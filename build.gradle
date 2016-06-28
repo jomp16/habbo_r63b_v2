@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2016 jomp16
+ *
+ * This file is part of habbo_r63b.
+ *
+ * habbo_r63b is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+buildscript {
+    ext.kotlin_version = '1.0.2-1'
+
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0'
+    }
+}
+
+subprojects {
+    apply plugin: 'kotlin'
+    apply plugin: 'com.github.ben-manes.versions'
+
+    group 'tk.jomp16.habbo'
+    version '1.0-SNAPSHOT'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    ext.jackson_json = '2.8.0.rc2'
+
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        testCompile 'junit:junit:4.12'
+
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    }
+}

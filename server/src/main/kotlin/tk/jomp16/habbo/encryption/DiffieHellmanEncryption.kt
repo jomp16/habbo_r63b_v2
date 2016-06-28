@@ -1,0 +1,64 @@
+/*
+ * Copyright (C) 2016 jomp16
+ *
+ * This file is part of habbo_r63b.
+ *
+ * habbo_r63b is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package tk.jomp16.habbo.encryption
+
+import tk.jomp16.habbo.util.Utils
+import java.math.BigInteger
+
+class DiffieHellmanEncryption {
+    var privateKey = BigInteger.ZERO
+    var publicKey = BigInteger.ZERO
+    var prime = BigInteger.ZERO
+    var generator = BigInteger.ZERO
+
+    init {
+        initialize()
+    }
+
+    private fun initialize() {
+        while (publicKey == BigInteger.ZERO) {
+            prime = BigInteger.probablePrime(bitLength, Utils.random)
+            generator = BigInteger.probablePrime(bitLength, Utils.random)
+
+            if (!prime.isProbablePrime(10) || !generator.isProbablePrime(10)) continue
+
+            val bytes = ByteArray(bitLength / 8)
+
+            Utils.random.nextBytes(bytes)
+
+            privateKey = BigInteger(bytes)
+
+            if (generator.compareTo(prime) == 1) {
+                val tmp = prime
+
+                prime = generator
+                generator = tmp
+            }
+
+            publicKey = generator.modPow(privateKey, prime)
+        }
+    }
+
+    fun calculateSharedKey(m: BigInteger) = m.modPow(privateKey, prime)
+
+    companion object {
+        const val bitLength = 32
+    }
+}

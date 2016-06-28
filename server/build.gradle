@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) 2016 jomp16
+ *
+ * This file is part of habbo_r63b.
+ *
+ * habbo_r63b is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+ext.netty_version = '4.1.1.Final'
+
+dependencies {
+    compile project(':pathfinding')
+
+    // Logging
+    compile 'org.slf4j:slf4j-api:1.7.21'
+
+    // JSON for config
+    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_json"
+
+    // Netty
+    compile "io.netty:netty-all:$netty_version"
+    compile "io.netty:netty-transport-native-epoll:$netty_version"
+
+    // SQL
+    compile 'com.github.andrewoma.kwery:core:0.12'
+    compile 'mysql:mysql-connector-java:6.0.3'
+    compile 'com.zaxxer:HikariCP:2.4.6'
+
+    // Reflection
+    compile 'org.reflections:reflections:0.9.10'
+
+    // Password encryption
+    compile 'org.jasypt:jasypt:1.9.2'
+}
