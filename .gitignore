@@ -4,9 +4,8 @@
 .gradle/
 build/
 
-gradle-app.setting
-!gradle-wrapper.jar
-.gradletasknamecache
-
 # IntelliJ IDEA
 .idea/
+
+# Config, they contains sensitive info about my stuffs
+config.json
