@@ -17,6 +17,8 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
+apply plugin: 'eu.appsatori.fatjar'
+
 ext.netty_version = '4.1.1.Final'
 
 dependencies {
