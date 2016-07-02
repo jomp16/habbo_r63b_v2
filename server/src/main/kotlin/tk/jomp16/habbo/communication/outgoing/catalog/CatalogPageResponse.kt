@@ -92,7 +92,7 @@ class CatalogPageResponse {
                 }
                 "pets",
                 "pets2",
-                "pets2" -> {
+                "pets3" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
