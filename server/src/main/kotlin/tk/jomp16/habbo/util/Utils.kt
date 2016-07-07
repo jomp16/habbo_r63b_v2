@@ -26,21 +26,6 @@ import java.security.SecureRandom
 object Utils {
     val random: SecureRandom = SecureRandom()
 
-    private val hexArray: CharArray = "0123456789ABCDEF".toCharArray()
-
-    fun bytesToHex(bytes: ByteArray): String {
-        val hexChars = CharArray(bytes.size * 2)
-
-        for (j in bytes.indices) {
-            val v = bytes[j].toInt() and 255
-
-            hexChars[j * 2] = hexArray[v ushr 4]
-            hexChars[j * 2 + 1] = hexArray[v and 15]
-        }
-
-        return String(hexChars)
-    }
-
     private val ramUsage: Long
         get() = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
 

@@ -37,7 +37,7 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
 
     val rsaDiffieHellmanPublicKey: String = getRsaStringEncrypted(diffieHellmanEncryption.publicKey.toString().toByteArray())
 
-    fun calculateDiffieHellmanSharedKey(publicKey: String) = diffieHellmanEncryption.calculateSharedKey(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)))
+    fun calculateDiffieHellmanSharedKey(publicKey: String): BigInteger = diffieHellmanEncryption.calculateSharedKey(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)))
 
     private fun getRsaStringEncrypted(bytes: ByteArray) = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))
 }

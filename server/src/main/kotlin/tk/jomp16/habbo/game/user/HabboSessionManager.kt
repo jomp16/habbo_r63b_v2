@@ -50,6 +50,6 @@ class HabboSessionManager {
     fun containsHabboSessionById(id: Int) = getHabboSessionById(id) != null
 
     companion object {
-        val habboSessionAttributeKey = AttributeKey.valueOf<HabboSession>("HABBO_SESSION")
+        val habboSessionAttributeKey: AttributeKey<HabboSession> = AttributeKey.valueOf<HabboSession>("HABBO_SESSION")
     }
 }

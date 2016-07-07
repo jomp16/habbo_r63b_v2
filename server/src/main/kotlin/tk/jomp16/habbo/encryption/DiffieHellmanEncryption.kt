@@ -23,10 +23,10 @@ import tk.jomp16.habbo.util.Utils
 import java.math.BigInteger
 
 class DiffieHellmanEncryption {
-    var privateKey = BigInteger.ZERO
-    var publicKey = BigInteger.ZERO
-    var prime = BigInteger.ZERO
-    var generator = BigInteger.ZERO
+    var privateKey: BigInteger = BigInteger.ZERO
+    var publicKey: BigInteger = BigInteger.ZERO
+    var prime: BigInteger = BigInteger.ZERO
+    var generator: BigInteger = BigInteger.ZERO
 
     init {
         initialize()
@@ -56,7 +56,7 @@ class DiffieHellmanEncryption {
         }
     }
 
-    fun calculateSharedKey(m: BigInteger) = m.modPow(privateKey, prime)
+    fun calculateSharedKey(m: BigInteger): BigInteger = m.modPow(privateKey, prime)
 
     companion object {
         const val bitLength = 32

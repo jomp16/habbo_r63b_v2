@@ -201,7 +201,7 @@ object HabboServer : Closeable {
         }
     }
 
-    fun <R> database(rollbackTransaction: Boolean = false, task: Session.() -> R) = executor.submit(
+    fun <R> database(rollbackTransaction: Boolean = false, task: Session.() -> R): R = executor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->

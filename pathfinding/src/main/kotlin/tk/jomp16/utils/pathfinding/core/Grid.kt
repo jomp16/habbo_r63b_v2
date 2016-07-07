@@ -80,22 +80,22 @@ class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int) -> 
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (diagonalMovement) {
             DiagonalMovement.ONLY_WHEN_NO_OBSTACLES -> {
-                d0 = s3 && s0;
-                d1 = s0 && s1;
-                d2 = s1 && s2;
-                d3 = s2 && s3;
+                d0 = s3 && s0
+                d1 = s0 && s1
+                d2 = s1 && s2
+                d3 = s2 && s3
             }
             DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE -> {
-                d0 = s3 || s0;
-                d1 = s0 || s1;
-                d2 = s1 || s2;
-                d3 = s2 || s3;
+                d0 = s3 || s0
+                d1 = s0 || s1
+                d2 = s1 || s2
+                d3 = s2 || s3
             }
             DiagonalMovement.ALWAYS -> {
-                d0 = true;
-                d1 = true;
-                d2 = true;
-                d3 = true;
+                d0 = true
+                d1 = true
+                d2 = true
+                d3 = true
             }
         }
 
