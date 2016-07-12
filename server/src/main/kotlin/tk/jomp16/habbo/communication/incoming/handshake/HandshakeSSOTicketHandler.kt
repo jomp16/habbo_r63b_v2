@@ -56,7 +56,7 @@ class HandshakeSSOTicketHandler {
                 habboSession.sendNotification("My Mustache tells me you tried something funny. Not a hacker, aren't you! Fuck you!\n\nChuck Norris is not happy with you!\n\nThis Hotel still in development!\n\n- jomp16")
             }
 
-            HabboServer.scheduledExecutor.schedule({ habboSession.channel.disconnect() }, 10, TimeUnit.SECONDS)
+            HabboServer.executor.schedule({ habboSession.channel.disconnect() }, 10, TimeUnit.SECONDS)
 
             return
         }

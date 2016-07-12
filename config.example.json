@@ -25,7 +25,7 @@
   },
   "timer": {
     "credits_seconds": 10,
-    "room_idle": 300,
+    "room_idle_seconds": 150,
     "roller": 3
   },
   "room_task": {

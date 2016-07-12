@@ -100,4 +100,7 @@ object Outgoing {
     const val ROOM_ITEM_ADDED = 671 // ObjectAddMessageComposer
     const val INVENTORY_REMOVE_OBJECT = 1171 // FurniListRemoveMessageComposer
     const val NAVIGATOR_CREATE_ROOM = 2413 // FlatCreatedMessageComposer
+    const val ROOM_USER_IDLE = 2647 // SleepMessageComposer
+    const val ROOM_USER_CHAT = 2064 // ChatMessageComposer
+    const val ROOM_USER_SHOUT = 3544 // ShoutMessageComposer
 }

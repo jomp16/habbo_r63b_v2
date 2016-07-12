@@ -22,17 +22,42 @@ package tk.jomp16.habbo.communication.incoming.room
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.room.tasks.ChatType
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserChatTalkHandler {
     @Handler(Incoming.ROOM_USER_CHAT)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+    fun handleChat(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
+        val (message, bubble) = parse(habboRequest) ?: return
+
+        // todo: check if user can use bubble
+        // todo: check if user is muted
+        // todo: word filter
+
+        habboSession.roomUser?.chat(message, bubble, ChatType.CHAT)
+    }
+
+    @Handler(Incoming.ROOM_USER_SHOUT)
+    fun handleShout(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+
+        val (message, bubble) = parse(habboRequest) ?: return
+
+        // todo: check if user can use bubble
+        // todo: check if user is muted
+        // todo: word filter
+
+        // todo: send chat
+        habboSession.roomUser?.chat(message, bubble, ChatType.SHOUT)
+    }
+
+    private fun parse(habboRequest: HabboRequest): Pair<String, Int>? {
         var message = habboRequest.readUTF()
 
-        if (message.length < 1) return
+        if (message.length < 1) return null
         if (message.length > 100) message = message.substring(0, 100)
 
         if (message.startsWith(':')) {
@@ -41,11 +66,6 @@ class RoomUserChatTalkHandler {
 
         val bubble = habboRequest.readInt()
 
-        // todo: check if user can use bubble
-        // todo: check if user is muted
-        // todo: word filter
-
-        // todo: un idle user
-        // todo: send chat
+        return Pair(message, bubble)
     }
 }

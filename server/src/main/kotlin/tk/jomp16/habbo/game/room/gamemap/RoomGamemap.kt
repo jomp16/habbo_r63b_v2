@@ -50,6 +50,8 @@ class RoomGamemap(private val room: Room) {
         room.floorItems.values.forEach { addRoomItem(it) }
     }
 
+    fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = Math.abs(x1 - x2) + Math.abs(y1 - y2)
+
     fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
         if (!roomUserMap.containsKey(vector2)) {
             val roomUsers: MutableList<RoomUser> = ArrayList()

@@ -19,15 +19,20 @@
 
 package tk.jomp16.habbo.game.room.user
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.Room
+import tk.jomp16.habbo.game.room.tasks.ChatType
+import tk.jomp16.habbo.game.room.tasks.UserChatTask
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 class RoomUser(
         val habboSession: HabboSession?, // nullable, for in the future support bots
@@ -48,6 +53,17 @@ class RoomUser(
         get() = objectiveVector2 != null
     private val stepSeated: Boolean
         get() = stepSeatedVector3 != null
+
+    private var idleCount: Int = 0
+
+    var idle: Boolean = false
+        set(newValue) {
+            idleCount = if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt() else 0
+
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
+
+            field = newValue
+        }
 
     fun addStatus(key: String, value: String = "", seconds: Int = -1) {
         statusMap.put(key, Pair(if (seconds == -1) null else LocalDateTime.now().plusSeconds(seconds.toLong()), value))
@@ -113,11 +129,24 @@ class RoomUser(
                     stepSeatedVector3 = Vector3(step.x, step.y, z)
                 }
             }
+        } else {
+            if (!idle) {
+                idleCount++
+
+                // check and commit idle state to room
+                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
+            }
         }
     }
 
     fun moveTo(x: Int, y: Int) {
+        idle = false
+
         objectiveVector2 = Vector2(x, y)
+    }
+
+    fun chat(message: String, bubble: Int, type: ChatType) {
+        room.roomTask?.addTask(room, UserChatTask(this, message, bubble, type))
     }
 
     private fun stopWalking() {

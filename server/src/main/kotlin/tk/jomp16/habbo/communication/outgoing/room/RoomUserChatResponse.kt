@@ -17,25 +17,28 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.handshake
+package tk.jomp16.habbo.communication.outgoing.room
 
-import tk.jomp16.habbo.communication.HabboRequest
-import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class HandshakeUniqueIDHandler {
-    @Handler(Incoming.UNIQUE_ID)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // ignore this shit
-        habboRequest.readUTF()
+class RoomUserChatResponse {
+    @Response(Outgoing.ROOM_USER_CHAT)
+    fun responseChat(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
+        habboResponse.apply {
+            writeInt(virtualId)
+            writeUTF(message)
+            writeInt(emoticon)
+            writeInt(bubble)
+            writeInt(0)
+            writeInt(-1)
+        }
+    }
 
-        val uniqueID = habboRequest.readUTF()
-
-        habboSession.uniqueID = uniqueID
-
-        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+    @Response(Outgoing.ROOM_USER_SHOUT)
+    fun responseShout(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
+        responseChat(habboResponse, virtualId, message, emoticon, bubble)
     }
 }

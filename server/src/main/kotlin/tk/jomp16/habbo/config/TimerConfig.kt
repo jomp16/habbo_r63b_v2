@@ -24,8 +24,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class TimerConfig(
         @JsonProperty("credits_seconds")
         val creditsSeconds: Int,
-        @JsonProperty("room_idle")
-        val roomIdle: Int,
+        @JsonProperty("room_idle_seconds")
+        val roomIdleSeconds: Int,
         @JsonProperty("roller")
         val roller: Int
 )

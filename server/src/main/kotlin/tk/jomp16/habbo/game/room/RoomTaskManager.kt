@@ -19,11 +19,15 @@
 
 package tk.jomp16.habbo.game.room
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 class RoomTaskManager {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     val scheduledFutureMap: MutableList<RoomTask> = ArrayList()
     val rooms: MutableList<Room> = ArrayList()
 
@@ -49,9 +53,9 @@ class RoomTaskManager {
 
     private fun execute(roomTask: RoomTask) {
         // dis is a timeout task manager
-        /*val handler = HabboServer.scheduledExecutor.submit(roomTask)
+        /*val handler = HabboServer.executor.submit(roomTask)
 
-        HabboServer.scheduledExecutor.schedule({
+        HabboServer.executor.schedule({
             if (handler.isDone) {
                 execute(roomTask)
             } else {
@@ -60,7 +64,13 @@ class RoomTaskManager {
             }
         }, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)*/
 
-        HabboServer.scheduledExecutor.scheduleWithFixedDelay(roomTask, 0, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)
+        HabboServer.executor.scheduleAtFixedRate({
+            try {
+                roomTask.run()
+            } catch (e: Exception) {
+                log.error("An exception happened!", e)
+            }
+        }, 0, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)
     }
 
     fun removeRoomFromTask(room: Room) {

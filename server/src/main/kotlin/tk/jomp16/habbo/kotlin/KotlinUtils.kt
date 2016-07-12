@@ -19,12 +19,9 @@
 
 package tk.jomp16.habbo.kotlin
 
-import tk.jomp16.habbo.util.RunnableException
 import java.time.LocalDateTime
 
 fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now().withNano(0).withSecond(0)
-
-fun runnableException(body: () -> Unit) = RunnableException(Runnable { body() })
 
 inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(sizeOuter) { Array(sizeInner, innerInit) }
 

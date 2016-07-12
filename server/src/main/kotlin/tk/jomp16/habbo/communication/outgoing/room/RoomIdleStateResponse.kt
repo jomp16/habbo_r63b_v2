@@ -17,19 +17,19 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.util
+package tk.jomp16.habbo.communication.outgoing.room
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-class RunnableException(private val runnable: Runnable) : Runnable {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    override fun run() {
-        try {
-            runnable.run()
-        } catch (e: Exception) {
-            log.error("Exception in RunnableException!", e)
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomIdleStateResponse {
+    @Response(Outgoing.ROOM_USER_IDLE)
+    fun response(habboResponse: HabboResponse, virtualId: Int, idleState: Boolean) {
+        habboResponse.apply {
+            writeInt(virtualId)
+            writeBoolean(idleState)
         }
     }
 }

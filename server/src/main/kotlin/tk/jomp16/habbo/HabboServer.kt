@@ -48,7 +48,6 @@ import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import java.io.Closeable
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
@@ -79,9 +78,7 @@ object HabboServer : Closeable {
         private set
 
     // Thread Executors
-    lateinit var executor: ExecutorService
-        private set
-    lateinit var scheduledExecutor: ScheduledExecutorService
+    lateinit var executor: ScheduledExecutorService
         private set
 
     val started: Boolean
@@ -126,8 +123,7 @@ object HabboServer : Closeable {
         }
 
         // Instantiate thread executors
-        executor = Executors.newCachedThreadPool()
-        scheduledExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors())
+        executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors())
 
         // Clean up things in database
         log.info("Cleaning up some things in database...")
@@ -194,6 +190,8 @@ object HabboServer : Closeable {
                         System.exit(1)
                     }
                 }
+            } catch (e: Exception) {
+                log.error("An exception happened!", e)
             } finally {
                 workerGroup.shutdownGracefully()
                 bossGroup.shutdownGracefully()
