@@ -17,14 +17,12 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-ext.log4j2_version = '2.6.1'
-
 dependencies {
     compile project(':server')
 
     compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
 
-    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_json"
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_json"
+    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
 }

@@ -19,16 +19,14 @@
 
 apply plugin: 'eu.appsatori.fatjar'
 
-ext.netty_version = '4.1.1.Final'
-
 dependencies {
     compile project(':pathfinding')
 
     // Logging
-    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile "org.slf4j:slf4j-api:$slf4j_version"
 
     // JSON for config
-    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_json"
+    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
 
     // Netty
     compile "io.netty:netty-all:$netty_version"
@@ -37,7 +35,7 @@ dependencies {
     // SQL
     compile 'com.github.andrewoma.kwery:core:0.12'
     compile 'mysql:mysql-connector-java:6.0.3'
-    compile 'com.zaxxer:HikariCP:2.4.6'
+    compile 'com.zaxxer:HikariCP:2.4.7'
 
     // Reflection
     compile 'org.reflections:reflections:0.9.10'
