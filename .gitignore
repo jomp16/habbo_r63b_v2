@@ -6,6 +6,7 @@ build/
 
 # IntelliJ IDEA
 .idea/
+classes/
 
 # Config, they contains sensitive info about my stuffs
 config.json

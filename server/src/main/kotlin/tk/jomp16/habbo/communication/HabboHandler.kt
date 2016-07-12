@@ -105,7 +105,7 @@ class HabboHandler {
                     methodHandle.invokeWithArguments(clazz, habboSession, it)
                 } catch (e: Exception) {
                     log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
-                    log.error("Cause: {}", e.cause?.message)
+                    log.error("Cause: {}", e.message)
                 }
             } else if (!blacklistIds.contains(habboRequest.headerId)) {
                 log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
@@ -127,16 +127,7 @@ class HabboHandler {
                 return habboResponse
             } catch (e: Exception) {
                 log.error("Error when invoking HabboResponse for {} - {}!", headerId, outgoingNames[headerId])
-                log.error("Cause: {}", e.cause?.message)
-
-                /*if (e is IllegalArgumentException) {
-                    log.error("Excepted parameters: {}", method.parameters.map { it.type.simpleName })
-                    log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it.javaClass.simpleName }))
-
-                    habboResponse.close()
-                } else {
-                    log.error("Cause: {}", e.cause?.message)
-                }*/
+                log.error("Cause: {}", e.message)
             }
         } else {
             log.error("Non existent response header ID: {} - {}", headerId, outgoingNames[headerId])
