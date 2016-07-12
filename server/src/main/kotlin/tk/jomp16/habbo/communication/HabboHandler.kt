@@ -26,14 +26,15 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
-import java.lang.reflect.Method
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.util.*
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val messageHandlers: MutableMap<Int, Pair<Any, Method>> = HashMap()
-    private val messageResponses: MutableMap<Int, Pair<Any, Method>> = HashMap()
+    private val messageHandlers: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
+    private val messageResponses: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
     private val instances: MutableMap<Class<*>, Any> = HashMap()
 
     val blacklistIds: IntArray = intArrayOf(Incoming.CLIENT_DEBUG,
@@ -58,6 +59,8 @@ class HabboHandler {
     val outgoingNames: MutableMap<Int, String> = HashMap()
 
     init {
+        val lookup = MethodHandles.lookup()
+
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
         // Load incoming
@@ -69,7 +72,9 @@ class HabboHandler {
             val clazz = getInstance(it.declaringClass)
             val handler = it.getAnnotation(Handler::class.java)
 
-            if (!messageHandlers.containsKey(handler.headerId)) messageHandlers += handler.headerId to Pair(clazz, it)
+            val methodHandle = lookup.unreflect(it)
+
+            if (!messageHandlers.containsKey(handler.headerId)) messageHandlers += handler.headerId to Pair(clazz, methodHandle)
         }
 
         // Load outgoing
@@ -81,10 +86,11 @@ class HabboHandler {
             val clazz = getInstance(it.declaringClass)
             val response = it.getAnnotation(Response::class.java)
 
-            if (!messageResponses.containsKey(response.headerId)) messageResponses += response.headerId to Pair(clazz, it)
+            val methodHandle = lookup.unreflect(it)
+
+            if (!messageResponses.containsKey(response.headerId)) messageResponses += response.headerId to Pair(clazz, methodHandle)
         }
 
-        log.info("Loaded {} Habbo message handlers", messageHandlers.size)
         log.info("Loaded {} Habbo response handlers", messageResponses.size)
     }
 
@@ -94,9 +100,9 @@ class HabboHandler {
                 try {
                     val pair = messageHandlers[it.headerId] ?: return@use
                     val clazz = pair.first
-                    val method = pair.second
+                    val methodHandle = pair.second
 
-                    method.invoke(clazz, habboSession, it)
+                    methodHandle.invokeWithArguments(clazz, habboSession, it)
                 } catch (e: Exception) {
                     log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
                     log.error("Cause: {}", e.cause?.message)
@@ -111,24 +117,26 @@ class HabboHandler {
         if (messageResponses.containsKey(headerId)) {
             val response = messageResponses[headerId] ?: return null
             val clazz = response.first
-            val method = response.second
+            val methodHandle = response.second
+
             val habboResponse = HabboResponse(headerId)
 
             try {
-                method.invoke(clazz, habboResponse, *args)
+                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
 
                 return habboResponse
             } catch (e: Exception) {
                 log.error("Error when invoking HabboResponse for {} - {}!", headerId, outgoingNames[headerId])
+                log.error("Cause: {}", e.cause?.message)
 
-                if (e is IllegalArgumentException) {
+                /*if (e is IllegalArgumentException) {
                     log.error("Excepted parameters: {}", method.parameters.map { it.type.simpleName })
                     log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it.javaClass.simpleName }))
 
                     habboResponse.close()
                 } else {
                     log.error("Cause: {}", e.cause?.message)
-                }
+                }*/
             }
         } else {
             log.error("Non existent response header ID: {} - {}", headerId, outgoingNames[headerId])
