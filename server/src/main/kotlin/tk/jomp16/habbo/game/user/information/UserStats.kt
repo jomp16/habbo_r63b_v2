@@ -41,7 +41,7 @@ data class UserStats(
         var marketplaceTickets: Int,
         var creditsLastUpdate: LocalDateTime,
         var respectLastUpdate: LocalDateTime
-) {
+                    ) {
     val totalOnlineSeconds: Long
         get() = Duration.between(lastOnline, LocalDateTime.now()).seconds + onlineSeconds
 }

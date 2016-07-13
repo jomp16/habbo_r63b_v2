@@ -30,7 +30,7 @@ data class RoomModel(
         val doorDir: Int,
         val heightmap: List<String>,
         val clubOnly: Boolean
-) {
+                    ) {
     val mapSizeX: Int = heightmap[0].length
     val mapSizeY: Int = heightmap.size
 

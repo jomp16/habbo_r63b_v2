@@ -38,10 +38,10 @@ class NavigatorInitializeHandler {
 
         queuedHabboResponse += Outgoing.NAVIGATOR_METADATA to arrayOf(
                 HabboServer.habboGame.navigatorManager.navTabs
-        ) // NavigatorMetaDataParserComposer
+                                                                     ) // NavigatorMetaDataParserComposer
         queuedHabboResponse += Outgoing.NAVIGATOR_LIFTED_ROOMS to arrayOf(
                 arrayOf<Room>()
-        ) // NavigatorLiftedRoomsComposer
+                                                                         ) // NavigatorLiftedRoomsComposer
         queuedHabboResponse += Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES to arrayOf()
 
         queuedHabboResponse += Outgoing.NAVIGATOR_PREFERENCES to arrayOf(
@@ -50,7 +50,7 @@ class NavigatorInitializeHandler {
                 habboSession.userPreferences.navigatorWidth,
                 habboSession.userPreferences.navigatorHeight,
                 false // open search bar
-        ) // NavigatorPreferencesComposer
+                                                                        ) // NavigatorPreferencesComposer
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }

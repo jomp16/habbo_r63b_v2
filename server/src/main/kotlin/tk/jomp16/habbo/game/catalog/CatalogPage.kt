@@ -44,7 +44,7 @@ data class CatalogPage(
         val pageTextTeaser: String,
         val pageLinkDescription: String,
         val pageLinkPagename: String
-) : IHabboResponseSerialize {
+                      ) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val rank = params[0] as Int

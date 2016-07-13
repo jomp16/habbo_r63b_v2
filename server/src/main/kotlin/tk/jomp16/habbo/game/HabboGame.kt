@@ -51,21 +51,23 @@ class HabboGame {
         navigatorManager = NavigatorManager()
 
         HabboServer.executor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
-            }
-        }, 0, 1, TimeUnit.MINUTES)
+                                                        HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+                                                            if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
+                                                        }
+                                                    }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.executor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                    it.rewardUser()
-                }
-            }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
+                                                            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+                                                                it.rewardUser()
+                                                            }
+                                                        }, 0,
+                                                        HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(),
+                                                        TimeUnit.SECONDS)
         }
 
         HabboServer.executor.scheduleAtFixedRate({
-            log.info("RAM usage: {}", Utils.ramUsageString)
-        }, 0, 10, TimeUnit.SECONDS)
+                                                     log.info("RAM usage: {}", Utils.ramUsageString)
+                                                 }, 0, 10, TimeUnit.SECONDS)
     }
 }

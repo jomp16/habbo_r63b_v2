@@ -54,7 +54,7 @@ data class RoomData(
         var allowPets: Boolean,
         var allowPetsEat: Boolean,
         var allowWalkThrough: Boolean
-) {
+                   ) {
     val ownerName: String
         get() = UserInformationDao.getUserInformationById(ownerId)?.username ?: "null"
 }

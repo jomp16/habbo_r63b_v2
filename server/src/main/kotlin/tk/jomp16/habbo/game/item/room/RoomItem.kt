@@ -42,7 +42,7 @@ data class RoomItem(
         var rotation: Int,
         val wallPosition: String,
         val limitedItemData: LimitedItemData?
-) : IHabboResponseSerialize {
+                   ) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[baseName]!!
 
@@ -83,7 +83,8 @@ data class RoomItem(
                 writeUTF(id.toString())
                 writeInt(furnishing.spriteId)
                 writeUTF(wallPosition)
-                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
+                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(
+                        ' ')[0] else extraData)
             }
 
             writeInt(-1)
@@ -93,13 +94,14 @@ data class RoomItem(
     }
 
     val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
+        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width,
+                                                                   furnishing.height)
 
     fun update(updateDb: Boolean, updateClient: Boolean) {
         if (updateClient) {
             when {
                 furnishing.type == ItemType.WALL -> room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
-                else -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
+                else                             -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
             }
         }
 

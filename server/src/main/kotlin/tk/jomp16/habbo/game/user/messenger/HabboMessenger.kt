@@ -25,8 +25,10 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboMessenger(private val habboSession: HabboSession) {
-    val friends: MutableMap<Int, MessengerFriend> = HashMap(MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId })
-    val requests: MutableMap<Int, MessengerRequest> = HashMap(MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId })
+    val friends: MutableMap<Int, MessengerFriend> = HashMap(
+            MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId })
+    val requests: MutableMap<Int, MessengerRequest> = HashMap(
+            MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId })
 
     var initializedMessenger: Boolean = false
 
@@ -34,7 +36,9 @@ class HabboMessenger(private val habboSession: HabboSession) {
         friends.values.filter {
             it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false
         }.forEach {
-            it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
+            it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE,
+                                               listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
+                                               0)
         }
     }
 }

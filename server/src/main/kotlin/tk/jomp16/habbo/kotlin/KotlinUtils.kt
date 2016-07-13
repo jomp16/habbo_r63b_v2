@@ -19,11 +19,13 @@
 
 package tk.jomp16.habbo.kotlin
 
+import tk.jomp16.habbo.util.Utils
 import java.time.LocalDateTime
 
 fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now().withNano(0).withSecond(0)
 
-inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(sizeOuter) { Array(sizeInner, innerInit) }
+inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(
+        sizeOuter) { Array(sizeInner, innerInit) }
 
 fun array2dOfShort(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ShortArray(sizeInner) }
 
@@ -34,3 +36,5 @@ fun array2dOfLong(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { LongArray
 fun array2dOfByte(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ByteArray(sizeInner) }
 
 fun array2dOfChar(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { CharArray(sizeInner) }
+
+fun <E> List<E>.random(): E = this[Utils.random.nextInt(this.size)]

@@ -103,4 +103,5 @@ object Outgoing {
     const val ROOM_USER_IDLE = 2647 // SleepMessageComposer
     const val ROOM_USER_CHAT = 2064 // ChatMessageComposer
     const val ROOM_USER_SHOUT = 3544 // ShoutMessageComposer
+    const val ROOM_USER_ACTION = 2156 // ActionMessageComposer
 }

@@ -26,7 +26,8 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboInventory(private val habboSession: HabboSession) {
-    val items: MutableMap<Int, UserItem> = HashMap(ItemDao.getUserItems(habboSession.userInformation.id).associateBy { it.id })
+    val items: MutableMap<Int, UserItem> = HashMap(
+            ItemDao.getUserItems(habboSession.userInformation.id).associateBy { it.id })
 
     fun removeItem(userItem: UserItem) {
         if (!items.containsKey(userItem.id)) return

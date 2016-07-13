@@ -33,7 +33,7 @@ object LandingDao {
                     it.boolean("show_button"),
                     it.string("button_link"),
                     it.string("image")
-            )
+                        )
         }
     }
 }

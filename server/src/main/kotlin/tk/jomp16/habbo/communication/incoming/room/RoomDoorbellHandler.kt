@@ -42,13 +42,17 @@ class RoomDoorbellHandler {
         if (accept) {
             requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, "")
 
-            habboSession.currentRoom?.roomUsersWithRights?.forEach { it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.userInformation.username) }
+            habboSession.currentRoom?.roomUsersWithRights?.forEach {
+                it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.userInformation.username)
+            }
         } else {
             requestHabboSession.currentRoom = null
 
             requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
 
-            habboSession.currentRoom?.roomUsersWithRights?.forEach { it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.userInformation.username) }
+            habboSession.currentRoom?.roomUsersWithRights?.forEach {
+                it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.userInformation.username)
+            }
         }
     }
 }

@@ -23,4 +23,4 @@ data class Badge(
         val id: Int,
         val code: String,
         var slot: Int
-)
+                )

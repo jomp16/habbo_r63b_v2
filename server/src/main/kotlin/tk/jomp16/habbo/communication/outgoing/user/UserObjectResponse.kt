@@ -29,7 +29,8 @@ import java.time.format.DateTimeFormatter
 class UserObjectResponse {
     @Response(Outgoing.USER_OBJECT)
     fun response(habboResponse: HabboResponse, id: Int, username: String, figure: String, gender: String,
-                 motto: String, respect: Int, dailyRespectPoints: Int, dailyPetRespectPoints: Int, lastOnline: LocalDateTime,
+                 motto: String, respect: Int, dailyRespectPoints: Int, dailyPetRespectPoints: Int,
+                 lastOnline: LocalDateTime,
                  canChangeName: Boolean) {
         habboResponse.apply {
             writeInt(id)

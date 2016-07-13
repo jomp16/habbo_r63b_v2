@@ -23,4 +23,4 @@ data class LimitedItemData(
         val id: Int,
         val limitedNumber: Int,
         val limitedTotal: Int
-)
+                          )

@@ -46,7 +46,7 @@ class DefaultItemInteractor : ItemInteractor() {
 
         if (roomUser != null) {
             // todo: wired
-//            room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
+            //            room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
         }
     }
 }

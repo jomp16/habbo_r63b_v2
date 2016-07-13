@@ -23,4 +23,4 @@ data class NavigatorFlatcat(
         val id: Int,
         val caption: String,
         val minRank: Int
-)
+                           )

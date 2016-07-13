@@ -48,7 +48,7 @@ object CatalogDao {
                     it.string("page_text_teaser"),
                     it.string("page_link_description"),
                     it.string("page_link_pagename")
-            )
+                       )
         }
     }
 
@@ -69,7 +69,7 @@ object CatalogDao {
                     AtomicInteger(it.int("limited_sells")),
                     it.int("limited_stack"),
                     it.boolean("offer_active")
-            )
+                       )
         }
     }
 }

@@ -44,7 +44,9 @@ class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
             queuedHabboResponse += Outgoing.ROOM_FLOOR_ITEMS to arrayOf(room, room.floorItems.values)
             queuedHabboResponse += Outgoing.ROOM_WALL_ITEMS to arrayOf(room, room.wallItems.values)
             queuedHabboResponse += Outgoing.ROOM_OWNERSHIP to arrayOf(room.roomData.id, room.hasRights(it, true))
-            queuedHabboResponse += Outgoing.ROOM_VISUALIZATION_THICKNESS to arrayOf(room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
+            queuedHabboResponse += Outgoing.ROOM_VISUALIZATION_THICKNESS to arrayOf(room.roomData.hideWall,
+                                                                                    room.roomData.wallThick,
+                                                                                    room.roomData.floorThick)
 
             // todo: events
 
@@ -76,7 +78,11 @@ class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
         // todo: add support to bots
         roomUser.habboSession?.let {
             room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
-            room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, it.userInformation.figure, it.userInformation.gender, it.userInformation.motto, it.userStats.achievementScore)
+            room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, it.userInformation.figure,
+                                   it.userInformation.gender, it.userInformation.motto, it.userStats.achievementScore)
         }
+
+        // Reset empty counter
+        if (room.emptyCounter.get() > 0) room.emptyCounter.set(0)
     }
 }

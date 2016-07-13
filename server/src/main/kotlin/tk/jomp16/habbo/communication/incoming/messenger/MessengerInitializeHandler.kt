@@ -37,18 +37,18 @@ class MessengerInitializeHandler {
 
         queuedHabboResponse += Outgoing.MESSENGER_INIT to arrayOf(
                 2000 // max friends
-        ) // MessengerInitComposer
+                                                                 ) // MessengerInitComposer
 
         queuedHabboResponse += Outgoing.MESSENGER_FRIENDS to arrayOf(
                 habboSession.habboMessenger.friends.values
-        ) // BuddyListComposer
+                                                                    ) // BuddyListComposer
 
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             queuedHabboResponse += Outgoing.MESSENGER_CHAT to arrayOf(
                     it.first,
                     it.second,
                     it.third
-            )
+                                                                     )
         }
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)

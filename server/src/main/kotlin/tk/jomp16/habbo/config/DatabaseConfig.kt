@@ -33,7 +33,7 @@ data class DatabaseConfig(
         val password: String,
         @JsonProperty("name")
         val name: String
-) {
+                         ) {
     val hikariConfig: HikariConfig
         get() {
             val config = HikariConfig()

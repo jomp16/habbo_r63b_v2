@@ -28,4 +28,4 @@ data class TimerConfig(
         val roomIdleSeconds: Int,
         @JsonProperty("roller")
         val roller: Int
-)
+                      )

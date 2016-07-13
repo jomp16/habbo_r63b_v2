@@ -32,7 +32,7 @@ class NavigatorManager {
             "hotel_view",
             "roomads_view",
             "myworld_view"
-    )
+                                        )
 
     val navigatorFlatCats: MutableMap<Int, NavigatorFlatcat> = HashMap()
     val navigatorPromoCats: MutableMap<Int, NavigatorPromocat> = HashMap()

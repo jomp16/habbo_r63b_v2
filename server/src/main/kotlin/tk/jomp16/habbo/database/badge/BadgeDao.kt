@@ -26,36 +26,37 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 object BadgeDao {
     fun getBadges(userId: Int) = HabboServer.database {
         select("SELECT * FROM users_badges WHERE user_id = :user_id",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
+               mapOf(
+                       "user_id" to userId
+                    )
+              ) {
             Badge(
                     it.int("id"),
                     it.string("code"),
                     it.int("slot")
-            )
+                 )
         }
     }
 
     fun removeBadge(id: Int) {
         HabboServer.database {
             update("DELETE FROM users_badges WHERE id = :id",
-                    mapOf(
-                            "id" to id
-                    )
-            )
+                   mapOf(
+                           "id" to id
+                        )
+                  )
         }
     }
 
     fun addBadge(userId: Int, code: String, slot: Int) = HabboServer.database {
-        val id = insertAndGetGeneratedKey("INSERT INTO users_badges (user_id, code, slot) VALUES (:user_id, :code, :slot)",
+        val id = insertAndGetGeneratedKey(
+                "INSERT INTO users_badges (user_id, code, slot) VALUES (:user_id, :code, :slot)",
                 mapOf(
                         "user_id" to userId,
                         "code" to code,
                         "slot" to slot
-                )
-        )
+                     )
+                                         )
 
         Badge(id, code, slot)
     }
@@ -63,13 +64,13 @@ object BadgeDao {
     fun saveBadges(badges: Collection<Badge>) {
         HabboServer.database {
             batchUpdate("UPDATE users_badges SET slot = :slot WHERE id = :id",
-                    badges.map {
-                        mapOf(
-                                "slot" to it.slot,
-                                "id" to it.id
-                        )
-                    }
-            )
+                        badges.map {
+                            mapOf(
+                                    "slot" to it.slot,
+                                    "id" to it.id
+                                 )
+                        }
+                       )
         }
     }
 }

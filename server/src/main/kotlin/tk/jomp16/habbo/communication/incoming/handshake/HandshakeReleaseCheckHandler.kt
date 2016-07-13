@@ -35,7 +35,8 @@ class HandshakeReleaseCheckHandler {
         val release = habboRequest.readUTF()
 
         if (Incoming.RELEASE != release) {
-            log.warn("Client release isn't for this server. Client: {}, server: {}. Disconnecting user...", release, Incoming.RELEASE)
+            log.warn("Client release isn't for this server. Client: {}, server: {}. Disconnecting user...", release,
+                     Incoming.RELEASE)
 
             habboSession.channel.disconnect()
         }

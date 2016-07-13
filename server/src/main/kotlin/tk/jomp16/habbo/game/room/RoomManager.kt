@@ -41,14 +41,17 @@ class RoomManager {
 
         roomModels += RoomDao.getRoomModels().associateBy { it.id }
         customRoomModels += RoomDao.getCustomRoomModels().associateBy { it.roomId }
-        rooms += RoomDao.getRoomsData().associateBy({ it.id }, { Room(it, if (it.modelName == "custom") customRoomModels[it.id]!! else roomModels[it.modelName]!!) })
+        rooms += RoomDao.getRoomsData().associateBy({ it.id }, {
+            Room(it, if (it.modelName == "custom") customRoomModels[it.id]!! else roomModels[it.modelName]!!)
+        })
 
         log.info("Loaded {} room models!", roomModels.size)
         log.info("Loaded {} custom room models!", customRoomModels.size)
         log.info("Loaded {} rooms!", rooms.size)
     }
 
-    fun createRoom(userId: Int, validSubscription: Boolean, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Room? {
+    fun createRoom(userId: Int, validSubscription: Boolean, name: String, description: String, model: String,
+                   category: Int, maxUsers: Int, tradeSettings: Int): Room? {
         val roomModel = roomModels[model]
 
         if (name.length < 3 || roomModel == null || roomModel.clubOnly && !validSubscription) return null

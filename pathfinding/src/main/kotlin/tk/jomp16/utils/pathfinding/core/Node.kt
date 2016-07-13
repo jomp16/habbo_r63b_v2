@@ -26,4 +26,4 @@ data class Node(
         var f: Double = 0.toDouble(),
         var h: Double = 0.toDouble(),
         var parent: Node? = null
-)
+               )

@@ -33,7 +33,8 @@ class RoomTriggerItemHandler {
         habboSession.currentRoom?.let {
             val item = it.roomItems[habboRequest.readInt()] ?: return@let
 
-            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
+            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession),
+                                                  habboRequest.readInt())
         }
     }
 }

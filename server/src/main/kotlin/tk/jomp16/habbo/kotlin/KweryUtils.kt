@@ -29,19 +29,24 @@ import java.time.LocalDateTime
 /**
  * Inserts and fetch the rows affected and the generated key
  */
-fun Session.insertWithIntGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY")
+fun Session.insertWithIntGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(),
+                                      options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY")
         = insert(sql, parameters, options) { it.int(columnName) }
 
 /**
  * Inserts and fetch the rows affected and the generated key
  */
-fun Session.insertAndGetGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions)
+fun Session.insertAndGetGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(),
+                                     options: StatementOptions = defaultOptions)
         = insertWithIntGeneratedKey(sql, parameters, options).second
 
-fun Session.batchInsertWithIntGeneratedKey(sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY")
+fun Session.batchInsertWithIntGeneratedKey(sql: String, parametersList: List<Map<String, Any?>>,
+                                           options: StatementOptions = defaultOptions,
+                                           columnName: String = "GENERATED_KEY")
         = batchInsert(sql, parametersList, options) { it.int(columnName) }
 
-fun Session.batchInsertAndGetGeneratedKeys(sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions)
+fun Session.batchInsertAndGetGeneratedKeys(sql: String, parametersList: List<Map<String, Any?>>,
+                                           options: StatementOptions = defaultOptions)
         = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
 fun Row.localDateTime(name: String) = localDateTimeOrNull(name)!!

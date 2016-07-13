@@ -51,11 +51,13 @@ class SubscriptionStatusHandler {
             months = ChronoUnit.MONTHS.between(currentTime, subscription?.expire).toInt()
             elapsedDays = ChronoUnit.DAYS.between(subscription?.activated, currentTime).toInt()
             minutes = ChronoUnit.MINUTES.between(currentTime, subscription?.expire).toInt()
-            days = Period.between(LocalDate.now(), LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())).days.toInt()
+            days = Period.between(LocalDate.now(),
+                                  LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())).days.toInt()
 
             if (days == 0) days = 1
         }
 
-        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, HabboSubscription.CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
+        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, HabboSubscription.CLUB_TYPE, active, days,
+                                       if (months >= 1) months - 1 else months, elapsedDays, minutes)
     }
 }

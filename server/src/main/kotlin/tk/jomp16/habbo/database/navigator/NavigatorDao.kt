@@ -26,29 +26,29 @@ import tk.jomp16.habbo.game.navigator.NavigatorPromocat
 object NavigatorDao {
     fun getNavigatorFlatCats() = HabboServer.database {
         select("SELECT * FROM navigator_flatcats WHERE enabled = :enabled",
-                mapOf(
-                        "enabled" to true
-                )
-        ) {
+               mapOf(
+                       "enabled" to true
+                    )
+              ) {
             NavigatorFlatcat(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
-            )
+                            )
         }
     }
 
     fun getNavigatorPromoCats() = HabboServer.database {
         select("SELECT * FROM navigator_promocats WHERE visible = :visible",
-                mapOf(
-                        "visible" to true
-                )
-        ) {
+               mapOf(
+                       "visible" to true
+                    )
+              ) {
             NavigatorPromocat(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
-            )
+                             )
         }
     }
 }

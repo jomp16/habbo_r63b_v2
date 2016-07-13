@@ -29,7 +29,7 @@ import java.time.format.DateTimeFormatter
 
 data class MessengerFriend(
         val userId: Int
-) : IHabboResponseSerialize {
+                          ) : IHabboResponseSerialize {
     val habboSession: HabboSession?
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
 
@@ -48,7 +48,8 @@ data class MessengerFriend(
             writeUTF(userInformation.figure)
             writeInt(0) // todo: add ability to add friend on custom category
             writeUTF(userInformation.motto)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
             writeUTF(userInformation.realname)
             writeBoolean(true) // allows offline messaging
             writeBoolean(false) // ?
@@ -69,7 +70,8 @@ data class MessengerFriend(
             writeUTF("")
             writeInt(0) // ?
             writeUTF(userInformation.figure)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
         }
     }
 }

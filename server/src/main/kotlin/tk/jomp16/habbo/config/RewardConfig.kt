@@ -34,4 +34,4 @@ data class RewardConfig(
         val vipPoints: Int,
         @JsonProperty("vip_points_max")
         val vipPointsMax: Int
-)
+                       )

@@ -54,7 +54,8 @@ class RoomPlaceItemHandler {
 
             if (correctedWallData.size < 3) return
 
-            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
+            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(
+                    habboSession.currentRoom!!.roomData.id, userItem)
 
             println(roomItem)
 
@@ -67,9 +68,11 @@ class RoomPlaceItemHandler {
             val y = rawDataSplit[2].toInt()
             val rot = rawDataSplit[3].toInt()
 
-            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
+            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(
+                    habboSession.currentRoom!!.roomData.id, userItem)
 
-            if (habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.userInformation.username)) {
+            if (habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot,
+                                                        habboSession.userInformation.username)) {
                 habboSession.habboInventory.removeItem(userItem)
             }
         }

@@ -30,12 +30,16 @@ class UserChatTask(private val roomUser: RoomUser, private val message: String, 
 
         // todo: wired trigger on chat
         room.roomUsers.values.forEach {
-            if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
+            if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(
+                    roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x,
+                    it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
                 // todo: emoji
-                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, roomUser.virtualID, message, 0, bubble)
+                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, roomUser.virtualID, message, 0,
+                                                         bubble)
             } else {
                 // todo: emoji
-                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, roomUser.virtualID, message, 0, bubble)
+                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, roomUser.virtualID, message, 0,
+                                                         bubble)
             }
         }
     }

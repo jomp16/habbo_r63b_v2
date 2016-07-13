@@ -36,6 +36,6 @@ class NavigatorFlatCategoriesHandler {
                 Outgoing.NAVIGATOR_FLAT_CATEGORIES,
                 HabboServer.habboGame.navigatorManager.navigatorFlatCats.values,
                 habboSession.userInformation.rank
-        )
+                                      )
     }
 }

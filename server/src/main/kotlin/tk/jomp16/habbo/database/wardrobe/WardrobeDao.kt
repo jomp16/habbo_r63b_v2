@@ -25,16 +25,16 @@ import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
 object WardrobeDao {
     fun getWardrobes(userId: Int) = HabboServer.database {
         select("SELECT * FROM users_wardrobe WHERE user_id = :user_id",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
+               mapOf(
+                       "user_id" to userId
+                    )
+              ) {
             Wardrobe(
                     it.int("id"),
                     it.int("slot_id"),
                     it.string("figure"),
                     it.string("gender")
-            )
+                    )
         }
     }
 }

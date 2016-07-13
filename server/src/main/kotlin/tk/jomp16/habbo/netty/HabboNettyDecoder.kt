@@ -67,7 +67,9 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 msg.readerIndex(msg.readableBytes())
                 msg.discardSomeReadBytes()
 
-                log.error("Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!", delimiter)
+                log.error(
+                        "Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!",
+                        delimiter)
 
                 ctx.disconnect()
 
@@ -87,7 +89,9 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             if (msg.readableBytes() < size) {
                 msg.resetReaderIndex()
 
-                if (!HabboServer.habboHandler.blacklistIds.contains(headerId)) log.warn("({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId, msg.readableBytes(), size)
+                if (!HabboServer.habboHandler.blacklistIds.contains(headerId)) log.warn(
+                        "({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId,
+                        msg.readableBytes(), size)
 
                 return
             }
@@ -96,7 +100,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             if (log.isDebugEnabled) {
                 out.forEach {
-                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId)) log.trace("({}) - GOT --> [{}] -- {}", username, it.headerId, it.toString())
+                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId)) log.trace(
+                            "({}) - GOT --> [{}] -- {}", username, it.headerId, it.toString())
                 }
             }
         }

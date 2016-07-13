@@ -56,7 +56,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
         log.info("Disconnecting user {}", username)
 
-        if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn("Disconnection of {} unsuccessful!", username)
+        if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn(
+                "Disconnection of {} unsuccessful!", username)
         else log.info("Disconnection of user {} successful!", username)
     }
 

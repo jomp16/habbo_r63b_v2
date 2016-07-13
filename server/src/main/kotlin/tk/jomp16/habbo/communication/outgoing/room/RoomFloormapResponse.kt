@@ -39,12 +39,14 @@ class RoomFloormapResponse {
             for (i in 0..room.roomModel.mapSizeY - 1) {
                 for (j in 0..room.roomModel.mapSizeX - 1) {
                     if (j == room.roomModel.doorVector3.x && i == room.roomModel.doorVector3.y) {
-                        if (room.roomModel.doorVector3.z > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.doorVector3.z.toInt() - 10])
+                        if (room.roomModel.doorVector3.z > 9) stringBuilder.append(
+                                RoomModel.letters.toCharArray()[room.roomModel.doorVector3.z.toInt() - 10])
                         else stringBuilder.append(room.roomModel.doorVector3.z.toInt())
                     } else if (room.roomModel.squareStates[j][i] == SquareState.CLOSED) {
                         stringBuilder.append("x")
                     } else {
-                        if (room.roomModel.floorHeight[j][i] > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.floorHeight[j][i] - 10])
+                        if (room.roomModel.floorHeight[j][i] > 9) stringBuilder.append(
+                                RoomModel.letters.toCharArray()[room.roomModel.floorHeight[j][i] - 10])
                         else stringBuilder.append(room.roomModel.floorHeight[j][i].toInt())
                     }
                 }

@@ -24,4 +24,4 @@ data class Wardrobe(
         val slotId: Int,
         val figure: String,
         val gender: String
-)
+                   )

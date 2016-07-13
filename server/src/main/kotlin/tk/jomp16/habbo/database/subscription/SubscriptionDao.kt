@@ -28,15 +28,15 @@ import tk.jomp16.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
 object SubscriptionDao {
     fun getSubscription(userId: Int) = HabboServer.database {
         select("SELECT * FROM users_subscriptions WHERE user_id = :user_id LIMIT 1",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
+               mapOf(
+                       "user_id" to userId
+                    )
+              ) {
             Subscription(
                     it.int("id"),
                     it.localDateTime("activated"),
                     it.localDateTime("expire")
-            )
+                        )
         }.firstOrNull()
     }
 
@@ -44,13 +44,14 @@ object SubscriptionDao {
         val activated = localDateTimeNowWithoutSecondsAndNanos()
         val expire = localDateTimeNowWithoutSecondsAndNanos().plusMonths(months.toLong())
 
-        val id = insertAndGetGeneratedKey("INSERT INTO users_subscriptions (user_id, activated, expire) VALUES (:user_id, :activated, :expire)",
+        val id = insertAndGetGeneratedKey(
+                "INSERT INTO users_subscriptions (user_id, activated, expire) VALUES (:user_id, :activated, :expire)",
                 mapOf(
                         "user_id" to userId,
                         "activated" to activated,
                         "expire" to expire
-                )
-        )
+                     )
+                                         )
 
         Subscription(id, activated, expire)
     }
@@ -62,11 +63,11 @@ object SubscriptionDao {
             subscription.expire = subscription.expire.plusMonths(months.toLong())
 
             update("UPDATE users_subscriptions SET expire = :expire WHERE id = :id",
-                    mapOf(
-                            "expire" to subscription.expire,
-                            "id" to subscription.id
-                    )
-            )
+                   mapOf(
+                           "expire" to subscription.expire,
+                           "id" to subscription.id
+                        )
+                  )
         }
     }
 
@@ -75,10 +76,10 @@ object SubscriptionDao {
 
         HabboServer.database {
             update("DELETE FROM users_subscriptions WHERE id = :id",
-                    mapOf(
-                            "id" to subscription.id
-                    )
-            )
+                   mapOf(
+                           "id" to subscription.id
+                        )
+                  )
         }
     }
 }

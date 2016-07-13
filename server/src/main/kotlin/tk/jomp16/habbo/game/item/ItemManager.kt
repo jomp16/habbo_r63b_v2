@@ -100,10 +100,11 @@ class ItemManager {
             0,
             "",
             userItem.limitedItemData
-    )
+                                                                                     )
 
     // todo: see if I can improve it
-    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?) {
+    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing,
+                       limitedItemData: LimitedItemData?) {
         habboResponse.apply {
             if (limitedItemData != null) {
                 writeInt(1)
@@ -118,7 +119,7 @@ class ItemManager {
             if (furnishing.itemName == "wallpaper" || furnishing.itemName == "floor" || furnishing.itemName == "landscape") {
                 when (furnishing.itemName) {
                     "wallpaper" -> writeInt(2)
-                    "floor" -> writeInt(3)
+                    "floor"     -> writeInt(3)
                     "landscape" -> writeInt(4)
                 }
 
@@ -140,7 +141,7 @@ class ItemManager {
                     writeUTF(splitData[1]) // owner
                     writeUTF(splitData[2]) // date
                 }
-                else -> {
+                else                          -> {
                     writeInt(1)
                     writeInt(0)
                     writeUTF(extraData)

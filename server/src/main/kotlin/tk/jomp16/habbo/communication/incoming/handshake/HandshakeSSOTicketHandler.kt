@@ -46,14 +46,15 @@ class HandshakeSSOTicketHandler {
 
             if (code != 3) {
                 habboSession.sendNotification(if (code == 1)
-                    "The same user is connected on Habbo!"
-                else
-                    (if (code == 2)
-                        "This user don't exist or SSO ticket is wrong!"
-                    else
-                        "Failed to authenticate!"))
+                                                  "The same user is connected on Habbo!"
+                                              else
+                                                  (if (code == 2)
+                                                      "This user don't exist or SSO ticket is wrong!"
+                                                  else
+                                                      "Failed to authenticate!"))
             } else {
-                habboSession.sendNotification("My Mustache tells me you tried something funny. Not a hacker, aren't you! Fuck you!\n\nChuck Norris is not happy with you!\n\nThis Hotel still in development!\n\n- jomp16")
+                habboSession.sendNotification(
+                        "My Mustache tells me you tried something funny. Not a hacker, aren't you! Fuck you!\n\nChuck Norris is not happy with you!\n\nThis Hotel still in development!\n\n- jomp16")
             }
 
             HabboServer.executor.schedule({ habboSession.channel.disconnect() }, 10, TimeUnit.SECONDS)
@@ -70,18 +71,18 @@ class HandshakeSSOTicketHandler {
         queuedHabboResponse += Outgoing.AVATAR_EFFECTS to arrayOf() // AvatarEffectsComposer
         queuedHabboResponse += Outgoing.HOME_ROOM to arrayOf(
                 habboSession.userInformation.homeRoom
-        ) // NavigatorSettingsComposer
+                                                            ) // NavigatorSettingsComposer
         queuedHabboResponse += Outgoing.NAVIGATOR_FAVORITES to arrayOf() // FavouritesComposer
         queuedHabboResponse += Outgoing.FIGURE_SETS to arrayOf() // FigureSetIdsComposer
         queuedHabboResponse += Outgoing.USER_RIGHTS to arrayOf(
                 if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
                 habboSession.userInformation.rank,
                 habboSession.userInformation.ambassador
-        ) // UserRightsComposer
+                                                              ) // UserRightsComposer
         queuedHabboResponse += Outgoing.AVAILABILITY_STATUS to arrayOf() // AvailabilityStatusComposer
         queuedHabboResponse += Outgoing.ACHIEVEMENT_SCORE to arrayOf(
                 habboSession.userStats.achievementScore
-        ) // AchievementScoreComposer
+                                                                    ) // AchievementScoreComposer
         queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf() // BuildersClubMembershipComposer
 
         queuedHabboResponse += Outgoing.USER_SETTINGS to arrayOf(
@@ -93,7 +94,7 @@ class HandshakeSSOTicketHandler {
                 habboSession.userPreferences.disableCameraFollow,
                 habboSession.userPreferences.friendBarOpen,
                 habboSession.userPreferences.chatColor
-        ) // SoundSettingsComposer
+                                                                ) // SoundSettingsComposer
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
 

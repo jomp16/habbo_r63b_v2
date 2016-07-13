@@ -37,13 +37,15 @@ class InventoryUpdateBadgesHandler {
             val slot = habboRequest.readInt()
             val code = habboRequest.readUTF()
 
-            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(code) || slot < 1 || slot > 5) return@forEach
+            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(
+                    code) || slot < 1 || slot > 5) return@forEach
 
             habboSession.habboBadge.badges[code]?.slot = slot
         }
 
         habboSession.habboBadge.saveAll()
 
-        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
+        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id,
+                                       habboSession.habboBadge.badges.values)
     }
 }

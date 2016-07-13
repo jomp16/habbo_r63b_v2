@@ -41,7 +41,7 @@ class RoomUser(
         var currentVector3: Vector3,
         var headRotation: Int,
         var bodyRotation: Int
-) : IHabboResponseSerialize {
+              ) : IHabboResponseSerialize {
     var updateNeeded: Boolean = false
 
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
@@ -58,7 +58,8 @@ class RoomUser(
 
     var idle: Boolean = false
         set(newValue) {
-            idleCount = if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt() else 0
+            idleCount = if (newValue) (TimeUnit.SECONDS.toMillis(
+                    HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt() else 0
 
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
 
@@ -93,7 +94,8 @@ class RoomUser(
                 stopWalking()
             } else {
                 // todo: override, etc
-                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y)
+                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y,
+                                                    objectiveVector2!!.x, objectiveVector2!!.y)
 
                 if (path.isEmpty()) {
                     stopWalking()
@@ -134,7 +136,8 @@ class RoomUser(
                 idleCount++
 
                 // check and commit idle state to room
-                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
+                if (TimeUnit.MILLISECONDS.toSeconds(
+                        (idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
             }
         }
     }
@@ -182,5 +185,19 @@ class RoomUser(
                 writeBoolean(false) // is member of builder club
             }
         }
+    }
+
+    fun action(action: Int) {
+        if (action == 5) {
+            idle = true
+
+            return
+        }
+
+        idle = false
+
+        // todo: unset dance
+        // todo: unset carry
+        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, virtualID, action)
     }
 }

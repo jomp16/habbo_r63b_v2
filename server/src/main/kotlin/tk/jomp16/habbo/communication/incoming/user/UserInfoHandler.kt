@@ -45,7 +45,7 @@ class UserInfoHandler {
                 habboSession.userStats.dailyPetRespectPoints,
                 habboSession.userStats.lastOnline,
                 false // todo can change name
-        )
+                                                              )
 
         // todo
         queuedHabboResponse += Outgoing.USER_PERKS to arrayOf(arrayOf(
@@ -64,7 +64,7 @@ class UserInfoHandler {
                 Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
                 Triple("MOUSE_ZOOM", "", true),
                 Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", false)
-        ))
+                                                                     ))
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }

@@ -19,16 +19,14 @@
 
 package tk.jomp16.habbo.game.room
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.kotlin.random
 import java.util.*
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class RoomTaskManager {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    val scheduledFutureMap: MutableList<RoomTask> = ArrayList()
+    val scheduledFutureMap: MutableMap<RoomTask, ScheduledFuture<*>> = HashMap()
     val rooms: MutableList<Room> = ArrayList()
 
     fun addRoomToTask(room: Room) {
@@ -38,39 +36,22 @@ class RoomTaskManager {
 
         val roomTask: RoomTask
 
-        val tmpTasks = scheduledFutureMap.filter { it.rooms.size < HabboServer.habboConfig.roomTaskConfig.maxRoomPerThread }
+        val tmpTasks = scheduledFutureMap.keys.filter {
+            it.rooms.size < HabboServer.habboConfig.roomTaskConfig
+                    .maxRoomPerThread
+        }
 
         if (tmpTasks.isNotEmpty()) {
-            roomTask = tmpTasks[0]
+            roomTask = tmpTasks.random()
         } else {
             roomTask = RoomTask()
 
-            execute(roomTask)
+            scheduledFutureMap.put(roomTask, HabboServer.executor.scheduleAtFixedRate(roomTask, 0,
+                                                                                      HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(),
+                                                                                      TimeUnit.MILLISECONDS))
         }
 
         roomTask.addRoom(room)
-    }
-
-    private fun execute(roomTask: RoomTask) {
-        // dis is a timeout task manager
-        /*val handler = HabboServer.executor.submit(roomTask)
-
-        HabboServer.executor.schedule({
-            if (handler.isDone) {
-                execute(roomTask)
-            } else {
-                // todo: throw users outta here
-                handler.cancel(true)
-            }
-        }, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)*/
-
-        HabboServer.executor.scheduleAtFixedRate({
-            try {
-                roomTask.run()
-            } catch (e: Exception) {
-                log.error("An exception happened!", e)
-            }
-        }, 0, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)
     }
 
     fun removeRoomFromTask(room: Room) {
@@ -78,6 +59,6 @@ class RoomTaskManager {
 
         rooms -= room
 
-        scheduledFutureMap.filter { it.rooms.contains(room) }.forEach { it.removeRoom(room) }
+        scheduledFutureMap.keys.filter { it.rooms.contains(room) }.forEach { it.removeRoom(room) }
     }
 }

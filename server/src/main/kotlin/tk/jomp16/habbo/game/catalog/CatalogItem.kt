@@ -41,7 +41,7 @@ data class CatalogItem(
         val limitedSells: AtomicInteger,
         val limitedStack: Int,
         val offerActive: Boolean
-) : IHabboResponseSerialize {
+                      ) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 
@@ -67,7 +67,9 @@ data class CatalogItem(
             // todo: catalog deal
 
             writeBoolean(furnishing.canGift)
-            writeInt(if (badge.isNotBlank()) 2 else 1) // item count, count 1 item if there is no badge, otherwise count as 2.
+
+            // item count, count 1 item if there is no badge, otherwise count as 2.
+            writeInt(if (badge.isNotBlank()) 2 else 1)
 
             if (badge.isNotBlank()) {
                 writeUTF("b")

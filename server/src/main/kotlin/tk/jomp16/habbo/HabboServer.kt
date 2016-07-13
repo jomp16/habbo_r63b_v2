@@ -60,7 +60,8 @@ object HabboServer : Closeable {
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
-    lateinit private var databaseFactory: SessionFactory
+    lateinit var databaseFactory: SessionFactory
+        private set
 
     // Netty
     lateinit private var serverBootstrap: ServerBootstrap
@@ -102,7 +103,8 @@ object HabboServer : Closeable {
         log.info("")
         log.info("Version: $VERSION.")
         log.info("By jomp16 and Lucas.")
-        log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
+        log.info(
+                "Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See http://www.gnu.org/licenses/")
         log.info("")
         log.info("Loading Habbo R63B emulator...")
@@ -137,7 +139,8 @@ object HabboServer : Closeable {
         // Load HabboGame...
         log.info("Loading Habbo game...")
 
-        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
+        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d,
+                                                        habboConfig.rsaConfig.e)
         habboHandler = HabboHandler()
         habboSessionManager = HabboSessionManager()
 
@@ -199,7 +202,8 @@ object HabboServer : Closeable {
         }
     }
 
-    fun <R> database(rollbackTransaction: Boolean = false, task: Session.() -> R): R = executor.submit(
+    inline fun <R> database(rollbackTransaction: Boolean = false,
+                            crossinline task: Session.() -> R): R = executor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->
@@ -209,7 +213,7 @@ object HabboServer : Closeable {
                     }
                 }
             }
-    ).get()
+                                                                                   ).get()
 
     override fun close() {
         if (started) {
@@ -224,7 +228,9 @@ object HabboServer : Closeable {
 
             // Start room
             log.debug("Closing all loaded rooms...")
-            habboGame.roomManager.roomTaskManager.rooms.toList().forEach { habboGame.roomManager.roomTaskManager.removeRoomFromTask(it) }
+            habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
+                habboGame.roomManager.roomTaskManager.removeRoomFromTask(it)
+            }
             log.debug("Done!")
             // End room
 

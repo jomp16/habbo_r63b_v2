@@ -22,4 +22,4 @@ package tk.jomp16.utils.pathfinding.core
 data class Path(
         val x: Int,
         val y: Int
-)
+               )

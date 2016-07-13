@@ -70,12 +70,12 @@ class RoomTask : Runnable {
                 try {
                     val queue = queuedTasks[room] ?: return@forEach
 
-                    if (room.roomUsers.isEmpty() &&
-                            TimeUnit.MILLISECONDS.toSeconds((room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
-                                    >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
-                        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+                    if (TimeUnit.MILLISECONDS.toSeconds(
+                            (room.saveRoomItemsCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
+                            >= HabboServer.habboConfig.roomTaskConfig.saveItemSeconds) {
+                        room.saveRoomItemsCounter.set(0)
 
-                        return@forEach
+                        room.saveItems()
                     }
 
                     while (queue.isNotEmpty()) queue.poll().executeTask(room)
@@ -92,20 +92,23 @@ class RoomTask : Runnable {
                         }
                     }
 
-                    if (room.roomUsers.isEmpty()) room.emptyCounter.incrementAndGet()
-                    if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
+                    if (room.roomUsers.isEmpty() &&
+                            TimeUnit.MILLISECONDS.toSeconds(
+                                    (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig
+                                            .delayMilliseconds).toLong())
+                                    >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
+                        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 
-                    if (TimeUnit.MILLISECONDS.toSeconds((room.saveRoomItemsCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
-                            >= HabboServer.habboConfig.roomTaskConfig.saveItemSeconds) {
-                        room.saveRoomItemsCounter.set(0)
-
-                        room.saveItems()
+                        return@forEach
                     }
+
+                    if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
                 } catch (e: Exception) {
                     log.error("An exception happened on room task, room n° {}. Cause: {}", room.roomData.id, e)
 
                     if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
-                        log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id, HabboServer.habboConfig.roomTaskConfig.errorThreshold)
+                        log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id,
+                                  HabboServer.habboConfig.roomTaskConfig.errorThreshold)
 
                         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
                     }

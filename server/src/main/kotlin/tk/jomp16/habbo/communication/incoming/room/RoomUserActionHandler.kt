@@ -17,19 +17,21 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.item.xml
+package tk.jomp16.habbo.communication.incoming.room
 
-import java.io.Serializable
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.user.HabboSession
 
-data class FurniXMLInfo(
-        var spriteId: Int = 0,
-        var itemName: String = "",
-        var publicName: String = "",
-        var defaultDir: Int = 0,
-        var xDim: Int = 0,
-        var yDim: Int = 0,
-        var canStandOn: Boolean = false,
-        var canSitOn: Boolean = false,
-        var canLayOn: Boolean = false,
-        var wallFurni: Boolean = false
-                       ) : Serializable
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomUserActionHandler {
+    @Handler(Incoming.ROOM_USER_ACTION)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+
+        val action = habboRequest.readInt()
+
+        habboSession.roomUser?.action(action)
+    }
+}

@@ -45,7 +45,8 @@ class HabboSessionManager {
 
     fun getHabboSessionById(id: Int) = habboSessions.values.find { it.authenticated && it.userInformation.id == id }
 
-    fun getHabboSessionByUsername(username: String) = habboSessions.values.find { it.authenticated && it.userInformation.username == username }
+    fun getHabboSessionByUsername(
+            username: String) = habboSessions.values.find { it.authenticated && it.userInformation.username == username }
 
     fun containsHabboSessionById(id: Int) = getHabboSessionById(id) != null
 

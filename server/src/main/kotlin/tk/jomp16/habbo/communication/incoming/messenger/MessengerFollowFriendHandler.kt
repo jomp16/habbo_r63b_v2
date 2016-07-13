@@ -38,9 +38,11 @@ class MessengerFollowFriendHandler {
 
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(friendId)
 
-        if (friendHabboSession == null || friendHabboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, 2)
+        if (friendHabboSession == null || friendHabboSession.currentRoom == null) habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, 2)
         // todo: add permission check here if I can follow anybody
-        if (!habboSession.habboMessenger.friends.containsKey(friendId)) habboSession.sendHabboResponse(Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, 0)
+        if (!habboSession.habboMessenger.friends.containsKey(friendId)) habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, 0)
 
         habboSession.sendHabboResponse(Outgoing.ROOM_FORWARD, habboSession.currentRoom!!.roomData.id)
     }

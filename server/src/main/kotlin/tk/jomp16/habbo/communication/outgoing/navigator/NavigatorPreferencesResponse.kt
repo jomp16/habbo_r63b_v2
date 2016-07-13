@@ -26,7 +26,8 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorPreferencesResponse {
     @Response(Outgoing.NAVIGATOR_PREFERENCES)
-    fun response(habboResponse: HabboResponse, navigatorX: Int, navigatorY: Int, navigatorWidth: Int, navigatorHeight: Int, openSearchBar: Boolean) {
+    fun response(habboResponse: HabboResponse, navigatorX: Int, navigatorY: Int, navigatorWidth: Int,
+                 navigatorHeight: Int, openSearchBar: Boolean) {
         habboResponse.apply {
             writeInt(navigatorX)
             writeInt(navigatorY)

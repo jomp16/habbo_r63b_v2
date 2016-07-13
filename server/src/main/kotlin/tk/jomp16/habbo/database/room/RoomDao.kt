@@ -39,10 +39,10 @@ object RoomDao {
 
     fun getRoomData(roomId: Int) = HabboServer.database {
         select("SELECT * FROM rooms WHERE id = :room_id",
-                mapOf(
-                        "room_id" to roomId
-                )
-        ) {
+               mapOf(
+                       "room_id" to roomId
+                    )
+              ) {
             getRoomData(it)
         }.first()
     }
@@ -80,7 +80,7 @@ object RoomDao {
             row.boolean("allow_pets"),
             row.boolean("allow_pets_eat"),
             row.boolean("allow_walk_through")
-    )
+                                                )
 
     fun getRoomModels() = HabboServer.database {
         select("SELECT * FROM rooms_models") {
@@ -91,11 +91,11 @@ object RoomDao {
                             it.int("door_x"),
                             it.int("door_y"),
                             it.double("door_z")
-                    ),
+                           ),
                     it.int("door_dir"),
                     it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
                     it.boolean("club_only")
-            )
+                     )
         }
     }
 
@@ -108,30 +108,32 @@ object RoomDao {
                             it.int("door_x"),
                             it.int("door_y"),
                             it.double("door_z")
-                    ),
+                           ),
                     it.int("door_dir"),
                     it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
                     false
-            )
+                     )
         }
     }
 
     fun getRights(roomId: Int) = HabboServer.database {
         select("SELECT id, user_id FROM rooms_rights WHERE room_id = :room_id",
-                mapOf(
-                        "room_id" to roomId
-                )
-        ) {
+               mapOf(
+                       "room_id" to roomId
+                    )
+              ) {
             RightData(
                     it.int("id"),
                     it.int("user_id")
-            )
+                     )
         }
     }
 
-    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int) = HabboServer.database {
-        insertAndGetGeneratedKey("INSERT INTO rooms (caption, description, owner_id, model_name, category, users_max, trade_state)" +
-                "VALUES (:caption, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
+    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int,
+                   tradeSettings: Int) = HabboServer.database {
+        insertAndGetGeneratedKey(
+                "INSERT INTO rooms (caption, description, owner_id, model_name, category, users_max, trade_state)" +
+                        "VALUES (:caption, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
                 mapOf(
                         "caption" to name,
                         "description" to description,
@@ -140,13 +142,14 @@ object RoomDao {
                         "category" to category,
                         "users_max" to maxUsers,
                         "trade_state" to tradeSettings.toString()
-                )
-        )
+                     )
+                                )
     }
 
     fun saveItems(roomId: Int, roomItemsToSave: List<RoomItem>) {
         HabboServer.database {
-            batchUpdate("UPDATE items SET room_id = :room_id, x = :x, y = :y, z = :z, rot = :rot, wall_pos = :wall_pos, extra_data = :extra_data WHERE id = :id",
+            batchUpdate(
+                    "UPDATE items SET room_id = :room_id, x = :x, y = :y, z = :z, rot = :rot, wall_pos = :wall_pos, extra_data = :extra_data WHERE id = :id",
                     roomItemsToSave.map {
                         mapOf(
                                 "room_id" to roomId,
@@ -157,9 +160,9 @@ object RoomDao {
                                 "wall_pos" to it.wallPosition,
                                 "extra_data" to it.extraData,
                                 "id" to it.id
-                        )
+                             )
                     }
-            )
+                       )
 
             // todo: dimmer
             // todo: wired

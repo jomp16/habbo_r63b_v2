@@ -32,6 +32,7 @@ class LandingPromoArticlesHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.LANDING_PROMO_ARTICLES, HabboServer.habboGame.landingManager.landingPromos)
+        habboSession.sendHabboResponse(Outgoing.LANDING_PROMO_ARTICLES,
+                                       HabboServer.habboGame.landingManager.landingPromos)
     }
 }

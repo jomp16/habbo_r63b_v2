@@ -37,10 +37,12 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun addOrExtend(months: Int) {
-        if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id, months.toLong())
+        if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id,
+                                                                                    months.toLong())
         else SubscriptionDao.extendSubscription(subscription, months.toLong())
 
-        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1", 0)
+        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey(
+                "ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1", 0)
     }
 
     fun clearSubscription() {
@@ -56,9 +58,9 @@ class HabboSubscription(private val habboSession: HabboSession) {
                 if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
                 habboSession.userInformation.rank,
                 habboSession.userInformation.ambassador
-        )
+                                                              )
 
-        queuedHabboResponse += Outgoing.SUBSCRIPTION_STATUS  to arrayOf(HabboSubscription.CLUB_TYPE, false, 0, 0, 0, 0)
+        queuedHabboResponse += Outgoing.SUBSCRIPTION_STATUS to arrayOf(HabboSubscription.CLUB_TYPE, false, 0, 0, 0, 0)
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }

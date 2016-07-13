@@ -52,7 +52,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val saveRoomItemsCounter: AtomicInteger = AtomicInteger()
     val errorsCounter: AtomicInteger = AtomicInteger()
 
-    val roomItems: MutableMap<Int, RoomItem> by lazy { HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id }) }
+    val roomItems: MutableMap<Int, RoomItem> by lazy {
+        HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id })
+    }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem>
@@ -93,7 +95,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
 
-            it.addTask(this, AddUserToRoomTask(RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir, roomModel.doorDir)))
+            it.addTask(this, AddUserToRoomTask(
+                    RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir,
+                             roomModel.doorDir)))
         }
     }
 
@@ -180,7 +184,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
-        HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
+        HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width,
+                                                           roomItem.furnishing.height).forEach {
             if (!roomGamemap.grid.isWalkable(roomGamemap.grid, it.x, it.y)) {
                 // cannot set item, because at least one tile is blocked
 
@@ -196,7 +201,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomItems += roomItem.id to roomItem
         }
 
-        roomItem.position = Vector3(position.x, position.y, Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
+        roomItem.position = Vector3(position.x, position.y,
+                                    Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
 
         roomGamemap.addRoomItem(roomItem)
 

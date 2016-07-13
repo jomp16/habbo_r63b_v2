@@ -91,7 +91,8 @@ class AStarFinder(
                 // can be reached with smaller cost from the current node
                 if (!openList.contains(neighbor) || ng < neighbor.g) {
                     neighbor.g = ng
-                    neighbor.h = heuristic.getCost(grid, Math.abs((x - endX).toDouble()).toInt(), Math.abs((y - endY).toDouble().toInt()))
+                    neighbor.h = heuristic.getCost(grid, Math.abs((x - endX).toDouble()).toInt(),
+                                                   Math.abs((y - endY).toDouble().toInt()))
                     neighbor.f = neighbor.g + neighbor.h
                     neighbor.parent = node
 
