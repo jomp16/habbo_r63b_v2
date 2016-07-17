@@ -28,13 +28,13 @@ object NavigatorDao {
         select("SELECT * FROM navigator_flatcats WHERE enabled = :enabled",
                mapOf(
                        "enabled" to true
-                    )
-              ) {
+               )
+        ) {
             NavigatorFlatcat(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
-                            )
+            )
         }
     }
 
@@ -42,13 +42,13 @@ object NavigatorDao {
         select("SELECT * FROM navigator_promocats WHERE visible = :visible",
                mapOf(
                        "visible" to true
-                    )
-              ) {
+               )
+        ) {
             NavigatorPromocat(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
-                             )
+            )
         }
     }
 }

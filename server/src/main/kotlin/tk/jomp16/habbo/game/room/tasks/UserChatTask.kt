@@ -29,20 +29,85 @@ class UserChatTask(private val roomUser: RoomUser, private val message: String, 
         roomUser.idle = false
 
         // todo: wired trigger on chat
+
         room.roomUsers.values.forEach {
             if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(
                     roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x,
                     it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
-                // todo: emoji
-                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, roomUser.virtualID, message, 0,
-                                                         bubble)
-            } else {
-                // todo: emoji
-                roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, roomUser.virtualID, message, 0,
-                                                         bubble)
+                it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, roomUser.virtualID, message,
+                                                   getSpeechEmotion(message.toUpperCase()), bubble)
+            } else if (type == ChatType.SHOUT) {
+                it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, roomUser.virtualID, message,
+                                                   getSpeechEmotion(message.toUpperCase()), bubble)
             }
         }
     }
+}
+
+private fun getSpeechEmotion(message: String): Int {
+    // Happy face
+    if (message.contains(":)") ||
+            message.contains(";)") ||
+            message.contains(":D") ||
+            message.contains(";D") ||
+            message.contains(":]") ||
+            message.contains(";]") ||
+            message.contains("=)") ||
+            message.contains("=]") ||
+            message.contains("=D") ||
+            message.contains(":>") ||
+            message.contains(":-]") ||
+            message.contains(":-)") ||
+            message.contains(":-D")) {
+        return 1
+    }
+
+    // Angry face
+    if (message.contains(">:(") ||
+            message.contains(">;(") ||
+            message.contains(">:[") ||
+            message.contains(">;[") ||
+            message.contains(">=(") ||
+            message.contains(">=[") ||
+            message.contains(":@")) {
+        return 2
+    }
+
+    // Surprised face
+    if (message.contains(":O") ||
+            message.contains(";O") ||
+            message.contains(":0") ||
+            message.contains(";0") ||
+            message.contains(">:O") ||
+            message.contains(">;O") ||
+            message.contains(">:0") ||
+            message.contains(">;0") ||
+            message.contains("=O") ||
+            message.contains(">=O")) {
+        return 3
+    }
+
+    // Sad face
+    if (message.contains(":(") ||
+            message.contains(":[") ||
+            message.contains("=(") ||
+            message.contains("=[") ||
+            message.contains(":C") ||
+            message.contains("=C") ||
+            message.contains(":'(") ||
+            message.contains(":'[") ||
+            message.contains("='(") ||
+            message.contains("='[") ||
+            message.contains(":'C") ||
+            message.contains("='C") ||
+            message.contains(":<") ||
+            message.contains(":-[") ||
+            message.contains(":-(")) {
+        return 4
+    }
+
+    // Normal face
+    return 0
 }
 
 enum class ChatType {

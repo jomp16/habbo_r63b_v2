@@ -26,4 +26,4 @@ data class MotdConfig(
         val enabled: Boolean,
         @JsonProperty("message")
         val message: String
-                     )
+)

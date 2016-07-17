@@ -17,18 +17,25 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.tag
+package tk.jomp16.habbo.game.room.tasks
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.room.IRoomTask
+import tk.jomp16.habbo.game.room.Room
+import tk.jomp16.habbo.game.room.user.RoomUser
 
-object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
-        ) {
-            it.string("tag")
+class UserActionTask(private val roomUser: RoomUser, private val action: Int) : IRoomTask {
+    override fun executeTask(room: Room) {
+        if (action == 5) {
+            roomUser.idle = true
+
+            return
         }
+
+        roomUser.idle = false
+
+        // todo: unset dance
+        // todo: unset carry
+        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action)
     }
 }

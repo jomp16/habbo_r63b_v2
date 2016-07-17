@@ -41,7 +41,7 @@ data class CatalogItem(
         val limitedSells: AtomicInteger,
         val limitedStack: Int,
         val offerActive: Boolean
-                      ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 

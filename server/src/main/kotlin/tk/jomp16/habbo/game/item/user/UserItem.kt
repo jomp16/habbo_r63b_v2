@@ -33,7 +33,7 @@ data class UserItem(
         var extraData: String,
         val limitedId: Int,
         val limitedItemData: LimitedItemData?
-                   ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[baseItem]!!
 
@@ -50,7 +50,7 @@ data class UserItem(
             writeBoolean(furnishing.allowTrade)
             writeBoolean(limitedId == 0 && furnishing.allowInventoryStack)
             writeBoolean(furnishing.allowMarketplaceSell)
-            writeInt(-1) // seconds to expire rental
+            writeInt(-1) // milliseconds to expire rental
             writeBoolean(true)
             writeInt(-1) // room id
 

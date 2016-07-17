@@ -104,4 +104,6 @@ object Outgoing {
     const val ROOM_USER_CHAT = 2064 // ChatMessageComposer
     const val ROOM_USER_SHOUT = 3544 // ShoutMessageComposer
     const val ROOM_USER_ACTION = 2156 // ActionMessageComposer
+    const val CATALOG_HABBO_CLUB_PAGE = 1080 // HabboClubOffersMessageComposer
+    const val ROOM_USER_TYPING = 449 // UserTypingMessageComposer
 }

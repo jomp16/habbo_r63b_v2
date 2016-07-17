@@ -36,6 +36,6 @@ class NavigatorPromoCategoriesHandler {
                 Outgoing.NAVIGATOR_PROMO_CATEGORIES,
                 HabboServer.habboGame.navigatorManager.navigatorPromoCats.values,
                 habboSession.userInformation.rank
-                                      )
+        )
     }
 }

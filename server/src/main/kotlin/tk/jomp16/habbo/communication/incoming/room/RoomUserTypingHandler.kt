@@ -17,25 +17,26 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.navigator
+package tk.jomp16.habbo.communication.incoming.room
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class NavigatorFlatCategoriesHandler {
-    @Handler(Incoming.NAVIGATOR_FLAT_CATEGORIES)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+class RoomUserTypingHandler {
+    @Handler(Incoming.ROOM_USER_START_TYPING)
+    fun handleStartTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
-        habboSession.sendHabboResponse(
-                Outgoing.NAVIGATOR_FLAT_CATEGORIES,
-                HabboServer.habboGame.navigatorManager.navigatorFlatCats.values,
-                habboSession.userInformation.rank
-        )
+        habboSession.roomUser?.typing = true
+    }
+
+    @Handler(Incoming.ROOM_USER_STOP_TYPING)
+    fun handleStopTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+
+        habboSession.roomUser?.typing = false
     }
 }

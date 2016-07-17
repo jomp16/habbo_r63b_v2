@@ -27,13 +27,13 @@ import java.io.Closeable
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
 
-    fun readUTF() = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF().intern()
+    fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 
-    fun readShort() = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
+    fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
-    fun readInt() = if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()
+    fun readInt(): Int = if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()
 
-    fun readBoolean() = byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
+    fun readBoolean(): Boolean = byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
 
     override fun toString(): String {
         var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")

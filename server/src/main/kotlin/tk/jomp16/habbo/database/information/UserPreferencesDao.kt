@@ -29,8 +29,8 @@ object UserPreferencesDao {
             select("SELECT * FROM users_preferences WHERE user_id = :user_id LIMIT 1",
                    mapOf(
                            "user_id" to userId
-                        )
-                  ) {
+                   )
+            ) {
                 UserPreferences(
                         it.int("id"),
                         it.string("volume"),
@@ -45,7 +45,7 @@ object UserPreferencesDao {
                         it.boolean("block_new_friends"),
                         it.int("chat_color"),
                         it.boolean("friend_bar_open")
-                               )
+                )
             }.firstOrNull()
         }
 
@@ -55,8 +55,8 @@ object UserPreferencesDao {
                 insertWithIntGeneratedKey("INSERT INTO users_preferences (user_id) VALUES (:id)",
                                           mapOf(
                                                   "id" to userId
-                                               )
-                                         )
+                                          )
+                )
             }
 
             // Now fetch it again, doing a one recursive call, and returns this

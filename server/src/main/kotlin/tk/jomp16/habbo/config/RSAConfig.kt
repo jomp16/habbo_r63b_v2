@@ -28,4 +28,4 @@ data class RSAConfig(
         val d: String,
         @JsonProperty("E")
         val e: String
-                    )
+)

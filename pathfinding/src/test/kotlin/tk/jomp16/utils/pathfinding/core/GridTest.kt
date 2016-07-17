@@ -50,7 +50,7 @@ class GridTest {
                 arrayOf(0, 1, 0, 0),
                 arrayOf(0, 0, 0, 0),
                 arrayOf(1, 0, 0, 1)
-                            )
+        )
 
         val width = matrix[0].size
         val height = matrix.size
@@ -82,7 +82,7 @@ class GridTest {
                 arrayOf(0, height, false),
                 arrayOf(width, 0, false),
                 arrayOf(width, height, false)
-                             )
+        )
 
         asserts.forEach {
             Assert.assertEquals("should return correct answer for position validity query", it[2] as Boolean,
@@ -98,6 +98,6 @@ class GridTest {
                             grid.getNeighbors(grid.getNodeAt(2, 0),
                                               DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE).sortedWith(
                                     Comparator { a, b -> a.x * 100 + a.y - b.x * 100 - b.y })
-                           )
+        )
     }
 }

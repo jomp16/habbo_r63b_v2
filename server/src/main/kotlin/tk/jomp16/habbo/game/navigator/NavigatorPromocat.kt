@@ -23,4 +23,4 @@ data class NavigatorPromocat(
         val id: Int,
         val caption: String,
         val minRank: Int = 0
-                            )
+)

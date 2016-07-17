@@ -35,20 +35,20 @@ object MessengerDao {
         select("SELECT id, user_two_id AS user_id FROM messenger_friendships WHERE user_one_id = :user_one_id",
                mapOf(
                        "user_one_id" to userId
-                    )
-              ) { createMessengerFriend(it) }
+               )
+        ) { createMessengerFriend(it) }
     }
 
     fun getRequests(toUserId: Int) = HabboServer.database {
         select("SELECT id, from_id FROM messenger_requests WHERE to_id = :to_id",
                mapOf(
                        "to_id" to toUserId
-                    )
-              ) {
+               )
+        ) {
             MessengerRequest(
                     it.int("id"),
                     it.int("from_id")
-                            )
+            )
         }
     }
 
@@ -57,13 +57,13 @@ object MessengerDao {
                mapOf(
                        "username" to "$username%",
                        "user_id" to userId
-                    )
-              ) { createMessengerFriend(it) }
+               )
+        ) { createMessengerFriend(it) }
     }
 
     private fun createMessengerFriend(row: Row) = MessengerFriend(
             row.int("user_id")
-                                                                 )
+    )
 
     fun removeFriendships(userId: Int, friendIds: List<Int>) {
         HabboServer.database {
@@ -74,14 +74,14 @@ object MessengerDao {
                                 mapOf(
                                         "user_one_id" to userId,
                                         "user_two_id" to it
-                                     ),
+                                ),
                                 mapOf(
                                         "user_one_id" to it,
                                         "user_two_id" to userId
-                                     )
-                              )
+                                )
+                        )
                     }.flatMap { it }
-                       )
+            )
         }
     }
 
@@ -90,8 +90,8 @@ object MessengerDao {
             update("DELETE FROM messenger_requests WHERE to_id = :to_id",
                    mapOf(
                            "to_id" to toUserId
-                        )
-                  )
+                   )
+            )
         }
     }
 
@@ -101,9 +101,9 @@ object MessengerDao {
                         requestIds.map {
                             mapOf(
                                     "id" to it
-                                 )
+                            )
                         }
-                       )
+            )
         }
     }
 
@@ -118,13 +118,13 @@ object MessengerDao {
                                 mapOf(
                                         "user_one_id" to userId,
                                         "user_two_id" to it
-                                     ),
+                                ),
                                 mapOf(
                                         "user_one_id" to it,
                                         "user_two_id" to userId
-                                     )
-                              )
-                                              )
+                                )
+                        )
+                )
 
                 friends += MessengerFriend(it)
             }
@@ -139,8 +139,8 @@ object MessengerDao {
                                      mapOf(
                                              "to_id" to toUserId,
                                              "from_id" to fromUserId
-                                          )
-                                    )
+                                     )
+            )
         }
 
         return MessengerRequest(id, fromUserId)
@@ -153,22 +153,22 @@ object MessengerDao {
             select("SELECT * FROM messenger_offline_messages WHERE to_id = :to_id",
                    mapOf(
                            "to_id" to toUserId
-                        )
-                  ) {
+                   )
+            ) {
                 offlineMessages += Triple(
                         it.int("from_id"),
                         it.string("message"),
                         (Instant.now().epochSecond - it.localDateTime("timestamp").toEpochSecond(
                                 ZoneOffset.UTC)).toInt()
-                                         )
+                )
             }
 
             if (offlineMessages.isNotEmpty()) {
                 update("DELETE FROM messenger_offline_messages WHERE to_id = :to_id",
                        mapOf(
                                "to_id" to toUserId
-                            )
-                      )
+                       )
+                )
             }
         }
 
@@ -183,8 +183,8 @@ object MessengerDao {
                             "to_id" to toUserId,
                             "from_id" to fromUserId,
                             "message" to message
-                         )
-                                    )
+                    )
+            )
         }
     }
 }

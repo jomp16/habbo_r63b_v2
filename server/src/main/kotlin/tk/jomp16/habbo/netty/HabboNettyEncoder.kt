@@ -26,6 +26,7 @@ import io.netty.handler.codec.MessageToByteEncoder
 import io.netty.util.ReferenceCountUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
@@ -43,14 +44,18 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
             ctx.channel().ip()
         }
 
-        if (log.isDebugEnabled) log.trace("({}) - SENT --> [{}] -- {}", username, msg.headerId, msg.toString())
+        if (log.isDebugEnabled) {
+            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4),
+                      HabboServer.habboHandler.outgoingNames[msg.headerId]?.padEnd(
+                              HabboServer.habboHandler.largestNameSize), msg.toString())
+        }
 
         val byteBuf = msg.byteBuf
 
-        byteBuf.let {
-            out.writeInt(msg.byteBuf.writerIndex() + 2)
-            out.writeShort(msg.headerId)
-            out.writeBytes(msg.byteBuf)
+        out.apply {
+            writeInt(byteBuf.writerIndex() + 2)
+            writeShort(msg.headerId)
+            writeBytes(byteBuf)
         }
 
         if (!msg.keepCopy) msg.close()

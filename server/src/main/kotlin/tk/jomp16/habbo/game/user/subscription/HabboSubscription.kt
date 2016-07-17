@@ -58,7 +58,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
                 if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
                 habboSession.userInformation.rank,
                 habboSession.userInformation.ambassador
-                                                              )
+        )
 
         queuedHabboResponse += Outgoing.SUBSCRIPTION_STATUS to arrayOf(HabboSubscription.CLUB_TYPE, false, 0, 0, 0, 0)
 

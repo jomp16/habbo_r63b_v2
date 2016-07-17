@@ -41,8 +41,8 @@ object RoomDao {
         select("SELECT * FROM rooms WHERE id = :room_id",
                mapOf(
                        "room_id" to roomId
-                    )
-              ) {
+               )
+        ) {
             getRoomData(it)
         }.first()
     }
@@ -80,7 +80,7 @@ object RoomDao {
             row.boolean("allow_pets"),
             row.boolean("allow_pets_eat"),
             row.boolean("allow_walk_through")
-                                                )
+    )
 
     fun getRoomModels() = HabboServer.database {
         select("SELECT * FROM rooms_models") {
@@ -91,11 +91,11 @@ object RoomDao {
                             it.int("door_x"),
                             it.int("door_y"),
                             it.double("door_z")
-                           ),
+                    ),
                     it.int("door_dir"),
                     it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
                     it.boolean("club_only")
-                     )
+            )
         }
     }
 
@@ -108,11 +108,11 @@ object RoomDao {
                             it.int("door_x"),
                             it.int("door_y"),
                             it.double("door_z")
-                           ),
+                    ),
                     it.int("door_dir"),
                     it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
                     false
-                     )
+            )
         }
     }
 
@@ -120,12 +120,12 @@ object RoomDao {
         select("SELECT id, user_id FROM rooms_rights WHERE room_id = :room_id",
                mapOf(
                        "room_id" to roomId
-                    )
-              ) {
+               )
+        ) {
             RightData(
                     it.int("id"),
                     it.int("user_id")
-                     )
+            )
         }
     }
 
@@ -142,8 +142,8 @@ object RoomDao {
                         "category" to category,
                         "users_max" to maxUsers,
                         "trade_state" to tradeSettings.toString()
-                     )
-                                )
+                )
+        )
     }
 
     fun saveItems(roomId: Int, roomItemsToSave: List<RoomItem>) {
@@ -160,9 +160,9 @@ object RoomDao {
                                 "wall_pos" to it.wallPosition,
                                 "extra_data" to it.extraData,
                                 "id" to it.id
-                             )
+                        )
                     }
-                       )
+            )
 
             // todo: dimmer
             // todo: wired

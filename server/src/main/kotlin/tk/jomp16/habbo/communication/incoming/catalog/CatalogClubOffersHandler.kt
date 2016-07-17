@@ -17,18 +17,22 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.tag
+package tk.jomp16.habbo.communication.incoming.catalog
 
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
-object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
-        ) {
-            it.string("tag")
-        }
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogClubOffersHandler {
+    @Handler(Incoming.CATALOG_HABBO_CLUB_PAGE)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
+
+        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(),
+                                       HabboServer.habboGame.catalogManager.catalogClubOffers)
     }
 }

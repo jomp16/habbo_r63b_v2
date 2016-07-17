@@ -37,7 +37,7 @@ data class UserInformation(
         var motto: String,
         var homeRoom: Int,
         var vip: Boolean
-                          ) {
+) {
     // todo
     val ambassador: Boolean
         get() = rank >= 7

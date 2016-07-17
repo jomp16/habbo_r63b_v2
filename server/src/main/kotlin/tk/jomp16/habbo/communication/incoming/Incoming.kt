@@ -94,6 +94,7 @@ object Incoming {
     const val USER_CHANGE_FIGURE = 1175 // UpdateFigureDataMessageEvent
     const val USER_WARDROBE_SAVE = 1093 // SaveWardrobeOutfitMessageEvent
     const val ROOM_USER_ACTION = 212 // ActionMessageEvent
+    const val ROOM_USER_SIGN = 1600 // ApplySignMessageEvent
     const val ROOM_USER_CHAT = 2252 // ChatMessageEvent
     const val ROOM_USER_SHOUT = 1471 // ShoutMessageEvent
     const val ROOM_USER_START_TYPING = 2170 // StartTypingMessageEvent

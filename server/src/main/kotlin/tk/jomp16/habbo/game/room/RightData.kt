@@ -24,7 +24,7 @@ import tk.jomp16.habbo.database.information.UserInformationDao
 data class RightData(
         val id: Int,
         val userId: Int
-                    ) {
+) {
     val username: String
         get() = UserInformationDao.getUserInformationById(userId)?.username ?: "null"
 }

@@ -50,7 +50,6 @@ class RoomUserChatTalkHandler {
         // todo: check if user is muted
         // todo: word filter
 
-        // todo: send chat
         habboSession.roomUser?.chat(message, bubble, ChatType.SHOUT)
     }
 

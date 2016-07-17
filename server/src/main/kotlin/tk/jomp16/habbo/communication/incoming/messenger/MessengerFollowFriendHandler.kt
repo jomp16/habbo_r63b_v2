@@ -44,6 +44,6 @@ class MessengerFollowFriendHandler {
         if (!habboSession.habboMessenger.friends.containsKey(friendId)) habboSession.sendHabboResponse(
                 Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, 0)
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_FORWARD, habboSession.currentRoom!!.roomData.id)
+        habboSession.sendHabboResponse(Outgoing.ROOM_FORWARD, friendHabboSession!!.currentRoom!!.roomData.id)
     }
 }

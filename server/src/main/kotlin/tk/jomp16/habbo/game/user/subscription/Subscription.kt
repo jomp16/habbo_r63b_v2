@@ -25,4 +25,4 @@ data class Subscription(
         val id: Int,
         var activated: LocalDateTime,
         var expire: LocalDateTime
-                       )
+)

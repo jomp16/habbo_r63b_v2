@@ -113,6 +113,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomUser.habboSession.habboMessenger.notifyFriends()
         }
 
+        roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
+        roomUsers.remove(roomUser.virtualID)
+
         roomTask?.let { it.addTask(this, RemoveUserFromRoomTask(roomUser)) }
     }
 

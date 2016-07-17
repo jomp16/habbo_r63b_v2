@@ -27,14 +27,14 @@ object WardrobeDao {
         select("SELECT * FROM users_wardrobe WHERE user_id = :user_id",
                mapOf(
                        "user_id" to userId
-                    )
-              ) {
+               )
+        ) {
             Wardrobe(
                     it.int("id"),
                     it.int("slot_id"),
                     it.string("figure"),
                     it.string("gender")
-                    )
+            )
         }
     }
 }

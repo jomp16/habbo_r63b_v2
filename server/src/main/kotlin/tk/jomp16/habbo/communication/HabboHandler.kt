@@ -53,11 +53,12 @@ class HabboHandler {
                                             2414,
                                             3652,
                                             2031,
-                                            334
-                                           )
+                                            334)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
+
+    val largestNameSize: Int
 
     init {
         val lookup = MethodHandles.lookup()
@@ -94,6 +95,8 @@ class HabboHandler {
                                                                                                                 methodHandle)
         }
 
+        largestNameSize = incomingNames.plus(outgoingNames).values.sortedByDescending { it.length }.first().length
+
         log.info("Loaded {} Habbo response handlers", messageResponses.size)
     }
 
@@ -101,15 +104,13 @@ class HabboHandler {
         habboRequest.use {
             if (messageHandlers.containsKey(it.headerId)) {
                 try {
-                    val pair = messageHandlers[it.headerId] ?: return@use
-                    val clazz = pair.first
-                    val methodHandle = pair.second
+                    val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
 
                     methodHandle.invokeWithArguments(clazz, habboSession, it)
                 } catch (e: Exception) {
                     log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId,
                               incomingNames[habboRequest.headerId])
-                    log.error("Cause: {}", e.message)
+                    log.error("", e)
                 }
             } else if (!blacklistIds.contains(habboRequest.headerId)) {
                 log.warn("Non existent request header ID: {} - {}", habboRequest.headerId,
@@ -120,9 +121,7 @@ class HabboHandler {
 
     fun invokeResponse(headerId: Int, vararg args: Any): HabboResponse? {
         if (messageResponses.containsKey(headerId)) {
-            val response = messageResponses[headerId] ?: return null
-            val clazz = response.first
-            val methodHandle = response.second
+            val (clazz, methodHandle) = messageResponses[headerId] ?: return null
 
             val habboResponse = HabboResponse(headerId)
 
@@ -132,7 +131,10 @@ class HabboHandler {
                 return habboResponse
             } catch (e: Exception) {
                 log.error("Error when invoking HabboResponse for {} - {}!", headerId, outgoingNames[headerId])
-                log.error("Cause: {}", e.message)
+                log.error("", e)
+
+                // Close the Habbo Response
+                habboResponse.close()
             }
         } else {
             log.error("Non existent response header ID: {} - {}", headerId, outgoingNames[headerId])

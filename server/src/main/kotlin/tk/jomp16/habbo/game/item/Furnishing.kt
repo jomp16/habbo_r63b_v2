@@ -40,7 +40,7 @@ data class Furnishing(
         val interactionType: InteractionType,
         val interactionModesCount: Int,
         val vendingIds: List<Int>
-                     ) {
+) {
     val stackMultiple: Boolean = stackHeight.size > 1
     val interactor: ItemInteractor?
         get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]

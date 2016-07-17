@@ -30,13 +30,13 @@ object SubscriptionDao {
         select("SELECT * FROM users_subscriptions WHERE user_id = :user_id LIMIT 1",
                mapOf(
                        "user_id" to userId
-                    )
-              ) {
+               )
+        ) {
             Subscription(
                     it.int("id"),
                     it.localDateTime("activated"),
                     it.localDateTime("expire")
-                        )
+            )
         }.firstOrNull()
     }
 
@@ -50,8 +50,8 @@ object SubscriptionDao {
                         "user_id" to userId,
                         "activated" to activated,
                         "expire" to expire
-                     )
-                                         )
+                )
+        )
 
         Subscription(id, activated, expire)
     }
@@ -66,8 +66,8 @@ object SubscriptionDao {
                    mapOf(
                            "expire" to subscription.expire,
                            "id" to subscription.id
-                        )
-                  )
+                   )
+            )
         }
     }
 
@@ -78,8 +78,8 @@ object SubscriptionDao {
             update("DELETE FROM users_subscriptions WHERE id = :id",
                    mapOf(
                            "id" to subscription.id
-                        )
-                  )
+                   )
+            )
         }
     }
 }

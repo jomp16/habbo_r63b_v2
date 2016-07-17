@@ -29,7 +29,7 @@ import java.time.format.DateTimeFormatter
 
 data class MessengerFriend(
         val userId: Int
-                          ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     val habboSession: HabboSession?
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
 

@@ -17,18 +17,18 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.tag
+package tk.jomp16.habbo.communication.outgoing.misc
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
-        ) {
-            it.string("tag")
+@Suppress("unused", "UNUSED_PARAMETER")
+class MiscGenericErrorResponse {
+    @Response(Outgoing.GENERIC_ERROR)
+    fun response(habboResponse: HabboResponse, errorCode: Int) {
+        habboResponse.apply {
+            writeInt(errorCode)
         }
     }
 }

@@ -28,24 +28,24 @@ object UserInformationDao {
         select("SELECT * FROM users WHERE id = :id LIMIT 1",
                mapOf(
                        "id" to id
-                    )
-              ) { getUserInformation(it) }.firstOrNull()
+               )
+        ) { getUserInformation(it) }.firstOrNull()
     }
 
     fun getUserInformationByAuthTicket(ssoTicket: String) = HabboServer.database {
         select("SELECT * FROM users WHERE auth_ticket = :ticket LIMIT 1",
                mapOf(
                        "ticket" to ssoTicket
-                    )
-              ) { getUserInformation(it) }.firstOrNull()
+               )
+        ) { getUserInformation(it) }.firstOrNull()
     }
 
     fun getUserInformationByUsername(username: String): UserInformation? = HabboServer.database {
         select("SELECT * FROM users WHERE username = :username",
                mapOf(
                        "username" to username
-                    )
-              ) { getUserInformation(it) }.firstOrNull()
+               )
+        ) { getUserInformation(it) }.firstOrNull()
     }
 
     private fun getUserInformation(row: Row) = UserInformation(
@@ -62,5 +62,5 @@ object UserInformationDao {
             row.string("motto"),
             row.int("home_room"),
             row.boolean("vip")
-                                                              )
+    )
 }

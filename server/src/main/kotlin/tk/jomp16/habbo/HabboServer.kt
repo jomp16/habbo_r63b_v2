@@ -33,6 +33,7 @@ import io.netty.channel.epoll.EpollEventLoopGroup
 import io.netty.channel.epoll.EpollServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
+import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -161,7 +162,8 @@ object HabboServer : Closeable {
                 val habboNettyHandler = HabboNettyHandler()
 
                 serverBootstrap.group(bossGroup, workerGroup)
-                        .channel(EpollServerSocketChannel::class.java)
+                        .channel(
+                                if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
                                 // socketChannel.pipeline().addLast(IdleStateHandler(60, 30, 0))
@@ -213,7 +215,7 @@ object HabboServer : Closeable {
                     }
                 }
             }
-                                                                                   ).get()
+    ).get()
 
     override fun close() {
         if (started) {

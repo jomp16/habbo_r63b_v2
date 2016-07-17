@@ -160,8 +160,8 @@ class HabboSession(val channel: Channel) : Closeable {
                            "online" to true,
                            "ip_last" to ip,
                            "id" to userInformation.id
-                        )
-                  )
+                   )
+            )
         }
 
         return 0
@@ -220,7 +220,7 @@ class HabboSession(val channel: Channel) : Closeable {
     }
 
     fun enterRoom(room: Room, password: String, bypassAuth: Boolean = false) {
-        currentRoom?.removeUser(roomUser, false, false)
+        currentRoom?.removeUser(roomUser, true, true)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
@@ -304,8 +304,8 @@ class HabboSession(val channel: Channel) : Closeable {
                                "motto" to userInformation.motto,
                                "home_room" to userInformation.homeRoom,
                                "id" to userInformation.id
-                            )
-                      )
+                       )
+                )
 
                 update("UPDATE users_preferences SET volume = :volume, prefer_old_chat = :prefer_old_chat, " +
                                "ignore_room_invite = :ignore_room_invite, disable_camera_follow = :disable_camera_follow, " +
@@ -326,8 +326,8 @@ class HabboSession(val channel: Channel) : Closeable {
                                "chat_color" to userPreferences.chatColor,
                                "friend_bar_open" to userPreferences.friendBarOpen,
                                "id" to userPreferences.id
-                            )
-                      )
+                       )
+                )
 
                 update("UPDATE users_stats SET last_online = :last_online, credits_last_update = :credits_last_update, " +
                                "favorite_group = :favorite_group, online_seconds = :online_seconds, respect = :respect, " +
@@ -344,8 +344,8 @@ class HabboSession(val channel: Channel) : Closeable {
                                "respect_last_update" to userStats.respectLastUpdate,
                                "marketplace_tickets" to userStats.marketplaceTickets,
                                "id" to userStats.id
-                            )
-                      )
+                       )
+                )
             }
 
             habboMessenger.notifyFriends()

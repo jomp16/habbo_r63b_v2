@@ -37,8 +37,8 @@ fun HabboServer.cleanUpUsers() {
                    mapOf(
                            "ticket" to "",
                            "online" to false
-                        )
-                  )
+                   )
+            )
         }
     }
 }

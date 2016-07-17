@@ -30,7 +30,7 @@ data class LandingPromo(
         val showButton: Boolean,
         val buttonLink: String,
         val image: String
-                       ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id) // index

@@ -42,4 +42,4 @@ data class HabboConfig(
         val roomTaskConfig: RoomTaskConfig,
         @JsonProperty("motd")
         val motdConfig: MotdConfig
-                      )
+)

@@ -100,7 +100,7 @@ class ItemManager {
             0,
             "",
             userItem.limitedItemData
-                                                                                     )
+    )
 
     // todo: see if I can improve it
     fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing,

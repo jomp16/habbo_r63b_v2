@@ -44,6 +44,6 @@ class MessengerFriendBarStateHandler {
                                        habboSession.userPreferences.disableCameraFollow,
                                        habboSession.userPreferences.friendBarOpen,
                                        habboSession.userPreferences.chatColor
-                                      )
+        )
     }
 }

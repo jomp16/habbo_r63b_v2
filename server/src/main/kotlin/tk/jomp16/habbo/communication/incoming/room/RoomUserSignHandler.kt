@@ -17,18 +17,21 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.tag
+package tk.jomp16.habbo.communication.incoming.room
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.user.HabboSession
 
-object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
-        ) {
-            it.string("tag")
-        }
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomUserSignHandler {
+    @Handler(Incoming.ROOM_USER_SIGN)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+
+        val sign = habboRequest.readInt()
+
+        habboSession.roomUser?.sign(sign)
     }
 }

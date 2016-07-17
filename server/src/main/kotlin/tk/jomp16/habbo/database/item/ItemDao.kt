@@ -56,7 +56,7 @@ object ItemDao {
                     interactionType,
                     it.int("interaction_modes_count"),
                     it.string("vending_ids").split(',').map { it.trim().toInt() }
-                      )
+            )
         }
     }
 
@@ -64,8 +64,8 @@ object ItemDao {
         select("SELECT id, base_item, extra_data, limited_id, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
                mapOf(
                        "room_id" to roomId
-                    )
-              ) {
+               )
+        ) {
             val limitedId = it.int("limited_id")
 
             RoomItem(
@@ -79,11 +79,11 @@ object ItemDao {
                             it.int("x"),
                             it.int("y"),
                             it.double("z")
-                           ),
+                    ),
                     it.int("rot"),
                     it.string("wall_pos"),
                     if (limitedId > 0) ItemDao.getLimitedData(limitedId) else null
-                    )
+            )
         }
     }
 
@@ -91,8 +91,8 @@ object ItemDao {
         select("SELECT id, base_item, extra_data, limited_id FROM items WHERE room_id = 0 AND user_id = :user_id",
                mapOf(
                        "user_id" to userId
-                    )
-              ) {
+               )
+        ) {
             val limitedId = it.int("limited_id")
 
             UserItem(
@@ -102,7 +102,7 @@ object ItemDao {
                     it.string("extra_data"),
                     limitedId,
                     if (limitedId > 0) ItemDao.getLimitedData(limitedId) else null
-                    )
+            )
         }
     }
 
@@ -110,13 +110,13 @@ object ItemDao {
         select("SELECT * FROM items_limited WHERE id = :id",
                mapOf(
                        "id" to limitedId
-                    )
-              ) {
+               )
+        ) {
             LimitedItemData(
                     it.int("id"),
                     it.int("limited_num"),
                     it.int("limited_total")
-                           )
+            )
         }.firstOrNull()
     }
 }

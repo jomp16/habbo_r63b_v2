@@ -26,9 +26,6 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 
 class RemoveUserFromRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
-        room.roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
-        room.roomUsers.remove(roomUser.virtualID)
-
         // todo: item handling
         // todo: trade
 

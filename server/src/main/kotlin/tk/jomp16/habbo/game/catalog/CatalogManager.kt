@@ -29,14 +29,17 @@ class CatalogManager {
 
     val catalogPages: MutableList<CatalogPage> = ArrayList()
     val catalogItems: MutableList<CatalogItem> = ArrayList()
+    val catalogClubOffers: MutableList<CatalogClubOffer> = ArrayList()
 
     init {
         log.info("Loading catalog...")
 
         catalogPages += CatalogDao.getCatalogPages()
         catalogItems += CatalogDao.getCatalogItems()
+        catalogClubOffers += CatalogDao.getCatalogClubOffers()
 
         log.info("Loaded {} catalog pages!", catalogPages.size)
         log.info("Loaded {} catalog items!", catalogItems.size)
+        log.info("Loaded {} club offers!", catalogClubOffers.size)
     }
 }

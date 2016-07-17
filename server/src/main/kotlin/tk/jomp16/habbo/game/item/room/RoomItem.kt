@@ -42,7 +42,7 @@ data class RoomItem(
         var rotation: Int,
         val wallPosition: String,
         val limitedItemData: LimitedItemData?
-                   ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[baseName]!!
 

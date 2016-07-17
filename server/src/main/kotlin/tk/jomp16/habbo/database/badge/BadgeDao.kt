@@ -28,13 +28,13 @@ object BadgeDao {
         select("SELECT * FROM users_badges WHERE user_id = :user_id",
                mapOf(
                        "user_id" to userId
-                    )
-              ) {
+               )
+        ) {
             Badge(
                     it.int("id"),
                     it.string("code"),
                     it.int("slot")
-                 )
+            )
         }
     }
 
@@ -43,8 +43,8 @@ object BadgeDao {
             update("DELETE FROM users_badges WHERE id = :id",
                    mapOf(
                            "id" to id
-                        )
-                  )
+                   )
+            )
         }
     }
 
@@ -55,8 +55,8 @@ object BadgeDao {
                         "user_id" to userId,
                         "code" to code,
                         "slot" to slot
-                     )
-                                         )
+                )
+        )
 
         Badge(id, code, slot)
     }
@@ -68,9 +68,9 @@ object BadgeDao {
                             mapOf(
                                     "slot" to it.slot,
                                     "id" to it.id
-                                 )
+                            )
                         }
-                       )
+            )
         }
     }
 }

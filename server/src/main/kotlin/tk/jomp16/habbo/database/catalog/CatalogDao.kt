@@ -20,6 +20,7 @@
 package tk.jomp16.habbo.database.catalog
 
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.game.catalog.CatalogClubOffer
 import tk.jomp16.habbo.game.catalog.CatalogItem
 import tk.jomp16.habbo.game.catalog.CatalogPage
 import java.util.concurrent.atomic.AtomicInteger
@@ -48,7 +49,7 @@ object CatalogDao {
                     it.string("page_text_teaser"),
                     it.string("page_link_description"),
                     it.string("page_link_pagename")
-                       )
+            )
         }
     }
 
@@ -69,7 +70,20 @@ object CatalogDao {
                     AtomicInteger(it.int("limited_sells")),
                     it.int("limited_stack"),
                     it.boolean("offer_active")
-                       )
+            )
+        }
+    }
+
+    fun getCatalogClubOffers() = HabboServer.database {
+        select("SELECT * FROM catalog_club_offers") {
+            CatalogClubOffer(
+                    it.int("id"),
+                    it.int("item_id"),
+                    it.string("name"),
+                    it.int("months"),
+                    it.int("credits"),
+                    it.int("pixels")
+            )
         }
     }
 }

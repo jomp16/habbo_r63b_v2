@@ -26,7 +26,7 @@ import tk.jomp16.habbo.database.information.UserInformationDao
 data class MessengerRequest(
         val id: Int,
         val fromId: Int
-                           ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val userInformation = UserInformationDao.getUserInformationById(fromId) ?: return

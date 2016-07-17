@@ -62,8 +62,6 @@ class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
                     queuedHabboResponse += Outgoing.ROOM_RIGHT_LEVEL to arrayOf(1)
                 }
-
-                roomUser.updateNeeded = true
             } else {
                 queuedHabboResponse += Outgoing.ROOM_NO_RIGHTS to arrayOf()
             }
@@ -80,6 +78,7 @@ class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
             room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
             room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, it.userInformation.figure,
                                    it.userInformation.gender, it.userInformation.motto, it.userStats.achievementScore)
+            room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomUser))
         }
 
         // Reset empty counter

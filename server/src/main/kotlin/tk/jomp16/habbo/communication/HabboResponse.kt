@@ -33,7 +33,7 @@ class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : Closeabl
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
     fun writeUTF(s: String) {
-        byteBufOutputStream.writeUTF(s.intern())
+        byteBufOutputStream.writeUTF(s)
     }
 
     fun writeShort(s: Int) {

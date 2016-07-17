@@ -31,9 +31,7 @@ class UserPerksResponse {
             writeInt(perksData.size)
 
             perksData.forEach {
-                val name = it.first
-                val requirement = it.second
-                val enabled = it.third
+                val (name, requirement, enabled) = it
 
                 writeUTF(name)
                 writeUTF(requirement)

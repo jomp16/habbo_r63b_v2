@@ -32,4 +32,4 @@ data class FurniXMLInfo(
         var canSitOn: Boolean = false,
         var canLayOn: Boolean = false,
         var wallFurni: Boolean = false
-                       ) : Serializable
+) : Serializable

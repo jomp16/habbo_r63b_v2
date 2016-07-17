@@ -30,7 +30,7 @@ data class RoomModel(
         val doorDir: Int,
         val heightmap: List<String>,
         val clubOnly: Boolean
-                    ) {
+) {
     val mapSizeX: Int = heightmap[0].length
     val mapSizeY: Int = heightmap.size
 
@@ -47,12 +47,9 @@ data class RoomModel(
                     floorHeight[x][y] = -1
                 } else if (Character.isLetterOrDigit(square)) {
                     squareStates[x][y] = SquareState.OPEN
-
                     floorHeight[x][y] =
-                            if (Character.isDigit(square))
-                                java.lang.Short.parseShort(square.toString())
-                            else
-                                java.lang.Short.parseShort((letters.indexOf(square.toChar()) + 10).toString())
+                            if (Character.isDigit(square)) square.toString().toShort()
+                            else (letters.indexOf(square.toChar()) + 10).toString().toShort()
                 }
             }
         }

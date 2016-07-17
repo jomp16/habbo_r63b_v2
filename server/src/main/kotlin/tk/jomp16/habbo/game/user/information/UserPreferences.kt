@@ -33,4 +33,4 @@ class UserPreferences(
         var blockNewFriends: Boolean,
         var chatColor: Int,
         var friendBarOpen: Boolean
-                     )
+)

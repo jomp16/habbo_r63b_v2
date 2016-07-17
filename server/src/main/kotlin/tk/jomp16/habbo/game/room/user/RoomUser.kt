@@ -24,8 +24,7 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.game.room.tasks.ChatType
-import tk.jomp16.habbo.game.room.tasks.UserChatTask
+import tk.jomp16.habbo.game.room.tasks.*
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
@@ -41,12 +40,12 @@ class RoomUser(
         var currentVector3: Vector3,
         var headRotation: Int,
         var bodyRotation: Int
-              ) : IHabboResponseSerialize {
+) : IHabboResponseSerialize {
     var updateNeeded: Boolean = false
 
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
 
-    private var objectiveVector2: Vector2? = null
+    var objectiveVector2: Vector2? = null
     private var stepSeatedVector3: Vector3? = null
 
     private val walking: Boolean
@@ -58,16 +57,29 @@ class RoomUser(
 
     var idle: Boolean = false
         set(newValue) {
-            idleCount = if (newValue) (TimeUnit.SECONDS.toMillis(
-                    HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt() else 0
+            idleCount =
+                    if (newValue) (TimeUnit.SECONDS.toMillis(
+                            HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                    else 0
 
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
 
             field = newValue
         }
 
-    fun addStatus(key: String, value: String = "", seconds: Int = -1) {
-        statusMap.put(key, Pair(if (seconds == -1) null else LocalDateTime.now().plusSeconds(seconds.toLong()), value))
+    var typing: Boolean = false
+        set(newValue) {
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, newValue)
+
+            field = newValue
+        }
+
+    fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
+        statusMap.put(key, Pair(
+                if (milliseconds == -1) null
+                else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())),
+                value)
+        )
 
         updateNeeded = true
     }
@@ -143,13 +155,19 @@ class RoomUser(
     }
 
     fun moveTo(x: Int, y: Int) {
-        idle = false
-
-        objectiveVector2 = Vector2(x, y)
+        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y)))
     }
 
     fun chat(message: String, bubble: Int, type: ChatType) {
         room.roomTask?.addTask(room, UserChatTask(this, message, bubble, type))
+    }
+
+    fun action(action: Int) {
+        room.roomTask?.addTask(room, UserActionTask(this, action))
+    }
+
+    fun sign(sign: Int) {
+        room.roomTask?.addTask(room, UserSignTask(this, sign))
     }
 
     private fun stopWalking() {
@@ -185,19 +203,5 @@ class RoomUser(
                 writeBoolean(false) // is member of builder club
             }
         }
-    }
-
-    fun action(action: Int) {
-        if (action == 5) {
-            idle = true
-
-            return
-        }
-
-        idle = false
-
-        // todo: unset dance
-        // todo: unset carry
-        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, virtualID, action)
     }
 }

@@ -17,18 +17,13 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.tag
+package tk.jomp16.habbo.game.catalog
 
-import tk.jomp16.habbo.HabboServer
-
-object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
-        ) {
-            it.string("tag")
-        }
-    }
-}
+data class CatalogClubOffer(
+        val id: Int,
+        val itemId: Int,
+        val name: String,
+        val months: Int,
+        val credits: Int,
+        val pixels: Int
+)

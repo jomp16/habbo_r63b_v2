@@ -89,9 +89,10 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             if (msg.readableBytes() < size) {
                 msg.resetReaderIndex()
 
-                if (!HabboServer.habboHandler.blacklistIds.contains(headerId)) log.warn(
-                        "({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId,
-                        msg.readableBytes(), size)
+                if (!HabboServer.habboHandler.blacklistIds.contains(headerId)) {
+                    log.warn("({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId,
+                             msg.readableBytes(), size)
+                }
 
                 return
             }
@@ -100,8 +101,11 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             if (log.isDebugEnabled) {
                 out.forEach {
-                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId)) log.trace(
-                            "({}) - GOT --> [{}] -- {}", username, it.headerId, it.toString())
+                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId)) {
+                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4),
+                                  HabboServer.habboHandler.incomingNames[it.headerId]?.padEnd(
+                                          HabboServer.habboHandler.largestNameSize), it.toString())
+                    }
                 }
             }
         }
