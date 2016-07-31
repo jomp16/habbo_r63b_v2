@@ -25,7 +25,7 @@ import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 
-class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
+class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
 
@@ -47,6 +47,12 @@ class AddUserToRoomTask(private val roomUser: RoomUser) : IRoomTask {
             queuedHabboResponse += Outgoing.ROOM_VISUALIZATION_THICKNESS to arrayOf(room.roomData.hideWall,
                                                                                     room.roomData.wallThick,
                                                                                     room.roomData.floorThick)
+
+            room.roomUsers.values.forEach {
+                if (it.idle) queuedHabboResponse += Outgoing.ROOM_USER_IDLE to arrayOf(it.virtualID, true)
+                if (it.danceId > 0) queuedHabboResponse += Outgoing.ROOM_USER_DANCE to arrayOf(it.virtualID, it.danceId)
+                // todo: carry item
+            }
 
             // todo: events
 

@@ -74,6 +74,13 @@ class RoomUser(
             field = newValue
         }
 
+    var danceId: Int = 0
+        set(newValue) {
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
+
+            field = newValue
+        }
+
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         statusMap.put(key, Pair(
                 if (milliseconds == -1) null
@@ -168,6 +175,10 @@ class RoomUser(
 
     fun sign(sign: Int) {
         room.roomTask?.addTask(room, UserSignTask(this, sign))
+    }
+
+    fun dance(danceId: Int) {
+        room.roomTask?.addTask(room, UserDanceTask(this, danceId))
     }
 
     private fun stopWalking() {

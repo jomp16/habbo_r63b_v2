@@ -31,8 +31,8 @@ import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.gamemap.RoomGamemap
 import tk.jomp16.habbo.game.room.model.RoomModel
-import tk.jomp16.habbo.game.room.tasks.AddUserToRoomTask
-import tk.jomp16.habbo.game.room.tasks.RemoveUserFromRoomTask
+import tk.jomp16.habbo.game.room.tasks.UserJoinRoomTask
+import tk.jomp16.habbo.game.room.tasks.UserPartRoomTask
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Utils
@@ -95,7 +95,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
 
-            it.addTask(this, AddUserToRoomTask(
+            it.addTask(this, UserJoinRoomTask(
                     RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir,
                              roomModel.doorDir)))
         }
@@ -116,7 +116,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
         roomUsers.remove(roomUser.virtualID)
 
-        roomTask?.let { it.addTask(this, RemoveUserFromRoomTask(roomUser)) }
+        roomTask?.let { it.addTask(this, UserPartRoomTask(roomUser)) }
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

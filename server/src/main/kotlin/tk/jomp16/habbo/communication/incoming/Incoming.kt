@@ -101,4 +101,5 @@ object Incoming {
     const val ROOM_USER_STOP_TYPING = 2751 // CancelTypingMessageEvent
     const val NAVIGATOR_CREATE_ROOM = 1822 // CreateFlatMessageEvent
     const val CATALOG_PURCHASE = 730 // PurchaseFromCatalogMessageEvent
+    const val ROOM_USER_DANCE = 3688 // DanceMessageEvent
 }

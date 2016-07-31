@@ -19,16 +19,16 @@
 
 package tk.jomp16.habbo.game.room.tasks
 
-import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 
-class RemoveUserFromRoomTask(private val roomUser: RoomUser) : IRoomTask {
+class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : IRoomTask {
     override fun executeTask(room: Room) {
-        // todo: item handling
-        // todo: trade
+        roomUser.idle = false
 
-        room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomUser.virtualID)
+        // todo: unset user carry item
+
+        roomUser.danceId = danceId
     }
 }
