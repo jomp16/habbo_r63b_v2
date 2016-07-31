@@ -92,9 +92,9 @@ data class CatalogItem(
             } else {
                 writeInt(furnishing.spriteId)
 
-                if (catalogName == "wallpaper_single" ||
-                        catalogName == "floor_single" ||
-                        catalogName == "landscape_single") writeUTF(furnishing.itemName.split('_')[2])
+                if (itemName == "wallpaper" ||
+                        itemName == "floor" ||
+                        itemName == "landscape") writeUTF(catalogName.split('_')[2])
                 else writeUTF("")
 
                 writeInt(amount)

@@ -29,8 +29,8 @@ class CatalogOfferConfigurationResponse {
     fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
             writeInt(100) // Most you can get.
-            writeInt(6)
-            writeInt(1)
+            writeInt(6) // each n items
+            writeInt(1) // win one item for free
             writeInt(1)
             writeInt(2)
             writeInt(40)

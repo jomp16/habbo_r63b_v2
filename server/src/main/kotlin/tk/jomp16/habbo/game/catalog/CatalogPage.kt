@@ -45,6 +45,9 @@ data class CatalogPage(
         val pageLinkDescription: String,
         val pageLinkPagename: String
 ) : IHabboResponseSerialize {
+    val catalogItems: List<CatalogItem>
+        get() = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }.sortedBy { it.id }
+
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val rank = params[0] as Int

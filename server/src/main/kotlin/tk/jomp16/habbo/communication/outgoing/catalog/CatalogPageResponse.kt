@@ -19,7 +19,6 @@
 
 package tk.jomp16.habbo.communication.outgoing.catalog
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
@@ -206,11 +205,9 @@ class CatalogPageResponse {
                 }
             }
 
-            val catalogItems = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == catalogPage.id }.sortedBy { it.id }
+            writeInt(catalogPage.catalogItems.size)
 
-            writeInt(catalogItems.size)
-
-            catalogItems.forEach { serialize(it) }
+            catalogPage.catalogItems.forEach { serialize(it) }
 
             writeInt(-1)
             writeBoolean(false)
