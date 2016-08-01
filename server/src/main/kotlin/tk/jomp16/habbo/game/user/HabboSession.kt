@@ -220,7 +220,7 @@ class HabboSession(val channel: Channel) : Closeable {
     }
 
     fun enterRoom(room: Room, password: String, bypassAuth: Boolean = false) {
-        currentRoom?.removeUser(roomUser, true, true)
+        currentRoom?.removeUser(roomUser, false, false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
