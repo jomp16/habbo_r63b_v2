@@ -49,6 +49,7 @@ import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import java.io.Closeable
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
@@ -80,7 +81,11 @@ object HabboServer : Closeable {
         private set
 
     // Thread Executors
-    lateinit var executor: ScheduledExecutorService
+    lateinit var scheduledExecutor: ScheduledExecutorService
+        private set
+    lateinit var databaseExecutor: ExecutorService
+        private set
+    lateinit var gameExcecutor: ExecutorService
         private set
 
     val started: Boolean
@@ -126,7 +131,10 @@ object HabboServer : Closeable {
         }
 
         // Instantiate thread executors
-        executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2)
+        scheduledExecutor = Executors.newScheduledThreadPool(
+                Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
+        databaseExecutor = Executors.newCachedThreadPool()
+        gameExcecutor = Executors.newCachedThreadPool()
 
         // Clean up things in database
         log.info("Cleaning up some things in database...")
@@ -151,7 +159,7 @@ object HabboServer : Closeable {
     }
 
     fun start() {
-        executor.execute {
+        gameExcecutor.execute {
             try {
                 serverBootstrap = ServerBootstrap()
                 workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
@@ -205,7 +213,7 @@ object HabboServer : Closeable {
     }
 
     inline fun <R> database(rollbackTransaction: Boolean = false,
-                            crossinline task: Session.() -> R): R = executor.submit(
+                            crossinline task: Session.() -> R): R = databaseExecutor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->

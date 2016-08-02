@@ -63,11 +63,9 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HabboRequest) {
-            HabboServer.executor.execute {
-                val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-                HabboServer.habboHandler.handle(habboSession, msg)
-            }
+            HabboServer.habboHandler.handle(habboSession, msg)
         }
     }
 

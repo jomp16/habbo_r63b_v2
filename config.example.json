@@ -23,6 +23,7 @@
     "vip_points": 16,
     "vip_points_max": 0
   },
+  "scheduler_multiplier": 4,
   "timer": {
     "credits_seconds": 10,
     "room_idle_seconds": 150,

@@ -46,9 +46,9 @@ class RoomTaskManager {
         } else {
             roomTask = RoomTask()
 
-            scheduledFutureMap.put(roomTask, HabboServer.executor.scheduleAtFixedRate(roomTask, 0,
-                                                                                      HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(),
-                                                                                      TimeUnit.MILLISECONDS))
+            scheduledFutureMap.put(roomTask, HabboServer.scheduledExecutor.scheduleAtFixedRate(roomTask, 0,
+                                                                                               HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(),
+                                                                                               TimeUnit.MILLISECONDS))
         }
 
         roomTask.addRoom(room)

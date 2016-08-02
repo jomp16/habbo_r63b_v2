@@ -97,6 +97,7 @@ class HabboHandler {
 
         largestNameSize = incomingNames.plus(outgoingNames).values.sortedByDescending { it.length }.first().length
 
+        log.info("Loaded {} Habbo request handlers", messageHandlers.size)
         log.info("Loaded {} Habbo response handlers", messageResponses.size)
     }
 
