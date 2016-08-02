@@ -17,6 +17,8 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
+apply plugin: 'eu.appsatori.fatjar'
+
 dependencies {
     compile project(':server')
 
