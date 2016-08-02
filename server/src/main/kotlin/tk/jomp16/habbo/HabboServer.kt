@@ -126,7 +126,7 @@ object HabboServer : Closeable {
         }
 
         // Instantiate thread executors
-        executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors())
+        executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2)
 
         // Clean up things in database
         log.info("Cleaning up some things in database...")
