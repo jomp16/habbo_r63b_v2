@@ -20,6 +20,8 @@
 package tk.jomp16.habbo.kotlin
 
 import tk.jomp16.habbo.util.Utils
+import java.net.URL
+import java.net.URLConnection
 import java.time.LocalDateTime
 
 fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now().withNano(0).withSecond(0)
@@ -38,3 +40,11 @@ fun array2dOfByte(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ByteArray
 fun array2dOfChar(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { CharArray(sizeInner) }
 
 fun <E> List<E>.random(): E = this[Utils.random.nextInt(this.size)]
+
+fun urlUserAgent(url: String,
+                 userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {
+    val urlConnection = URL(url).openConnection()
+    urlConnection.setRequestProperty("User-Agent", userAgent)
+
+    return urlConnection
+}

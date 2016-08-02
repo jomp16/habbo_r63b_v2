@@ -29,9 +29,9 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.kotlin.urlUserAgent
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
-import java.net.URL
 import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
@@ -48,7 +48,7 @@ class ItemManager {
     init {
         log.info("Loading furnishings...")
 
-        URL(HabboServer.habboConfig.furnidataXml).openStream().use {
+        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use {
             it.buffered().use {
                 val saxParser = SAXParserFactory.newInstance().newSAXParser()
                 val handler = FurniXMLHandler()
