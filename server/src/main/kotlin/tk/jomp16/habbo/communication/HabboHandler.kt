@@ -44,16 +44,12 @@ class HabboHandler {
                                             Incoming.SET_USERNAME,
                                             Incoming.MESSENGER_FRIENDS_UPDATE,
                                             Incoming.LANDING_HALL_OF_FAME,
-                                            Incoming.CATALOG_BUILDERS_INDEX,
-                                            349,
-                                            1105,
-                                            2140,
-                                            2544,
-                                            3303,
-                                            2414,
-                                            3652,
-                                            2031,
-                                            334)
+                                            1686,
+                                            3784,
+                                            1307,
+                                            1205,
+                                            1502,
+                                            3065)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()

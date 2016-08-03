@@ -44,6 +44,37 @@ class CatalogPageResponse {
                     writeInt(0)
                     writeInt(-1)
                     writeBoolean(false)
+
+                    // todo: figure out dis to add on database
+                    writeInt(4) // count
+
+                    writeInt(1) // id
+                    writeUTF("New Rare Jellyfish Lamp!") // name
+                    writeUTF("") // image
+                    writeInt(0)
+                    writeUTF("boat16jelly") // page link?
+                    writeInt(-1) // page id?
+
+                    writeInt(2)
+                    writeUTF("Cozy Garden Bundle (ALL new furni)")
+                    writeUTF("catalogue/feature_cata_hort_gardenbundle.png")
+                    writeInt(0)
+                    writeUTF("room_bundles_mobile")
+                    writeInt(-1)
+
+                    writeInt(3)
+                    writeUTF("NEW: Karaoke Bar Bundle")
+                    writeUTF("catalogue/feature_cata_hort_barbundle.png")
+                    writeInt(0)
+                    writeUTF("room_bundles_mobile")
+                    writeInt(-1)
+
+                    writeInt(4)
+                    writeUTF("Classic Jetset Furni!")
+                    writeUTF("catalogue/feature_cata_hort_partyboat16_b.png")
+                    writeInt(0)
+                    writeUTF("jetset")
+                    writeInt(-1)
                 }
                 "vip_buy"                 -> {
                     writeUTF("NORMAL")

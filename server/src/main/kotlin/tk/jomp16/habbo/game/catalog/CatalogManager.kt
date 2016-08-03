@@ -36,6 +36,13 @@ class CatalogManager {
     init {
         log.info("Loading catalog...")
 
+        // catalog root
+        catalogPages += CatalogPage(-1, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "",
+                                    "")
+        // catalog builders
+        catalogPages += CatalogPage(-2, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "",
+                                    "")
+
         catalogPages += CatalogDao.getCatalogPages()
         catalogItems += CatalogDao.getCatalogItems()
         catalogClubOffers += CatalogDao.getCatalogClubOffers()

@@ -29,7 +29,7 @@ class UserHomeRoomResponse {
     fun response(habboResponse: HabboResponse, roomId: Int) {
         habboResponse.apply {
             writeInt(roomId)
-            writeInt(roomId)
+            writeInt(0)
         }
     }
 }

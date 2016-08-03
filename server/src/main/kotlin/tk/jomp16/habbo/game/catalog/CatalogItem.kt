@@ -80,6 +80,8 @@ data class CatalogItem(
 
             writeInt(if (clubOnly) 1 else 0)
             writeBoolean(offerActive && !limited)
+            writeBoolean(true) // ?
+            writeUTF("") // ?
         }
     }
 
