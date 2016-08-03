@@ -51,10 +51,8 @@ object Incoming {
     const val AVATAR_EFFECT = 1856 // AvatarEffectSelectedMessageEvent
     const val CATALOG_RECYCLER_REWARDS = 1221 // GetRecyclerRewardsMessageEvent
     const val CATALOG_CONFIGURATION = 2527 // GetMarketplaceConfigurationMessageEvent
-    const val CATALOG_OFFER_CONFIGURATION = 2573 // jomp16
     const val CATALOG_HABBO_CLUB_PAGE = 155 // GetHabboClubWindowMessageEvent
     const val CATALOG_GIFT_WRAPPING = 3663 // GetGiftWrappingConfigurationMessageEvent
-    const val CATALOG_BUILDERS_INDEX = 1602 // jomp16
     const val CATALOG_INDEX = 3357 // GetCatalogIndexMessageEvent
     const val CATALOG_PAGE = 3889 // GetCatalogPageMessageEvent
     const val MESSENGER_REQUESTS = 3542 // GetBuddyRequestsMessageEvent
@@ -75,7 +73,6 @@ object Incoming {
     const val MESSENGER_FOLLOW_FRIEND = 3066 // FollowFriendMessageEvent
     const val NAVIGATOR_HOME_ROOM = 2408 // UpdateNavigatorSettingsMessageEvent
     const val LANDING_PROMO_ARTICLES = 995 // GetPromoArticlesMessageEvent
-    const val LANDING_HALL_OF_FAME = 1476 // jomp16
     const val INVENTORY_ITEMS = 46 // RequestFurniInventoryMessageEvent
     const val INVENTORY_BADGES = 602 // GetBadgesMessageEvent
     const val INVENTORY_UPDATE_BADGES = 2684 // SetActivatedBadgesMessageEvent
