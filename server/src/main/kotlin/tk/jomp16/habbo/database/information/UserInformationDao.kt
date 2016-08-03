@@ -24,12 +24,34 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
 
 object UserInformationDao {
-    fun getUserInformationById(id: Int): UserInformation? = HabboServer.database {
-        select("SELECT * FROM users WHERE id = :id LIMIT 1",
-               mapOf(
-                       "id" to id
-               )
-        ) { getUserInformation(it) }.firstOrNull()
+    private val serverConsoleInformation = UserInformation(
+            Int.MAX_VALUE,
+            "SERVER CONSOLE",
+            "",
+            "habbo_r63b console",
+            1,
+            0,
+            0,
+            0,
+            "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62",
+            "M",
+            "habbo_r63b console!",
+            0,
+            false
+    )
+
+    fun getUserInformationById(id: Int): UserInformation? {
+        if (id == Int.MAX_VALUE) {
+            return serverConsoleInformation
+        } else {
+            return HabboServer.database {
+                select("SELECT * FROM users WHERE id = :id LIMIT 1",
+                       mapOf(
+                               "id" to id
+                       )
+                ) { getUserInformation(it) }.firstOrNull()
+            }
+        }
     }
 
     fun getUserInformationByAuthTicket(ssoTicket: String) = HabboServer.database {

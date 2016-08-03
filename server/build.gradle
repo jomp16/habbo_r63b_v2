@@ -42,4 +42,7 @@ dependencies {
 
     // Password encryption
     compile 'org.jasypt:jasypt:1.9.2'
+
+    // Commons Lang3 for human readable uptime
+    compile 'org.apache.commons:commons-lang3:3.4'
 }

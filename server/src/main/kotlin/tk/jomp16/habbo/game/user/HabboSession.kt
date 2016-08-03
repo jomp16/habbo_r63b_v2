@@ -44,6 +44,8 @@ import tk.jomp16.habbo.game.user.subscription.HabboSubscription
 import tk.jomp16.habbo.kotlin.ip
 import java.io.Closeable
 import java.time.LocalDateTime
+import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : Closeable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -66,6 +68,8 @@ class HabboSession(val channel: Channel) : Closeable {
 
     lateinit var rooms: MutableList<Room>
         private set
+
+    val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
 
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
