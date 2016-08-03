@@ -24,15 +24,10 @@ import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MiscGenericErrorResponse {
-    @Response(Outgoing.GENERIC_ERROR)
+class MiscServerErrorResponse {
+    @Response(Outgoing.MISC_SERVER_ERROR)
     fun response(habboResponse: HabboResponse, errorCode: Int) {
         habboResponse.apply {
-            // -100002 ==
-            // 4009 == navigator.alert.need.to.be.vip
-            // 4010 == navigator.alert.invalid_room_name
-            // 4011 == navigator.alert.cannot_perm_ban
-            // 4013 == navigator.alert.room_in_maintenance
             writeInt(errorCode)
         }
     }

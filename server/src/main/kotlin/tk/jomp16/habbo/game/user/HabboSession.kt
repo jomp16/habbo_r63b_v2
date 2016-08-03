@@ -126,17 +126,17 @@ class HabboSession(val channel: Channel) : Closeable {
         sendHabboResponse(Outgoing.SUPER_NOTIFICATION, type, strings)
     }
 
-    fun authenticate(ssoTicket: String): Int {
+    fun authenticate(ssoTicket: String): Boolean {
         val ip = channel.ip()
 
-        val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return 2
+        val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return false
 
         if (HabboServer.habboSessionManager.containsHabboSessionById(userInformation1.id)) {
             val habboSession = HabboServer.habboSessionManager.getHabboSessionById(userInformation1.id)
 
             habboSession?.sendNotification("An user tried to login as you!\n\nIP: $ip")
 
-            return 1
+            return false
         }
 
         userInformation = userInformation1
@@ -164,7 +164,7 @@ class HabboSession(val channel: Channel) : Closeable {
             )
         }
 
-        return 0
+        return true
     }
 
     fun rewardUser() {

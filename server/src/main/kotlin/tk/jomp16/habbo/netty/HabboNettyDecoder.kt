@@ -26,6 +26,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
@@ -71,7 +72,9 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                         "Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!",
                         delimiter)
 
-                ctx.disconnect()
+                habboSession.sendHabboResponse(Outgoing.MISC_SERVER_ERROR, -400)
+
+                //                ctx.disconnect()
 
                 return
             }

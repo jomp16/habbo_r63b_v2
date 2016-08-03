@@ -36,6 +36,8 @@ data class HabboConfig(
         val furnidataXml: String,
         @JsonProperty("reward")
         val rewardConfig: RewardConfig,
+        @JsonProperty("auto_join_room")
+        val autoJoinRoom: Boolean,
         @JsonProperty("scheduler_multiplier")
         val schedulerMultiplier: Int,
         @JsonProperty("timer")

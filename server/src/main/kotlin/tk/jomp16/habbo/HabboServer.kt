@@ -35,6 +35,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
+import io.netty.handler.timeout.IdleStateHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.HabboHandler
@@ -81,11 +82,9 @@ object HabboServer : Closeable {
         private set
 
     // Thread Executors
-    lateinit var scheduledExecutor: ScheduledExecutorService
+    lateinit var serverScheduledExecutor: ScheduledExecutorService
         private set
-    lateinit var databaseExecutor: ExecutorService
-        private set
-    lateinit var gameExcecutor: ExecutorService
+    lateinit var serverExecutor: ExecutorService
         private set
 
     val started: Boolean
@@ -102,6 +101,11 @@ object HabboServer : Closeable {
     }
 
     fun init() {
+        // Instantiate thread executors
+        serverScheduledExecutor = Executors.newScheduledThreadPool(
+                Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
+        serverExecutor = Executors.newCachedThreadPool()
+
         javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine {
             log.info(it)
         }
@@ -130,12 +134,6 @@ object HabboServer : Closeable {
             System.exit(1)
         }
 
-        // Instantiate thread executors
-        scheduledExecutor = Executors.newScheduledThreadPool(
-                Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
-        databaseExecutor = Executors.newCachedThreadPool()
-        gameExcecutor = Executors.newCachedThreadPool()
-
         // Clean up things in database
         log.info("Cleaning up some things in database...")
         // START USERS
@@ -159,7 +157,7 @@ object HabboServer : Closeable {
     }
 
     fun start() {
-        gameExcecutor.execute {
+        serverExecutor.execute {
             try {
                 serverBootstrap = ServerBootstrap()
                 workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
@@ -174,7 +172,7 @@ object HabboServer : Closeable {
                                 if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
-                                // socketChannel.pipeline().addLast(IdleStateHandler(60, 30, 0))
+                                socketChannel.pipeline().addLast(IdleStateHandler(60, 30, 0))
 
                                 socketChannel.pipeline().addLast(stringEncoder)
                                 socketChannel.pipeline().addLast(habboNettyEncoder)
@@ -213,7 +211,7 @@ object HabboServer : Closeable {
     }
 
     inline fun <R> database(rollbackTransaction: Boolean = false,
-                            crossinline task: Session.() -> R): R = databaseExecutor.submit(
+                            crossinline task: Session.() -> R): R = serverExecutor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->

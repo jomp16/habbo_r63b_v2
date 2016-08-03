@@ -21,6 +21,7 @@ package tk.jomp16.habbo.database.catalog
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.catalog.CatalogClubOffer
+import tk.jomp16.habbo.game.catalog.CatalogDeal
 import tk.jomp16.habbo.game.catalog.CatalogItem
 import tk.jomp16.habbo.game.catalog.CatalogPage
 import java.util.concurrent.atomic.AtomicInteger
@@ -83,6 +84,16 @@ object CatalogDao {
                     it.int("months"),
                     it.int("credits"),
                     it.int("pixels")
+            )
+        }
+    }
+
+    fun getCatalogDeals() = HabboServer.database {
+        select("SELECT * FROM catalog_deals") {
+            CatalogDeal(
+                    it.int("id"),
+                    it.string("item_names").split(','),
+                    it.string("amounts").split(',').map { it.toInt() }
             )
         }
     }

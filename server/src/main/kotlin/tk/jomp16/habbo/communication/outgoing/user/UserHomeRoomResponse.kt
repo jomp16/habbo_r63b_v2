@@ -26,10 +26,10 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserHomeRoomResponse {
     @Response(Outgoing.HOME_ROOM)
-    fun response(habboResponse: HabboResponse, roomId: Int) {
+    fun response(habboResponse: HabboResponse, roomId: Int, autoJoinRoom: Boolean) {
         habboResponse.apply {
             writeInt(roomId)
-            writeInt(roomId)
+            writeInt(if (autoJoinRoom) roomId else 0) // auto join room
         }
     }
 }

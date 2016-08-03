@@ -42,7 +42,9 @@ class HandshakeSecretKeyHandler {
             if (sharedKey == BigInteger.ZERO) {
                 log.error("Couldn't generate shared key. Probably a RSA error. Disconnecting user!")
 
-                habboSession.channel.close()
+                habboSession.sendHabboResponse(Outgoing.MISC_SERVER_ERROR, -400)
+
+                //                habboSession.channel.close()
 
                 return
             }

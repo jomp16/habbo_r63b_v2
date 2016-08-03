@@ -42,18 +42,19 @@ data class CatalogItem(
         val limitedStack: Int,
         val offerActive: Boolean
 ) : IHabboResponseSerialize {
-    val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+    val furnishing: Furnishing?
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]
+    val deal: CatalogDeal?
+        get() = HabboServer.habboGame.catalogManager.catalogDeals.find { it.id == dealId }
 
     val limited = limitedStack > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            val furnishing = furnishing
-
             writeInt(id)
-            writeUTF(if (catalogName.isNotBlank()) catalogName else furnishing.itemName)
-            writeBoolean(false) // is rentable
+            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing!!.itemName)
+            writeBoolean(false) // todo: is rentable
+
             writeInt(costCredits)
 
             if (costVip > 0) {
@@ -64,19 +65,25 @@ data class CatalogItem(
                 writeInt(0)
             }
 
-            // todo: catalog deal
+            writeBoolean(if (dealId > 0) true else furnishing!!.canGift)
 
-            writeBoolean(furnishing.canGift)
-
-            // item count, count 1 item if there is no badge, otherwise count as 2.
-            writeInt(if (badge.isNotBlank()) 2 else 1)
+            // item count, count n item if there is no badge, otherwise count as n + 1.
+            writeInt(if (dealId > 0) deal!!.furnishings.size else 1 + if (badge.isNotBlank()) 1 else 0)
 
             if (badge.isNotBlank()) {
                 writeUTF("b")
                 writeUTF(badge)
             }
 
-            serializeItem(habboResponse, furnishing, amount)
+            if (dealId > 0) {
+                deal!!.let { deal ->
+                    deal.furnishings.forEachIndexed { i, furnishing ->
+                        serializeItem(habboResponse, furnishing, deal.amounts[i])
+                    }
+                }
+            } else {
+                serializeItem(habboResponse, furnishing!!, amount)
+            }
 
             writeInt(if (clubOnly) 1 else 0)
             writeBoolean(offerActive && !limited)
