@@ -31,6 +31,7 @@ class CatalogIndexHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
+        habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER_CONFIGURATION)
         habboSession.sendHabboResponse(Outgoing.CATALOG_INDEX, "NORMAL", habboSession.userInformation.rank)
     }
 }
