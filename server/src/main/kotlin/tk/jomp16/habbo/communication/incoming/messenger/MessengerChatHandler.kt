@@ -19,12 +19,18 @@
 
 package tk.jomp16.habbo.communication.incoming.messenger
 
+import org.apache.commons.lang3.time.DurationFormatUtils
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.kotlin.urlUserAgent
+import tk.jomp16.habbo.util.Utils
+import java.io.InputStreamReader
+import java.lang.management.ManagementFactory
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatHandler {
@@ -36,6 +42,40 @@ class MessengerChatHandler {
         val message = habboRequest.readUTF()
 
         if (userId <= 0 || message.isBlank() || !habboSession.habboMessenger.friends.containsKey(userId)) return
+
+        if (userId == Int.MAX_VALUE) {
+            // server console!
+
+            val args = message.split(' ')
+
+            if (args.size >= 1) {
+                habboSession.scriptEngine.put("habboSession", habboSession)
+                habboSession.scriptEngine.put("habboServer", HabboServer)
+                habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)
+                habboSession.scriptEngine.put("room", habboSession.currentRoom)
+                habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
+
+                if (args[0] == "load" && args.size >= 2) {
+                    val jsOutput = habboSession.scriptEngine.eval(
+                            InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString() ?: "null"
+
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, jsOutput, 0)
+                } else if (args[0] == "ram") {
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, Utils.ramUsageString, 0)
+                } else if (args[0] == "uptime") {
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE,
+                                                   DurationFormatUtils.formatDurationWords(
+                                                           ManagementFactory.getRuntimeMXBean().uptime, true,
+                                                           false) + " up!", 0)
+                } else {
+                    val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
+
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, jsOutput, 0)
+                }
+            }
+
+            return
+        }
 
         val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
 

@@ -51,7 +51,6 @@ object Incoming {
     const val AVATAR_EFFECT = 728 // AvatarEffectSelectedMessageEvent
     const val CATALOG_RECYCLER_REWARDS = 3052 // GetRecyclerRewardsMessageEvent
     const val CATALOG_CONFIGURATION = 95 // GetMarketplaceConfigurationMessageEvent
-    const val LANDING_HALL_OF_FAME = -1 // jomp16
     const val CATALOG_HABBO_CLUB_PAGE = 2277 // GetHabboClubWindowMessageEvent
     const val CATALOG_GIFT_WRAPPING = 2570 // GetGiftWrappingConfigurationMessageEvent
     const val CATALOG_INDEX = 3048 // GetCatalogIndexMessageEvent

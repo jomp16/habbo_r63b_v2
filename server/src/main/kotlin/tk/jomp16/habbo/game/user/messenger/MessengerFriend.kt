@@ -34,7 +34,7 @@ data class MessengerFriend(
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
 
     val online: Boolean
-        get() = habboSession != null // todo: add appear offline here
+        get() = userId == Int.MAX_VALUE || habboSession != null // todo: add appear offline here
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {

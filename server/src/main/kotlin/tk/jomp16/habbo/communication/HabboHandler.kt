@@ -43,7 +43,6 @@ class HabboHandler {
                                             Incoming.LATENCY_TEST,
                                             Incoming.SET_USERNAME,
                                             Incoming.MESSENGER_FRIENDS_UPDATE,
-                                            Incoming.LANDING_HALL_OF_FAME,
                                             1686,
                                             3784,
                                             1307,

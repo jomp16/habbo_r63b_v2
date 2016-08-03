@@ -32,6 +32,12 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
     var initializedMessenger: Boolean = false
 
+    init {
+        if (habboSession.userInformation.rank >= 7) {
+            // server console!
+            friends += Int.MAX_VALUE to MessengerFriend(Int.MAX_VALUE)
+        }
+    }
     fun notifyFriends() {
         friends.values.filter {
             it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false

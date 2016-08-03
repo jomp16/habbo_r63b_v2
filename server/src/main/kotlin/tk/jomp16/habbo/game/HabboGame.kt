@@ -50,23 +50,23 @@ class HabboGame {
         catalogManager = CatalogManager()
         navigatorManager = NavigatorManager()
 
-        HabboServer.scheduledExecutor.scheduleWithFixedDelay({
+        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
                                                         HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
                                                             if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
                                                         }
                                                     }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
-            HabboServer.scheduledExecutor.scheduleWithFixedDelay({
+            HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
                                                             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
                                                                 it.rewardUser()
                                                             }
                                                         }, 0,
-                                                                 HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(),
-                                                                 TimeUnit.SECONDS)
+                                                                       HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(),
+                                                                       TimeUnit.SECONDS)
         }
 
-        HabboServer.scheduledExecutor.scheduleAtFixedRate({
+        HabboServer.serverScheduledExecutor.scheduleAtFixedRate({
                                                      log.info("RAM usage: {}", Utils.ramUsageString)
                                                  }, 0, 10, TimeUnit.SECONDS)
     }

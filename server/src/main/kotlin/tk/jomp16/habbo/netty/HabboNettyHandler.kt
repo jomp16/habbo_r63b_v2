@@ -22,6 +22,8 @@ package tk.jomp16.habbo.netty
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.handler.timeout.IdleState
+import io.netty.handler.timeout.IdleStateEvent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
@@ -66,6 +68,16 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
             HabboServer.habboHandler.handle(habboSession, msg)
+        }
+    }
+
+    override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
+        if (evt is IdleStateEvent) {
+            if (evt.state() === IdleState.READER_IDLE) {
+                ctx.close()
+            } else if (evt.state() === IdleState.WRITER_IDLE) {
+                //ctx.writeAndFlush(PingMessage())
+            }
         }
     }
 

@@ -17,23 +17,16 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.misc
+package tk.jomp16.habbo.game.catalog
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
-import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.game.item.Furnishing
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class MiscGenericErrorResponse {
-    @Response(Outgoing.GENERIC_ERROR)
-    fun response(habboResponse: HabboResponse, errorCode: Int) {
-        habboResponse.apply {
-            // -100002 ==
-            // 4009 == navigator.alert.need.to.be.vip
-            // 4010 == navigator.alert.invalid_room_name
-            // 4011 == navigator.alert.cannot_perm_ban
-            // 4013 == navigator.alert.room_in_maintenance
-            writeInt(errorCode)
-        }
-    }
+data class CatalogDeal(
+        val id: Int,
+        val items: List<String>,
+        val amounts: List<Int>
+) {
+    val furnishings: List<Furnishing>
+        get() = HabboServer.habboGame.itemManager.furnishings.values.filter { items.contains(it.itemName) }
 }

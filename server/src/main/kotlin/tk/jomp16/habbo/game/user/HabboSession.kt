@@ -44,6 +44,8 @@ import tk.jomp16.habbo.game.user.subscription.HabboSubscription
 import tk.jomp16.habbo.kotlin.ip
 import java.io.Closeable
 import java.time.LocalDateTime
+import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : Closeable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -66,6 +68,8 @@ class HabboSession(val channel: Channel) : Closeable {
 
     lateinit var rooms: MutableList<Room>
         private set
+
+    val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
 
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
@@ -126,17 +130,17 @@ class HabboSession(val channel: Channel) : Closeable {
         sendHabboResponse(Outgoing.SUPER_NOTIFICATION, type, strings)
     }
 
-    fun authenticate(ssoTicket: String): Int {
+    fun authenticate(ssoTicket: String): Boolean {
         val ip = channel.ip()
 
-        val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return 2
+        val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return false
 
         if (HabboServer.habboSessionManager.containsHabboSessionById(userInformation1.id)) {
             val habboSession = HabboServer.habboSessionManager.getHabboSessionById(userInformation1.id)
 
             habboSession?.sendNotification("An user tried to login as you!\n\nIP: $ip")
 
-            return 1
+            return false
         }
 
         userInformation = userInformation1
@@ -164,7 +168,7 @@ class HabboSession(val channel: Channel) : Closeable {
             )
         }
 
-        return 0
+        return true
     }
 
     fun rewardUser() {
