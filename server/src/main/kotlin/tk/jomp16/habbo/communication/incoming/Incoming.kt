@@ -99,5 +99,4 @@ object Incoming {
     const val NAVIGATOR_CREATE_ROOM = 1822 // CreateFlatMessageEvent
     const val CATALOG_PURCHASE = 730 // PurchaseFromCatalogMessageEvent
     const val ROOM_USER_DANCE = 3688 // DanceMessageEvent
-    const val PING = 1006 // PingMessageEvent
 }
