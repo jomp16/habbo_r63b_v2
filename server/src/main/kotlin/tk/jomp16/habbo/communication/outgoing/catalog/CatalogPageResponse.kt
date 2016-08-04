@@ -45,36 +45,20 @@ class CatalogPageResponse {
                     writeInt(-1)
                     writeBoolean(false)
 
-                    // todo: figure out dis to add on database
-                    writeInt(4) // count
+                    val imagesSplit = catalogPage.pageTextDetails.split('-')
 
-                    writeInt(1) // id
-                    writeUTF("New Rare Jellyfish Lamp!") // name
-                    writeUTF("") // image
-                    writeInt(0)
-                    writeUTF("boat16jelly") // page link?
-                    writeInt(-1) // page id?
+                    writeInt(imagesSplit.size)
 
-                    writeInt(2)
-                    writeUTF("Cozy Garden Bundle (ALL new furni)")
-                    writeUTF("catalogue/feature_cata_hort_gardenbundle.png")
-                    writeInt(0)
-                    writeUTF("room_bundles_mobile")
-                    writeInt(-1)
+                    imagesSplit.forEachIndexed { i, s ->
+                        val split = s.split("[\\r\\n]+".toRegex()).filterNot { it.isEmpty() }
 
-                    writeInt(3)
-                    writeUTF("NEW: Karaoke Bar Bundle")
-                    writeUTF("catalogue/feature_cata_hort_barbundle.png")
-                    writeInt(0)
-                    writeUTF("room_bundles_mobile")
-                    writeInt(-1)
-
-                    writeInt(4)
-                    writeUTF("Classic Jetset Furni!")
-                    writeUTF("catalogue/feature_cata_hort_partyboat16_b.png")
-                    writeInt(0)
-                    writeUTF("jetset")
-                    writeInt(-1)
+                        writeInt(i + 1)
+                        writeUTF(if (split.size >= 1) split[0] else "")
+                        writeUTF(if (split.size >= 2) split[1] else "")
+                        writeInt(0)
+                        writeUTF(if (split.size >= 3) split[2] else "")
+                        writeInt(-1)
+                    }
                 }
                 "vip_buy"                 -> {
                     writeUTF("NORMAL")

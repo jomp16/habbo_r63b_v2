@@ -48,7 +48,12 @@ class HabboHandler {
                                             1307,
                                             1205,
                                             1502,
-                                            3065)
+                                            3065,
+                                            1969,
+                                            3858,
+                                            454,
+                                            3095,
+                                            2281)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
