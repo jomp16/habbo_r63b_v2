@@ -63,8 +63,7 @@ object HabboServer : Closeable {
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
-    lateinit var databaseFactory: SessionFactory
-        private set
+    lateinit private var databaseFactory: SessionFactory
 
     // Netty
     lateinit private var serverBootstrap: ServerBootstrap
@@ -210,8 +209,7 @@ object HabboServer : Closeable {
         }
     }
 
-    inline fun <R> database(rollbackTransaction: Boolean = false,
-                            crossinline task: Session.() -> R): R = serverExecutor.submit(
+    fun <R> database(rollbackTransaction: Boolean = false, task: Session.() -> R): R = serverExecutor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->
