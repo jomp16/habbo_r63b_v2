@@ -13,3 +13,6 @@ config.json
 
 # JRebel
 rebel.xml
+
+# MOTD
+motd/

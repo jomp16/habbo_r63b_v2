@@ -32,7 +32,6 @@ class CatalogClubOffersHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(),
-                                       HabboServer.habboGame.catalogManager.catalogClubOffers)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(), HabboServer.habboGame.catalogManager.catalogClubOffers)
     }
 }

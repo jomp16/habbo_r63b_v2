@@ -32,6 +32,6 @@ class UserWardrobesHandler {
         if (!habboSession.authenticated) return
 
         habboSession.sendHabboResponse(Outgoing.USER_WARDROBES, habboSession.habboSubscription.validUserSubscription,
-                                       habboSession.userInformation.wardrobes)
+                habboSession.userInformation.wardrobes)
     }
 }

@@ -28,7 +28,8 @@ import kotlin.comparisons.compareBy
 
 class AStarFinder(
         private val diagonalMovement: DiagonalMovement = DiagonalMovement.ONLY_WHEN_NO_OBSTACLES,
-        private val heuristic: IHeuristic = if (diagonalMovement == DiagonalMovement.NEVER) OctileHeuristic() else ManhattanHeuristic()) : IFinder {
+        private val heuristic: IHeuristic = if (diagonalMovement == DiagonalMovement.NEVER) OctileHeuristic() else ManhattanHeuristic()
+) : IFinder {
 
     override fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int): List<Path> {
         val openList: Queue<Node> = PriorityQueue(compareBy { it.f })
@@ -91,8 +92,7 @@ class AStarFinder(
                 // can be reached with smaller cost from the current node
                 if (!openList.contains(neighbor) || ng < neighbor.g) {
                     neighbor.g = ng
-                    neighbor.h = heuristic.getCost(grid, Math.abs((x - endX).toDouble()).toInt(),
-                                                   Math.abs((y - endY).toDouble().toInt()))
+                    neighbor.h = heuristic.getCost(grid, Math.abs((x - endX).toDouble()).toInt(), Math.abs((y - endY).toDouble().toInt()))
                     neighbor.f = neighbor.g + neighbor.h
                     neighbor.parent = node
 

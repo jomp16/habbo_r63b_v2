@@ -28,9 +28,9 @@ object UserStatsDao {
     fun getUserStats(userId: Int): UserStats {
         val tmp = HabboServer.database {
             select("SELECT * FROM users_stats WHERE user_id = :user_id LIMIT 1",
-                   mapOf(
-                           "user_id" to userId
-                   )
+                    mapOf(
+                            "user_id" to userId
+                    )
             ) {
                 UserStats(
                         it.int("id"),
@@ -59,9 +59,9 @@ object UserStatsDao {
             // no users stats, create it
             HabboServer.database {
                 insertAndGetGeneratedKey("INSERT INTO users_stats (user_id) VALUES (:id)",
-                                         mapOf(
-                                                 "id" to userId
-                                         )
+                        mapOf(
+                                "id" to userId
+                        )
                 )
             }
 

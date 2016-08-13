@@ -19,11 +19,13 @@
 
 package tk.jomp16.habbo.game.user.subscription
 
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.subscription.SubscriptionDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
+import java.time.LocalDate
+import java.time.Period
+import java.time.temporal.ChronoUnit
 
 class HabboSubscription(private val habboSession: HabboSession) {
     var subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
@@ -37,12 +39,12 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun addOrExtend(months: Int) {
-        if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id,
-                                                                                    months.toLong())
+        if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id, months.toLong())
         else SubscriptionDao.extendSubscription(subscription, months.toLong())
 
-        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey(
-                "ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1", 0)
+        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1", 0)
+
+        updateStatus()
     }
 
     fun clearSubscription() {
@@ -52,17 +54,33 @@ class HabboSubscription(private val habboSession: HabboSession) {
 
         subscription = null
 
-        val queuedHabboResponse = QueuedHabboResponse()
+        updateStatus()
+    }
 
-        queuedHabboResponse += Outgoing.USER_RIGHTS to arrayOf(
-                if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+    fun updateStatus() {
+        val active = habboSession.habboSubscription.validUserSubscription
+        var days = 0
+        var months = 0
+        var elapsedDays = 0
+        var minutes = 0
+
+        if (habboSession.habboSubscription.validUserSubscription) {
+            val currentTime = localDateTimeNowWithoutSecondsAndNanos()
+
+            days = ChronoUnit.DAYS.between(currentTime, subscription?.expire).toInt()
+            months = ChronoUnit.MONTHS.between(currentTime, subscription?.expire).toInt()
+            elapsedDays = ChronoUnit.DAYS.between(subscription?.activated, currentTime).toInt()
+            minutes = ChronoUnit.MINUTES.between(currentTime, subscription?.expire).toInt()
+            days = Period.between(LocalDate.now(), LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())).days.toInt()
+
+            if (days == 0) days = 1
+        }
+
+        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, HabboSubscription.CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
+        habboSession.sendHabboResponse(Outgoing.USER_RIGHTS, if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
                 habboSession.userInformation.rank,
                 habboSession.userInformation.ambassador
         )
-
-        queuedHabboResponse += Outgoing.SUBSCRIPTION_STATUS to arrayOf(HabboSubscription.CLUB_TYPE, false, 0, 0, 0, 0)
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }
 
     companion object {

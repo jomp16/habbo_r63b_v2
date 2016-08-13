@@ -36,14 +36,14 @@ class MessengerFriendBarStateHandler {
         val tmp = habboSession.userPreferences.volume.split(',').map { it.toInt() }
 
         habboSession.sendHabboResponse(Outgoing.USER_SETTINGS,
-                                       tmp[0],
-                                       tmp[1],
-                                       tmp[2],
-                                       habboSession.userPreferences.preferOldChat,
-                                       habboSession.userPreferences.ignoreRoomInvite,
-                                       habboSession.userPreferences.disableCameraFollow,
-                                       habboSession.userPreferences.friendBarOpen,
-                                       habboSession.userPreferences.chatColor
+                tmp[0],
+                tmp[1],
+                tmp[2],
+                habboSession.userPreferences.preferOldChat,
+                habboSession.userPreferences.ignoreRoomInvite,
+                habboSession.userPreferences.disableCameraFollow,
+                habboSession.userPreferences.friendBarOpen,
+                habboSession.userPreferences.chatColor
         )
     }
 }

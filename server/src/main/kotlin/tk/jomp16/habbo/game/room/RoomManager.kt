@@ -50,8 +50,7 @@ class RoomManager {
         log.info("Loaded {} rooms!", rooms.size)
     }
 
-    fun createRoom(userId: Int, validSubscription: Boolean, name: String, description: String, model: String,
-                   category: Int, maxUsers: Int, tradeSettings: Int): Room? {
+    fun createRoom(userId: Int, validSubscription: Boolean, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Room? {
         val roomModel = roomModels[model]
 
         if (name.length < 3 || roomModel == null || roomModel.clubOnly && !validSubscription) return null

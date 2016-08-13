@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <!--
   ~ Copyright (C) 2016 jomp16
   ~
@@ -23,8 +21,7 @@
 <Configuration shutdownHook="disable" status="WARN">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout
-                pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
+            <PatternLayout pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
         </Console>
     </Appenders>
     <loggers>
@@ -33,10 +30,9 @@
         </Root>
 
         <Logger name="tk.jomp16" level="trace"/>
-
-        <Logger name="com.github.andrewoma.kwery" level="debug"/>
+        <Logger name="com.github.andrewoma.kwery" level="error"/>
         <Logger name="io.netty" level="error"/>
         <Logger name="com.zaxxer" level="error"/>
-        <Logger name="com.zaxxer" level="error"/>
+        <Logger name="org.reflections" level="error"/>
     </loggers>
 </Configuration>

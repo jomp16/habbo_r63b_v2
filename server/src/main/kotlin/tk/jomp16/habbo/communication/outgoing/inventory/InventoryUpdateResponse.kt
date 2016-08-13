@@ -17,24 +17,15 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.room
+package tk.jomp16.habbo.communication.outgoing.inventory
 
-import tk.jomp16.habbo.communication.HabboRequest
-import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomTriggerItemHandler {
-    @Handler(Incoming.ROOM_TRIGGER_ITEM)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
-        habboSession.currentRoom?.let {
-            val item = it.roomItems[habboRequest.readInt()] ?: return@let
-
-            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession),
-                    habboRequest.readInt())
-        }
+class InventoryUpdateResponse {
+    @Response(Outgoing.INVENTORY_UPDATE)
+    fun response(habboResponse: HabboResponse) {
     }
 }

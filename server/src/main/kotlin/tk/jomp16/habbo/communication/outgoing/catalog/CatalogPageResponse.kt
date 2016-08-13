@@ -44,6 +44,21 @@ class CatalogPageResponse {
                     writeInt(0)
                     writeInt(-1)
                     writeBoolean(false)
+
+                    val imagesSplit = catalogPage.pageTextDetails.split('-')
+
+                    writeInt(imagesSplit.size)
+
+                    imagesSplit.forEachIndexed { i, s ->
+                        val split = s.split("[\\r\\n]+".toRegex()).filterNot { it.isEmpty() }
+
+                        writeInt(i + 1)
+                        writeUTF(if (split.size >= 1) split[0] else "")
+                        writeUTF(if (split.size >= 2) split[1] else "")
+                        writeInt(0)
+                        writeUTF(if (split.size >= 3) split[2] else "")
+                        writeInt(-1)
+                    }
                 }
                 "vip_buy"                 -> {
                     writeUTF("NORMAL")

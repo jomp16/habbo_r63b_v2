@@ -113,16 +113,14 @@ class RoomUser(
                 stopWalking()
             } else {
                 // todo: override, etc
-                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y,
-                                                    objectiveVector2!!.x, objectiveVector2!!.y)
+                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y)
 
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
                     val step = path.first()
 
-                    if (room.roomGamemap.getAbsoluteHeight(step.x, step.y)
-                            - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
+                    if (room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
                         stopWalking()
 
                         return
@@ -155,8 +153,7 @@ class RoomUser(
                 idleCount++
 
                 // check and commit idle state to room
-                if (TimeUnit.MILLISECONDS.toSeconds(
-                        (idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
+                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
             }
         }
     }

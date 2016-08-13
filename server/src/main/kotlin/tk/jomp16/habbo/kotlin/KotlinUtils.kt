@@ -26,8 +26,7 @@ import java.time.LocalDateTime
 
 fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now().withNano(0).withSecond(0)
 
-inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(
-        sizeOuter) { Array(sizeInner, innerInit) }
+inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(sizeOuter) { Array(sizeInner, innerInit) }
 
 fun array2dOfShort(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ShortArray(sizeInner) }
 
@@ -41,8 +40,7 @@ fun array2dOfChar(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { CharArray
 
 fun <E> List<E>.random(): E = this[Utils.random.nextInt(this.size)]
 
-fun urlUserAgent(url: String,
-                 userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {
+fun urlUserAgent(url: String, userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {
     val urlConnection = URL(url).openConnection()
     urlConnection.setRequestProperty("User-Agent", userAgent)
 

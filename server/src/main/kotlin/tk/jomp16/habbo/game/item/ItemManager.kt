@@ -29,9 +29,12 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.urlUserAgent
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
@@ -103,8 +106,7 @@ class ItemManager {
     )
 
     // todo: see if I can improve it
-    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing,
-                       limitedItemData: LimitedItemData?) {
+    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?) {
         habboResponse.apply {
             if (limitedItemData != null) {
                 writeInt(1)
@@ -147,6 +149,22 @@ class ItemManager {
                     writeUTF(extraData)
                 }
             }
+        }
+    }
+
+    fun correctExtradataCatalog(habboSession: HabboSession, extraData: String, furnishing: Furnishing): String? {
+        return when (furnishing.interactionType) {
+            InteractionType.POST_IT       -> "FFFF33"
+            InteractionType.ROOM_EFFECT   -> if (extraData.isEmpty()) "0" else extraData.trim()
+            InteractionType.DIMMER        -> "1,1,1,#000000,255"
+            InteractionType.MANNEQUIN     -> "m${7.toChar()}ch-215-92.lg-3202-1322-73${7.toChar()}Mannequin"
+            InteractionType.BADGE_DISPLAY -> {
+                if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
+
+                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
+            }
+            InteractionType.TROPHY        -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
+            else                          -> ""
         }
     }
 }

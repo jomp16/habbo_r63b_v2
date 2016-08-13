@@ -38,22 +38,22 @@ class HabboHandler {
     private val instances: MutableMap<Class<*>, Any> = HashMap()
 
     val blacklistIds: IntArray = intArrayOf(Incoming.CLIENT_DEBUG,
-                                            Incoming.CLIENT_VARIABLES,
-                                            Incoming.EVENT_TRACKER,
-                                            Incoming.LATENCY_TEST,
-                                            Incoming.SET_USERNAME,
-                                            Incoming.MESSENGER_FRIENDS_UPDATE,
-                                            1476,
-                                            2573,
-                                            349,
-                                            1105,
-                                            2140,
-                                            2544,
-                                            3303,
-                                            2414,
-                                            3652,
-                                            2031,
-                                            334)
+            Incoming.CLIENT_VARIABLES,
+            Incoming.EVENT_TRACKER,
+            Incoming.LATENCY_TEST,
+            Incoming.SET_USERNAME,
+            Incoming.MESSENGER_FRIENDS_UPDATE,
+            1686,
+            3784,
+            1307,
+            1205,
+            1502,
+            3065,
+            1969,
+            3858,
+            454,
+            3095,
+            2281)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
@@ -77,7 +77,7 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             if (!messageHandlers.containsKey(handler.headerId)) messageHandlers += handler.headerId to Pair(clazz,
-                                                                                                            methodHandle)
+                    methodHandle)
         }
 
         // Load outgoing
@@ -92,7 +92,7 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             if (!messageResponses.containsKey(response.headerId)) messageResponses += response.headerId to Pair(clazz,
-                                                                                                                methodHandle)
+                    methodHandle)
         }
 
         largestNameSize = incomingNames.plus(outgoingNames).values.sortedByDescending { it.length }.first().length
@@ -110,12 +110,12 @@ class HabboHandler {
                     methodHandle.invokeWithArguments(clazz, habboSession, it)
                 } catch (e: Exception) {
                     log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId,
-                              incomingNames[habboRequest.headerId])
+                            incomingNames[habboRequest.headerId])
                     log.error("", e)
                 }
             } else if (!blacklistIds.contains(habboRequest.headerId)) {
                 log.warn("Non existent request header ID: {} - {}", habboRequest.headerId,
-                         incomingNames[habboRequest.headerId])
+                        incomingNames[habboRequest.headerId])
             }
         }
     }

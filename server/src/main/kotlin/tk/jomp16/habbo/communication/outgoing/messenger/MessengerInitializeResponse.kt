@@ -31,7 +31,6 @@ class MessengerInitializeResponse {
             writeInt(maxFriends)
             writeInt(300)
             writeInt(800)
-            writeInt(1100)
             writeInt(0) // category count
         }
     }

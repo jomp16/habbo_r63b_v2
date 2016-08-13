@@ -28,6 +28,7 @@ import tk.jomp16.habbo.game.catalog.CatalogManager
 import tk.jomp16.habbo.game.item.ItemManager
 import tk.jomp16.habbo.game.landing.LandingManager
 import tk.jomp16.habbo.game.navigator.NavigatorManager
+import tk.jomp16.habbo.game.permission.PermissionManager
 import tk.jomp16.habbo.game.room.RoomManager
 import tk.jomp16.habbo.util.Utils
 import java.util.concurrent.TimeUnit
@@ -42,6 +43,7 @@ class HabboGame {
     val itemManager: ItemManager
     val catalogManager: CatalogManager
     val navigatorManager: NavigatorManager
+    val permissionManager: PermissionManager
 
     init {
         landingManager = LandingManager()
@@ -49,25 +51,24 @@ class HabboGame {
         itemManager = ItemManager()
         catalogManager = CatalogManager()
         navigatorManager = NavigatorManager()
+        permissionManager = PermissionManager()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                                                        HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                                                            if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
-                                                        }
-                                                    }, 0, 1, TimeUnit.MINUTES)
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+                if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
+            }
+        }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                                                            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                                                                it.rewardUser()
-                                                            }
-                                                        }, 0,
-                                                                       HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(),
-                                                                       TimeUnit.SECONDS)
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+                    it.rewardUser()
+                }
+            }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleAtFixedRate({
-                                                     log.info("RAM usage: {}", Utils.ramUsageString)
-                                                 }, 0, 10, TimeUnit.SECONDS)
+            log.info("RAM usage: {}", Utils.ramUsageString)
+        }, 0, 10, TimeUnit.SECONDS)
     }
 }

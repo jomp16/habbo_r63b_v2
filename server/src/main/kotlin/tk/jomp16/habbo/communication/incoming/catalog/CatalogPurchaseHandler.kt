@@ -23,6 +23,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -36,12 +37,17 @@ class CatalogPurchaseHandler {
         val extraData = habboRequest.readUTF()
         var amount = habboRequest.readInt()
 
-        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
-        val catalogItem = catalogPage.catalogItems.find { it.id == itemId } ?: return
+        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }
 
-        if (amount < 1 || amount > 1 && catalogItem.limited) amount = 1
+        if (catalogPage == null) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+
+            return
+        }
+
+        if (amount < 1/* || amount > 1 && catalogItem.limited*/) amount = 1
         else if (amount > 100) amount = 100
 
-        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogPage, catalogItem, extraData, amount)
+        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogPage, itemId, extraData, amount)
     }
 }

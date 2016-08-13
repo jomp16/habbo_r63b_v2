@@ -108,7 +108,7 @@ class RoomTask : Runnable {
 
                     if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
                         log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id,
-                                  HabboServer.habboConfig.roomTaskConfig.errorThreshold)
+                                HabboServer.habboConfig.roomTaskConfig.errorThreshold)
 
                         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
                     }

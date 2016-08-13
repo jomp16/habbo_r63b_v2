@@ -20,6 +20,7 @@
 package tk.jomp16.habbo.config
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.io.File
 
 data class HabboConfig(
         @JsonProperty("ip")
@@ -44,6 +45,19 @@ data class HabboConfig(
         val timerConfig: TimerConfig,
         @JsonProperty("room_task")
         val roomTaskConfig: RoomTaskConfig,
-        @JsonProperty("motd")
-        val motdConfig: MotdConfig
-)
+        @JsonProperty("motd_enabled")
+        val motdEnabled: Boolean,
+        @JsonProperty("motd_file_path")
+        val motdFilePath: String,
+        @JsonProperty("server_console_figure")
+        val serverConsoleFigure: String
+) {
+    val motdContents: String by lazy {
+        val f = File(motdFilePath)
+
+        when {
+            f.exists() -> f.readLines().filter { !it.startsWith('#') }.joinToString("\n").trim()
+            else       -> ""
+        }
+    }
+}

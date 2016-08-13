@@ -30,6 +30,7 @@ class UserAvailabilityStatusResponse {
         habboResponse.apply {
             writeBoolean(true)
             writeBoolean(false)
+            writeBoolean(true)
         }
     }
 }

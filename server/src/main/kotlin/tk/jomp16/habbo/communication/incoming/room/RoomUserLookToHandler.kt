@@ -41,7 +41,7 @@ class RoomUserLookToHandler {
         }
 
         val rotation = Rotation.calculate(habboSession.roomUser!!.currentVector3.x,
-                                          habboSession.roomUser!!.currentVector3.y, x, y)
+                habboSession.roomUser!!.currentVector3.y, x, y)
 
         var update = false
 

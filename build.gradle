@@ -16,36 +16,47 @@
  * You should have received a copy of the GNU General Public License
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
-
 buildscript {
-    ext.kotlin_version = '1.0.3'
-
     repositories {
-        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0'
-        classpath 'eu.appsatori:gradle-fatjar-plugin:0.3'
+        classpath "com.netflix.nebula:nebula-kotlin-plugin:1.0.3"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.13.0"
+        classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.6"
+        classpath "eu.appsatori:gradle-fatjar-plugin:0.3"
     }
 }
 
 subprojects {
-    apply plugin: 'kotlin'
-    apply plugin: 'com.github.ben-manes.versions'
+    apply plugin: "nebula.kotlin"
+    apply plugin: "com.github.ben-manes.versions"
+    apply plugin: "de.fuerstenau.buildconfig"
+    apply plugin: "eu.appsatori.fatjar"
+    apply plugin: "idea"
 
-    group 'tk.jomp16.habbo'
-    version '1.0-SNAPSHOT'
+    group "tk.jomp16.habbo"
+    version "1.0.0-SNAPSHOT"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
     ext {
-        jackson_version = '2.8.1'
-        netty_version = '4.1.2.Final'
-        log4j2_version = '2.6.2'
-        slf4j_version = '1.7.21'
+        junit_version = "4.12"
+        kotlinx_jdk8 = "0.2"
+        jackson_version = "2.8.1"
+        netty_version = "4.1.2.Final"
+        log4j2_version = "2.6.2"
+        slf4j_version = "1.7.21"
+        kwery_version = "0.13"
+        mysql_version = "6.0.3"
+        hikari_version = "2.4.7"
+        reflections_version = "0.9.10"
+        jasypt_version = "1.9.2"
+        commons_lang_version = "3.4"
     }
 
     repositories {
@@ -53,8 +64,16 @@ subprojects {
     }
 
     dependencies {
-        testCompile 'junit:junit:4.12'
+        testCompile "junit:junit:$junit_version"
 
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:$kotlinx_jdk8"
+    }
+
+    // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
+    idea {
+        module {
+            sourceDirs += file("$buildDir/gen/buildconfig/src/main")
+            generatedSourceDirs += file("$buildDir/gen/buildconfig/src/main")
+        }
     }
 }

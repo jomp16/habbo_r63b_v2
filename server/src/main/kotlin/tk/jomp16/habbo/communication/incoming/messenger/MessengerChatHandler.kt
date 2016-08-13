@@ -43,7 +43,7 @@ class MessengerChatHandler {
 
         if (userId <= 0 || message.isBlank() || !habboSession.habboMessenger.friends.containsKey(userId)) return
 
-        if (userId == Int.MAX_VALUE) {
+        if (userId == Int.MAX_VALUE && habboSession.hasPermission("acc_server_console")) {
             // server console!
 
             val args = message.split(' ')
@@ -56,17 +56,14 @@ class MessengerChatHandler {
                 habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
 
                 if (args[0] == "load" && args.size >= 2) {
-                    val jsOutput = habboSession.scriptEngine.eval(
-                            InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString() ?: "null"
+                    val jsOutput = habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString() ?: "null"
 
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, jsOutput, 0)
                 } else if (args[0] == "ram") {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, Utils.ramUsageString, 0)
                 } else if (args[0] == "uptime") {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE,
-                                                   DurationFormatUtils.formatDurationWords(
-                                                           ManagementFactory.getRuntimeMXBean().uptime, true,
-                                                           false) + " up!", 0)
+                            DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false) + " up!", 0)
                 } else {
                     val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
 
