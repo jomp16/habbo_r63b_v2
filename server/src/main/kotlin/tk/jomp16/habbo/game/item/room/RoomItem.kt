@@ -83,8 +83,7 @@ data class RoomItem(
                 writeUTF(id.toString())
                 writeInt(furnishing.spriteId)
                 writeUTF(wallPosition)
-                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(
-                        ' ')[0] else extraData)
+                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
 
             writeInt(-1)
@@ -94,8 +93,7 @@ data class RoomItem(
     }
 
     val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width,
-                                                                   furnishing.height)
+        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
 
     fun update(updateDb: Boolean, updateClient: Boolean) {
         if (updateClient) {

@@ -58,8 +58,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
         log.info("Disconnecting user {}", username)
 
-        if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn(
-                "Disconnection of {} unsuccessful!", username)
+        if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn("Disconnection of {} unsuccessful!", username)
         else log.info("Disconnection of user {} successful!", username)
     }
 
@@ -76,6 +75,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             if (evt.state() === IdleState.READER_IDLE) {
                 ctx.close()
             } else if (evt.state() === IdleState.WRITER_IDLE) {
+                // todo
                 //ctx.writeAndFlush(PingMessage())
             }
         }

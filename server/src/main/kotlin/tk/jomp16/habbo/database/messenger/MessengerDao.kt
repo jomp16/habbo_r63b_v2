@@ -33,17 +33,17 @@ import java.util.*
 object MessengerDao {
     fun getFriends(userId: Int) = HabboServer.database {
         select("SELECT id, user_two_id AS user_id FROM messenger_friendships WHERE user_one_id = :user_one_id",
-               mapOf(
-                       "user_one_id" to userId
-               )
+                mapOf(
+                        "user_one_id" to userId
+                )
         ) { createMessengerFriend(it) }
     }
 
     fun getRequests(toUserId: Int) = HabboServer.database {
         select("SELECT id, from_id FROM messenger_requests WHERE to_id = :to_id",
-               mapOf(
-                       "to_id" to toUserId
-               )
+                mapOf(
+                        "to_id" to toUserId
+                )
         ) {
             MessengerRequest(
                     it.int("id"),
@@ -54,10 +54,10 @@ object MessengerDao {
 
     fun searchFriends(userId: Int, username: String) = HabboServer.database {
         select("SELECT id AS user_id FROM users WHERE username LIKE :username AND NOT id = :user_id LIMIT 50",
-               mapOf(
-                       "username" to "$username%",
-                       "user_id" to userId
-               )
+                mapOf(
+                        "username" to "$username%",
+                        "user_id" to userId
+                )
         ) { createMessengerFriend(it) }
     }
 
@@ -88,9 +88,9 @@ object MessengerDao {
     fun removeAllRequests(toUserId: Int) {
         HabboServer.database {
             update("DELETE FROM messenger_requests WHERE to_id = :to_id",
-                   mapOf(
-                           "to_id" to toUserId
-                   )
+                    mapOf(
+                            "to_id" to toUserId
+                    )
             )
         }
     }
@@ -98,11 +98,11 @@ object MessengerDao {
     fun removeRequests(requestIds: List<Int>) {
         HabboServer.database {
             batchUpdate("DELETE FROM messenger_requests WHERE id = :id",
-                        requestIds.map {
-                            mapOf(
-                                    "id" to it
-                            )
-                        }
+                    requestIds.map {
+                        mapOf(
+                                "id" to it
+                        )
+                    }
             )
         }
     }
@@ -136,10 +136,10 @@ object MessengerDao {
     fun addRequest(fromUserId: Int, toUserId: Int): MessengerRequest {
         val id = HabboServer.database {
             insertAndGetGeneratedKey("INSERT INTO messenger_requests (to_id, from_id) VALUES (:to_id, :from_id)",
-                                     mapOf(
-                                             "to_id" to toUserId,
-                                             "from_id" to fromUserId
-                                     )
+                    mapOf(
+                            "to_id" to toUserId,
+                            "from_id" to fromUserId
+                    )
             )
         }
 
@@ -151,9 +151,9 @@ object MessengerDao {
 
         HabboServer.database {
             select("SELECT * FROM messenger_offline_messages WHERE to_id = :to_id",
-                   mapOf(
-                           "to_id" to toUserId
-                   )
+                    mapOf(
+                            "to_id" to toUserId
+                    )
             ) {
                 offlineMessages += Triple(
                         it.int("from_id"),
@@ -165,9 +165,9 @@ object MessengerDao {
 
             if (offlineMessages.isNotEmpty()) {
                 update("DELETE FROM messenger_offline_messages WHERE to_id = :to_id",
-                       mapOf(
-                               "to_id" to toUserId
-                       )
+                        mapOf(
+                                "to_id" to toUserId
+                        )
                 )
             }
         }

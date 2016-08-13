@@ -46,6 +46,6 @@ class InventoryUpdateBadgesHandler {
         habboSession.habboBadge.saveAll()
 
         habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id,
-                                       habboSession.habboBadge.badges.values)
+                habboSession.habboBadge.badges.values)
     }
 }

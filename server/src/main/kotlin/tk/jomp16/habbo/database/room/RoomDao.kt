@@ -39,9 +39,9 @@ object RoomDao {
 
     fun getRoomData(roomId: Int) = HabboServer.database {
         select("SELECT * FROM rooms WHERE id = :room_id",
-               mapOf(
-                       "room_id" to roomId
-               )
+                mapOf(
+                        "room_id" to roomId
+                )
         ) {
             getRoomData(it)
         }.first()
@@ -118,9 +118,9 @@ object RoomDao {
 
     fun getRights(roomId: Int) = HabboServer.database {
         select("SELECT id, user_id FROM rooms_rights WHERE room_id = :room_id",
-               mapOf(
-                       "room_id" to roomId
-               )
+                mapOf(
+                        "room_id" to roomId
+                )
         ) {
             RightData(
                     it.int("id"),

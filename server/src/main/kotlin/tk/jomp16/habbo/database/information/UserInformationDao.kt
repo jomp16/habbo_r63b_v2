@@ -20,25 +20,28 @@
 package tk.jomp16.habbo.database.information
 
 import com.github.andrewoma.kwery.core.Row
+import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
 
 object UserInformationDao {
-    private val serverConsoleInformation = UserInformation(
-            Int.MAX_VALUE,
-            "SERVER CONSOLE",
-            "",
-            "habbo_r63b console",
-            1,
-            0,
-            0,
-            0,
-            "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62",
-            "M",
-            "habbo_r63b console!",
-            0,
-            false
-    )
+    private val serverConsoleInformation by lazy {
+        UserInformation(
+                Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
+                "SERVER SCRIPTING CONSOLE", // name
+                "", // email, empty
+                "${BuildConfig.NAME} scripting console.", // realname
+                0, // rank
+                0, // credits
+                0, // pixels
+                0, // vip points
+                HabboServer.habboConfig.serverConsoleFigure, // figure
+                "M", // gender
+                "Version: ${BuildConfig.VERSION}", // motto
+                0, // homeroom
+                false // vip
+        )
+    }
 
     fun getUserInformationById(id: Int): UserInformation? {
         if (id == Int.MAX_VALUE) {
@@ -46,9 +49,9 @@ object UserInformationDao {
         } else {
             return HabboServer.database {
                 select("SELECT * FROM users WHERE id = :id LIMIT 1",
-                       mapOf(
-                               "id" to id
-                       )
+                        mapOf(
+                                "id" to id
+                        )
                 ) { getUserInformation(it) }.firstOrNull()
             }
         }
@@ -56,17 +59,17 @@ object UserInformationDao {
 
     fun getUserInformationByAuthTicket(ssoTicket: String) = HabboServer.database {
         select("SELECT * FROM users WHERE auth_ticket = :ticket LIMIT 1",
-               mapOf(
-                       "ticket" to ssoTicket
-               )
+                mapOf(
+                        "ticket" to ssoTicket
+                )
         ) { getUserInformation(it) }.firstOrNull()
     }
 
     fun getUserInformationByUsername(username: String): UserInformation? = HabboServer.database {
         select("SELECT * FROM users WHERE username = :username",
-               mapOf(
-                       "username" to username
-               )
+                mapOf(
+                        "username" to username
+                )
         ) { getUserInformation(it) }.firstOrNull()
     }
 

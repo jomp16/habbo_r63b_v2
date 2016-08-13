@@ -51,6 +51,6 @@ class HandshakeSecretKeyHandler {
         }
 
         habboSession.sendHabboResponse(Outgoing.SECRET_KEY,
-                                       HabboServer.habboEncryptionHandler.rsaDiffieHellmanPublicKey)
+                HabboServer.habboEncryptionHandler.rsaDiffieHellmanPublicKey)
     }
 }

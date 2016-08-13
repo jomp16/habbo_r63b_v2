@@ -26,9 +26,9 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 object BadgeDao {
     fun getBadges(userId: Int) = HabboServer.database {
         select("SELECT * FROM users_badges WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
+                mapOf(
+                        "user_id" to userId
+                )
         ) {
             Badge(
                     it.int("id"),
@@ -41,9 +41,9 @@ object BadgeDao {
     fun removeBadge(id: Int) {
         HabboServer.database {
             update("DELETE FROM users_badges WHERE id = :id",
-                   mapOf(
-                           "id" to id
-                   )
+                    mapOf(
+                            "id" to id
+                    )
             )
         }
     }
@@ -64,12 +64,12 @@ object BadgeDao {
     fun saveBadges(badges: Collection<Badge>) {
         HabboServer.database {
             batchUpdate("UPDATE users_badges SET slot = :slot WHERE id = :id",
-                        badges.map {
-                            mapOf(
-                                    "slot" to it.slot,
-                                    "id" to it.id
-                            )
-                        }
+                    badges.map {
+                        mapOf(
+                                "slot" to it.slot,
+                                "id" to it.id
+                        )
+                    }
             )
         }
     }

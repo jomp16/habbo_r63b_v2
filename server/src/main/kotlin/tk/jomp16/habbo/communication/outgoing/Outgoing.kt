@@ -107,4 +107,7 @@ object Outgoing {
     const val CATALOG_HABBO_CLUB_PAGE = 2387 // HabboClubOffersMessageComposer
     const val ROOM_USER_TYPING = 3991 // UserTypingMessageComposer
     const val ROOM_USER_DANCE = 1707 // DanceMessageComposer
+    const val CATALOG_PURCHASE_ERROR = 3266 // PurchaseErrorMessageComposer
+    const val INVENTORY_UPDATE = 489 // FurniListUpdateMessageComposer
+    const val CATALOG_PURCHASE_OK = 2445 // PurchaseOKMessageComposer
 }

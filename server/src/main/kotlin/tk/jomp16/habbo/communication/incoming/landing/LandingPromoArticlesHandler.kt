@@ -33,6 +33,6 @@ class LandingPromoArticlesHandler {
         if (!habboSession.authenticated) return
 
         habboSession.sendHabboResponse(Outgoing.LANDING_PROMO_ARTICLES,
-                                       HabboServer.habboGame.landingManager.landingPromos)
+                HabboServer.habboGame.landingManager.landingPromos)
     }
 }

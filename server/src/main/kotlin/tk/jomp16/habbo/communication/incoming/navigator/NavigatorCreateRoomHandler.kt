@@ -43,9 +43,9 @@ class NavigatorCreateRoomHandler {
         val tradeSettings = habboRequest.readInt() // 2 = All can trade, 1 = owner only, 0 = no trading.
 
         val room = HabboServer.habboGame.roomManager.createRoom(habboSession.userInformation.id,
-                                                                habboSession.habboSubscription.validUserSubscription,
-                                                                name, description, model, category, maxUsers,
-                                                                tradeSettings) ?: return
+                habboSession.habboSubscription.validUserSubscription,
+                name, description, model, category, maxUsers,
+                tradeSettings) ?: return
 
         habboSession.rooms.add(room)
 

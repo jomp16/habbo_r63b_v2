@@ -80,7 +80,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false): Boolean {
         if (habboSession == null) return false
 
-        val isOwner = roomData.ownerId == habboSession.userInformation.id /*&& habboSession.hasPermission("acc_any_room_owner")*/
+        val isOwner = roomData.ownerId == habboSession.userInformation.id && habboSession.hasPermission("acc_any_room_owner")
 
         // todo: add groups
         return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id }
@@ -97,7 +97,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             it.addTask(this, UserJoinRoomTask(
                     RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir,
-                             roomModel.doorDir)))
+                            roomModel.doorDir)))
         }
     }
 
@@ -187,8 +187,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
-        HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width,
-                                                           roomItem.furnishing.height).forEach {
+        HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
             if (!roomGamemap.grid.isWalkable(roomGamemap.grid, it.x, it.y)) {
                 // cannot set item, because at least one tile is blocked
 
@@ -204,8 +203,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomItems += roomItem.id to roomItem
         }
 
-        roomItem.position = Vector3(position.x, position.y,
-                                    Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
+        roomItem.position = Vector3(position.x, position.y, Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
 
         roomGamemap.addRoomItem(roomItem)
 

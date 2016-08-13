@@ -17,12 +17,18 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.kotlin
+package tk.jomp16.habbo.communication.outgoing.catalog
 
-/**
- * Created with IntelliJ IDEA.
- *
- * @author jomp16
- * Date: 21/04/16
- * Time: 12:25
- */
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogPurchaseErrorResponse {
+    @Response(Outgoing.CATALOG_PURCHASE_ERROR)
+    fun response(habboResponse: HabboResponse, errorCode: Int) {
+        habboResponse.apply {
+            writeInt(errorCode)
+        }
+    }
+}

@@ -25,26 +25,26 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboMessenger(private val habboSession: HabboSession) {
-    val friends: MutableMap<Int, MessengerFriend> = HashMap(
-            MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId })
-    val requests: MutableMap<Int, MessengerRequest> = HashMap(
-            MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId })
+    val friends: MutableMap<Int, MessengerFriend> = HashMap()
+    val requests: MutableMap<Int, MessengerRequest> = HashMap()
 
     var initializedMessenger: Boolean = false
 
     init {
-        if (habboSession.userInformation.rank >= 7) {
+        if (habboSession.hasPermission("acc_server_console")) {
             // server console!
             friends += Int.MAX_VALUE to MessengerFriend(Int.MAX_VALUE)
         }
+
+        friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
+        requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
     }
+
     fun notifyFriends() {
         friends.values.filter {
             it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false
         }.forEach {
-            it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE,
-                                               listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
-                                               0)
+            it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
         }
     }
 }

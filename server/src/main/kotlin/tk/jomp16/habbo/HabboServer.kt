@@ -57,13 +57,12 @@ import java.util.concurrent.ScheduledExecutorService
 object HabboServer : Closeable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val VERSION = "1.0-SNAPSHOT"
-
     lateinit var habboConfig: HabboConfig
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
-    lateinit private var databaseFactory: SessionFactory
+    lateinit var databaseFactory: SessionFactory
+        private set
 
     // Netty
     lateinit private var serverBootstrap: ServerBootstrap
@@ -101,8 +100,7 @@ object HabboServer : Closeable {
 
     fun init() {
         // Instantiate thread executors
-        serverScheduledExecutor = Executors.newScheduledThreadPool(
-                Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
+        serverScheduledExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
         serverExecutor = Executors.newCachedThreadPool()
 
         javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine {
@@ -110,13 +108,12 @@ object HabboServer : Closeable {
         }
 
         log.info("")
-        log.info("Version: $VERSION.")
+        log.info("Version: ${BuildConfig.VERSION}.")
         log.info("By jomp16 and Lucas.")
-        log.info(
-                "Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
+        log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See http://www.gnu.org/licenses/")
         log.info("")
-        log.info("Loading Habbo R63B emulator...")
+        log.info("Loading ${BuildConfig.NAME} emulator...")
 
         try {
             // Initialize database
@@ -145,8 +142,7 @@ object HabboServer : Closeable {
         // Load HabboGame...
         log.info("Loading Habbo game...")
 
-        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d,
-                                                        habboConfig.rsaConfig.e)
+        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
         habboHandler = HabboHandler()
         habboSessionManager = HabboSessionManager()
 
@@ -167,8 +163,7 @@ object HabboServer : Closeable {
                 val habboNettyHandler = HabboNettyHandler()
 
                 serverBootstrap.group(bossGroup, workerGroup)
-                        .channel(
-                                if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
+                        .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
                                 socketChannel.pipeline().addLast(IdleStateHandler(60, 30, 0))
@@ -191,11 +186,11 @@ object HabboServer : Closeable {
 
                 if (channelFuture.isDone) {
                     if (channelFuture.isSuccess) {
-                        log.info("Habbo R63B server started on ip {} port {}!", habboConfig.ip, habboConfig.port)
+                        log.info("${BuildConfig.NAME} server started on ip {} port {}!", habboConfig.ip, habboConfig.port)
 
                         channelFuture.channel().closeFuture().awaitUninterruptibly()
                     } else {
-                        log.error("Error starting Habbo R63B server!", channelFuture.cause().message)
+                        log.error("Error starting ${BuildConfig.NAME} server!", channelFuture.cause().message)
 
                         System.exit(1)
                     }
@@ -209,7 +204,7 @@ object HabboServer : Closeable {
         }
     }
 
-    fun <R> database(rollbackTransaction: Boolean = false, task: Session.() -> R): R = serverExecutor.submit(
+    inline fun <R> database(rollbackTransaction: Boolean = false, crossinline task: Session.() -> R): R = serverExecutor.submit(
             Callable {
                 databaseFactory.use { session ->
                     session.transaction { transaction ->
@@ -223,7 +218,7 @@ object HabboServer : Closeable {
 
     override fun close() {
         if (started) {
-            log.info("Shutting down Habbo R63B server...")
+            log.info("Shutting down ${BuildConfig.NAME} server...")
 
             // Start Netty
             log.debug("Shutting down Netty server...")

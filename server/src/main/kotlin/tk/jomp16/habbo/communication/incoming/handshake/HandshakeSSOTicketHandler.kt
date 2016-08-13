@@ -21,6 +21,7 @@ package tk.jomp16.habbo.communication.incoming.handshake
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
@@ -88,8 +89,13 @@ class HandshakeSSOTicketHandler {
         // CfhTopicsInitComposer
         // BadgeDefinitionsComposer
 
-        if (HabboServer.habboConfig.motdConfig.enabled) {
-            habboSession.sendNotification(NotificationType.MOTD_ALERT, HabboServer.habboConfig.motdConfig.message)
+        if (HabboServer.habboConfig.motdEnabled) {
+            val motd = HabboServer.habboConfig.motdContents
+                    .replace("\$server_name", BuildConfig.NAME)
+                    .replace("\$server_version", BuildConfig.VERSION)
+                    .replace("\$username", habboSession.userInformation.username)
+
+            habboSession.sendNotification(NotificationType.MOTD_ALERT, motd)
         } // MOTDNotificationComposer
     }
 }

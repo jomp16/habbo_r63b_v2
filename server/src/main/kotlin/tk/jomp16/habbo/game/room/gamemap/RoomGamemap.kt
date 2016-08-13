@@ -31,12 +31,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class RoomGamemap(private val room: Room) {
-    private val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) {
-        BooleanArray(room.roomModel.mapSizeY)
-    }
-    private val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) {
-        BooleanArray(room.roomModel.mapSizeY)
-    }
+    private val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
+    private val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     private val roomUserMap: MutableMap<Vector2, MutableList<RoomUser>> = ConcurrentHashMap()
     private val roomItemMap: MutableMap<Vector2, MutableList<RoomItem>> = ConcurrentHashMap()
 

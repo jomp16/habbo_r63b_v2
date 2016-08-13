@@ -26,8 +26,11 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboBadge(private val habboSession: HabboSession) {
-    val badges: MutableMap<String, Badge> = HashMap(
-            BadgeDao.getBadges(habboSession.userInformation.id).associateBy { it.code })
+    val badges: MutableMap<String, Badge> = HashMap()
+
+    init {
+        badges += BadgeDao.getBadges(habboSession.userInformation.id).associateBy { it.code }
+    }
 
     fun resetSlots() {
         badges.values.forEach { it.slot = 0 }

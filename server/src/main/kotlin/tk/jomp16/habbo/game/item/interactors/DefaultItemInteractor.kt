@@ -29,7 +29,7 @@ class DefaultItemInteractor : ItemInteractor() {
         if (!hasRights) return
 
         val modes = roomItem.furnishing.interactionModesCount - 1
-        var currentMode = roomItem.extraData.toInt()
+        var currentMode = if (roomItem.extraData.isEmpty()) 0 else roomItem.extraData.toInt()
 
         if (modes == 0) return
 

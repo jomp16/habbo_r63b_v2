@@ -24,9 +24,9 @@ import tk.jomp16.habbo.HabboServer
 object TagDao {
     fun getTags(userId: Int) = HabboServer.database {
         select("SELECT * FROM users_tags WHERE user_id = :user_id",
-               mapOf(
-                       "user_id" to userId
-               )
+                mapOf(
+                        "user_id" to userId
+                )
         ) {
             it.string("tag")
         }

@@ -17,10 +17,8 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'eu.appsatori.fatjar'
-
 dependencies {
-    compile project(':server')
+    compile project(":server")
 
     compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"

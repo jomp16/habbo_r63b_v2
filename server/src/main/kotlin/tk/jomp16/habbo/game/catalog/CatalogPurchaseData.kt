@@ -17,13 +17,12 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.config
+package tk.jomp16.habbo.game.catalog
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import tk.jomp16.habbo.game.item.Furnishing
 
-data class MotdConfig(
-        @JsonProperty("enabled")
-        val enabled: Boolean,
-        @JsonProperty("message")
-        val message: String
+data class CatalogPurchaseData(
+        val furnishing: Furnishing,
+        val extraData: String,
+        val limitedId: Int
 )

@@ -17,4 +17,4 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ':launcher', ':pathfinding', ':server'
+include ":launcher", ":pathfinding", ":server"

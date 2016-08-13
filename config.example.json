@@ -37,8 +37,7 @@
     "save_item_seconds": 300,
     "empty_room_seconds": 120
   },
-  "motd": {
-    "enabled": false,
-    "message": "Hello World!"
-  }
+  "motd_enabled": true,
+  "motd_file_path": "motd/welcome.txt",
+  "server_console_figure": "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62"
 }
