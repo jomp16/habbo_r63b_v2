@@ -26,7 +26,7 @@ buildscript {
     dependencies {
         classpath "com.netflix.nebula:nebula-kotlin-plugin:1.0.3"
         classpath "com.github.ben-manes:gradle-versions-plugin:0.13.0"
-        classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.6"
+        classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.7"
         classpath "eu.appsatori:gradle-fatjar-plugin:0.3"
     }
 }

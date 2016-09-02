@@ -95,9 +95,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
 
-            it.addTask(this, UserJoinRoomTask(
-                    RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir,
-                            roomModel.doorDir)))
+            it.addTask(this, UserJoinRoomTask(RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir, roomModel.doorDir)))
         }
     }
 

@@ -109,7 +109,7 @@ class RoomUser(
         }
 
         if (walking) {
-            if (objectiveVector2!!.equals(currentVector3.vector2)) {
+            if (objectiveVector2!! == currentVector3.vector2) {
                 stopWalking()
             } else {
                 // todo: override, etc
@@ -130,7 +130,7 @@ class RoomUser(
 
                     val vector2 = Vector2(step.x, step.y)
 
-                    if (vector2.equals(room.roomModel.doorVector3.vector2)) {
+                    if (vector2 == room.roomModel.doorVector3.vector2) {
                         room.removeUser(this, true, false)
 
                         return
