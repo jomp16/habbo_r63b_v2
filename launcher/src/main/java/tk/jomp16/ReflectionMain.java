@@ -27,6 +27,7 @@ import tk.jomp16.habbo.kotlin.HabboServerUtilsKt;
 import java.io.File;
 import java.lang.reflect.Method;
 
+@SuppressWarnings("unchecked")
 class ReflectionMain {
     public static void main(String[] args) throws Exception {
         final ObjectMapper objectMapper = new ObjectMapper().registerModule(new KotlinModule());

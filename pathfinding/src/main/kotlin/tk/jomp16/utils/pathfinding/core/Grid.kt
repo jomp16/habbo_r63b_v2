@@ -24,7 +24,7 @@ package tk.jomp16.utils.pathfinding.core
  *
  * @param width: The width
  * @param height: The height
- * @param isWalkable: a Kotlin function with param x, y and which returns a boolean
+ * @param isWalkable: a Kotlin function with param grid, x, y and returns a boolean
  */
 class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int) -> Boolean = Grid::isInside) {
     private val nodes: Array<Array<Node>> = Array(height) { y -> Array(width, { x -> Node(x, y) }) }

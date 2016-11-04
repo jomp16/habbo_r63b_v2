@@ -39,10 +39,6 @@ class AStarFinder(
         val endNode = grid.getNodeAt(endX, endY)
         var node: Node
         var neighbors: List<Node>
-        var x: Int
-        var y: Int
-
-        var ng: Double
 
         // set the 'g' and 'f' value of the start node to be 0
         startNode.g = 0.toDouble()
@@ -81,12 +77,12 @@ class AStarFinder(
             neighbors.forEachIndexed { i, neighbor ->
                 if (closedList.contains(neighbor)) return@forEachIndexed
 
-                x = neighbor.x
-                y = neighbor.y
+                val x = neighbor.x
+                val y = neighbor.y
 
                 // get the distance between current node and the neighbor
                 // and calculate the next g score
-                ng = node.g + if (x - node.x == 0 || y - node.y == 0) 1.toDouble() else Math.sqrt(2.toDouble())
+                val ng = node.g + if (x - node.x == 0 || y - node.y == 0) 1.toDouble() else Math.sqrt(2.toDouble())
 
                 // check if the neighbor has not been inspected yet, or
                 // can be reached with smaller cost from the current node
