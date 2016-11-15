@@ -22,6 +22,7 @@ package tk.jomp16.utils.pathfinding.core.heuristics
 import tk.jomp16.utils.pathfinding.core.Grid
 import tk.jomp16.utils.pathfinding.core.IHeuristic
 
+@Suppress("unused")
 class EuclideanHeuristic : IHeuristic {
     override fun getCost(grid: Grid, dx: Int, dy: Int) = Math.sqrt((dx * dx + dy * dy).toDouble())
 }

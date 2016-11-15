@@ -17,13 +17,19 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-group "tk.jomp16"
+package tk.jomp16.habbo.communication.incoming.setting
 
-dependencies {
-    compile project(":server")
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.user.HabboSession
 
-    compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
-    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
+@Suppress("unused", "UNUSED_PARAMETER")
+class SettingDataHandler {
+    @Handler(Incoming.USER_SETTINGS)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
 
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+        habboSession.sendSettings()
+    }
 }

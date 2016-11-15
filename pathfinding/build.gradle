@@ -17,6 +17,8 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
+group "tk.jomp16.utils.pathfinding"
+
 dependencies {
     compile "org.slf4j:slf4j-api:$slf4j_version"
 }

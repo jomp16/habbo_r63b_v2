@@ -22,36 +22,19 @@ package tk.jomp16.habbo.communication.incoming.room
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.game.room.tasks.ChatType
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserChatTalkHandler {
-    @Handler(Incoming.ROOM_USER_CHAT, Incoming.ROOM_USER_SHOUT)
+class RoomItemMoveWallHandler {
+    @Handler(Incoming.ROOM_MOVE_WALL_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
-        val (message, bubble) = parse(habboRequest) ?: return
+        val itemId = habboRequest.readInt()
+        val wallData = habboRequest.readUTF().split(' ')
 
-        // todo: check if user can use bubble
-        // todo: check if user is muted
-        // todo: word filter
+        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.roomUser?.chat(message, bubble, ChatType.CHAT)
-    }
-
-    private fun parse(habboRequest: HabboRequest): Pair<String, Int>? {
-        var message = habboRequest.readUTF()
-
-        if (message.isEmpty()) return null
-        if (message.length > 100) message = message.substring(0, 100)
-
-        if (message.startsWith(':')) {
-            // todo: process command if available
-        }
-
-        val bubble = habboRequest.readInt()
-
-        return Pair(message, bubble)
+        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.userInformation.username)
     }
 }

@@ -30,11 +30,8 @@ enum class ItemType(val type: String) {
 
     companion object {
         fun fromString(value: String): ItemType {
-            for (itemType in values()) {
-                if (itemType.type == value) return itemType
-            }
 
-            return FLOOR
+            return values().firstOrNull { it.type == value } ?: FLOOR
         }
     }
 }

@@ -21,8 +21,6 @@ package tk.jomp16.habbo.game
 
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.catalog.CatalogManager
 import tk.jomp16.habbo.game.item.ItemManager
@@ -30,12 +28,10 @@ import tk.jomp16.habbo.game.landing.LandingManager
 import tk.jomp16.habbo.game.navigator.NavigatorManager
 import tk.jomp16.habbo.game.permission.PermissionManager
 import tk.jomp16.habbo.game.room.RoomManager
-import tk.jomp16.habbo.util.Utils
+import tk.jomp16.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
 
     val landingManager: LandingManager
@@ -54,21 +50,14 @@ class HabboGame {
         permissionManager = PermissionManager()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                if (!it.habboSubscription.validUserSubscription) it.habboSubscription.clearSubscription()
-            }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.habboSubscription.validUserSubscription }
+                    .forEach { it.habboSubscription.clearSubscription() }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                    it.rewardUser()
-                }
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach(HabboSession::rewardUser)
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
-
-        HabboServer.serverScheduledExecutor.scheduleAtFixedRate({
-            log.info("RAM usage: {}", Utils.ramUsageString)
-        }, 0, 10, TimeUnit.SECONDS)
     }
 }

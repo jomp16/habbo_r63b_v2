@@ -25,8 +25,8 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserChatResponse {
-    @Response(Outgoing.ROOM_USER_CHAT)
-    fun responseChat(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
+    @Response(Outgoing.ROOM_USER_CHAT, Outgoing.ROOM_USER_SHOUT)
+    fun response(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
         habboResponse.apply {
             writeInt(virtualId)
             writeUTF(message)
@@ -35,10 +35,5 @@ class RoomUserChatResponse {
             writeInt(0)
             writeInt(-1)
         }
-    }
-
-    @Response(Outgoing.ROOM_USER_SHOUT)
-    fun responseShout(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
-        responseChat(habboResponse, virtualId, message, emoticon, bubble)
     }
 }

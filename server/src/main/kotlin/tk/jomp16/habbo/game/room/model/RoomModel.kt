@@ -47,7 +47,7 @@ data class RoomModel(
                     floorHeight[x][y] = -1
                 } else if (Character.isLetterOrDigit(square)) {
                     squareStates[x][y] = SquareState.OPEN
-                    floorHeight[x][y] = if (Character.isDigit(square)) square.toString().toShort() else (letters.indexOf(square.toChar()) + 10).toString().toShort()
+                    floorHeight[x][y] = if (Character.isDigit(square)) square.toString().toShort() else (letters.indexOf(square) + 10).toString().toShort()
                 }
             }
         }

@@ -32,6 +32,7 @@ object Rotation {
         else               -> 0
     }
 
+    @Suppress("unused")
     fun calculateInverse(x1: Int, y1: Int, x2: Int, y2: Int): Int {
         val rot = calculate(x1, y1, x2, y2)
 

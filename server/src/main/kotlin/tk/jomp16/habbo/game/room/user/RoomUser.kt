@@ -140,7 +140,7 @@ class RoomUser(
 
                     val z = room.roomGamemap.getAbsoluteHeight(step.x, step.y)
 
-                    addStatus("mv", "${step.x},${step.y},${z.toString()}")
+                    addStatus("mv", "${step.x},${step.y},$z")
 
                     bodyRotation = Rotation.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
                     headRotation = bodyRotation

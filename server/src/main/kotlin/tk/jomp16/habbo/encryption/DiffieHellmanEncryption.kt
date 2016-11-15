@@ -34,12 +34,12 @@ class DiffieHellmanEncryption {
 
     private fun initialize() {
         while (publicKey == BigInteger.ZERO) {
-            prime = BigInteger.probablePrime(bitLength, Utils.random)
-            generator = BigInteger.probablePrime(bitLength, Utils.random)
+            prime = BigInteger.probablePrime(BIT_LENGTH, Utils.random)
+            generator = BigInteger.probablePrime(BIT_LENGTH, Utils.random)
 
             if (!prime.isProbablePrime(10) || !generator.isProbablePrime(10)) continue
 
-            val bytes = ByteArray(bitLength / 8)
+            val bytes = ByteArray(BIT_LENGTH / 8)
 
             Utils.random.nextBytes(bytes)
 
@@ -59,6 +59,6 @@ class DiffieHellmanEncryption {
     fun calculateSharedKey(m: BigInteger): BigInteger = m.modPow(privateKey, prime)
 
     companion object {
-        const val bitLength = 32
+        const val BIT_LENGTH = 32
     }
 }

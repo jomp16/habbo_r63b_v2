@@ -38,8 +38,6 @@ class GridTest {
                 Assert.assertTrue("should set all nodes walkable attribute", grid.isWalkable(grid, x, y))
             }
         }
-
-        //println(AStarFinder().findPath(grid, 1, 1, 9, 15))
     }
 
     @Test
@@ -66,8 +64,7 @@ class GridTest {
 
         (0..height - 1).forEach { y ->
             (0..width - 1).forEach { x ->
-                Assert.assertEquals("should return correct answer for position validity query", matrix[y][x] == 1,
-                        grid.isWalkable(grid, x, y))
+                Assert.assertEquals("should return correct answer for position validity query", matrix[y][x] == 1, grid.isWalkable(grid, x, y))
             }
         }
 
@@ -85,19 +82,13 @@ class GridTest {
         )
 
         asserts.forEach {
-            Assert.assertEquals("should return correct answer for position validity query", it[2] as Boolean,
-                    grid.isInside(it[0] as Int, it[1] as Int))
+            Assert.assertEquals("should return correct answer for position validity query", it[2] as Boolean, grid.isInside(it[0] as Int, it[1] as Int))
         }
 
         invertResult = true
 
-        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(0, 2)),
-                grid.getNeighbors(grid.getNodeAt(0, 1), DiagonalMovement.NEVER))
-        Assert.assertEquals("should return correct neighbors",
-                listOf(grid.getNodeAt(1, 0), grid.getNodeAt(2, 1), grid.getNodeAt(3, 1)),
-                grid.getNeighbors(grid.getNodeAt(2, 0),
-                        DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE).sortedWith(
-                        Comparator { a, b -> a.x * 100 + a.y - b.x * 100 - b.y })
-        )
+        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(0, 2)), grid.getNeighbors(grid.getNodeAt(0, 1), DiagonalMovement.NEVER))
+        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(1, 0), grid.getNodeAt(2, 1), grid.getNodeAt(3, 1)), grid.getNeighbors(grid.getNodeAt(2, 0), DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE)
+                .sortedWith(Comparator { a, b -> a.x * 100 + a.y - b.x * 100 - b.y }))
     }
 }

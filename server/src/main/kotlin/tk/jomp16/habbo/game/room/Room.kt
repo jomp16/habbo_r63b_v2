@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.database.room.RoomDao
+import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.gamemap.RoomGamemap
@@ -114,7 +115,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
         roomUsers.remove(roomUser.virtualID)
 
-        roomTask?.let { it.addTask(this, UserPartRoomTask(roomUser)) }
+        roomTask?.addTask(this, UserPartRoomTask(roomUser))
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -197,8 +198,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomGamemap.removeRoomItem(roomItem)
 
             // todo: remove user statuses too
-        } else {
-            roomItems += roomItem.id to roomItem
         }
 
         roomItem.position = Vector3(position.x, position.y, Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
@@ -210,12 +209,52 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         // todo: roller
 
         if (newItem) {
-            sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, roomItem, userName)
+            roomItems.put(roomItem.id, roomItem)
+
+            roomItem.addToRoom(this, true, true, userName)
         } else {
-            sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, roomItem)
+            roomItem.update(true, true)
         }
 
         addItemToSave(roomItem)
+
+        return true
+    }
+
+    fun setWallItem(roomItem: RoomItem, wallData: List<String>, userName: String): Boolean {
+        if (wallData.size != 3 || !wallData[0].startsWith(":w=") || !wallData[1].startsWith("l=") || wallData[2] != "r" && wallData[2] != "l") return false
+
+        val newItem = !roomItems.containsKey(roomItem.id)
+
+        val wBit = wallData[0].substring(3, wallData[0].length)
+        val lBit = wallData[1].substring(2, wallData[1].length)
+
+        if (!wBit.contains(",") || !lBit.contains(",")) return false
+
+        val wBitSplit = wBit.split(",".toRegex())
+        val lBitSplit = lBit.split(",".toRegex())
+
+        val w1 = wBitSplit[0].toInt()
+        val w2 = wBitSplit[1].toInt()
+        val l1 = lBitSplit[0].toInt()
+        val l2 = lBitSplit[1].toInt()
+
+        if (w1 < 0 || w2 < 0 || l1 < 0 || l2 < 0 || w1 > 200 || w2 > 200 || l1 > 200 || l2 > 200) return false
+
+        roomItem.wallPosition = ":w=$w1,$w2 l=$l1,$l2 ${wallData[2]}"
+
+        // todo: furni interactor
+        if (newItem) {
+            if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
+                // todo: dimmer
+            }
+
+            roomItems.put(roomItem.id, roomItem)
+
+            roomItem.addToRoom(this, true, true, userName)
+        } else {
+            roomItem.update(true, true)
+        }
 
         return true
     }

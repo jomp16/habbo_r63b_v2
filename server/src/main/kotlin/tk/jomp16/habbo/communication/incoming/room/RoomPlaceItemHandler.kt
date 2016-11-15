@@ -46,7 +46,7 @@ class RoomPlaceItemHandler {
         val itemId = rawDataSplit[0].toInt()
         val userItem = habboSession.habboInventory.items[itemId] ?: return
 
-        // todo: remove item from inventory plox
+        val success: Boolean
 
         if (userItem.furnishing.type == ItemType.WALL) {
             // parse wall data
@@ -56,9 +56,7 @@ class RoomPlaceItemHandler {
 
             val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
 
-            println(roomItem)
-
-            // todo: place wall item
+            success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.userInformation.username)
         } else {
             // parse floor data
             if (rawDataSplit.size < 4) return
@@ -69,9 +67,9 @@ class RoomPlaceItemHandler {
 
             val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
 
-            if (habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.userInformation.username)) {
-                habboSession.habboInventory.removeItem(userItem)
-            }
+            success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.userInformation.username)
         }
+
+        if (success) habboSession.habboInventory.removeItem(userItem)
     }
 }

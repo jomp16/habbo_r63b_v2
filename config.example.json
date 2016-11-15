@@ -16,21 +16,21 @@
   "rc4": true,
   "furnidata_xml": "https://swf.habbixed.tk/gamedata/furnidata_xml/furnidata_xml.php?RELEASE=15_03_2016",
   "reward": {
-    "credits": 16,
-    "credits_max": 0,
-    "pixels": 16,
-    "pixels_max": 0,
-    "vip_points": 16,
-    "vip_points_max": 0
+    "credits": 10,
+    "credits_max": -1,
+    "pixels": 10,
+    "pixels_max": -1,
+    "vip_points": 10,
+    "vip_points_max": -1
   },
   "auto_join_room": false,
-  "scheduler_multiplier": 4,
   "timer": {
     "credits_seconds": 10,
     "room_idle_seconds": 150,
     "roller": 3
   },
   "room_task": {
+    "threads": 5,
     "max_room_per_thread": 100,
     "delay_milliseconds": 500,
     "error_threshold": 3,

@@ -42,7 +42,7 @@ object SubscriptionDao {
 
     fun createSubscription(userId: Int, months: Long) = HabboServer.database {
         val activated = localDateTimeNowWithoutSecondsAndNanos()
-        val expire = localDateTimeNowWithoutSecondsAndNanos().plusMonths(months.toLong())
+        val expire = localDateTimeNowWithoutSecondsAndNanos().plusMonths(months)
 
         val id = insertAndGetGeneratedKey(
                 "INSERT INTO users_subscriptions (user_id, activated, expire) VALUES (:user_id, :activated, :expire)",
@@ -60,7 +60,7 @@ object SubscriptionDao {
         if (subscription == null) return
 
         HabboServer.database {
-            subscription.expire = subscription.expire.plusMonths(months.toLong())
+            subscription.expire = subscription.expire.plusMonths(months)
 
             update("UPDATE users_subscriptions SET expire = :expire WHERE id = :id",
                     mapOf(

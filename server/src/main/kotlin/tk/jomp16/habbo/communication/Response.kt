@@ -21,4 +21,4 @@ package tk.jomp16.habbo.communication
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class Response(val headerId: Int)
+annotation class Response(vararg val headerIds: Int)

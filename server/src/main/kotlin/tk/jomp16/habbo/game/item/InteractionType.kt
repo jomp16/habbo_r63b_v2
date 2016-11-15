@@ -84,11 +84,7 @@ enum class InteractionType(val type: String) {
         fun fromString(value: String): InteractionType {
             if (value.isBlank()) return DEFAULT
 
-            for (interactionType in values()) {
-                if (interactionType.type == value) return interactionType
-            }
-
-            return DEFAULT
+            return values().firstOrNull { it.type == value } ?: DEFAULT
         }
     }
 }

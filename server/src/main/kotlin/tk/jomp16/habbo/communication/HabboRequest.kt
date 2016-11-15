@@ -29,6 +29,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 
+    @Suppress("unused")
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
     fun readInt(): Int = if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()

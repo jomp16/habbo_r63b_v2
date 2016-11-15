@@ -59,6 +59,7 @@ class HabboBadge(private val habboSession: HabboSession) {
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }
 
+    @Suppress("unused")
     fun removeBadge(badgeCode: String) {
         val badge = badges.remove(badgeCode) ?: return
 

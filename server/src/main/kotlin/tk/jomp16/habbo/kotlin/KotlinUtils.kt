@@ -30,14 +30,6 @@ inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline inne
 
 fun array2dOfShort(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ShortArray(sizeInner) }
 
-fun array2dOfInt(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { IntArray(sizeInner) }
-
-fun array2dOfLong(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { LongArray(sizeInner) }
-
-fun array2dOfByte(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ByteArray(sizeInner) }
-
-fun array2dOfChar(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { CharArray(sizeInner) }
-
 fun <E> List<E>.random(): E = this[Utils.random.nextInt(this.size)]
 
 fun urlUserAgent(url: String, userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {

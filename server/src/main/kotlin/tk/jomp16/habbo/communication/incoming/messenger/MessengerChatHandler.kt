@@ -48,7 +48,7 @@ class MessengerChatHandler {
 
             val args = message.split(' ')
 
-            if (args.size >= 1) {
+            if (args.isNotEmpty()) {
                 habboSession.scriptEngine.put("habboSession", habboSession)
                 habboSession.scriptEngine.put("habboServer", HabboServer)
                 habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)

@@ -40,7 +40,7 @@ data class RoomItem(
         val limitedId: Int,
         var position: Vector3,
         var rotation: Int,
-        val wallPosition: String,
+        var wallPosition: String,
         val limitedItemData: LimitedItemData?
 ) : IHabboResponseSerialize {
     val furnishing: Furnishing
@@ -67,6 +67,9 @@ data class RoomItem(
     val totalHeight: Double
         get() = position.z + height
 
+    val affectedTiles: List<Vector2>
+        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
+
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             if (furnishing.type == ItemType.FLOOR) {
@@ -92,9 +95,6 @@ data class RoomItem(
         }
     }
 
-    val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
-
     fun update(updateDb: Boolean, updateClient: Boolean) {
         if (updateClient) {
             when {
@@ -104,5 +104,18 @@ data class RoomItem(
         }
 
         if (updateDb) room.addItemToSave(this)
+    }
+
+    fun addToRoom(room: Room, updateDb: Boolean, updateClient: Boolean, userName: String) {
+        when {
+            furnishing.type == ItemType.FLOOR -> {
+                if (updateDb) room.addItemToSave(this)
+                if (updateClient) room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
+            }
+            furnishing.type == ItemType.WALL  -> {
+                if (updateDb) room.addItemToSave(this)
+                if (updateClient) room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
+            }
+        }
     }
 }

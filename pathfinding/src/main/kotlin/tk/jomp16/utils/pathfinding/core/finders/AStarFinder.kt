@@ -30,9 +30,8 @@ class AStarFinder(
         private val diagonalMovement: DiagonalMovement = DiagonalMovement.ONLY_WHEN_NO_OBSTACLES,
         private val heuristic: IHeuristic = if (diagonalMovement == DiagonalMovement.NEVER) OctileHeuristic() else ManhattanHeuristic()
 ) : IFinder {
-
     override fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int): List<Path> {
-        val openList: Queue<Node> = PriorityQueue(compareBy { it.f })
+        val openList: Queue<Node> = PriorityQueue(compareBy(Node::f))
         val closedList: MutableList<Node> = mutableListOf()
 
         val startNode = grid.getNodeAt(startX, startY)
@@ -74,8 +73,8 @@ class AStarFinder(
             // get neighbours of the current node
             neighbors = grid.getNeighbors(node, diagonalMovement)
 
-            neighbors.forEachIndexed { i, neighbor ->
-                if (closedList.contains(neighbor)) return@forEachIndexed
+            neighbors.forEach { neighbor ->
+                if (closedList.contains(neighbor)) return@forEach
 
                 val x = neighbor.x
                 val y = neighbor.y

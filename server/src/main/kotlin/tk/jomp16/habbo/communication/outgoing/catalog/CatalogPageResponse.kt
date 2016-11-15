@@ -32,9 +32,9 @@ class CatalogPageResponse {
             writeInt(catalogPage.id)
 
             when (catalogPage.pageLayout) {
-                "frontpage"               -> {
+                "frontpage4"               -> {
                     writeUTF("NORMAL")
-                    writeUTF("frontpage4")
+                    writeUTF(catalogPage.pageLayout)
                     writeInt(2)
                     writeUTF(catalogPage.pageHeadline)
                     writeUTF(catalogPage.pageTeaser)
@@ -50,10 +50,10 @@ class CatalogPageResponse {
                     writeInt(imagesSplit.size)
 
                     imagesSplit.forEachIndexed { i, s ->
-                        val split = s.split("[\\r\\n]+".toRegex()).filterNot { it.isEmpty() }
+                        val split = s.split("[\\r\\n]+".toRegex()).filterNot(String::isEmpty)
 
                         writeInt(i + 1)
-                        writeUTF(if (split.size >= 1) split[0] else "")
+                        writeUTF(if (split.isNotEmpty()) split[0] else "")
                         writeUTF(if (split.size >= 2) split[1] else "")
                         writeInt(0)
                         writeUTF(if (split.size >= 3) split[2] else "")

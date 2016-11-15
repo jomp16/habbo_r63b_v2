@@ -26,7 +26,7 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloorItemPlacedResponse {
-    @Response(Outgoing.ROOM_ITEM_ADDED)
+    @Response(Outgoing.ROOM_ITEM_ADDED, Outgoing.ROOM_WALL_ITEM_ADDED)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem, userName: String) {
         habboResponse.apply {
             serialize(roomItem)

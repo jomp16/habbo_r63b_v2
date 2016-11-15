@@ -43,17 +43,16 @@ class HabboHandler {
             Incoming.LATENCY_TEST,
             Incoming.SET_USERNAME,
             Incoming.MESSENGER_FRIENDS_UPDATE,
-            1686,
-            3784,
-            1307,
-            1205,
-            1502,
-            3065,
-            1969,
-            3858,
-            454,
-            3095,
-            2281)
+            Incoming.GAME_LISTING,
+            Incoming.INITIALIZE_GAME_CENTER,
+            1885,
+            3275,
+            2320,
+            3571,
+            2357,
+            3988,
+            1518,
+            2830)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
@@ -76,8 +75,9 @@ class HabboHandler {
 
             val methodHandle = lookup.unreflect(it)
 
-            if (!messageHandlers.containsKey(handler.headerId)) messageHandlers += handler.headerId to Pair(clazz,
-                    methodHandle)
+            handler.headerIds.forEach { headerId ->
+                if (!messageHandlers.containsKey(headerId)) messageHandlers += headerId to Pair(clazz, methodHandle)
+            }
         }
 
         // Load outgoing
@@ -91,8 +91,9 @@ class HabboHandler {
 
             val methodHandle = lookup.unreflect(it)
 
-            if (!messageResponses.containsKey(response.headerId)) messageResponses += response.headerId to Pair(clazz,
-                    methodHandle)
+            response.headerIds.forEach { headerId ->
+                if (!messageResponses.containsKey(headerId)) messageResponses += headerId to Pair(clazz, methodHandle)
+            }
         }
 
         largestNameSize = incomingNames.plus(outgoingNames).values.sortedByDescending { it.length }.first().length
@@ -109,13 +110,11 @@ class HabboHandler {
 
                     methodHandle.invokeWithArguments(clazz, habboSession, it)
                 } catch (e: Exception) {
-                    log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId,
-                            incomingNames[habboRequest.headerId])
+                    log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
                     log.error("", e)
                 }
             } else if (!blacklistIds.contains(habboRequest.headerId)) {
-                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId,
-                        incomingNames[habboRequest.headerId])
+                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
             }
         }
     }

@@ -26,17 +26,10 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserTypingHandler {
-    @Handler(Incoming.ROOM_USER_START_TYPING)
+    @Handler(Incoming.ROOM_USER_START_TYPING, Incoming.ROOM_USER_STOP_TYPING)
     fun handleStartTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
-        habboSession.roomUser?.typing = true
-    }
-
-    @Handler(Incoming.ROOM_USER_STOP_TYPING)
-    fun handleStopTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
-        habboSession.roomUser?.typing = false
+        habboSession.roomUser?.typing = habboRequest.headerId == Incoming.ROOM_USER_START_TYPING
     }
 }

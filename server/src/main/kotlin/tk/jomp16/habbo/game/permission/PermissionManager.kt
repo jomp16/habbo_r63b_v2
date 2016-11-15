@@ -72,7 +72,7 @@ class PermissionManager {
 
     private fun userHasCustomPermission(userId: Int) = this.permissionsUser.containsKey(userId)
 
-    fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.filter { it == permission }.size > 0
+    fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.filter { it == permission }.isNotEmpty()
 
-    fun rankHasPermission(rankId: Int, permission: String) = this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.filter { it == permission }.size > 0
+    fun rankHasPermission(rankId: Int, permission: String) = this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.filter { it == permission }.isNotEmpty()
 }

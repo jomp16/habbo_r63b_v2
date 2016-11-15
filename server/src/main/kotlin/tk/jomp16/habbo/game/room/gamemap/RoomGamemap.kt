@@ -57,7 +57,7 @@ class RoomGamemap(private val room: Room) {
             val roomUsers: MutableList<RoomUser> = ArrayList()
             roomUsers.add(roomUser)
 
-            roomUserMap.put(vector2, roomUsers)
+            roomUserMap += vector2 to roomUsers
         } else if (!roomUserMap[vector2]!!.contains(roomUser)) {
             roomUserMap[vector2]?.add(roomUser)
         }
@@ -83,7 +83,7 @@ class RoomGamemap(private val room: Room) {
             val roomItems: MutableList<RoomItem> = ArrayList()
             roomItems.add(roomItem)
 
-            roomItemMap.put(vector2, roomItems)
+            roomItemMap += vector2 to roomItems
         } else if (!roomItemMap[vector2]!!.contains(roomItem)) {
             roomItemMap[vector2]?.add(roomItem)
         }

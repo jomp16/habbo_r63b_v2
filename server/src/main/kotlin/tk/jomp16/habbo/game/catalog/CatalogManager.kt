@@ -261,4 +261,22 @@ class CatalogManager {
             habboSession.habboBadge.addBadge(catalogItem.badge)
         }
     }
+
+    fun redeemVoucher(habboSession: HabboSession, voucherCode: String) {
+        // todo
+        if (voucherCode == "full" && habboSession.hasPermission("cmd_catalog_voucher_full")) {
+            habboSession.userInformation.credits = Int.MAX_VALUE
+            habboSession.userInformation.pixels = Int.MAX_VALUE
+            if (habboSession.userInformation.vip) habboSession.userInformation.vipPoints = Int.MAX_VALUE
+
+            habboSession.updateAllCurrencies()
+
+            habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEMED, "", "")
+
+            return
+        }
+
+        // todo: add a voucher table and redeem
+        habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, 0)
+    }
 }

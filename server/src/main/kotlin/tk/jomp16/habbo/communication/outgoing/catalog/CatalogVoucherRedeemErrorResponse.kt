@@ -17,13 +17,19 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
-group "tk.jomp16"
+package tk.jomp16.habbo.communication.outgoing.catalog
 
-dependencies {
-    compile project(":server")
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-    compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
-    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
-
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogVoucherRedeemErrorResponse {
+    // errorCode: 0 = not valid, 1 = technical error, 3 = redeem from website
+    @Response(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR)
+    fun response(habboResponse: HabboResponse, errorCode: Int) {
+        habboResponse.apply {
+            writeUTF(errorCode.toString())
+        }
+    }
 }

@@ -17,6 +17,8 @@
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
 
+group "tk.jomp16.habbo"
+
 dependencies {
     compile project(":pathfinding")
 
@@ -46,5 +48,5 @@ dependencies {
 }
 
 buildConfig {
-    appName = "habbo_r63b"
+    appName = "Habbo R63Bv2"
 }

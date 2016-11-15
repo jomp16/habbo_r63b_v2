@@ -39,8 +39,6 @@ data class HabboConfig(
         val rewardConfig: RewardConfig,
         @JsonProperty("auto_join_room")
         val autoJoinRoom: Boolean,
-        @JsonProperty("scheduler_multiplier")
-        val schedulerMultiplier: Int,
         @JsonProperty("timer")
         val timerConfig: TimerConfig,
         @JsonProperty("room_task")

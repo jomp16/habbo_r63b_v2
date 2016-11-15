@@ -22,6 +22,8 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RoomTaskConfig(
+        @JsonProperty("threads")
+        val threads: Int,
         @JsonProperty("max_room_per_thread")
         val maxRoomPerThread: Int,
         @JsonProperty("delay_milliseconds")

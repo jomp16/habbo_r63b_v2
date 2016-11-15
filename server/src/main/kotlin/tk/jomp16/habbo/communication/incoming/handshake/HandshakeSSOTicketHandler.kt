@@ -30,7 +30,6 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -41,14 +40,12 @@ class HandshakeSSOTicketHandler {
         if (!habboSession.authenticate(habboRequest.readUTF())) {
             log.info("Unauthenticated user!")
 
-            HabboServer.serverScheduledExecutor.schedule({ habboSession.channel.disconnect() }, 10, TimeUnit.SECONDS)
+            habboSession.channel.disconnect()
 
             return
         }
 
         log.info("{} logged in!", habboSession.userInformation.username)
-
-        val tmp = habboSession.userPreferences.volume.split(',').map { it.toInt() }
 
         val queuedHabboResponse = QueuedHabboResponse()
 
@@ -70,17 +67,6 @@ class HandshakeSSOTicketHandler {
                 habboSession.userStats.achievementScore
         ) // AchievementScoreComposer
         queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf() // BuildersClubMembershipComposer
-
-        queuedHabboResponse += Outgoing.USER_SETTINGS to arrayOf(
-                tmp[0],
-                tmp[1],
-                tmp[2],
-                habboSession.userPreferences.preferOldChat,
-                habboSession.userPreferences.ignoreRoomInvite,
-                habboSession.userPreferences.disableCameraFollow,
-                habboSession.userPreferences.friendBarOpen,
-                habboSession.userPreferences.chatColor
-        ) // SoundSettingsComposer
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
 

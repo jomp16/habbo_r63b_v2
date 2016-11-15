@@ -42,6 +42,7 @@ fun Session.batchInsertAndGetGeneratedKeys(sql: String, parametersList: List<Map
 
 fun Row.localDateTime(name: String) = localDateTimeOrNull(name)!!
 
+@Suppress("unused")
 fun Row.localDate(name: String) = localDateOrNull(name)!!
 
 fun Row.localDateTimeOrNull(name: String): LocalDateTime? {

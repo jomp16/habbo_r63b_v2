@@ -95,17 +95,15 @@ object HabboServer : Closeable {
         }
 
     init {
-        Runtime.getRuntime().addShutdownHook(Thread() { close() })
+        Runtime.getRuntime().addShutdownHook(Thread { close() })
     }
 
     fun init() {
         // Instantiate thread executors
-        serverScheduledExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * habboConfig.schedulerMultiplier + 3)
+        serverScheduledExecutor = Executors.newScheduledThreadPool(2 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
         serverExecutor = Executors.newCachedThreadPool()
 
-        javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine {
-            log.info(it)
-        }
+        javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine { log.info(it) }
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")

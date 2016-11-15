@@ -93,7 +93,7 @@ object CatalogDao {
             CatalogDeal(
                     it.int("id"),
                     it.string("item_names").split(','),
-                    it.string("amounts").split(',').map { it.toInt() }
+                    it.string("amounts").split(',').map(String::toInt)
             )
         }
     }

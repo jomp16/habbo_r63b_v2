@@ -16,19 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with habbo_r63b. If not, see <http://www.gnu.org/licenses/>.
  */
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
 
-    dependencies {
-        classpath "com.netflix.nebula:nebula-kotlin-plugin:1.0.4"
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.13.0"
-        classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.7"
-        classpath "eu.appsatori:gradle-fatjar-plugin:0.3"
-    }
+plugins {
+    id "nebula.kotlin" version "1.0.5" apply false
+    id "com.github.ben-manes.versions" version "0.13.0" apply false
+    id "de.fuerstenau.buildconfig" version "1.1.7" apply false
+    id "eu.appsatori.fatjar" version "0.3" apply false
 }
 
 subprojects {
@@ -38,7 +31,6 @@ subprojects {
     apply plugin: "eu.appsatori.fatjar"
     apply plugin: "idea"
 
-    group "tk.jomp16.habbo"
     version "1.0.0-SNAPSHOT"
 
     sourceCompatibility = JavaVersion.VERSION_1_8

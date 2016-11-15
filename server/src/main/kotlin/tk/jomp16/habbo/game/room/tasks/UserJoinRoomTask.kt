@@ -31,7 +31,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
         val queuedHabboResponse = QueuedHabboResponse()
 
-        room.roomUsers.put(roomUser.virtualID, roomUser)
+        room.roomUsers += roomUser.virtualID to roomUser
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         roomUser.habboSession?.let {

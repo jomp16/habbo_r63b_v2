@@ -129,6 +129,21 @@ class HabboSession(val channel: Channel) : Closeable {
         sendHabboResponse(Outgoing.SUPER_NOTIFICATION, type, strings)
     }
 
+    fun sendSettings() {
+        val tmp = userPreferences.volume.split(',').map(String::toInt)
+
+        sendHabboResponse(Outgoing.USER_SETTINGS,
+                tmp[0],
+                tmp[1],
+                tmp[2],
+                userPreferences.preferOldChat,
+                userPreferences.ignoreRoomInvite,
+                userPreferences.disableCameraFollow,
+                userPreferences.friendBarOpen,
+                userPreferences.chatColor
+        )
+    }
+
     fun hasPermission(permission: String) = HabboServer.habboGame.permissionManager.userHasPermission(userInformation.id, permission)
             || HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
 
@@ -176,39 +191,28 @@ class HabboSession(val channel: Channel) : Closeable {
     fun rewardUser() {
         val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
 
-        var updatePixels = false
         var updateCredits = false
 
         if (LocalDateTime.now().isAfter(localDateTime)) {
-            if (userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax) {
-                userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
+            userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
+            userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
+            if (userInformation.vip) userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
 
-                if (userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
+            userStats.creditsLastUpdate = LocalDateTime.now()
 
-                updateCredits = true
-            }
+            // todo: halp me
+            updateCredits = true
+        }
 
-            if (userInformation.pixels < HabboServer.habboConfig.rewardConfig.pixelsMax) {
-                userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
+        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
+        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
+        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
 
-                if (userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
+        if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
+        if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
+        if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
 
-                updatePixels = true
-            }
-
-            if (userInformation.vip && userInformation.vipPoints < HabboServer.habboConfig.rewardConfig.vipPointsMax) {
-                userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
-
-                if (userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
-
-                updatePixels = true
-            }
-
-            if (updateCredits || updatePixels) userStats.creditsLastUpdate = LocalDateTime.now()
-            if (!alreadySentPurse || updateCredits && updatePixels) updateAllCurrencies()
-            else if (updateCredits) sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
-            else if (updatePixels) sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
-        } else if (!alreadySentPurse) updateAllCurrencies()
+        if (alreadySentPurse || updateCredits) updateAllCurrencies()
     }
 
     fun updateAllCurrencies() {

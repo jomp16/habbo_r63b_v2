@@ -55,6 +55,7 @@ class RSAEncryption(n: String, d: String, e: String) {
         }
     }
 
+    @Suppress("unused")
     fun encrypt(src: ByteArray): ByteArray {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, publicKey)
@@ -75,6 +76,7 @@ class RSAEncryption(n: String, d: String, e: String) {
         }
     }
 
+    @Suppress("unused")
     fun decrypt(src: ByteArray): ByteArray {
         try {
             cipher.init(Cipher.DECRYPT_MODE, publicKey)
