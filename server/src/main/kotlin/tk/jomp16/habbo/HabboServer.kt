@@ -123,7 +123,7 @@ object HabboServer : Closeable {
 
             log.info("Database initialized!")
         } catch (e: HikariPool.PoolInitializationException) {
-            log.error("Couldn't connect to database! Error: {}", e.message)
+            log.error("Couldn't connect to database! Error: {}", e)
 
             System.exit(1)
         }
@@ -188,7 +188,7 @@ object HabboServer : Closeable {
 
                         channelFuture.channel().closeFuture().awaitUninterruptibly()
                     } else {
-                        log.error("Error starting ${BuildConfig.NAME} server!", channelFuture.cause().message)
+                        log.error("Error starting ${BuildConfig.NAME} server!", channelFuture.cause())
 
                         System.exit(1)
                     }
