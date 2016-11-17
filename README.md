@@ -18,4 +18,4 @@ Pull requests and stars are always welcome. For bugs and feature requests, [plea
 
 Copyright (C) 2016 [jomp16](https://git.jomp16.tk/).
 
-Licensed under the GPLv3 license.
+Licensed under the GPLv3 license. See [LICENSE](LICENSE)
