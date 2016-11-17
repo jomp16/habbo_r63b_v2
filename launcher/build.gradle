@@ -22,8 +22,12 @@ group "tk.jomp16"
 dependencies {
     compile project(":server")
 
+    //noinspection GrUnresolvedAccess
     compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
+
+    //noinspection GrUnresolvedAccess
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
 
+    //noinspection GrUnresolvedAccess
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
 }

@@ -17,11 +17,15 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import org.ajoberstar.grgit.Grgit
+import java.time.Instant
+
 plugins {
-    id "nebula.kotlin" version "1.0.5" apply false
+    id "nebula.kotlin" version "1.0.5-2" apply false
     id "com.github.ben-manes.versions" version "0.13.0" apply false
     id "de.fuerstenau.buildconfig" version "1.1.7" apply false
     id "eu.appsatori.fatjar" version "0.3" apply false
+    id "org.ajoberstar.grgit" version "1.6.0"
 }
 
 subprojects {
@@ -31,12 +35,12 @@ subprojects {
     apply plugin: "eu.appsatori.fatjar"
     apply plugin: "idea"
 
-    version "1.0.0-SNAPSHOT"
-
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-
     ext {
+        //noinspection GrUnresolvedAccess, GrDeprecatedAPIUsage
+        grgit = Grgit.open(project.rootDir)
+        //noinspection GrUnresolvedAccess
+        gitRevision = grgit.head().abbreviatedId
+
         junit_version = "4.12"
         kotlinx_jdk8 = "0.3"
         jackson_version = "2.8.4"
@@ -51,14 +55,27 @@ subprojects {
         commons_lang_version = "3.5"
     }
 
+    //noinspection GrUnresolvedAccess
+    version "0.1.0-SNAPSHOT+$gitRevision"
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
     repositories {
         jcenter()
     }
 
     dependencies {
+        //noinspection GrUnresolvedAccess
         testCompile "junit:junit:$junit_version"
 
+        //noinspection GrUnresolvedAccess
         compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:$kotlinx_jdk8"
+    }
+
+    buildConfig {
+        //noinspection GrUnresolvedAccess
+        buildConfigField "java.time.LocalDateTime", "BUILD_DATE", "java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(${Instant.now().getEpochSecond()}), java.time.ZoneId.of(\"UTC\"))"
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs

@@ -18,7 +18,9 @@
  */
 
 group "tk.jomp16.utils.pathfinding"
+version = "0.1.0-SNAPSHOT"
 
 dependencies {
+    //noinspection GrUnresolvedAccess
     compile "org.slf4j:slf4j-api:$slf4j_version"
 }
