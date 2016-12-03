@@ -290,10 +290,7 @@ class CatalogManager {
         }
 
         if (catalogItem.limited) {
-            // send new data to everyone logged in
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
-
-            // and save new limited sell to database
+            // save new limited sell to database
             CatalogDao.updateLimitedSells(catalogItem)
         }
     }
