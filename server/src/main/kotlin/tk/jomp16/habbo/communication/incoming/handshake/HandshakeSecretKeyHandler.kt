@@ -50,7 +50,6 @@ class HandshakeSecretKeyHandler {
             habboSession.rc4Encryption = RC4Encryption(sharedKey.toByteArray())
         }
 
-        habboSession.sendHabboResponse(Outgoing.SECRET_KEY,
-                HabboServer.habboEncryptionHandler.rsaDiffieHellmanPublicKey)
+        habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.rsaDiffieHellmanPublicKey)
     }
 }
