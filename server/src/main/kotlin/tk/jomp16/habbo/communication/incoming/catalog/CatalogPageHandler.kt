@@ -35,7 +35,7 @@ class CatalogPageHandler {
         val pageId = habboRequest.readInt()
         val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
 
-        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !(habboSession.userInformation.vip && habboSession.habboSubscription.validUserSubscription)) {
+        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.codename.startsWith("category_") || catalogPage.clubOnly && !(habboSession.userInformation.vip && habboSession.habboSubscription.validUserSubscription)) {
             return
         }
 
