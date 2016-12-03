@@ -35,10 +35,6 @@ class CatalogOfferHandler {
         val catalogItemId = habboRequest.readInt()
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogItemId } ?: return
 
-        if (catalogItemId == habboSession.lastSentOffer) return
-
-        habboSession.lastSentOffer = catalogItemId
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
     }
 }
