@@ -43,7 +43,7 @@ class NavigatorInitializeHandler {
                 arrayOf<Room>()
         ) // NavigatorLiftedRoomsComposer
         queuedHabboResponse += Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES to arrayOf(
-                HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.map { "category__" + it }.plus(
+                HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.map { "category__" + it.caption }.plus(
                         listOf(
                                 "new_ads",
                                 "friend_finding",
