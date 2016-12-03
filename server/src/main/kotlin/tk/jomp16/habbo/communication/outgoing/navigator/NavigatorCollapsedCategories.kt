@@ -26,9 +26,11 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorCollapsedCategories {
     @Response(Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES)
-    fun response(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse, categories: Collection<String>) {
         habboResponse.apply {
-            writeInt(0)
+            writeInt(categories.size)
+
+            categories.forEach { writeUTF(it) }
         }
     }
 }
