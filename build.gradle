@@ -46,6 +46,8 @@ subprojects {
         //noinspection GrUnresolvedAccess, GrDeprecatedAPIUsage
         grgit = Grgit.open(project.rootDir)
         //noinspection GrUnresolvedAccess
+        gitCommits = grgit.log(includes: ['HEAD']).size()
+        //noinspection GrUnresolvedAccess
         gitRevision = grgit.head().abbreviatedId
         //noinspection GrUnresolvedAccess
         gitRevisionLong = grgit.head().id
@@ -65,7 +67,7 @@ subprojects {
     }
 
     //noinspection GrUnresolvedAccess
-    version "0.1.0-SNAPSHOT+$gitRevision"
+    version "0.1.0-SNAPSHOT+r$gitCommits.$gitRevision"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
