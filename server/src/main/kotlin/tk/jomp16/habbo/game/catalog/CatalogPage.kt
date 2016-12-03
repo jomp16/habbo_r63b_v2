@@ -54,7 +54,7 @@ data class CatalogPage(
 
             writeBoolean(visible)
             writeInt(iconImage)
-            writeInt(id)
+            writeInt(if (pageLayout == "category") -1 else id)
             writeUTF(codename)
             writeUTF(caption)
 
