@@ -62,8 +62,7 @@ class MessengerChatHandler {
                 } else if (args[0] == "ram") {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, Utils.ramUsageString, 0)
                 } else if (args[0] == "uptime") {
-                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE,
-                            DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false) + " up!", 0)
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false) + " up!", 0)
                 } else {
                     val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
 

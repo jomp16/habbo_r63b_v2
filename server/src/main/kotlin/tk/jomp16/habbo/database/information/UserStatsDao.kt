@@ -23,6 +23,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserStats
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
+import java.time.LocalDateTime
 
 object UserStatsDao {
     fun getUserStats(userId: Int): UserStats {
@@ -70,5 +71,27 @@ object UserStatsDao {
         }
 
         return tmp
+    }
+
+    fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now()) {
+        HabboServer.database {
+            update("UPDATE users_stats SET last_online = :last_online, credits_last_update = :credits_last_update, " +
+                    "favorite_group = :favorite_group, online_seconds = :online_seconds, respect = :respect, " +
+                    "daily_respect_points = :daily_respect_points, daily_pet_respect_points = :daily_pet_respect_points, " +
+                    "respect_last_update = :respect_last_update, marketplace_tickets = :marketplace_tickets WHERE id = :id",
+                    mapOf(
+                            "last_online" to lastOnline,
+                            "credits_last_update" to userStats.creditsLastUpdate,
+                            "favorite_group" to userStats.favoriteGroup,
+                            "online_seconds" to userStats.totalOnlineSeconds,
+                            "respect" to userStats.respect,
+                            "daily_respect_points" to userStats.dailyRespectPoints,
+                            "daily_pet_respect_points" to userStats.dailyPetRespectPoints,
+                            "respect_last_update" to userStats.respectLastUpdate,
+                            "marketplace_tickets" to userStats.marketplaceTickets,
+                            "id" to userStats.id
+                    )
+            )
+        }
     }
 }

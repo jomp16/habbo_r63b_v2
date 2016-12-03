@@ -58,7 +58,7 @@ class PermissionManager {
         val metadata = resultSet.metaData
 
         while (resultSet.next()) {
-            val permissions: MutableList<String> = ArrayList()
+            val permissions: MutableList<String> = mutableListOf()
 
             for (i in 3..metadata.columnCount) {
                 if (resultSet.getBoolean(i)) {

@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserChatResponse {
-    @Response(Outgoing.ROOM_USER_CHAT, Outgoing.ROOM_USER_SHOUT)
+    @Response(Outgoing.ROOM_USER_CHAT, Outgoing.ROOM_USER_SHOUT, Outgoing.ROOM_USER_WHISPER)
     fun response(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
         habboResponse.apply {
             writeInt(virtualId)

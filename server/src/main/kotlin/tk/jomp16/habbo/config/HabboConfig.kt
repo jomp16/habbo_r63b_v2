@@ -55,7 +55,7 @@ data class HabboConfig(
 
         when {
             f.exists() -> f.readLines().filter { !it.startsWith('#') }.joinToString("\n").trim()
-            else       -> ""
+            else -> ""
         }
     }
 }

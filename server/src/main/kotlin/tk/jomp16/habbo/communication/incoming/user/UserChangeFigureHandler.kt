@@ -40,11 +40,8 @@ class UserChangeFigureHandler {
         habboSession.userInformation.figure = figure
         habboSession.userInformation.gender = gender
 
-        habboSession.sendHabboResponse(Outgoing.USER_UPDATE, -1, figure, gender, habboSession.userInformation.motto,
-                habboSession.userStats.achievementScore)
+        habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, figure, gender)
 
-        habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, figure,
-                gender, habboSession.userInformation.motto,
-                habboSession.userStats.achievementScore)
+        habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, figure, gender, habboSession.userInformation.motto, habboSession.userStats.achievementScore)
     }
 }

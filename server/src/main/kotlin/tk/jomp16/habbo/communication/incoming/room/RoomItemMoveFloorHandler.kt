@@ -17,32 +17,27 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.inventory
+package tk.jomp16.habbo.communication.incoming.room
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.util.Vector2
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryUpdateBadgesHandler {
-    @Handler(Incoming.INVENTORY_UPDATE_BADGES)
+class RoomItemMoveFloorHandler {
+    @Handler(Incoming.ROOM_MOVE_FLOOR_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+        if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
-        habboSession.habboBadge.resetSlots()
+        val itemId = habboRequest.readInt()
+        val x = habboRequest.readInt()
+        val y = habboRequest.readInt()
+        val rotation = habboRequest.readInt()
 
-        (0..4).forEach {
-            val slot = habboRequest.readInt()
-            val code = habboRequest.readUTF()
+        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(
-                    code) || slot < 1 || slot > 5) return@forEach
-
-            habboSession.habboBadge.badges[code]?.slot = slot
-        }
-
-        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
+        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.userInformation.username)
     }
 }

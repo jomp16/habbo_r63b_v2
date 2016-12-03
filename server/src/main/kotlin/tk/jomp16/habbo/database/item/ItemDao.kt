@@ -119,4 +119,14 @@ object ItemDao {
             )
         }.firstOrNull()
     }
+
+    fun removeUserItem(userItem: UserItem) {
+        HabboServer.database {
+            update("DELETE FROM items WHERE id = :id",
+                    mapOf(
+                            "id" to userItem.id
+                    )
+            )
+        }
+    }
 }

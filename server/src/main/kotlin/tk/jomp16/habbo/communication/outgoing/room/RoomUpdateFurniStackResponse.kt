@@ -17,22 +17,26 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.inventory
+package tk.jomp16.habbo.communication.outgoing.room
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.room.Room
+import tk.jomp16.habbo.util.Vector2
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryNewObjectsResponse {
-    @Response(Outgoing.INVENTORY_NEW_OBJECTS)
-    fun response(habboResponse: HabboResponse, type: Int, ids: Collection<Int>) {
+class RoomUpdateFurniStackResponse {
+    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
+    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
         habboResponse.apply {
-            writeInt(1)
-            writeInt(type)
-            writeInt(ids.size)
+            writeByte(affectedTiles.size)
 
-            ids.forEach { writeInt(it) }
+            affectedTiles.forEach {
+                writeByte(it.x)
+                writeByte(it.y)
+                writeShort(room.roomGamemap.getAbsoluteHeight(it.x, it.y).toInt() * 256)
+            }
         }
     }
 }

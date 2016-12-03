@@ -38,15 +38,15 @@ class DefaultItemInteractor : ItemInteractor() {
         roomItem.extraData = currentMode.toString()
 
         if (roomItem.furnishing.stackMultiple) {
-            // todo: set floor item
-            //room.setFloorItem(null, roomItem, roomItem.getX(), roomItem.getY(), roomItem.getRot(), roomItem.getTotalHeight(), -1, false)
+            // todo: check if this is working properly
+            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser?.habboSession?.userInformation?.username ?: "", roomItem.totalHeight)
         }
 
         roomItem.update(true, true)
 
         if (roomUser != null) {
             // todo: wired
-            //            room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
+            // room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
         }
     }
 }

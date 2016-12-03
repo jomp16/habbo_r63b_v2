@@ -25,7 +25,6 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserStatsDao
 import tk.jomp16.habbo.game.user.HabboSession
-import java.time.format.DateTimeFormatter
 
 data class MessengerFriend(
         val userId: Int
@@ -48,10 +47,10 @@ data class MessengerFriend(
             writeUTF(userInformation.figure)
             writeInt(0) // todo: add ability to add friend on custom category
             writeUTF(userInformation.motto)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
             writeUTF(userInformation.realname)
             writeBoolean(true) // allows offline messaging
-            writeBoolean(false) // ?
+            writeBoolean(false) // useless
             writeBoolean(false) // uses phone
             writeShort(0) // todo relationship type
         }
@@ -69,7 +68,7 @@ data class MessengerFriend(
             writeUTF("")
             writeInt(0) // ?
             writeUTF(userInformation.figure)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
         }
     }
 }

@@ -44,22 +44,20 @@ class ItemManager {
     private val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
 
     val furnishings: MutableMap<String, Furnishing> = HashMap()
-    val oldGiftWrapper: MutableList<Furnishing> = ArrayList()
-    val newGiftWrapper: MutableList<Furnishing> = ArrayList()
+    val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
+    val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
 
     init {
         log.info("Loading furnishings...")
 
-        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use {
-            it.buffered().use {
-                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                val handler = FurniXMLHandler()
+        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
+            val saxParser = SAXParserFactory.newInstance().newSAXParser()
+            val handler = FurniXMLHandler()
 
-                saxParser.parse(it, handler)
+            saxParser.parse(it, handler)
 
-                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
-            }
+            furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
         }
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
@@ -67,7 +65,7 @@ class ItemManager {
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
 
-        furniInteractor += InteractionType.DEFAULT to DefaultItemInteractor()
+        furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
@@ -75,7 +73,7 @@ class ItemManager {
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
-        val list: MutableList<Vector2> = ArrayList()
+        val list: MutableList<Vector2> = mutableListOf()
 
         for (i in 0..width - 1) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x
@@ -121,7 +119,7 @@ class ItemManager {
             if (furnishing.itemName == "wallpaper" || furnishing.itemName == "floor" || furnishing.itemName == "landscape") {
                 when (furnishing.itemName) {
                     "wallpaper" -> writeInt(2)
-                    "floor"     -> writeInt(3)
+                    "floor" -> writeInt(3)
                     "landscape" -> writeInt(4)
                 }
 
@@ -143,7 +141,7 @@ class ItemManager {
                     writeUTF(splitData[1]) // owner
                     writeUTF(splitData[2]) // date
                 }
-                else                          -> {
+                else -> {
                     writeInt(1)
                     writeInt(0)
                     writeUTF(extraData)
@@ -154,17 +152,17 @@ class ItemManager {
 
     fun correctExtradataCatalog(habboSession: HabboSession, extraData: String, furnishing: Furnishing): String? {
         return when (furnishing.interactionType) {
-            InteractionType.POST_IT       -> "FFFF33"
-            InteractionType.ROOM_EFFECT   -> if (extraData.isEmpty()) "0" else extraData.trim()
-            InteractionType.DIMMER        -> "1,1,1,#000000,255"
-            InteractionType.MANNEQUIN     -> "m${7.toChar()}ch-215-92.lg-3202-1322-73${7.toChar()}Mannequin"
+            InteractionType.POST_IT -> "FFFF33"
+            InteractionType.ROOM_EFFECT -> if (extraData.isEmpty()) "0" else extraData.trim()
+            InteractionType.DIMMER -> "1,1,1,#000000,255"
+            InteractionType.MANNEQUIN -> "m${7.toChar()}ch-215-92.lg-3202-1322-73${7.toChar()}Mannequin"
             InteractionType.BADGE_DISPLAY -> {
                 if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
 
                 "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
             }
-            InteractionType.TROPHY        -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
-            else                          -> ""
+            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
+            else -> ""
         }
     }
 }

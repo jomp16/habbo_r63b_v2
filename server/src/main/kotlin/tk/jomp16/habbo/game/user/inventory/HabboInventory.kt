@@ -39,9 +39,11 @@ class HabboInventory(private val habboSession: HabboSession) {
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
     }
 
-    fun removeItem(userItem: UserItem) {
+    fun removeItem(userItem: UserItem, delete: Boolean = false) {
         if (!items.containsKey(userItem.id)) return
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, userItem.id)
+
+        if (delete) ItemDao.removeUserItem(userItem)
     }
 }

@@ -23,6 +23,8 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.item.InteractionType
+import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.tasks.*
 import tk.jomp16.habbo.game.user.HabboSession
@@ -118,6 +120,8 @@ class RoomUser(
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
+                    removeUserStatuses()
+
                     val step = path.first()
 
                     if (room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
@@ -162,8 +166,8 @@ class RoomUser(
         room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y)))
     }
 
-    fun chat(message: String, bubble: Int, type: ChatType) {
-        room.roomTask?.addTask(room, UserChatTask(this, message, bubble, type))
+    fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType) {
+        room.roomTask?.addTask(room, UserChatTask(this, virtualID, message, bubble, type))
     }
 
     fun action(action: Int) {
@@ -182,6 +186,10 @@ class RoomUser(
         objectiveVector2 = null
 
         removeStatus("mv")
+
+        room.roomGamemap.getHighestItem(currentVector3.vector2)?.let {
+            addUserStatuses(it)
+        }
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -211,5 +219,26 @@ class RoomUser(
                 writeBoolean(false) // is member of builder club
             }
         }
+    }
+
+    fun removeUserStatuses() {
+        removeStatus("sit")
+        removeStatus("lay")
+
+        // todo: remove effects
+
+        updateNeeded = true
+    }
+
+    fun addUserStatuses(roomItem: RoomItem) {
+        if (roomItem.furnishing.canSit || roomItem.furnishing.interactionType == InteractionType.BED) {
+            addStatus(if (roomItem.furnishing.canSit) "sit" else "lay", roomItem.height.toString())
+            bodyRotation = roomItem.rotation
+            headRotation = roomItem.rotation
+
+            // todo: add effects
+        }
+
+        updateNeeded = true
     }
 }

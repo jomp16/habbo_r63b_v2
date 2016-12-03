@@ -28,7 +28,6 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
 import java.time.Instant
 import java.time.ZoneOffset
-import java.util.*
 
 object MessengerDao {
     fun getFriends(userId: Int) = HabboServer.database {
@@ -108,7 +107,7 @@ object MessengerDao {
     }
 
     fun addFriends(userId: Int, friendIds: List<Int>): List<MessengerFriend> {
-        val friends: MutableList<MessengerFriend> = ArrayList()
+        val friends: MutableList<MessengerFriend> = mutableListOf()
 
         HabboServer.database {
             friendIds.forEach {
@@ -147,7 +146,7 @@ object MessengerDao {
     }
 
     fun getOfflineMessages(toUserId: Int): List<Triple<Int, String, Int>> {
-        val offlineMessages: MutableList<Triple<Int, String, Int>> = ArrayList()
+        val offlineMessages: MutableList<Triple<Int, String, Int>> = mutableListOf()
 
         HabboServer.database {
             select("SELECT * FROM messenger_offline_messages WHERE to_id = :to_id",

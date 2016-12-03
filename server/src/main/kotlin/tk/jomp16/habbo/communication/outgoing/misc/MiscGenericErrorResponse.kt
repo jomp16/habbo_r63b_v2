@@ -28,11 +28,12 @@ class MiscGenericErrorResponse {
     @Response(Outgoing.GENERIC_ERROR)
     fun response(habboResponse: HabboResponse, errorCode: Int) {
         habboResponse.apply {
-            // -100002 ==
+            // -100002 == did_not_receive_code_link = true and retry_wait_label = false
             // 4009 == navigator.alert.need.to.be.vip
             // 4010 == navigator.alert.invalid_room_name
             // 4011 == navigator.alert.cannot_perm_ban
             // 4013 == navigator.alert.room_in_maintenance
+
             writeInt(errorCode)
         }
     }

@@ -16,3 +16,7 @@ rebel.xml
 
 # MOTD
 motd/
+
+*.pro
+
+packet_infos/

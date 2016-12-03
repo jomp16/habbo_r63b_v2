@@ -45,14 +45,18 @@ class HabboHandler {
             Incoming.MESSENGER_FRIENDS_UPDATE,
             Incoming.GAME_LISTING,
             Incoming.INITIALIZE_GAME_CENTER,
-            1885,
-            3275,
-            2320,
-            3571,
-            2357,
-            3988,
-            1518,
-            2830)
+            Incoming.SANCTION_STATUS,
+            3737,
+            3232,
+            2858,
+            1946,
+            3134,
+            2852,
+            2703,
+            2494,
+            3716,
+            3906,
+            1172)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
@@ -66,7 +70,7 @@ class HabboHandler {
 
         // Load incoming
         Incoming::class.java.declaredFields.forEach {
-            if (it.type == Int::class.java) incomingNames += it.getInt(null) to it.name
+            if (it.type == Int::class.java) incomingNames.put(it.getInt(null), it.name)
         }
 
         reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
@@ -76,13 +80,13 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             handler.headerIds.forEach { headerId ->
-                if (!messageHandlers.containsKey(headerId)) messageHandlers += headerId to Pair(clazz, methodHandle)
+                if (!messageHandlers.containsKey(headerId)) messageHandlers.put(headerId, Pair(clazz, methodHandle))
             }
         }
 
         // Load outgoing
         Outgoing::class.java.declaredFields.forEach {
-            if (it.type == Int::class.java) outgoingNames += it.getInt(null) to it.name
+            if (it.type == Int::class.java) outgoingNames.put(it.getInt(null), it.name)
         }
 
         reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
@@ -92,7 +96,7 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             response.headerIds.forEach { headerId ->
-                if (!messageResponses.containsKey(headerId)) messageResponses += headerId to Pair(clazz, methodHandle)
+                if (!messageResponses.containsKey(headerId)) messageResponses.put(headerId, Pair(clazz, methodHandle))
             }
         }
 
@@ -119,7 +123,7 @@ class HabboHandler {
         }
     }
 
-    fun invokeResponse(headerId: Int, vararg args: Any): HabboResponse? {
+    fun invokeResponse(headerId: Int, vararg args: Any?): HabboResponse? {
         if (messageResponses.containsKey(headerId)) {
             val (clazz, methodHandle) = messageResponses[headerId] ?: return null
 
@@ -149,7 +153,7 @@ class HabboHandler {
         if (!instances.containsKey(clazz)) {
             clazz1 = clazz.newInstance()
 
-            instances += clazz to clazz1
+            instances.put(clazz, clazz1)
         } else {
             clazz1 = instances[clazz]!!
         }

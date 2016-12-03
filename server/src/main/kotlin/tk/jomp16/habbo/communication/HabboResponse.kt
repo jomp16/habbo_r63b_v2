@@ -36,12 +36,16 @@ class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : Closeabl
         byteBufOutputStream.writeUTF(s)
     }
 
-    fun writeShort(s: Int) {
-        byteBufOutputStream.writeShort(s)
+    fun writeShort(i: Int) {
+        byteBufOutputStream.writeShort(i)
     }
 
     fun writeInt(i: Int) {
         byteBufOutputStream.writeInt(i)
+    }
+
+    fun writeDouble(d: Double) {
+        byteBufOutputStream.writeDouble(d)
     }
 
     fun writeBoolean(b: Boolean) {

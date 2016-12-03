@@ -49,6 +49,7 @@ import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import java.io.Closeable
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -85,6 +86,8 @@ object HabboServer : Closeable {
     lateinit var serverExecutor: ExecutorService
         private set
 
+    val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
     val started: Boolean
         get() {
             try {
@@ -107,6 +110,7 @@ object HabboServer : Closeable {
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
+        log.info("Built on ${BuildConfig.BUILD_DATE.format(DATE_TIME_FORMATTER)}")
         log.info("By jomp16 and Lucas.")
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See http://www.gnu.org/licenses/")

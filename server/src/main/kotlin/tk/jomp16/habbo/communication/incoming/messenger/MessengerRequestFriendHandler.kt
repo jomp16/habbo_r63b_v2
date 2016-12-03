@@ -44,7 +44,7 @@ class MessengerRequestFriendHandler {
 
         if (!friendHabboSession.habboMessenger.initializedMessenger) return
 
-        friendHabboSession.habboMessenger.requests += messengerRequest.fromId to messengerRequest
+        friendHabboSession.habboMessenger.requests.put(messengerRequest.fromId, messengerRequest)
         friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_REQUEST_FRIEND, messengerRequest)
     }
 }

@@ -30,18 +30,28 @@ import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
-import java.util.*
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val catalogPages: MutableList<CatalogPage> = ArrayList()
-    val catalogItems: MutableList<CatalogItem> = ArrayList()
-    val catalogClubOffers: MutableList<CatalogClubOffer> = ArrayList()
-    val catalogDeals: MutableList<CatalogDeal> = ArrayList()
+    val catalogPages: MutableList<CatalogPage> = mutableListOf()
+    val catalogItems: MutableList<CatalogItem> = mutableListOf()
+    val catalogClubOffers: MutableList<CatalogClubOffer> = mutableListOf()
+    val catalogDeals: MutableList<CatalogDeal> = mutableListOf()
 
     init {
+        load()
+    }
+
+    fun load() {
         log.info("Loading catalog...")
+
+        // clear catalog
+        catalogPages.clear()
+        catalogItems.clear()
+        catalogClubOffers.clear()
+        catalogDeals.clear()
+        // done clear catalog
 
         // catalog root
         catalogPages += CatalogPage(-1, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "", "")
@@ -89,6 +99,7 @@ class CatalogManager {
 
         if (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+
             return
         }
 
@@ -109,9 +120,10 @@ class CatalogManager {
                 return
             }
 
-            if (habboSession.userInformation.credits < clubOffer.credits) return
+            if (habboSession.userInformation.credits < clubOffer.credits || habboSession.userInformation.pixels < clubOffer.pixels) return
 
             habboSession.userInformation.credits -= clubOffer.credits
+            habboSession.userInformation.pixels -= clubOffer.pixels
 
             habboSession.habboSubscription.addOrExtend(clubOffer.months)
 
@@ -122,9 +134,8 @@ class CatalogManager {
 
         val catalogItem = catalogPage.catalogItems.find { it.id == catalogItemId }
 
-        if (catalogItem == null || !catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription
-                || catalogItem.limited && catalogItem.limitedSells.get() >= catalogItem.limitedStack) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+        if (catalogItem == null || !catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED, 1)
 
             return
         }
@@ -137,8 +148,14 @@ class CatalogManager {
             return
         }
 
+        if (catalogItem.limited && catalogItem.limitedSells.get() >= catalogItem.limitedStack) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_LIMITED_SOLD_OUT)
+
+            return
+        }
+
         // todo
-        val furnishingToPurchase: MutableList<CatalogPurchaseData> = ArrayList()
+        val furnishingToPurchase: MutableList<CatalogPurchaseData> = mutableListOf()
 
         if (catalogItem.dealId > 0) {
             catalogItem.deal!!.furnishings.forEachIndexed { i, furnishing ->
@@ -152,7 +169,7 @@ class CatalogManager {
             }
         } else {
             HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing!!)?.let { extraData1 ->
-                (0..catalogItem.amount - 1).forEach {
+                (0..catalogItem.amount * amount - 1).forEach {
                     furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing!!, extraData1, if (catalogItem.limited) catalogItem.limitedSells.andIncrement else 0)
 
                     if (catalogItem.furnishing!!.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
@@ -221,7 +238,7 @@ class CatalogManager {
                                 )
                         )
                     }
-                    userItem.furnishing.interactionType.name.startsWith("WIRED_")   -> {
+                    userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
                         insertAndGetGeneratedKey("INSERT INTO items_wired (item_id, extra1, extra2, extra3, extra4, extra5) VALUES (:item_id, :extra1, :extra2, :extra3, :extra4, :extra5)",
                                 mapOf(
                                         "item_id" to userItem.id,
@@ -233,7 +250,7 @@ class CatalogManager {
                                 )
                         )
                     }
-                    userItem.furnishing.interactionType == InteractionType.DIMMER   -> {
+                    userItem.furnishing.interactionType == InteractionType.DIMMER -> {
                         insertAndGetGeneratedKey("INSERT INTO items_dimmer (item_id, enabled, current_preset, preset_one, preset_two, preset_three) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
                                 mapOf(
                                         "item_id" to userItem.id,

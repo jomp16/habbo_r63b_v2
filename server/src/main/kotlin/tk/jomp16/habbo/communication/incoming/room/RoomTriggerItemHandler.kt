@@ -26,15 +26,14 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomTriggerItemHandler {
-    @Handler(Incoming.ROOM_TRIGGER_ITEM)
+    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
         habboSession.currentRoom?.let {
             val item = it.roomItems[habboRequest.readInt()] ?: return@let
 
-            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession),
-                    habboRequest.readInt())
+            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
         }
     }
 }

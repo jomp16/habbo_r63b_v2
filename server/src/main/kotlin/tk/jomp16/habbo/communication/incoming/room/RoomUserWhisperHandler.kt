@@ -17,32 +17,38 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.inventory
+package tk.jomp16.habbo.communication.incoming.room
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.room.tasks.ChatType
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryUpdateBadgesHandler {
-    @Handler(Incoming.INVENTORY_UPDATE_BADGES)
+class RoomUserWhisperHandler {
+    @Handler(Incoming.ROOM_USER_WHISPER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.habboBadge.resetSlots()
+        val raw = habboRequest.readUTF()
+        val bubble = habboRequest.readInt()
 
-        (0..4).forEach {
-            val slot = habboRequest.readInt()
-            val code = habboRequest.readUTF()
+        val targetName = raw.substring(0, raw.indexOf(' '))
+        var message = raw.substring(targetName.length + 1)
 
-            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(
-                    code) || slot < 1 || slot > 5) return@forEach
+        if (message.isEmpty()) return
+        if (message.length > 100) message = message.substring(0, 100)
 
-            habboSession.habboBadge.badges[code]?.slot = slot
+        if (message.startsWith(':')) {
+            // todo: process command if available
         }
 
-        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
+        if (habboSession.userInformation.username == targetName) return
+
+        val targetRoomUser = habboSession.currentRoom!!.roomUsers.values.filter { it.habboSession != null }.find { it.habboSession!!.userInformation.username == targetName } ?: return
+
+        habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER)
+        targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER)
     }
 }

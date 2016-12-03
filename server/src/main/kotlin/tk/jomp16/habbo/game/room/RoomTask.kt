@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.room.RoomDao
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -38,7 +39,7 @@ class RoomTask : Runnable {
         log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.caption)
 
         rooms += room
-        queuedTasks += room to ArrayDeque()
+        queuedTasks.put(room, ArrayDeque())
 
         room.emptyCounter.set(0)
         room.saveRoomItemsCounter.set(0)
@@ -58,6 +59,7 @@ class RoomTask : Runnable {
         room.roomTask = null
 
         room.saveItems()
+        RoomDao.updateRoomData(room.roomData)
     }
 
     fun addTask(room: Room, task: IRoomTask) {
@@ -94,8 +96,7 @@ class RoomTask : Runnable {
 
                     if (room.roomUsers.isEmpty() &&
                             TimeUnit.MILLISECONDS.toSeconds(
-                                    (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig
-                                            .delayMilliseconds).toLong())
+                                    (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
                                     >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
                         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 
@@ -107,8 +108,7 @@ class RoomTask : Runnable {
                     log.error("An exception happened on room task, room n° {}. Cause: {}", room.roomData.id, e)
 
                     if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
-                        log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id,
-                                HabboServer.habboConfig.roomTaskConfig.errorThreshold)
+                        log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id, HabboServer.habboConfig.roomTaskConfig.errorThreshold)
 
                         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
                     }

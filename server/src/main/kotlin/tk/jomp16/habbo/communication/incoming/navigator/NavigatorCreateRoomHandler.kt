@@ -47,8 +47,6 @@ class NavigatorCreateRoomHandler {
                 name, description, model, category, maxUsers,
                 tradeSettings) ?: return
 
-        habboSession.rooms.add(room)
-
         // FlatCreatedComposer id, name
 
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.caption)

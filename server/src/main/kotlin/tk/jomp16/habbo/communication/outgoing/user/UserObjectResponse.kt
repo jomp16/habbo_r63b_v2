@@ -19,11 +19,11 @@
 
 package tk.jomp16.habbo.communication.outgoing.user
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserObjectResponse {
@@ -44,7 +44,7 @@ class UserObjectResponse {
             writeInt(dailyRespectPoints)
             writeInt(dailyPetRespectPoints)
             writeBoolean(true) // Friends stream active
-            writeUTF(lastOnline.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+            writeUTF(lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
             writeBoolean(canChangeName)
             writeBoolean(false)
         }

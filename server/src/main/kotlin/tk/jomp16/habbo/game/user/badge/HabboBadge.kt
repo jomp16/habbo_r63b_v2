@@ -49,7 +49,7 @@ class HabboBadge(private val habboSession: HabboSession) {
 
         val badge = BadgeDao.addBadge(habboSession.userInformation.id, code, slot)
 
-        badges += badge.code to badge
+        badges.put(badge.code, badge)
 
         val queuedHabboResponse = QueuedHabboResponse()
 

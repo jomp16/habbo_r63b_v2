@@ -27,7 +27,6 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
-import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerAcceptRequestHandler {
@@ -40,8 +39,8 @@ class MessengerAcceptRequestHandler {
         if (amount < 0) return
         if (amount > 50) amount = 50
 
-        val friendIds: MutableList<Int> = ArrayList()
-        val requestIds: MutableList<Int> = ArrayList()
+        val friendIds: MutableList<Int> = mutableListOf()
+        val requestIds: MutableList<Int> = mutableListOf()
 
         (0..amount - 1).forEach {
             val userId = habboRequest.readInt()
@@ -67,7 +66,7 @@ class MessengerAcceptRequestHandler {
 
             val messengerFriend = MessengerFriend(habboSession.userInformation.id)
 
-            friendHabboSession.habboMessenger.friends += messengerFriend.userId to messengerFriend
+            friendHabboSession.habboMessenger.friends.put(messengerFriend.userId, messengerFriend)
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), 0)
         }

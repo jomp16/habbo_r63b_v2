@@ -28,7 +28,7 @@ import tk.jomp16.habbo.game.item.Furnishing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseOkResponse {
     @Response(Outgoing.CATALOG_PURCHASE_OK)
-    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, furnishings: List<Furnishing>) {
+    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, furnishings: Collection<Furnishing>) {
         habboResponse.apply {
             writeInt(catalogItem.id)
             writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing!!.itemName else catalogItem.catalogName)

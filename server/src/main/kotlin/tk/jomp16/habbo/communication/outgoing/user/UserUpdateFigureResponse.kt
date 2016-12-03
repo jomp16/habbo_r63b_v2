@@ -17,20 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.communication.outgoing.user
 
-import java.util.*
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-class QueuedHabboResponse {
-    val headerIds: MutableMap<Int, Array<out Any>> = LinkedHashMap() // Do not change this, LinkedHashMap is the only that keeps the insertion order
-
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.put(headerId, args)
-
-        return this
-    }
-
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
-        add(pair.first, pair.second)
+@Suppress("unused", "UNUSED_PARAMETER")
+class UserUpdateFigureResponse {
+    @Response(Outgoing.USER_UPDATE_FIGURE)
+    fun handle(habboResponse: HabboResponse, figure: String, gender: String) {
+        habboResponse.apply {
+            writeUTF(figure)
+            writeUTF(gender)
+        }
     }
 }

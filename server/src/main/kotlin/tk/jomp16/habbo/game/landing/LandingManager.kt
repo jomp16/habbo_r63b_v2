@@ -22,12 +22,11 @@ package tk.jomp16.habbo.game.landing
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.landing.LandingDao
-import java.util.*
 
 class LandingManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val landingPromos: MutableList<LandingPromo> = ArrayList()
+    val landingPromos: MutableList<LandingPromo> = mutableListOf()
 
     init {
         log.info("Loading landing...")

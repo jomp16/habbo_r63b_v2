@@ -32,9 +32,9 @@ class CatalogPageResponse {
             writeInt(catalogPage.id)
 
             when (catalogPage.pageLayout) {
-                "frontpage4"               -> {
+                "frontpage", "frontpage4" -> {
                     writeUTF("NORMAL")
-                    writeUTF(catalogPage.pageLayout)
+                    writeUTF("frontpage4")
                     writeInt(2)
                     writeUTF(catalogPage.pageHeadline)
                     writeUTF(catalogPage.pageTeaser)
@@ -60,7 +60,7 @@ class CatalogPageResponse {
                         writeInt(-1)
                     }
                 }
-                "vip_buy"                 -> {
+                "vip_buy" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -70,8 +70,7 @@ class CatalogPageResponse {
                 }
                 "builders_club_frontpage_normal",
                 "builders_club_frontpage" -> {
-                    writeUTF(
-                            if (catalogPage.pageLayout == "builders_club_frontpage_normal") "NORMAL" else "BUILDERS_CLUB")
+                    writeUTF(if (catalogPage.pageLayout == "builders_club_frontpage_normal") "NORMAL" else "BUILDERS_CLUB")
                     writeUTF("builders_club_frontpage")
                     writeInt(0)
                     writeInt(1)
@@ -107,7 +106,7 @@ class CatalogPageResponse {
                 }
                 "pets",
                 "pets2",
-                "pets3"                   -> {
+                "pets3" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -119,7 +118,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageTextTeaser)
                 }
-                "spaces_new"              -> {
+                "spaces_new" -> {
                     writeUTF("NORMAL")
                     writeUTF("spaces_new")
                     writeInt(1)
@@ -127,7 +126,7 @@ class CatalogPageResponse {
                     writeInt(1)
                     writeUTF(catalogPage.pageText1)
                 }
-                "guild_frontpage"         -> {
+                "guild_frontpage" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -138,7 +137,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageText2)
                 }
-                "guild_custom_furni"      -> {
+                "guild_custom_furni" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(3)
@@ -150,7 +149,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageText2)
                 }
-                "badge_display"           -> {
+                "badge_display" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -161,7 +160,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText2)
                     writeUTF(catalogPage.pageTextDetails)
                 }
-                "trophies"                -> {
+                "trophies" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(1)
@@ -170,7 +169,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText1)
                     writeUTF(catalogPage.pageTextDetails)
                 }
-                "recycler"                -> {
+                "recycler" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -179,7 +178,7 @@ class CatalogPageResponse {
                     writeInt(1)
                     writeUTF(catalogPage.pageText1)
                 }
-                "recycler_info"           -> {
+                "recycler_info" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(2)
@@ -190,7 +189,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText2)
                     writeUTF(catalogPage.pageTextDetails)
                 }
-                "recycler_prizes"         -> {
+                "recycler_prizes" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(1)
@@ -199,14 +198,20 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText1)
                 }
                 "marketplace_own_items",
-                "marketplace"             -> {
+                "marketplace" -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(1)
                     writeUTF(catalogPage.pageHeadline)
                     writeInt(0)
                 }
-                else                      -> {
+                "empty" -> {
+                    writeUTF("NORMAL")
+                    writeUTF("")
+                    writeInt(0)
+                    writeInt(0)
+                }
+                else -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)
                     writeInt(3)

@@ -21,9 +21,10 @@ package tk.jomp16.habbo.database.wardrobe
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
+import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object WardrobeDao {
-    fun getWardrobes(userId: Int) = HabboServer.database {
+    fun getWardrobes(userId: Int): List<Wardrobe> = HabboServer.database {
         select("SELECT * FROM users_wardrobe WHERE user_id = :user_id",
                 mapOf(
                         "user_id" to userId
@@ -36,5 +37,31 @@ object WardrobeDao {
                     it.string("gender")
             )
         }
+    }
+
+    fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
+        update("UPDATE users_wardrobe SET figure = :figure, gender = :gender, slot_id = :slot_id WHERE id = :id",
+                mapOf(
+                        "figure" to figure,
+                        "gender" to gender,
+                        "slot_id" to slotId,
+                        "id" to id
+                )
+        )
+
+        return@database Wardrobe(id, slotId, figure, gender)
+    }
+
+    fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
+        val id = insertAndGetGeneratedKey("INSERT INTO users_wardrobe (user_id, slot_id, figure, gender) VALUES (:user_id, :slot_id, :figure, :gender)",
+                mapOf(
+                        "user_id" to userId,
+                        "slot_id" to slotId,
+                        "figure" to figure,
+                        "gender" to gender
+                )
+        )
+
+        return@database Wardrobe(id, slotId, figure, gender)
     }
 }

@@ -32,6 +32,10 @@ class MessengerInitializeResponse {
             writeInt(300)
             writeInt(800)
             writeInt(0) // category count
+
+            // category structure:
+            // int - id
+            // string - name
         }
     }
 }

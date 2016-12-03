@@ -65,4 +65,30 @@ object UserPreferencesDao {
 
         return tmp
     }
+
+    fun savePreferences(userPreferences: UserPreferences) {
+        HabboServer.database {
+            update("UPDATE users_preferences SET volume = :volume, prefer_old_chat = :prefer_old_chat, " +
+                    "ignore_room_invite = :ignore_room_invite, disable_camera_follow = :disable_camera_follow, " +
+                    "navigator_x = :navigator_x, navigator_y = :navigator_y, navigator_width = :navigator_width, " +
+                    "navigator_height = :navigator_height, hide_in_room = :hide_in_room, block_new_friends = :block_new_friends, " +
+                    "chat_color = :chat_color, friend_bar_open = :friend_bar_open WHERE id = :id",
+                    mapOf(
+                            "volume" to userPreferences.volume,
+                            "prefer_old_chat" to userPreferences.preferOldChat,
+                            "ignore_room_invite" to userPreferences.ignoreRoomInvite,
+                            "disable_camera_follow" to userPreferences.disableCameraFollow,
+                            "navigator_x" to userPreferences.navigatorX,
+                            "navigator_y" to userPreferences.navigatorY,
+                            "navigator_width" to userPreferences.navigatorWidth,
+                            "navigator_height" to userPreferences.navigatorHeight,
+                            "hide_in_room" to userPreferences.hideInRoom,
+                            "block_new_friends" to userPreferences.blockNewFriends,
+                            "chat_color" to userPreferences.chatColor,
+                            "friend_bar_open" to userPreferences.friendBarOpen,
+                            "id" to userPreferences.id
+                    )
+            )
+        }
+    }
 }

@@ -17,20 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.communication.incoming.subscription
 
-import java.util.*
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
-class QueuedHabboResponse {
-    val headerIds: MutableMap<Int, Array<out Any>> = LinkedHashMap() // Do not change this, LinkedHashMap is the only that keeps the insertion order
+@Suppress("unused", "UNUSED_PARAMETER")
+class SubscriptionInfoHandler {
+    @Handler(Incoming.HABBO_CLUB_INFO)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
 
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.put(headerId, args)
-
-        return this
-    }
-
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
-        add(pair.first, pair.second)
+        habboSession.sendHabboResponse(Outgoing.HABBO_CLUB_INFO, habboSession.habboSubscription.subscription)
     }
 }

@@ -17,32 +17,38 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.inventory
+package tk.jomp16.habbo.communication.incoming.user
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.wardrobe.WardrobeDao
 import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryUpdateBadgesHandler {
-    @Handler(Incoming.INVENTORY_UPDATE_BADGES)
+class UserWardrobeSaveHandler {
+    @Handler(Incoming.USER_WARDROBE_SAVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.habboBadge.resetSlots()
+        val slotId = habboRequest.readInt()
 
-        (0..4).forEach {
-            val slot = habboRequest.readInt()
-            val code = habboRequest.readUTF()
+        if (slotId > 10) return
 
-            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(
-                    code) || slot < 1 || slot > 5) return@forEach
+        val figure = habboRequest.readUTF()
+        val gender = habboRequest.readUTF()
 
-            habboSession.habboBadge.badges[code]?.slot = slot
+        val wardrobeToRemove = habboSession.userInformation.wardrobes.filter { it.slotId == slotId }.firstOrNull()
+
+        val newWardrobe: Wardrobe = if (wardrobeToRemove != null) {
+            habboSession.userInformation.wardrobes.remove(wardrobeToRemove)
+
+            WardrobeDao.updateWardrobe(wardrobeToRemove.id, slotId, figure, gender)
+        } else {
+            WardrobeDao.createWardrobe(habboSession.userInformation.id, slotId, figure, gender)
         }
 
-        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
+        habboSession.userInformation.wardrobes.add(newWardrobe)
     }
 }

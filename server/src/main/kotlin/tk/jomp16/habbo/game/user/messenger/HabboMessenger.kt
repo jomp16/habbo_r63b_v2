@@ -41,10 +41,8 @@ class HabboMessenger(private val habboSession: HabboSession) {
     }
 
     fun notifyFriends() {
-        friends.values.filter {
-            it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false
-        }.forEach {
-            it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
+        friends.values.filter { it.online && (it.userId != Int.MAX_VALUE && it.habboSession!!.habboMessenger.initializedMessenger) }.forEach {
+            it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
         }
     }
 }

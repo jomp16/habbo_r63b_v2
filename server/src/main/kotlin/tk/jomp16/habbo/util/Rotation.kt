@@ -25,11 +25,11 @@ object Rotation {
         x1 < x2 && y1 < y2 -> 3
         x1 > x2 && y1 < y2 -> 5
         x1 < x2 && y1 > y2 -> 1
-        x1 > x2            -> 6
-        x1 < x2            -> 2
-        y1 < y2            -> 4
-        y1 > y2            -> 0
-        else               -> 0
+        x1 > x2 -> 6
+        x1 < x2 -> 2
+        y1 < y2 -> 4
+        y1 > y2 -> 0
+        else -> 0
     }
 
     @Suppress("unused")
@@ -38,7 +38,7 @@ object Rotation {
 
         return when {
             rot > 3 -> rot - 4
-            else    -> rot + 4
+            else -> rot + 4
         }
     }
 }

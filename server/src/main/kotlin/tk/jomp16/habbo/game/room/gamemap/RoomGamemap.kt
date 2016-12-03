@@ -27,37 +27,41 @@ import tk.jomp16.habbo.game.room.model.SquareState
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.utils.pathfinding.core.Grid
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class RoomGamemap(private val room: Room) {
     private val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
-    private val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
+    val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     private val roomUserMap: MutableMap<Vector2, MutableList<RoomUser>> = ConcurrentHashMap()
     private val roomItemMap: MutableMap<Vector2, MutableList<RoomItem>> = ConcurrentHashMap()
 
-    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y ->
-        if (!grid.isInside(x, y)) return@Grid false
-        if (room.roomModel.doorVector3.x == x && room.roomModel.doorVector3.y == y) return@Grid true
-        if (room.roomModel.squareStates[x][y] == SquareState.CLOSED) return@Grid false
-
-        val vector2 = Vector2(x, y)
-
-        return@Grid !(roomUserMap[vector2] != null && !roomUserMap[vector2]!!.isEmpty() && !room.roomData.allowWalkThrough || blockedItem[x][y])
-    })
+    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y -> !isBlocked(Vector2(x, y)) })
 
     init {
         room.floorItems.values.forEach { addRoomItem(it) }
+    }
+
+    fun isBlocked(vector2: Vector2, ignoreUsers: Boolean = false): Boolean {
+        if (!grid.isInside(vector2.x, vector2.y)) return true
+        if (room.roomModel.doorVector3.x == vector2.x && room.roomModel.doorVector3.y == vector2.y) return false
+        if (room.roomModel.squareStates[vector2.x][vector2.y] == SquareState.CLOSED) return true
+        if (blockedItem[vector2.x][vector2.y]) return true
+
+        if (!ignoreUsers) {
+            if (!room.roomData.allowWalkThrough) return roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty()
+        }
+
+        return false
     }
 
     fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = Math.abs(x1 - x2) + Math.abs(y1 - y2)
 
     fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
         if (!roomUserMap.containsKey(vector2)) {
-            val roomUsers: MutableList<RoomUser> = ArrayList()
+            val roomUsers: MutableList<RoomUser> = mutableListOf()
             roomUsers.add(roomUser)
 
-            roomUserMap += vector2 to roomUsers
+            roomUserMap.put(vector2, roomUsers)
         } else if (!roomUserMap[vector2]!!.contains(roomUser)) {
             roomUserMap[vector2]?.add(roomUser)
         }
@@ -73,20 +77,19 @@ class RoomGamemap(private val room: Room) {
     }
 
     fun addRoomItem(roomItem: RoomItem) {
-        roomItem.affectedTiles.forEach { setRoomItem(it, roomItem) }
+        roomItem.affectedTiles.forEach {
+            setRoomItem(it, roomItem)
+        }
     }
 
     private fun setRoomItem(vector2: Vector2, roomItem: RoomItem) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
-        if (!roomItemMap.containsKey(vector2)) {
-            val roomItems: MutableList<RoomItem> = ArrayList()
-            roomItems.add(roomItem)
+        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, mutableListOf())
 
-            roomItemMap += vector2 to roomItems
-        } else if (!roomItemMap[vector2]!!.contains(roomItem)) {
-            roomItemMap[vector2]?.add(roomItem)
-        }
+        if (roomItemMap[vector2]!!.contains(roomItem)) return
+
+        roomItemMap[vector2]?.add(roomItem)
 
         if (!cannotStackItem[vector2.x][vector2.y]) cannotStackItem[vector2.x][vector2.y] = !roomItem.furnishing.canStack
 
@@ -141,11 +144,13 @@ class RoomGamemap(private val room: Room) {
     fun removeRoomItem(roomItem: RoomItem) {
         if (roomItem.furnishing.type == ItemType.WALL) return
 
-        roomItem.affectedTiles.forEach { unsetRoomItem(it, roomItem) }
+        roomItem.affectedTiles.forEach {
+            unsetRoomItem(it, roomItem)
+        }
     }
 
     private fun unsetRoomItem(vector2: Vector2, roomItem: RoomItem) {
-        if (!roomItemMap.containsKey(vector2) || roomItemMap[vector2]?.contains(roomItem)!!) return
+        if (!roomItemMap.containsKey(vector2) && !roomItemMap[vector2]!!.contains(roomItem)) return
 
         roomItemMap[vector2]?.remove(roomItem)
         cannotStackItem[vector2.x][vector2.y] = false
@@ -153,4 +158,6 @@ class RoomGamemap(private val room: Room) {
 
         getHighestItem(vector2)?.let { setRoomItem(vector2, it) }
     }
+
+    fun getUsersFromVector2(vector2: Vector2): List<RoomUser> = roomUserMap[vector2] ?: emptyList()
 }

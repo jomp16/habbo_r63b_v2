@@ -89,6 +89,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun addUser(habboSession: HabboSession) {
         roomTask?.let {
+            if (roomUsers.values.filter { it.habboSession == habboSession }.isNotEmpty()) return
+
             // generate random virtual id
             var virtualId = 0
 
@@ -181,28 +183,47 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItemsToSave.clear()
     }
 
-    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String): Boolean {
+    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String, overrideZ: Double = -1.toDouble()): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
-            if (!roomGamemap.grid.isWalkable(roomGamemap.grid, it.x, it.y)) {
+            if (roomItem.rotation == rotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it, true) && overrideZ == -1.toDouble()) {
                 // cannot set item, because at least one tile is blocked
 
                 return false
             }
         }
 
+        val affectedTiles = mutableSetOf<Vector2>()
+
         if (!newItem) {
             roomGamemap.removeRoomItem(roomItem)
 
-            // todo: remove user statuses too
+            HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
+                it.forEach { vector2 ->
+                    roomGamemap.getUsersFromVector2(vector2).forEach(RoomUser::removeUserStatuses)
+                }
+
+                affectedTiles += it
+            }
         }
 
-        roomItem.position = Vector3(position.x, position.y, Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
+        roomItem.position = Vector3(position.x, position.y, if (overrideZ != -1.toDouble()) overrideZ else Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
+        roomItem.rotation = rotation
 
         roomGamemap.addRoomItem(roomItem)
+
+        roomItem.affectedTiles.let {
+            it.forEach { vector2 ->
+                roomGamemap.getUsersFromVector2(vector2).forEach {
+                    it.addUserStatuses(roomItem)
+                }
+            }
+
+            affectedTiles += it
+        }
 
         // todo: wired
         // todo: furni interactor
@@ -215,6 +236,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         } else {
             roomItem.update(true, true)
         }
+
+        sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
 
         addItemToSave(roomItem)
 

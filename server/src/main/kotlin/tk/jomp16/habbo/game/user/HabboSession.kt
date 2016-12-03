@@ -26,6 +26,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserPreferencesDao
 import tk.jomp16.habbo.database.information.UserStatsDao
@@ -66,8 +67,8 @@ class HabboSession(val channel: Channel) : Closeable {
     lateinit var habboInventory: HabboInventory
         private set
 
-    lateinit var rooms: MutableList<Room>
-        private set
+    val rooms: List<Room>
+        get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true) }
 
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
 
@@ -88,7 +89,7 @@ class HabboSession(val channel: Channel) : Closeable {
     var uniqueID: String = ""
     private var alreadySentPurse: Boolean = false
 
-    fun sendHabboResponse(headerId: Int, vararg args: Any) = HabboServer.habboHandler.invokeResponse(headerId, *args)?.let {
+    fun sendHabboResponse(headerId: Int, vararg args: Any?) = HabboServer.habboHandler.invokeResponse(headerId, *args)?.let {
         sendHabboResponse(it)
     }
 
@@ -114,7 +115,7 @@ class HabboSession(val channel: Channel) : Closeable {
     fun sendNotification(notificationType: NotificationType, message: String) {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (notificationType) {
-            NotificationType.MOTD_ALERT      -> sendHabboResponse(Outgoing.MOTD_NOTIFICATION, message)
+            NotificationType.MOTD_ALERT -> sendHabboResponse(Outgoing.MOTD_NOTIFICATION, message)
             NotificationType.BROADCAST_ALERT -> sendHabboResponse(Outgoing.BROADCAST_NOTIFICATION, message)
         }
     }
@@ -171,19 +172,7 @@ class HabboSession(val channel: Channel) : Closeable {
         habboMessenger = HabboMessenger(this)
         habboInventory = HabboInventory(this)
 
-        rooms = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true) }.toMutableList()
-
-        // TODO: move dis to database DAO
-        HabboServer.database {
-            update("UPDATE users SET auth_ticket = :ticket, online = :online, ip_last = :ip_last WHERE id = :id",
-                    mapOf(
-                            "ticket" to "",
-                            "online" to true,
-                            "ip_last" to ip,
-                            "id" to userInformation.id
-                    )
-            )
-        }
+        UserInformationDao.saveInformation(userInformation, true, "", ip)
 
         return true
     }
@@ -191,28 +180,40 @@ class HabboSession(val channel: Channel) : Closeable {
     fun rewardUser() {
         val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
 
-        var updateCredits = false
+        var updateCurrency = false
 
         if (LocalDateTime.now().isAfter(localDateTime)) {
-            userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
-            userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
-            if (userInformation.vip) userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
+            if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits < Int.MAX_VALUE) {
+                userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
+
+                updateCurrency = true
+
+            }
+
+            if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.pixels < Int.MAX_VALUE) {
+                userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
+
+                updateCurrency = true
+            }
+
+            if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints < Int.MAX_VALUE) {
+                userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
+
+                updateCurrency = true
+            }
 
             userStats.creditsLastUpdate = LocalDateTime.now()
-
-            // todo: halp me
-            updateCredits = true
         }
-
-        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
-        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
-        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
 
         if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
         if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
         if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
 
-        if (alreadySentPurse || updateCredits) updateAllCurrencies()
+        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
+        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
+        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
+
+        if (!alreadySentPurse || updateCurrency) updateAllCurrencies()
     }
 
     fun updateAllCurrencies() {
@@ -292,63 +293,10 @@ class HabboSession(val channel: Channel) : Closeable {
         if (authenticated) {
             currentRoom?.removeUser(roomUser, false, false)
 
-            // TODO: move everything to database DAO
-            HabboServer.database {
-                update("UPDATE users SET online = :online, credits = :credits, pixels = :pixels, vip_points = :vip_points, " +
-                        "figure = :figure, gender = :gender, motto = :motto, home_room = :home_room WHERE id = :id",
-                        mapOf(
-                                "online" to false,
-                                "credits" to userInformation.credits,
-                                "pixels" to userInformation.pixels,
-                                "vip_points" to userInformation.vipPoints,
-                                "figure" to userInformation.figure,
-                                "gender" to userInformation.gender,
-                                "motto" to userInformation.motto,
-                                "home_room" to userInformation.homeRoom,
-                                "id" to userInformation.id
-                        )
-                )
-
-                update("UPDATE users_preferences SET volume = :volume, prefer_old_chat = :prefer_old_chat, " +
-                        "ignore_room_invite = :ignore_room_invite, disable_camera_follow = :disable_camera_follow, " +
-                        "navigator_x = :navigator_x, navigator_y = :navigator_y, navigator_width = :navigator_width, " +
-                        "navigator_height = :navigator_height, hide_in_room = :hide_in_room, block_new_friends = :block_new_friends, " +
-                        "chat_color = :chat_color, friend_bar_open = :friend_bar_open WHERE id = :id",
-                        mapOf(
-                                "volume" to userPreferences.volume,
-                                "prefer_old_chat" to userPreferences.preferOldChat,
-                                "ignore_room_invite" to userPreferences.ignoreRoomInvite,
-                                "disable_camera_follow" to userPreferences.disableCameraFollow,
-                                "navigator_x" to userPreferences.navigatorX,
-                                "navigator_y" to userPreferences.navigatorY,
-                                "navigator_width" to userPreferences.navigatorWidth,
-                                "navigator_height" to userPreferences.navigatorHeight,
-                                "hide_in_room" to userPreferences.hideInRoom,
-                                "block_new_friends" to userPreferences.blockNewFriends,
-                                "chat_color" to userPreferences.chatColor,
-                                "friend_bar_open" to userPreferences.friendBarOpen,
-                                "id" to userPreferences.id
-                        )
-                )
-
-                update("UPDATE users_stats SET last_online = :last_online, credits_last_update = :credits_last_update, " +
-                        "favorite_group = :favorite_group, online_seconds = :online_seconds, respect = :respect, " +
-                        "daily_respect_points = :daily_respect_points, daily_pet_respect_points = :daily_pet_respect_points, " +
-                        "respect_last_update = :respect_last_update, marketplace_tickets = :marketplace_tickets WHERE id = :id",
-                        mapOf(
-                                "last_online" to LocalDateTime.now(),
-                                "credits_last_update" to userStats.creditsLastUpdate,
-                                "favorite_group" to userStats.favoriteGroup,
-                                "online_seconds" to userStats.totalOnlineSeconds,
-                                "respect" to userStats.respect,
-                                "daily_respect_points" to userStats.dailyRespectPoints,
-                                "daily_pet_respect_points" to userStats.dailyPetRespectPoints,
-                                "respect_last_update" to userStats.respectLastUpdate,
-                                "marketplace_tickets" to userStats.marketplaceTickets,
-                                "id" to userStats.id
-                        )
-                )
-            }
+            BadgeDao.saveBadges(habboBadge.badges.values)
+            UserInformationDao.saveInformation(userInformation, false, "", channel.ip())
+            UserPreferencesDao.savePreferences(userPreferences)
+            UserStatsDao.saveStats(userStats)
 
             habboMessenger.notifyFriends()
         }

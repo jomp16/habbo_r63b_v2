@@ -43,17 +43,23 @@ object UserInformationDao {
         )
     }
 
+    private val userInformationCache: MutableMap<Int, UserInformation> = mutableMapOf()
+
     fun getUserInformationById(id: Int): UserInformation? {
         if (id == Int.MAX_VALUE) {
             return serverConsoleInformation
         } else {
-            return HabboServer.database {
-                select("SELECT * FROM users WHERE id = :id LIMIT 1",
-                        mapOf(
-                                "id" to id
-                        )
-                ) { getUserInformation(it) }.firstOrNull()
+            if (!userInformationCache.containsKey(id)) {
+                HabboServer.database {
+                    select("SELECT * FROM users WHERE id = :id LIMIT 1",
+                            mapOf(
+                                    "id" to id
+                            )
+                    ) { getUserInformation(it) }.firstOrNull()
+                }?.let { userInformationCache.put(id, it) }
             }
+
+            return userInformationCache[id]
         }
     }
 
@@ -65,12 +71,22 @@ object UserInformationDao {
         ) { getUserInformation(it) }.firstOrNull()
     }
 
-    fun getUserInformationByUsername(username: String): UserInformation? = HabboServer.database {
-        select("SELECT * FROM users WHERE username = :username",
-                mapOf(
-                        "username" to username
-                )
-        ) { getUserInformation(it) }.firstOrNull()
+    fun getUserInformationByUsername(username: String): UserInformation? {
+        var information = userInformationCache.values.filter { it.username == username }.firstOrNull()
+
+        if (information == null) {
+            information = HabboServer.database {
+                select("SELECT * FROM users WHERE username = :username",
+                        mapOf(
+                                "username" to username
+                        )
+                ) { getUserInformation(it) }.firstOrNull()
+            }
+
+            information?.let { userInformationCache.put(it.id, it) }
+        }
+
+        return information
     }
 
     private fun getUserInformation(row: Row) = UserInformation(
@@ -88,4 +104,25 @@ object UserInformationDao {
             row.int("home_room"),
             row.boolean("vip")
     )
+
+    fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String, authTicket: String = "") {
+        HabboServer.database {
+            update("UPDATE users SET auth_ticket = :ticket, online = :online, ip_last = :ip_last, credits = :credits, pixels = :pixels, " +
+                    "vip_points = :vip_points, figure = :figure, gender = :gender, motto = :motto, home_room = :home_room WHERE id = :id",
+                    mapOf(
+                            "ticket" to authTicket,
+                            "online" to online,
+                            "ip_last" to ip,
+                            "credits" to userInformation.credits,
+                            "pixels" to userInformation.pixels,
+                            "vip_points" to userInformation.vipPoints,
+                            "figure" to userInformation.figure,
+                            "gender" to userInformation.gender,
+                            "motto" to userInformation.motto,
+                            "home_room" to userInformation.homeRoom,
+                            "id" to userInformation.id
+                    )
+            )
+        }
+    }
 }

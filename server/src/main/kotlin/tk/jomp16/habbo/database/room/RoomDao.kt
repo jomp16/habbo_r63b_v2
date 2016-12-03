@@ -129,8 +129,7 @@ object RoomDao {
         }
     }
 
-    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int,
-                   tradeSettings: Int) = HabboServer.database {
+    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int) = HabboServer.database {
         insertAndGetGeneratedKey(
                 "INSERT INTO rooms (caption, description, owner_id, model_name, category, users_max, trade_state)" +
                         "VALUES (:caption, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
@@ -167,6 +166,49 @@ object RoomDao {
             // todo: dimmer
             // todo: wired
             // todo: teleport
+        }
+    }
+
+    fun updateRoomData(roomData: RoomData) {
+        HabboServer.database {
+            update("UPDATE rooms SET caption = :caption, description = :description, state = :state, password = :password, " +
+                    "users_max = :users_max, category = :category, tags = :tags, trade_state = :trade_state, allow_pets = :allow_pets, " +
+                    "allow_pets_eat = :allow_pets_eat, allow_walk_through = :allow_walk_through, hide_wall = :hide_wall, " +
+                    "wall_thick = :wall_thick, floor_thick = :floor_thick, wall_height = :wall_height, mute_settings = :mute_settings, " +
+                    "kick_settings = :kick_settings, ban_settings = :ban_settings, chat_type = :chat_type, chat_balloon = :chat_balloon, " +
+                    "chat_speed = :chat_speed, chat_max_distance = :chat_max_distance, chat_flood_protection = :chat_flood_protection, " +
+                    "floor = :floor, wallpaper = :wallpaper, landscape = :landscape, group_id = :group_id WHERE id = :room_id",
+                    mapOf(
+                            "caption" to roomData.caption,
+                            "description" to roomData.description,
+                            "state" to roomData.state.name.toLowerCase(),
+                            "password" to roomData.password,
+                            "users_max" to roomData.usersMax,
+                            "category" to roomData.category,
+                            "tags" to roomData.tags.joinToString(","),
+                            "trade_state" to roomData.tradeState.toString(),
+                            "allow_pets" to roomData.allowPets,
+                            "allow_pets_eat" to roomData.allowPetsEat,
+                            "allow_walk_through" to roomData.allowWalkThrough,
+                            "hide_wall" to roomData.hideWall,
+                            "wall_thick" to roomData.wallThick,
+                            "floor_thick" to roomData.floorThick,
+                            "wall_height" to roomData.wallHeight,
+                            "mute_settings" to roomData.muteSettings,
+                            "kick_settings" to roomData.kickSettings,
+                            "ban_settings" to roomData.banSettings,
+                            "chat_type" to roomData.chatType,
+                            "chat_balloon" to roomData.chatBalloon,
+                            "chat_speed" to roomData.chatSpeed,
+                            "chat_max_distance" to roomData.chatMaxDistance,
+                            "chat_flood_protection" to roomData.chatFloodProtection,
+                            "floor" to roomData.floor,
+                            "wallpaper" to roomData.wallpaper,
+                            "landscape" to roomData.landscape,
+                            "group_id" to roomData.groupId,
+                            "room_id" to roomData.id
+                    )
+            )
         }
     }
 }

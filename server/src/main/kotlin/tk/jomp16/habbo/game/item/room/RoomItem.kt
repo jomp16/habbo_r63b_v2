@@ -99,7 +99,7 @@ data class RoomItem(
         if (updateClient) {
             when {
                 furnishing.type == ItemType.WALL -> room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
-                else                             -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
+                else -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
             }
         }
 
@@ -112,7 +112,7 @@ data class RoomItem(
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
             }
-            furnishing.type == ItemType.WALL  -> {
+            furnishing.type == ItemType.WALL -> {
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
             }

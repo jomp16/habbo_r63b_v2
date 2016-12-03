@@ -26,10 +26,9 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUpdateUserResponse {
     @Response(Outgoing.USER_UPDATE)
-    fun response(habboResponse: HabboResponse, actorId: Int, figure: String, gender: String, motto: String,
-                 achievementScore: Int) {
+    fun response(habboResponse: HabboResponse, virtualId: Int, figure: String, gender: String, motto: String, achievementScore: Int) {
         habboResponse.apply {
-            writeInt(actorId)
+            writeInt(virtualId)
             writeUTF(figure)
             writeUTF(gender)
             writeUTF(motto)
