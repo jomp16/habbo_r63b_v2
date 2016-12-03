@@ -22,7 +22,6 @@ package tk.jomp16.habbo.kotlin
 import com.github.andrewoma.kwery.core.Row
 import com.github.andrewoma.kwery.core.Session
 import com.github.andrewoma.kwery.core.StatementOptions
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 
@@ -40,11 +39,4 @@ fun Session.batchInsertWithIntGeneratedKey(sql: String, parametersList: List<Map
 
 fun Session.batchInsertAndGetGeneratedKeys(sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
-fun Row.localDateTime(name: String): LocalDateTime = localDateTimeOrNull(name)!!
-
-@Suppress("unused")
-fun Row.localDate(name: String): LocalDate = localDateOrNull(name)!!
-
-fun Row.localDateTimeOrNull(name: String): LocalDateTime? = timestampOrNull(name)?.toLocalDateTime()
-
-fun Row.localDateOrNull(name: String): LocalDate? = dateOrNull(name)?.toLocalDate()
+fun Row.localDateTime(name: String): LocalDateTime = timestampOrNull(name)?.toLocalDateTime()!!
