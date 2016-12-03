@@ -83,7 +83,9 @@ object CatalogDao {
                     it.string("name"),
                     it.int("months"),
                     it.int("credits"),
-                    it.int("pixels")
+                    it.int("points"),
+                    it.int("points_type"),
+                    it.boolean("giftable")
             )
         }
     }

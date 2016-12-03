@@ -40,14 +40,14 @@ class CatalogClubOffersResponse {
 
                 writeInt(it.itemId)
                 writeUTF(it.name)
-                writeBoolean(false)
+                writeBoolean(false) // useless
                 writeInt(it.credits) // credits
-                writeInt(it.pixels) // pixels
-                writeInt(0) // type: 0 - pixel
+                writeInt(it.points) // points
+                writeInt(it.pointsType) // type: 0 - pixel, > 0 - vip points (5 = diamonds)
                 writeBoolean(true)
                 writeInt(ChronoUnit.MONTHS.between(now, localDateTime).toInt())
                 writeInt(ChronoUnit.DAYS.between(now, localDateTime).toInt())
-                writeBoolean(false)
+                writeBoolean(it.giftable)
                 writeInt(ChronoUnit.DAYS.between(now, localDateTime).toInt())
                 writeInt(localDateTime.year)
                 writeInt(localDateTime.monthValue)

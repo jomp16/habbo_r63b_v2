@@ -120,10 +120,19 @@ class CatalogManager {
                 return
             }
 
-            if (habboSession.userInformation.credits < clubOffer.credits || habboSession.userInformation.pixels < clubOffer.pixels) return
+            if (habboSession.userInformation.credits < clubOffer.credits ||
+                    when (clubOffer.pointsType) {
+                        0 -> habboSession.userInformation.pixels < clubOffer.points
+                        else -> habboSession.userInformation.vipPoints < clubOffer.points
+                    }
+            ) return
 
             habboSession.userInformation.credits -= clubOffer.credits
-            habboSession.userInformation.pixels -= clubOffer.pixels
+
+            when (clubOffer.pointsType) {
+                0 -> habboSession.userInformation.pixels -= clubOffer.points
+                else -> habboSession.userInformation.vipPoints -= clubOffer.points
+            }
 
             habboSession.habboSubscription.addOrExtend(clubOffer.months)
 

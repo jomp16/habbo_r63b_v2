@@ -25,5 +25,7 @@ data class CatalogClubOffer(
         val name: String,
         val months: Int,
         val credits: Int,
-        val pixels: Int
+        val points: Int,
+        val pointsType: Int,
+        val giftable: Boolean
 )
