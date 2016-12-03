@@ -32,7 +32,9 @@ data class DatabaseConfig(
         @JsonProperty("password")
         val password: String,
         @JsonProperty("name")
-        val name: String
+        val name: String,
+        @JsonProperty("timeout")
+        val timeout: Long
 ) {
     val hikariConfig: HikariConfig
         get() {
@@ -41,7 +43,8 @@ data class DatabaseConfig(
             config.jdbcUrl = "jdbc:mysql://$host:$port/$name"
             config.username = user
             config.password = password
-            config.addDataSourceProperty("useSSL", false)
+            config.connectionTimeout = timeout
+//            config.addDataSourceProperty("useSSL", false)
             config.addDataSourceProperty("serverTimezone", "UTC")
 
             return config
