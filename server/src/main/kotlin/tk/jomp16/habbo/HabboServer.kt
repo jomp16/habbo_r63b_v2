@@ -23,7 +23,6 @@ import com.github.andrewoma.kwery.core.Session
 import com.github.andrewoma.kwery.core.SessionFactory
 import com.github.andrewoma.kwery.core.dialect.MysqlDialect
 import com.zaxxer.hikari.HikariDataSource
-import com.zaxxer.hikari.pool.HikariPool
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
@@ -122,35 +121,30 @@ object HabboServer : Closeable {
             log.info("Initializing database...")
 
             hikariDataSource = HikariDataSource(habboConfig.databaseConfig.hikariConfig)
-
             databaseFactory = SessionFactory(hikariDataSource, MysqlDialect())
 
             log.info("Database initialized!")
-        } catch (e: HikariPool.PoolInitializationException) {
-            log.error("Couldn't connect to database! Error: {}", e)
+            // Clean up things in database
+            log.info("Cleaning up some things in database...")
+            // START USERS
+            log.debug("Fixing some data in users table...")
+            cleanUpUsers()
+            log.debug("Done!")
+
+            // END USERS
+            log.info("Done!")
+            // Load HabboGame...
+            log.info("Loading Habbo game...")
+            habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
+            habboHandler = HabboHandler()
+            habboSessionManager = HabboSessionManager()
+            habboGame = HabboGame()
+            log.info("Done!")
+        } catch (e: Exception) {
+            log.error("An error happened!", e)
 
             System.exit(1)
         }
-
-        // Clean up things in database
-        log.info("Cleaning up some things in database...")
-        // START USERS
-        log.debug("Fixing some data in users table...")
-        cleanUpUsers()
-        log.debug("Done!")
-        // END USERS
-        log.info("Done!")
-
-        // Load HabboGame...
-        log.info("Loading Habbo game...")
-
-        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
-        habboHandler = HabboHandler()
-        habboSessionManager = HabboSessionManager()
-
-        habboGame = HabboGame()
-
-        log.info("Done!")
     }
 
     fun start() {
@@ -168,15 +162,17 @@ object HabboServer : Closeable {
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
-                                socketChannel.pipeline().addLast(IdleStateHandler(60, 30, 0))
+                                socketChannel.pipeline().apply {
+                                    addLast(IdleStateHandler(60, 30, 0))
 
-                                socketChannel.pipeline().addLast(stringEncoder)
-                                socketChannel.pipeline().addLast(habboNettyEncoder)
+                                    addLast(stringEncoder)
+                                    addLast(habboNettyEncoder)
 
-                                if (habboConfig.rc4) socketChannel.pipeline().addLast(HabboNettyRC4Decoder())
+                                    if (habboConfig.rc4) addLast(HabboNettyRC4Decoder())
 
-                                socketChannel.pipeline().addLast(HabboNettyDecoder())
-                                socketChannel.pipeline().addLast(habboNettyHandler)
+                                    addLast(HabboNettyDecoder())
+                                    addLast(habboNettyHandler)
+                                }
                             }
                         })
                         .option(ChannelOption.SO_BACKLOG, 128)
