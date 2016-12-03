@@ -239,8 +239,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
 
-        addItemToSave(roomItem)
-
         return true
     }
 
