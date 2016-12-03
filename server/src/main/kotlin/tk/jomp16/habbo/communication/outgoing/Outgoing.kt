@@ -119,4 +119,5 @@ object Outgoing {
     const val ROOM_UPDATE_FURNI_STACK = 558 // 3493
     const val CATALOG_LIMITED_SOLD_OUT = 377 // 506
     const val CATALOG_PURCHASE_NOT_ALLOWED = 3770 // 2237
+    const val CATALOG_OFFER = 3388 // 3318
 }

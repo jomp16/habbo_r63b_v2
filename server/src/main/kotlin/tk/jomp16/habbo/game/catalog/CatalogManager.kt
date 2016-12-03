@@ -193,21 +193,23 @@ class CatalogManager {
                                 "user_id" to habboSession.userInformation.id,
                                 "base_item" to it.furnishing.itemName,
                                 "extra_data" to it.extraData,
-                                "limited_id" to it.limitedId,
+                                "limited_id" to it.limitedNum,
                                 "wall_pos" to ""
                         )
                     }
             )
 
-            if (furnishingToPurchase.filter { it.limitedId > 0 }.isNotEmpty()) {
-                batchInsertAndGetGeneratedKeys("INSERT INTO items_limited (limited_num, limited_total) VALUES (:limited_num, :limited_total)",
-                        furnishingToPurchase.filter { it.limitedId > 0 }.map {
+            if (furnishingToPurchase.filter { it.limitedNum > 0 }.isNotEmpty()) {
+                val ids = batchInsertAndGetGeneratedKeys("INSERT INTO items_limited (limited_num, limited_total) VALUES (:limited_num, :limited_total)",
+                        furnishingToPurchase.filter { it.limitedNum > 0 }.map {
                             mapOf(
-                                    "limited_num" to it.limitedId,
+                                    "limited_num" to it.limitedNum,
                                     "limited_total" to catalogItem.limitedStack
                             )
                         }
                 )
+
+                furnishingToPurchase.forEachIndexed { i, catalogPurchaseData -> catalogPurchaseData.limitedId = ids[i] }
             }
 
             val userItems = ids.mapIndexed { i, itemId ->
@@ -285,6 +287,14 @@ class CatalogManager {
 
         if (!catalogItem.badge.isEmpty()) {
             habboSession.habboBadge.addBadge(catalogItem.badge)
+        }
+
+        if (catalogItem.limited) {
+            // send new data to everyone logged in
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
+
+            // and save new limited sell to database
+            CatalogDao.updateLimitedSells(catalogItem)
         }
     }
 

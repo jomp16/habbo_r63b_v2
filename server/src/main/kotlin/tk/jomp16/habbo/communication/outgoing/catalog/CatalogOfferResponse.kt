@@ -17,14 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.catalog
+package tk.jomp16.habbo.communication.outgoing.catalog
 
-import tk.jomp16.habbo.game.item.Furnishing
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.catalog.CatalogItem
 
-data class CatalogPurchaseData(
-        val furnishing: Furnishing,
-        val extraData: String,
-        val limitedNum: Int
-) {
-    var limitedId: Int = 0
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogOfferResponse {
+    @Response(Outgoing.CATALOG_OFFER)
+    fun handle(habboResponse: HabboResponse, catalogItem: CatalogItem) {
+        habboResponse.apply {
+            serialize(catalogItem)
+        }
+    }
 }

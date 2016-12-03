@@ -99,4 +99,15 @@ object CatalogDao {
             )
         }
     }
+
+    fun updateLimitedSells(catalogItem: CatalogItem) {
+        HabboServer.database {
+            update("UPDATE catalog_items SET limited_sells = :limited_sells WHERE id = :id",
+                    mapOf(
+                            "limited_sells" to catalogItem.limitedSells.get(),
+                            "id" to catalogItem.id
+                    )
+            )
+        }
+    }
 }

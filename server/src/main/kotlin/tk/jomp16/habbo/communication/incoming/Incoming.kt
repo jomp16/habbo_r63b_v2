@@ -55,6 +55,7 @@ object Incoming {
     const val CATALOG_GIFT_WRAPPING = 418 // 2844
     const val CATALOG_INDEX = 223 // 1344
     const val CATALOG_PAGE = 412 // 3520
+    const val CATALOG_OFFER = 2594 // 522
     const val MESSENGER_REQUESTS = 2448 // 2913
     const val MESSENGER_FRIENDS_UPDATE = 1419 // 17
     const val MESSENGER_CHAT = 3567 // 1442
