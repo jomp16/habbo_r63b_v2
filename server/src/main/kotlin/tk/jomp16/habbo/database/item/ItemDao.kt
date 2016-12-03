@@ -30,6 +30,8 @@ import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.util.Vector3
 
 object ItemDao {
+    private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = mutableMapOf()
+
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>) = HabboServer.database {
         select("SELECT * FROM furnishings") {
             val itemName = it.string("item_name")
@@ -81,8 +83,7 @@ object ItemDao {
                             it.double("z")
                     ),
                     it.int("rot"),
-                    it.string("wall_pos"),
-                    if (limitedId > 0) ItemDao.getLimitedData(limitedId) else null
+                    it.string("wall_pos")
             )
         }
     }
@@ -100,24 +101,31 @@ object ItemDao {
                     userId,
                     it.string("base_item"),
                     it.string("extra_data"),
-                    limitedId,
-                    if (limitedId > 0) ItemDao.getLimitedData(limitedId) else null
+                    limitedId
             )
         }
     }
 
-    fun getLimitedData(limitedId: Int) = HabboServer.database {
-        select("SELECT * FROM items_limited WHERE id = :id",
-                mapOf(
-                        "id" to limitedId
-                )
-        ) {
-            LimitedItemData(
-                    it.int("id"),
-                    it.int("limited_num"),
-                    it.int("limited_total")
-            )
-        }.firstOrNull()
+    fun getLimitedData(limitedId: Int): LimitedItemData? {
+        if (!limitedItemDatas.containsKey(limitedId)) {
+            val limitedItemData = HabboServer.database {
+                select("SELECT * FROM items_limited WHERE id = :id",
+                        mapOf(
+                                "id" to limitedId
+                        )
+                ) {
+                    LimitedItemData(
+                            it.int("id"),
+                            it.int("limited_num"),
+                            it.int("limited_total")
+                    )
+                }.firstOrNull()
+            }
+
+            limitedItemDatas.put(limitedId, limitedItemData)
+        }
+
+        return limitedItemDatas[limitedId]
     }
 
     fun removeUserItem(userItem: UserItem) {

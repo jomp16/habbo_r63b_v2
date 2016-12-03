@@ -100,8 +100,7 @@ class ItemManager {
             userItem.limitedId,
             Vector3(0, 0, 0.toDouble()),
             0,
-            "",
-            userItem.limitedItemData
+            ""
     )
 
     // todo: see if I can improve it

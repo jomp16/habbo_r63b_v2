@@ -23,6 +23,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.ItemType
@@ -40,9 +41,10 @@ data class RoomItem(
         val limitedId: Int,
         var position: Vector3,
         var rotation: Int,
-        var wallPosition: String,
-        val limitedItemData: LimitedItemData?
+        var wallPosition: String
 ) : IHabboResponseSerialize {
+    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(limitedId) }
+
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[baseName]!!
 

@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.catalog.CatalogDao
-import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
@@ -218,8 +217,7 @@ class CatalogManager {
                         habboSession.userInformation.id,
                         furnishingToPurchase[i].furnishing.itemName,
                         furnishingToPurchase[i].extraData,
-                        furnishingToPurchase[i].limitedId,
-                        ItemDao.getLimitedData(furnishingToPurchase[i].limitedId)
+                        furnishingToPurchase[i].limitedId
                 )
             }
 

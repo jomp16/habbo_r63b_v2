@@ -22,6 +22,7 @@ package tk.jomp16.habbo.game.item.user
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
+import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.LimitedItemData
@@ -31,9 +32,10 @@ data class UserItem(
         var userId: Int,
         val baseItem: String,
         var extraData: String,
-        val limitedId: Int,
-        val limitedItemData: LimitedItemData?
+        val limitedId: Int
 ) : IHabboResponseSerialize {
+    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(limitedId) }
+
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[baseItem]!!
 
