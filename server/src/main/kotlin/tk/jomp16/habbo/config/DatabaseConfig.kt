@@ -44,8 +44,6 @@ data class DatabaseConfig(
             config.username = user
             config.password = password
             config.connectionTimeout = timeout
-//            config.addDataSourceProperty("useSSL", false)
-            config.addDataSourceProperty("serverTimezone", "UTC")
 
             return config
         }
