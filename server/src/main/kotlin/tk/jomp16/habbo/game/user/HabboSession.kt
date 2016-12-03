@@ -172,7 +172,7 @@ class HabboSession(val channel: Channel) : Closeable {
         habboMessenger = HabboMessenger(this)
         habboInventory = HabboInventory(this)
 
-        UserInformationDao.saveInformation(userInformation, true, "", ip)
+        UserInformationDao.saveInformation(userInformation, true, ip, "")
 
         return true
     }
@@ -294,7 +294,7 @@ class HabboSession(val channel: Channel) : Closeable {
             currentRoom?.removeUser(roomUser, false, false)
 
             BadgeDao.saveBadges(habboBadge.badges.values)
-            UserInformationDao.saveInformation(userInformation, false, "", channel.ip())
+            UserInformationDao.saveInformation(userInformation, false, channel.ip(), "")
             UserPreferencesDao.savePreferences(userPreferences)
             UserStatsDao.saveStats(userStats)
 
