@@ -62,15 +62,17 @@ object BadgeDao {
     }
 
     fun saveBadges(badges: Collection<Badge>) {
-        HabboServer.database {
-            batchUpdate("UPDATE users_badges SET slot = :slot WHERE id = :id",
-                    badges.map {
-                        mapOf(
-                                "slot" to it.slot,
-                                "id" to it.id
-                        )
-                    }
-            )
+        if (badges.isNotEmpty()) {
+            HabboServer.database {
+                batchUpdate("UPDATE users_badges SET slot = :slot WHERE id = :id",
+                        badges.map {
+                            mapOf(
+                                    "slot" to it.slot,
+                                    "id" to it.id
+                            )
+                        }
+                )
+            }
         }
     }
 }
