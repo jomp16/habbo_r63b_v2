@@ -31,6 +31,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.time.Clock
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -86,8 +87,7 @@ class RoomUser(
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         statusMap.put(key, Pair(
                 if (milliseconds == -1) null
-                else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())),
-                value)
+                else LocalDateTime.now(Clock.systemUTC()).plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value)
         )
 
         updateNeeded = true
@@ -101,7 +101,7 @@ class RoomUser(
 
     fun onCycle() {
         statusMap.entries.forEach {
-            if (it.value.first != null && LocalDateTime.now().isAfter(it.value.first)) removeStatus(it.key)
+            if (it.value.first != null && LocalDateTime.now(Clock.systemUTC()).isAfter(it.value.first)) removeStatus(it.key)
         }
 
         if (stepSeated) {

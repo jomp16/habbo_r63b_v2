@@ -19,6 +19,7 @@
 
 import org.ajoberstar.grgit.Grgit
 
+import java.time.Clock
 import java.time.Instant
 
 plugins {
@@ -83,7 +84,7 @@ subprojects {
 
     buildConfig {
         //noinspection GrUnresolvedAccess
-        buildConfigField "java.time.LocalDateTime", "BUILD_DATE", "java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(${Instant.now().getEpochSecond()}), java.time.ZoneId.of(\"UTC\"))"
+        buildConfigField "java.time.LocalDateTime", "BUILD_DATE", "java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(${Instant.now(Clock.systemUTC()).getEpochSecond()}), java.time.ZoneId.of(\"UTC\"))"
         //noinspection GrUnresolvedAccess
         buildConfigField "String", "GIT_REVISION_SHORT", "$gitRevision"
         //noinspection GrUnresolvedAccess

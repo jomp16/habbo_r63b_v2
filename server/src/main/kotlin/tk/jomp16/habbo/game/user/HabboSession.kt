@@ -44,6 +44,7 @@ import tk.jomp16.habbo.game.user.messenger.HabboMessenger
 import tk.jomp16.habbo.game.user.subscription.HabboSubscription
 import tk.jomp16.habbo.kotlin.ip
 import java.io.Closeable
+import java.time.Clock
 import java.time.LocalDateTime
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -78,7 +79,7 @@ class HabboSession(val channel: Channel) : Closeable {
     val authenticated: Boolean
         get() {
             try {
-                return userInformation.id > 0
+                return userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
             } catch (exception: UninitializedPropertyAccessException) {
                 return false
             }
@@ -165,7 +166,7 @@ class HabboSession(val channel: Channel) : Closeable {
         userStats = UserStatsDao.getUserStats(userInformation.id)
         userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
 
-        userStats.lastOnline = LocalDateTime.now()
+        userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
 
         habboSubscription = HabboSubscription(this)
         habboBadge = HabboBadge(this)
@@ -182,7 +183,7 @@ class HabboSession(val channel: Channel) : Closeable {
 
         var updateCurrency = false
 
-        if (LocalDateTime.now().isAfter(localDateTime)) {
+        if (LocalDateTime.now(Clock.systemUTC()).isAfter(localDateTime)) {
             if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits < Int.MAX_VALUE) {
                 userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
 
@@ -202,7 +203,7 @@ class HabboSession(val channel: Channel) : Closeable {
                 updateCurrency = true
             }
 
-            userStats.creditsLastUpdate = LocalDateTime.now()
+            userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
         }
 
         if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE

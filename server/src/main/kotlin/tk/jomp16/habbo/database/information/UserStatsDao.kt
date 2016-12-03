@@ -23,6 +23,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserStats
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
+import java.time.Clock
 import java.time.LocalDateTime
 
 object UserStatsDao {
@@ -73,7 +74,7 @@ object UserStatsDao {
         return tmp
     }
 
-    fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now()) {
+    fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {
         HabboServer.database {
             update("UPDATE users_stats SET last_online = :last_online, credits_last_update = :credits_last_update, " +
                     "favorite_group = :favorite_group, online_seconds = :online_seconds, respect = :respect, " +

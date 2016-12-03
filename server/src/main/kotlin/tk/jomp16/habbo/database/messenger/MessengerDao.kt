@@ -26,6 +26,7 @@ import tk.jomp16.habbo.game.user.messenger.MessengerRequest
 import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -157,8 +158,7 @@ object MessengerDao {
                 offlineMessages += Triple(
                         it.int("from_id"),
                         it.string("message"),
-                        (Instant.now().epochSecond - it.localDateTime("timestamp").toEpochSecond(
-                                ZoneOffset.UTC)).toInt()
+                        (Instant.now(Clock.systemUTC()).epochSecond - it.localDateTime("timestamp").toEpochSecond(ZoneOffset.UTC)).toInt()
                 )
             }
 

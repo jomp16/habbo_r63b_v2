@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.game.user.information
 
+import java.time.Clock
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -43,5 +44,5 @@ data class UserStats(
         var respectLastUpdate: LocalDateTime
 ) {
     val totalOnlineSeconds: Long
-        get() = Duration.between(lastOnline, LocalDateTime.now()).seconds + onlineSeconds
+        get() = Duration.between(lastOnline, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
 }

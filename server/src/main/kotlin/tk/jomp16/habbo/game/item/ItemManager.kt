@@ -33,6 +33,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.urlUserAgent
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -159,9 +160,9 @@ class ItemManager {
             InteractionType.BADGE_DISPLAY -> {
                 if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
 
-                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
+                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
             }
-            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
+            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
             else -> ""
         }
     }

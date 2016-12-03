@@ -23,6 +23,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.subscription.SubscriptionDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
+import java.time.Clock
 import java.time.LocalDate
 import java.time.Period
 import java.time.temporal.ChronoUnit
@@ -71,7 +72,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
             months = ChronoUnit.MONTHS.between(currentTime, subscription?.expire).toInt()
             elapsedDays = ChronoUnit.DAYS.between(subscription?.activated, currentTime).toInt()
             minutes = ChronoUnit.MINUTES.between(currentTime, subscription?.expire).toInt()
-            days = Period.between(LocalDate.now(), LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())).days
+            days = Period.between(LocalDate.now(Clock.systemUTC()), LocalDate.now(Clock.systemUTC()).plusDays(days.toLong()).minusMonths(months.toLong())).days
 
             if (days == 0) days = 1
         }

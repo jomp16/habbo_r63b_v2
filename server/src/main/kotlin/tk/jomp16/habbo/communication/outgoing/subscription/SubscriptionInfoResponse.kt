@@ -24,6 +24,7 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.subscription.Subscription
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -42,7 +43,7 @@ class SubscriptionInfoResponse {
                 writeInt(100) // credits spent on catalog
                 writeInt(5) // credits bonus
                 writeInt(150) // credits to receive with multiplier
-                writeInt(LocalDateTime.now().plusMonths(1).second) // how long to get next bonus
+                writeInt(LocalDateTime.now(Clock.systemUTC()).plusMonths(1).second) // how long to get next bonus
             } else {
                 writeInt(0)
                 writeUTF("")
@@ -52,7 +53,7 @@ class SubscriptionInfoResponse {
                 writeInt(0)
                 writeInt(0)
                 writeInt(0)
-                writeInt(LocalDateTime.now().plusDays(1).second)
+                writeInt(LocalDateTime.now(Clock.systemUTC()).plusDays(1).second)
             }
         }
     }

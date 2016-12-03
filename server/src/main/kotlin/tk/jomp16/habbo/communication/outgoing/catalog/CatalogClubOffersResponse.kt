@@ -23,6 +23,7 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.catalog.CatalogClubOffer
+import java.time.Clock
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -34,7 +35,7 @@ class CatalogClubOffersResponse {
             writeInt(clubOffers.size)
 
             clubOffers.forEach {
-                val now = LocalDateTime.now()
+                val now = LocalDateTime.now(Clock.systemUTC())
                 val localDateTime = now.plusMonths(it.months.toLong())
 
                 writeInt(it.itemId)
