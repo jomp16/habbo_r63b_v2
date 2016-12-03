@@ -43,23 +43,24 @@ class NavigatorInitializeHandler {
                 arrayOf<Room>()
         ) // NavigatorLiftedRoomsComposer
         queuedHabboResponse += Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES to arrayOf(
-                listOf(
-                        "new_ads",
-                        "friend_finding",
-                        "staffpicks",
-                        "with_friends",
-                        "with_rights",
-                        "recommended",
-                        "my_groups",
-                        "favorites",
-                        "history",
-                        "top_promotions",
-                        "friends_rooms",
-                        "groups",
-                        "metadata",
-                        "history_freq",
-                        "highest_score",
-                        HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.map { "category__" + it }
+                HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.map { "category__" + it }.plus(
+                        listOf(
+                                "new_ads",
+                                "friend_finding",
+                                "staffpicks",
+                                "with_friends",
+                                "with_rights",
+                                "recommended",
+                                "my_groups",
+                                "favorites",
+                                "history",
+                                "top_promotions",
+                                "friends_rooms",
+                                "groups",
+                                "metadata",
+                                "history_freq",
+                                "highest_score"
+                        )
                 )
         )
 
