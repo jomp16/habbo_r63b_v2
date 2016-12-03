@@ -30,13 +30,15 @@ class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, p
 
         // todo: wired trigger on chat
 
-        room.roomUsers.values.forEach {
-            if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
-                it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
-            } else if (type == ChatType.SHOUT) {
-                it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
-            } else if (type == ChatType.WHISPER) {
-                it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+        if (type == ChatType.WHISPER) {
+            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+        } else {
+            room.roomUsers.values.forEach {
+                if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+                } else if (type == ChatType.SHOUT) {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+                }
             }
         }
     }
