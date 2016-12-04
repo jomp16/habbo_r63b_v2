@@ -28,6 +28,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
@@ -71,12 +72,17 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
+        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+
         if (evt is IdleStateEvent) {
-            if (evt.state() === IdleState.READER_IDLE) {
+            if (evt.state() == IdleState.READER_IDLE) {
+                log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
+
                 ctx.close()
-            } else if (evt.state() === IdleState.WRITER_IDLE) {
-                // todo
-                //ctx.writeAndFlush(PingMessage())
+            } else if (evt.state() == IdleState.WRITER_IDLE) {
+                log.error("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
+
+                habboSession.sendHabboResponse(Outgoing.PING)
             }
         }
     }
