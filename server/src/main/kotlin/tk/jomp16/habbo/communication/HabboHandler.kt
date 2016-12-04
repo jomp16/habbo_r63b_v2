@@ -45,8 +45,7 @@ class HabboHandler {
             Incoming.MESSENGER_FRIENDS_UPDATE,
             Incoming.GAME_LISTING,
             Incoming.INITIALIZE_GAME_CENTER,
-            Incoming.SANCTION_STATUS,
-            Incoming.PONG)
+            Incoming.SANCTION_STATUS)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
