@@ -27,10 +27,10 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomWallItemRemoveResponse {
     @Response(Outgoing.ROOM_WALL_ITEM_REMOVE)
-    fun handle(habboResponse: HabboResponse, roomItem: RoomItem, pickupId: Int) {
+    fun handle(habboResponse: HabboResponse, roomItem: RoomItem) {
         habboResponse.apply {
             writeUTF(roomItem.id.toString())
-            writeInt(pickupId)
+            writeInt(roomItem.userId)
         }
     }
 }
