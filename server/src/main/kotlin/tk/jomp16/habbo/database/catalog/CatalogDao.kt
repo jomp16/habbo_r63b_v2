@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object CatalogDao {
     fun getCatalogPages() = HabboServer.database {
-        select("SELECT * FROM catalog_pages") {
+        select("SELECT * FROM catalog_pages WHERE id != -1 AND id != -2") {
             CatalogPage(
                     it.int("id"),
                     it.int("parent_id"),
