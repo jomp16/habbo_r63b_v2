@@ -36,10 +36,6 @@ class HabboBadge(private val habboSession: HabboSession) {
         badges.values.forEach { it.slot = 0 }
     }
 
-    fun saveAll() {
-        BadgeDao.saveBadges(badges.values)
-    }
-
     fun addBadge(code: String) {
         addBadge(code, 0)
     }
