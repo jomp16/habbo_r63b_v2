@@ -76,7 +76,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
         if (evt is IdleStateEvent) {
             if (evt.state() == IdleState.READER_IDLE) {
-                log.info("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
+                log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
 
                 ctx.close()
             } else if (evt.state() == IdleState.WRITER_IDLE) {
