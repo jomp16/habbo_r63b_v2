@@ -80,7 +80,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                 ctx.close()
             } else if (evt.state() == IdleState.WRITER_IDLE) {
-                log.error("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
+                log.info("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
 
                 habboSession.sendHabboResponse(Outgoing.PING)
             }
