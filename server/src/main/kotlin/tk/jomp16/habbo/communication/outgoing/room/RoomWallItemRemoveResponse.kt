@@ -25,15 +25,12 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.item.room.RoomItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomItemRemoveResponse {
-    @Response(Outgoing.ROOM_FLOOR_ITEM_REMOVE, Outgoing.ROOM_WALL_ITEM_REMOVE)
-    fun handle(habboResponse: HabboResponse, roomItem: RoomItem, expired: Boolean) {
+class RoomWallItemRemoveResponse {
+    @Response(Outgoing.ROOM_WALL_ITEM_REMOVE)
+    fun handle(habboResponse: HabboResponse, roomItem: RoomItem, pickupId: Int) {
         habboResponse.apply {
             writeUTF(roomItem.id.toString())
-            writeBoolean(expired)
-            writeInt(roomItem.userId)
-
-            if (habboResponse.headerId == Outgoing.ROOM_FLOOR_ITEM_REMOVE) writeInt(0)
+            writeInt(pickupId)
         }
     }
 }

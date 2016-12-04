@@ -280,7 +280,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         return true
     }
 
-    fun removeItem(roomItem: RoomItem): Boolean {
+    fun removeItem(userId: Int, roomItem: RoomItem): Boolean {
         if (!roomItems.containsValue(roomItem)) return false
 
         roomItems.remove(roomItem.id)
@@ -294,7 +294,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (roomItem.furnishing.type) {
             ItemType.FLOOR -> {
-                sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false)
+                sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false, userId, 0)
 
                 HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                     it.forEach { vector2 ->
@@ -305,7 +305,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
                 }
             }
             ItemType.WALL -> {
-                sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem, false)
+                sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem, userId)
             }
         }
 
