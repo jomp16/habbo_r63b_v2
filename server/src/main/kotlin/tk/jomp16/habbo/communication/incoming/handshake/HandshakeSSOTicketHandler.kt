@@ -67,7 +67,6 @@ class HandshakeSSOTicketHandler {
         )
         queuedHabboResponse += Outgoing.AVAILABILITY_STATUS to arrayOf()
         queuedHabboResponse += Outgoing.ENABLE_TRADING to arrayOf(true)
-        queuedHabboResponse += Outgoing.ACTIVITY_POINTS_BALANCE to arrayOf(habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
         queuedHabboResponse += Outgoing.ACHIEVEMENT_SCORE to arrayOf(
                 habboSession.userStats.achievementScore
         )
@@ -91,6 +90,6 @@ class HandshakeSSOTicketHandler {
                     .replace("\$username", habboSession.userInformation.username)
 
             habboSession.sendNotification(NotificationType.MOTD_ALERT, motd)
-        } // MOTDNotificationComposer
+        }
     }
 }
