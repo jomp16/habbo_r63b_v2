@@ -279,4 +279,38 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         return true
     }
+
+    fun removeItem(roomItem: RoomItem): Boolean {
+        if (!roomItems.containsValue(roomItem)) return false
+
+        roomItems.remove(roomItem.id)
+
+        roomGamemap.removeRoomItem(roomItem)
+
+        // todo: WIRED
+        // todo: dimmer
+        // todo: furni interactor
+
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (roomItem.furnishing.type) {
+            ItemType.FLOOR -> {
+                sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false)
+
+                HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
+                    it.forEach { vector2 ->
+                        roomGamemap.getUsersFromVector2(vector2).forEach(RoomUser::removeUserStatuses)
+                    }
+
+                    sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)
+                }
+            }
+            ItemType.WALL -> {
+                sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem, false)
+            }
+        }
+
+        if (roomItemsToSave.contains(roomItem)) roomItemsToSave.remove(roomItem)
+
+        return true
+    }
 }

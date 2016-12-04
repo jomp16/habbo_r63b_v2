@@ -112,4 +112,5 @@ object Incoming {
     const val CAMPAIGN_OPEN1 = 2257
     const val CAMPAIGN_OPEN2 = 3889
     const val PONG = 2596
+    const val ROOM_TAKE_ITEM = 3456
 }

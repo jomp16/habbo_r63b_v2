@@ -127,4 +127,6 @@ object Outgoing {
     const val CAMPAIGN_CALENDAR = 2531
     const val CATALOG_BUILDERS_BORROWED = 3828
     const val PING = 3928
+    const val ROOM_FLOOR_ITEM_REMOVE = 2703
+    const val ROOM_WALL_ITEM_REMOVE = 3208
 }

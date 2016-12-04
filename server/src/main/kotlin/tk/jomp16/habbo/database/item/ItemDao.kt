@@ -137,4 +137,15 @@ object ItemDao {
             )
         }
     }
+
+    fun removeRoomItem(roomItem: RoomItem) {
+        HabboServer.database {
+            update("UPDATE items SET room_id = :room_id WHERE id = :id",
+                    mapOf(
+                            "room_id" to 0,
+                            "id" to roomItem.id
+                    )
+            )
+        }
+    }
 }
