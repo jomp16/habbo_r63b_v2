@@ -34,6 +34,10 @@ class UserPongHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        log.info("User ${habboSession.userInformation.username} replied to ping!")
+        val timeElapsed = System.nanoTime() - habboSession.ping
+
+        habboSession.ping = 0.toLong()
+
+        log.info("User ${habboSession.userInformation.username} replied to ping! Time elapsed: ${timeElapsed / 1000000.toDouble()}ms")
     }
 }

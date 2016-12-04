@@ -82,6 +82,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             } else if (evt.state() == IdleState.WRITER_IDLE) {
                 log.info("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
 
+                habboSession.ping = System.nanoTime()
                 habboSession.sendHabboResponse(Outgoing.PING)
             }
         }
