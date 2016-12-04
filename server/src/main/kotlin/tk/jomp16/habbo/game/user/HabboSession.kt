@@ -197,7 +197,7 @@ class HabboSession(val channel: Channel) : Closeable {
                 updateCurrency = true
             }
 
-            if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints < Int.MAX_VALUE) {
+            if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints < Int.MAX_VALUE)) {
                 userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
 
                 updateCurrency = true
