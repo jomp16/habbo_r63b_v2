@@ -150,7 +150,7 @@ class RoomGamemap(private val room: Room) {
     }
 
     private fun unsetRoomItem(vector2: Vector2, roomItem: RoomItem) {
-        if (!roomItemMap.containsKey(vector2) && !roomItemMap[vector2]!!.contains(roomItem)) return
+        if (!roomItemMap.containsKey(vector2) || !roomItemMap[vector2]!!.contains(roomItem)) return
 
         roomItemMap[vector2]?.remove(roomItem)
         cannotStackItem[vector2.x][vector2.y] = false
