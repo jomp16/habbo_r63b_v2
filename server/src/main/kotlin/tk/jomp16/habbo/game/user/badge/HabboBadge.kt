@@ -54,7 +54,7 @@ class HabboBadge(private val habboSession: HabboSession) {
         val queuedHabboResponse = QueuedHabboResponse()
 
         queuedHabboResponse += Outgoing.INVENTORY_BADGES to arrayOf(badges.values)
-        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(4, badge.id)
+        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(true, 4, badge.id)
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }

@@ -17,28 +17,28 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.inventory
+package tk.jomp16.habbo.communication.outgoing.landing
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryNewObjectsResponse {
-    @Response(Outgoing.INVENTORY_NEW_OBJECTS)
-    fun response(habboResponse: HabboResponse, execute: Boolean, type: Int, ids: Collection<Int>) {
+class LandingCampaignCalendarResponse {
+    @Response(Outgoing.CAMPAIGN_CALENDAR)
+    fun handle(habboResponse: HabboResponse, campaignName: String, unknown: String, currentDay: Int, daysOfCampaign: Int, openedBoxes: Collection<Int>, lateBoxes: Collection<Int>) {
         habboResponse.apply {
-            if (!execute) {
-                writeInt(0)
+            writeUTF(campaignName)
+            writeUTF(unknown) // useless
+            writeInt(currentDay)
+            writeInt(daysOfCampaign)
+            writeInt(openedBoxes.size)
 
-                return
-            }
+            openedBoxes.forEach { writeInt(it) }
 
-            writeInt(1)
-            writeInt(type)
-            writeInt(ids.size)
+            writeInt(lateBoxes.size)
 
-            ids.forEach { writeInt(it) }
+            lateBoxes.forEach { writeInt(it) }
         }
     }
 }

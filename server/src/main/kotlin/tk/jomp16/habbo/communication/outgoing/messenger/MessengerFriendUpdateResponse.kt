@@ -29,11 +29,14 @@ class MessengerFriendUpdateResponse {
     @Response(Outgoing.MESSENGER_FRIEND_UPDATE)
     fun response(habboResponse: HabboResponse, messengerFriends: Collection<MessengerFriend>, mode: Int) {
         habboResponse.apply {
-            writeInt(0)
+            writeInt(0) // size to update messenger category
             writeInt(messengerFriends.size)
             writeInt(mode)
 
-            messengerFriends.forEach { serialize(it) }
+            messengerFriends.forEach {
+                if (mode == -1) writeInt(it.userId)
+                else serialize(it)
+            }
         }
     }
 }

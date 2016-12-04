@@ -35,7 +35,7 @@ class HabboInventory(private val habboSession: HabboSession) {
     fun addItems(userItems: List<UserItem>) {
         items += userItems.associateBy { it.id }
 
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, 1, userItems.map { it.id })
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
     }
 

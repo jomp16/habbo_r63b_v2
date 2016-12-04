@@ -48,16 +48,18 @@ class UserInfoHandler {
         )
 
         queuedHabboResponse += Outgoing.USER_PERKS to arrayOf(arrayOf(
-                Triple("USE_GUIDE_TOOL", "", true),
-                Triple("JUDGE_CHAT_REVIEWS", "", true),
                 Triple("CITIZEN", "", true),
-                Triple("TRADE", "", true),
-                Triple("BUILDER_AT_WORK", "", false),
-                Triple("NAVIGATOR_PHASE_ONE_2014", "", false),
-                Triple("CAMERA", "", false),
+                Triple("CALL_ON_HELPERS", "", true),
                 Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
+                Triple("USE_GUIDE_TOOL", "", true),
+                Triple("BUILDER_AT_WORK", "", false),
+                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", false),
+                Triple("TRADE", "", true),
+                Triple("HABBO_CLUB_OFFER_BETA", "", true),
+                Triple("JUDGE_CHAT_REVIEWS", "", true),
                 Triple("MOUSE_ZOOM", "", true),
-                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", false)
+                Triple("VOTE_IN_COMPETITIONS", "", true),
+                Triple("CAMERA", "", false)
         ))
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)

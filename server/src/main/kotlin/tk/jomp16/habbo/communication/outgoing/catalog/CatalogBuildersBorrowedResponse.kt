@@ -17,28 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.inventory
+package tk.jomp16.habbo.communication.outgoing.catalog
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryNewObjectsResponse {
-    @Response(Outgoing.INVENTORY_NEW_OBJECTS)
-    fun response(habboResponse: HabboResponse, execute: Boolean, type: Int, ids: Collection<Int>) {
+class CatalogBuildersBorrowedResponse {
+    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
+    fun handle(habboResponse: HabboResponse) {
         habboResponse.apply {
-            if (!execute) {
-                writeInt(0)
-
-                return
-            }
-
-            writeInt(1)
-            writeInt(type)
-            writeInt(ids.size)
-
-            ids.forEach { writeInt(it) }
+            // todo
+            writeInt(0)
         }
     }
 }

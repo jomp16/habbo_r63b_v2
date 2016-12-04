@@ -109,4 +109,7 @@ object Incoming {
     const val ROOM_APPLY_DECORATION = 711 // 2199
     const val SANCTION_STATUS = 2746 // 112
     const val USER_CHANGE_MOTTO = 2228 // 1936
+    const val CAMPAIGN_OPEN1 = 2257
+    const val CAMPAIGN_OPEN2 = 3889
+    const val PONG = 2596
 }

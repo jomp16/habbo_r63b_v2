@@ -120,4 +120,11 @@ object Outgoing {
     const val CATALOG_LIMITED_SOLD_OUT = 377 // 506
     const val CATALOG_PURCHASE_NOT_ALLOWED = 3770 // 2237
     const val CATALOG_OFFER = 3388 // 3318
+    const val ENABLE_TRADING = 3284
+    const val AUTHENTICATION_UNKNOWN_ID1 = 3738
+    const val AUTHENTICATION_UNKNOWN_ID2 = 793
+    const val AUTHENTICATION_UNKNOWN_ID3 = 2833
+    const val CAMPAIGN_CALENDAR = 2531
+    const val CATALOG_BUILDERS_BORROWED = 3828
+    const val PING = 3928
 }
