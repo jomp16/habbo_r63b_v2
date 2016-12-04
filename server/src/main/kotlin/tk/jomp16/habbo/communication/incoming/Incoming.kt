@@ -113,4 +113,7 @@ object Incoming {
     const val CAMPAIGN_OPEN2 = 3889
     const val PONG = 2596
     const val ROOM_TAKE_ITEM = 3456
+    const val SETTINGS_SAVE_CHAT = 1262
+    const val SETTINGS_SAVE_INVITES = 1086
+    const val SETTINGS_SAVE_FOCUS = 1461
 }
