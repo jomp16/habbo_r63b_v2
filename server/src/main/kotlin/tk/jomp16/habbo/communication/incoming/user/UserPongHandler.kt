@@ -25,6 +25,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.game.user.HabboSession
+import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserPongHandler {
@@ -38,6 +39,6 @@ class UserPongHandler {
 
         habboSession.ping = 0.toLong()
 
-        log.info("User ${habboSession.userInformation.username} replied to ping! Time elapsed: ${timeElapsed / 1000000.toDouble()}ms")
+        log.info("User ${habboSession.userInformation.username} replied to ping! Time elapsed: ${TimeUnit.NANOSECONDS.toMillis(timeElapsed)}ms")
     }
 }
