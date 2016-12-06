@@ -302,6 +302,8 @@ class HabboSession(val channel: Channel) : Closeable {
             UserPreferencesDao.savePreferences(userPreferences)
             UserStatsDao.saveStats(userStats)
 
+            saveAllQueuedStuffs()
+
             habboMessenger.notifyFriends()
         }
     }
