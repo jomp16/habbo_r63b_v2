@@ -47,7 +47,9 @@ import tk.jomp16.habbo.netty.HabboNettyDecoder
 import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
+import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
+import java.io.File
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -58,6 +60,8 @@ object HabboServer : Closeable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     lateinit var habboConfig: HabboConfig
+
+    val pluginManager: PluginManager = PluginManager()
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
@@ -133,12 +137,18 @@ object HabboServer : Closeable {
 
             // END USERS
             log.info("Done!")
+
             // Load HabboGame...
             log.info("Loading Habbo game...")
             habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
             habboHandler = HabboHandler()
             habboSessionManager = HabboSessionManager()
             habboGame = HabboGame()
+            log.info("Done!")
+
+            // load plugins
+            log.info("Loading plugins...")
+            pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")
         } catch (e: Exception) {
             log.error("An error happened!", e)
@@ -238,6 +248,10 @@ object HabboServer : Closeable {
             cleanUpUsers()
             log.debug("Done!")
             // End database
+
+            // Start plugins
+            pluginManager.close()
+            // End plugins
 
             log.info("Done!")
         }

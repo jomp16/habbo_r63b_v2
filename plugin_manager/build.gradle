@@ -17,6 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":pathfinding", ":server"
+group "tk.jomp16.utils.plugin"
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
+dependencies {
+    //noinspection GrUnresolvedAccess
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "org.reflections:reflections:$reflections_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "net.engio:mbassador:$mbassador_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+}

@@ -17,6 +17,15 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":pathfinding", ":server"
+package tk.jomp16.utils.plugin.json
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
+import com.fasterxml.jackson.annotation.JsonProperty
+
+data class PluginInfo(
+        @JsonProperty("name")
+        val name: String,
+        @JsonProperty("version")
+        val version: String,
+        @JsonProperty("authors")
+        val authors: Collection<String>
+)

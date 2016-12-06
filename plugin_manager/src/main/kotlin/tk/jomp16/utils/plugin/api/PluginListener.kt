@@ -17,6 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":pathfinding", ":server"
+package tk.jomp16.utils.plugin.api
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
+open class PluginListener {
+    open fun onCreate() {
+    }
+
+    open fun onDestroy() {
+    }
+}

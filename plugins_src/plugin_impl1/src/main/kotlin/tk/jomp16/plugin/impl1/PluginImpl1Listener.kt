@@ -17,6 +17,17 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":pathfinding", ":server"
+package tk.jomp16.plugin.impl1
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import tk.jomp16.utils.plugin.api.PluginListener
+
+@Suppress("unused")
+class PluginImpl1Listener : PluginListener() {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    override fun onCreate() = log.trace("Olá mundo de ${javaClass.simpleName}!")
+
+    override fun onDestroy() = log.trace("Tchau mundo de ${javaClass.simpleName}!")
+}
