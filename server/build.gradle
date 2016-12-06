@@ -54,5 +54,5 @@ dependencies {
 }
 
 buildConfig {
-    appName = "Habbo R63Bv2"
+    appName = "Habbo R63B v2"
 }
