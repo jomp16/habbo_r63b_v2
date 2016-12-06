@@ -35,7 +35,7 @@ class RoomUpdateFurniStackResponse {
             affectedTiles.forEach {
                 writeByte(it.x)
                 writeByte(it.y)
-                writeShort(room.roomGamemap.getAbsoluteHeight(it.x, it.y).toInt() * 256)
+                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
             }
         }
     }
