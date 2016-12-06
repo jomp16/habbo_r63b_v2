@@ -210,7 +210,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             }
         }
 
-        roomItem.position = Vector3(position.x, position.y, if (overrideZ != -1.toDouble()) overrideZ else Utils.round(roomGamemap.getAbsoluteHeight(position.x, position.y), 2))
+        roomItem.position = Vector3(position.x, position.y, if (overrideZ != -1.toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
         roomItem.rotation = rotation
 
         roomGamemap.addRoomItem(roomItem)
