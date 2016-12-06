@@ -250,7 +250,7 @@ class CatalogManager {
                 }
             }
 
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems.map { it.limitedItemData }, userItems.map { it.furnishing })
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems)
         }
 
         if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
