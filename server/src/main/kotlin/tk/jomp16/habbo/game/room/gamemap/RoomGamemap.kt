@@ -25,6 +25,7 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.model.SquareState
 import tk.jomp16.habbo.game.room.user.RoomUser
+import tk.jomp16.habbo.util.Utils
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
@@ -106,9 +107,9 @@ class RoomGamemap(private val room: Room) {
         val vector2 = Vector2(x, y)
 
         if (roomItemMap.containsKey(vector2)) {
-            var highestStack = 0.0
+            var highestStack = 0.toDouble()
             var deduct = false
-            var deductable = 0.0
+            var deductable = 0.toDouble()
 
             roomItemMap[vector2]?.forEach {
                 if (it.totalHeight > highestStack) {
@@ -127,12 +128,12 @@ class RoomGamemap(private val room: Room) {
             var stackHeight = highestStack - floorHeight
 
             if (deduct) stackHeight -= deductable
-            if (stackHeight < 0) stackHeight = 0.0
+            if (stackHeight < 0) stackHeight = 0.toDouble()
 
-            return floorHeight + stackHeight
+            return Utils.round(floorHeight + stackHeight, 2)
         }
 
-        return room.roomModel.floorHeight[x][y].toDouble()
+        return Utils.round(room.roomModel.floorHeight[x][y].toDouble(), 2)
     }
 
     fun getHighestItem(vector2: Vector2): RoomItem? {
