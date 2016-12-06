@@ -71,6 +71,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val pathfinder: IFinder by lazy { AStarFinder() }
 
     private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
+    private val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
 
     fun sendHabboResponse(headerId: Int, vararg args: Any) {
         // todo: find a way to cache habbo response
@@ -179,8 +180,10 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomItemsToSave.isEmpty()) return
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
+        ItemDao.removeRoomItems(roomItemsToRemove)
 
         roomItemsToSave.clear()
+        roomItemsToRemove.clear()
     }
 
     fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String, overrideZ: Double = -1.toDouble()): Boolean {
@@ -284,8 +287,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (!roomItems.containsValue(roomItem)) return false
 
         roomItems.remove(roomItem.id)
-
         roomGamemap.removeRoomItem(roomItem)
+
+        if (!roomItemsToRemove.contains(roomItem)) roomItemsToRemove.add(roomItem)
 
         // todo: WIRED
         // todo: dimmer

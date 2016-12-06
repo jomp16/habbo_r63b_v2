@@ -138,13 +138,15 @@ object ItemDao {
         }
     }
 
-    fun removeRoomItem(roomItem: RoomItem) {
+    fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
         HabboServer.database {
-            update("UPDATE items SET room_id = :room_id WHERE id = :id",
-                    mapOf(
-                            "room_id" to 0,
-                            "id" to roomItem.id
-                    )
+            batchUpdate("UPDATE items SET room_id = :room_id WHERE id = :id",
+                    roomItemsToRemove.map {
+                        mapOf(
+                                "room_id" to 0,
+                                "id" to it.id
+                        )
+                    }
             )
         }
     }

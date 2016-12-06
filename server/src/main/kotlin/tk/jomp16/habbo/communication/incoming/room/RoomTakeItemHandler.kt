@@ -23,7 +23,6 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
@@ -51,8 +50,5 @@ class RoomTakeItemHandler {
                     roomItem.limitedId
             )))
         }
-
-        // todo: can I delay the database update, like I did on Room?
-        ItemDao.removeRoomItem(roomItem)
     }
 }
