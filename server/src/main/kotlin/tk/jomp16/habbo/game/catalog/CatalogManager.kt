@@ -70,32 +70,6 @@ class CatalogManager {
 
     // todo: add gift support
     fun purchase(habboSession: HabboSession, catalogPage: CatalogPage, catalogItemId: Int, extraData: String, amount: Int) {
-        /*val amountPurchase = if (catalogItem.amount > 1) catalogItem.amount else amount
-        val totalCreditsCost = if (amount > 1) (catalogItem.costCredits * amount - Math.floor(
-                (amount / 6).toDouble()) * catalogItem.costCredits).toInt() else catalogItem.costCredits
-
-        val totalPixelsCost = if (amount > 1) (catalogItem.costPixels * amount - Math.floor(
-                (amount / 6).toDouble()) * catalogItem.costPixels).toInt() else catalogItem.costPixels
-
-        val totalVipCost = if (amount > 1) (catalogItem.costVip * amount - Math.floor(
-                (amount / 6).toDouble()) * catalogItem.costVip).toInt() else catalogItem.costVip
-
-        println(amountPurchase)
-        println(totalCreditsCost)
-        println(totalPixelsCost)
-        println(totalVipCost)*/
-
-        var totalPrice = amount
-
-        if (amount >= 6) {
-            // numbers like 11, 17 does not show correct total price discount
-            // my workaround was checking if amount is an odd prime number, if yes, subtract one
-            // But numbers like 39, 40, 41, 42, 43, 95, 99 also don't work properly
-            // totalPrice -= Math.floor((amount.toDouble() / 6) * 2).toInt() - if (amount != 100 && (amount >= 40 || amount % 6 == 0)) 1 else if (amount < 40 && amount % 2 != 0) 2 else 0
-            // totalPrice -= Math.floor((amount.toDouble() / 6) * 2).toInt() - if (amount == 40 || amount == 99) 2 else if (amount % 6 == 0) 1 else 0
-            totalPrice -= Math.ceil((amount.toDouble() / 6) * 2).toInt() - 1
-        }
-
         if (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
@@ -148,9 +122,11 @@ class CatalogManager {
             return
         }
 
-        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalPrice
-                || catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalPrice
-                || catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalPrice) {
+        val totalAmountToPurchase = amount - totalFreeAmount(amount)
+
+        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
+                || catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalAmountToPurchase
+                || catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalAmountToPurchase) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
             return
@@ -274,12 +250,12 @@ class CatalogManager {
                 }
             }
 
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, furnishingToPurchase.map { it.furnishing })
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems.map { it.limitedItemData }, userItems.map { it.furnishing })
         }
 
-        if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalPrice
-        if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalPrice
-        if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints -= catalogItem.costVip * totalPrice
+        if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
+        if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase
+        if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints -= catalogItem.costVip * totalAmountToPurchase
 
         habboSession.updateAllCurrencies()
 
@@ -312,5 +288,40 @@ class CatalogManager {
 
         // todo: add a voucher table and redeem
         habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, 0)
+    }
+
+    private fun totalFreeAmount(amount: Int): Int {
+        return blackBoxMath1(amount) + blackBoxMath2(amount) + blackBoxMath3(amount)
+    }
+
+    private fun blackBoxMath1(amount: Int): Int {
+        return (amount / FREE_AMOUNT) * 1
+    }
+
+    private fun blackBoxMath2(amount: Int): Int {
+        var int1 = 0
+        val int2 = amount / FREE_AMOUNT
+
+        if (int2 >= 1) {
+            if (amount % FREE_AMOUNT == FREE_AMOUNT - 1) int1++
+
+            int1 += (int2 - 1)
+        }
+
+        return int1
+    }
+
+    private fun blackBoxMath3(amount: Int): Int {
+        var int1 = 0
+
+        intArrayOf(40, 99).forEach {
+            if (amount >= it) int1++
+        }
+
+        return int1
+    }
+
+    companion object {
+        const val FREE_AMOUNT = 6
     }
 }

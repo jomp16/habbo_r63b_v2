@@ -22,6 +22,7 @@ package tk.jomp16.habbo.communication.outgoing.catalog
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.catalog.CatalogManager
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogOfferConfigurationResponse {
@@ -29,7 +30,7 @@ class CatalogOfferConfigurationResponse {
     fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
             writeInt(100) // Most you can get.
-            writeInt(6) // each n items
+            writeInt(CatalogManager.FREE_AMOUNT) // each n items
             writeInt(1) // win one item for free
             writeInt(1)
             writeInt(2)

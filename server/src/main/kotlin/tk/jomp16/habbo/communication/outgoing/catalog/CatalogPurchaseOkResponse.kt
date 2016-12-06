@@ -24,31 +24,46 @@ import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.catalog.CatalogItem
 import tk.jomp16.habbo.game.item.Furnishing
+import tk.jomp16.habbo.game.item.ItemType
+import tk.jomp16.habbo.game.item.LimitedItemData
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseOkResponse {
     @Response(Outgoing.CATALOG_PURCHASE_OK)
-    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, furnishings: Collection<Furnishing>) {
+    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, limitedItemDatas: List<LimitedItemData?>, furnishings: Collection<Furnishing>) {
         habboResponse.apply {
             writeInt(catalogItem.id)
             writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing!!.itemName else catalogItem.catalogName)
             writeBoolean(false) // is rentable
             writeInt(catalogItem.costCredits)
             writeInt(catalogItem.costPixels)
-            writeInt(catalogItem.costVip)
-            writeBoolean(true)
+            writeInt(if (catalogItem.costPixels > 0) 0 else 5) // activityPointType
+            writeBoolean(false) // is gift
             writeInt(furnishings.size)
 
             furnishings.forEachIndexed { i, furnishing ->
                 writeUTF(furnishing.type.type)
-                writeInt(furnishing.spriteId)
-                writeUTF(furnishing.itemName)
-                writeInt(i + 1)
-                writeBoolean(false) // limited
+
+                when (furnishing.type) {
+                    ItemType.BADGE -> {
+                        writeUTF(furnishing.itemName)
+                    }
+                    else -> {
+                        writeInt(furnishing.spriteId)
+                        writeUTF(furnishing.itemName)
+                        writeInt(i + 1)
+                        writeBoolean(catalogItem.limited) // limited
+
+                        if (catalogItem.limited && limitedItemDatas.isNotEmpty()) {
+                            writeInt(limitedItemDatas[i]!!.limitedNumber)
+                            writeInt(limitedItemDatas[i]!!.limitedTotal)
+                        }
+                    }
+                }
             }
 
-            writeInt(1)
-            writeBoolean(false)
+            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level
+            writeBoolean(true)
         }
     }
 }
