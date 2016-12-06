@@ -50,5 +50,7 @@ class RoomTakeItemHandler {
                     roomItem.limitedId
             )))
         }
+
+        if (!habboSession.habboInventory.roomItemsToRemove.contains(roomItem)) habboSession.habboInventory.roomItemsToRemove += roomItem
     }
 }

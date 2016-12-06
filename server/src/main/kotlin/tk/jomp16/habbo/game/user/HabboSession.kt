@@ -30,6 +30,7 @@ import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserPreferencesDao
 import tk.jomp16.habbo.database.information.UserStatsDao
+import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.encryption.RC4Encryption
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.room.Room
@@ -303,5 +304,11 @@ class HabboSession(val channel: Channel) : Closeable {
 
             habboMessenger.notifyFriends()
         }
+    }
+
+    fun saveAllQueuedStuffs() {
+        ItemDao.removeRoomItems(habboInventory.roomItemsToRemove)
+
+        habboInventory.roomItemsToRemove.clear()
     }
 }

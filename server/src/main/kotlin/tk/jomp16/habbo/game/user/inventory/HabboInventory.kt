@@ -21,12 +21,14 @@ package tk.jomp16.habbo.game.user.inventory
 
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.item.ItemDao
+import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboInventory(private val habboSession: HabboSession) {
     val items: MutableMap<Int, UserItem> = HashMap()
+    val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
 
     init {
         items += ItemDao.getUserItems(habboSession.userInformation.id).associateBy { it.id }

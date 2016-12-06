@@ -50,7 +50,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     // for room task
     var roomTask: RoomTask? = null
     val emptyCounter: AtomicInteger = AtomicInteger()
-    val saveRoomItemsCounter: AtomicInteger = AtomicInteger()
     val errorsCounter: AtomicInteger = AtomicInteger()
 
     val roomItems: MutableMap<Int, RoomItem> by lazy {
@@ -71,7 +70,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val pathfinder: IFinder by lazy { AStarFinder() }
 
     private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
-    private val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
 
     fun sendHabboResponse(headerId: Int, vararg args: Any) {
         // todo: find a way to cache habbo response
@@ -176,14 +174,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (!roomItemsToSave.contains(roomItem)) roomItemsToSave += roomItem
     }
 
-    fun saveItems() {
+    fun saveQueuedItems() {
         if (roomItemsToSave.isEmpty()) return
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
-        ItemDao.removeRoomItems(roomItemsToRemove)
 
         roomItemsToSave.clear()
-        roomItemsToRemove.clear()
     }
 
     fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String, overrideZ: Double = -1.toDouble()): Boolean {
@@ -288,8 +284,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         roomItems.remove(roomItem.id)
         roomGamemap.removeRoomItem(roomItem)
-
-        if (!roomItemsToRemove.contains(roomItem)) roomItemsToRemove.add(roomItem)
 
         // todo: WIRED
         // todo: dimmer

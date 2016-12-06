@@ -102,7 +102,7 @@ object HabboServer : Closeable {
 
     fun init() {
         // Instantiate thread executors
-        serverScheduledExecutor = Executors.newScheduledThreadPool(2 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
+        serverScheduledExecutor = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
         serverExecutor = Executors.newCachedThreadPool()
 
         javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine { log.info(it) }

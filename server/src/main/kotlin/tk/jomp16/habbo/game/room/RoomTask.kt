@@ -42,7 +42,6 @@ class RoomTask : Runnable {
         queuedTasks.put(room, ArrayDeque())
 
         room.emptyCounter.set(0)
-        room.saveRoomItemsCounter.set(0)
         room.errorsCounter.set(0)
 
         room.roomTask = this
@@ -58,7 +57,7 @@ class RoomTask : Runnable {
 
         room.roomTask = null
 
-        room.saveItems()
+        room.saveQueuedItems()
         RoomDao.updateRoomData(room.roomData)
     }
 
@@ -71,14 +70,6 @@ class RoomTask : Runnable {
             rooms.forEach { room ->
                 try {
                     val queue = queuedTasks[room] ?: return@forEach
-
-                    if (TimeUnit.MILLISECONDS.toSeconds(
-                            (room.saveRoomItemsCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
-                            >= HabboServer.habboConfig.roomTaskConfig.saveItemSeconds) {
-                        room.saveRoomItemsCounter.set(0)
-
-                        room.saveItems()
-                    }
 
                     while (queue.isNotEmpty()) queue.poll().executeTask(room)
 
