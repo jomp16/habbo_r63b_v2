@@ -74,12 +74,9 @@ class HandshakeSSOTicketHandler {
         queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID3 to arrayOf("", "")
         queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf()
         queuedHabboResponse += Outgoing.CAMPAIGN_CALENDAR to arrayOf("xmas16", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
+        queuedHabboResponse += Outgoing.MODERATION_TOPICS_INIT to arrayOf(HabboServer.habboGame.moderationManager.moderationCategories, HabboServer.habboGame.moderationManager.moderationTopics.values)
 
-        /*
-         * todo: CfhTopicsInitMessageParser
-         *
-         * Incoming(325, 885, _-0HH, CfhTopicsInitMessageParser) <- [0][0][3]u[1]E[0][0][0][6][0]sexual_content[0][0][0][4][0]explicit_sexual_talk[0][0][0][1][0][4]mods[0][8]cybersex[0][0][0][2][0][4]mods[0]sexual_webcam_images[0][0][0][3][0][4]mods[0][9]sex_links[0][0][0]$[0][4]mods[0]pii_meeting_irl[0][0][0][2][0][8]meet_irl[0][0][0][6][0][4]mods[0][10]asking_pii[0][0][0][8][0][4]mods[0][8]scamming[0][0][0][5][0]scamsites_promoting[0][0][0][9][0][4]mods[0] selling_buying_accounts_or_furni[0][0][0][10][0][4]mods[0]stealing_accounts_or_furni[0][0][0][11][0][4]mods[0]hacking_scamming_tricks[0][0][0] [0][4]mods[0][5]fraud[0][0][0]![0][4]mods[0]trolling_bad_behavior[0][0][0][8][0][8]bullying[0][0][0][12][0]mods_till_logout[0][10]habbo_name[0][0][0][13][0][4]mods[0]inappropiate_room_group_event[0][0][0]"[0][4]mods[0][8]swearing[0][0][0][0][10]auto_reply[0]drugs_promotion[0][0][0][0]mods_till_logout[0][8]gambling[0][0][0][0][4]mods[0]staff_impersonation[0][0][0][0][4]mods[0][13]minors_access[0][0][0][0][4]mods[0]violent_behavior[0][0][0][3][0][11]hate_speech[0][0][0][0]mods_till_logout[0]violent_roleplay[0][0][0][0]mods_till_logout[0]self_threatening[0][0][0][0][4]mods[0]game_interruption[0][0][0][4][0][8]flooding[0][0][0][0]mods_till_logout[0][13]door_blocking[0][0][0][0][10]auto_reply[0][5]raids[0][0][0][0][4]mods[0][9]scripting[0][0][0]#[0][4]mods
-         */
+        if (habboSession.hasPermission("acc_mod_tools")) queuedHabboResponse += Outgoing.MODERATION_INIT to arrayOf()
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
 
