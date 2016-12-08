@@ -139,6 +139,8 @@ object ItemDao {
     }
 
     fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
+        if (roomItemsToRemove.isEmpty()) return
+
         HabboServer.database {
             batchUpdate("UPDATE items SET room_id = :room_id WHERE id = :id",
                     roomItemsToRemove.map {
