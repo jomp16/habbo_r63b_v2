@@ -116,4 +116,10 @@ object Incoming {
     const val SETTINGS_SAVE_CHAT = 1262
     const val SETTINGS_SAVE_INVITES = 1086
     const val SETTINGS_SAVE_FOCUS = 1461
+    const val MODERATION_TOUR_REQUEST = 3338
+    const val MODERATION_ROOM_INFO = 707
+    const val MODERATION_USER_INFO = 3295
+    const val MODERATION_ROOM_CHATLOG = 2587
+    const val MODERATION_USER_CHATLOG = 1391
+    const val MODERATION_TICKET_CHATLOG = 211
 }
