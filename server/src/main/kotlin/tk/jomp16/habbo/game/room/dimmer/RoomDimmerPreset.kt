@@ -17,20 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.game.room.dimmer
 
-import java.util.*
-
-class QueuedHabboResponse {
-    val headerIds: MutableList<Pair<Int, Array<out Any>>> = LinkedList() // Do not change this, LinkedHashMap is the only that keeps the insertion order
-
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.add(headerId to args)
-
-        return this
-    }
-
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
-        add(pair.first, pair.second)
-    }
+data class RoomDimmerPreset(
+        val colorCode: String,
+        val colorIntensity: Int,
+        val backgroundOnly: Boolean
+) {
+    override fun toString() = "$colorCode,$colorIntensity,${if (backgroundOnly) 1 else 0}"
 }

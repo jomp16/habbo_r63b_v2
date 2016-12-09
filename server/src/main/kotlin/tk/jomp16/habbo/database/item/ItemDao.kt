@@ -27,6 +27,7 @@ import tk.jomp16.habbo.game.item.LimitedItemData
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.util.Vector3
 
 object ItemDao {
@@ -149,6 +150,43 @@ object ItemDao {
                                 "id" to it.id
                         )
                     }
+            )
+        }
+    }
+
+    fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
+        return HabboServer.database {
+            select("SELECT * FROM items_dimmer WHERE item_id = :item_id LIMIT 1",
+                    mapOf(
+                            "item_id" to roomItem.id
+                    )
+            ) {
+                RoomDimmer(
+                        it.int("id"),
+                        roomItem,
+                        it.boolean("enabled"),
+                        it.int("current_preset"),
+                        mutableListOf(
+                                RoomDimmer.generatePreset(it.string("preset_one")),
+                                RoomDimmer.generatePreset(it.string("preset_two")),
+                                RoomDimmer.generatePreset(it.string("preset_three"))
+                        )
+                )
+            }.firstOrNull()
+        }
+    }
+
+    fun saveDimmer(roomDimmer: RoomDimmer) {
+        HabboServer.database {
+            update("UPDATE items_dimmer SET enabled = :enabled, current_preset = :current_preset, preset_one = :preset_one, preset_two = :preset_two, preset_three = :preset_three WHERE id = :id",
+                    mapOf(
+                            "enabled" to roomDimmer.enabled,
+                            "current_preset" to roomDimmer.currentPreset,
+                            "preset_one" to roomDimmer.presets[0].toString(),
+                            "preset_two" to roomDimmer.presets[1].toString(),
+                            "preset_three" to roomDimmer.presets[2].toString(),
+                            "id" to roomDimmer.id
+                    )
             )
         }
     }

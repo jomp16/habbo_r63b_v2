@@ -133,4 +133,5 @@ object Outgoing {
     const val MODERATION_INIT = 2696
     const val MODERATION_ROOM_INFO = 1333
     const val MODERATION_USER_INFO = 2866
+    const val ROOM_DIMMER_INFO = 2710
 }

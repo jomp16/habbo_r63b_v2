@@ -17,20 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.communication.incoming.room
 
-import java.util.*
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.user.HabboSession
 
-class QueuedHabboResponse {
-    val headerIds: MutableList<Pair<Int, Array<out Any>>> = LinkedList() // Do not change this, LinkedHashMap is the only that keeps the insertion order
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomSwitchDimmerHandler {
+    @Handler(Incoming.ROOM_DIMMER_SWITCH)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
 
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.add(headerId to args)
-
-        return this
-    }
-
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
-        add(pair.first, pair.second)
+        habboSession.currentRoom!!.roomDimmer!!.switchState()
     }
 }

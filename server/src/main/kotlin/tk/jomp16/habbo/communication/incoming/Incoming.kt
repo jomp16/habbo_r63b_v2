@@ -122,4 +122,7 @@ object Incoming {
     const val MODERATION_ROOM_CHATLOG = 2587
     const val MODERATION_USER_CHATLOG = 1391
     const val MODERATION_TICKET_CHATLOG = 211
+    const val ROOM_DIMMER_SWITCH = 2296
+    const val ROOM_DIMMER_INFO = 2813
+    const val ROOM_DIMMER_UPDATE = 1648
 }

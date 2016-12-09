@@ -105,7 +105,7 @@ class HabboSession(val channel: Channel) : Closeable {
 
     fun sendQueuedHabboResponse(queuedHabboResponse: QueuedHabboResponse) {
         queuedHabboResponse.headerIds.forEach {
-            HabboServer.habboHandler.invokeResponse(it.key, *it.value)?.let {
+            HabboServer.habboHandler.invokeResponse(it.first, *it.second)?.let {
                 sendHabboResponse(it, false)
             }
         }

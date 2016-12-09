@@ -30,6 +30,7 @@ import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.game.room.gamemap.RoomGamemap
 import tk.jomp16.habbo.game.room.model.RoomModel
 import tk.jomp16.habbo.game.room.tasks.UserJoinRoomTask
@@ -53,7 +54,11 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val errorsCounter: AtomicInteger = AtomicInteger()
 
     val roomItems: MutableMap<Int, RoomItem> by lazy {
-        HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id })
+        val items = HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id })
+
+        items.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
+
+        return@lazy items
     }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
@@ -70,6 +75,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val pathfinder: IFinder by lazy { AStarFinder() }
 
     private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
+
+    var roomDimmer: RoomDimmer? = null
 
     fun sendHabboResponse(headerId: Int, vararg args: Any) {
         // todo: find a way to cache habbo response
@@ -91,9 +98,11 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             if (roomUsers.values.filter { it.habboSession == habboSession }.isNotEmpty()) return
 
             // generate random virtual id
-            var virtualId = 0
+            var virtualId: Int
 
-            while (virtualId == 0 || roomUsers.containsKey(virtualId)) virtualId = Utils.randInt(1..Int.MAX_VALUE)
+            do {
+                virtualId = Utils.randInt(1..Int.MAX_VALUE)
+            } while (roomUsers.containsKey(virtualId))
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
 
@@ -178,6 +187,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomItemsToSave.isEmpty()) return
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
+
+        if (roomDimmer != null && roomItemsToSave.any { it == roomDimmer!!.roomItem }) ItemDao.saveDimmer(roomDimmer!!)
 
         roomItemsToSave.clear()
     }
@@ -267,6 +278,10 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (newItem) {
             if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
                 // todo: dimmer
+                if (roomDimmer != null) return false
+
+                roomDimmer = ItemDao.getRoomDimmer(roomItem)
+                roomItem.extraData = roomDimmer!!.generateExtraData()
             }
 
             roomItems.put(roomItem.id, roomItem)
