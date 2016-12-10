@@ -17,6 +17,8 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
+apply plugin: 'java-library-distribution'
+
 group "tk.jomp16"
 
 dependencies {
@@ -29,5 +31,24 @@ dependencies {
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
 
     //noinspection GrUnresolvedAccess
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version") {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-reflect'
+    }
+
+    compile "org.jetbrains.kotlin:kotlin-reflect:1.0.5-2"
+}
+
+jar {
+    // Keep jar clean:
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+
+    manifest {
+        attributes 'Main-Class': 'tk.jomp16.MainKt',
+                'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
+    }
+}
+
+//noinspection GrUnresolvedAccess
+distTar {
+    compression = Compression.BZIP2
 }
