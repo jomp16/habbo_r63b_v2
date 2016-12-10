@@ -32,7 +32,7 @@ class CatalogPurchaseOkResponse {
     fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, userItems: Collection<UserItem>) {
         habboResponse.apply {
             writeInt(catalogItem.id)
-            writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing!!.itemName else catalogItem.catalogName)
+            writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing.itemName else catalogItem.catalogName)
             writeBoolean(false) // is rentable
             writeInt(catalogItem.costCredits)
             writeInt(catalogItem.costPixels)

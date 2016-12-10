@@ -42,8 +42,8 @@ data class CatalogItem(
         val limitedStack: Int,
         val offerActive: Boolean
 ) : IHabboResponseSerialize {
-    val furnishing: Furnishing?
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]
+    val furnishing: Furnishing
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
     val deal: CatalogDeal?
         get() = HabboServer.habboGame.catalogManager.catalogDeals.find { it.id == dealId }
 
@@ -52,7 +52,7 @@ data class CatalogItem(
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id)
-            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing!!.itemName)
+            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName)
             writeBoolean(false) // todo: is rentable
 
             writeInt(costCredits)
@@ -65,7 +65,7 @@ data class CatalogItem(
                 writeInt(0)
             }
 
-            writeBoolean(if (dealId > 0) true else furnishing!!.canGift)
+            writeBoolean(if (dealId > 0) true else furnishing.canGift)
 
             // item count, count n item if there is no badge, otherwise count as n + 1.
             writeInt(if (dealId > 0) deal!!.furnishings.size else 1 + if (badge.isNotBlank()) 1 else 0)
@@ -82,7 +82,7 @@ data class CatalogItem(
                     }
                 }
             } else {
-                serializeItem(habboResponse, furnishing!!, amount)
+                serializeItem(habboResponse, furnishing, amount)
             }
 
             writeInt(if (clubOnly) 1 else 0)

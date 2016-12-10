@@ -45,9 +45,8 @@ class RoomTakeItemHandler {
             HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(listOf(UserItem(
                     roomItem.id,
                     roomItem.userId,
-                    roomItem.baseName,
-                    roomItem.extraData,
-                    roomItem.limitedId
+                    roomItem.itemName,
+                    roomItem.extraData
             )))
         }
 

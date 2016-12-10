@@ -64,20 +64,17 @@ object ItemDao {
     }
 
     fun getRoomItems(roomId: Int) = HabboServer.database {
-        select("SELECT id, base_item, extra_data, limited_id, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
+        select("SELECT id, item_name, extra_data, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
                 mapOf(
                         "room_id" to roomId
                 )
         ) {
-            val limitedId = it.int("limited_id")
-
             RoomItem(
                     it.int("id"),
                     it.int("user_id"),
                     roomId,
-                    it.string("base_item"),
+                    it.string("item_name"),
                     it.string("extra_data"),
-                    limitedId,
                     Vector3(
                             it.int("x"),
                             it.int("y"),
@@ -90,43 +87,41 @@ object ItemDao {
     }
 
     fun getUserItems(userId: Int) = HabboServer.database {
-        select("SELECT id, base_item, extra_data, limited_id FROM items WHERE room_id = 0 AND user_id = :user_id",
+        select("SELECT id, item_name, extra_data FROM items WHERE room_id = 0 AND user_id = :user_id",
                 mapOf(
                         "user_id" to userId
                 )
         ) {
-            val limitedId = it.int("limited_id")
-
             UserItem(
                     it.int("id"),
                     userId,
-                    it.string("base_item"),
-                    it.string("extra_data"),
-                    limitedId
+                    it.string("item_name"),
+                    it.string("extra_data")
             )
         }
     }
 
-    fun getLimitedData(limitedId: Int): LimitedItemData? {
-        if (!limitedItemDatas.containsKey(limitedId)) {
+    fun getLimitedData(itemId: Int): LimitedItemData? {
+        if (!limitedItemDatas.containsKey(itemId)) {
             val limitedItemData = HabboServer.database {
-                select("SELECT * FROM items_limited WHERE id = :id",
+                select("SELECT * FROM items_limited WHERE item_id = :id",
                         mapOf(
-                                "id" to limitedId
+                                "id" to itemId
                         )
                 ) {
                     LimitedItemData(
                             it.int("id"),
+                            itemId,
                             it.int("limited_num"),
                             it.int("limited_total")
                     )
                 }.firstOrNull()
             }
 
-            limitedItemDatas.put(limitedId, limitedItemData)
+            limitedItemDatas.put(itemId, limitedItemData)
         }
 
-        return limitedItemDatas[limitedId]
+        return limitedItemDatas[itemId]
     }
 
     fun removeUserItem(userItem: UserItem) {

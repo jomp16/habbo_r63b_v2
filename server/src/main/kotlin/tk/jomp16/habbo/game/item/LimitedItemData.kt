@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.item
 
 data class LimitedItemData(
         val id: Int,
+        val itemId: Int,
         val limitedNumber: Int,
         val limitedTotal: Int
 )

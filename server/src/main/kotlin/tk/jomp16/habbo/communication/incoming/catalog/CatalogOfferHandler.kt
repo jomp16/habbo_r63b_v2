@@ -23,7 +23,6 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -33,8 +32,11 @@ class CatalogOfferHandler {
         if (!habboSession.authenticated) return
 
         val catalogItemId = habboRequest.readInt()
+
+        @Suppress("UNUSED_VARIABLE")
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogItemId } ?: return
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
+        // fuck this shit, Habbo.swf is spamming the hell of it!
+        // habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
     }
 }
