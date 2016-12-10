@@ -43,7 +43,7 @@ object Incoming {
     const val LATENCY_TEST = 295 // 2909
     const val GO_TO_HOTEL_VIEW = 105 // 1207
     const val REFRESH_CAMPAIGN = 2912 // 1350
-    const val CATALOG_ROOM_PROMOTION = 957 // 722
+    const val LANDING_REWARD = 957 // 722
     const val SET_USERNAME = 3878 // 3324
     const val NAVIGATOR_FLAT_CATEGORIES = 3027 // 1900
     const val NAVIGATOR_PROMO_CATEGORIES = 1782 // 2887

@@ -21,6 +21,7 @@ package tk.jomp16.habbo.database.landing
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.landing.LandingPromo
+import tk.jomp16.habbo.game.landing.LandingReward
 
 object LandingDao {
     fun getLandingPromos() = HabboServer.database {
@@ -35,5 +36,15 @@ object LandingDao {
                     it.string("image")
             )
         }
+    }
+
+    fun getLandingReward() = HabboServer.database {
+        select("SELECT * FROM landing_reward LIMIT 1") {
+            LandingReward(
+                    it.int("id"),
+                    it.string("item_name"),
+                    it.int("total_amount")
+            )
+        }.firstOrNull()
     }
 }

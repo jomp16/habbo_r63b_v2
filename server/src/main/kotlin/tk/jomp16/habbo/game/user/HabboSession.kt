@@ -92,6 +92,7 @@ class HabboSession(val channel: Channel) : Closeable {
     private var alreadySentPurse: Boolean = false
 
     var ping: Long = 0
+    var sentLandingReward: Boolean = false
 
     fun sendHabboResponse(headerId: Int, vararg args: Any?) = HabboServer.habboHandler.invokeResponse(headerId, *args)?.let {
         sendHabboResponse(it)

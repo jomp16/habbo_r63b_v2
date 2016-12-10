@@ -19,31 +19,14 @@
 
 package tk.jomp16.habbo.game.landing
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import tk.jomp16.habbo.database.landing.LandingDao
+import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.game.item.Furnishing
 
-class LandingManager {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    val landingPromos: MutableList<LandingPromo> = mutableListOf()
-    var landingReward: LandingReward? = null
-        private set
-
-    init {
-        load()
-    }
-
-    fun load() {
-        log.info("Loading landing...")
-
-        landingPromos.clear()
-        landingReward = null
-
-        landingPromos += LandingDao.getLandingPromos()
-        landingReward = LandingDao.getLandingReward()
-
-        log.info("Loaded {} landing promos!", landingPromos.size)
-        log.info("Loaded landing reward, data=$landingReward")
-    }
+data class LandingReward(
+        val id: Int,
+        val itemName: String,
+        val totalAmount: Int
+) {
+    val furnishing: Furnishing
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 }
