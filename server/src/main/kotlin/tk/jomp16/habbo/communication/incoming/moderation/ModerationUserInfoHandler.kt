@@ -17,26 +17,26 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.catalog
+package tk.jomp16.habbo.communication.incoming.moderation
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.information.UserStatsDao
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogOfferHandler {
-    @Handler(Incoming.CATALOG_OFFER)
+class ModerationUserInfoHandler {
+    @Handler(Incoming.MODERATION_USER_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+        if (!habboSession.authenticated || !habboSession.hasPermission("acc_mod_tools")) return
 
-        val catalogItemId = habboRequest.readInt()
+        val userId = habboRequest.readInt()
+        val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
+        val userStats = UserStatsDao.getUserStats(userId)
 
-        @Suppress("UNUSED_VARIABLE")
-        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogItemId } ?: return
-
-        // fuck this shit, Habbo.swf is spamming the hell of it!
-        // habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
+        habboSession.sendHabboResponse(Outgoing.MODERATION_USER_INFO, userInformation, userStats)
     }
 }

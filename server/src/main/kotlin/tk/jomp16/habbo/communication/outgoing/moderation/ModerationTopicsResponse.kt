@@ -17,25 +17,31 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.outgoing.moderation
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.game.moderation.ModerationTopic
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
+class ModerationTopicsResponse {
+    @Response(Outgoing.MODERATION_TOPICS_INIT)
+    fun handle(habboResponse: HabboResponse, moderationCategories: Map<Int, String>, moderationTopics: Collection<ModerationTopic>) {
         habboResponse.apply {
-            writeByte(affectedTiles.size)
+            writeInt(moderationCategories.size)
+            moderationCategories.forEach { category ->
+                writeUTF(category.value)
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
+                moderationTopics.filter { it.categoryId == category.key }.let {
+                    writeInt(it.size)
+
+                    it.forEach {
+                        writeUTF(it.name)
+                        writeInt(it.topicId)
+                        writeUTF(it.consequence)
+                    }
+                }
             }
         }
     }

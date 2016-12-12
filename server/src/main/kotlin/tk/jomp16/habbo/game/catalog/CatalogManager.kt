@@ -152,20 +152,34 @@ class CatalogManager {
                 }
             }
         } else {
-            HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing!!)?.let { extraData1 ->
+            HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)?.let { extraData1 ->
                 (0..catalogItem.amount * amount - 1).forEach {
-                    furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing!!, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
+                    furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
 
-                    if (catalogItem.furnishing!!.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
+                    if (catalogItem.furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
                 }
             }
         }
 
+        val userItems: MutableList<UserItem> = mutableListOf()
+
         HabboServer.database {
+            val ids = batchInsertAndGetGeneratedKeys("INSERT INTO items (user_id, item_name, extra_data, wall_pos) VALUES (:user_id, :item_name, :extra_data, :wall_pos)",
+                    furnishingToPurchase.map {
+                        mapOf(
+                                "user_id" to habboSession.userInformation.id,
+                                "item_name" to it.furnishing.itemName,
+                                "extra_data" to it.extraData,
+                                "wall_pos" to ""
+                        )
+                    }
+            )
+
             if (furnishingToPurchase.filter { it.limitedNum > 0 }.isNotEmpty()) {
-                val limitedIds = batchInsertAndGetGeneratedKeys("INSERT INTO items_limited (limited_num, limited_total) VALUES (:limited_num, :limited_total)",
+                val limitedIds = batchInsertAndGetGeneratedKeys("INSERT INTO items_limited (item_id, limited_num, limited_total) VALUES (:item_id, :limited_num, :limited_total)",
                         furnishingToPurchase.filter { it.limitedNum > 0 }.map {
                             mapOf(
+                                    "item_id" to ids[furnishingToPurchase.indexOf(it)],
                                     "limited_num" to it.limitedNum,
                                     "limited_total" to catalogItem.limitedStack
                             )
@@ -175,31 +189,16 @@ class CatalogManager {
                 furnishingToPurchase.forEachIndexed { i, catalogPurchaseData -> catalogPurchaseData.limitedId = limitedIds[i] }
             }
 
-            val ids = batchInsertAndGetGeneratedKeys("INSERT INTO items (user_id, base_item, extra_data, limited_id, wall_pos) VALUES (:user_id, :base_item, :extra_data, :limited_id, :wall_pos)",
-                    furnishingToPurchase.map {
-                        mapOf(
-                                "user_id" to habboSession.userInformation.id,
-                                "base_item" to it.furnishing.itemName,
-                                "extra_data" to it.extraData,
-                                "limited_id" to it.limitedId,
-                                "wall_pos" to ""
-                        )
-                    }
-            )
-
-            val userItems = ids.mapIndexed { i, itemId ->
+            userItems += ids.mapIndexed { i, itemId ->
                 UserItem(
                         itemId,
                         habboSession.userInformation.id,
                         furnishingToPurchase[i].furnishing.itemName,
-                        furnishingToPurchase[i].extraData,
-                        furnishingToPurchase[i].limitedId
+                        furnishingToPurchase[i].extraData
                 )
             }
 
-            val copyUserItems = userItems.toMutableList()
-
-            habboSession.habboInventory.addItems(userItems)
+            val copyUserItems = userItems
 
             userItems.forEach { userItem ->
                 if (!copyUserItems.contains(userItem)) return@forEach
@@ -249,9 +248,10 @@ class CatalogManager {
                     }
                 }
             }
-
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems.map { it.limitedItemData }, userItems.map { it.furnishing })
         }
+
+        habboSession.habboInventory.addItems(userItems)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems)
 
         if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
         if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase

@@ -17,33 +17,32 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.landing
+package tk.jomp16.habbo.game.moderation
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import tk.jomp16.habbo.database.landing.LandingDao
+import tk.jomp16.habbo.database.moderation.ModerationDao
 
-class LandingManager {
+class ModerationManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val landingPromos: MutableList<LandingPromo> = mutableListOf()
-    var landingReward: LandingReward? = null
-        private set
+    val moderationCategories: MutableMap<Int, String> = mutableMapOf()
+    val moderationTopics: MutableMap<Int, ModerationTopic> = mutableMapOf()
 
     init {
         load()
     }
 
     fun load() {
-        log.info("Loading landing...")
+        log.info("Loading moderation stuffs...")
 
-        landingPromos.clear()
-        landingReward = null
+        moderationCategories.clear()
+        moderationTopics.clear()
 
-        landingPromos += LandingDao.getLandingPromos()
-        landingReward = LandingDao.getLandingReward()
+        moderationCategories += ModerationDao.getCategories()
+        moderationTopics += ModerationDao.getTopics().associateBy { it.topicId }
 
-        log.info("Loaded {} landing promos!", landingPromos.size)
-        log.info("Loaded landing reward, data=$landingReward")
+        log.info("Loaded ${moderationCategories.size} moderation categories!")
+        log.info("Loaded ${moderationTopics.size} moderation topics!")
     }
 }

@@ -25,8 +25,10 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.catalog.CatalogManager
 import tk.jomp16.habbo.game.item.ItemManager
 import tk.jomp16.habbo.game.landing.LandingManager
+import tk.jomp16.habbo.game.moderation.ModerationManager
 import tk.jomp16.habbo.game.navigator.NavigatorManager
 import tk.jomp16.habbo.game.permission.PermissionManager
+import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.RoomManager
 import tk.jomp16.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
@@ -40,6 +42,7 @@ class HabboGame {
     val catalogManager: CatalogManager
     val navigatorManager: NavigatorManager
     val permissionManager: PermissionManager
+    val moderationManager: ModerationManager
 
     init {
         landingManager = LandingManager()
@@ -48,6 +51,7 @@ class HabboGame {
         catalogManager = CatalogManager()
         navigatorManager = NavigatorManager()
         permissionManager = PermissionManager()
+        moderationManager = ModerationManager()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.habboSubscription.validUserSubscription }
@@ -59,5 +63,11 @@ class HabboGame {
                 HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach(HabboSession::rewardUser)
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
+
+        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
+            roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveQueuedItems)
+
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.saveAllQueuedStuffs() }
+        }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

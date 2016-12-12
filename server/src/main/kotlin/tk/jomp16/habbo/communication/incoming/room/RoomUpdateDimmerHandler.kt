@@ -19,37 +19,22 @@
 
 package tk.jomp16.habbo.communication.incoming.room
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.game.item.InteractionType
-import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomTakeItemHandler {
-    @Handler(Incoming.ROOM_TAKE_ITEM)
+class RoomUpdateDimmerHandler {
+    @Handler(Incoming.ROOM_DIMMER_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
 
-        habboRequest.readInt() // useless
+        val preset = habboRequest.readInt()
+        val backgroundOnly = habboRequest.readInt() >= 2
+        val colorCode = habboRequest.readUTF()
+        val intensity = habboRequest.readInt()
 
-        val itemId = habboRequest.readInt()
-
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
-
-        if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
-
-        if (habboSession.currentRoom!!.removeItem(roomItem)) {
-            HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(listOf(UserItem(
-                    roomItem.id,
-                    roomItem.userId,
-                    roomItem.itemName,
-                    roomItem.extraData
-            )))
-        }
-
-        if (!habboSession.habboInventory.roomItemsToRemove.contains(roomItem)) habboSession.habboInventory.roomItemsToRemove += roomItem
+        habboSession.currentRoom!!.roomDimmer!!.updatePreset(preset, colorCode, intensity, backgroundOnly)
     }
 }

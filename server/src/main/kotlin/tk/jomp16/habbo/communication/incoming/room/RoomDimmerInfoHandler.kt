@@ -17,26 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.incoming.room
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
-        habboResponse.apply {
-            writeByte(affectedTiles.size)
+class RoomDimmerInfoHandler {
+    @Handler(Incoming.ROOM_DIMMER_INFO)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
-            }
-        }
+        habboSession.sendHabboResponse(Outgoing.ROOM_DIMMER_INFO, habboSession.currentRoom!!.roomDimmer!!)
     }
 }

@@ -27,6 +27,7 @@ import tk.jomp16.habbo.game.item.LimitedItemData
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.util.Vector3
 
 object ItemDao {
@@ -63,20 +64,17 @@ object ItemDao {
     }
 
     fun getRoomItems(roomId: Int) = HabboServer.database {
-        select("SELECT id, base_item, extra_data, limited_id, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
+        select("SELECT id, item_name, extra_data, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
                 mapOf(
                         "room_id" to roomId
                 )
         ) {
-            val limitedId = it.int("limited_id")
-
             RoomItem(
                     it.int("id"),
                     it.int("user_id"),
                     roomId,
-                    it.string("base_item"),
+                    it.string("item_name"),
                     it.string("extra_data"),
-                    limitedId,
                     Vector3(
                             it.int("x"),
                             it.int("y"),
@@ -89,43 +87,41 @@ object ItemDao {
     }
 
     fun getUserItems(userId: Int) = HabboServer.database {
-        select("SELECT id, base_item, extra_data, limited_id FROM items WHERE room_id = 0 AND user_id = :user_id",
+        select("SELECT id, item_name, extra_data FROM items WHERE room_id = 0 AND user_id = :user_id",
                 mapOf(
                         "user_id" to userId
                 )
         ) {
-            val limitedId = it.int("limited_id")
-
             UserItem(
                     it.int("id"),
                     userId,
-                    it.string("base_item"),
-                    it.string("extra_data"),
-                    limitedId
+                    it.string("item_name"),
+                    it.string("extra_data")
             )
         }
     }
 
-    fun getLimitedData(limitedId: Int): LimitedItemData? {
-        if (!limitedItemDatas.containsKey(limitedId)) {
+    fun getLimitedData(itemId: Int): LimitedItemData? {
+        if (!limitedItemDatas.containsKey(itemId)) {
             val limitedItemData = HabboServer.database {
-                select("SELECT * FROM items_limited WHERE id = :id",
+                select("SELECT * FROM items_limited WHERE item_id = :id",
                         mapOf(
-                                "id" to limitedId
+                                "id" to itemId
                         )
                 ) {
                     LimitedItemData(
                             it.int("id"),
+                            itemId,
                             it.int("limited_num"),
                             it.int("limited_total")
                     )
                 }.firstOrNull()
             }
 
-            limitedItemDatas.put(limitedId, limitedItemData)
+            limitedItemDatas.put(itemId, limitedItemData)
         }
 
-        return limitedItemDatas[limitedId]
+        return limitedItemDatas[itemId]
     }
 
     fun removeUserItem(userItem: UserItem) {
@@ -138,12 +134,53 @@ object ItemDao {
         }
     }
 
-    fun removeRoomItem(roomItem: RoomItem) {
+    fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
+        if (roomItemsToRemove.isEmpty()) return
+
         HabboServer.database {
-            update("UPDATE items SET room_id = :room_id WHERE id = :id",
+            batchUpdate("UPDATE items SET room_id = :room_id WHERE id = :id",
+                    roomItemsToRemove.map {
+                        mapOf(
+                                "room_id" to 0,
+                                "id" to it.id
+                        )
+                    }
+            )
+        }
+    }
+
+    fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
+        return HabboServer.database {
+            select("SELECT * FROM items_dimmer WHERE item_id = :item_id LIMIT 1",
                     mapOf(
-                            "room_id" to 0,
-                            "id" to roomItem.id
+                            "item_id" to roomItem.id
+                    )
+            ) {
+                RoomDimmer(
+                        it.int("id"),
+                        roomItem,
+                        it.boolean("enabled"),
+                        it.int("current_preset"),
+                        mutableListOf(
+                                RoomDimmer.generatePreset(it.string("preset_one")),
+                                RoomDimmer.generatePreset(it.string("preset_two")),
+                                RoomDimmer.generatePreset(it.string("preset_three"))
+                        )
+                )
+            }.firstOrNull()
+        }
+    }
+
+    fun saveDimmer(roomDimmer: RoomDimmer) {
+        HabboServer.database {
+            update("UPDATE items_dimmer SET enabled = :enabled, current_preset = :current_preset, preset_one = :preset_one, preset_two = :preset_two, preset_three = :preset_three WHERE id = :id",
+                    mapOf(
+                            "enabled" to roomDimmer.enabled,
+                            "current_preset" to roomDimmer.currentPreset,
+                            "preset_one" to roomDimmer.presets[0].toString(),
+                            "preset_two" to roomDimmer.presets[1].toString(),
+                            "preset_three" to roomDimmer.presets[2].toString(),
+                            "id" to roomDimmer.id
                     )
             )
         }

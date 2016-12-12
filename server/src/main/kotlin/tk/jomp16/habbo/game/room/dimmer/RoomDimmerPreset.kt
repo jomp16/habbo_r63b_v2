@@ -17,11 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.item
+package tk.jomp16.habbo.game.room.dimmer
 
-data class LimitedItemData(
-        val id: Int,
-        val itemId: Int,
-        val limitedNumber: Int,
-        val limitedTotal: Int
-)
+data class RoomDimmerPreset(
+        val colorCode: String,
+        val colorIntensity: Int,
+        val backgroundOnly: Boolean
+) {
+    override fun toString() = "$colorCode,$colorIntensity,${if (backgroundOnly) 1 else 0}"
+}

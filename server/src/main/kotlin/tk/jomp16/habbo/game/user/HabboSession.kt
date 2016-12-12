@@ -30,6 +30,7 @@ import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserPreferencesDao
 import tk.jomp16.habbo.database.information.UserStatsDao
+import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.encryption.RC4Encryption
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.room.Room
@@ -91,6 +92,7 @@ class HabboSession(val channel: Channel) : Closeable {
     private var alreadySentPurse: Boolean = false
 
     var ping: Long = 0
+    var sentLandingReward: Boolean = false
 
     fun sendHabboResponse(headerId: Int, vararg args: Any?) = HabboServer.habboHandler.invokeResponse(headerId, *args)?.let {
         sendHabboResponse(it)
@@ -104,7 +106,7 @@ class HabboSession(val channel: Channel) : Closeable {
 
     fun sendQueuedHabboResponse(queuedHabboResponse: QueuedHabboResponse) {
         queuedHabboResponse.headerIds.forEach {
-            HabboServer.habboHandler.invokeResponse(it.key, *it.value)?.let {
+            HabboServer.habboHandler.invokeResponse(it.first, *it.second)?.let {
                 sendHabboResponse(it, false)
             }
         }
@@ -301,7 +303,15 @@ class HabboSession(val channel: Channel) : Closeable {
             UserPreferencesDao.savePreferences(userPreferences)
             UserStatsDao.saveStats(userStats)
 
+            saveAllQueuedStuffs()
+
             habboMessenger.notifyFriends()
         }
+    }
+
+    fun saveAllQueuedStuffs() {
+        ItemDao.removeRoomItems(habboInventory.roomItemsToRemove)
+
+        habboInventory.roomItemsToRemove.clear()
     }
 }

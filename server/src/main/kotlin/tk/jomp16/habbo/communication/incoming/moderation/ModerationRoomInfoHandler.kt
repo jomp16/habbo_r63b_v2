@@ -17,26 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.incoming.moderation
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
-        habboResponse.apply {
-            writeByte(affectedTiles.size)
+class ModerationRoomInfoHandler {
+    @Handler(Incoming.MODERATION_ROOM_INFO)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || !habboSession.hasPermission("acc_mod_tools")) return
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
-            }
-        }
+        val roomId = habboRequest.readInt()
+        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+
+        habboSession.sendHabboResponse(Outgoing.MODERATION_ROOM_INFO, room)
     }
 }

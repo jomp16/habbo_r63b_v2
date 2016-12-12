@@ -17,26 +17,25 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.outgoing.landing
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.game.landing.LandingReward
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
+class LandingRewardResponse {
+    @Response(Outgoing.LANDING_REWARD)
+    fun handle(habboResponse: HabboResponse, landingReward: LandingReward, respects: Int) {
         habboResponse.apply {
-            writeByte(affectedTiles.size)
+            var remaining = landingReward.totalAmount - respects
+            if (remaining < 0) remaining = 0
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
-            }
+            writeUTF(landingReward.itemName)
+            writeInt(landingReward.furnishing.spriteId)
+            writeInt(landingReward.totalAmount)
+            writeInt(remaining)
         }
     }
 }

@@ -30,14 +30,13 @@ import tk.jomp16.habbo.game.item.LimitedItemData
 data class UserItem(
         val id: Int,
         var userId: Int,
-        val baseItem: String,
-        var extraData: String,
-        val limitedId: Int
+        val itemName: String,
+        var extraData: String
 ) : IHabboResponseSerialize {
-    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(limitedId) }
+    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(id) }
 
     val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[baseItem]!!
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -50,7 +49,7 @@ data class UserItem(
 
             writeBoolean(furnishing.allowRecycle)
             writeBoolean(furnishing.allowTrade)
-            writeBoolean(limitedId == 0 && furnishing.allowInventoryStack)
+            writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
             writeBoolean(furnishing.allowMarketplaceSell)
             writeInt(-1) // milliseconds to expire rental
             writeBoolean(true)

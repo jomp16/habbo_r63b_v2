@@ -60,7 +60,7 @@ object CatalogDao {
                     it.int("id"),
                     it.int("page_id"),
                     it.string("item_name"),
-                    it.int("deal_id"),
+                    it.intOrNull("deal_id") ?: 0,
                     it.string("catalog_name"),
                     it.string("badge"),
                     it.int("cost_credits"),

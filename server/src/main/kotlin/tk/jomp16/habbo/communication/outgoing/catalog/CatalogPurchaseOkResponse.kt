@@ -23,46 +23,45 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.catalog.CatalogItem
-import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.ItemType
-import tk.jomp16.habbo.game.item.LimitedItemData
+import tk.jomp16.habbo.game.item.user.UserItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseOkResponse {
     @Response(Outgoing.CATALOG_PURCHASE_OK)
-    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, limitedItemDatas: List<LimitedItemData?>, furnishings: Collection<Furnishing>) {
+    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem, userItems: Collection<UserItem>) {
         habboResponse.apply {
             writeInt(catalogItem.id)
-            writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing!!.itemName else catalogItem.catalogName)
+            writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing.itemName else catalogItem.catalogName)
             writeBoolean(false) // is rentable
             writeInt(catalogItem.costCredits)
             writeInt(catalogItem.costPixels)
             writeInt(if (catalogItem.costPixels > 0) 0 else 5) // activityPointType
             writeBoolean(false) // is gift
-            writeInt(furnishings.size)
+            writeInt(userItems.size)
 
-            furnishings.forEachIndexed { i, furnishing ->
-                writeUTF(furnishing.type.type)
+            userItems.forEachIndexed { i, userItem ->
+                writeUTF(userItem.furnishing.type.type)
 
-                when (furnishing.type) {
+                when (userItem.furnishing.type) {
                     ItemType.BADGE -> {
-                        writeUTF(furnishing.itemName)
+                        writeUTF(userItem.furnishing.itemName)
                     }
                     else -> {
-                        writeInt(furnishing.spriteId)
-                        writeUTF(furnishing.itemName)
+                        writeInt(userItem.furnishing.spriteId)
+                        writeUTF(userItem.furnishing.itemName)
                         writeInt(i + 1)
-                        writeBoolean(catalogItem.limited) // limited
+                        writeBoolean(userItem.limitedItemData != null)
 
-                        if (catalogItem.limited && limitedItemDatas.isNotEmpty()) {
-                            writeInt(limitedItemDatas[i]!!.limitedNumber)
-                            writeInt(limitedItemDatas[i]!!.limitedTotal)
+                        userItem.limitedItemData?.let {
+                            writeInt(it.limitedNumber)
+                            writeInt(it.limitedTotal)
                         }
                     }
                 }
             }
 
-            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level
+            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level, probably
             writeBoolean(true)
         }
     }

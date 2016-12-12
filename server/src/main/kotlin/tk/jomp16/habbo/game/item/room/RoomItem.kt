@@ -36,17 +36,16 @@ data class RoomItem(
         val id: Int,
         var userId: Int,
         var roomId: Int,
-        val baseName: String,
+        val itemName: String,
         var extraData: String,
-        val limitedId: Int,
         var position: Vector3,
         var rotation: Int,
         var wallPosition: String
 ) : IHabboResponseSerialize {
-    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(limitedId) }
+    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(id) }
 
     val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[baseName]!!
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 
     val room: Room
         get() = HabboServer.habboGame.roomManager.rooms[roomId]!!

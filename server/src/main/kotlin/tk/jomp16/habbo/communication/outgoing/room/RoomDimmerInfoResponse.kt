@@ -22,20 +22,21 @@ package tk.jomp16.habbo.communication.outgoing.room
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
+class RoomDimmerInfoResponse {
+    @Response(Outgoing.ROOM_DIMMER_INFO)
+    fun handle(habboResponse: HabboResponse, roomDimmer: RoomDimmer) {
         habboResponse.apply {
-            writeByte(affectedTiles.size)
+            writeInt(roomDimmer.presets.size)
+            writeInt(roomDimmer.currentPreset)
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
+            roomDimmer.presets.forEachIndexed { i, roomDimmerPreset ->
+                writeInt(i + 1)
+                writeInt(if (roomDimmerPreset.backgroundOnly) 2 else 1)
+                writeUTF(roomDimmerPreset.colorCode)
+                writeInt(roomDimmerPreset.colorIntensity)
             }
         }
     }

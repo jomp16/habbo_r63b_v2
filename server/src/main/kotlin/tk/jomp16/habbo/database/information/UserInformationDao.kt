@@ -92,7 +92,7 @@ object UserInformationDao {
     private fun getUserInformation(row: Row) = UserInformation(
             row.int("id"),
             row.string("username"),
-            row.string("mail"),
+            row.string("email"),
             row.string("realname"),
             row.int("rank"),
             row.int("credits"),

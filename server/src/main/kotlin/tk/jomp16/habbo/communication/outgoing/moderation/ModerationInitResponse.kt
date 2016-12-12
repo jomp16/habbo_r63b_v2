@@ -17,26 +17,36 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.outgoing.moderation
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.util.Vector2
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUpdateFurniStackResponse {
-    @Response(Outgoing.ROOM_UPDATE_FURNI_STACK)
-    fun response(habboResponse: HabboResponse, room: Room, affectedTiles: Collection<Vector2>) {
+class ModerationInitResponse {
+    @Response(Outgoing.MODERATION_INIT)
+    fun handle(habboResponse: HabboResponse) {
         habboResponse.apply {
-            writeByte(affectedTiles.size)
+            // todo: tickets
+            writeInt(0)
 
-            affectedTiles.forEach {
-                writeByte(it.x)
-                writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
-            }
+            // todo: user presets
+            writeInt(0)
+
+            // todo: user actions presets, but it's useless on Habbo.swf
+            writeInt(0)
+
+            writeBoolean(true) // Ticket right
+            writeBoolean(true) // Chatlogs
+            writeBoolean(true) // User actions alert etc
+            writeBoolean(true) // Kick users
+            writeBoolean(true) // Ban users
+            writeBoolean(true) // Caution etc
+            writeBoolean(true) // ?
+
+            // todo: room presets
+            writeInt(0)
         }
     }
 }

@@ -22,10 +22,10 @@ package tk.jomp16.habbo.communication
 import java.util.*
 
 class QueuedHabboResponse {
-    val headerIds: MutableMap<Int, Array<out Any>> = LinkedHashMap() // Do not change this, LinkedHashMap is the only that keeps the insertion order
+    val headerIds: MutableList<Pair<Int, Array<out Any>>> = LinkedList() // Do not change this, LinkedHashMap is the only that keeps the insertion order
 
     fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.put(headerId, args)
+        headerIds.add(headerId to args)
 
         return this
     }

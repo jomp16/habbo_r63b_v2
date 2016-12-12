@@ -50,7 +50,16 @@ class ItemManager {
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
 
     init {
+        load()
+    }
+
+    fun load() {
         log.info("Loading furnishings...")
+
+        furniXMLInfos.clear()
+        oldGiftWrapper.clear()
+        newGiftWrapper.clear()
+        furniInteractor.clear()
 
         urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
             val saxParser = SAXParserFactory.newInstance().newSAXParser()
@@ -62,10 +71,8 @@ class ItemManager {
         }
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
-
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
-
         furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
@@ -95,9 +102,8 @@ class ItemManager {
             userItem.id,
             userItem.userId,
             roomId,
-            userItem.baseItem,
+            userItem.itemName,
             userItem.extraData,
-            userItem.limitedId,
             Vector3(0, 0, 0.toDouble()),
             0,
             ""

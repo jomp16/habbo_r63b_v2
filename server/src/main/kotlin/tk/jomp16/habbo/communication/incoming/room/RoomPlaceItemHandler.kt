@@ -70,10 +70,6 @@ class RoomPlaceItemHandler {
             success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.userInformation.username)
         }
 
-        if (success) {
-            habboSession.habboInventory.removeItem(userItem)
-
-            habboSession.currentRoom!!.saveItems()
-        }
+        if (success) habboSession.habboInventory.removeItem(userItem)
     }
 }

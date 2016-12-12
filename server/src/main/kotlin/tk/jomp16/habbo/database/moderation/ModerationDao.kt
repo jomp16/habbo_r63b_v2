@@ -17,34 +17,27 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.landing
+package tk.jomp16.habbo.database.moderation
 
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.game.landing.LandingPromo
-import tk.jomp16.habbo.game.landing.LandingReward
+import tk.jomp16.habbo.game.moderation.ModerationTopic
 
-object LandingDao {
-    fun getLandingPromos() = HabboServer.database {
-        select("SELECT * FROM landing_promos") {
-            LandingPromo(
-                    it.int("id"),
-                    it.string("header"),
-                    it.string("body"),
-                    it.string("button"),
-                    it.boolean("show_button"),
-                    it.string("button_link"),
-                    it.string("image")
-            )
+object ModerationDao {
+    fun getCategories(): List<Pair<Int, String>> = HabboServer.database {
+        select("SELECT * FROM moderation_categories") {
+            it.int("id") to it.string("name")
         }
     }
 
-    fun getLandingReward() = HabboServer.database {
-        select("SELECT * FROM landing_reward LIMIT 1") {
-            LandingReward(
+    fun getTopics(): List<ModerationTopic> = HabboServer.database {
+        select("SELECT * FROM moderation_topics") {
+            ModerationTopic(
                     it.int("id"),
-                    it.string("item_name"),
-                    it.int("total_amount")
+                    it.int("category_id"),
+                    it.string("name"),
+                    it.int("topic_id"),
+                    it.string("consequence")
             )
-        }.firstOrNull()
+        }
     }
 }
