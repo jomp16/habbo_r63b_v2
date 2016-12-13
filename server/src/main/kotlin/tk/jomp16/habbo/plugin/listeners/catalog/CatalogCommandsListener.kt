@@ -25,6 +25,7 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.plugin.event.events.room.annotation.Command
 import tk.jomp16.utils.plugin.api.PluginListener
 
+@Suppress("UNUSED_PARAMETER")
 class CatalogCommandsListener() : PluginListener() {
     @Command(arrayOf("update_catalog", "reload_catalog"), permissionName = "cmd_update_catalogue")
     fun updateCatalogue(roomUser: RoomUser, message: String, args: List<String>) {
