@@ -166,8 +166,8 @@ class RoomUser(
         room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y)))
     }
 
-    fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType) {
-        room.roomTask?.addTask(room, UserChatTask(this, virtualID, message, bubble, type))
+    fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType, skipCommands: Boolean) {
+        room.roomTask?.addTask(room, UserChatTask(this, virtualID, message, bubble, type, skipCommands))
     }
 
     fun action(action: Int) {

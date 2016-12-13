@@ -47,6 +47,8 @@ import tk.jomp16.habbo.netty.HabboNettyDecoder
 import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
+import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
+import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
 import java.io.File
@@ -148,6 +150,8 @@ object HabboServer : Closeable {
 
             // load plugins
             log.info("Loading plugins...")
+            pluginManager.addPlugin(RoomCommandsManagerListener())
+            pluginManager.addPlugin(CatalogCommandsListener())
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")
         } catch (e: Exception) {

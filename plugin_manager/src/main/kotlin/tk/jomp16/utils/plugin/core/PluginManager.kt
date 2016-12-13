@@ -29,6 +29,8 @@ import org.reflections.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.utils.plugin.api.PluginListener
+import tk.jomp16.utils.plugin.event.events.PluginListenerAddedEvent
+import tk.jomp16.utils.plugin.event.events.PluginListenerRemovedEvent
 import tk.jomp16.utils.plugin.json.PluginInfo
 import java.io.File
 import java.net.URL
@@ -39,7 +41,7 @@ class PluginManager : AutoCloseable {
 
     val pluginsListener: MutableList<Pair<ClassLoader, PluginListener>> = mutableListOf()
     val pluginsJar: MutableMap<String, Triple<PluginInfo, ClassLoader, List<PluginListener>>> = mutableMapOf()
-    val eventBus = MBassador<Any>(IPublicationErrorHandler { error -> log.error("An error happened when handling listener!", error) })
+    private val eventBus = MBassador<Any>(IPublicationErrorHandler { error -> log.error("An error happened when handling listener!", error) })
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
     fun loadPluginsFromDir(fileDir: File) {
@@ -77,6 +79,8 @@ class PluginManager : AutoCloseable {
         pluginsListener.add(classLoader to pluginListener)
         eventBus.subscribe(pluginListener)
 
+        executeEvent(PluginListenerAddedEvent(pluginListener))
+
         log.trace("${pluginListener.javaClass.simpleName} subscribed!")
     }
 
@@ -88,6 +92,8 @@ class PluginManager : AutoCloseable {
         pluginsListener.removeAll { it.second == pluginListener }
         eventBus.unsubscribe(pluginListener)
 
+        executeEvent(PluginListenerRemovedEvent(pluginListener))
+
         log.trace("${pluginListener.javaClass.simpleName} unsubscribed!")
     }
 
@@ -96,6 +102,14 @@ class PluginManager : AutoCloseable {
         if (!pluginsJar.containsKey(pluginName)) return
 
         pluginsJar.remove(pluginName)?.third?.forEach { removePlugin(it) }
+    }
+
+    fun executeEventAsync(eventClass: Any) {
+        eventBus.publishAsync(eventClass)
+    }
+
+    fun executeEvent(eventClass: Any) {
+        eventBus.publish(eventClass)
     }
 
     private fun loadPluginListenersFromJar(jarFile: File): Pair<ClassLoader, List<PluginListener>> {

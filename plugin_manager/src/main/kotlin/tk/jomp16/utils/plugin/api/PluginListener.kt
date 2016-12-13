@@ -19,7 +19,7 @@
 
 package tk.jomp16.utils.plugin.api
 
-open class PluginListener {
+abstract class PluginListener {
     open fun onCreate() {
     }
 

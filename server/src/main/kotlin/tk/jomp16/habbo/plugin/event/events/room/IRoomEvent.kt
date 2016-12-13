@@ -17,13 +17,8 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply from: "$rootDir/plugins_src/common_plugins.gradle"
+package tk.jomp16.habbo.plugin.event.events.room
 
-group "tk.jomp16.utils.plugin"
+import tk.jomp16.habbo.game.room.Room
 
-dependencies {
-    compile project(":server")
-
-    //noinspection GrUnresolvedAccess
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-}
+abstract class IRoomEvent(val room: Room)

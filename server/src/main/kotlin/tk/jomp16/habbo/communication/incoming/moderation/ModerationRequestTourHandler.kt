@@ -24,7 +24,7 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.game.user.HabboSession
 
-@Suppress("unused", "UNUSED_PARAMETER")
+@Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class ModerationRequestTourHandler {
     @Handler(Incoming.MODERATION_TOUR_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {

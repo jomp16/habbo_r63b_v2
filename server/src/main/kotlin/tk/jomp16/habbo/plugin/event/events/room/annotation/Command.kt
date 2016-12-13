@@ -17,13 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply from: "$rootDir/plugins_src/common_plugins.gradle"
+package tk.jomp16.habbo.plugin.event.events.room.annotation
 
-group "tk.jomp16.utils.plugin"
-
-dependencies {
-    compile project(":server")
-
-    //noinspection GrUnresolvedAccess
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-}
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class Command(
+        val commands: Array<String> = arrayOf(""),
+        val rank: Int = 1,
+        val permissionName: String = ""
+)

@@ -19,25 +19,34 @@
 
 package tk.jomp16.habbo.game.room.tasks
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
+import tk.jomp16.habbo.plugin.event.events.room.RoomUserChatEvent
 
-class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, private val message: String, private val bubble: Int, private val type: ChatType) : IRoomTask {
+class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, private val message: String, private val bubble: Int, private val type: ChatType, val skipCommands: Boolean) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
 
-        // todo: wired trigger on chat
+        val speechEmotion = getSpeechEmotion(message.toUpperCase())
+
+        // todo: wired trigger on chat in plugins
+        if (!skipCommands) {
+            HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))
+
+            if (!skipCommands && message.startsWith(':')) return
+        }
 
         if (type == ChatType.WHISPER) {
-            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, message, speechEmotion, bubble)
         } else {
             room.roomUsers.values.forEach {
                 if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
-                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, speechEmotion, bubble)
                 } else if (type == ChatType.SHOUT) {
-                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, message, getSpeechEmotion(message.toUpperCase()), bubble)
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, message, speechEmotion, bubble)
                 }
             }
         }

@@ -135,4 +135,5 @@ object Outgoing {
     const val MODERATION_USER_INFO = 2866
     const val ROOM_DIMMER_INFO = 2710
     const val LANDING_REWARD = 1533
+    const val CATALOG_UPDATE = 1866
 }

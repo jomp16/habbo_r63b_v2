@@ -17,13 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply from: "$rootDir/plugins_src/common_plugins.gradle"
+package tk.jomp16.habbo.communication.outgoing.catalog
 
-group "tk.jomp16.utils.plugin"
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-dependencies {
-    compile project(":server")
-
-    //noinspection GrUnresolvedAccess
-    compile "org.slf4j:slf4j-api:$slf4j_version"
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogUpdateResponse {
+    @Response(Outgoing.CATALOG_UPDATE)
+    fun handle(habboResponse: HabboResponse) {
+        habboResponse.apply {
+            writeBoolean(false)
+        }
+    }
 }
