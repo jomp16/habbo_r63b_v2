@@ -20,8 +20,6 @@
 package tk.jomp16.habbo.game.misc
 
 enum class NotificationType {
-    MOD_ALERT,
     BROADCAST_ALERT,
     MOTD_ALERT,
-    MULTI_ALERT
 }
