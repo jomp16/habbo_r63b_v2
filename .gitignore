@@ -1,5 +1,3 @@
-# Created by .ignore support plugin (hsz.mobi)
-
 # Gradle
 .gradle/
 build/
@@ -18,6 +16,5 @@ rebel.xml
 motd/
 
 *.pro
-
 packet_infos/
 plugins/
