@@ -28,10 +28,7 @@ import java.time.LocalDateTime
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserObjectResponse {
     @Response(Outgoing.USER_OBJECT)
-    fun response(habboResponse: HabboResponse, id: Int, username: String, figure: String, gender: String,
-                 motto: String, respect: Int, dailyRespectPoints: Int, dailyPetRespectPoints: Int,
-                 lastOnline: LocalDateTime,
-                 canChangeName: Boolean) {
+    fun response(habboResponse: HabboResponse, id: Int, username: String, figure: String, gender: String, motto: String, respect: Int, dailyRespectPoints: Int, dailyPetRespectPoints: Int, lastOnline: LocalDateTime, canChangeName: Boolean) {
         habboResponse.apply {
             writeInt(id)
             writeUTF(username)

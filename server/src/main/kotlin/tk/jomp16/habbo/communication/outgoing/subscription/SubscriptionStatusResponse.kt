@@ -26,8 +26,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class SubscriptionStatusResponse {
     @Response(Outgoing.SUBSCRIPTION_STATUS)
-    fun response(habboResponse: HabboResponse, clubType: String, active: Boolean, days: Int, months: Int,
-                 elapsedDays: Int, minutes: Int) {
+    fun response(habboResponse: HabboResponse, clubType: String, active: Boolean, days: Int, months: Int, elapsedDays: Int, minutes: Int) {
         habboResponse.apply {
             writeUTF(clubType)
             writeInt(days) // days left

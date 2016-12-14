@@ -65,7 +65,7 @@ data class CatalogItem(
                 writeInt(0)
             }
 
-            writeBoolean(if (dealId > 0) true else furnishing.canGift)
+            writeBoolean(dealId > 0 || furnishing.canGift)
 
             // item count, count n item if there is no badge, otherwise count as n + 1.
             writeInt(if (dealId > 0) deal!!.furnishings.size else 1 + if (badge.isNotBlank()) 1 else 0)

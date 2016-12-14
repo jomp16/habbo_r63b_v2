@@ -28,8 +28,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomInfoResponse {
     @Response(Outgoing.ROOM_INFO)
-    fun response(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean,
-                 checkEntry: Boolean) {
+    fun response(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean, checkEntry: Boolean) {
         habboResponse.apply {
             writeBoolean(isLoading)
 
