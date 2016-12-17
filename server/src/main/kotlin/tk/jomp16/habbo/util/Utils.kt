@@ -19,10 +19,14 @@
 
 package tk.jomp16.habbo.util
 
+import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.security.SecureRandom
+import java.util.zip.Deflater
+import java.util.zip.Inflater
 
+@Suppress("unused")
 object Utils {
     val random: SecureRandom = SecureRandom()
 
@@ -49,5 +53,42 @@ object Utils {
         if (places < 0) throw IllegalArgumentException()
 
         return BigDecimal(value).setScale(places, RoundingMode.HALF_UP).toDouble()
+    }
+
+    fun inflate(source: ByteArray): ByteArray {
+        val inflater = Inflater()
+        inflater.setInput(source)
+
+        ByteArrayOutputStream(source.size).use { byteArrayOutputStream ->
+            while (!inflater.finished()) {
+                val buff = ByteArray(DEFAULT_BUFFER_SIZE)
+                val count = inflater.inflate(buff)
+
+                byteArrayOutputStream.write(buff, 0, count)
+            }
+
+            return byteArrayOutputStream.toByteArray()
+        }
+    }
+
+    fun deflate(source: ByteArray): ByteArray {
+        return deflate(source, Deflater.DEFAULT_COMPRESSION)
+    }
+
+    fun deflate(source: ByteArray, compression: Int): ByteArray {
+        val deflater = Deflater(compression)
+        deflater.setInput(source)
+        deflater.finish()
+
+        ByteArrayOutputStream(source.size).use { byteArrayOutputStream ->
+            while (!deflater.finished()) {
+                val buff = ByteArray(DEFAULT_BUFFER_SIZE)
+                val count = deflater.deflate(buff)
+
+                byteArrayOutputStream.write(buff, 0, count)
+            }
+
+            return byteArrayOutputStream.toByteArray()
+        }
     }
 }
