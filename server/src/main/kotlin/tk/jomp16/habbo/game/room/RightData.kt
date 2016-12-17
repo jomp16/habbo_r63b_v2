@@ -26,5 +26,5 @@ data class RightData(
         val userId: Int
 ) {
     val username: String
-        get() = UserInformationDao.getUserInformationById(userId)?.username ?: "null"
+        get() = UserInformationDao.getUserInformationById(userId)!!.username
 }
