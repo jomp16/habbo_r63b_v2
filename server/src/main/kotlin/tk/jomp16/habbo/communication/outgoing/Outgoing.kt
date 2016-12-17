@@ -136,4 +136,9 @@ object Outgoing {
     const val ROOM_DIMMER_INFO = 3623 // 2710
     const val LANDING_REWARD = 3333 // 1533
     const val CATALOG_UPDATE = 3202 // 1866
+    const val CAMERA_PRICE = 1787 // 3878
+    const val ROOM_SETTINGS = 2217 // 633
+    const val ROOM_SETTINGS_SAVED = 3100 // 948
+    const val ROOM_INFO_UPDATED = 97 // 3297
+    const val ROOM_RIGHTS = 1944 // 1284
 }

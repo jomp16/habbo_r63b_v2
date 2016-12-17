@@ -36,6 +36,8 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
 
     fun readBoolean(): Boolean = byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
 
+    fun readBytes(bytes: ByteArray) = byteBufInputStream.readFully(bytes)
+
     override fun toString(): String {
         var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
 

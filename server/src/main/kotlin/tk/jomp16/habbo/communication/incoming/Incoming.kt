@@ -125,4 +125,10 @@ object Incoming {
     const val ROOM_DIMMER_SWITCH = 2679 // 2296
     const val ROOM_DIMMER_INFO = 3230 // 2813
     const val ROOM_DIMMER_UPDATE = 124 // 1648
+    const val CAMERA_PRICE = 421 // 796
+    const val HABBO_CAMERA_DATA = 2091 // 3226
+    const val ROOM_SETTINGS = 812 // 3129
+    const val ROOM_SAVE_SETTINGS = 2314 // ok
+    const val ROOM_RIGHTS = 3440 // 3385
+    const val ROOM_BANNED_USERS = 2114 // 2267
 }
