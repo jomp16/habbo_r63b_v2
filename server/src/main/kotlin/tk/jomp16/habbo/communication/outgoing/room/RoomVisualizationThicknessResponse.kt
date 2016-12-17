@@ -26,7 +26,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomVisualizationThicknessResponse {
     @Response(Outgoing.ROOM_VISUALIZATION_THICKNESS)
-    fun response(habboResponse: HabboResponse, hideWall: Boolean, floorThickness: Int, wallThickness: Int) {
+    fun response(habboResponse: HabboResponse, hideWall: Boolean, wallThickness: Int, floorThickness: Int) {
         habboResponse.apply {
             writeBoolean(hideWall)
             writeInt(wallThickness)
