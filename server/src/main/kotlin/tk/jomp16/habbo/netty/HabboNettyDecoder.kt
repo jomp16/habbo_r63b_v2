@@ -26,6 +26,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
@@ -89,7 +90,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             if (msg.readableBytes() < size) {
                 msg.resetReaderIndex()
 
-                if (!HabboServer.habboHandler.blacklistIds.contains(headerId)) {
+                if (!HabboServer.habboHandler.blacklistIds.contains(headerId) && headerId != Incoming.HABBO_CAMERA_DATA) {
                     log.warn("({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId, msg.readableBytes(), size)
                 }
 
@@ -100,9 +101,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             if (log.isDebugEnabled) {
                 out.forEach {
-                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId)) {
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4),
-                                HabboServer.habboHandler.incomingNames[it.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId) && it.headerId != Incoming.HABBO_CAMERA_DATA) {
+                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), HabboServer.habboHandler.incomingNames[it.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
                     }
                 }
             }

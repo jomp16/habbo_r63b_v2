@@ -45,8 +45,7 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
         }
 
         if (log.isDebugEnabled) {
-            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4),
-                    HabboServer.habboHandler.outgoingNames[msg.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
+            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), HabboServer.habboHandler.outgoingNames[msg.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
         }
 
         val byteBuf = msg.byteBuf
