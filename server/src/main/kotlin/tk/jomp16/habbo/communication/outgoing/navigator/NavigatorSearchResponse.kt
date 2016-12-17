@@ -46,44 +46,46 @@ class NavigatorSearchResponse {
 
     private fun serializeSearchResultList(category: String, direct: Boolean, habboResponse: HabboResponse, habboSession: HabboSession) {
         habboResponse.apply {
-            val rooms: MutableList<Room> = mutableListOf()
-
-            val staticId: String = if (category.isBlank() || category == "official") "official_view" else category
+            val staticId: String = category
 
             if (staticId != "hotel_view" && staticId != "roomads_view" && staticId != "myworld_view" && staticId != "official_view") {
                 writeUTF(staticId) // code to be appended to navigator.searchcode.title.%s
                 writeUTF("") // title if nothing found ^
                 writeInt(1) // 0 : no button - 1 : Show More - 2 : Show Back button
-                writeBoolean(staticId != "my" && staticId != "popular" && staticId != "official-root") // collapsed or not
-                writeInt(if (staticId == "official-root") 1 else 0) // 0 : list - 1 : thumbnail
+                writeBoolean(staticId != "my" && staticId != "popular" && staticId != "official") // collapsed or not
+                writeInt(/*if (staticId == "official" || staticId == "popular") 1 else */0) // 0 : list - 1 : thumbnail
             }
 
             when (staticId) {
                 "hotel_view" -> {
                     serializeSearchResultList("popular", false, habboResponse, habboSession)
+                    serializeSearchResultList("recommended", false, habboResponse, habboSession)
+
                     HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.forEach {
                         serializeFlatCategories(it, direct, habboResponse)
                     }
                 }
                 "myworld_view" -> {
                     serializeSearchResultList("my", false, habboResponse, habboSession)
+                    serializeSearchResultList("favorites", false, habboResponse, habboSession)
                     serializeSearchResultList("history", false, habboResponse, habboSession)
                     serializeSearchResultList("friends_rooms", false, habboResponse, habboSession)
-                    serializeSearchResultList("favorites", false, habboResponse, habboSession)
-                    serializeSearchResultList("my_groups", false, habboResponse, habboSession)
+                    serializeSearchResultList("history_freq", false, habboResponse, habboSession)
                 }
                 "roomads_view" -> {
+                    serializeSearchResultList("top_promotions", false, habboResponse, habboSession)
+
                     HabboServer.habboGame.navigatorManager.navigatorPromoCats.values.forEach {
                         serializePromotions(it, direct, habboResponse)
                     }
-                    serializeSearchResultList("top_promotions", false, habboResponse, habboSession)
                 }
                 "official_view" -> {
-                    // todo: customize this tab
-                    serializeSearchResultList("official-root", false, habboResponse, habboSession)
-                    serializeSearchResultList("staffpicks", false, habboResponse, habboSession)
+                    serializeSearchResultList("official", false, habboResponse, habboSession)
+                    serializeSearchResultList("recommended", false, habboResponse, habboSession)
                 }
                 "my" -> {
+                    val rooms: MutableList<Room> = mutableListOf()
+
                     (0..habboSession.rooms.size - 1).forEach { i ->
                         rooms.add(habboSession.rooms[i])
 
@@ -92,6 +94,13 @@ class NavigatorSearchResponse {
 
                     writeInt(rooms.size)
                     rooms.forEach { serialize(it, false, false) }
+                }
+                "popular" -> {
+                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }.sortedBy { it.roomUsers.size }.let {
+                        writeInt(it.size)
+
+                        it.forEach { habboResponse.serialize(it, false, false) }
+                    }
                 }
                 else -> writeInt(0)
             }
@@ -151,8 +160,8 @@ class NavigatorSearchResponse {
     private fun getNewNavigatorLength(category: String): Int {
         when (category) {
             "official_view" -> return 2
-            "myworld_view" -> return 5
-            "hotel_view" -> return HabboServer.habboGame.navigatorManager.navigatorFlatCats.size + 1
+            "myworld_view" -> return 4
+            "hotel_view" -> return HabboServer.habboGame.navigatorManager.navigatorFlatCats.size + 2
             "roomads_view" -> return HabboServer.habboGame.navigatorManager.navigatorPromoCats.size + 1
             else -> return 1
         }

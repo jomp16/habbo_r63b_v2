@@ -59,7 +59,8 @@ class NavigatorInitializeHandler {
                                 "groups",
                                 "metadata",
                                 "history_freq",
-                                "highest_score"
+                                "highest_score",
+                                "competition"
                         )
                 )
         )
