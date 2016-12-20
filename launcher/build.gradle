@@ -35,7 +35,7 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-reflect'
     }
 
-    compile "org.jetbrains.kotlin:kotlin-reflect:1.0.5-2"
+    compile "org.jetbrains.kotlin:kotlin-reflect:1.0.5-3"
 }
 
 jar {
