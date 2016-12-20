@@ -48,6 +48,15 @@ jar {
     }
 }
 
+/*distributions {
+    main {
+        contents {
+            from { "$rootDir/plugins" }
+            into { }
+        }
+    }
+}*/
+
 //noinspection GrUnresolvedAccess
 distTar {
     compression = Compression.BZIP2
