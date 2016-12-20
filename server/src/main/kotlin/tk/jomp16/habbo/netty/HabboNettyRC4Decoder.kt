@@ -29,11 +29,11 @@ class HabboNettyRC4Decoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, incomingByteBuf: ByteBuf, out: MutableList<Any>) {
         val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-        val bytes = ByteArray(incomingByteBuf.readableBytes())
+        var bytes = ByteArray(incomingByteBuf.readableBytes())
 
         incomingByteBuf.readBytes(bytes)
 
-        habboSession.rc4Encryption?.parse(bytes)
+        if (habboSession.rc4Encryption != null) bytes = habboSession.rc4Encryption!!.decrypt(bytes)
 
         out += PooledByteBufAllocator.DEFAULT.buffer(bytes.size, bytes.size).writeBytes(bytes)
     }

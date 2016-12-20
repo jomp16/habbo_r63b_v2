@@ -19,46 +19,14 @@
 
 package tk.jomp16.habbo.encryption
 
-import tk.jomp16.habbo.util.Utils
-import java.math.BigInteger
+import java.security.AlgorithmParameterGenerator
+import javax.crypto.spec.DHParameterSpec
 
-class DiffieHellmanEncryption {
-    var privateKey: BigInteger = BigInteger.ZERO
-    var publicKey: BigInteger = BigInteger.ZERO
-    var prime: BigInteger = BigInteger.ZERO
-    var generator: BigInteger = BigInteger.ZERO
+object DiffieHellmanEncryption {
+    fun getDHParameterSpec(length: Int = 1024): DHParameterSpec {
+        val paramGen = AlgorithmParameterGenerator.getInstance("DH", "BC")
+        paramGen.init(length)
 
-    init {
-        initialize()
-    }
-
-    private fun initialize() {
-        while (publicKey == BigInteger.ZERO) {
-            prime = BigInteger.probablePrime(BIT_LENGTH, Utils.random)
-            generator = BigInteger.probablePrime(BIT_LENGTH, Utils.random)
-
-            if (!prime.isProbablePrime(10) || !generator.isProbablePrime(10)) continue
-
-            val bytes = ByteArray(BIT_LENGTH / 8)
-
-            Utils.random.nextBytes(bytes)
-
-            privateKey = BigInteger(bytes)
-
-            if (generator.compareTo(prime) == 1) {
-                val tmp = prime
-
-                prime = generator
-                generator = tmp
-            }
-
-            publicKey = generator.modPow(privateKey, prime)
-        }
-    }
-
-    fun calculateSharedKey(m: BigInteger): BigInteger = m.modPow(privateKey, prime)
-
-    companion object {
-        const val BIT_LENGTH = 32
+        return paramGen.generateParameters().getParameterSpec(DHParameterSpec::class.java)
     }
 }

@@ -20,22 +20,36 @@
 package tk.jomp16.habbo.encryption
 
 import java.math.BigInteger
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import javax.crypto.KeyAgreement
+import javax.crypto.interfaces.DHPublicKey
+import javax.crypto.spec.DHParameterSpec
+import javax.crypto.spec.DHPublicKeySpec
 import javax.xml.bind.DatatypeConverter
 
 class HabboEncryptionHandler(n: String, d: String, e: String) {
-    val rsaEncryption: RSAEncryption
-    val diffieHellmanEncryption: DiffieHellmanEncryption
+    val rsaEncryption: RSAEncryption = RSAEncryption(n, d, e)
 
-    init {
-        diffieHellmanEncryption = DiffieHellmanEncryption()
-        rsaEncryption = RSAEncryption(n, d, e)
+    fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<ByteArray, ByteArray> {
+        val serverKeyPair = KeyPairGenerator.getInstance("DH", "BC").run {
+            initialize(diffieHellmanParams)
+
+            genKeyPair()
+        }
+
+        val serverKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
+            init(serverKeyPair.private)
+        }
+
+        val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
+            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey))), diffieHellmanParams.p, diffieHellmanParams.g))
+        }
+
+        serverKeyAgree.doPhase(clientPublicKey, true)
+
+        return (serverKeyPair.public as DHPublicKey).y.toString().toByteArray() to serverKeyAgree.generateSecret()
     }
 
-    val rsaDiffieHellmanPrimeKey: String = getRsaStringEncrypted(diffieHellmanEncryption.prime.toString().toByteArray())
-    val rsaDiffieHellmanGeneratorKey: String = getRsaStringEncrypted(diffieHellmanEncryption.generator.toString().toByteArray())
-    val rsaDiffieHellmanPublicKey: String = getRsaStringEncrypted(diffieHellmanEncryption.publicKey.toString().toByteArray())
-
-    fun calculateDiffieHellmanSharedKey(publicKey: String): BigInteger = diffieHellmanEncryption.calculateSharedKey(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)))
-
-    private fun getRsaStringEncrypted(bytes: ByteArray) = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))
+    fun getRsaStringEncrypted(bytes: ByteArray): String = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))
 }

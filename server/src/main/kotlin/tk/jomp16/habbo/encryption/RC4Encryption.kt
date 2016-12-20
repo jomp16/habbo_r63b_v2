@@ -19,56 +19,17 @@
 
 package tk.jomp16.habbo.encryption
 
+import org.bouncycastle.crypto.engines.RC4Engine
+import org.bouncycastle.crypto.params.KeyParameter
+
 class RC4Encryption(key: ByteArray) {
-    private var bytes = ByteArray(POOL_SIZE)
+    val rc4Engine = RC4Engine().apply { init(true, KeyParameter(key)) }
 
-    private var i = 0
-    private var j = 0
+    fun decrypt(byteArray: ByteArray): ByteArray {
+        val bytes = ByteArray(byteArray.size)
 
-    init {
-        i = 0
+        rc4Engine.processBytes(byteArray, 0, byteArray.size, bytes, 0)
 
-        while (i < POOL_SIZE) {
-            bytes[i] = i.toByte()
-
-            ++i
-        }
-
-        i = 0
-
-        while (i < POOL_SIZE) {
-            j = j + bytes[i].toInt() + key[i % key.size].toInt() and POOL_SIZE - 1
-
-            swap(i, j)
-
-            ++i
-        }
-
-        i = 0
-        j = 0
-    }
-
-    private fun next(): Byte {
-        i = ++i and POOL_SIZE - 1
-        j = j + bytes[i] and POOL_SIZE - 1
-
-        swap(i, j)
-
-        return bytes[bytes[i] + bytes[j] and 255]
-    }
-
-    fun parse(src: ByteArray) {
-        src.indices.forEach { k -> src[k] = (src[k].toInt() xor next().toInt()).toByte() }
-    }
-
-    private fun swap(a: Int, b: Int) {
-        val t = bytes[a]
-
-        bytes[a] = bytes[b]
-        bytes[b] = t
-    }
-
-    companion object {
-        private const val POOL_SIZE: Int = 256
+        return bytes
     }
 }

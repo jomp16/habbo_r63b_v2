@@ -52,6 +52,9 @@ dependencies {
 
     //noinspection GrUnresolvedAccess
     compile "org.apache.commons:commons-lang3:$commons_lang_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
 }
 
 buildConfig {

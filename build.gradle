@@ -66,6 +66,7 @@ subprojects {
         commons_lang_version = "3.5"
         reflections_version = "0.9.10"
         mbassador_version = "1.3.0"
+        bouncycastle_version = "1.55"
     }
 
     //noinspection GrUnresolvedAccess

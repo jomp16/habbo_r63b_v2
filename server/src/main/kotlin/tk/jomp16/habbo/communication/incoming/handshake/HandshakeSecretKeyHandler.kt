@@ -19,8 +19,6 @@
 
 package tk.jomp16.habbo.communication.incoming.handshake
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
@@ -28,28 +26,17 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.encryption.RC4Encryption
 import tk.jomp16.habbo.game.user.HabboSession
-import java.math.BigInteger
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSecretKeyHandler {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     @Handler(Incoming.SECRET_KEY)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (HabboServer.habboConfig.rc4) {
-            val sharedKey = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(habboRequest.readUTF())
+            val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(habboSession.diffieHellmanParams, habboRequest.readUTF())
 
-            if (sharedKey == BigInteger.ZERO) {
-                log.error("Couldn't generate shared key. Probably a RSA error. Disconnecting user!")
+            habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second)
 
-                habboSession.channel.close()
-
-                return
-            }
-
-            habboSession.rc4Encryption = RC4Encryption(sharedKey.toByteArray())
+            habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first))
         }
-
-        habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.rsaDiffieHellmanPublicKey)
     }
 }

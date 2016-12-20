@@ -24,14 +24,18 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.encryption.DiffieHellmanEncryption
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeInitCryptoHandler {
     @Handler(Incoming.INIT_CRYPTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val prime = HabboServer.habboEncryptionHandler.rsaDiffieHellmanPrimeKey
-        val generator = HabboServer.habboEncryptionHandler.rsaDiffieHellmanGeneratorKey
+        val dh = DiffieHellmanEncryption.getDHParameterSpec(512)
+
+        habboSession.diffieHellmanParams = dh
+        val prime = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.p.toString().toByteArray())
+        val generator = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.g.toString().toByteArray())
 
         habboSession.sendHabboResponse(Outgoing.INIT_CRYPTO, prime, generator)
     }

@@ -35,6 +35,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.HabboHandler
@@ -52,6 +53,7 @@ import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
 import java.io.File
+import java.security.Security
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -103,6 +105,8 @@ object HabboServer : Closeable {
         }
 
     init {
+        Security.addProvider(BouncyCastleProvider())
+
         Runtime.getRuntime().addShutdownHook(Thread { close() })
     }
 

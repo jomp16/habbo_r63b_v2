@@ -47,11 +47,14 @@ import tk.jomp16.habbo.kotlin.ip
 import java.io.Closeable
 import java.time.Clock
 import java.time.LocalDateTime
+import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : Closeable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    lateinit var diffieHellmanParams: DHParameterSpec
 
     lateinit var userInformation: UserInformation
         private set

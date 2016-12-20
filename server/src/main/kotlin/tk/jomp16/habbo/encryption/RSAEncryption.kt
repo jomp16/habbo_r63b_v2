@@ -37,7 +37,7 @@ class RSAEncryption(n: String, d: String, e: String) {
         val d1 = BigInteger(d, 16)
         val e1 = BigInteger(e, 16)
 
-        val keyFactory = KeyFactory.getInstance("RSA")
+        val keyFactory = KeyFactory.getInstance("RSA", "BC")
         val pubKeySpec = RSAPublicKeySpec(n1, e1)
         val privKeySpec = RSAPrivateKeySpec(n1, d1)
 

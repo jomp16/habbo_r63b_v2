@@ -79,7 +79,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                 log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
 
                 ctx.close()
-            } else if (evt.state() == IdleState.WRITER_IDLE) {
+            } else if (evt.state() == IdleState.WRITER_IDLE && habboSession.authenticated) {
                 log.info("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
 
                 habboSession.ping = System.nanoTime()
