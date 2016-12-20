@@ -31,7 +31,7 @@ import javax.xml.bind.DatatypeConverter
 class HabboEncryptionHandler(n: String, d: String, e: String) {
     val rsaEncryption: RSAEncryption = RSAEncryption(n, d, e)
 
-    fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<ByteArray, ByteArray> {
+    fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<BigInteger, BigInteger> {
         val serverKeyPair = KeyPairGenerator.getInstance("DH", "BC").run {
             initialize(diffieHellmanParams)
 
@@ -43,12 +43,12 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         }
 
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
-            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey))), diffieHellmanParams.p, diffieHellmanParams.g))
+            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
         }
 
         serverKeyAgree.doPhase(clientPublicKey, true)
 
-        return (serverKeyPair.public as DHPublicKey).y.toString().toByteArray() to serverKeyAgree.generateSecret()
+        return (serverKeyPair.public as DHPublicKey).y to BigInteger(serverKeyAgree.generateSecret())
     }
 
     fun getRsaStringEncrypted(bytes: ByteArray): String = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))

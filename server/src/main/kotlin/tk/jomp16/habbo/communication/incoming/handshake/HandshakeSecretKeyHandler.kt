@@ -34,9 +34,9 @@ class HandshakeSecretKeyHandler {
         if (HabboServer.habboConfig.rc4) {
             val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(habboSession.diffieHellmanParams, habboRequest.readUTF())
 
-            habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second)
+            habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second.toByteArray())
 
-            habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first))
+            habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first.toString().toByteArray()))
         }
     }
 }

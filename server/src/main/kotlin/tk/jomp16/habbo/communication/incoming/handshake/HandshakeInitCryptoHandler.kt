@@ -34,6 +34,7 @@ class HandshakeInitCryptoHandler {
         val dh = DiffieHellmanEncryption.getDHParameterSpec(512)
 
         habboSession.diffieHellmanParams = dh
+
         val prime = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.p.toString().toByteArray())
         val generator = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.g.toString().toByteArray())
 
