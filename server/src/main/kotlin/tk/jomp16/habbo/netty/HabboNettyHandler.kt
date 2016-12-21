@@ -72,9 +72,17 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
 
         if (evt is IdleStateEvent) {
+            if (!habboSession.authenticated) {
+                log.error("Found an connected user without doing the handshake! Disconnecting it!")
+
+                habboSession.channel.disconnect()
+
+                return
+            }
+
             if (evt.state() == IdleState.READER_IDLE) {
                 log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
 

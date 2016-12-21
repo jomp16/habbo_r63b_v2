@@ -21,6 +21,8 @@ package tk.jomp16.habbo.game
 
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.catalog.CatalogManager
 import tk.jomp16.habbo.game.item.ItemManager
@@ -34,6 +36,8 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
 
     val landingManager: LandingManager
@@ -54,6 +58,12 @@ class HabboGame {
         moderationManager = ModerationManager()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
+            HabboServer.habboSessionManager.habboSessions.values.filter { !it.authenticated }.forEach {
+                log.error("Found an connected user without doing the handshake! Disconnecting it!")
+
+                it.channel.close()
+            }
+
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.habboSubscription.validUserSubscription }
                     .forEach { it.habboSubscription.clearSubscription() }
         }, 0, 1, TimeUnit.MINUTES)
