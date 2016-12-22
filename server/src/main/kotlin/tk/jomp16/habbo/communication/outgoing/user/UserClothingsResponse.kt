@@ -19,17 +19,23 @@
 
 package tk.jomp16.habbo.communication.outgoing.user
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserFigureSetsResponse {
-    @Response(Outgoing.FIGURE_SETS)
-    fun response(habboResponse: HabboResponse) {
+class UserClothingsResponse {
+    @Response(Outgoing.USER_CLOTHINGS)
+    fun response(habboResponse: HabboResponse, clothings: Collection<String>) {
         habboResponse.apply {
-            writeInt(0) // size
-            writeInt(0) // size
+            val figureSetIds = HabboServer.habboGame.itemManager.furniXMLInfos.filterKeys { clothings.contains(it) }.flatMap { it.value.customParams.split(',').map(String::toInt) }
+
+            writeInt(figureSetIds.size)
+            figureSetIds.forEach { writeInt(it) }
+
+            writeInt(clothings.size)
+            clothings.forEach { writeUTF(it) }
         }
     }
 }

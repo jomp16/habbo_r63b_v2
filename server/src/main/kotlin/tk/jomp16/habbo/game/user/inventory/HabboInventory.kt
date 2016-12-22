@@ -48,6 +48,6 @@ class HabboInventory(private val habboSession: HabboSession) {
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, userItem.id)
 
-        if (delete) ItemDao.removeUserItem(userItem)
+        if (delete) ItemDao.deleteItem(userItem.id)
     }
 }

@@ -29,12 +29,13 @@ import tk.jomp16.habbo.util.Vector2
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomPlaceItemHandler {
-    @Handler(Incoming.ROOM_PLACE_ITEM)
+    @Handler(Incoming.ROOM_PLACE_ITEM, Incoming.ROOM_PLACE_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
         // floor = [0][7]3 8 4 2
         // wall  = [0][19]2 :w=2,11 l=11,36 l
+        // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
 
         if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
             habboSession.sendSuperNotification("furni_placement_error", "message", "\${room.error.cant_set_not_owner}")
@@ -42,8 +43,19 @@ class RoomPlaceItemHandler {
             return
         }
 
-        val rawDataSplit = habboRequest.readUTF().split(' ')
-        val itemId = rawDataSplit[0].toInt()
+        val rawDataSplit: List<String>
+        val itemId: Int
+
+        if (habboRequest.headerId == Incoming.ROOM_PLACE_POST_IT) {
+            itemId = habboRequest.readInt()
+            val extraData = habboRequest.readUTF().split(' ')
+
+            rawDataSplit = listOf("", extraData[0], extraData[1], extraData[2])
+        } else {
+            rawDataSplit = habboRequest.readUTF().split(' ')
+            itemId = rawDataSplit[0].toInt()
+        }
+
         val userItem = habboSession.habboInventory.items[itemId] ?: return
 
         val success: Boolean

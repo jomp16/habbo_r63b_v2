@@ -124,11 +124,11 @@ object ItemDao {
         return limitedItemDatas[itemId]
     }
 
-    fun removeUserItem(userItem: UserItem) {
+    fun deleteItem(itemId: Int) {
         HabboServer.database {
             update("DELETE FROM items WHERE id = :id",
                     mapOf(
-                            "id" to userItem.id
+                            "id" to itemId
                     )
             )
         }

@@ -51,7 +51,6 @@ object Outgoing {
     const val CATALOG_VOUCHER_REDEEMED = 478 // 2929
     const val CREDITS_BALANCE = 780 // 1231
     const val ENABLE_TRADING = 1021 // 258
-    const val FIGURE_SETS = 2305 // 335
     const val GENERIC_ERROR = 2047 // 1742
     const val HABBO_CLUB_INFO = 2877 // 3246
     const val HOME_ROOM = 1549 // 3399
@@ -108,6 +107,7 @@ object Outgoing {
     const val ROOM_OPEN = 1973 // 569
     const val ROOM_OWNER = 1395 // 1642
     const val ROOM_OWNERSHIP = 1457 // 1315
+    const val ROOM_POST_IT = 835 // 903
     const val ROOM_RIGHT_LEVEL = 3084 // 2299
     const val ROOM_RIGHTS = 1618 // 1944
     const val ROOM_SETTINGS = 2651 // 2217
@@ -133,6 +133,7 @@ object Outgoing {
     const val SUPER_NOTIFICATION = 1200 // 1212
     const val UNIQUE_ID = 3466 // 46
     const val USER_BADGES = 574 // 11
+    const val USER_CLOTHINGS = 2305 // 335
     const val USER_OBJECT = 2870 // 1902
     const val USER_PERKS = 1782 // 974
     const val USER_RIGHTS = 2261 // 2461

@@ -17,21 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.item.xml
+package tk.jomp16.habbo.communication.outgoing.room
 
-data class FurniXMLInfo(
-        var spriteId: Int = 0,
-        var revision: Int = 0,
-        var itemName: String = "",
-        var publicName: String = "",
-        var description: String = "",
-        var defaultDir: Int = 0,
-        var xDim: Int = 0,
-        var yDim: Int = 0,
-        var canStandOn: Boolean = false,
-        var canSitOn: Boolean = false,
-        var canLayOn: Boolean = false,
-        var wallFurni: Boolean = false,
-        var customParams: String = "",
-        var furniLine: String = ""
-)
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomPostItResponse {
+    @Response(Outgoing.ROOM_POST_IT)
+    fun handle(habboResponse: HabboResponse, itemId: Int, extraData: String) {
+        habboResponse.apply {
+            writeUTF(itemId.toString())
+            writeUTF(extraData)
+        }
+    }
+}

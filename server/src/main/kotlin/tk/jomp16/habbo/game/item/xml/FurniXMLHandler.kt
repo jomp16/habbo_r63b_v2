@@ -45,13 +45,17 @@ class FurniXMLHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, qName: String) {
         when (qName) {
             "furnitype" -> furniXMLInfo?.let { furniXMLInfos += it }
+            "revision" -> furniXMLInfo?.revision = content.trim().toInt()
             "name" -> furniXMLInfo?.publicName = content.trim()
+            "description" -> furniXMLInfo?.description = content.trim()
             "defaultdir" -> furniXMLInfo?.defaultDir = content.trim().toInt()
             "xdim" -> furniXMLInfo?.xDim = content.trim().toInt()
             "ydim" -> furniXMLInfo?.yDim = content.trim().toInt()
             "canstandon" -> furniXMLInfo?.canStandOn = content.trim() == "1"
             "cansiton" -> furniXMLInfo?.canSitOn = content.trim() == "1"
             "canlayon" -> furniXMLInfo?.canLayOn = content.trim() == "1"
+            "customparams" -> furniXMLInfo?.customParams = content.trim()
+            "furniline" -> furniXMLInfo?.furniLine = content.trim()
         }
     }
 

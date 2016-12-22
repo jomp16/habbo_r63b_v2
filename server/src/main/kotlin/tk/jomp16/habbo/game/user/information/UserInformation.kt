@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.game.user.information
 
+import tk.jomp16.habbo.database.clothing.ClothingDao
 import tk.jomp16.habbo.database.wardrobe.WardrobeDao
 import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
 import java.util.*
@@ -43,4 +44,5 @@ data class UserInformation(
         get() = rank >= 7
 
     val wardrobes: MutableList<Wardrobe> = ArrayList(WardrobeDao.getWardrobes(id))
+    val clothings: MutableList<String> = ArrayList(ClothingDao.getClothings(id))
 }

@@ -25,6 +25,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.interactors.DefaultItemInteractor
+import tk.jomp16.habbo.game.item.interactors.MannequinFurniInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
@@ -42,7 +43,7 @@ import javax.xml.parsers.SAXParserFactory
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
+    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
 
     val furnishings: MutableMap<String, Furnishing> = HashMap()
     val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
@@ -73,7 +74,9 @@ class ItemManager {
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
+
         furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
+        furniInteractor.put(InteractionType.MANNEQUIN, MannequinFurniInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
@@ -110,7 +113,7 @@ class ItemManager {
     )
 
     // todo: see if I can improve it
-    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?) {
+    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?, magicRemove: Boolean = false) {
         habboResponse.apply {
             if (limitedItemData != null) {
                 writeInt(1)
@@ -146,6 +149,42 @@ class ItemManager {
                     writeUTF(splitData[0]) // badge name
                     writeUTF(splitData[1]) // owner
                     writeUTF(splitData[2]) // date
+                }
+                InteractionType.MANNEQUIN -> {
+                    val splitData = extraData.split(7.toChar())
+
+                    writeInt(0)
+                    writeInt(1)
+                    writeInt(3)
+                    writeUTF("GENDER")
+                    writeUTF(splitData[0])
+                    writeUTF("FIGURE")
+                    writeUTF(splitData[1])
+                    writeUTF("OUTFIT_NAME")
+                    writeUTF(splitData[2])
+                }
+                InteractionType.GIFT -> {
+                    val split = extraData.split(7.toChar())
+
+                    writeInt(split[2].toInt() * 1000 + split[3].toInt())
+                    writeInt(1)
+                    writeInt(if (split[4].toBoolean()) 6 else 4)
+                    writeUTF("EXTRA_PARAM")
+                    writeUTF("")
+                    writeUTF("MESSAGE")
+                    writeUTF(split[1])
+
+                    if (split[4].toBoolean()) {
+                        writeUTF("PURCHASER_NAME")
+                        writeUTF(split[5])
+                        writeUTF("PURCHASER_FIGURE")
+                        writeUTF(split[6])
+                    }
+
+                    writeUTF("PRODUCT_CODE")
+                    writeUTF(split[7])
+                    writeUTF("state")
+                    writeUTF(if (magicRemove) "1" else "0")
                 }
                 else -> {
                     writeInt(1)

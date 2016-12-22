@@ -57,7 +57,7 @@ class HandshakeSSOTicketHandler {
                 habboSession.userInformation.homeRoom,
                 HabboServer.habboConfig.autoJoinRoom
         )
-        queuedHabboResponse += Outgoing.FIGURE_SETS to arrayOf()
+        queuedHabboResponse += Outgoing.USER_CLOTHINGS to arrayOf(habboSession.userInformation.clothings)
         queuedHabboResponse += Outgoing.NAVIGATOR_FAVORITES to arrayOf()
         queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID1 to arrayOf(0)
         queuedHabboResponse += Outgoing.USER_RIGHTS to arrayOf(
