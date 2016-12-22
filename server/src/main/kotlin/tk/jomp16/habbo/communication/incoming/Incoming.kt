@@ -103,6 +103,7 @@ object Incoming {
     const val ROOM_POST_IT = 1769 // 2782
     const val ROOM_PLACE_ITEM = 3221 // 256
     const val ROOM_PLACE_POST_IT = 3675 // 2944
+    const val ROOM_REEDEM_EXCHANGE_ITEM = 2 // 782
     const val ROOM_REMOVE_POST_IT = 2636 // 30
     const val ROOM_RIGHTS = 123 // 3440
     const val ROOM_SAVE_POST_IT = 2653 // 2095
