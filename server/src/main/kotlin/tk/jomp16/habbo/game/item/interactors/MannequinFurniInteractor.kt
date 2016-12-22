@@ -36,8 +36,8 @@ class MannequinFurniInteractor : ItemInteractor() {
 
         val figures = LinkedHashMap<String, String>()
 
-        for (figure in mannequinFigureArray) {
-            for (figure1 in userFigureArray) {
+        mannequinFigureArray.forEach { figure ->
+            userFigureArray.forEach { figure1 ->
                 val key = figure.split('-')[0]
                 val key1 = figure1.split('-')[0]
 
