@@ -213,6 +213,12 @@ class HabboSession(val channel: Channel) : Closeable {
             userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
         }
 
+        if (!alreadySentPurse || updateCurrency) updateAllCurrencies()
+    }
+
+    fun updateAllCurrencies() {
+        if (!alreadySentPurse) alreadySentPurse = true
+
         if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
         if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
         if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
@@ -220,12 +226,6 @@ class HabboSession(val channel: Channel) : Closeable {
         if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
         if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
         if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
-
-        if (!alreadySentPurse || updateCurrency) updateAllCurrencies()
-    }
-
-    fun updateAllCurrencies() {
-        if (!alreadySentPurse) alreadySentPurse = true
 
         val queuedHabboResponseEvent = QueuedHabboResponse()
 
