@@ -40,8 +40,6 @@ class RoomItemUseClothingHandler {
 
         habboSession.currentRoom!!.removeItem(roomItem)
 
-        // todo: add clothing
-
         habboSession.userInformation.clothings += roomItem.itemName
 
         habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
