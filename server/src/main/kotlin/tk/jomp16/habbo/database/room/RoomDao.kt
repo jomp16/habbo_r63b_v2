@@ -129,6 +129,16 @@ object RoomDao {
         }
     }
 
+    fun getWordFilter(roomId: Int) = HabboServer.database {
+        select("SELECT word FROM rooms_word_filter WHERE room_id = :room_id",
+                mapOf(
+                        "room_id" to roomId
+                )
+        ) {
+            it.string("word")
+        }
+    }
+
     fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int) = HabboServer.database {
         insertAndGetGeneratedKey(
                 "INSERT INTO rooms (caption, description, owner_id, model_name, category, users_max, trade_state)" +
@@ -207,6 +217,26 @@ object RoomDao {
                             "landscape" to roomData.landscape,
                             "group_id" to roomData.groupId,
                             "room_id" to roomData.id
+                    )
+            )
+        }
+    }
+
+    fun addWordFilter(roomId: Int, wordFilter: String) = HabboServer.database {
+        insertAndGetGeneratedKey("INSERT INTO rooms_word_filter (room_id, word) VALUES (:room_id, :word)",
+                mapOf(
+                        "room_id" to roomId,
+                        "word" to wordFilter
+                )
+        )
+    }
+
+    fun removeWordFilter(roomId: Int, wordFilter: String) {
+        HabboServer.database {
+            update("DELETE FROM rooms_word_filter WHERE room_id = :room_id AND word = :word",
+                    mapOf(
+                            "room_id" to roomId,
+                            "word" to wordFilter
                     )
             )
         }

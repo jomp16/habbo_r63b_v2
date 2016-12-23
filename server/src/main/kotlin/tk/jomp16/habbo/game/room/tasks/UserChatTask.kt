@@ -39,14 +39,18 @@ class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, p
             if (!skipCommands && message.startsWith(':')) return
         }
 
+        var filterMessage = message
+
+        room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
+
         if (type == ChatType.WHISPER) {
-            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, message, speechEmotion, bubble)
+            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, filterMessage, speechEmotion, bubble)
         } else {
             room.roomUsers.values.forEach {
-                if (type == ChatType.CHAT && (room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance)) {
-                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, speechEmotion, bubble)
+                if (type == ChatType.CHAT && room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(roomUser.currentVector3.x, roomUser.currentVector3.y, it.currentVector3.x, it.currentVector3.y) <= room.roomData.chatMaxDistance) {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, filterMessage, speechEmotion, bubble)
                 } else if (type == ChatType.SHOUT) {
-                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, message, speechEmotion, bubble)
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_SHOUT, virtualID, filterMessage, speechEmotion, bubble)
                 }
             }
         }

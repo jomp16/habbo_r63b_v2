@@ -112,6 +112,7 @@ object Incoming {
     const val ROOM_TAKE_ITEM = 2368 // 534
     const val ROOM_TRIGGER_ITEM = 1225 // 2622
     const val ROOM_TRIGGER_WALL_ITEM = 1057 // 3940
+    const val ROOM_UPDATE_WORD_FILTER = 1048 // 1345
     const val ROOM_USER_ACTION = 347 // 1158
     const val ROOM_USER_CHAT = 2026 // 227
     const val ROOM_USER_DANCE = 2051 // 1006
@@ -120,6 +121,7 @@ object Incoming {
     const val ROOM_USER_START_TYPING = 625 // 1104
     const val ROOM_USER_STOP_TYPING = 282 // 3851
     const val ROOM_USER_WHISPER = 1687 // 2207
+    const val ROOM_WORD_FILTER = 322 // 2795
     const val SANCTION_STATUS = 591 // 2577
     const val SECRET_KEY = 1180 // 1853
     const val SET_USERNAME = 600 // 3000

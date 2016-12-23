@@ -128,6 +128,7 @@ object Outgoing {
     const val ROOM_WALL_ITEM_REMOVE = 100 // 2350
     const val ROOM_WALL_ITEM_UPDATE = 2163 // 776
     const val ROOM_WALL_ITEMS = 2379 // 2304
+    const val ROOM_WORD_FILTER = 3808 // 3406
     const val SECRET_KEY = 3886 // 1532
     const val SUBSCRIPTION_STATUS = 3429 // 3398
     const val SUPER_NOTIFICATION = 1200 // 1212
