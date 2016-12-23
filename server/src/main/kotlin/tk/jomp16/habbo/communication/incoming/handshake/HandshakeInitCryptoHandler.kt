@@ -31,7 +31,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class HandshakeInitCryptoHandler {
     @Handler(Incoming.INIT_CRYPTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val dh = DiffieHellmanEncryption.getDHParameterSpec(512)
+        val dh = DiffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.diffieHellmanKeySize)
 
         habboSession.diffieHellmanParams = dh
 

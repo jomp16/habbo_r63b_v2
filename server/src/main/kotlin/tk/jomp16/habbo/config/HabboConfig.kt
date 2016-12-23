@@ -29,6 +29,8 @@ data class HabboConfig(
         val port: Int,
         @JsonProperty("database")
         val databaseConfig: DatabaseConfig,
+        @JsonProperty("diffie_hellman_key_size")
+        val diffieHellmanKeySize: Int,
         @JsonProperty("rsa")
         val rsaConfig: RSAConfig,
         @JsonProperty("rc4")
