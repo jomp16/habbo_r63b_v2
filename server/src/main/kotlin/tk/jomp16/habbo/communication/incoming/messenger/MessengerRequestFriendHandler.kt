@@ -25,6 +25,7 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.information.UserPreferencesDao
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 
@@ -39,6 +40,10 @@ class MessengerRequestFriendHandler {
         if (username.isBlank()) return
 
         val userInformation = UserInformationDao.getUserInformationByUsername(username) ?: return
+        val userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
+
+        if (userPreferences.blockNewFriends) return
+
         val messengerRequest = MessengerDao.addRequest(habboSession.userInformation.id, userInformation.id)
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(userInformation.id) ?: return
 
