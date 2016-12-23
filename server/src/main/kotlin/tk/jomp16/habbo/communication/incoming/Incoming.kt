@@ -77,6 +77,7 @@ object Incoming {
     const val NAVIGATOR_HOME_ROOM = 3796 // 906
     const val NAVIGATOR_INITIALIZE = 3883 // 3182
     const val NAVIGATOR_PROMO_CATEGORIES = 86 // 3009
+    const val NAVIGATOR_SAVE_SETTINGS = 2522 // 527
     const val NAVIGATOR_SEARCH = 696 // 3011
     const val PONG = 455 // 1126
     const val REFRESH_CAMPAIGN = 1572 // 1139
