@@ -22,6 +22,7 @@ group "tk.jomp16.habbo"
 dependencies {
     compile project(":pathfinding")
     compile project(":plugin_manager")
+    compile project(":habbo_imaging")
 
     //noinspection GrUnresolvedAccess
     compile "org.slf4j:slf4j-api:$slf4j_version"

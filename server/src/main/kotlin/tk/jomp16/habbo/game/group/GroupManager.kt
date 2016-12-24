@@ -17,6 +17,11 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":pathfinding", ":habbo_imaging", ":server"
+package tk.jomp16.habbo.game.group
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
+import tk.jomp16.habbo.database.group.GroupDao
+import tk.jomp16.habbo.imaging.GroupBadge
+
+class GroupManager {
+    val groupBadge = GroupBadge(GroupDao.getBadgesBases(), GroupDao.getBadgesBaseColors(), GroupDao.getBadgesSymbols(), GroupDao.getBadgesSymbolColors())
+}
