@@ -38,7 +38,7 @@ class RoomItemUseClothingHandler {
 
         if (roomItem.userId != habboSession.userInformation.id || !roomItem.furnishing.itemName.startsWith("clothing_")) return
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
 
         habboSession.userInformation.clothings += roomItem.itemName
 

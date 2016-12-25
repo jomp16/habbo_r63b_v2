@@ -41,7 +41,7 @@ class RoomTakeItemHandler {
 
         if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
-        if (habboSession.currentRoom!!.removeItem(roomItem)) {
+        if (habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)) {
             HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(listOf(UserItem(
                     roomItem.id,
                     roomItem.userId,

@@ -43,7 +43,7 @@ class RoomReedemExchangeItemHandler {
         habboSession.userInformation.credits += credits
         habboSession.updateAllCurrencies()
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
         ItemDao.deleteItem(itemId)
     }
 }

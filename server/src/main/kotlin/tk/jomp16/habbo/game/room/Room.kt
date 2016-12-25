@@ -53,13 +53,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val emptyCounter: AtomicInteger = AtomicInteger()
     val errorsCounter: AtomicInteger = AtomicInteger()
 
-    val roomItems: MutableMap<Int, RoomItem> by lazy {
-        val items = HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id })
-
-        items.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
-
-        return@lazy items
-    }
+    val roomItems: MutableMap<Int, RoomItem> by lazy { HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id }) }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem>
@@ -78,6 +72,11 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
 
     var roomDimmer: RoomDimmer? = null
+
+    fun initialize() {
+        roomItems.values.filter { it.furnishing.interactor != null }.forEach { it.furnishing.interactor?.onPlace(this, null, it) }
+        roomItems.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
+    }
 
     fun sendHabboResponse(headerId: Int, vararg args: Any) {
         // todo: find a way to cache habbo response
@@ -194,7 +193,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItemsToSave.clear()
     }
 
-    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String, overrideZ: Double = -1.toDouble()): Boolean {
+    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = -1.toDouble()): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
@@ -237,13 +236,13 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         }
 
         // todo: wired
-        // todo: furni interactor
+        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
         // todo: roller
 
         if (newItem) {
             roomItems.put(roomItem.id, roomItem)
 
-            roomItem.addToRoom(this, true, true, userName)
+            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             roomItem.update(true, true)
         }
@@ -253,7 +252,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         return true
     }
 
-    fun setWallItem(roomItem: RoomItem, wallData: List<String>, userName: String): Boolean {
+    fun setWallItem(roomItem: RoomItem, wallData: List<String>, roomUser: RoomUser?): Boolean {
         if (wallData.size != 3 || !wallData[0].startsWith(":w=") || !wallData[1].startsWith("l=") || wallData[2] != "r" && wallData[2] != "l") return false
 
         val newItem = !roomItems.containsKey(roomItem.id)
@@ -275,7 +274,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         roomItem.wallPosition = ":w=$w1,$w2 l=$l1,$l2 ${wallData[2]}"
 
-        // todo: furni interactor
+        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
+
         if (newItem) {
             if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
                 // todo: dimmer
@@ -287,7 +287,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomItems.put(roomItem.id, roomItem)
 
-            roomItem.addToRoom(this, true, true, userName)
+            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             roomItem.update(true, true)
         }
@@ -295,15 +295,20 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         return true
     }
 
-    fun removeItem(roomItem: RoomItem): Boolean {
+    fun removeItem(roomUser: RoomUser, roomItem: RoomItem): Boolean {
         if (!roomItems.containsValue(roomItem)) return false
 
         roomItems.remove(roomItem.id)
         roomGamemap.removeRoomItem(roomItem)
 
         // todo: WIRED
-        // todo: dimmer
-        // todo: furni interactor
+        if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
+            ItemDao.saveDimmer(roomDimmer!!)
+
+            roomDimmer = null
+        }
+
+        roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
 
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (roomItem.furnishing.type) {

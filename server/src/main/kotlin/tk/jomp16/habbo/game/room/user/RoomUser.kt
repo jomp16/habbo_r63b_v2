@@ -49,14 +49,24 @@ class RoomUser(
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
 
     var objectiveVector2: Vector2? = null
+    var objectiveRotation: Int = 0
+    var objectiveItem: RoomItem? = null
+
     private var stepSeatedVector3: Vector3? = null
 
     private val walking: Boolean
-        get() = objectiveVector2 != null
+        get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
+
     private val stepSeated: Boolean
         get() = stepSeatedVector3 != null
 
     private var idleCount: Int = 0
+    private var cycles: Int = 0
+    private var currentCycles: Int = 0
+
+    var walkingBlocked: Boolean = false
+    var ignoreBlocking: Boolean = false
+    var overrideBlocking: Boolean = false
 
     var idle: Boolean = false
         set(newValue) {
@@ -110,12 +120,21 @@ class RoomUser(
             stepSeatedVector3 = null
         }
 
+        if (cycles > 0) {
+            if (currentCycles >= cycles) {
+                walkingBlocked = false
+                cycles = 0
+                currentCycles = 0
+            } else {
+                currentCycles++
+            }
+        }
+
         if (walking) {
             if (objectiveVector2!! == currentVector3.vector2) {
                 stopWalking()
             } else {
-                // todo: override, etc
-                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y)
+                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, ignoreBlocking || overrideBlocking)
 
                 if (path.isEmpty()) {
                     stopWalking()
@@ -162,8 +181,14 @@ class RoomUser(
         }
     }
 
-    fun moveTo(x: Int, y: Int) {
-        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y)))
+    fun moveTo(vector2: Vector2, rotation: Int = -1, ignoreBlocking: Boolean = false, actingItem: RoomItem? = null) = moveTo(vector2.x, vector2.y, rotation, ignoreBlocking, actingItem)
+
+    fun moveTo(x: Int, y: Int, rotation: Int = -1, ignoreBlocking1: Boolean = false, actingItem: RoomItem? = null) {
+        if (!ignoreBlocking1 && !overrideBlocking && walkingBlocked) return
+
+        ignoreBlocking = ignoreBlocking1
+
+        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y), rotation, actingItem))
     }
 
     fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType, skipCommands: Boolean) {
@@ -184,8 +209,21 @@ class RoomUser(
 
     private fun stopWalking() {
         objectiveVector2 = null
+        ignoreBlocking = false
 
         removeStatus("mv")
+
+        if (objectiveRotation != -1) {
+            headRotation = objectiveRotation
+            bodyRotation = objectiveRotation
+
+            objectiveRotation = -1
+        }
+
+        if (objectiveItem != null) {
+            objectiveItem!!.furnishing.interactor?.onTrigger(room, this, objectiveItem!!, room.hasRights(habboSession, false), 0)
+            objectiveItem = null
+        }
 
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let {
             addUserStatuses(it)

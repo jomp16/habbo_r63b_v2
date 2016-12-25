@@ -31,12 +31,12 @@ import tk.jomp16.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
 
 class RoomGamemap(private val room: Room) {
-    private val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
+    val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
-    private val roomUserMap: MutableMap<Vector2, MutableList<RoomUser>> = ConcurrentHashMap()
-    private val roomItemMap: MutableMap<Vector2, MutableList<RoomItem>> = ConcurrentHashMap()
+    val roomUserMap: MutableMap<Vector2, MutableList<RoomUser>> = ConcurrentHashMap()
+    val roomItemMap: MutableMap<Vector2, MutableList<RoomItem>> = ConcurrentHashMap()
 
-    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y -> !isBlocked(Vector2(x, y)) })
+    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) })
 
     init {
         room.floorItems.values.forEach { addRoomItem(it) }
@@ -48,11 +48,7 @@ class RoomGamemap(private val room: Room) {
         if (room.roomModel.squareStates[vector2.x][vector2.y] == SquareState.CLOSED) return true
         if (blockedItem[vector2.x][vector2.y]) return true
 
-        if (!ignoreUsers) {
-            if (!room.roomData.allowWalkThrough) return roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty()
-        }
-
-        return false
+        return if (!ignoreUsers && !room.roomData.allowWalkThrough) roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty() else false
     }
 
     fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = Math.abs(x1 - x2) + Math.abs(y1 - y2)

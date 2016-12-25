@@ -85,6 +85,8 @@ class RoomTask : Runnable {
                         }
                     }
 
+                    room.roomItems.values.forEach { it.onCycle() }
+
                     if (room.roomUsers.isEmpty() &&
                             TimeUnit.MILLISECONDS.toSeconds(
                                     (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())

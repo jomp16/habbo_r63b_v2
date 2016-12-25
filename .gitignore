@@ -18,3 +18,5 @@ motd/
 *.pro
 packet_infos/
 plugins/
+
+*.txt

@@ -38,6 +38,6 @@ class RoomItemMoveFloorHandler {
 
         if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.userInformation.username)
+        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.roomUser)
     }
 }

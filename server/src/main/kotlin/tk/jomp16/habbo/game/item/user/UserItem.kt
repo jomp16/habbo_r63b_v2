@@ -33,7 +33,7 @@ data class UserItem(
         val itemName: String,
         var extraData: String
 ) : IHabboResponseSerialize {
-    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(id) }
+    val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
 
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!

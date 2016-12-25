@@ -26,6 +26,8 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 
 class DefaultItemInteractor : ItemInteractor() {
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+
         if (!hasRights) return
 
         val modes = roomItem.furnishing.interactionModesCount - 1
@@ -39,7 +41,7 @@ class DefaultItemInteractor : ItemInteractor() {
 
         if (roomItem.furnishing.stackMultiple) {
             // todo: check if this is working properly
-            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser?.habboSession?.userInformation?.username ?: "", roomItem.totalHeight)
+            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser!!, roomItem.totalHeight)
         }
 
         roomItem.update(true, true)

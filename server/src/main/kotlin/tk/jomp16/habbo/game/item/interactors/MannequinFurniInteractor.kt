@@ -28,6 +28,8 @@ import java.util.*
 
 class MannequinFurniInteractor : ItemInteractor() {
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+
         if (roomUser == null || roomUser.habboSession == null) return
 
         val mannequinDataArray = roomItem.extraData.split(7.toChar())

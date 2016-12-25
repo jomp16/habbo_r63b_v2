@@ -19,15 +19,18 @@
 
 package tk.jomp16.habbo.game.room.tasks
 
+import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Vector2
 
-class UserMoveTask(private val roomUser: RoomUser, private val objectiveVector2: Vector2) : IRoomTask {
+class UserMoveTask(private val roomUser: RoomUser, private val objectiveVector2: Vector2, private val rotation: Int, private val actingItem: RoomItem?) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
 
         roomUser.objectiveVector2 = objectiveVector2
+        roomUser.objectiveRotation = rotation
+        roomUser.objectiveItem = actingItem
     }
 }

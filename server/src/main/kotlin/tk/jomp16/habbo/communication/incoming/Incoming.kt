@@ -111,7 +111,11 @@ object Incoming {
     const val ROOM_SAVE_SETTINGS = 115 // 2314
     const val ROOM_SETTINGS = 2460 // 812
     const val ROOM_TAKE_ITEM = 2368 // 534
+    const val ROOM_TRIGGER_CLOSE_DICE = 905 // 3321
+    const val ROOM_TRIGGER_HABBO_WHEEL = 855 // 1123
     const val ROOM_TRIGGER_ITEM = 1225 // 2622
+    const val ROOM_TRIGGER_ONE_WAY_GATE = 3787 // 2903
+    const val ROOM_TRIGGER_ROLL_DICE = 948 // 2673
     const val ROOM_TRIGGER_WALL_ITEM = 1057 // 3940
     const val ROOM_UPDATE_WORD_FILTER = 1048 // 1345
     const val ROOM_USER_ACTION = 347 // 1158

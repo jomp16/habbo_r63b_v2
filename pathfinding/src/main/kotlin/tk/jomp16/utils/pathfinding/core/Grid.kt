@@ -26,14 +26,14 @@ package tk.jomp16.utils.pathfinding.core
  * @param height: The height
  * @param isWalkable: a Kotlin function with param grid, x, y and returns a boolean
  */
-class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int) -> Boolean = Grid::isInside) {
+class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int, Boolean) -> Boolean = { grid, x, y, overrideBlock -> overrideBlock || grid.isInside(x, y) }) {
     private val nodes: Array<Array<Node>> = Array(height) { y -> Array(width, { x -> Node(x, y) }) }
 
     fun getNodeAt(x: Int, y: Int): Node = nodes[y][x]
 
     fun isInside(x: Int, y: Int): Boolean = x >= 0 && x < width && y >= 0 && y < height
 
-    fun getNeighbors(node: Node, diagonalMovement: DiagonalMovement): List<Node> {
+    fun getNeighbors(node: Node, diagonalMovement: DiagonalMovement, overrideBlocking: Boolean): List<Node> {
         val x = node.x
         val y = node.y
 
@@ -50,28 +50,28 @@ class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int) -> 
         var d3 = false
 
         // ↑
-        if (isWalkable(this, x, y - 1)) {
+        if (isWalkable(this, x, y - 1, overrideBlocking)) {
             neighbors += nodes1[y - 1][x]
 
             s0 = true
         }
 
         // →
-        if (isWalkable(this, x + 1, y)) {
+        if (isWalkable(this, x + 1, y, overrideBlocking)) {
             neighbors += nodes1[y][x + 1]
 
             s1 = true
         }
 
         // ↓
-        if (isWalkable(this, x, y + 1)) {
+        if (isWalkable(this, x, y + 1, overrideBlocking)) {
             neighbors += nodes1[y + 1][x]
 
             s2 = true
         }
 
         // ←
-        if (isWalkable(this, x - 1, y)) {
+        if (isWalkable(this, x - 1, y, overrideBlocking)) {
             neighbors += nodes1[y][x - 1]
 
             s3 = true
@@ -100,22 +100,22 @@ class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int) -> 
         }
 
         // ↖
-        if (d0 && isWalkable(this, x - 1, y - 1)) {
+        if (d0 && isWalkable(this, x - 1, y - 1, overrideBlocking)) {
             neighbors += nodes[y - 1][x - 1]
         }
 
         // ↗
-        if (d1 && isWalkable(this, x + 1, y - 1)) {
+        if (d1 && isWalkable(this, x + 1, y - 1, overrideBlocking)) {
             neighbors += nodes[y - 1][x + 1]
         }
 
         // ↘
-        if (d2 && isWalkable(this, x + 1, y + 1)) {
+        if (d2 && isWalkable(this, x + 1, y + 1, overrideBlocking)) {
             neighbors += nodes[y + 1][x + 1]
         }
 
         // ↙
-        if (d3 && isWalkable(this, x - 1, y + 1)) {
+        if (d3 && isWalkable(this, x - 1, y + 1, overrideBlocking)) {
             neighbors += nodes[y + 1][x - 1]
         }
 

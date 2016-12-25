@@ -38,7 +38,7 @@ class RoomRemovePostItHandler {
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
 
         ItemDao.deleteItem(itemId)
     }

@@ -35,6 +35,6 @@ class RoomItemMoveWallHandler {
 
         if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.userInformation.username)
+        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.roomUser)
     }
 }

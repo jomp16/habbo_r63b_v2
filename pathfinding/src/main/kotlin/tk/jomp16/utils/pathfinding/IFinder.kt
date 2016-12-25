@@ -23,5 +23,5 @@ import tk.jomp16.utils.pathfinding.core.Grid
 import tk.jomp16.utils.pathfinding.core.Path
 
 interface IFinder {
-    fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int): List<Path>
+    fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int, overrideBlocking: Boolean): List<Path>
 }
