@@ -41,7 +41,7 @@ class DefaultItemInteractor : ItemInteractor() {
 
         if (roomItem.furnishing.stackMultiple) {
             // todo: check if this is working properly
-            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser!!, roomItem.totalHeight)
+            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser, roomItem.totalHeight)
         }
 
         roomItem.update(true, true)
