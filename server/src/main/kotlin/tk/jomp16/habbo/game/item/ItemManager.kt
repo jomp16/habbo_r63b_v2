@@ -27,6 +27,7 @@ import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.interactors.DefaultItemInteractor
 import tk.jomp16.habbo.game.item.interactors.MannequinFurniInteractor
 import tk.jomp16.habbo.game.item.interactors.OneWayGateFurniInteractor
+import tk.jomp16.habbo.game.item.interactors.RollerFurniInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
@@ -79,6 +80,7 @@ class ItemManager {
         furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
         furniInteractor.put(InteractionType.MANNEQUIN, MannequinFurniInteractor())
         furniInteractor.put(InteractionType.ONE_WAY_GATE, OneWayGateFurniInteractor())
+        furniInteractor.put(InteractionType.ROLLER, RollerFurniInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)

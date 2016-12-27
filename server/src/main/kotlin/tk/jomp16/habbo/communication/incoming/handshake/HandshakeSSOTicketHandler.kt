@@ -88,5 +88,7 @@ class HandshakeSSOTicketHandler {
 
             habboSession.sendNotification(NotificationType.MOTD_ALERT, motd)
         }
+
+        habboSession.handshaking = false
     }
 }

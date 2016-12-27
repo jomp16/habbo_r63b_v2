@@ -77,13 +77,15 @@ class HabboSession(val channel: Channel) : Closeable {
 
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
 
+    var handshaking: Boolean = false
+
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
 
     val authenticated: Boolean
         get() {
             try {
-                return userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
+                return userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0 && !handshaking
             } catch (exception: UninitializedPropertyAccessException) {
                 return false
             }

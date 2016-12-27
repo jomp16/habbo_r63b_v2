@@ -29,6 +29,7 @@ import tk.jomp16.habbo.util.Utils
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class RoomGamemap(private val room: Room) {
     val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
@@ -55,7 +56,7 @@ class RoomGamemap(private val room: Room) {
 
     fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
         if (!roomUserMap.containsKey(vector2)) {
-            val roomUsers: MutableList<RoomUser> = mutableListOf()
+            val roomUsers: MutableList<RoomUser> = CopyOnWriteArrayList()
             roomUsers.add(roomUser)
 
             roomUserMap.put(vector2, roomUsers)
@@ -82,7 +83,7 @@ class RoomGamemap(private val room: Room) {
     private fun setRoomItem(vector2: Vector2, roomItem: RoomItem) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
-        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, mutableListOf())
+        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, CopyOnWriteArrayList())
 
         if (roomItemMap[vector2]!!.contains(roomItem)) return
 
@@ -98,6 +99,8 @@ class RoomGamemap(private val room: Room) {
                     && !(roomItem.furnishing.canSit || roomItem.furnishing.interactionType == InteractionType.BED)
         }
     }
+
+    fun getAbsoluteHeight(vector2: Vector2) = getAbsoluteHeight(vector2.x, vector2.y)
 
     fun getAbsoluteHeight(x: Int, y: Int): Double {
         val vector2 = Vector2(x, y)

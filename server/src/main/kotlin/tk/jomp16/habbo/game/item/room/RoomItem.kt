@@ -129,7 +129,10 @@ data class RoomItem(
     }
 
     fun requestCycles(cycles1: Int) {
-        cycles = cycles1
+        if (currentCycles == 0 || cycles1 == 0) {
+            cycles = cycles1
+            currentCycles = 0
+        }
     }
 
     fun onCycle() {

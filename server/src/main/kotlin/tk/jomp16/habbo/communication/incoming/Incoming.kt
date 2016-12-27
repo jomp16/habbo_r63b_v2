@@ -95,15 +95,15 @@ object Incoming {
     const val ROOM_ITEM_USE_CLOTHING = 1253 // 3842
     const val ROOM_LOAD_BY_DOORBELL = 1163 // 3661
     const val ROOM_LOOK_TO = 1431 // 1767
-    const val ROOM_MANNEQUIN_CHANGE_NAME = 2527 // 1025
     const val ROOM_MANNEQUIN_CHANGE_FIGURE = 2166 // 877
+    const val ROOM_MANNEQUIN_CHANGE_NAME = 2527 // 1025
     const val ROOM_MOVE = 284 // 3003
     const val ROOM_MOVE_FLOOR_ITEM = 1093 // 285
     const val ROOM_MOVE_WALL_ITEM = 1873 // 3136
     const val ROOM_OPEN_FLAT = 3462 // 1400
-    const val ROOM_POST_IT = 1769 // 2782
     const val ROOM_PLACE_ITEM = 3221 // 256
     const val ROOM_PLACE_POST_IT = 3675 // 2944
+    const val ROOM_POST_IT = 1769 // 2782
     const val ROOM_REEDEM_EXCHANGE_ITEM = 2 // 782
     const val ROOM_REMOVE_POST_IT = 2636 // 30
     const val ROOM_RIGHTS = 123 // 3440

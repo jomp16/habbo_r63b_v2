@@ -34,6 +34,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
+import io.netty.handler.ipfilter.UniqueIpFilter
 import io.netty.handler.timeout.IdleStateHandler
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
@@ -175,13 +176,15 @@ object HabboServer : Closeable {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
                 val habboNettyHandler = HabboNettyHandler()
+                val uniqueIpFilterHandler = UniqueIpFilter()
 
                 serverBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
                                 socketChannel.pipeline().apply {
-                                    addLast(IdleStateHandler(60, 30, 0))
+                                    addLast(uniqueIpFilterHandler)
+                                    addLast(IdleStateHandler(30, 10, 0))
 
                                     addLast(stringEncoder)
                                     addLast(habboNettyEncoder)

@@ -60,14 +60,15 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         log.info("Disconnecting user {}", username)
 
         if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn("Disconnection of {} unsuccessful!", username)
-        else log.info("Disconnection of user {} successful!", username)
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HabboRequest) {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-            HabboServer.habboHandler.handle(habboSession, msg)
+            HabboServer.serverExecutor.execute {
+                HabboServer.habboHandler.handle(habboSession, msg)
+            }
         }
     }
 
@@ -75,7 +76,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
 
         if (evt is IdleStateEvent) {
-            if (!habboSession.authenticated) {
+            if (!habboSession.authenticated && !habboSession.handshaking) {
                 log.error("Found an connected user without doing the handshake! Disconnecting it!")
 
                 habboSession.channel.disconnect()

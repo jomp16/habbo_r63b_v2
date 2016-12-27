@@ -27,24 +27,20 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 abstract class ItemInteractor {
     open fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         roomItem.affectedTiles.forEach { vector2 ->
-            val roomItems = room.roomGamemap.roomItemMap[vector2]?.filter { it != roomItem } ?: return@forEach
+            val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
 
-            roomItems.forEach {
-                if (it.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomUser != null) it.onUserWalksOn(roomUser, true)
-                else if (it.furnishing.interactionType == InteractionType.ROLLER) it.requestCycles(HabboServer.habboConfig.timerConfig.roller)
-            }
+            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomUser != null) roomItem1.onUserWalksOn(roomUser, true)
+            else if (roomItem1.furnishing.interactionType == InteractionType.ROLLER) roomItem1.requestCycles(HabboServer.habboConfig.timerConfig.roller)
         }
     }
 
     open fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         roomItem.affectedTiles.forEach { vector2 ->
-            val roomItems = room.roomGamemap.roomItemMap[vector2]?.filter { it != roomItem } ?: return@forEach
+            val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
 
-            roomItems.forEach {
-                if (it.furnishing.interactionType == InteractionType.PRESSURE_PAD) {
-                    it.extraData = "0"
-                    it.update(false, true)
-                }
+            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD) {
+                roomItem1.extraData = "0"
+                roomItem1.update(false, true)
             }
         }
     }

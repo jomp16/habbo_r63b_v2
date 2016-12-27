@@ -110,6 +110,7 @@ object Outgoing {
     const val ROOM_POST_IT = 835 // 903
     const val ROOM_RIGHT_LEVEL = 3084 // 2299
     const val ROOM_RIGHTS = 1618 // 1944
+    const val ROOM_ROLLER = 2497 // 3433
     const val ROOM_SETTINGS = 2651 // 2217
     const val ROOM_SETTINGS_SAVED = 638 // 3100
     const val ROOM_UPDATE_FURNI_STACK = 2717 // 3595
