@@ -44,6 +44,15 @@ data class DatabaseConfig(
             config.username = user
             config.password = password
             config.connectionTimeout = timeout
+            config.maximumPoolSize = (Runtime.getRuntime().availableProcessors() * 2) + 1
+            config.idleTimeout = 0
+            config.maxLifetime = 0
+
+            config.addDataSourceProperty("serverTimezone", "UTC")
+            config.addDataSourceProperty("prepStmtCacheSize", "250")
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
+            config.addDataSourceProperty("cachePrepStmts", true)
+            config.addDataSourceProperty("useServerPrepStmts", true)
 
             return config
         }
