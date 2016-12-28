@@ -24,10 +24,7 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.database.item.ItemDao
-import tk.jomp16.habbo.game.item.interactors.DefaultItemInteractor
-import tk.jomp16.habbo.game.item.interactors.MannequinFurniInteractor
-import tk.jomp16.habbo.game.item.interactors.OneWayGateFurniInteractor
-import tk.jomp16.habbo.game.item.interactors.RollerFurniInteractor
+import tk.jomp16.habbo.game.item.interactors.*
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
@@ -39,18 +36,19 @@ import tk.jomp16.habbo.util.Vector3
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
+    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = mutableMapOf()
 
-    val furnishings: MutableMap<String, Furnishing> = HashMap()
+    val furnishings: MutableMap<String, Furnishing> = mutableMapOf()
     val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
     val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
+    val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
+    val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
+    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
 
     init {
         load()
@@ -63,6 +61,8 @@ class ItemManager {
         oldGiftWrapper.clear()
         newGiftWrapper.clear()
         furniInteractor.clear()
+        teleportLinks.clear()
+        roomTeleportLinks.clear()
 
         urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
             val saxParser = SAXParserFactory.newInstance().newSAXParser()
@@ -76,14 +76,19 @@ class ItemManager {
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
+        teleportLinks += ItemDao.getTeleportLinks()
+
+        teleportLinks.keys.forEach { roomTeleportLinks.put(it, ItemDao.getLinkedTeleport(it)) }
 
         furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
         furniInteractor.put(InteractionType.MANNEQUIN, MannequinFurniInteractor())
         furniInteractor.put(InteractionType.ONE_WAY_GATE, OneWayGateFurniInteractor())
         furniInteractor.put(InteractionType.ROLLER, RollerFurniInteractor())
+        furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
+        log.info("Loaded {} teleport links!", teleportLinks.size / 2)
         log.info("Loaded {} item interactors!", furniInteractor.size)
     }
 

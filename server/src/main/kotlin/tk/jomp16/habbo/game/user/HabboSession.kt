@@ -82,6 +82,12 @@ class HabboSession(val channel: Channel) : Closeable {
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
 
+    var targetTeleporterId: Int = -1
+    var teleportRoom: Room? = null
+
+    val teleporting: Boolean
+        get() = targetTeleporterId != -1
+
     val authenticated: Boolean
         get() {
             try {
@@ -237,7 +243,7 @@ class HabboSession(val channel: Channel) : Closeable {
         sendQueuedHabboResponse(queuedHabboResponseEvent)
     }
 
-    fun enterRoom(room: Room, password: String, bypassAuth: Boolean = false) {
+    fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
         currentRoom?.removeUser(roomUser, false, false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)

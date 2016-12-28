@@ -124,6 +124,22 @@ object ItemDao {
         return limitedItemDatas[itemId]
     }
 
+    fun getTeleportLinks() = HabboServer.database {
+        select("SELECT * FROM items_teleport") {
+            it.int("teleport_one_id") to it.int("teleport_two_id")
+        }
+    }
+
+    fun getLinkedTeleport(teleportId: Int) = HabboServer.database {
+        select("SELECT room_id FROM items WHERE id = :teleport_id LIMIT 1",
+                mapOf(
+                        "teleport_id" to teleportId
+                )
+        ) {
+            it.int("room_id")
+        }.first()
+    }
+
     fun deleteItem(itemId: Int) {
         HabboServer.database {
             update("DELETE FROM items WHERE id = :id",

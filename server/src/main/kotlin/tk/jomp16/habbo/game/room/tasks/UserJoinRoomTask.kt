@@ -37,6 +37,24 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         roomUser.habboSession?.let {
             it.roomUser = roomUser
 
+            if (it.teleporting) {
+                room.roomItems[it.targetTeleporterId]?.let { teleportItem ->
+                    if (!teleportItem.interactingUsers.containsKey(2)) {
+                        roomUser.walkingBlocked = true
+                        roomUser.currentVector3 = teleportItem.position
+                        roomUser.headRotation = teleportItem.rotation
+                        roomUser.bodyRotation = teleportItem.rotation
+
+                        teleportItem.interactingUsers.put(2, roomUser)
+                        teleportItem.extraData = "2"
+                        teleportItem.update(false, true)
+                        teleportItem.requestCycles(2)
+                    }
+
+                    roomUser.habboSession.targetTeleporterId = 0
+                }
+            }
+
             queuedHabboResponse += Outgoing.ROOM_HEIGHTMAP to arrayOf(room)
             queuedHabboResponse += Outgoing.ROOM_FLOORMAP to arrayOf(room)
             queuedHabboResponse += Outgoing.ROOM_USERS to arrayOf(room.roomUsers.values)
