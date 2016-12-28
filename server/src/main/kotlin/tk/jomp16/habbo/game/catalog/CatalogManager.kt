@@ -29,6 +29,7 @@ import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
+import java.util.*
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -198,26 +199,26 @@ class CatalogManager {
                 )
             }
 
-            val copyUserItems = userItems
+            val copyUserItems = ArrayList(userItems)
 
             userItems.forEach { userItem ->
                 if (!copyUserItems.contains(userItem)) return@forEach
 
                 when {
                     userItem.furnishing.interactionType == InteractionType.TELEPORT -> {
-                        val teleporterItem1 = userItems.find { it.furnishing == userItem.furnishing } ?: return@forEach
+                        val teleporterItem = copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem } ?: return@forEach
 
-                        copyUserItems.remove(teleporterItem1)
+                        copyUserItems.remove(teleporterItem)
 
                         batchInsertAndGetGeneratedKeys("INSERT INTO items_teleport (teleport_one_id, teleport_two_id) VALUES (:teleport_one_id, :teleport_two_id)",
                                 listOf(
                                         mapOf(
                                                 "teleport_one_id" to userItem.id,
-                                                "teleport_two_id" to teleporterItem1.id
+                                                "teleport_two_id" to teleporterItem.id
                                         ),
                                         mapOf(
                                                 "teleport_two_id" to userItem.id,
-                                                "teleport_one_id" to teleporterItem1.id
+                                                "teleport_one_id" to teleporterItem.id
                                         )
                                 )
                         )
@@ -259,9 +260,7 @@ class CatalogManager {
 
         habboSession.updateAllCurrencies()
 
-        if (!catalogItem.badge.isEmpty()) {
-            habboSession.habboBadge.addBadge(catalogItem.badge)
-        }
+        if (!catalogItem.badge.isEmpty()) habboSession.habboBadge.addBadge(catalogItem.badge)
 
         if (catalogItem.limited) {
             // send new data to everyone logged in
