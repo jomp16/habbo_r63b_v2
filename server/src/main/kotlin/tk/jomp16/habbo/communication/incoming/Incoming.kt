@@ -133,6 +133,7 @@ object Incoming {
     const val SETTINGS_SAVE_CHAT = 1367 // 2322
     const val SETTINGS_SAVE_FOCUS = 1279 // 3161
     const val SETTINGS_SAVE_INVITES = 1193 // 1735
+    const val SETTINGS_SAVE_VOLUME = 68 // 755
     const val SSO_TICKET = 3429 // 2906
     const val SUBSCRIPTION_STATUS = 339 // 1334
     const val UNIQUE_ID = 2236 // 618
