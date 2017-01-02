@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,7 @@ import tk.jomp16.habbo.database.clothing.ClothingDao
 import tk.jomp16.habbo.database.wardrobe.WardrobeDao
 import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 data class UserInformation(
         val id: Int,
@@ -30,9 +31,9 @@ data class UserInformation(
         val email: String,
         val realname: String,
         var rank: Int,
-        var credits: Int,
-        var pixels: Int,
-        var vipPoints: Int,
+        var credits: AtomicInteger,
+        var pixels: AtomicInteger,
+        var vipPoints: AtomicInteger,
         var figure: String,
         var gender: String,
         var motto: String,

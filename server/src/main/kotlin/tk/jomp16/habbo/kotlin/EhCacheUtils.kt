@@ -17,20 +17,13 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.kotlin
 
-import java.util.*
+import net.sf.ehcache.CacheManager
+import net.sf.ehcache.Ehcache
 
-class QueuedHabboResponse {
-    val headerIds: MutableList<Pair<Int, Array<out Any>>> = ArrayList() // Do not change this, LinkedList is the only that keeps the insertion order
+fun CacheManager.addAndGetEhCache(cacheName: String): Ehcache {
+    addCache(cacheName)
 
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.add(headerId to args)
-
-        return this
-    }
-
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
-        add(pair.first, pair.second)
-    }
+    return getEhcache(cacheName)
 }

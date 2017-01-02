@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,8 +33,6 @@ class TeleportFurniInteractor : ItemInteractor() {
         roomItem.extraData = "0"
 
         HabboServer.habboGame.itemManager.roomTeleportLinks.put(roomItem.id, room.roomData.id)
-
-        println(HabboServer.habboGame.itemManager.roomTeleportLinks[roomItem.id])
     }
 
     override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {

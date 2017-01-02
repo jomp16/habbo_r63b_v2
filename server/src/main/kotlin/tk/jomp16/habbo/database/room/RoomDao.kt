@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -59,7 +59,7 @@ object RoomDao {
             row.int("users_max"),
             row.string("model_name"),
             row.int("score"),
-            row.string("tags").split(","),
+            row.string("tags").split(','),
             row.string("password"),
             row.string("wallpaper"),
             row.string("floor"),
@@ -155,7 +155,7 @@ object RoomDao {
         )
     }
 
-    fun saveItems(roomId: Int, roomItemsToSave: List<RoomItem>) {
+    fun saveItems(roomId: Int, roomItemsToSave: Collection<RoomItem>) {
         HabboServer.database {
             batchUpdate(
                     "UPDATE items SET room_id = :room_id, x = :x, y = :y, z = :z, rot = :rot, wall_pos = :wall_pos, extra_data = :extra_data WHERE id = :id",

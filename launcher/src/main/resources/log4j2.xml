@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (C) 2016 jomp16
+  ~ Copyright (C) 2017 jomp16
   ~
   ~ This file is part of habbo_r63b_v2.
   ~
@@ -34,5 +34,6 @@
         <Logger name="io.netty" level="error"/>
         <Logger name="com.zaxxer" level="error"/>
         <Logger name="org.reflections" level="error"/>
+        <Logger name="net.sf.ehcache" level="error"/>
     </loggers>
 </Configuration>

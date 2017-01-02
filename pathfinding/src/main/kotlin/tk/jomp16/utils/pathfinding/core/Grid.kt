@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,8 @@
 
 package tk.jomp16.utils.pathfinding.core
 
+import java.util.*
+
 /**
  * The Grid class, which serves as the encapsulation of the layout of the nodes.
  *
@@ -37,7 +39,7 @@ class Grid(val width: Int, val height: Int, val isWalkable: (Grid, Int, Int, Boo
         val x = node.x
         val y = node.y
 
-        val neighbors: MutableList<Node> = mutableListOf()
+        val neighbors: MutableList<Node> = ArrayList()
         val nodes1 = nodes.copyOf()
 
         var s0 = false

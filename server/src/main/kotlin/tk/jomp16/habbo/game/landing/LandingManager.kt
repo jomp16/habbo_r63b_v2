@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,11 +22,12 @@ package tk.jomp16.habbo.game.landing
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.landing.LandingDao
+import java.util.*
 
 class LandingManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val landingPromos: MutableList<LandingPromo> = mutableListOf()
+    val landingPromos: MutableList<LandingPromo> = ArrayList()
     var landingReward: LandingReward? = null
         private set
 

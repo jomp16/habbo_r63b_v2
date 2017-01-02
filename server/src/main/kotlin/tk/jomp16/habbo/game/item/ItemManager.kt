@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,19 +36,20 @@ import tk.jomp16.habbo.util.Vector3
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = mutableMapOf()
+    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
 
-    val furnishings: MutableMap<String, Furnishing> = mutableMapOf()
-    val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
-    val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
-    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
+    val furnishings: MutableMap<String, Furnishing> = HashMap()
+    val oldGiftWrapper: MutableList<Furnishing> = ArrayList()
+    val newGiftWrapper: MutableList<Furnishing> = ArrayList()
+    val teleportLinks: MutableMap<Int, Int> = HashMap()
+    val roomTeleportLinks: MutableMap<Int, Int> = HashMap()
+    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
 
     init {
         load()
@@ -93,7 +94,7 @@ class ItemManager {
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
-        val list: MutableList<Vector2> = mutableListOf()
+        val list: MutableList<Vector2> = ArrayList()
 
         for (i in 0..width - 1) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,6 +36,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ipfilter.UniqueIpFilter
 import io.netty.handler.timeout.IdleStateHandler
+import net.sf.ehcache.CacheManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -50,6 +51,7 @@ import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
+import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
@@ -67,6 +69,7 @@ object HabboServer : Closeable {
     lateinit var habboConfig: HabboConfig
 
     val pluginManager: PluginManager = PluginManager()
+    val cacheManager: CacheManager = CacheManager.newInstance()
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
@@ -156,6 +159,7 @@ object HabboServer : Closeable {
             // load plugins
             log.info("Loading plugins...")
             pluginManager.addPlugin(RoomCommandsManagerListener())
+            pluginManager.addPlugin(RoomCommandsListener())
             pluginManager.addPlugin(CatalogCommandsListener())
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")

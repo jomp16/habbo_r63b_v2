@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -55,6 +55,9 @@ dependencies {
 
     //noinspection GrUnresolvedAccess
     compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "net.sf.ehcache:ehcache:$ehcache_version"
 }
 
 buildConfig {

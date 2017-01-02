@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,51 +19,60 @@
 
 package tk.jomp16.habbo.database.information
 
+import net.sf.ehcache.Ehcache
+import net.sf.ehcache.Element
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserPreferences
+import tk.jomp16.habbo.kotlin.addAndGetEhCache
 import tk.jomp16.habbo.kotlin.insertWithIntGeneratedKey
 
 object UserPreferencesDao {
-    fun getUserPreferences(userId: Int): UserPreferences {
-        val tmp = HabboServer.database {
-            select("SELECT * FROM users_preferences WHERE user_id = :user_id LIMIT 1",
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                UserPreferences(
-                        it.int("id"),
-                        it.string("volume"),
-                        it.boolean("prefer_old_chat"),
-                        it.boolean("ignore_room_invite"),
-                        it.boolean("disable_camera_follow"),
-                        it.int("navigator_x"),
-                        it.int("navigator_y"),
-                        it.int("navigator_width"),
-                        it.int("navigator_height"),
-                        it.boolean("hide_in_room"),
-                        it.boolean("block_new_friends"),
-                        it.int("chat_color"),
-                        it.boolean("friend_bar_open")
-                )
-            }.firstOrNull()
-        }
+    private val userPreferencesCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userPreferencesCache")
 
-        if (tmp == null) {
-            // no users preferences, create it
-            HabboServer.database {
-                insertWithIntGeneratedKey("INSERT INTO users_preferences (user_id) VALUES (:id)",
+    fun getUserPreferences(userId: Int, cache: Boolean = true): UserPreferences {
+        if (!cache || !userPreferencesCache.isKeyInCache(userId)) {
+            val userPreferences = HabboServer.database {
+                select("SELECT * FROM users_preferences WHERE user_id = :user_id LIMIT 1",
                         mapOf(
-                                "id" to userId
+                                "user_id" to userId
                         )
-                )
+                ) {
+                    UserPreferences(
+                            it.int("id"),
+                            it.string("volume"),
+                            it.boolean("prefer_old_chat"),
+                            it.boolean("ignore_room_invite"),
+                            it.boolean("disable_camera_follow"),
+                            it.int("navigator_x"),
+                            it.int("navigator_y"),
+                            it.int("navigator_width"),
+                            it.int("navigator_height"),
+                            it.boolean("hide_in_room"),
+                            it.boolean("block_new_friends"),
+                            it.int("chat_color"),
+                            it.boolean("friend_bar_open")
+                    )
+                }.firstOrNull()
             }
 
-            // Now fetch it again, doing a one recursive call, and returns this
-            return getUserPreferences(userId)
+            if (userPreferences == null) {
+                // no users preferences, create it
+                HabboServer.database {
+                    insertWithIntGeneratedKey("INSERT INTO users_preferences (user_id) VALUES (:id)",
+                            mapOf(
+                                    "id" to userId
+                            )
+                    )
+                }
+
+                // Now fetch it again, doing a one recursive call, and returns this
+                return getUserPreferences(userId, cache)
+            }
+
+            userPreferencesCache.put(Element(userId, userPreferences))
         }
 
-        return tmp
+        return userPreferencesCache.get(userId).objectValue as UserPreferences
     }
 
     fun savePreferences(userPreferences: UserPreferences) {

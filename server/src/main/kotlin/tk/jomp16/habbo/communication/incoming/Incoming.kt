@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -45,8 +45,8 @@ object Incoming {
     const val HABBO_CLUB_GIFTS = 2007 // 303
     const val HABBO_CLUB_INFO = 1720 // 1480
     const val INFO_RETRIEVE = 3211 // 2598
-    const val INIT_CRYPTO = 3087 // 3123
     const val INITIALIZE_GAME_CENTER = 795 // 3987
+    const val INIT_CRYPTO = 3087 // 3123
     const val INVENTORY_BADGES = 3412 // 1470
     const val INVENTORY_BOTS = 3757 // 1351
     const val INVENTORY_ITEMS = 140 // 181
@@ -59,19 +59,32 @@ object Incoming {
     const val MESSENGER_CHAT = 3371 // 2556
     const val MESSENGER_DECLINE_REQUEST = 668 // 1901
     const val MESSENGER_FOLLOW_FRIEND = 2151 // 1689
-    const val MESSENGER_FRIEND_BAR_STATE = 1342 // 1024
     const val MESSENGER_FRIENDS_UPDATE = 2881 // 2618
+    const val MESSENGER_FRIEND_BAR_STATE = 1342 // 1024
     const val MESSENGER_INIT = 2134 // 678
     const val MESSENGER_REMOVE_FRIEND = 402 // 613
-    const val MESSENGER_REQUEST_FRIEND = 1823 // 1567
     const val MESSENGER_REQUESTS = 343 // 3063
+    const val MESSENGER_REQUEST_FRIEND = 1823 // 1567
     const val MESSENGER_SEARCH_FRIENDS = 553 // 3281
+    const val MODERATION_BAN_USER = 2912 // 1999
+    const val MODERATION_CALL_FOR_HELP = 716 // 3870
+    const val MODERATION_CLOSE_TICKET = 3615 // 2976
+    const val MODERATION_CLOSE_TRADE_USER = 3084 // 188
+    const val MODERATION_KICK_USER = 910 // 2561
+    const val MODERATION_MESSAGE_USER = 1292 // 2132
+    const val MODERATION_MODERATE_ROOM = 3803 // 582
+    const val MODERATION_MODERATE_USER = 2805 // 2825
+    const val MODERATION_MUTE_USER = 2525 // 2161
+    const val MODERATION_PICK_TICKET = 769 // 486
+    const val MODERATION_RELEASE_TICKET = 2401 // 585
     const val MODERATION_ROOM_CHATLOG = 197 // 553
     const val MODERATION_ROOM_INFO = 351 // 3608
     const val MODERATION_TICKET_CHATLOG = 3056 // 3716
     const val MODERATION_TOUR_REQUEST = 781 // 3719
     const val MODERATION_USER_CHATLOG = 3377 // 3499
     const val MODERATION_USER_INFO = 2917 // 313
+    const val MODERATION_USER_ROOM_VISITS = 599 // 2057
+    const val MODERATION_WARN_USER = 1809 // 3619
     const val NAVIGATOR_CREATE_ROOM = 3777 // 2575
     const val NAVIGATOR_FLAT_CATEGORIES = 2590 // 2926
     const val NAVIGATOR_HOME_ROOM = 3796 // 906
@@ -129,11 +142,11 @@ object Incoming {
     const val ROOM_WORD_FILTER = 322 // 2795
     const val SANCTION_STATUS = 591 // 2577
     const val SECRET_KEY = 1180 // 1853
-    const val SET_USERNAME = 600 // 3000
     const val SETTINGS_SAVE_CHAT = 1367 // 2322
     const val SETTINGS_SAVE_FOCUS = 1279 // 3161
     const val SETTINGS_SAVE_INVITES = 1193 // 1735
     const val SETTINGS_SAVE_VOLUME = 68 // 755
+    const val SET_USERNAME = 600 // 3000
     const val SSO_TICKET = 3429 // 2906
     const val SUBSCRIPTION_STATUS = 339 // 1334
     const val UNIQUE_ID = 2236 // 618
@@ -145,6 +158,6 @@ object Incoming {
     const val USER_RELATIONSHIPS = 3128 // 2557
     const val USER_SETTINGS = 3174 // 3804
     const val USER_TAGS = 2393 // 2621
-    const val USER_WARDROBE_SAVE = 1860 // 3986
     const val USER_WARDROBES = 384 // 1677
+    const val USER_WARDROBE_SAVE = 1860 // 3986
 }

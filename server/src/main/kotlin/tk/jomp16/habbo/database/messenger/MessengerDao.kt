@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,6 +29,7 @@ import tk.jomp16.habbo.kotlin.localDateTime
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.*
 
 object MessengerDao {
     fun getFriends(userId: Int) = HabboServer.database {
@@ -107,8 +108,8 @@ object MessengerDao {
         }
     }
 
-    fun addFriends(userId: Int, friendIds: List<Int>): List<MessengerFriend> {
-        val friends: MutableList<MessengerFriend> = mutableListOf()
+    fun addFriends(userId: Int, friendIds: Collection<Int>): Set<MessengerFriend> {
+        val friends: MutableSet<MessengerFriend> = HashSet()
 
         HabboServer.database {
             friendIds.forEach {
@@ -146,8 +147,8 @@ object MessengerDao {
         return MessengerRequest(id, fromUserId)
     }
 
-    fun getOfflineMessages(toUserId: Int): List<Triple<Int, String, Int>> {
-        val offlineMessages: MutableList<Triple<Int, String, Int>> = mutableListOf()
+    fun getOfflineMessages(toUserId: Int): Set<Triple<Int, String, Int>> {
+        val offlineMessages: MutableSet<Triple<Int, String, Int>> = HashSet()
 
         HabboServer.database {
             select("SELECT * FROM messenger_offline_messages WHERE to_id = :to_id",

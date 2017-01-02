@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerAcceptRequestHandler {
@@ -39,8 +40,8 @@ class MessengerAcceptRequestHandler {
         if (amount < 0) return
         if (amount > 50) amount = 50
 
-        val friendIds: MutableList<Int> = mutableListOf()
-        val requestIds: MutableList<Int> = mutableListOf()
+        val friendIds: MutableList<Int> = ArrayList()
+        val requestIds: MutableList<Int> = ArrayList()
 
         (0..amount - 1).forEach {
             val userId = habboRequest.readInt()

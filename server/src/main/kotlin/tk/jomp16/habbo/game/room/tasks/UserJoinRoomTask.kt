@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,9 +30,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         if (room.roomUsers.containsValue(roomUser)) return
 
         val queuedHabboResponse = QueuedHabboResponse()
-
-        room.roomUsers.put(roomUser.virtualID, roomUser)
-        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         roomUser.habboSession?.let {
             it.roomUser = roomUser
@@ -94,6 +91,9 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             // todo: wired
         }
+
+        room.roomUsers.put(roomUser.virtualID, roomUser)
+        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         // todo: add support to bots
         roomUser.habboSession?.let {

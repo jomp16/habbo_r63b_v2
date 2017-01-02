@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,12 +22,13 @@ package tk.jomp16.habbo.game.moderation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.moderation.ModerationDao
+import java.util.*
 
 class ModerationManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val moderationCategories: MutableMap<Int, String> = mutableMapOf()
-    val moderationTopics: MutableMap<Int, ModerationTopic> = mutableMapOf()
+    val moderationCategories: MutableMap<Int, String> = HashMap()
+    val moderationTopics: MutableMap<Int, ModerationTopic> = HashMap()
 
     init {
         load()

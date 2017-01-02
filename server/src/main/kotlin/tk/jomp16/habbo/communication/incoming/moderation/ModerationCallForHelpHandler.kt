@@ -17,33 +17,30 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.room
+package tk.jomp16.habbo.communication.incoming.moderation
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.user.HabboSession
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomReedemExchangeItemHandler {
-    @Handler(Incoming.ROOM_REEDEM_EXCHANGE_ITEM)
+@Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
+class ModerationCallForHelpHandler {
+    @Handler(Incoming.MODERATION_CALL_FOR_HELP)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (!habboSession.authenticated) return
 
-        val itemId = habboRequest.readInt()
+        // [716 ][null] -- [0]%olá mundo! aeeeeeeeeeeeeeeeeeeeeeeee[0][0][0][3]����[0][0][0][1][0][0][0][0]
+        // [716 ][null] -- [0]3eu sou jomp16![13][13]mas tem alguém dizendo ser jomp16![0][0][0][17]����[0][0][0][1][0][0][0][0]
 
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val message = habboRequest.readUTF()
+        val topicId = habboRequest.readInt()
+        val reportedUserId = habboRequest.readInt()
+        val roomId = habboRequest.readInt()
+        val chatlogs = habboRequest.readInt() // ???
 
-        if (!roomItem.itemName.startsWith("CF_") && !roomItem.itemName.startsWith("CFC_")) return
-
-        val split = roomItem.itemName.split('_')
-        val credits = if (split[1] == "diamond") split[2].toInt() else split[1].toInt()
-
-        habboSession.userInformation.credits.set(habboSession.userInformation.credits.get() + credits)
-        habboSession.updateAllCurrencies()
-
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
-        ItemDao.deleteItem(itemId)
+        // structure users envolved in the help:
+        // int - user id
+        // string - chat -- ???
     }
 }

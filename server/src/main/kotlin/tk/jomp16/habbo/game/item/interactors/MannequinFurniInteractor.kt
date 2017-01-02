@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,7 +36,7 @@ class MannequinFurniInteractor : ItemInteractor() {
         val mannequinFigureArray = mannequinDataArray[1].split('.').toTypedArray()
         val userFigureArray = roomUser.habboSession.userInformation.figure.split('.')
 
-        val figures = LinkedHashMap<String, String>()
+        val figures = HashMap<String, String>()
 
         mannequinFigureArray.forEach { figure ->
             userFigureArray.forEach { figure1 ->

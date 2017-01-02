@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerDeclineRequestHandler {
@@ -45,7 +46,7 @@ class MessengerDeclineRequestHandler {
             return
         }
 
-        val ids: MutableList<Int> = mutableListOf()
+        val ids: MutableList<Int> = ArrayList()
 
         (0..amount - 1).forEach {
             val userId = habboRequest.readInt()

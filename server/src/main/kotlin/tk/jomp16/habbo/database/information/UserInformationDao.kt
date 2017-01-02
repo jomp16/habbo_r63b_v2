@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,73 +20,81 @@
 package tk.jomp16.habbo.database.information
 
 import com.github.andrewoma.kwery.core.Row
+import net.sf.ehcache.Ehcache
+import net.sf.ehcache.Element
 import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
+import tk.jomp16.habbo.kotlin.addAndGetEhCache
+import java.util.concurrent.atomic.AtomicInteger
 
 object UserInformationDao {
-    private val serverConsoleInformation by lazy {
-        UserInformation(
+    private val userInformationByIdCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userInformationByIdCache")
+    private val userInformationByUsernameCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userInformationByUsernameCache")
+
+    init {
+        userInformationByIdCache.put(Element(Int.MAX_VALUE, UserInformation(
                 Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
                 "SERVER SCRIPTING CONSOLE", // name
                 "", // email, empty
                 "${BuildConfig.NAME} scripting console.", // realname
-                0, // rank
-                0, // credits
-                0, // pixels
-                0, // vip points
+                7, // rank
+                AtomicInteger(0), // credits
+                AtomicInteger(0), // pixels
+                AtomicInteger(0), // vip points
                 HabboServer.habboConfig.serverConsoleFigure, // figure
                 "M", // gender
                 "Version: ${BuildConfig.VERSION}", // motto
                 0, // homeroom
                 false // vip
-        )
+        )))
     }
 
-    private val userInformationCache: MutableMap<Int, UserInformation> = mutableMapOf()
-
-    fun getUserInformationById(id: Int): UserInformation? {
-        if (id == Int.MAX_VALUE) {
-            return serverConsoleInformation
-        } else {
-            if (!userInformationCache.containsKey(id)) {
-                HabboServer.database {
-                    select("SELECT * FROM users WHERE id = :id LIMIT 1",
-                            mapOf(
-                                    "id" to id
-                            )
-                    ) { getUserInformation(it) }.firstOrNull()
-                }?.let { userInformationCache.put(id, it) }
-            }
-
-            return userInformationCache[id]
+    fun getUserInformationById(id: Int, cache: Boolean = true): UserInformation? {
+        if (!cache || !userInformationByIdCache.isKeyInCache(id)) {
+            HabboServer.database {
+                select("SELECT * FROM users WHERE id = :id LIMIT 1",
+                        mapOf(
+                                "id" to id
+                        )
+                ) { getUserInformation(it) }.firstOrNull()
+            }?.let { addCache(it) }
         }
+
+        return userInformationByIdCache.get(id).objectValue as UserInformation
     }
 
-    fun getUserInformationByAuthTicket(ssoTicket: String) = HabboServer.database {
-        select("SELECT * FROM users WHERE auth_ticket = :ticket LIMIT 1",
-                mapOf(
-                        "ticket" to ssoTicket
-                )
-        ) { getUserInformation(it) }.firstOrNull()
+    fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
+        val userInformation = HabboServer.database {
+            select("SELECT id FROM users WHERE auth_ticket = :ticket LIMIT 1",
+                    mapOf(
+                            "ticket" to ssoTicket
+                    )
+            ) { getUserInformationById(it.int("id")) }.firstOrNull()
+        } ?: return null
+
+        addCache(userInformation)
+
+        return userInformation
     }
 
-    fun getUserInformationByUsername(username: String): UserInformation? {
-        var information = userInformationCache.values.filter { it.username == username }.firstOrNull()
-
-        if (information == null) {
-            information = HabboServer.database {
+    fun getUserInformationByUsername(username: String, cache: Boolean = true): UserInformation? {
+        if (!cache || !userInformationByUsernameCache.isKeyInCache(username)) {
+            HabboServer.database {
                 select("SELECT * FROM users WHERE username = :username",
                         mapOf(
                                 "username" to username
                         )
                 ) { getUserInformation(it) }.firstOrNull()
-            }
-
-            information?.let { userInformationCache.put(it.id, it) }
+            }?.let { addCache(it) }
         }
 
-        return information
+        return userInformationByUsernameCache.get(username).objectValue as UserInformation
+    }
+
+    private fun addCache(userInformation: UserInformation) {
+        userInformationByIdCache.put(Element(userInformation.id, userInformation))
+        userInformationByUsernameCache.put(Element(userInformation.username, userInformation))
     }
 
     private fun getUserInformation(row: Row) = UserInformation(
@@ -95,9 +103,9 @@ object UserInformationDao {
             row.string("email"),
             row.string("realname"),
             row.int("rank"),
-            row.int("credits"),
-            row.int("pixels"),
-            row.int("vip_points"),
+            AtomicInteger(row.int("credits")),
+            AtomicInteger(row.int("pixels")),
+            AtomicInteger(row.int("vip_points")),
             row.string("figure"),
             row.string("gender"),
             row.string("motto"),
@@ -113,9 +121,9 @@ object UserInformationDao {
                             "ticket" to authTicket,
                             "online" to online,
                             "ip_last" to ip,
-                            "credits" to userInformation.credits,
-                            "pixels" to userInformation.pixels,
-                            "vip_points" to userInformation.vipPoints,
+                            "credits" to userInformation.credits.get(),
+                            "pixels" to userInformation.pixels.get(),
+                            "vip_points" to userInformation.vipPoints.get(),
                             "figure" to userInformation.figure,
                             "gender" to userInformation.gender,
                             "motto" to userInformation.motto,

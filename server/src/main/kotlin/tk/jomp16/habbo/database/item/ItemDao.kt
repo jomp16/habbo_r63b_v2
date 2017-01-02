@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,8 @@
 
 package tk.jomp16.habbo.database.item
 
+import net.sf.ehcache.Ehcache
+import net.sf.ehcache.Element
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.InteractionType
@@ -28,10 +30,12 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
+import tk.jomp16.habbo.kotlin.addAndGetEhCache
 import tk.jomp16.habbo.util.Vector3
 
 object ItemDao {
-    private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = mutableMapOf()
+    private val limitedItemDataCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("limitedItemDataCache")
+    private val roomDimmerCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("roomDimmerCache")
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>) = HabboServer.database {
         select("SELECT * FROM furnishings") {
@@ -101,8 +105,8 @@ object ItemDao {
         }
     }
 
-    fun getLimitedData(itemId: Int): LimitedItemData? {
-        if (!limitedItemDatas.containsKey(itemId)) {
+    fun getLimitedData(itemId: Int, cache: Boolean = true): LimitedItemData? {
+        if (!cache || !limitedItemDataCache.isKeyInCache(itemId)) {
             val limitedItemData = HabboServer.database {
                 select("SELECT * FROM items_limited WHERE item_id = :id",
                         mapOf(
@@ -118,10 +122,10 @@ object ItemDao {
                 }.firstOrNull()
             }
 
-            limitedItemDatas.put(itemId, limitedItemData)
+            limitedItemDataCache.put(Element(itemId, limitedItemData))
         }
 
-        return limitedItemDatas[itemId]
+        return limitedItemDataCache.get(itemId).objectValue as LimitedItemData?
     }
 
     fun getTeleportLinks() = HabboServer.database {
@@ -165,26 +169,32 @@ object ItemDao {
         }
     }
 
-    fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
-        return HabboServer.database {
-            select("SELECT * FROM items_dimmer WHERE item_id = :item_id LIMIT 1",
-                    mapOf(
-                            "item_id" to roomItem.id
-                    )
-            ) {
-                RoomDimmer(
-                        it.int("id"),
-                        roomItem,
-                        it.boolean("enabled"),
-                        it.int("current_preset"),
-                        mutableListOf(
-                                RoomDimmer.generatePreset(it.string("preset_one")),
-                                RoomDimmer.generatePreset(it.string("preset_two")),
-                                RoomDimmer.generatePreset(it.string("preset_three"))
+    fun getRoomDimmer(roomItem: RoomItem, cache: Boolean = true): RoomDimmer? {
+        if (!cache || !roomDimmerCache.isKeyInCache(roomItem)) {
+            val roomDimmer = HabboServer.database {
+                select("SELECT * FROM items_dimmer WHERE item_id = :item_id LIMIT 1",
+                        mapOf(
+                                "item_id" to roomItem.id
                         )
-                )
-            }.firstOrNull()
+                ) {
+                    RoomDimmer(
+                            it.int("id"),
+                            roomItem,
+                            it.boolean("enabled"),
+                            it.int("current_preset"),
+                            mutableListOf(
+                                    RoomDimmer.generatePreset(it.string("preset_one")),
+                                    RoomDimmer.generatePreset(it.string("preset_two")),
+                                    RoomDimmer.generatePreset(it.string("preset_three"))
+                            )
+                    )
+                }.firstOrNull()
+            }
+
+            roomDimmerCache.put(Element(roomItem, roomDimmer))
         }
+
+        return roomDimmerCache.get(roomItem).objectValue as RoomDimmer?
     }
 
     fun saveDimmer(roomDimmer: RoomDimmer) {

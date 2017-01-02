@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -60,17 +60,17 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val floorItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
 
-    val rights: MutableList<RightData> by lazy { ArrayList(RoomDao.getRights(roomData.id)) }
+    val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
 
     val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
-    val roomUsersWithRights: List<RoomUser>
-        get() = roomUsers.values.filter { hasRights(it.habboSession, false) }
+    val roomUsersWithRights: Set<RoomUser>
+        get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
 
     val roomGamemap: RoomGamemap by lazy { RoomGamemap(this) }
     val pathfinder: IFinder by lazy { AStarFinder() }
 
-    private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
+    private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
 
     var roomDimmer: RoomDimmer? = null
 
@@ -212,7 +212,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             }
         }
 
-        val affectedTiles = mutableSetOf<Vector2>()
+        val affectedTiles = HashSet<Vector2>()
 
         if (!newItem) {
             roomGamemap.removeRoomItem(roomItem)
@@ -291,10 +291,10 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         val wBit = wallData[0].substring(3, wallData[0].length)
         val lBit = wallData[1].substring(2, wallData[1].length)
 
-        if (!wBit.contains(",") || !lBit.contains(",")) return false
+        if (!wBit.contains(',') || !lBit.contains(',')) return false
 
-        val wBitSplit = wBit.split(",".toRegex())
-        val lBitSplit = lBit.split(",".toRegex())
+        val wBitSplit = wBit.split(',')
+        val lBitSplit = lBit.split(',')
 
         val w1 = wBitSplit[0].toInt()
         val w2 = wBitSplit[1].toInt()

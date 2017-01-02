@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -77,7 +77,7 @@ data class RoomItem(
     private var cycles: Int = 0
     private var currentCycles: Int = 0
 
-    val interactingUsers: MutableMap<Int, RoomUser> by lazy { LinkedHashMap<Int, RoomUser>() }
+    val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -197,9 +197,7 @@ data class RoomItem(
         return Vector2(x, y)
     }
 
-    fun isTouching(pos: Vector3, rotation: Int, altitude: Double) = isTouching(pos, rotation, false, altitude)
-
-    fun isTouching(pos: Vector3, rotation: Int) = isTouching(pos, rotation, false, -1.0)
+    fun isTouching(pos: Vector3, rotation: Int, z: Double) = isTouching(pos, rotation, false, z)
 
     private fun isTouching(vector3: Vector3, rotation: Int, ignoreItemRotation: Boolean, z: Double): Boolean {
         if (z != -1.toDouble() && z - vector3.z > 3.toDouble()) return false

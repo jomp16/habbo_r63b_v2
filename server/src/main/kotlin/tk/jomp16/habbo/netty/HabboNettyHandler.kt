@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -66,9 +66,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         if (msg is HabboRequest) {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-            HabboServer.serverExecutor.execute {
-                HabboServer.habboHandler.handle(habboSession, msg)
-            }
+            HabboServer.habboHandler.handle(habboSession, msg)
         }
     }
 
@@ -89,7 +87,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                 ctx.close()
             } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || habboSession.handshaking)) {
-                log.info("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
+                log.info("Didn't send any message to user ${if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()}, pinging it.")
 
                 habboSession.ping = System.nanoTime()
                 habboSession.sendHabboResponse(Outgoing.PING)

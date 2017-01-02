@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,14 +30,17 @@ import tk.jomp16.utils.plugin.event.events.PluginListenerAddedEvent
 import tk.jomp16.utils.plugin.event.events.PluginListenerRemovedEvent
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.util.*
 import java.util.regex.Pattern
 
 class RoomCommandsManagerListener : PluginListener() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     private val lookup = MethodHandles.lookup()
-    private val commandsEvents: MutableSet<PluginCommandRegister> = mutableSetOf()
+    private val commandsEvents: MutableSet<PluginCommandRegister> = HashSet()
 
     override fun onCreate() {
+        super.onCreate()
+
         HabboServer.pluginManager.pluginsListener.map { it.second }.forEach {
             handlePluginListenerAdded(PluginListenerAddedEvent(it))
         }
@@ -90,10 +93,10 @@ class RoomCommandsManagerListener : PluginListener() {
                 return@forEach
             }
 
-            val messageWithoutCommand = if (roomUserChatEvent.message.length == args[0].length) "" else roomUserChatEvent.message.substring(args[0].length).trim()
+            args[0] = if (roomUserChatEvent.message.length == args[0].length) "" else roomUserChatEvent.message.substring(args[0].length).trim()
 
             try {
-                it.methodHandle.invokeWithArguments(it.pluginListener, roomUserChatEvent.roomUser, messageWithoutCommand, args.drop(1))
+                it.methodHandle.invokeWithArguments(it.pluginListener, roomUserChatEvent.room, roomUserChatEvent.roomUser, args)
             } catch (e: Exception) {
                 log.error("Error when trying to invoke command ${args[0]}!", e)
             }
@@ -101,7 +104,7 @@ class RoomCommandsManagerListener : PluginListener() {
     }
 
     private fun searchCommands(pluginListener: PluginListener): List<PluginCommandRegister> {
-        val commands: MutableList<PluginCommandRegister> = mutableListOf()
+        val commands: MutableList<PluginCommandRegister> = ArrayList()
 
         pluginListener.javaClass.declaredMethods.forEach {
             val commandAnnotation = it.getAnnotation(Command::class.java) ?: return@forEach
@@ -114,12 +117,12 @@ class RoomCommandsManagerListener : PluginListener() {
         return commands
     }
 
-    private fun parseLine(message: String?): List<String>? {
+    private fun parseLine(message: String?): MutableList<String>? {
         if (message == null || message.isEmpty()) {
             return null
         }
 
-        val args: MutableList<String> = mutableListOf()
+        val args: MutableList<String> = ArrayList()
 
         val matcher = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'").matcher(message)
 

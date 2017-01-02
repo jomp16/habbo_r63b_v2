@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import tk.jomp16.habbo.game.navigator.NavigatorPromocat
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.RoomType
 import tk.jomp16.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchResponse {
@@ -84,7 +85,7 @@ class NavigatorSearchResponse {
                     serializeSearchResultList("recommended", false, habboResponse, habboSession)
                 }
                 "my" -> {
-                    val rooms: MutableList<Room> = mutableListOf()
+                    val rooms: MutableList<Room> = ArrayList()
 
                     (0..habboSession.rooms.size - 1).forEach { i ->
                         rooms.add(habboSession.rooms[i])
