@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,9 +30,9 @@ class RoomCommandsListener : PluginListener() {
 
     @Command(arrayOf("unload", "close"))
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (!roomUser.room.hasRights(roomUser.habboSession, true)) return
+        if (!room.hasRights(roomUser.habboSession, true)) return
 
-        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(roomUser.room)
+        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
     }
 
     @Command(arrayOf("coords"))

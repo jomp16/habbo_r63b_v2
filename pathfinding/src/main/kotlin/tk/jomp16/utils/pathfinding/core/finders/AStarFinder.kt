@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
