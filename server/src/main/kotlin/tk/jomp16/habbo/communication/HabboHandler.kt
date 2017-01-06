@@ -23,6 +23,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
@@ -96,18 +97,20 @@ class HabboHandler {
     }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboRequest.use {
-            if (messageHandlers.containsKey(it.headerId)) {
-                try {
-                    val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
+        HabboServer.serverExecutor.execute {
+            habboRequest.use {
+                if (messageHandlers.containsKey(it.headerId)) {
+                    try {
+                        val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
 
-                    methodHandle.invokeWithArguments(clazz, habboSession, it)
-                } catch (e: Exception) {
-                    log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
-                    log.error("", e)
+                        methodHandle.invokeWithArguments(clazz, habboSession, it)
+                    } catch (e: Exception) {
+                        log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
+                        log.error("", e)
+                    }
+                } else if (!blacklistIds.contains(habboRequest.headerId)) {
+                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
                 }
-            } else if (!blacklistIds.contains(habboRequest.headerId)) {
-                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
             }
         }
     }
