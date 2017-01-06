@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,9 +19,26 @@
 
 package tk.jomp16.habbo.game.group
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.group.GroupDao
 import tk.jomp16.habbo.imaging.GroupBadge
 
 class GroupManager {
-    val groupBadge = GroupBadge(GroupDao.getBadgesBases(), GroupDao.getBadgesBaseColors(), GroupDao.getBadgesSymbols(), GroupDao.getBadgesSymbolColors())
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    lateinit var groupBadge: GroupBadge
+        private set
+
+    init {
+        load()
+    }
+
+    fun load() {
+        log.info("Loading group badges...")
+
+        groupBadge = GroupBadge(GroupDao.getBadgesBases(), GroupDao.getBadgesBaseColors(), GroupDao.getBadgesSymbols(), GroupDao.getBadgesSymbolColors())
+
+        log.info("Loaded group badges!")
+    }
 }

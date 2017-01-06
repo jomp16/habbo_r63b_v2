@@ -35,5 +35,9 @@
         <Logger name="com.zaxxer" level="error"/>
         <Logger name="org.reflections" level="error"/>
         <Logger name="net.sf.ehcache" level="error"/>
+        <Logger name="ro.pippo" level="error"/>
+        <Logger name="io.undertow" level="error"/>
+        <Logger name="org.xnio" level="error"/>
+        <Logger name="org.jboss" level="error"/>
     </loggers>
 </Configuration>

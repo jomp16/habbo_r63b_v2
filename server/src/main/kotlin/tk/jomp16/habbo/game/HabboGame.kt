@@ -23,6 +23,7 @@ import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.catalog.CatalogManager
+import tk.jomp16.habbo.game.group.GroupManager
 import tk.jomp16.habbo.game.item.ItemManager
 import tk.jomp16.habbo.game.landing.LandingManager
 import tk.jomp16.habbo.game.moderation.ModerationManager
@@ -43,6 +44,7 @@ class HabboGame {
     val navigatorManager: NavigatorManager = NavigatorManager()
     val permissionManager: PermissionManager = PermissionManager()
     val moderationManager: ModerationManager = ModerationManager()
+    val groupManager: GroupManager = GroupManager()
 
     init {
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({

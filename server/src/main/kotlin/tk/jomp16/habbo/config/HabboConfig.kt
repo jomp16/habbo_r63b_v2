@@ -27,6 +27,8 @@ data class HabboConfig(
         val ip: String,
         @JsonProperty("port")
         val port: Int,
+        @JsonProperty("web_port")
+        val webPort: Int,
         @JsonProperty("database")
         val databaseConfig: DatabaseConfig,
         @JsonProperty("diffie_hellman_key_size")

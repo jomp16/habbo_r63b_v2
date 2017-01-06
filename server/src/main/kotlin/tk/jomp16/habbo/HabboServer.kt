@@ -40,6 +40,7 @@ import net.sf.ehcache.CacheManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ro.pippo.core.Pippo
 import tk.jomp16.habbo.communication.HabboHandler
 import tk.jomp16.habbo.config.HabboConfig
 import tk.jomp16.habbo.encryption.HabboEncryptionHandler
@@ -53,6 +54,7 @@ import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
+import tk.jomp16.habbo.web.HabboWebApplication
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
 import java.io.File
@@ -80,6 +82,9 @@ object HabboServer : Closeable {
     lateinit private var serverBootstrap: ServerBootstrap
     lateinit private var workerGroup: EventLoopGroup
     lateinit private var bossGroup: EventLoopGroup
+
+    // Pippo
+    lateinit private var pippo: Pippo
 
     // Habbo
     lateinit var habboEncryptionHandler: HabboEncryptionHandler
@@ -173,6 +178,14 @@ object HabboServer : Closeable {
     fun start() {
         serverExecutor.execute {
             try {
+                log.info("Lauching web application")
+
+                pippo = Pippo(HabboWebApplication())
+                pippo.server.settings.host(habboConfig.ip).port(habboConfig.webPort)
+                pippo.start()
+
+                log.info("Web application launched on ip {} port {}!", habboConfig.ip, habboConfig.webPort)
+
                 serverBootstrap = ServerBootstrap()
                 workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
                 bossGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()

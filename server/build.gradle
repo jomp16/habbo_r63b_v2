@@ -59,6 +59,15 @@ dependencies {
 
     //noinspection GrUnresolvedAccess
     compile "net.sf.ehcache:ehcache:$ehcache_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "ro.pippo:pippo-core:$pippo_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "ro.pippo:pippo-undertow:$pippo_version"
+
+    //noinspection GrUnresolvedAccess
+    compile "ro.pippo:pippo-jackson:$pippo_version"
 }
 
 buildConfig {
