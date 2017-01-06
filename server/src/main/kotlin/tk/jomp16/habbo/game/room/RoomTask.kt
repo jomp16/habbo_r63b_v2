@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -45,6 +45,7 @@ class RoomTask : Runnable {
         room.errorsCounter.set(0)
 
         room.roomTask = this
+        room.initialize()
     }
 
     fun removeRoom(room: Room) {
@@ -68,40 +69,44 @@ class RoomTask : Runnable {
     override fun run() {
         try {
             rooms.forEach { room ->
-                try {
-                    val queue = queuedTasks[room] ?: return@forEach
+                HabboServer.serverExecutor.execute {
+                    try {
+                        val queue = queuedTasks[room] ?: return@execute
 
-                    while (queue.isNotEmpty()) queue.poll().executeTask(room)
+                        while (queue.isNotEmpty()) queue.poll().executeTask(room)
 
-                    room.roomUsers.values.let {
-                        it.forEach { it.onCycle() }
+                        room.roomUsers.values.let {
+                            it.forEach { it.onCycle() }
 
-                        it.filter { it.updateNeeded }.let {
-                            if (it.isNotEmpty()) {
-                                room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, it)
+                            it.filter { it.updateNeeded }.let {
+                                if (it.isNotEmpty()) {
+                                    room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, it)
 
-                                it.forEach { it.updateNeeded = false }
+                                    it.forEach { it.updateNeeded = false }
+                                }
                             }
                         }
-                    }
 
-                    if (room.roomUsers.isEmpty() &&
-                            TimeUnit.MILLISECONDS.toSeconds(
-                                    (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
-                                    >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
-                        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+                        room.roomItems.values.forEach { it.onCycle() }
 
-                        return@forEach
-                    }
+                        if (room.roomUsers.isEmpty() &&
+                                TimeUnit.MILLISECONDS.toSeconds(
+                                        (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
+                                        >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
+                            HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 
-                    if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
-                } catch (e: Exception) {
-                    log.error("An exception happened on room task, room n° {}. Cause: {}", room.roomData.id, e)
+                            return@execute
+                        }
 
-                    if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
-                        log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id, HabboServer.habboConfig.roomTaskConfig.errorThreshold)
+                        if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
+                    } catch (e: Exception) {
+                        log.error("An exception happened on room task, room n° ${room.roomData.id}. Cause: {}", e)
 
-                        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+                        if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
+                            log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id, HabboServer.habboConfig.roomTaskConfig.errorThreshold)
+
+                            HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+                        }
                     }
                 }
             }

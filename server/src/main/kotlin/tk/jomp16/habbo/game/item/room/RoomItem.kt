@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,8 +29,11 @@ import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.LimitedItemData
 import tk.jomp16.habbo.game.room.Room
+import tk.jomp16.habbo.game.room.user.RoomUser
+import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.util.*
 
 data class RoomItem(
         val id: Int,
@@ -42,7 +45,7 @@ data class RoomItem(
         var rotation: Int,
         var wallPosition: String
 ) : IHabboResponseSerialize {
-    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(id) }
+    val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
 
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
@@ -70,6 +73,11 @@ data class RoomItem(
 
     val affectedTiles: List<Vector2>
         get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
+
+    private var cycles: Int = 0
+    private var currentCycles: Int = 0
+
+    val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -118,5 +126,95 @@ data class RoomItem(
                 if (updateClient) room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
             }
         }
+    }
+
+    fun requestCycles(cycles1: Int) {
+        if (currentCycles == 0 || cycles1 == 0) {
+            cycles = cycles1
+            currentCycles = 0
+        }
+    }
+
+    fun onCycle() {
+        if (cycles != 0) {
+            if (currentCycles >= cycles) {
+                cycles = 0
+                currentCycles = 0
+
+                furnishing.interactor?.onCycle(room, this)
+
+                return
+            }
+
+            currentCycles++
+        }
+    }
+
+    fun onUserWalksOn(roomUser: RoomUser, handleInteractor: Boolean) {
+        if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomUser, this)
+
+        // todo: wired
+        // room.getWiredHandler().triggerWired(WiredTriggerWalksOnFurni::class.java, roomUser, this)
+    }
+
+    fun onUserWalksOff(roomUser: RoomUser, handleInteractor: Boolean) {
+        if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomUser, this)
+
+        // todo: wired
+        // room.getWiredHandler().triggerWired(WiredTriggerWalksOffFurni::class.java, roomUser, this)
+    }
+
+    private fun getFrontRotation(front: Vector2) = Rotation.calculate(front.x, front.y, position.x, position.y)
+
+    fun getFrontRotation(): Int {
+        if (rotation == 2) return 6
+        else if (rotation == 6) return 2
+        else if (rotation == 0) return 4
+        else return 0
+    }
+
+    fun getFrontPosition(): Vector2 {
+        var x = position.x
+        var y = position.y
+
+        if (rotation == 0) y--
+        else if (rotation == 2) x++
+        else if (rotation == 4) y++
+        else if (rotation == 6) x--
+
+        return Vector2(x, y)
+    }
+
+    fun getBehindPosition(): Vector2 {
+        var x = position.x
+        var y = position.y
+
+        if (rotation == 0) y++
+        else if (rotation == 2) x--
+        else if (rotation == 4) y--
+        else if (rotation == 6) x++
+
+        return Vector2(x, y)
+    }
+
+    fun isTouching(pos: Vector3, rotation: Int, z: Double) = isTouching(pos, rotation, false, z)
+
+    private fun isTouching(vector3: Vector3, rotation: Int, ignoreItemRotation: Boolean, z: Double): Boolean {
+        if (z != -1.toDouble() && z - vector3.z > 3.toDouble()) return false
+
+        if (ignoreItemRotation) return !(rotation != -1 && rotation != getFrontRotation(vector3.vector2)) && (position.x == vector3.x && position.y == vector3.y ||
+                vector3.x == position.x && vector3.y == position.y + 1 ||
+                vector3.x == position.x - 1 && vector3.y == position.y + 1 ||
+                vector3.x == position.x - 1 && vector3.y == position.y ||
+                vector3.x == position.x + 1 && vector3.y == position.y + 1 ||
+                vector3.x == position.x && vector3.y == position.y - 1 ||
+                vector3.x == position.x + 1 && vector3.y == position.y - 1 ||
+                vector3.x == position.x + 1 && vector3.y == position.y ||
+                vector3.x == position.x - 1 && vector3.y == position.y - 1)
+
+        if (rotation != -1 && rotation != getFrontRotation()) return false
+        if (position.x == vector3.x && position.y == vector3.y) return true
+        if (rotation == 2 || rotation == 6) return vector3.x == (if (rotation == 6) position.x + 1 else position.x - 1) && vector3.y >= position.y && vector3.y < position.y + furnishing.width
+        else return vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.height
     }
 }

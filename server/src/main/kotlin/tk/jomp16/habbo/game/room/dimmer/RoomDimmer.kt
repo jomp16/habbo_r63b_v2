@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -53,7 +53,7 @@ data class RoomDimmer(
 
     companion object {
         fun generatePreset(data: String): RoomDimmerPreset {
-            val bits = data.split(",").toMutableList()
+            val bits = data.split(',').toMutableList()
 
             if (!isValidColor(bits[0])) bits[0] = "#000000"
 

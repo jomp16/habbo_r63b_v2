@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -47,8 +47,8 @@ object Outgoing {
     const val CATALOG_PURCHASE_OK = 2634 // 1359
     const val CATALOG_RECYCLER_REWARDS = 2469 // 71
     const val CATALOG_UPDATE = 3697 // 3202
-    const val CATALOG_VOUCHER_REDEEM_ERROR = 300 // 1739
     const val CATALOG_VOUCHER_REDEEMED = 478 // 2929
+    const val CATALOG_VOUCHER_REDEEM_ERROR = 300 // 1739
     const val CREDITS_BALANCE = 780 // 1231
     const val ENABLE_TRADING = 1021 // 258
     const val GENERIC_ERROR = 2047 // 1742
@@ -64,11 +64,11 @@ object Outgoing {
     const val LANDING_REWARD = 1779 // 3333
     const val MESSENGER_CHAT = 1096 // 1836
     const val MESSENGER_FOLLOW_FRIEND_ERROR = 3724 // 1559
-    const val MESSENGER_FRIEND_UPDATE = 3851 // 1996
     const val MESSENGER_FRIENDS = 1795 // 2933
+    const val MESSENGER_FRIEND_UPDATE = 3851 // 1996
     const val MESSENGER_INIT = 1103 // 3269
-    const val MESSENGER_REQUEST_FRIEND = 362 // 2186
     const val MESSENGER_REQUESTS = 1674 // 2576
+    const val MESSENGER_REQUEST_FRIEND = 362 // 2186
     const val MESSENGER_SEARCH_FRIENDS = 99 // 2760
     const val MODERATION_INIT = 2785 // 787
     const val MODERATION_ROOM_INFO = 439 // 3954
@@ -92,10 +92,10 @@ object Outgoing {
     const val ROOM_DOORBELL_DENIED = 3442 // 2612
     const val ROOM_ERROR = 523 // 2596
     const val ROOM_EXIT = 2869 // 1414
+    const val ROOM_FLOORMAP = 2886 // 1925
+    const val ROOM_FLOOR_ITEMS = 1880 // 1242
     const val ROOM_FLOOR_ITEM_REMOVE = 2694 // 3476
     const val ROOM_FLOOR_ITEM_UPDATE = 1787 // 161
-    const val ROOM_FLOOR_ITEMS = 1880 // 1242
-    const val ROOM_FLOORMAP = 2886 // 1925
     const val ROOM_FORWARD = 986 // 3068
     const val ROOM_HEIGHTMAP = 807 // 2090
     const val ROOM_INFO = 1213 // 1982
@@ -108,11 +108,14 @@ object Outgoing {
     const val ROOM_OWNER = 1395 // 1642
     const val ROOM_OWNERSHIP = 1457 // 1315
     const val ROOM_POST_IT = 835 // 903
-    const val ROOM_RIGHT_LEVEL = 3084 // 2299
     const val ROOM_RIGHTS = 1618 // 1944
+    const val ROOM_RIGHT_LEVEL = 3084 // 2299
+    const val ROOM_ROLLER = 2497 // 3433
     const val ROOM_SETTINGS = 2651 // 2217
     const val ROOM_SETTINGS_SAVED = 638 // 3100
     const val ROOM_UPDATE_FURNI_STACK = 2717 // 3595
+    const val ROOM_USERS = 3117 // 1485
+    const val ROOM_USERS_STATUSES = 2789 // 1343
     const val ROOM_USER_ACTION = 1631 // 3245
     const val ROOM_USER_CHAT = 1731 // 2248
     const val ROOM_USER_DANCE = 87 // 2360
@@ -121,13 +124,11 @@ object Outgoing {
     const val ROOM_USER_SHOUT = 592 // 329
     const val ROOM_USER_TYPING = 906 // 1259
     const val ROOM_USER_WHISPER = 1740 // 978
-    const val ROOM_USERS = 3117 // 1485
-    const val ROOM_USERS_STATUSES = 2789 // 1343
     const val ROOM_VISUALIZATION_THICKNESS = 3972 // 3326
+    const val ROOM_WALL_ITEMS = 2379 // 2304
     const val ROOM_WALL_ITEM_ADDED = 3079 // 1973
     const val ROOM_WALL_ITEM_REMOVE = 100 // 2350
     const val ROOM_WALL_ITEM_UPDATE = 2163 // 776
-    const val ROOM_WALL_ITEMS = 2379 // 2304
     const val ROOM_WORD_FILTER = 3808 // 3406
     const val SECRET_KEY = 3886 // 1532
     const val SUBSCRIPTION_STATUS = 3429 // 3398

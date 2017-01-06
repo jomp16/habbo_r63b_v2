@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,7 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-reflect'
     }
 
-    compile "org.jetbrains.kotlin:kotlin-reflect:1.0.5-3"
+    compile "org.jetbrains.kotlin:kotlin-reflect:1.0.6"
 }
 
 jar {

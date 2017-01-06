@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,6 +35,6 @@ class RoomItemMoveWallHandler {
 
         if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.userInformation.username)
+        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.roomUser)
     }
 }

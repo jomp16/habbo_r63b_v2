@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,13 +28,15 @@ import java.util.*
 
 class MannequinFurniInteractor : ItemInteractor() {
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+
         if (roomUser == null || roomUser.habboSession == null) return
 
         val mannequinDataArray = roomItem.extraData.split(7.toChar())
         val mannequinFigureArray = mannequinDataArray[1].split('.').toTypedArray()
         val userFigureArray = roomUser.habboSession.userInformation.figure.split('.')
 
-        val figures = LinkedHashMap<String, String>()
+        val figures = HashMap<String, String>()
 
         mannequinFigureArray.forEach { figure ->
             userFigureArray.forEach { figure1 ->

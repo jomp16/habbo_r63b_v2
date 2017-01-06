@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,5 +23,5 @@ import tk.jomp16.utils.pathfinding.core.Grid
 import tk.jomp16.utils.pathfinding.core.Path
 
 interface IFinder {
-    fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int): List<Path>
+    fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int, overrideBlocking: Boolean): List<Path>
 }

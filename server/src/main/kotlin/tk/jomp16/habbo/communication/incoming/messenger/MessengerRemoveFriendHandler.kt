@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRemoveFriendHandler {
@@ -39,7 +40,7 @@ class MessengerRemoveFriendHandler {
         if (amount < 0) return
         if (amount > 100) amount = 100
 
-        val messengerFriends: MutableList<MessengerFriend> = mutableListOf()
+        val messengerFriends: MutableList<MessengerFriend> = ArrayList()
 
         (0..amount - 1).forEach {
             val userId = habboRequest.readInt()

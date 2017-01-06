@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 
 class RoomTaskManager {
     val scheduledFutureMap: MutableMap<RoomTask, ScheduledFuture<*>> = HashMap()
-    val rooms: MutableList<Room> = mutableListOf()
+    val rooms: MutableSet<Room> = HashSet()
 
     fun addRoomToTask(room: Room) {
         if (rooms.contains(room)) return

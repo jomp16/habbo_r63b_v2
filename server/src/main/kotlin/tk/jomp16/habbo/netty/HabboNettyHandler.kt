@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -60,7 +60,6 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         log.info("Disconnecting user {}", username)
 
         if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn("Disconnection of {} unsuccessful!", username)
-        else log.info("Disconnection of user {} successful!", username)
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -75,7 +74,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
 
         if (evt is IdleStateEvent) {
-            if (!habboSession.authenticated) {
+            if (!habboSession.authenticated && !habboSession.handshaking) {
                 log.error("Found an connected user without doing the handshake! Disconnecting it!")
 
                 habboSession.channel.disconnect()
@@ -87,8 +86,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                 log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
 
                 ctx.close()
-            } else if (evt.state() == IdleState.WRITER_IDLE && habboSession.authenticated) {
-                log.info("Didn't send any message to user ${habboSession.userInformation.username}, pinging it.")
+            } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || habboSession.handshaking)) {
+                log.info("Didn't send any message to user ${if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()}, pinging it.")
 
                 habboSession.ping = System.nanoTime()
                 habboSession.sendHabboResponse(Outgoing.PING)

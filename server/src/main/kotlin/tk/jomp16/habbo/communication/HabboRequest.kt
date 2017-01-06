@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -41,9 +41,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
     override fun toString(): String {
         var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
 
-        for (i in 0..31) {
-            message = message.replace(i.toChar().toString(), "[$i]")
-        }
+        for (i in -32..31) message = message.replace(i.toChar().toString(), "[$i]")
 
         return message
     }

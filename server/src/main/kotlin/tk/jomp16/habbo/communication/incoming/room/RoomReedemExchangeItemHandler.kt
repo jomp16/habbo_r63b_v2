@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -40,10 +40,10 @@ class RoomReedemExchangeItemHandler {
         val split = roomItem.itemName.split('_')
         val credits = if (split[1] == "diamond") split[2].toInt() else split[1].toInt()
 
-        habboSession.userInformation.credits += credits
+        habboSession.userInformation.credits.set(habboSession.userInformation.credits.get() + credits)
         habboSession.updateAllCurrencies()
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
         ItemDao.deleteItem(itemId)
     }
 }

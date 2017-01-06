@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,9 +30,9 @@ class AStarFinder(
         private val diagonalMovement: DiagonalMovement = DiagonalMovement.ONLY_WHEN_NO_OBSTACLES,
         private val heuristic: IHeuristic = if (diagonalMovement == DiagonalMovement.NEVER) OctileHeuristic() else ManhattanHeuristic()
 ) : IFinder {
-    override fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int): List<Path> {
+    override fun findPath(grid: Grid, startX: Int, startY: Int, endX: Int, endY: Int, overrideBlocking: Boolean): List<Path> {
         val openList: Queue<Node> = PriorityQueue(compareBy(Node::f))
-        val closedList: MutableList<Node> = mutableListOf()
+        val closedList: MutableList<Node> = ArrayList()
 
         val startNode = grid.getNodeAt(startX, startY)
         val endNode = grid.getNodeAt(endX, endY)
@@ -55,7 +55,7 @@ class AStarFinder(
 
             // if reached the end position, construct the path and return it
             if (node == endNode) {
-                val path: MutableList<Path> = mutableListOf()
+                val path: MutableList<Path> = ArrayList()
 
                 var target: Node? = endNode
 
@@ -71,7 +71,7 @@ class AStarFinder(
             }
 
             // get neighbours of the current node
-            neighbors = grid.getNeighbors(node, diagonalMovement)
+            neighbors = grid.getNeighbors(node, diagonalMovement, overrideBlocking)
 
             neighbors.forEach { neighbor ->
                 if (closedList.contains(neighbor)) return@forEach

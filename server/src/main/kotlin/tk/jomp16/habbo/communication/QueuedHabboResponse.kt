@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,7 +22,7 @@ package tk.jomp16.habbo.communication
 import java.util.*
 
 class QueuedHabboResponse {
-    val headerIds: MutableList<Pair<Int, Array<out Any>>> = LinkedList() // Do not change this, LinkedHashMap is the only that keeps the insertion order
+    val headerIds: MutableList<Pair<Int, Array<out Any>>> = ArrayList() // Do not change this, LinkedList is the only that keeps the insertion order
 
     fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
         headerIds.add(headerId to args)

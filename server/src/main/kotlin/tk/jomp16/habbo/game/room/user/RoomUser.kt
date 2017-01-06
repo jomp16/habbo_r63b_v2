@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -48,15 +48,27 @@ class RoomUser(
 
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
 
+    var oldCurrentVector3: Vector3? = null
     var objectiveVector2: Vector2? = null
+    var objectiveRotation: Int = 0
+    var objectiveItem: RoomItem? = null
+
     private var stepSeatedVector3: Vector3? = null
 
-    private val walking: Boolean
-        get() = objectiveVector2 != null
+    val walking: Boolean
+        get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
+
     private val stepSeated: Boolean
         get() = stepSeatedVector3 != null
 
     private var idleCount: Int = 0
+    private var cycles: Int = 0
+    private var currentCycles: Int = 0
+
+    var walkingBlocked: Boolean = false
+    var ignoreBlocking: Boolean = false
+    var overrideBlocking: Boolean = false
+    var rollerId: Int = -1
 
     var idle: Boolean = false
         set(newValue) {
@@ -105,34 +117,48 @@ class RoomUser(
         }
 
         if (stepSeated) {
+            oldCurrentVector3 = currentVector3
             currentVector3 = stepSeatedVector3!!
 
             stepSeatedVector3 = null
         }
 
+        if (cycles > 0) {
+            if (currentCycles >= cycles) {
+                walkingBlocked = false
+                cycles = 0
+                currentCycles = 0
+            } else {
+                currentCycles++
+            }
+        }
+
         if (walking) {
-            if (objectiveVector2!! == currentVector3.vector2) {
+            if (objectiveVector2 == currentVector3.vector2) {
                 stopWalking()
             } else {
-                // todo: override, etc
-                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y)
+                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, rollerId != -1 || ignoreBlocking || overrideBlocking)
 
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
-                    removeUserStatuses()
-
                     val step = path.first()
 
-                    if (room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
+                    if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
                         stopWalking()
 
                         return
                     }
 
-                    // todo: room item handling
-
                     val vector2 = Vector2(step.x, step.y)
+
+                    val roomItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
+                    val roomItem1 = room.roomGamemap.getHighestItem(vector2)
+
+                    if (roomItem != roomItem1) {
+                        roomItem?.onUserWalksOff(this, true)
+                        roomItem1?.onUserWalksOn(this, true)
+                    }
 
                     if (vector2 == room.roomModel.doorVector3.vector2) {
                         room.removeUser(this, true, false)
@@ -142,14 +168,18 @@ class RoomUser(
 
                     room.roomGamemap.updateRoomUserMovement(this, currentVector3.vector2, vector2)
 
-                    val z = room.roomGamemap.getAbsoluteHeight(step.x, step.y)
+                    val z = room.roomGamemap.getAbsoluteHeight(vector2)
 
-                    addStatus("mv", "${step.x},${step.y},$z")
+                    stepSeatedVector3 = Vector3(vector2, z)
 
-                    bodyRotation = Rotation.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
-                    headRotation = bodyRotation
+                    if (rollerId == -1) {
+                        removeUserStatuses()
 
-                    stepSeatedVector3 = Vector3(step.x, step.y, z)
+                        bodyRotation = Rotation.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
+                        headRotation = bodyRotation
+
+                        addStatus("mv", "${step.x},${step.y},$z")
+                    }
                 }
             }
         } else {
@@ -162,8 +192,14 @@ class RoomUser(
         }
     }
 
-    fun moveTo(x: Int, y: Int) {
-        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y)))
+    fun moveTo(vector2: Vector2, rotation: Int = -1, rollerId: Int = -1, ignoreBlocking: Boolean = false, actingItem: RoomItem? = null) = moveTo(vector2.x, vector2.y, rotation, rollerId, ignoreBlocking, actingItem)
+
+    fun moveTo(x: Int, y: Int, rotation: Int = -1, rollerId: Int = -1, ignoreBlocking: Boolean = false, actingItem: RoomItem? = null): Boolean {
+        if (!ignoreBlocking && !overrideBlocking && walkingBlocked) return false
+
+        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y), rotation, actingItem, ignoreBlocking, rollerId))
+
+        return true
     }
 
     fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType, skipCommands: Boolean) {
@@ -184,8 +220,21 @@ class RoomUser(
 
     private fun stopWalking() {
         objectiveVector2 = null
+        ignoreBlocking = false
 
         removeStatus("mv")
+
+        if (objectiveRotation != -1) {
+            headRotation = objectiveRotation
+            bodyRotation = objectiveRotation
+
+            objectiveRotation = -1
+        }
+
+        if (objectiveItem != null) {
+            objectiveItem!!.furnishing.interactor?.onTrigger(room, this, objectiveItem!!, room.hasRights(habboSession, false), 0)
+            objectiveItem = null
+        }
 
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let {
             addUserStatuses(it)

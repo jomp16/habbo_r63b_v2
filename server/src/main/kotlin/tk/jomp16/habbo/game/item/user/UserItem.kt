@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,7 +33,7 @@ data class UserItem(
         val itemName: String,
         var extraData: String
 ) : IHabboResponseSerialize {
-    val limitedItemData: LimitedItemData? by lazy { ItemDao.getLimitedData(id) }
+    val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
 
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!

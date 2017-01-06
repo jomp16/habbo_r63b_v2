@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,6 +38,6 @@ class RoomItemMoveFloorHandler {
 
         if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.userInformation.username)
+        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.roomUser)
     }
 }

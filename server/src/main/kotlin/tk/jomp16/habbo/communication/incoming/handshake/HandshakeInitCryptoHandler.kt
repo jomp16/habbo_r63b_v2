@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,6 +31,8 @@ import tk.jomp16.habbo.game.user.HabboSession
 class HandshakeInitCryptoHandler {
     @Handler(Incoming.INIT_CRYPTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.handshaking = true
+
         val dh = DiffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.diffieHellmanKeySize)
 
         habboSession.diffieHellmanParams = dh

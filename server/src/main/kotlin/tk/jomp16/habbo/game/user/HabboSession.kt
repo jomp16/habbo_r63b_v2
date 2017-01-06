@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -77,8 +77,16 @@ class HabboSession(val channel: Channel) : Closeable {
 
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
 
+    var handshaking: Boolean = false
+
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
+
+    var targetTeleporterId: Int = -1
+    var teleportRoom: Room? = null
+
+    val teleporting: Boolean
+        get() = targetTeleporterId != -1
 
     val authenticated: Boolean
         get() {
@@ -191,21 +199,21 @@ class HabboSession(val channel: Channel) : Closeable {
         var updateCurrency = false
 
         if (LocalDateTime.now(Clock.systemUTC()).isAfter(localDateTime)) {
-            if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits < Int.MAX_VALUE) {
-                userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
+            if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits.get() < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits.get() < Int.MAX_VALUE) {
+                userInformation.credits.set(userInformation.credits.get() + HabboServer.habboConfig.rewardConfig.credits)
 
                 updateCurrency = true
 
             }
 
-            if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.credits < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.pixels < Int.MAX_VALUE) {
-                userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
+            if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.pixels.get() < HabboServer.habboConfig.rewardConfig.pixelsMax || userInformation.pixels.get() < Int.MAX_VALUE) {
+                userInformation.pixels.set(userInformation.pixels.get() + HabboServer.habboConfig.rewardConfig.pixels)
 
                 updateCurrency = true
             }
 
-            if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints < Int.MAX_VALUE)) {
-                userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
+            if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints.get() < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints.get() < Int.MAX_VALUE)) {
+                userInformation.vipPoints.set(userInformation.vipPoints.get() + HabboServer.habboConfig.rewardConfig.vipPoints)
 
                 updateCurrency = true
             }
@@ -219,23 +227,23 @@ class HabboSession(val channel: Channel) : Closeable {
     fun updateAllCurrencies() {
         if (!alreadySentPurse) alreadySentPurse = true
 
-        if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
-        if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
-        if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
+        if (userInformation.credits.get() < 0) userInformation.credits.set(Int.MAX_VALUE)
+        if (userInformation.pixels.get() < 0) userInformation.pixels.set(Int.MAX_VALUE)
+        if (userInformation.vip && userInformation.vipPoints.get() < 0) userInformation.vipPoints.set(Int.MAX_VALUE)
 
-        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
-        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
-        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
+        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits.get() > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits.set(HabboServer.habboConfig.rewardConfig.creditsMax)
+        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels.get() > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels.set(HabboServer.habboConfig.rewardConfig.pixelsMax)
+        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints.get() > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints.set(HabboServer.habboConfig.rewardConfig.vipPointsMax)
 
         val queuedHabboResponseEvent = QueuedHabboResponse()
 
-        queuedHabboResponseEvent += Outgoing.CREDITS_BALANCE to arrayOf(userInformation.credits)
-        queuedHabboResponseEvent += Outgoing.ACTIVITY_POINTS_BALANCE to arrayOf(userInformation.pixels, userInformation.vipPoints)
+        queuedHabboResponseEvent += Outgoing.CREDITS_BALANCE to arrayOf(userInformation.credits.get())
+        queuedHabboResponseEvent += Outgoing.ACTIVITY_POINTS_BALANCE to arrayOf(userInformation.pixels.get(), userInformation.vipPoints.get())
 
         sendQueuedHabboResponse(queuedHabboResponseEvent)
     }
 
-    fun enterRoom(room: Room, password: String, bypassAuth: Boolean = false) {
+    fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
         currentRoom?.removeUser(roomUser, false, false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)

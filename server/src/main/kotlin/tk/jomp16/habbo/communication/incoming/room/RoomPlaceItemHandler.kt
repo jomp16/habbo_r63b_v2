@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -68,7 +68,7 @@ class RoomPlaceItemHandler {
 
             val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
 
-            success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.userInformation.username)
+            success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
         } else {
             // parse floor data
             if (rawDataSplit.size < 4) return
@@ -79,7 +79,7 @@ class RoomPlaceItemHandler {
 
             val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
 
-            success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.userInformation.username)
+            success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
         }
 
         if (success) habboSession.habboInventory.removeItem(userItem)

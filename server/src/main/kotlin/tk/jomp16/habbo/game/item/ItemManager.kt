@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.database.item.ItemDao
-import tk.jomp16.habbo.game.item.interactors.DefaultItemInteractor
-import tk.jomp16.habbo.game.item.interactors.MannequinFurniInteractor
+import tk.jomp16.habbo.game.item.interactors.*
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
@@ -46,8 +45,10 @@ class ItemManager {
     val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
 
     val furnishings: MutableMap<String, Furnishing> = HashMap()
-    val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
+    val oldGiftWrapper: MutableList<Furnishing> = ArrayList()
+    val newGiftWrapper: MutableList<Furnishing> = ArrayList()
+    val teleportLinks: MutableMap<Int, Int> = HashMap()
+    val roomTeleportLinks: MutableMap<Int, Int> = HashMap()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
 
     init {
@@ -61,6 +62,8 @@ class ItemManager {
         oldGiftWrapper.clear()
         newGiftWrapper.clear()
         furniInteractor.clear()
+        teleportLinks.clear()
+        roomTeleportLinks.clear()
 
         urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
             val saxParser = SAXParserFactory.newInstance().newSAXParser()
@@ -74,17 +77,24 @@ class ItemManager {
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
+        teleportLinks += ItemDao.getTeleportLinks()
+
+        teleportLinks.keys.forEach { roomTeleportLinks.put(it, ItemDao.getLinkedTeleport(it)) }
 
         furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
         furniInteractor.put(InteractionType.MANNEQUIN, MannequinFurniInteractor())
+        furniInteractor.put(InteractionType.ONE_WAY_GATE, OneWayGateFurniInteractor())
+        furniInteractor.put(InteractionType.ROLLER, RollerFurniInteractor())
+        furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
+        log.info("Loaded {} teleport links!", teleportLinks.size / 2)
         log.info("Loaded {} item interactors!", furniInteractor.size)
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
-        val list: MutableList<Vector2> = mutableListOf()
+        val list: MutableList<Vector2> = ArrayList()
 
         for (i in 0..width - 1) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x

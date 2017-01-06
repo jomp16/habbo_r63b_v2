@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,7 @@ import java.time.Instant
 
 plugins {
     //noinspection GrUnresolvedAccess
-    id "nebula.kotlin" version "1.0.5-3" apply false
+    id "nebula.kotlin" version "1.0.6" apply false
     //noinspection GrUnresolvedAccess
     id "com.github.ben-manes.versions" version "0.13.0" apply false
     //noinspection GrUnresolvedAccess
@@ -65,6 +65,7 @@ subprojects {
         reflections_version = "0.9.10"
         mbassador_version = "1.3.0"
         bouncycastle_version = "1.55"
+        ehcache_version = "2.10.3"
     }
 
     //noinspection GrUnresolvedAccess

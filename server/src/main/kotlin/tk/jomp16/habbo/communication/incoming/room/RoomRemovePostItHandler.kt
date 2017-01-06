@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,7 +38,7 @@ class RoomRemovePostItHandler {
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
 
         ItemDao.deleteItem(itemId)
     }

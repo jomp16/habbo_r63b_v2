@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,14 +29,15 @@ import tk.jomp16.habbo.util.Utils
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 
 class RoomGamemap(private val room: Room) {
-    private val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
+    val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
-    private val roomUserMap: MutableMap<Vector2, MutableList<RoomUser>> = ConcurrentHashMap()
-    private val roomItemMap: MutableMap<Vector2, MutableList<RoomItem>> = ConcurrentHashMap()
+    val roomUserMap: MutableMap<Vector2, MutableSet<RoomUser>> = ConcurrentHashMap()
+    val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
 
-    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y -> !isBlocked(Vector2(x, y)) })
+    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) })
 
     init {
         room.floorItems.values.forEach { addRoomItem(it) }
@@ -48,18 +49,14 @@ class RoomGamemap(private val room: Room) {
         if (room.roomModel.squareStates[vector2.x][vector2.y] == SquareState.CLOSED) return true
         if (blockedItem[vector2.x][vector2.y]) return true
 
-        if (!ignoreUsers) {
-            if (!room.roomData.allowWalkThrough) return roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty()
-        }
-
-        return false
+        return if (!ignoreUsers && !room.roomData.allowWalkThrough) roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty() else false
     }
 
     fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = Math.abs(x1 - x2) + Math.abs(y1 - y2)
 
     fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
         if (!roomUserMap.containsKey(vector2)) {
-            val roomUsers: MutableList<RoomUser> = mutableListOf()
+            val roomUsers: MutableSet<RoomUser> = CopyOnWriteArraySet()
             roomUsers.add(roomUser)
 
             roomUserMap.put(vector2, roomUsers)
@@ -86,7 +83,7 @@ class RoomGamemap(private val room: Room) {
     private fun setRoomItem(vector2: Vector2, roomItem: RoomItem) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
-        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, mutableListOf())
+        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, CopyOnWriteArraySet())
 
         if (roomItemMap[vector2]!!.contains(roomItem)) return
 
@@ -102,6 +99,8 @@ class RoomGamemap(private val room: Room) {
                     && !(roomItem.furnishing.canSit || roomItem.furnishing.interactionType == InteractionType.BED)
         }
     }
+
+    fun getAbsoluteHeight(vector2: Vector2) = getAbsoluteHeight(vector2.x, vector2.y)
 
     fun getAbsoluteHeight(x: Int, y: Int): Double {
         val vector2 = Vector2(x, y)
@@ -160,5 +159,5 @@ class RoomGamemap(private val room: Room) {
         getHighestItem(vector2)?.let { setRoomItem(vector2, it) }
     }
 
-    fun getUsersFromVector2(vector2: Vector2): List<RoomUser> = roomUserMap[vector2] ?: emptyList()
+    fun getUsersFromVector2(vector2: Vector2): Set<RoomUser> = roomUserMap[vector2] ?: emptySet()
 }

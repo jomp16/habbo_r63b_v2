@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,10 +21,7 @@ package tk.jomp16.habbo.game.item.xml
 
 data class FurniXMLInfo(
         var spriteId: Int = 0,
-        var revision: Int = 0,
         var itemName: String = "",
-        var publicName: String = "",
-        var description: String = "",
         var defaultDir: Int = 0,
         var xDim: Int = 0,
         var yDim: Int = 0,
@@ -32,6 +29,5 @@ data class FurniXMLInfo(
         var canSitOn: Boolean = false,
         var canLayOn: Boolean = false,
         var wallFurni: Boolean = false,
-        var customParams: String = "",
-        var furniLine: String = ""
+        var customParams: String = ""
 )

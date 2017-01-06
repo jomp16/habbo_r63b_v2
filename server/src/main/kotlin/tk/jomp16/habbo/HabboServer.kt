@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -34,7 +34,9 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
+import io.netty.handler.ipfilter.UniqueIpFilter
 import io.netty.handler.timeout.IdleStateHandler
+import net.sf.ehcache.CacheManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -49,6 +51,7 @@ import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
+import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.Closeable
@@ -66,6 +69,7 @@ object HabboServer : Closeable {
     lateinit var habboConfig: HabboConfig
 
     val pluginManager: PluginManager = PluginManager()
+    val cacheManager: CacheManager = CacheManager.newInstance()
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
@@ -155,6 +159,7 @@ object HabboServer : Closeable {
             // load plugins
             log.info("Loading plugins...")
             pluginManager.addPlugin(RoomCommandsManagerListener())
+            pluginManager.addPlugin(RoomCommandsListener())
             pluginManager.addPlugin(CatalogCommandsListener())
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")
@@ -175,13 +180,15 @@ object HabboServer : Closeable {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
                 val habboNettyHandler = HabboNettyHandler()
+                val uniqueIpFilterHandler = UniqueIpFilter()
 
                 serverBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
                                 socketChannel.pipeline().apply {
-                                    addLast(IdleStateHandler(60, 30, 0))
+                                    addLast(uniqueIpFilterHandler)
+                                    addLast(IdleStateHandler(30, 10, 0))
 
                                     addLast(stringEncoder)
                                     addLast(habboNettyEncoder)

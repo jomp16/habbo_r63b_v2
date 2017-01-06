@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -58,7 +58,7 @@ class PermissionManager {
         val metadata = resultSet.metaData
 
         while (resultSet.next()) {
-            val permissions: MutableList<String> = mutableListOf()
+            val permissions: MutableList<String> = ArrayList()
 
             for (i in 3..metadata.columnCount) {
                 if (resultSet.getBoolean(i)) {

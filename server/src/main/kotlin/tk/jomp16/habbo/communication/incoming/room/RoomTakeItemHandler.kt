@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -41,7 +41,7 @@ class RoomTakeItemHandler {
 
         if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
-        if (habboSession.currentRoom!!.removeItem(roomItem)) {
+        if (habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)) {
             HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(listOf(UserItem(
                     roomItem.id,
                     roomItem.userId,

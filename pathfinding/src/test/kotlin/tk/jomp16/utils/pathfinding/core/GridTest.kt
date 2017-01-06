@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,7 @@ class GridTest {
 
         (0..height - 1).forEach { y ->
             (0..width - 1).forEach { x ->
-                Assert.assertTrue("should set all nodes walkable attribute", grid.isWalkable(grid, x, y))
+                Assert.assertTrue("should set all nodes walkable attribute", grid.isWalkable(grid, x, y, false))
             }
         }
     }
@@ -55,7 +55,7 @@ class GridTest {
 
         var invertResult = false
 
-        val grid = Grid(width, height) { grid, x, y ->
+        val grid = Grid(width, height) { grid, x, y, overrideBlocking ->
             grid.isInside(x, y) && if (invertResult) matrix[y][x] == 0 else matrix[y][x] == 1
         }
 
@@ -64,7 +64,7 @@ class GridTest {
 
         (0..height - 1).forEach { y ->
             (0..width - 1).forEach { x ->
-                Assert.assertEquals("should return correct answer for position validity query", matrix[y][x] == 1, grid.isWalkable(grid, x, y))
+                Assert.assertEquals("should return correct answer for position validity query", matrix[y][x] == 1, grid.isWalkable(grid, x, y, false))
             }
         }
 
@@ -87,8 +87,7 @@ class GridTest {
 
         invertResult = true
 
-        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(0, 2)), grid.getNeighbors(grid.getNodeAt(0, 1), DiagonalMovement.NEVER))
-        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(1, 0), grid.getNodeAt(2, 1), grid.getNodeAt(3, 1)), grid.getNeighbors(grid.getNodeAt(2, 0), DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE)
-                .sortedWith(Comparator { a, b -> a.x * 100 + a.y - b.x * 100 - b.y }))
+        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(0, 2)), grid.getNeighbors(grid.getNodeAt(0, 1), DiagonalMovement.NEVER, false))
+        Assert.assertEquals("should return correct neighbors", listOf(grid.getNodeAt(1, 0), grid.getNodeAt(2, 1), grid.getNodeAt(3, 1)), grid.getNeighbors(grid.getNodeAt(2, 0), DiagonalMovement.IF_AT_MOST_ONE_OBSTACLE, false).sortedWith(Comparator { a, b -> a.x * 100 + a.y - b.x * 100 - b.y }))
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,38 +36,29 @@ import java.util.concurrent.TimeUnit
 class HabboGame {
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
 
-    val landingManager: LandingManager
-    val roomManager: RoomManager
-    val itemManager: ItemManager
-    val catalogManager: CatalogManager
-    val navigatorManager: NavigatorManager
-    val permissionManager: PermissionManager
-    val moderationManager: ModerationManager
+    val landingManager: LandingManager = LandingManager()
+    val roomManager: RoomManager = RoomManager()
+    val itemManager: ItemManager = ItemManager()
+    val catalogManager: CatalogManager = CatalogManager()
+    val navigatorManager: NavigatorManager = NavigatorManager()
+    val permissionManager: PermissionManager = PermissionManager()
+    val moderationManager: ModerationManager = ModerationManager()
 
     init {
-        landingManager = LandingManager()
-        roomManager = RoomManager()
-        itemManager = ItemManager()
-        catalogManager = CatalogManager()
-        navigatorManager = NavigatorManager()
-        permissionManager = PermissionManager()
-        moderationManager = ModerationManager()
-
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.habboSubscription.validUserSubscription }
-                    .forEach { it.habboSubscription.clearSubscription() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach(HabboSession::rewardUser)
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach(HabboSession::rewardUser)
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveQueuedItems)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.saveAllQueuedStuffs() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { it.saveAllQueuedStuffs() }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

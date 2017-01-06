@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,9 +21,10 @@ package tk.jomp16.habbo.game.item.xml
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
+import java.util.*
 
 class FurniXMLHandler : DefaultHandler() {
-    val furniXMLInfos: MutableList<FurniXMLInfo> = mutableListOf()
+    val furniXMLInfos: MutableList<FurniXMLInfo> = ArrayList()
 
     private var wallFurni: Boolean = false
     private var furniXMLInfo: FurniXMLInfo? = null
@@ -45,9 +46,6 @@ class FurniXMLHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, qName: String) {
         when (qName) {
             "furnitype" -> furniXMLInfo?.let { furniXMLInfos += it }
-            "revision" -> furniXMLInfo?.revision = content.trim().toInt()
-            "name" -> furniXMLInfo?.publicName = content.trim()
-            "description" -> furniXMLInfo?.description = content.trim()
             "defaultdir" -> furniXMLInfo?.defaultDir = content.trim().toInt()
             "xdim" -> furniXMLInfo?.xDim = content.trim().toInt()
             "ydim" -> furniXMLInfo?.yDim = content.trim().toInt()
@@ -55,7 +53,6 @@ class FurniXMLHandler : DefaultHandler() {
             "cansiton" -> furniXMLInfo?.canSitOn = content.trim() == "1"
             "canlayon" -> furniXMLInfo?.canLayOn = content.trim() == "1"
             "customparams" -> furniXMLInfo?.customParams = content.trim()
-            "furniline" -> furniXMLInfo?.furniLine = content.trim()
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,5 +20,7 @@
 package tk.jomp16.habbo.util
 
 data class Vector3(val x: Int, val y: Int, val z: Double) {
+    constructor(vector2: Vector2, z: Double) : this(vector2.x, vector2.y, z)
+
     val vector2: Vector2 = Vector2(x, y)
 }

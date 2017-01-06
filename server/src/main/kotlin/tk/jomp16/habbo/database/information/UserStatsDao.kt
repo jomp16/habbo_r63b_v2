@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,59 +19,68 @@
 
 package tk.jomp16.habbo.database.information
 
+import net.sf.ehcache.Ehcache
+import net.sf.ehcache.Element
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserStats
+import tk.jomp16.habbo.kotlin.addAndGetEhCache
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
 import java.time.Clock
 import java.time.LocalDateTime
 
 object UserStatsDao {
-    fun getUserStats(userId: Int): UserStats {
-        val tmp = HabboServer.database {
-            select("SELECT * FROM users_stats WHERE user_id = :user_id LIMIT 1",
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                UserStats(
-                        it.int("id"),
-                        it.localDateTime("last_online"),
-                        it.long("online_seconds"),
-                        it.int("room_visits"),
-                        it.int("respect"),
-                        it.int("gifts_given"),
-                        it.int("gifts_received"),
-                        it.int("daily_respect_points"),
-                        it.int("daily_pet_respect_points"),
-                        it.int("daily_competition_votes"),
-                        it.int("achievement_score"),
-                        it.int("quest_id"),
-                        it.int("quest_progress"),
-                        it.int("favorite_group"),
-                        it.int("tickets_answered"),
-                        it.int("marketplace_tickets"),
-                        it.localDateTime("credits_last_update"),
-                        it.localDateTime("respect_last_update")
-                )
-            }.firstOrNull()
-        }
+    private val userStatsCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userStatsCache")
 
-        if (tmp == null) {
-            // no users stats, create it
-            HabboServer.database {
-                insertAndGetGeneratedKey("INSERT INTO users_stats (user_id) VALUES (:id)",
+    fun getUserStats(userId: Int, cache: Boolean = true): UserStats {
+        if (!cache || !userStatsCache.isKeyInCache(userId)) {
+            val userStats = HabboServer.database {
+                select("SELECT * FROM users_stats WHERE user_id = :user_id LIMIT 1",
                         mapOf(
-                                "id" to userId
+                                "user_id" to userId
                         )
-                )
+                ) {
+                    UserStats(
+                            it.int("id"),
+                            it.localDateTime("last_online"),
+                            it.long("online_seconds"),
+                            it.int("room_visits"),
+                            it.int("respect"),
+                            it.int("gifts_given"),
+                            it.int("gifts_received"),
+                            it.int("daily_respect_points"),
+                            it.int("daily_pet_respect_points"),
+                            it.int("daily_competition_votes"),
+                            it.int("achievement_score"),
+                            it.int("quest_id"),
+                            it.int("quest_progress"),
+                            it.int("favorite_group"),
+                            it.int("tickets_answered"),
+                            it.int("marketplace_tickets"),
+                            it.localDateTime("credits_last_update"),
+                            it.localDateTime("respect_last_update")
+                    )
+                }.firstOrNull()
             }
 
-            // Now fetch it again, doing a one recursive call, and returns this
-            return getUserStats(userId)
+            if (userStats == null) {
+                // no users stats, create it
+                HabboServer.database {
+                    insertAndGetGeneratedKey("INSERT INTO users_stats (user_id) VALUES (:id)",
+                            mapOf(
+                                    "id" to userId
+                            )
+                    )
+                }
+
+                // Now fetch it again, doing a one recursive call, and returns this
+                return getUserStats(userId)
+            }
+
+            userStatsCache.put(Element(userId, userStats))
         }
 
-        return tmp
+        return userStatsCache.get(userId).objectValue as UserStats
     }
 
     fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,7 +38,7 @@ class RoomItemUseClothingHandler {
 
         if (roomItem.userId != habboSession.userInformation.id || !roomItem.furnishing.itemName.startsWith("clothing_")) return
 
-        habboSession.currentRoom!!.removeItem(roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
 
         habboSession.userInformation.clothings += roomItem.itemName
 

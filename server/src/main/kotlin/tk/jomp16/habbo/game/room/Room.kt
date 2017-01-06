@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -43,6 +43,7 @@ import tk.jomp16.habbo.util.Vector3
 import tk.jomp16.utils.pathfinding.IFinder
 import tk.jomp16.utils.pathfinding.core.finders.AStarFinder
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSerialize {
@@ -53,33 +54,36 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val emptyCounter: AtomicInteger = AtomicInteger()
     val errorsCounter: AtomicInteger = AtomicInteger()
 
-    val roomItems: MutableMap<Int, RoomItem> by lazy {
-        val items = HashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id })
-
-        items.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
-
-        return@lazy items
-    }
+    val roomItems: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id }) }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
 
-    val rights: MutableList<RightData> by lazy { ArrayList(RoomDao.getRights(roomData.id)) }
+    val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
 
     val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
-    val roomUsersWithRights: List<RoomUser>
-        get() = roomUsers.values.filter { hasRights(it.habboSession, false) }
+    val roomUsersWithRights: Set<RoomUser>
+        get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
 
     val roomGamemap: RoomGamemap by lazy { RoomGamemap(this) }
     val pathfinder: IFinder by lazy { AStarFinder() }
 
-    private val roomItemsToSave: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
+    private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
 
     var roomDimmer: RoomDimmer? = null
 
-    fun sendHabboResponse(headerId: Int, vararg args: Any) {
+    private var initialized: Boolean = false
+
+    fun initialize() {
+        if (!initialized) {
+            roomItems.values.filter { it.furnishing.interactor != null }.forEach { it.furnishing.interactor?.onPlace(this, null, it) }
+            roomItems.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
+        }
+    }
+
+    fun sendHabboResponse(headerId: Int, vararg args: Any?) {
         // todo: find a way to cache habbo response
 
         roomUsers.values.forEach { it.habboSession?.sendHabboResponse(headerId, *args) }
@@ -194,32 +198,46 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItemsToSave.clear()
     }
 
-    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, userName: String, overrideZ: Double = -1.toDouble()): Boolean {
+    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = -1.toDouble(), rollerId: Int = -1): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
+        val onlyRotation = roomItem.rotation == rotation
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
-            if (roomItem.rotation == rotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it, true) && overrideZ == -1.toDouble()) {
+            if (onlyRotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it, true) && overrideZ == -1.toDouble()) {
                 // cannot set item, because at least one tile is blocked
 
                 return false
             }
         }
 
-        val affectedTiles = mutableSetOf<Vector2>()
+        val affectedTiles = HashSet<Vector2>()
 
         if (!newItem) {
             roomGamemap.removeRoomItem(roomItem)
 
             HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                 it.forEach { vector2 ->
-                    roomGamemap.getUsersFromVector2(vector2).forEach(RoomUser::removeUserStatuses)
+                    roomGamemap.getUsersFromVector2(vector2).forEach {
+                        if (!onlyRotation) {
+                            roomItem.onUserWalksOff(it, true)
+
+                            it.removeUserStatuses()
+
+                            it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                            it.updateNeeded = true
+                        }
+                    }
                 }
 
                 affectedTiles += it
             }
+
+            roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
         }
+
+        val oldPosition = roomItem.position
 
         roomItem.position = Vector3(position.x, position.y, if (overrideZ != -1.toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
         roomItem.rotation = rotation
@@ -229,7 +247,14 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItem.affectedTiles.let {
             it.forEach { vector2 ->
                 roomGamemap.getUsersFromVector2(vector2).forEach {
-                    it.addUserStatuses(roomItem)
+                    if (!onlyRotation) {
+                        roomItem.onUserWalksOn(it, true)
+
+                        it.addUserStatuses(roomItem)
+
+                        it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                        it.updateNeeded = true
+                    }
                 }
             }
 
@@ -237,15 +262,20 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         }
 
         // todo: wired
-        // todo: furni interactor
-        // todo: roller
+        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
 
         if (newItem) {
             roomItems.put(roomItem.id, roomItem)
 
-            roomItem.addToRoom(this, true, true, userName)
+            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
-            roomItem.update(true, true)
+            if (rollerId == -1) {
+                roomItem.update(true, true)
+            } else {
+                sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
+
+                addItemToSave(roomItem)
+            }
         }
 
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
@@ -253,7 +283,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         return true
     }
 
-    fun setWallItem(roomItem: RoomItem, wallData: List<String>, userName: String): Boolean {
+    fun setWallItem(roomItem: RoomItem, wallData: List<String>, roomUser: RoomUser?): Boolean {
         if (wallData.size != 3 || !wallData[0].startsWith(":w=") || !wallData[1].startsWith("l=") || wallData[2] != "r" && wallData[2] != "l") return false
 
         val newItem = !roomItems.containsKey(roomItem.id)
@@ -261,10 +291,10 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         val wBit = wallData[0].substring(3, wallData[0].length)
         val lBit = wallData[1].substring(2, wallData[1].length)
 
-        if (!wBit.contains(",") || !lBit.contains(",")) return false
+        if (!wBit.contains(',') || !lBit.contains(',')) return false
 
-        val wBitSplit = wBit.split(",".toRegex())
-        val lBitSplit = lBit.split(",".toRegex())
+        val wBitSplit = wBit.split(',')
+        val lBitSplit = lBit.split(',')
 
         val w1 = wBitSplit[0].toInt()
         val w2 = wBitSplit[1].toInt()
@@ -275,7 +305,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         roomItem.wallPosition = ":w=$w1,$w2 l=$l1,$l2 ${wallData[2]}"
 
-        // todo: furni interactor
+        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
+
         if (newItem) {
             if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
                 // todo: dimmer
@@ -287,7 +318,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomItems.put(roomItem.id, roomItem)
 
-            roomItem.addToRoom(this, true, true, userName)
+            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             roomItem.update(true, true)
         }
@@ -295,15 +326,20 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         return true
     }
 
-    fun removeItem(roomItem: RoomItem): Boolean {
+    fun removeItem(roomUser: RoomUser, roomItem: RoomItem): Boolean {
         if (!roomItems.containsValue(roomItem)) return false
 
         roomItems.remove(roomItem.id)
         roomGamemap.removeRoomItem(roomItem)
 
         // todo: WIRED
-        // todo: dimmer
-        // todo: furni interactor
+        if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
+            ItemDao.saveDimmer(roomDimmer!!)
+
+            roomDimmer = null
+        }
+
+        roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
 
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (roomItem.furnishing.type) {
@@ -312,7 +348,14 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
                 HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                     it.forEach { vector2 ->
-                        roomGamemap.getUsersFromVector2(vector2).forEach(RoomUser::removeUserStatuses)
+                        roomGamemap.getUsersFromVector2(vector2).forEach {
+                            roomItem.onUserWalksOff(it, true)
+
+                            it.removeUserStatuses()
+
+                            it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                            it.updateNeeded = true
+                        }
                     }
 
                     sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.RoomState
 import tk.jomp16.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSaveSettingsHandler {
@@ -51,18 +52,16 @@ class RoomSaveSettingsHandler {
 
         var roomMaxUsers = habboRequest.readInt()
 
-        if (roomMaxUsers < 10) {
-            roomMaxUsers = 10
-        }
+        if (roomMaxUsers < 10) roomMaxUsers = 10
 
         val roomCategoryId = habboRequest.readInt()
 
-        val tags: MutableList<String> = mutableListOf()
+        val tags: MutableList<String> = ArrayList()
 
         val roomTagCount = habboRequest.readInt()
 
         (0..roomTagCount - 1).forEach { i ->
-            val tag = habboRequest.readUTF().trim { it <= ' ' }.replace(",", "")
+            val tag = habboRequest.readUTF().replace(",", "")
 
             if (!tag.isEmpty() && tag.length <= 30) tags += tag
         }

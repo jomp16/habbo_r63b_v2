@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,12 +35,13 @@ import tk.jomp16.utils.plugin.json.PluginInfo
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
+import java.util.*
 
 class PluginManager : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val pluginsListener: MutableList<Pair<ClassLoader, PluginListener>> = mutableListOf()
-    val pluginsJar: MutableMap<String, Triple<PluginInfo, ClassLoader, List<PluginListener>>> = mutableMapOf()
+    val pluginsListener: MutableList<Pair<ClassLoader, PluginListener>> = ArrayList()
+    val pluginsJar: MutableMap<String, Triple<PluginInfo, ClassLoader, List<PluginListener>>> = HashMap()
     private val eventBus = MBassador<Any>(IPublicationErrorHandler { error -> log.error("An error happened when handling listener!", error) })
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
@@ -113,7 +114,7 @@ class PluginManager : AutoCloseable {
     }
 
     private fun loadPluginListenersFromJar(jarFile: File): Pair<ClassLoader, List<PluginListener>> {
-        val pluginListeners: MutableList<PluginListener> = mutableListOf()
+        val pluginListeners: MutableList<PluginListener> = ArrayList()
 
         val urls = arrayOf<URL>(jarFile.toURI().toURL())
         val urlClassLoader = URLClassLoader(urls, ClassLoader.getSystemClassLoader())

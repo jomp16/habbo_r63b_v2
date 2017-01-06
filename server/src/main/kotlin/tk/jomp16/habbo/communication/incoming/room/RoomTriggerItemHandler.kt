@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,7 +26,8 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomTriggerItemHandler {
-    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM)
+    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM, Incoming.ROOM_TRIGGER_ONE_WAY_GATE, Incoming.ROOM_TRIGGER_HABBO_WHEEL,
+            Incoming.ROOM_TRIGGER_CLOSE_DICE, Incoming.ROOM_TRIGGER_ROLL_DICE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 

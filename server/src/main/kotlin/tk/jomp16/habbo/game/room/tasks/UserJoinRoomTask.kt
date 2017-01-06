@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,11 +31,26 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
         val queuedHabboResponse = QueuedHabboResponse()
 
-        room.roomUsers.put(roomUser.virtualID, roomUser)
-        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
-
         roomUser.habboSession?.let {
             it.roomUser = roomUser
+
+            if (it.teleporting) {
+                room.roomItems[it.targetTeleporterId]?.let { teleportItem ->
+                    if (!teleportItem.interactingUsers.containsKey(2)) {
+                        roomUser.walkingBlocked = true
+                        roomUser.currentVector3 = teleportItem.position
+                        roomUser.headRotation = teleportItem.rotation
+                        roomUser.bodyRotation = teleportItem.rotation
+
+                        teleportItem.interactingUsers.put(2, roomUser)
+                        teleportItem.extraData = "2"
+                        teleportItem.update(false, true)
+                        teleportItem.requestCycles(2)
+                    }
+
+                    roomUser.habboSession.targetTeleporterId = 0
+                }
+            }
 
             queuedHabboResponse += Outgoing.ROOM_HEIGHTMAP to arrayOf(room)
             queuedHabboResponse += Outgoing.ROOM_FLOORMAP to arrayOf(room)
@@ -76,6 +91,9 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             // todo: wired
         }
+
+        room.roomUsers.put(roomUser.virtualID, roomUser)
+        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         // todo: add support to bots
         roomUser.habboSession?.let {
