@@ -20,3 +20,5 @@ packet_infos/
 plugins/
 
 *.txt
+
+!server/src/main/resources/ascii_art.txt
