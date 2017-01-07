@@ -36,7 +36,7 @@ class RoomTask : Runnable {
     val queuedTasks: MutableMap<Room, Queue<IRoomTask>> = ConcurrentHashMap()
 
     fun addRoom(room: Room) {
-        log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.caption)
+        log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         rooms += room
         queuedTasks.put(room, ArrayDeque())
@@ -49,7 +49,7 @@ class RoomTask : Runnable {
     }
 
     fun removeRoom(room: Room) {
-        log.info("Closing room n° {} - name {}", room.roomData.id, room.roomData.caption)
+        log.info("Closing room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         room.roomUsers.values.toList().forEach { room.removeUser(it, true, true) }
 

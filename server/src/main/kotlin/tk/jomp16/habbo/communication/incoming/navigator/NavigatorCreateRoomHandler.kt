@@ -49,6 +49,6 @@ class NavigatorCreateRoomHandler {
 
         // FlatCreatedComposer id, name
 
-        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.caption)
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
     }
 }

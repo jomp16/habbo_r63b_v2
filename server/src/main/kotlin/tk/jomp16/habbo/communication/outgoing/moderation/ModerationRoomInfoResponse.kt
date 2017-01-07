@@ -35,7 +35,7 @@ class ModerationRoomInfoResponse {
             writeInt(room.roomData.ownerId)
             writeUTF(room.roomData.ownerName)
             writeBoolean(true) // room data, always true because I have the info
-            writeUTF(room.roomData.caption)
+            writeUTF(room.roomData.name)
             writeUTF(room.roomData.description)
             writeInt(room.roomData.tags.size)
 

@@ -35,7 +35,7 @@ class NavigatorLiftedRoomsResponse {
                 writeInt(it.roomData.id)
                 writeInt(0) // ?
                 writeUTF("") // image ?
-                writeUTF(it.roomData.caption)
+                writeUTF(it.roomData.name)
             }
         }
     }

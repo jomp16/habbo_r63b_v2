@@ -30,7 +30,7 @@ class RoomSettingsResponse {
     fun handle(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeInt(room.roomData.id)
-            writeUTF(room.roomData.caption)
+            writeUTF(room.roomData.name)
             writeUTF(room.roomData.description)
             writeInt(room.roomData.state.state)
             writeInt(room.roomData.category)

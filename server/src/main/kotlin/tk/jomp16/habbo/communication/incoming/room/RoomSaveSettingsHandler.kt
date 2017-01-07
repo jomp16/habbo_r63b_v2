@@ -91,7 +91,7 @@ class RoomSaveSettingsHandler {
         if (chatMaxDistance > 99) chatMaxDistance = 99
         if (chatFloodProtection > 2) chatFloodProtection = 2
 
-        room.roomData.caption = roomName
+        room.roomData.name = roomName
         room.roomData.description = roomDescription
         room.roomData.state = roomState
         room.roomData.password = HabboServer.habboGame.passwordEncryptor.encryptPassword(roomPassword)

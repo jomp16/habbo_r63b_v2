@@ -32,7 +32,7 @@ object CatalogDao {
             CatalogPage(
                     it.int("id"),
                     it.int("parent_id"),
-                    it.string("caption"),
+                    it.string("name"),
                     it.string("code_name"),
                     it.int("icon_image"),
                     it.boolean("visible"),

@@ -24,7 +24,7 @@ import tk.jomp16.habbo.database.information.UserInformationDao
 data class RoomData(
         val id: Int,
         val roomType: RoomType,
-        var caption: String,
+        var name: String,
         val ownerId: Int,
         var description: String,
         var category: Int,

@@ -50,7 +50,7 @@ object RoomDao {
     private fun getRoomData(row: Row) = RoomData(
             row.int("id"),
             RoomType.valueOf(row.string("room_type").toUpperCase()),
-            row.string("caption"),
+            row.string("name"),
             row.int("owner_id"),
             row.string("description"),
             row.int("category"),
@@ -141,10 +141,10 @@ object RoomDao {
 
     fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int) = HabboServer.database {
         insertAndGetGeneratedKey(
-                "INSERT INTO rooms (caption, description, owner_id, model_name, category, users_max, trade_state)" +
-                        "VALUES (:caption, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
+                "INSERT INTO rooms (name, description, owner_id, model_name, category, users_max, trade_state)" +
+                        "VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
                 mapOf(
-                        "caption" to name,
+                        "name" to name,
                         "description" to description,
                         "owner_id" to userId,
                         "model_name" to model,
@@ -181,7 +181,7 @@ object RoomDao {
 
     fun updateRoomData(roomData: RoomData) {
         HabboServer.database {
-            update("UPDATE rooms SET caption = :caption, description = :description, state = :state, password = :password, " +
+            update("UPDATE rooms SET name = :name, description = :description, state = :state, password = :password, " +
                     "users_max = :users_max, category = :category, tags = :tags, trade_state = :trade_state, allow_pets = :allow_pets, " +
                     "allow_pets_eat = :allow_pets_eat, allow_walk_through = :allow_walk_through, hide_wall = :hide_wall, " +
                     "wall_thick = :wall_thick, floor_thick = :floor_thick, wall_height = :wall_height, mute_settings = :mute_settings, " +
@@ -189,7 +189,7 @@ object RoomDao {
                     "chat_speed = :chat_speed, chat_max_distance = :chat_max_distance, chat_flood_protection = :chat_flood_protection, " +
                     "floor = :floor, wallpaper = :wallpaper, landscape = :landscape, group_id = :group_id WHERE id = :room_id",
                     mapOf(
-                            "caption" to roomData.caption,
+                            "name" to roomData.name,
                             "description" to roomData.description,
                             "state" to roomData.state.name.toLowerCase(),
                             "password" to roomData.password,

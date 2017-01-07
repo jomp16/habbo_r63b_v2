@@ -122,9 +122,9 @@ class NavigatorSearchResponse {
                     it.roomData.roomType == RoomType.PUBLIC -> false
                     searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
                     searchTerm.startsWith("tag:") -> it.roomData.tags.any { it == searchTerm.substring(4) }
-                    searchTerm.startsWith("roomname:") -> it.roomData.caption == searchTerm.substring(9)
+                    searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
                     it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    it.roomData.caption.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
+                    it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     else -> it.roomData.tags.any { it.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex()) }
                 }

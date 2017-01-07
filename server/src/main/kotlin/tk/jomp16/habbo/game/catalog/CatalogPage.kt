@@ -26,7 +26,7 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 data class CatalogPage(
         val id: Int,
         val parentId: Int,
-        val caption: String,
+        val name: String,
         val codename: String,
         val iconImage: Int,
         val visible: Boolean,
@@ -56,7 +56,7 @@ data class CatalogPage(
             writeInt(iconImage)
             writeInt(if (pageLayout == "category") -1 else id)
             writeUTF(codename)
-            writeUTF(caption)
+            writeUTF(name)
 
             // todo: catalog item offers?
             writeInt(0)

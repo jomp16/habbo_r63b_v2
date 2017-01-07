@@ -139,7 +139,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             val enterRoom = params[1] as Boolean
 
             writeInt(roomData.id)
-            writeUTF(roomData.caption)
+            writeUTF(roomData.name)
             writeInt(roomData.ownerId)
             writeUTF(roomData.ownerName)
             writeInt(roomData.state.state)
