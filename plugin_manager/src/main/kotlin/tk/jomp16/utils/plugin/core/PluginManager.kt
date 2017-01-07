@@ -41,7 +41,7 @@ class PluginManager : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     val pluginsListener: MutableList<Pair<ClassLoader, PluginListener>> = ArrayList()
-    val pluginsJar: MutableMap<String, Triple<PluginInfo, ClassLoader, List<PluginListener>>> = HashMap()
+    val pluginsJar: MutableMap<String, Triple<PluginInfo, URLClassLoader, List<PluginListener>>> = HashMap()
     private val eventBus = MBassador<Any>(IPublicationErrorHandler { error -> log.error("An error happened when handling listener!", error) })
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
@@ -50,26 +50,30 @@ class PluginManager : AutoCloseable {
 
         log.info("Loading plugins from dir ${fileDir.name}...")
 
-        fileDir.walk().filter { it.isFile && it.extension == "jar" }.forEach { pluginFile ->
-            val pluginPair = loadPluginListenersFromJar(pluginFile)
-
-            val pluginPropertiesStream = pluginPair.first.getResourceAsStream("plugin.json")
-
-            if (pluginPropertiesStream == null) {
-                log.error("Plugin ${pluginFile.name} didn't have a plugin.json!")
-
-                return@forEach
-            }
-
-            val pluginInfo: PluginInfo = objectMapper.readValue(pluginPropertiesStream)
-
-            if (pluginsJar.containsKey(pluginInfo.name)) return@forEach
-
-            pluginPair.second.forEach { addPlugin(it, pluginPair.first) }
-            pluginsJar.put(pluginInfo.name, Triple(pluginInfo, pluginPair.first, pluginPair.second))
-
-            log.info("Loaded plugin: $pluginInfo")
+        fileDir.walk().filter { it.isFile && !it.absolutePath.contains("lib") && it.extension == "jar" }.forEach { pluginFile ->
+            addPluginJar(pluginFile)
         }
+    }
+
+    fun addPluginJar(pluginFile: File) {
+        val pluginPair = loadPluginListenersFromJar(pluginFile)
+
+        val pluginPropertiesStream = pluginPair.first.getResourceAsStream("plugin.json")
+
+        if (pluginPropertiesStream == null) {
+            log.error("Plugin ${pluginFile.name} didn't have a plugin.json!")
+
+            return
+        }
+
+        val pluginInfo: PluginInfo = objectMapper.readValue(pluginPropertiesStream)
+
+        if (pluginsJar.containsKey(pluginInfo.name)) return
+
+        pluginPair.second.forEach { addPlugin(it, pluginPair.first) }
+        pluginsJar.put(pluginInfo.name, Triple(pluginInfo, pluginPair.first, pluginPair.second))
+
+        log.info("Loaded plugin: $pluginInfo")
     }
 
     fun addPlugin(pluginListener: PluginListener, classLoader: ClassLoader = javaClass.classLoader) {
@@ -90,8 +94,8 @@ class PluginManager : AutoCloseable {
 
         pluginListener.onDestroy()
 
-        pluginsListener.removeAll { it.second == pluginListener }
         eventBus.unsubscribe(pluginListener)
+        pluginsListener.removeAll { it.second == pluginListener }
 
         executeEvent(PluginListenerRemovedEvent(pluginListener))
 
@@ -102,7 +106,11 @@ class PluginManager : AutoCloseable {
     fun removePluginJarByName(pluginName: String) {
         if (!pluginsJar.containsKey(pluginName)) return
 
-        pluginsJar.remove(pluginName)?.third?.forEach { removePlugin(it) }
+        pluginsJar.remove(pluginName)?.let {
+            it.third.forEach { removePlugin(it) }
+
+            it.second.close()
+        }
     }
 
     fun executeEventAsync(eventClass: Any) {
@@ -113,7 +121,7 @@ class PluginManager : AutoCloseable {
         eventBus.publish(eventClass)
     }
 
-    private fun loadPluginListenersFromJar(jarFile: File): Pair<ClassLoader, List<PluginListener>> {
+    private fun loadPluginListenersFromJar(jarFile: File): Pair<URLClassLoader, List<PluginListener>> {
         val pluginListeners: MutableList<PluginListener> = ArrayList()
 
         val urls = arrayOf<URL>(jarFile.toURI().toURL())
@@ -131,9 +139,11 @@ class PluginManager : AutoCloseable {
         log.info("Closing plugin manager...")
 
         pluginsJar.values.flatMap { it.third }.forEach { removePlugin(it) }
+        pluginsJar.values.map { it.second }.toSet().forEach { it.close() }
         pluginsJar.clear()
 
         pluginsListener.map { it.second }.forEach { removePlugin(it) }
+        pluginsListener.clear()
 
         log.info("Closed plugin manager!")
     }

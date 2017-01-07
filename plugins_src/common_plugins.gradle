@@ -24,10 +24,44 @@ processResources {
 }
 
 clean {
-    //noinspection GrUnresolvedAccess
-    delete "$jar.archivePath"
+    doLast {
+        //noinspection GrUnresolvedAccess
+        jar.archivePath.delete()
+
+        //noinspection GrUnresolvedAccess
+        file("$jar.destinationDir/lib/$project.name").deleteDir()
+    }
 }
 
-tasks.withType(Jar) {
+dependencies {
+    compileOnly project(":server")
+}
+
+task copyLibs(type: Copy) {
+    from {
+        (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
+            !it.name.contains("server")
+        }.collect { it }
+    }
+    into {
+        //noinspection GrUnresolvedAccess
+        "$jar.destinationDir/lib/$project.name"
+    }
+}
+
+jar {
     destinationDir = file("$rootDir/plugins")
+
+    //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
+    dependsOn copyLibs
+
+    // Keep jar clean:
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+
+    manifest {
+        attributes 'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
+            !it.name.contains("server")
+        }
+        .collect { "lib/$project.name/$it.name" }.join(' ')
+    }
 }

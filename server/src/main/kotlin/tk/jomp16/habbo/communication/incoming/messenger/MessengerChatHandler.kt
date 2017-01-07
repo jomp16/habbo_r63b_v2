@@ -29,6 +29,7 @@ import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.urlUserAgent
 import tk.jomp16.habbo.util.Utils
+import java.io.File
 import java.io.InputStreamReader
 import java.lang.management.ManagementFactory
 
@@ -63,6 +64,25 @@ class MessengerChatHandler {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, Utils.ramUsageString, 0)
                 } else if (args[0] == "uptime") {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false) + " up!", 0)
+                } else if (args[0] == "plugin") {
+                    if (args.size < 3) return
+
+                    val pluginName = args[2].trim()
+
+                    when (args[1]) {
+                        "load" -> {
+                            File("plugins").walk().filter { it.nameWithoutExtension.contains(pluginName) }.firstOrNull()?.let {
+                                HabboServer.pluginManager.addPluginJar(it)
+
+                                habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, "Done!", 0)
+                            }
+                        }
+                        "unload" -> {
+                            HabboServer.pluginManager.removePluginJarByName(pluginName)
+
+                            habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, Int.MAX_VALUE, "Done!", 0)
+                        }
+                    }
                 } else {
                     val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
 

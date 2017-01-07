@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2015-2017 jomp16
+ *
+ * This file is part of habbo_r63b_v2.
+ *
+ * habbo_r63b_v2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b_v2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+group "tk.jomp16.utils.plugin.webapp"
+
+dependencies {
+    compile project(":habbo_imaging")
+
+    //noinspection GrUnresolvedAccess
+    compile("ro.pippo:pippo-core:$pippo_version") {
+//        exclude module: "slf4j-api"
+    }
+
+    //noinspection GrUnresolvedAccess
+    compile("ro.pippo:pippo-undertow:$pippo_version") {
+//        exclude module: "slf4j-api"
+    }
+
+    //noinspection GrUnresolvedAccess
+    compile("ro.pippo:pippo-jackson:$pippo_version") {
+//        exclude module: "slf4j-api"
+        exclude module: "jackson-core"
+        exclude module: "jackson-databind"
+//        exclude module: "jackson-annotations"
+        exclude module: "jackson-module-afterburner"
+    }
+
+    //noinspection GrUnresolvedAccess
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+    //noinspection GrUnresolvedAccess
+    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+    //noinspection GrUnresolvedAccess
+    compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jackson_version"
+    compile 'org.jboss.logging:jboss-logging:3.3.0.Final'
+    compile 'io.undertow:undertow-core:1.4.7.Final'
+    compile 'io.undertow:undertow-servlet:1.4.7.Final'
+    compile 'org.jboss.xnio:xnio-api:3.4.3.Final'
+    compile 'org.jboss.xnio:xnio-nio:3.4.3.Final'
+}
+
+apply from: "$rootDir/plugins_src/common_plugins.gradle"

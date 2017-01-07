@@ -22,13 +22,15 @@ package tk.jomp16.habbo.game.group
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.group.GroupDao
-import tk.jomp16.habbo.imaging.GroupBadge
+import java.util.*
 
 class GroupManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    lateinit var groupBadge: GroupBadge
-        private set
+    val badgesBases: MutableList<Triple<Int, String, String>> = ArrayList()
+    val badgeBaseColors: MutableList<Pair<Int, String>> = ArrayList()
+    val badgesSymbols: MutableList<Triple<Int, String, String>> = ArrayList()
+    val badgeSymbolColors: MutableList<Pair<Int, String>> = ArrayList()
 
     init {
         load()
@@ -37,8 +39,14 @@ class GroupManager {
     fun load() {
         log.info("Loading group badges...")
 
-        groupBadge = GroupBadge(GroupDao.getBadgesBases(), GroupDao.getBadgesBaseColors(), GroupDao.getBadgesSymbols(), GroupDao.getBadgesSymbolColors())
+        badgesBases += GroupDao.getBadgesBases()
+        badgeBaseColors += GroupDao.getBadgesBaseColors()
+        badgesSymbols += GroupDao.getBadgesSymbols()
+        badgeSymbolColors += GroupDao.getBadgesSymbolColors()
 
-        log.info("Loaded group badges!")
+        log.info("Loaded ${badgesBases.size} group badges base!")
+        log.info("Loaded ${badgeBaseColors.size} group badges base colors!")
+        log.info("Loaded ${badgesSymbols.size} group badges symbol!")
+        log.info("Loaded ${badgeSymbolColors.size} group badges symbol colors!")
     }
 }

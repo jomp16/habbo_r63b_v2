@@ -23,7 +23,7 @@ import net.sf.ehcache.CacheManager
 import net.sf.ehcache.Ehcache
 
 fun CacheManager.addAndGetEhCache(cacheName: String): Ehcache {
-    addCache(cacheName)
+    addCacheIfAbsent(cacheName)
 
     return getEhcache(cacheName)
 }

@@ -23,8 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
 
 data class HabboConfig(
-        @JsonProperty("ip")
-        val ip: String,
         @JsonProperty("port")
         val port: Int,
         @JsonProperty("web_port")

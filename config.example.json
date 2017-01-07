@@ -1,5 +1,4 @@
 {
-  "ip": "localhost",
   "port": 30000,
   "web_port": 30001,
   "database": {
