@@ -40,9 +40,6 @@ dependencies {
     compile project(":plugin_manager")
 
     //noinspection GrUnresolvedAccess
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-
-    //noinspection GrUnresolvedAccess
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
 
     //noinspection GrUnresolvedAccess

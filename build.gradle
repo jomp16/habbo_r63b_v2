@@ -66,6 +66,9 @@ subprojects {
         testCompile "junit:junit:$junit_version"
 
         //noinspection GrUnresolvedAccess
+        compile "org.slf4j:slf4j-api:$slf4j_version"
+
+        //noinspection GrUnresolvedAccess
         compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:$kotlinx_jdk8"
     }
 

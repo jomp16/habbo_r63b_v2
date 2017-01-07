@@ -21,9 +21,6 @@ group "tk.jomp16.utils.plugin"
 
 dependencies {
     //noinspection GrUnresolvedAccess
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-
-    //noinspection GrUnresolvedAccess
     compile "org.reflections:reflections:$reflections_version"
 
     //noinspection GrUnresolvedAccess
