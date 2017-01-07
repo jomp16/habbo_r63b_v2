@@ -19,8 +19,6 @@
 
 package tk.jomp16.plugin.impl1
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.plugin.event.events.room.annotation.Command
@@ -28,8 +26,6 @@ import tk.jomp16.utils.plugin.api.PluginListener
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class PluginImpl1Listener : PluginListener() {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     override fun onCreate() = log.trace("Olá mundo de ${javaClass.simpleName}!")
 
     override fun onDestroy() = log.trace("Tchau mundo de ${javaClass.simpleName}!")

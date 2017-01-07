@@ -20,8 +20,6 @@
 package tk.jomp16.habbo.plugin.listeners.room
 
 import net.engio.mbassy.listener.Handler
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.plugin.event.events.room.RoomUserChatEvent
 import tk.jomp16.habbo.plugin.event.events.room.annotation.Command
@@ -34,7 +32,6 @@ import java.util.*
 import java.util.regex.Pattern
 
 class RoomCommandsManagerListener : PluginListener() {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
     private val lookup = MethodHandles.lookup()
     private val commandsEvents: MutableSet<PluginCommandRegister> = HashSet()
 

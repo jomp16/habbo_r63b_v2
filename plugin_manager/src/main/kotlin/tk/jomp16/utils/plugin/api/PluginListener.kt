@@ -19,8 +19,15 @@
 
 package tk.jomp16.utils.plugin.api
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 abstract class PluginListener {
+    protected val log: Logger = LoggerFactory.getLogger(javaClass)
+
     open fun onCreate() {
+        // ugly hack. Never to do this!
+        Thread.currentThread().contextClassLoader = javaClass.classLoader
     }
 
     open fun onDestroy() {
