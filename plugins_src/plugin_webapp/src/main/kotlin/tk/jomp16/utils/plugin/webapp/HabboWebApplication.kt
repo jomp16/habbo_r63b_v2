@@ -51,7 +51,17 @@ class HabboWebApplication : Application() {
         })
 
         GET("/api/v1/users/{id}", {
-            val userInformation = UserInformationDao.getUserInformationById(it.request.getParameter("id").toInt()) ?: it.response.json().send(mapOf("error" to "User not found"))
+            val userInformation = UserInformationDao.getUserInformationById(it.request.getParameter("id").toInt())
+
+            if (userInformation == null) {
+                it.response.json().send(
+                        mapOf(
+                                "error" to "User not found"
+                        )
+                )
+
+                return@GET
+            }
 
             if (userInformation is UserInformation) {
                 it.response.json().send(
@@ -73,7 +83,17 @@ class HabboWebApplication : Application() {
         })
 
         GET("/api/v1/rooms/{id}", {
-            val room = HabboServer.habboGame.roomManager.rooms[it.request.getParameter("id").toInt()] ?: it.response.json().send(mapOf("error" to "Room not found"))
+            val room = HabboServer.habboGame.roomManager.rooms[it.request.getParameter("id").toInt()]
+
+            if (room == null) {
+                it.response.json().send(
+                        mapOf(
+                                "error" to "Room not found"
+                        )
+                )
+
+                return@GET
+            }
 
             if (room is Room) {
                 it.response.json().send(

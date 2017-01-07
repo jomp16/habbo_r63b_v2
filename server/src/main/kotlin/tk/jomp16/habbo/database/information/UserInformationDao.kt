@@ -61,7 +61,7 @@ object UserInformationDao {
             }?.let { addCache(it) }
         }
 
-        return userInformationByIdCache.get(id).objectValue as UserInformation
+        return if (!userInformationByIdCache.isKeyInCache(id)) return null else userInformationByIdCache.get(id).objectValue as UserInformation
     }
 
     fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
@@ -89,7 +89,7 @@ object UserInformationDao {
             }?.let { addCache(it) }
         }
 
-        return userInformationByUsernameCache.get(username).objectValue as UserInformation
+        return if (!userInformationByUsernameCache.isKeyInCache(username)) return null else userInformationByUsernameCache.get(username).objectValue as UserInformation?
     }
 
     private fun addCache(userInformation: UserInformation) {
