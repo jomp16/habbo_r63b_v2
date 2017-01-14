@@ -43,11 +43,11 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
         msg.resetReaderIndex()
 
-        if (delimiter != 0.toByte() || delimiter != 60.toByte()) {
+        if (delimiter != 0.toByte() && delimiter != 60.toByte()) {
             msg.readerIndex(msg.readableBytes())
             msg.discardSomeReadBytes()
 
-            log.error("Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!", delimiter)
+            log.error("Invalid delimiter! Excepted 60 or 0, got {}.", delimiter)
 
             ctx.disconnect()
 
