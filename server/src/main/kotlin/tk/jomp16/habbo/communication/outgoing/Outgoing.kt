@@ -62,7 +62,6 @@ object Outgoing {
     const val INVENTORY_UPDATE = 2692
     const val LANDING_PROMO_ARTICLES = 1556
     const val LANDING_REWARD = 1779
-    const val LATENCY_TEST = 76
     const val MESSENGER_CHAT = 1096
     const val MESSENGER_FOLLOW_FRIEND_ERROR = 3724
     const val MESSENGER_FRIENDS = 1795
@@ -86,6 +85,7 @@ object Outgoing {
     const val NAVIGATOR_PROMO_CATEGORIES = 995
     const val NAVIGATOR_SEARCH = 2786
     const val PING = 2993
+    const val PONG = 76
     const val ROOM_COMPETITION = 2323
     const val ROOM_COMPETITION_DATA = 2062
     const val ROOM_DECORATION = 3740

@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.user
+package tk.jomp16.habbo.communication.incoming.misc
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,7 +28,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserPongHandler {
+class MiscPongHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     @Handler(Incoming.PONG)

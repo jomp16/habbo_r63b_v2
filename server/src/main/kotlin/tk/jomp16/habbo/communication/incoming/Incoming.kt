@@ -58,7 +58,6 @@ object Incoming {
     const val INVENTORY_UPDATE_BADGES = 3048
     const val LANDING_PROMO_ARTICLES = 1202
     const val LANDING_REWARD = 1696
-    const val LATENCY_TEST = 3379
     const val LOAD_INTERSTITIALS = 1755
     const val MESSENGER_ACCEPT_REQUEST = 402
     const val MESSENGER_CHAT = 3371
@@ -97,6 +96,7 @@ object Incoming {
     const val NAVIGATOR_PROMO_CATEGORIES = 86
     const val NAVIGATOR_SAVE_SETTINGS = 2522
     const val NAVIGATOR_SEARCH = 696
+    const val PING = 3379
     const val PONG = 455
     const val REFRESH_CAMPAIGN = 1572
     const val RELEASE_CHECK = 4000

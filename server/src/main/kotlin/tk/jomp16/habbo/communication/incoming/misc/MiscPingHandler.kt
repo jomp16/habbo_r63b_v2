@@ -17,15 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.user
+package tk.jomp16.habbo.communication.incoming.misc
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserPingResponse {
-    @Response(Outgoing.PING)
-    fun handle(habboResponse: HabboResponse) {
+class MiscPingHandler {
+    @Handler(Incoming.PING)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
+
+        habboSession.sendHabboResponse(Outgoing.PONG, habboRequest.readInt())
     }
 }

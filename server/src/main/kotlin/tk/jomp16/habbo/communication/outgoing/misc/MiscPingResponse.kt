@@ -17,20 +17,15 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.misc
+package tk.jomp16.habbo.communication.outgoing.misc
 
-import tk.jomp16.habbo.communication.HabboRequest
-import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MiscLatencyTestHandler {
-    @Handler(Incoming.LATENCY_TEST)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
-        habboSession.sendHabboResponse(Outgoing.LATENCY_TEST, habboRequest.readInt())
+class MiscPingResponse {
+    @Response(Outgoing.PING)
+    fun handle(habboResponse: HabboResponse) {
     }
 }
