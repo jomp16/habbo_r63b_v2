@@ -29,12 +29,11 @@ class UserMoveTask(private val roomUser: RoomUser, private val objectiveVector2:
     override fun executeTask(room: Room) {
         roomUser.idle = false
 
+        roomUser.path = mutableListOf()
         roomUser.ignoreBlocking = ignoreBlocking
         roomUser.rollerId = rollerId
         roomUser.objectiveVector2 = objectiveVector2
         roomUser.objectiveRotation = rotation
         roomUser.objectiveItem = actingItem
-
-        roomUser.calculatePath()
     }
 }

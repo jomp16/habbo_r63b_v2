@@ -71,7 +71,7 @@ class RoomUser(
     var overrideBlocking: Boolean = false
     var rollerId: Int = -1
 
-    private var path: MutableList<Path> = mutableListOf()
+    internal var path: MutableList<Path> = mutableListOf()
 
     var idle: Boolean = false
         set(newValue) {
@@ -140,6 +140,8 @@ class RoomUser(
             if (objectiveVector2 == currentVector3.vector2) {
                 stopWalking()
             } else {
+                if (path.isEmpty()) calculatePath()
+
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
@@ -247,7 +249,7 @@ class RoomUser(
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let { addUserStatuses(it) }
     }
 
-    internal fun calculatePath() {
+    private fun calculatePath() {
         if (objectiveVector2 == null) return
 
         path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, ignoreBlocking || overrideBlocking).toMutableList()
