@@ -70,6 +70,8 @@ subprojects {
 
         //noinspection GrUnresolvedAccess
         compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:$kotlinx_jdk8"
+
+        compile "org.jetbrains.kotlin:kotlin-reflect:1.0.6"
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
