@@ -34,5 +34,7 @@ class UserMoveTask(private val roomUser: RoomUser, private val objectiveVector2:
         roomUser.objectiveVector2 = objectiveVector2
         roomUser.objectiveRotation = rotation
         roomUser.objectiveItem = actingItem
+
+        roomUser.calculatePath()
     }
 }

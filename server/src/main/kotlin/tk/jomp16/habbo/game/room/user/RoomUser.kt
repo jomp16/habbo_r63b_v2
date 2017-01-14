@@ -140,8 +140,6 @@ class RoomUser(
             if (objectiveVector2 == currentVector3.vector2) {
                 stopWalking()
             } else {
-                if (path.isEmpty()) calculatePath()
-
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
@@ -246,12 +244,12 @@ class RoomUser(
             objectiveItem = null
         }
 
-        room.roomGamemap.getHighestItem(currentVector3.vector2)?.let {
-            addUserStatuses(it)
-        }
+        room.roomGamemap.getHighestItem(currentVector3.vector2)?.let { addUserStatuses(it) }
     }
 
-    private fun calculatePath() {
+    internal fun calculatePath() {
+        if (objectiveVector2 == null) return
+
         path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, ignoreBlocking || overrideBlocking).toMutableList()
     }
 
