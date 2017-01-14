@@ -119,23 +119,25 @@ class HabboWebApplication : Application() {
             ))
         })
 
-        GET("/habbo-imaging/badge/{badge_code}", {
-            val badgeCode = File(it.getParameter("badge_code").toString("")).nameWithoutExtension
+        GET("/api/v1/habbo-imaging/badge/{badge_code}", {
+            val badgeCodeFile = File(it.getParameter("badge_code").toString(""))
+            val badgeCode = badgeCodeFile.nameWithoutExtension
+            val extension = if (badgeCodeFile.extension.isEmpty()) "gif" else badgeCodeFile.extension
 
             if (!badgeCache.isKeyInCache(badgeCode)) {
                 val badgeImage = groupBadge.getGroupBadge(badgeCode)
 
                 val byteArrayOutputStream = ByteArrayOutputStream()
 
-                ImageIO.write(badgeImage, "png", byteArrayOutputStream)
+                ImageIO.write(badgeImage, extension, byteArrayOutputStream)
 
-                badgeCache.put(Element(badgeCode, byteArrayOutputStream.toByteArray()))
+                badgeCache.put(Element(badgeCodeFile.name, byteArrayOutputStream.toByteArray()))
             }
 
-            val badgeImageByteArray = badgeCache[badgeCode]!!.objectValue as ByteArray
+            val badgeImageByteArray = badgeCache[badgeCodeFile.name]!!.objectValue as ByteArray
 
-            it.response.contentType("image/png")
-            it.response.contentLength(badgeImageByteArray.size.toLong())
+            it.response.contentType("image/$extension")
+            it.response.characterEncoding(null)
             it.response.outputStream.write(badgeImageByteArray)
         })
     }

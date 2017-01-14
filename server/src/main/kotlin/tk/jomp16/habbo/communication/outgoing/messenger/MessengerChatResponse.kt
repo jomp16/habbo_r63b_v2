@@ -26,11 +26,13 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatResponse {
     @Response(Outgoing.MESSENGER_CHAT)
-    fun response(habboResponse: HabboResponse, id: Int, message: String, diffTimestamp: Int) {
+    fun response(habboResponse: HabboResponse, id: Int, message: String, diffTimestamp: Int, userId: Int, username: String, figure: String) {
         habboResponse.apply {
             writeInt(id)
             writeUTF(message)
             writeInt(diffTimestamp)
+
+            if (id < 0) writeUTF("$username/$figure/$id")
         }
     }
 }

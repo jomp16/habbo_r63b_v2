@@ -33,6 +33,8 @@ class MessengerInitializeHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.habboMessenger.initializedMessenger) return
 
+        habboSession.habboMessenger.load()
+
         val queuedHabboResponse = QueuedHabboResponse()
 
         queuedHabboResponse += Outgoing.MESSENGER_INIT to arrayOf(

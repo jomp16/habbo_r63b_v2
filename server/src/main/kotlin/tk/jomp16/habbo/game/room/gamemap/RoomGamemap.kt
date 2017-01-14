@@ -160,4 +160,8 @@ class RoomGamemap(private val room: Room) {
     }
 
     fun getUsersFromVector2(vector2: Vector2): Set<RoomUser> = roomUserMap[vector2] ?: emptySet()
+
+    fun clearUsers() {
+        roomUserMap.values.forEach { it.clear() }
+    }
 }

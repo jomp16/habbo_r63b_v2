@@ -19,7 +19,6 @@
 
 package tk.jomp16.habbo.game.item
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
@@ -29,8 +28,10 @@ abstract class ItemInteractor {
         roomItem.affectedTiles.forEach { vector2 ->
             val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
 
-            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomUser != null) roomItem1.onUserWalksOn(roomUser, true)
-            else if (roomItem1.furnishing.interactionType == InteractionType.ROLLER) roomItem1.requestCycles(HabboServer.habboConfig.timerConfig.roller)
+            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomItem1.extraData == "0") {
+                roomItem1.extraData = "1"
+                roomItem1.update(false, true)
+            }
         }
     }
 
@@ -38,7 +39,7 @@ abstract class ItemInteractor {
         roomItem.affectedTiles.forEach { vector2 ->
             val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
 
-            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD) {
+            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomItem1.extraData == "1") {
                 roomItem1.extraData = "0"
                 roomItem1.update(false, true)
             }

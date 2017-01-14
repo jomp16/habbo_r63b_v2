@@ -17,29 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.messenger
+package tk.jomp16.habbo.communication.incoming.misc
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MessengerInitializeResponse {
-    @Response(Outgoing.MESSENGER_INIT)
-    fun response(habboResponse: HabboResponse, maxFriends: Int) {
-        habboResponse.apply {
-            writeInt(maxFriends)
-            writeInt(300)
-            writeInt(800)
-            writeInt(1) // category count
+class MiscLatencyTestHandler {
+    @Handler(Incoming.LATENCY_TEST)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
 
-            // category structure:
-            // int - id
-            // string - name
-
-            // groups category
-            writeInt(1)
-            writeUTF("Groups")
-        }
+        habboSession.sendHabboResponse(Outgoing.LATENCY_TEST, habboRequest.readInt())
     }
 }

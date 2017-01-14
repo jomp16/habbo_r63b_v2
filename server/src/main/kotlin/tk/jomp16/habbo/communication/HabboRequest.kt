@@ -22,9 +22,8 @@ package tk.jomp16.habbo.communication
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
 import io.netty.util.ReferenceCountUtil
-import java.io.Closeable
 
-class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
+class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
@@ -41,7 +40,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : Closeable {
     override fun toString(): String {
         var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
 
-        for (i in -32..31) message = message.replace(i.toChar().toString(), "[$i]")
+        for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
 
         return message
     }

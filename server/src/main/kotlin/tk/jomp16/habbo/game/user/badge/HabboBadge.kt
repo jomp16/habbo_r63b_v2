@@ -29,6 +29,10 @@ class HabboBadge(private val habboSession: HabboSession) {
     val badges: MutableMap<String, Badge> = HashMap()
 
     init {
+        load()
+    }
+
+    internal fun load() {
         badges += BadgeDao.getBadges(habboSession.userInformation.id).associateBy { it.code }
     }
 

@@ -56,8 +56,8 @@ class MessengerRemoveFriendHandler {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
 
             if (!friendHabboSession.habboMessenger.initializedMessenger) return@forEach
-            val messengerFriend = friendHabboSession.habboMessenger.friends.remove(
-                    habboSession.userInformation.id) ?: return@forEach
+
+            val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id) ?: return@forEach
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), -1)
         }

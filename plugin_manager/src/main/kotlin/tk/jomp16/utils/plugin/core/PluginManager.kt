@@ -55,7 +55,7 @@ class PluginManager : AutoCloseable {
         }
     }
 
-    fun addPluginJar(pluginFile: File) {
+    fun addPluginJar(pluginFile: File): Boolean {
         val pluginPair = loadPluginListenersFromJar(pluginFile)
 
         val pluginPropertiesStream = pluginPair.first.getResourceAsStream("plugin.json")
@@ -63,17 +63,19 @@ class PluginManager : AutoCloseable {
         if (pluginPropertiesStream == null) {
             log.error("Plugin ${pluginFile.name} didn't have a plugin.json!")
 
-            return
+            return false
         }
 
         val pluginInfo: PluginInfo = objectMapper.readValue(pluginPropertiesStream)
 
-        if (pluginsJar.containsKey(pluginInfo.name)) return
+        if (pluginsJar.containsKey(pluginInfo.name)) return false
 
         pluginPair.second.forEach { addPlugin(it, pluginPair.first) }
         pluginsJar.put(pluginInfo.name, Triple(pluginInfo, pluginPair.first, pluginPair.second))
 
         log.info("Loaded plugin: $pluginInfo")
+
+        return true
     }
 
     fun addPlugin(pluginListener: PluginListener, classLoader: ClassLoader = javaClass.classLoader) {
@@ -102,15 +104,16 @@ class PluginManager : AutoCloseable {
         log.trace("${pluginListener.javaClass.simpleName} unsubscribed!")
     }
 
-    @Suppress("unused")
-    fun removePluginJarByName(pluginName: String) {
-        if (!pluginsJar.containsKey(pluginName)) return
+    fun removePluginJarByName(pluginName: String): Boolean {
+        if (!pluginsJar.containsKey(pluginName)) return false
 
         pluginsJar.remove(pluginName)?.let {
             it.third.forEach { removePlugin(it) }
 
             it.second.close()
         }
+
+        return true
     }
 
     fun executeEventAsync(eventClass: Any) {
@@ -124,8 +127,7 @@ class PluginManager : AutoCloseable {
     private fun loadPluginListenersFromJar(jarFile: File): Pair<URLClassLoader, List<PluginListener>> {
         val pluginListeners: MutableList<PluginListener> = ArrayList()
 
-        val urls = arrayOf<URL>(jarFile.toURI().toURL())
-        val urlClassLoader = URLClassLoader(urls, ClassLoader.getSystemClassLoader())
+        val urlClassLoader = URLClassLoader(arrayOf<URL>(jarFile.toURI().toURL()), ClassLoader.getSystemClassLoader())
 
         val reflections = Reflections(ConfigurationBuilder().addUrls(URL("file:" + jarFile.path)).addClassLoader(urlClassLoader))
         val eventsClasses = reflections.getSubTypesOf(PluginListener::class.java)

@@ -38,11 +38,7 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
 
     override fun encode(ctx: ChannelHandlerContext, msg: HabboResponse, out: ByteBuf) {
         val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-        val username = try {
-            habboSession.userInformation.username
-        } catch (exception: UninitializedPropertyAccessException) {
-            ctx.channel().ip()
-        }
+        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
         if (log.isDebugEnabled) {
             log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), HabboServer.habboHandler.outgoingNames[msg.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())

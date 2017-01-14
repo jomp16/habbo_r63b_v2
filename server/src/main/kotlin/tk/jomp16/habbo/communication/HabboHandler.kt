@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.communication
 
+import kotlinx.support.jdk7.use
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
@@ -29,6 +30,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.WrongMethodTypeException
 import java.util.*
 
 class HabboHandler {
@@ -37,16 +39,6 @@ class HabboHandler {
     private val messageHandlers: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
     private val messageResponses: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
     private val instances: MutableMap<Class<*>, Any> = HashMap()
-
-    val blacklistIds: IntArray = intArrayOf(Incoming.CLIENT_DEBUG,
-            Incoming.CLIENT_VARIABLES,
-            Incoming.EVENT_TRACKER,
-            Incoming.LATENCY_TEST,
-            Incoming.SET_USERNAME,
-            Incoming.MESSENGER_FRIENDS_UPDATE,
-            Incoming.GAME_LISTING,
-            Incoming.INITIALIZE_GAME_CENTER,
-            Incoming.SANCTION_STATUS)
 
     val incomingNames: MutableMap<Int, String> = HashMap()
     val outgoingNames: MutableMap<Int, String> = HashMap()
@@ -100,15 +92,19 @@ class HabboHandler {
         HabboServer.serverExecutor.execute {
             habboRequest.use {
                 if (messageHandlers.containsKey(it.headerId)) {
-                    try {
-                        val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
+                    val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
 
+                    try {
                         methodHandle.invokeWithArguments(clazz, habboSession, it)
                     } catch (e: Exception) {
-                        log.error("Error when invoking HabboRequest for headerID: {} - {}.", habboRequest.headerId, incomingNames[habboRequest.headerId])
-                        log.error("", e)
+                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - ${incomingNames[habboRequest.headerId]}!", e)
+
+                        if (e is ClassCastException || e is WrongMethodTypeException) {
+                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                            log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
+                        }
                     }
-                } else if (!blacklistIds.contains(habboRequest.headerId)) {
+                } else {
                     log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
                 }
             }
@@ -126,8 +122,12 @@ class HabboHandler {
 
                 return habboResponse
             } catch (e: Exception) {
-                log.error("Error when invoking HabboResponse for {} - {}!", headerId, outgoingNames[headerId])
-                log.error("", e)
+                log.error("Error when invoking HabboResponse for $headerId - ${outgoingNames[headerId]}!", e)
+
+                if (e is ClassCastException || e is WrongMethodTypeException) {
+                    log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                    log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
+                }
 
                 // Close the Habbo Response
                 habboResponse.close()

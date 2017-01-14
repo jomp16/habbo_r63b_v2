@@ -31,6 +31,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import tk.jomp16.utils.pathfinding.core.Path
 import java.time.Clock
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -69,6 +70,8 @@ class RoomUser(
     var ignoreBlocking: Boolean = false
     var overrideBlocking: Boolean = false
     var rollerId: Int = -1
+
+    private var path: MutableList<Path> = mutableListOf()
 
     var idle: Boolean = false
         set(newValue) {
@@ -137,12 +140,18 @@ class RoomUser(
             if (objectiveVector2 == currentVector3.vector2) {
                 stopWalking()
             } else {
-                val path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, rollerId != -1 || ignoreBlocking || overrideBlocking)
+                if (path.isEmpty()) calculatePath()
 
                 if (path.isEmpty()) {
                     stopWalking()
                 } else {
-                    val step = path.first()
+                    var step = path.removeAt(0)
+
+                    if (room.roomGamemap.roomUserMap[Vector2(step.x, step.y)]?.isNotEmpty() ?: false && !ignoreBlocking && !overrideBlocking) {
+                        calculatePath()
+
+                        step = path.removeAt(0)
+                    }
 
                     if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
                         stopWalking()
@@ -219,6 +228,7 @@ class RoomUser(
     }
 
     private fun stopWalking() {
+        path = mutableListOf()
         objectiveVector2 = null
         ignoreBlocking = false
 
@@ -239,6 +249,10 @@ class RoomUser(
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let {
             addUserStatuses(it)
         }
+    }
+
+    private fun calculatePath() {
+        path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, ignoreBlocking || overrideBlocking).toMutableList()
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

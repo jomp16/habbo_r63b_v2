@@ -31,6 +31,10 @@ class HabboInventory(private val habboSession: HabboSession) {
     val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
 
     init {
+        load()
+    }
+
+    internal fun load() {
         items += ItemDao.getUserItems(habboSession.userInformation.id).associateBy { it.id }
     }
 

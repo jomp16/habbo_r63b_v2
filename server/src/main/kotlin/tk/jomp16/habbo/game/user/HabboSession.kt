@@ -44,14 +44,13 @@ import tk.jomp16.habbo.game.user.inventory.HabboInventory
 import tk.jomp16.habbo.game.user.messenger.HabboMessenger
 import tk.jomp16.habbo.game.user.subscription.HabboSubscription
 import tk.jomp16.habbo.kotlin.ip
-import java.io.Closeable
 import java.time.Clock
 import java.time.LocalDateTime
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-class HabboSession(val channel: Channel) : Closeable {
+class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     lateinit var diffieHellmanParams: DHParameterSpec
@@ -100,7 +99,6 @@ class HabboSession(val channel: Channel) : Closeable {
     var rc4Encryption: RC4Encryption? = null
 
     var uniqueID: String = ""
-    private var alreadySentPurse: Boolean = false
 
     var ping: Long = 0
     var sentLandingReward: Boolean = false
@@ -164,7 +162,7 @@ class HabboSession(val channel: Channel) : Closeable {
     fun hasPermission(permission: String) = HabboServer.habboGame.permissionManager.userHasPermission(userInformation.id, permission)
             || HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
 
-    fun authenticate(ssoTicket: String): Boolean {
+    internal fun authenticate(ssoTicket: String): Boolean {
         val ip = channel.ip()
 
         val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return false
@@ -183,50 +181,53 @@ class HabboSession(val channel: Channel) : Closeable {
 
         userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
 
-        habboSubscription = HabboSubscription(this)
-        habboBadge = HabboBadge(this)
-        habboMessenger = HabboMessenger(this)
-        habboInventory = HabboInventory(this)
+        HabboServer.serverExecutor.execute {
+            habboSubscription = HabboSubscription(this)
+            habboBadge = HabboBadge(this)
+            habboMessenger = HabboMessenger(this)
+            habboInventory = HabboInventory(this)
+        }
 
         UserInformationDao.saveInformation(userInformation, true, ip, "")
+
+        rewardUser()
 
         return true
     }
 
-    fun rewardUser() {
+    internal fun rewardUser() {
         val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
 
-        var updateCurrency = false
+        var updateCredits = false
+        var updatePixels = false
 
         if (LocalDateTime.now(Clock.systemUTC()).isAfter(localDateTime)) {
             if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits.get() < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits.get() < Int.MAX_VALUE) {
                 userInformation.credits.set(userInformation.credits.get() + HabboServer.habboConfig.rewardConfig.credits)
 
-                updateCurrency = true
-
+                updateCredits = true
             }
 
             if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.pixels.get() < HabboServer.habboConfig.rewardConfig.pixelsMax || userInformation.pixels.get() < Int.MAX_VALUE) {
                 userInformation.pixels.set(userInformation.pixels.get() + HabboServer.habboConfig.rewardConfig.pixels)
 
-                updateCurrency = true
+                updatePixels = true
             }
 
             if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints.get() < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints.get() < Int.MAX_VALUE)) {
                 userInformation.vipPoints.set(userInformation.vipPoints.get() + HabboServer.habboConfig.rewardConfig.vipPoints)
 
-                updateCurrency = true
+                updatePixels = true
             }
 
             userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
         }
 
-        if (!alreadySentPurse || updateCurrency) updateAllCurrencies()
+        if (updateCredits) sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits.get())
+        else if (updatePixels) sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels.get(), userInformation.vipPoints.get())
     }
 
     fun updateAllCurrencies() {
-        if (!alreadySentPurse) alreadySentPurse = true
-
         if (userInformation.credits.get() < 0) userInformation.credits.set(Int.MAX_VALUE)
         if (userInformation.pixels.get() < 0) userInformation.pixels.set(Int.MAX_VALUE)
         if (userInformation.vip && userInformation.vipPoints.get() < 0) userInformation.vipPoints.set(Int.MAX_VALUE)
@@ -320,7 +321,7 @@ class HabboSession(val channel: Channel) : Closeable {
         }
     }
 
-    fun saveAllQueuedStuffs() {
+    internal fun saveAllQueuedStuffs() {
         ItemDao.removeRoomItems(habboInventory.roomItemsToRemove)
 
         habboInventory.roomItemsToRemove.clear()

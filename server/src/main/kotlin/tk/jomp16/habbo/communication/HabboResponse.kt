@@ -23,34 +23,23 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
-import java.io.Closeable
 
-class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : Closeable {
+class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
 
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
-    fun writeUTF(s: String) {
-        byteBufOutputStream.writeUTF(s)
-    }
+    fun writeUTF(s: String) = byteBufOutputStream.writeUTF(s)
 
-    fun writeShort(i: Int) {
-        byteBufOutputStream.writeShort(i)
-    }
+    fun writeShort(i: Int) = byteBufOutputStream.writeShort(i)
 
-    fun writeInt(i: Int) {
-        byteBufOutputStream.writeInt(i)
-    }
+    fun writeInt(i: Int) = byteBufOutputStream.writeInt(i)
 
-    fun writeDouble(d: Double) {
-        byteBufOutputStream.writeDouble(d)
-    }
+    fun writeDouble(d: Double) = byteBufOutputStream.writeDouble(d)
 
-    fun writeBoolean(b: Boolean) {
-        byteBufOutputStream.writeBoolean(b)
-    }
+    fun writeBoolean(b: Boolean) = byteBufOutputStream.writeBoolean(b)
 
     @Suppress("unused")
     fun writeByte(b: Int) {
@@ -62,9 +51,9 @@ class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : Closeabl
     }
 
     override fun toString(): String {
-        var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
+        var message = _byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
 
-        for (i in -32..31) message = message.replace(i.toChar().toString(), "[$i]")
+        for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
 
         return message
     }

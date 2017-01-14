@@ -24,7 +24,6 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.item.ItemInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.room.Room
-import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Vector3
 
 class RollerFurniInteractor : ItemInteractor() {
@@ -39,8 +38,10 @@ class RollerFurniInteractor : ItemInteractor() {
         if (!room.roomGamemap.isBlocked(frontVector2)) {
             // moving players
             room.roomGamemap.roomUserMap[roomItem.position.vector2]?.filter { !it.walking }?.forEach {
+                val copy = it.currentVector3
+
                 if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
-                    room.sendHabboResponse(Outgoing.ROOM_ROLLER, it.currentVector3, frontVector3, it.virtualID, roomItem.id, -1)
+                    room.sendHabboResponse(Outgoing.ROOM_ROLLER, copy, frontVector3, it.virtualID, roomItem.id, -1)
 
                     reCycle = false
                 }
@@ -51,44 +52,11 @@ class RollerFurniInteractor : ItemInteractor() {
                 val roomItems = if (it.size > 10) it.take(10) else it
 
                 roomItems.forEach {
-                    /*var x = frontVector2.x
-                    var y = frontVector2.y
-
-                    if (roomItem.rotation == 0 || roomItem.rotation == 4) {
-                        if (it.rotation == 2 || it.rotation == 6) {
-                            if (it.position.y != roomItem.position.y && roomItem.rotation == 0) y -= (it.furnishing.width - 1)
-                            if (it.position.x != roomItem.position.x) x -= (it.furnishing.height - 1)
-                        } else {
-                            if (it.position.y != roomItem.position.y && roomItem.rotation == 0) y -= (it.furnishing.height - 1)
-                            if (it.position.x != roomItem.position.x) x -= (it.furnishing.width - 1)
-                        }
-                    } else if (roomItem.rotation == 2 || roomItem.rotation == 6) {
-                        if (it.rotation == 0 || it.rotation == 4) {
-                            if (it.position.x != roomItem.position.x && roomItem.rotation == 6) x -= (it.furnishing.height - 1)
-                            if (it.position.y != roomItem.position.y) y -= (it.furnishing.width - 1)
-                        } else {
-                            if (it.position.x != roomItem.position.x && roomItem.rotation == 6) x -= (it.furnishing.width - 1)
-                            if (it.position.y != roomItem.position.y) y -= (it.furnishing.height - 1)
-                        }
-                    }*/
-
                     if (room.setFloorItem(it, frontVector2, it.rotation, null, rollerId = roomItem.id)) reCycle = false
                 }
             }
         }
 
         if (reCycle) roomItem.requestCycles(HabboServer.habboConfig.timerConfig.roller)
-    }
-
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOn(room, roomUser, roomItem)
-
-        roomItem.requestCycles(HabboServer.habboConfig.timerConfig.roller)
-    }
-
-    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOff(room, roomUser, roomItem)
-
-        roomItem.requestCycles(0)
     }
 }

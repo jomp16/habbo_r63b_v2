@@ -29,13 +29,19 @@ import java.time.Period
 import java.time.temporal.ChronoUnit
 
 class HabboSubscription(private val habboSession: HabboSession) {
-    var subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
+    var subscription: Subscription? = null
         private set
 
     val validUserSubscription: Boolean
         get() = subscription != null && localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription?.expire)
 
     init {
+        load()
+    }
+
+    internal fun load() {
+        subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
+
         if (!validUserSubscription) clearSubscription()
     }
 

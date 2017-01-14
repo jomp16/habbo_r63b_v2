@@ -30,10 +30,13 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
     var initializedMessenger: Boolean = false
 
-    init {
+    internal fun load() {
         if (habboSession.hasPermission("acc_server_console")) {
             // server console!
             friends += Int.MAX_VALUE to MessengerFriend(Int.MAX_VALUE)
+
+            // stub group
+            // friends += -1 to MessengerFriend(-1)
         }
 
         friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
@@ -41,7 +44,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
     }
 
     fun notifyFriends() {
-        friends.values.filter { it.online && (it.userId != Int.MAX_VALUE && it.habboSession!!.habboMessenger.initializedMessenger) }.forEach {
+        friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false }.forEach {
             it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
         }
     }

@@ -28,7 +28,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class SettingDataHandler {
     @Handler(Incoming.USER_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated) return
 
         habboSession.sendSettings()
     }

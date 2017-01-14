@@ -43,6 +43,17 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
         msg.resetReaderIndex()
 
+        if (delimiter != 0.toByte() || delimiter != 60.toByte()) {
+            msg.readerIndex(msg.readableBytes())
+            msg.discardSomeReadBytes()
+
+            log.error("Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!", delimiter)
+
+            ctx.disconnect()
+
+            return
+        }
+
         if (delimiter == 60.toByte()) {
             // flash policy
             msg.readerIndex(msg.readableBytes())
@@ -58,24 +69,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             return
         } else {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-            val username = try {
-                habboSession.userInformation.username
-            } catch (exception: UninitializedPropertyAccessException) {
-                ctx.channel().ip()
-            }
-
-            if (delimiter != 0.toByte()) {
-                msg.readerIndex(msg.readableBytes())
-                msg.discardSomeReadBytes()
-
-                log.error(
-                        "Invalid delimiter! Excepted 60 or 0, got {}. This is probably a invalid shared RC4 key. Disconnecting user!",
-                        delimiter)
-
-                ctx.disconnect()
-
-                return
-            }
+            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             msg.markReaderIndex()
 
@@ -90,10 +84,6 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             if (msg.readableBytes() < size) {
                 msg.resetReaderIndex()
 
-                if (!HabboServer.habboHandler.blacklistIds.contains(headerId) && headerId != Incoming.HABBO_CAMERA_DATA) {
-                    log.warn("({}) - HEADER: {}; readable bytes: {}; requested bytes: {}", username, headerId, msg.readableBytes(), size)
-                }
-
                 return
             }
 
@@ -101,7 +91,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             if (log.isDebugEnabled) {
                 out.forEach {
-                    if (it is HabboRequest && !HabboServer.habboHandler.blacklistIds.contains(it.headerId) && it.headerId != Incoming.HABBO_CAMERA_DATA) {
+                    if (it is HabboRequest && it.headerId != Incoming.HABBO_CAMERA_DATA) {
                         log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), HabboServer.habboHandler.incomingNames[it.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
                     }
                 }

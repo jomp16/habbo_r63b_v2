@@ -136,8 +136,8 @@ data class RoomItem(
     }
 
     fun onCycle() {
-        if (cycles != 0) {
-            if (currentCycles >= cycles) {
+        if (cycles != 0 || furnishing.interactionType == InteractionType.ROLLER) {
+            if (currentCycles >= cycles || furnishing.interactionType == InteractionType.ROLLER) {
                 cycles = 0
                 currentCycles = 0
 

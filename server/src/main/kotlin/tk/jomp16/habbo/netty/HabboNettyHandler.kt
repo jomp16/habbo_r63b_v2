@@ -51,11 +51,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     override fun channelUnregistered(ctx: ChannelHandlerContext) {
         val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-        val username = try {
-            habboSession.userInformation.username
-        } catch (exception: UninitializedPropertyAccessException) {
-            ctx.channel().ip()
-        }
+        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
         log.info("Disconnecting user {}", username)
 
@@ -72,10 +68,11 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
         val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
+        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
         if (evt is IdleStateEvent) {
             if (!habboSession.authenticated && !habboSession.handshaking) {
-                log.error("Found an connected user without doing the handshake! Disconnecting it!")
+                log.error("Found an connected user $username without doing the handshake! Disconnecting it!")
 
                 habboSession.channel.disconnect()
 
@@ -83,11 +80,11 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             }
 
             if (evt.state() == IdleState.READER_IDLE) {
-                log.error("User ${habboSession.userInformation.username} didn't reply ping! Disconnecting it.")
+                log.error("User $username didn't reply ping! Disconnecting it.")
 
                 ctx.close()
             } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || habboSession.handshaking)) {
-                log.info("Didn't send any message to user ${if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()}, pinging it.")
+                log.info("Didn't send any message to user $username, pinging it.")
 
                 habboSession.ping = System.nanoTime()
                 habboSession.sendHabboResponse(Outgoing.PING)

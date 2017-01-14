@@ -33,26 +33,44 @@ data class MessengerFriend(
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
 
     val online: Boolean
-        get() = userId == Int.MAX_VALUE || habboSession != null // todo: add appear offline here
+        get() = userId < 0 || userId == Int.MAX_VALUE || habboSession != null // todo: add appear offline here
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
+            writeInt(userId)
 
-            writeInt(userInformation.id)
-            writeUTF(userInformation.username)
-            writeInt(if (online) 1 else 0)
-            writeBoolean(online)
-            writeBoolean(online && habboSession?.currentRoom != null)
-            writeUTF(userInformation.figure)
-            writeInt(0) // todo: add ability to add friend on custom category
-            writeUTF(userInformation.motto)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
-            writeUTF(userInformation.realname)
-            writeBoolean(true) // allows offline messaging
-            writeBoolean(false) // useless
-            writeBoolean(false) // uses phone
-            writeShort(0) // todo relationship type
+            if (userId > 0) {
+                val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
+
+                writeUTF(userInformation.username)
+                writeInt(1)
+                writeBoolean(online)
+                writeBoolean(online && habboSession?.currentRoom != null)
+                writeUTF(userInformation.figure)
+                writeInt(0) // todo: add ability to add friend on custom category
+                writeUTF(userInformation.motto)
+                writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
+                writeUTF(userInformation.realname)
+                writeBoolean(true) // allows offline messaging
+                writeBoolean(false) // useless
+                writeBoolean(false) // uses phone
+                writeShort(0) // todo relationship type
+            } else {
+                // todo: group, this is a stub
+                writeUTF("GRUPO TESTE #1")
+                writeInt(1)
+                writeBoolean(true)
+                writeBoolean(false)
+                writeUTF("b0513s48104")
+                writeInt(1)
+                writeUTF("")
+                writeUTF("")
+                writeUTF("")
+                writeBoolean(true) // do not allow offline messaging
+                writeBoolean(false) // useless
+                writeBoolean(false) // uses phone
+                writeShort(0)
+            }
         }
     }
 

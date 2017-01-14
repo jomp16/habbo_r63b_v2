@@ -54,7 +54,6 @@ import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.utils.plugin.core.PluginManager
-import java.io.Closeable
 import java.io.File
 import java.security.Security
 import java.time.format.DateTimeFormatter
@@ -63,7 +62,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
-object HabboServer : Closeable {
+object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     lateinit var habboConfig: HabboConfig

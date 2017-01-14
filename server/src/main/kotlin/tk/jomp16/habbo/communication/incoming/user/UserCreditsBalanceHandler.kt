@@ -22,14 +22,15 @@ package tk.jomp16.habbo.communication.incoming.user
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserBalanceHandler {
+class UserCreditsBalanceHandler {
     @Handler(Incoming.CREDITS_BALANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.rewardUser()
+        habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits.get())
     }
 }

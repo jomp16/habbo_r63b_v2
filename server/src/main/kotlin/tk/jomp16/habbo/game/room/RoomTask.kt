@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.room.RoomDao
+import tk.jomp16.habbo.game.item.InteractionType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -36,6 +37,8 @@ class RoomTask : Runnable {
     val queuedTasks: MutableMap<Room, Queue<IRoomTask>> = ConcurrentHashMap()
 
     fun addRoom(room: Room) {
+        if (rooms.contains(room)) return
+
         log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         rooms += room
@@ -43,12 +46,17 @@ class RoomTask : Runnable {
 
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
+        room.rollerCounter.set(0)
 
         room.roomTask = this
+
         room.initialize()
+        room.roomGamemap.clearUsers()
     }
 
     fun removeRoom(room: Room) {
+        if (!rooms.contains(room)) return
+
         log.info("Closing room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         room.roomUsers.values.toList().forEach { room.removeUser(it, true, true) }
@@ -56,9 +64,15 @@ class RoomTask : Runnable {
         rooms -= room
         queuedTasks.remove(room)
 
+        room.emptyCounter.set(0)
+        room.errorsCounter.set(0)
+        room.rollerCounter.set(0)
+
         room.roomTask = null
 
         room.saveQueuedItems()
+        room.roomGamemap.clearUsers()
+
         RoomDao.updateRoomData(room.roomData)
     }
 
@@ -75,6 +89,14 @@ class RoomTask : Runnable {
 
                         while (queue.isNotEmpty()) queue.poll().executeTask(room)
 
+                        room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
+
+                        if (room.rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
+                            room.rollerCounter.set(0)
+
+                            room.roomItems.values.filter { it.furnishing.interactionType == InteractionType.ROLLER }.forEach { it.onCycle() }
+                        }
+
                         room.roomUsers.values.let {
                             it.forEach { it.onCycle() }
 
@@ -86,8 +108,6 @@ class RoomTask : Runnable {
                                 }
                             }
                         }
-
-                        room.roomItems.values.forEach { it.onCycle() }
 
                         if (room.roomUsers.isEmpty() &&
                                 TimeUnit.MILLISECONDS.toSeconds(
