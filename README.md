@@ -3,6 +3,13 @@
 
 [![Build Status](https://jenkins.jomp16.tk/job/habbo_r63b_v2/badge/icon)](https://jenkins.jomp16.tk/job/habbo_r63b_v2/)
 
+## How to build
+
+`git clone https://git.jomp16.tk/jomp16/habbo_r63b_v2.git`
+`git submodule init`
+`git submodule update`
+`./gradlew clean assembleDist`
+
 ## Contributing
 
 Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://git.jomp16.tk/jomp16/habbo_r63b_v2/issues)
