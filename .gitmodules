@@ -1,0 +1,3 @@
+[submodule "pathfinding"]
+	path = pathfinding
+	url = https://git.jomp16.tk/jomp16/pathfinding.git
