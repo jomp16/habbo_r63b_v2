@@ -15,7 +15,7 @@
 
 ## Contributing
 
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://git.jomp16.tk/jomp16/habbo_r63b_v2/issues)
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://git.jomp16.tk/Habbo/habbo_r63b_v2/issues)
 
 ## Author
 
