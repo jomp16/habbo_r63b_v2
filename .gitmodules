@@ -7,3 +7,6 @@
 [submodule "habbo_imaging"]
 	path = habbo_imaging
 	url = https://git.jomp16.tk/git/Habbo/habbo_imaging.git
+[submodule "plugin_manager"]
+	path = plugin_manager
+	url = https://git.jomp16.tk/git/jomp16/plugin_manager.git
