@@ -5,7 +5,7 @@
 
 ## How to build
 
-`git clone https://git.jomp16.tk/jomp16/habbo_r63b_v2.git`
+`git clone https://git.jomp16.tk/git/Habbo/habbo_r63b_v2.git`
 
 `git submodule init`
 
@@ -26,6 +26,6 @@ Pull requests and stars are always welcome. For bugs and feature requests, [plea
 
 ## License
 
-Copyright (C) 2016 [jomp16](https://git.jomp16.tk/).
+Copyright (C) 2015-2017 [jomp16](https://git.jomp16.tk/).
 
 Licensed under the GPLv3 license. See [LICENSE](LICENSE)
