@@ -27,10 +27,10 @@ import java.util.*
 class GroupManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val badgesBases: MutableList<Triple<Int, String, String>> = ArrayList()
-    val badgeBaseColors: MutableList<Pair<Int, String>> = ArrayList()
-    val badgesSymbols: MutableList<Triple<Int, String, String>> = ArrayList()
-    val badgeSymbolColors: MutableList<Pair<Int, String>> = ArrayList()
+    val groupBadgesBases: MutableList<Triple<Int, String, String>> = ArrayList()
+    val groupBaseColors: MutableList<Pair<Int, String>> = ArrayList()
+    val groupBadgesSymbols: MutableList<Triple<Int, String, String>> = ArrayList()
+    val groupBadgeSymbolColors: MutableList<Pair<Int, String>> = ArrayList()
 
     init {
         load()
@@ -39,14 +39,14 @@ class GroupManager {
     fun load() {
         log.info("Loading group badges...")
 
-        badgesBases += GroupDao.getBadgesBases()
-        badgeBaseColors += GroupDao.getBadgesBaseColors()
-        badgesSymbols += GroupDao.getBadgesSymbols()
-        badgeSymbolColors += GroupDao.getBadgesSymbolColors()
+        groupBadgesBases += GroupDao.getGroupsBadgesBases()
+        groupBaseColors += GroupDao.getGroupsBadgesBaseColors()
+        groupBadgesSymbols += GroupDao.getGroupsBadgesSymbols()
+        groupBadgeSymbolColors += GroupDao.getGroupsBadgesSymbolColors()
 
-        log.info("Loaded ${badgesBases.size} group badges base!")
-        log.info("Loaded ${badgeBaseColors.size} group badges base colors!")
-        log.info("Loaded ${badgesSymbols.size} group badges symbol!")
-        log.info("Loaded ${badgeSymbolColors.size} group badges symbol colors!")
+        log.info("Loaded ${groupBadgesBases.size} group badges base!")
+        log.info("Loaded ${groupBaseColors.size} group badges base colors!")
+        log.info("Loaded ${groupBadgesSymbols.size} group badges symbol!")
+        log.info("Loaded ${groupBadgeSymbolColors.size} group badges symbol colors!")
     }
 }

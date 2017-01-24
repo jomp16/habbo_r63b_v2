@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 jomp16
+ * Copyright (C) 2015-2017 jomp16
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,8 +22,8 @@ package tk.jomp16.habbo.database.group
 import tk.jomp16.habbo.HabboServer
 
 object GroupDao {
-    fun getBadgesBases(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM group_badges_base") {
+    fun getGroupsBadgesBases(): List<Triple<Int, String, String>> = HabboServer.database {
+        select("SELECT * FROM groups_badges_base") {
             Triple(
                     it.int("id"),
                     it.string("value1"),
@@ -32,8 +32,8 @@ object GroupDao {
         }
     }
 
-    fun getBadgesSymbols(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM group_badges_symbol") {
+    fun getGroupsBadgesSymbols(): List<Triple<Int, String, String>> = HabboServer.database {
+        select("SELECT * FROM groups_badges_symbol") {
             Triple(
                     it.int("id"),
                     it.string("value1"),
@@ -42,14 +42,14 @@ object GroupDao {
         }
     }
 
-    fun getBadgesBaseColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM group_badges_base_color") {
+    fun getGroupsBadgesBaseColors(): List<Pair<Int, String>> = HabboServer.database {
+        select("SELECT * FROM groups_badges_base_color") {
             it.int("id") to it.string("color")
         }
     }
 
-    fun getBadgesSymbolColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM group_badges_symbol_color") {
+    fun getGroupsBadgesSymbolColors(): List<Pair<Int, String>> = HabboServer.database {
+        select("SELECT * FROM groups_badges_symbol_color") {
             it.int("id") to it.string("color")
         }
     }
