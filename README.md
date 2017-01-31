@@ -5,7 +5,7 @@
 
 ## How to build
 
-`git clone https://git.jomp16.tk/git/Habbo/habbo_r63b_v2.git`
+`git clone https://git.jomp16.tk/Habbo/habbo_r63b_v2.git`
 
 `git submodule init`
 
