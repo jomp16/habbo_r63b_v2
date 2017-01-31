@@ -25,11 +25,16 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogVoucherRedeemErrorResponse {
-    // errorCode: 0 = not valid, 1 = technical error, 3 = redeem from website
     @Response(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR)
-    fun response(habboResponse: HabboResponse, errorCode: Int) {
+    fun response(habboResponse: HabboResponse, catalogVoucherRedeemError: CatalogVoucherRedeemError) {
         habboResponse.apply {
-            writeUTF(errorCode.toString())
+            writeUTF(catalogVoucherRedeemError.errorCode.toString())
         }
+    }
+
+    enum class CatalogVoucherRedeemError(val errorCode: Int) {
+        NOT_VALID(0),
+        TECHICAL_ERROR(1),
+        REDEEM_FROM_WEBSITE(3)
     }
 }

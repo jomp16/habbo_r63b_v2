@@ -26,15 +26,18 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscGenericErrorResponse {
     @Response(Outgoing.GENERIC_ERROR)
-    fun response(habboResponse: HabboResponse, errorCode: Int) {
+    fun response(habboResponse: HabboResponse, miscGenericError: MiscGenericError) {
         habboResponse.apply {
-            // -100002 == did_not_receive_code_link = true and retry_wait_label = false
-            // 4009 == navigator.alert.need.to.be.vip
-            // 4010 == navigator.alert.invalid_room_name
-            // 4011 == navigator.alert.cannot_perm_ban
-            // 4013 == navigator.alert.room_in_maintenance
-
-            writeInt(errorCode)
+            writeInt(miscGenericError.errorCode)
         }
+    }
+
+    enum class MiscGenericError(val errorCode: Int) {
+        WRONG_PASSWORD(-100002), // did_not_receive_code_link = true and retry_wait_label = false
+        ROOM_KICKED(4008), // room.error.kicked
+        NEED_TO_BE_VIP(4009), // navigator.alert.need.to.be.vip
+        INVALID_ROOM_NAME(4010), // navigator.alert.invalid_room_name
+        CANNOT_PERM_BAN(4011), // navigator.alert.cannot_perm_ban
+        ROOM_IN_MAINTENANCE(4013) // navigator.alert.room_in_maintenance
     }
 }

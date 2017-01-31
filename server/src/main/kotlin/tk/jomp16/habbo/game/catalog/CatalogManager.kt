@@ -23,6 +23,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
+import tk.jomp16.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
 import tk.jomp16.habbo.database.catalog.CatalogDao
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.user.UserItem
@@ -113,7 +115,7 @@ class CatalogManager {
         val catalogItem = catalogPage.catalogItems.find { it.id == catalogItemId }
 
         if (catalogItem == null || !catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED, 1)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR, CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC)
 
             return
         }
@@ -286,7 +288,7 @@ class CatalogManager {
         }
 
         // todo: add a voucher table and redeem
-        habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, 0)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID)
     }
 
     private fun totalFreeAmount(amount: Int): Int {

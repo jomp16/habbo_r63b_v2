@@ -17,10 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.navigator
+package tk.jomp16.habbo.communication.outgoing.catalog
 
-data class NavigatorPromocat(
-        val id: Int,
-        val caption: String,
-        val minRank: Int = 0
-)
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogPurchaseNotAllowedErrorResponse {
+    @Response(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR)
+    fun handle(habboResponse: HabboResponse, catalogPurchaseNotAllowedError: CatalogPurchaseNotAllowedError) {
+        habboResponse.apply {
+            writeInt(catalogPurchaseNotAllowedError.errorCode)
+        }
+    }
+
+    enum class CatalogPurchaseNotAllowedError(val errorCode: Int) {
+        DEFAULT(0),
+        NOT_HC(1)
+    }
+}

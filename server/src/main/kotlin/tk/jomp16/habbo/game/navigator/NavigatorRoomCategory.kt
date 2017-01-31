@@ -19,7 +19,7 @@
 
 package tk.jomp16.habbo.game.navigator
 
-data class NavigatorFlatcat(
+data class NavigatorRoomCategory(
         val id: Int,
         val caption: String,
         val minRank: Int

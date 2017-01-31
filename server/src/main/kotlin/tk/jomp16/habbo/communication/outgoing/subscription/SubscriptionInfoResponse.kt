@@ -25,6 +25,7 @@ import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.subscription.Subscription
 import java.time.Clock
+import java.time.Duration
 import java.time.LocalDateTime
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -36,14 +37,14 @@ class SubscriptionInfoResponse {
                 // todo: stub
 
                 writeInt(1) // streakduration - in days
-                writeUTF(subscription.activated.format(HabboServer.DATE_TIME_FORMATTER)) // Time joined HC
+                writeUTF(subscription.activated.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)) // Time joined HC
                 writeDouble((50.toDouble() / 100)) // credits multiplier / 10 -- %streakduration%
                 writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
                 writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
                 writeInt(100) // credits spent on catalog
                 writeInt(5) // credits bonus
                 writeInt(150) // credits to receive with multiplier
-                writeInt(LocalDateTime.now(Clock.systemUTC()).plusMonths(1).second) // how long to get next bonus
+                writeInt(Duration.between(LocalDateTime.now(Clock.systemUTC()), LocalDateTime.now(Clock.systemUTC()).plusMonths(2)).toMinutes().toInt()) // how long in minutes to get next bonus
             } else {
                 writeInt(0)
                 writeUTF("")
@@ -53,7 +54,7 @@ class SubscriptionInfoResponse {
                 writeInt(0)
                 writeInt(0)
                 writeInt(0)
-                writeInt(LocalDateTime.now(Clock.systemUTC()).plusDays(1).second)
+                writeInt(0)
             }
         }
     }

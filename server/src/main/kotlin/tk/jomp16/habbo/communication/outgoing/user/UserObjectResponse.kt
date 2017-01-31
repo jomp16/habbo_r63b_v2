@@ -41,7 +41,7 @@ class UserObjectResponse {
             writeInt(dailyRespectPoints)
             writeInt(dailyPetRespectPoints)
             writeBoolean(true) // Friends stream active
-            writeUTF(lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
+            writeUTF(lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
             writeBoolean(canChangeName)
             writeBoolean(false)
         }

@@ -23,8 +23,8 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.navigator.NavigatorFlatcat
-import tk.jomp16.habbo.game.navigator.NavigatorPromocat
+import tk.jomp16.habbo.game.navigator.NavigatorEventCategory
+import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.RoomType
 import tk.jomp16.habbo.game.user.HabboSession
@@ -62,8 +62,8 @@ class NavigatorSearchResponse {
                     serializeSearchResultList("popular", false, habboResponse, habboSession)
                     serializeSearchResultList("recommended", false, habboResponse, habboSession)
 
-                    HabboServer.habboGame.navigatorManager.navigatorFlatCats.values.forEach {
-                        serializeFlatCategories(it, direct, habboResponse)
+                    HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values.forEach {
+                        serializeRoomCategories(it, direct, habboResponse)
                     }
                 }
                 "myworld_view" -> {
@@ -76,8 +76,8 @@ class NavigatorSearchResponse {
                 "roomads_view" -> {
                     serializeSearchResultList("top_promotions", false, habboResponse, habboSession)
 
-                    HabboServer.habboGame.navigatorManager.navigatorPromoCats.values.forEach {
-                        serializePromotions(it, direct, habboResponse)
+                    HabboServer.habboGame.navigatorManager.navigatorEventCategories.values.forEach {
+                        serializeEvents(it, direct, habboResponse)
                     }
                 }
                 "official_view" -> {
@@ -136,10 +136,10 @@ class NavigatorSearchResponse {
         }
     }
 
-    private fun serializeFlatCategories(navigatorFlatcat: NavigatorFlatcat, direct: Boolean, habboResponse: HabboResponse) {
+    private fun serializeRoomCategories(navigatorRoomCategory: NavigatorRoomCategory, direct: Boolean, habboResponse: HabboResponse) {
         habboResponse.apply {
             writeUTF("")
-            writeUTF(navigatorFlatcat.caption)
+            writeUTF(navigatorRoomCategory.caption)
             writeInt(0)
             writeBoolean(true)
             writeInt(0)
@@ -147,10 +147,10 @@ class NavigatorSearchResponse {
         }
     }
 
-    private fun serializePromotions(navigatorPromocat: NavigatorPromocat, direct: Boolean, habboResponse: HabboResponse) {
+    private fun serializeEvents(navigatorEventCategory: NavigatorEventCategory, direct: Boolean, habboResponse: HabboResponse) {
         habboResponse.apply {
             writeUTF("")
-            writeUTF(navigatorPromocat.caption)
+            writeUTF(navigatorEventCategory.caption)
             writeInt(0)
             writeBoolean(true)
             writeInt(0)
@@ -162,8 +162,8 @@ class NavigatorSearchResponse {
         when (category) {
             "official_view" -> return 2
             "myworld_view" -> return 4
-            "hotel_view" -> return HabboServer.habboGame.navigatorManager.navigatorFlatCats.size + 2
-            "roomads_view" -> return HabboServer.habboGame.navigatorManager.navigatorPromoCats.size + 1
+            "hotel_view" -> return HabboServer.habboGame.navigatorManager.navigatorRoomCategories.size + 2
+            "roomads_view" -> return HabboServer.habboGame.navigatorManager.navigatorEventCategories.size + 1
             else -> return 1
         }
     }

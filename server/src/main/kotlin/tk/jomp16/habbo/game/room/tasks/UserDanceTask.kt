@@ -26,9 +26,7 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
-
-        // todo: unset user carry item
-
+        roomUser.handItem = 0
         roomUser.danceId = danceId
     }
 }

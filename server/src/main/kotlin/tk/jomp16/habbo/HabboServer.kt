@@ -96,7 +96,8 @@ object HabboServer : AutoCloseable {
     lateinit var serverExecutor: ExecutorService
         private set
 
-    val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    val DATE_TIME_FORMATTER_WITH_HOURS = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    val DATE_TIME_FORMATTER_ONLY_DAYS = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     val started: Boolean
         get() {

@@ -30,7 +30,6 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.user.HabboSession
-import java.time.LocalDate
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -73,7 +72,7 @@ class HandshakeSSOTicketHandler {
         queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID2 to arrayOf(false)
         queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID3 to arrayOf("", "")
         queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf()
-        queuedHabboResponse += Outgoing.CAMPAIGN_CALENDAR to arrayOf("xmas16", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
+//        queuedHabboResponse += Outgoing.CAMPAIGN_CALENDAR to arrayOf("xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
         queuedHabboResponse += Outgoing.MODERATION_TOPICS_INIT to arrayOf(HabboServer.habboGame.moderationManager.moderationCategories, HabboServer.habboGame.moderationManager.moderationTopics.values)
 
         if (habboSession.hasPermission("acc_mod_tools")) queuedHabboResponse += Outgoing.MODERATION_INIT to arrayOf()

@@ -34,16 +34,16 @@ class NavigatorManager {
             "myworld_view"
     )
 
-    val navigatorFlatCats: MutableMap<Int, NavigatorFlatcat> = HashMap()
-    val navigatorPromoCats: MutableMap<Int, NavigatorPromocat> = HashMap()
+    val navigatorRoomCategories: MutableMap<Int, NavigatorRoomCategory> = HashMap()
+    val navigatorEventCategories: MutableMap<Int, NavigatorEventCategory> = HashMap()
 
     init {
         log.info("Loading navigator...")
 
-        navigatorFlatCats += NavigatorDao.getNavigatorFlatCats().associateBy { it.id }
-        navigatorPromoCats += NavigatorDao.getNavigatorPromoCats().associateBy { it.id }
+        navigatorRoomCategories += NavigatorDao.getNavigatorRoomCategories().associateBy { it.id }
+        navigatorEventCategories += NavigatorDao.getNavigatorEventCategories().associateBy { it.id }
 
-        log.info("Loaded {} navigator categories!", navigatorFlatCats.size)
-        log.info("Loaded {} navigator promo categories!", navigatorPromoCats.size)
+        log.info("Loaded {} navigator categories!", navigatorRoomCategories.size)
+        log.info("Loaded {} navigator promo categories!", navigatorEventCategories.size)
     }
 }

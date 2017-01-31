@@ -17,19 +17,29 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.catalog
+package tk.jomp16.habbo.communication.outgoing.navigator
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogPurchaseNotAllowedResponse {
-    @Response(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED)
-            // errorCode = 1 == not HC, other == unknown error
-    fun handle(habboResponse: HabboResponse, errorCode: Int) {
+class NavigatorRoomCategoriesResponse {
+    @Response(Outgoing.NAVIGATOR_ROOM_CATEGORIES)
+    fun response(habboResponse: HabboResponse, roomCategories: Collection<NavigatorRoomCategory>, rank: Int) {
         habboResponse.apply {
-            writeInt(errorCode)
+            writeInt(roomCategories.size)
+
+            roomCategories.forEach {
+                writeInt(it.id)
+                writeUTF(it.caption)
+                writeBoolean(it.minRank <= rank)
+                writeBoolean(false)
+                writeUTF("NONE")
+                writeUTF("")
+                writeBoolean(false)
+            }
         }
     }
 }

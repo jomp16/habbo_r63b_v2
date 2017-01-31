@@ -22,14 +22,35 @@ package tk.jomp16.habbo.communication.outgoing.room
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.room.user.RoomUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserTypingResponse {
-    @Response(Outgoing.ROOM_USER_TYPING)
-    fun handle(habboResponse: HabboResponse, virtualId: Int, typing: Boolean) {
+class RoomUserStatusesResponse {
+    @Response(Outgoing.ROOM_USERS_STATUSES)
+    fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
         habboResponse.apply {
-            writeInt(virtualId)
-            writeInt(if (typing) 1 else 0)
+            writeInt(roomUsers.size)
+
+            roomUsers.forEach {
+                writeInt(it.virtualID)
+                writeInt(it.currentVector3.x)
+                writeInt(it.currentVector3.y)
+                writeUTF(it.currentVector3.z.toString())
+                writeInt(it.headRotation)
+                writeInt(it.bodyRotation)
+
+                val stringBuilder = StringBuilder("/")
+
+                it.statusMap.entries.filter { it.key.isNotBlank() }.forEach {
+                    stringBuilder.append(it.key)
+
+                    if (it.value.second.isNotBlank()) stringBuilder.append(' ').append(it.value.second)
+
+                    stringBuilder.append('/')
+                }
+
+                writeUTF(stringBuilder.toString())
+            }
         }
     }
 }

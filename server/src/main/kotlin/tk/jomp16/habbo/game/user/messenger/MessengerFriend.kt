@@ -49,7 +49,7 @@ data class MessengerFriend(
                 writeUTF(userInformation.figure)
                 writeInt(0) // todo: add ability to add friend on custom category
                 writeUTF(userInformation.motto)
-                writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
+                writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
                 writeUTF(userInformation.realname)
                 writeBoolean(true) // allows offline messaging
                 writeBoolean(false) // useless
@@ -86,7 +86,7 @@ data class MessengerFriend(
             writeUTF("")
             writeInt(0) // ?
             writeUTF(userInformation.figure)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER))
+            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
         }
     }
 }

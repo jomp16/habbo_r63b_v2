@@ -32,6 +32,29 @@ import java.time.LocalDateTime
 object UserStatsDao {
     private val userStatsCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userStatsCache")
 
+    init {
+        userStatsCache.put(Element(Int.MAX_VALUE, UserStats(
+                Int.MAX_VALUE,
+                LocalDateTime.now(Clock.systemUTC()),
+                Int.MAX_VALUE.toLong(),
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                0,
+                0,
+                0,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                LocalDateTime.now(Clock.systemUTC()),
+                LocalDateTime.now(Clock.systemUTC())
+        )))
+    }
+
     fun getUserStats(userId: Int, cache: Boolean = true): UserStats {
         if (!cache || !userStatsCache.isKeyInCache(userId)) {
             val userStats = HabboServer.database {

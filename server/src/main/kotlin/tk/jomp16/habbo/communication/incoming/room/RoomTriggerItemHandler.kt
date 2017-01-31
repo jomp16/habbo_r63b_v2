@@ -34,7 +34,12 @@ class RoomTriggerItemHandler {
         habboSession.currentRoom?.let {
             val item = it.roomItems[habboRequest.readInt()] ?: return@let
 
-            item.furnishing.interactor?.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
+            val interactor = item.furnishing.interactor
+
+            when {
+                interactor != null -> interactor.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
+                else -> habboSession.sendNotification("No interactor for this furnishing!\n\nInteractor type:\n\n${item.furnishing.interactionType.name}")
+            }
         }
     }
 }

@@ -33,8 +33,8 @@ class NavigatorPromoCategoriesHandler {
         if (!habboSession.authenticated) return
 
         habboSession.sendHabboResponse(
-                Outgoing.NAVIGATOR_PROMO_CATEGORIES,
-                HabboServer.habboGame.navigatorManager.navigatorPromoCats.values,
+                Outgoing.NAVIGATOR_EVENT_CATEGORIES,
+                HabboServer.habboGame.navigatorManager.navigatorEventCategories.values,
                 habboSession.userInformation.rank
         )
     }

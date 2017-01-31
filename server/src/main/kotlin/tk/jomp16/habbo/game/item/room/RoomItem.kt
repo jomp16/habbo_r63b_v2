@@ -137,7 +137,7 @@ data class RoomItem(
 
     fun onCycle() {
         if (cycles != 0 || furnishing.interactionType == InteractionType.ROLLER) {
-            if (currentCycles >= cycles || furnishing.interactionType == InteractionType.ROLLER) {
+            if (currentCycles++ >= cycles || furnishing.interactionType == InteractionType.ROLLER) {
                 cycles = 0
                 currentCycles = 0
 
@@ -145,8 +145,6 @@ data class RoomItem(
 
                 return
             }
-
-            currentCycles++
         }
     }
 
@@ -162,6 +160,18 @@ data class RoomItem(
 
         // todo: wired
         // room.getWiredHandler().triggerWired(WiredTriggerWalksOffFurni::class.java, roomUser, this)
+    }
+
+    fun canClose(): Boolean {
+        var closeable = true
+
+        affectedTiles.forEach {
+            val roomUsers = room.roomGamemap.roomUserMap[it]
+
+            if (roomUsers != null && closeable) closeable = roomUsers.isEmpty()
+        }
+
+        return closeable
     }
 
     private fun getFrontRotation(front: Vector2) = Rotation.calculate(front.x, front.y, position.x, position.y)
@@ -197,7 +207,7 @@ data class RoomItem(
         return Vector2(x, y)
     }
 
-    fun isTouching(pos: Vector3, rotation: Int, z: Double) = isTouching(pos, rotation, false, z)
+    fun isTouching(pos: Vector3, rotation: Int, z: Double = -1.toDouble()) = isTouching(pos, rotation, false, z)
 
     private fun isTouching(vector3: Vector3, rotation: Int, ignoreItemRotation: Boolean, z: Double): Boolean {
         if (z != -1.toDouble() && z - vector3.z > 3.toDouble()) return false

@@ -26,6 +26,8 @@ import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
 import tk.jomp16.habbo.kotlin.addAndGetEhCache
+import tk.jomp16.habbo.kotlin.localDateTime
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 
 object UserInformationDao {
@@ -37,6 +39,7 @@ object UserInformationDao {
                 Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
                 "SERVER SCRIPTING CONSOLE", // name
                 "", // email, empty
+                LocalDateTime.of(2015, 1, 1, 0, 0),
                 "${BuildConfig.NAME} scripting console.", // realname
                 7, // rank
                 AtomicInteger(0), // credits
@@ -101,6 +104,7 @@ object UserInformationDao {
             row.int("id"),
             row.string("username"),
             row.string("email"),
+            row.localDateTime("account_created"),
             row.string("realname"),
             row.int("rank"),
             AtomicInteger(row.int("credits")),

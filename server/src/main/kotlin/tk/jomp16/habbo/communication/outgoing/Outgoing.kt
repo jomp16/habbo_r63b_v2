@@ -125,6 +125,7 @@ object Outgoing {
     const val ROOM_USER_ACTION = 3349 // 2467
     const val ROOM_USER_CHAT = 2785 // 2397
     const val ROOM_USER_DANCE = 130 // 2742
+    const val ROOM_USER_HANDITEM = 2106 // 3655
     const val ROOM_USER_IDLE = 2306 // 3683
     const val ROOM_USER_REMOVE = 3839 // 775
     const val ROOM_USER_SHOUT = 2888 // 952

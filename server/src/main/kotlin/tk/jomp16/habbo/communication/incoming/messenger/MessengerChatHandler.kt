@@ -25,6 +25,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.messenger.MessengerChatErrorResponse
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.urlUserAgent
@@ -42,7 +43,13 @@ class MessengerChatHandler {
         val userId = habboRequest.readInt()
         val message = habboRequest.readUTF()
 
-        if (message.isBlank() || !habboSession.habboMessenger.friends.containsKey(userId)) return
+        if (message.isBlank()) return
+
+        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == Int.MAX_VALUE && !habboSession.hasPermission("acc_server_console")) {
+            habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT_ERROR, MessengerChatErrorResponse.MessengerChatError.NOT_FRIENDS, userId, message)
+
+            return
+        }
 
         if (userId == Int.MAX_VALUE && habboSession.hasPermission("acc_server_console")) {
             // server console!

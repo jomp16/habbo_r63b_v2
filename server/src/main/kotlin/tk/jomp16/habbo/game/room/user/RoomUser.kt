@@ -63,13 +63,17 @@ class RoomUser(
         get() = stepSeatedVector3 != null
 
     private var idleCount: Int = 0
+
     private var cycles: Int = 0
     private var currentCycles: Int = 0
+    private var handItemCycle: Int = 0
+    private var handItemCurrentCycles: Int = 0
 
     var walkingBlocked: Boolean = false
     var ignoreBlocking: Boolean = false
     var overrideBlocking: Boolean = false
     var rollerId: Int = -1
+    var handleVendingId: Int = -1
 
     internal var path: MutableList<Path> = mutableListOf()
 
@@ -87,7 +91,7 @@ class RoomUser(
 
     var typing: Boolean = false
         set(newValue) {
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, newValue)
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
 
             field = newValue
         }
@@ -95,6 +99,13 @@ class RoomUser(
     var danceId: Int = 0
         set(newValue) {
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
+
+            field = newValue
+        }
+
+    var handItem: Int = 0
+        set(newValue) {
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, virtualID, newValue)
 
             field = newValue
         }
@@ -126,13 +137,31 @@ class RoomUser(
             stepSeatedVector3 = null
         }
 
+        if (handItemCycle > 0) {
+            if (handItemCurrentCycles++ >= handItemCycle) {
+                if (handItem > 0) {
+                    handItemCurrentCycles = 0
+                    handItemCycle = 0
+
+                    carryHandItem(0)
+                }
+            }
+        }
+
         if (cycles > 0) {
-            if (currentCycles >= cycles) {
+            if (currentCycles++ >= cycles) {
+                if (handleVendingId > 0) {
+                    handItemCycle = 240
+
+                    carryHandItem(handleVendingId)
+
+                    handleVendingId = 0
+                }
+
                 walkingBlocked = false
+
                 cycles = 0
                 currentCycles = 0
-            } else {
-                currentCycles++
             }
         }
 
@@ -225,6 +254,21 @@ class RoomUser(
 
     fun dance(danceId: Int) {
         room.roomTask?.addTask(room, UserDanceTask(this, danceId))
+    }
+
+    fun vendingMachine(handItem: Int) {
+        room.roomTask?.addTask(room, UserVendingMachineTask(this, handItem))
+    }
+
+    fun carryHandItem(handItem: Int) {
+        room.roomTask?.addTask(room, UserHandItemTask(this, handItem))
+    }
+
+    fun requestCycles(cycles1: Int) {
+        if (currentCycles == 0 || cycles1 == 0) {
+            cycles = cycles1
+            currentCycles = 0
+        }
     }
 
     private fun stopWalking() {

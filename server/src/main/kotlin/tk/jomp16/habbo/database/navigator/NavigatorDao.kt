@@ -20,17 +20,17 @@
 package tk.jomp16.habbo.database.navigator
 
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.game.navigator.NavigatorFlatcat
-import tk.jomp16.habbo.game.navigator.NavigatorPromocat
+import tk.jomp16.habbo.game.navigator.NavigatorEventCategory
+import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
 
 object NavigatorDao {
-    fun getNavigatorFlatCats() = HabboServer.database {
-        select("SELECT * FROM navigator_flatcats WHERE enabled = :enabled",
+    fun getNavigatorRoomCategories() = HabboServer.database {
+        select("SELECT * FROM navigator_room_categories WHERE enabled = :enabled",
                 mapOf(
                         "enabled" to true
                 )
         ) {
-            NavigatorFlatcat(
+            NavigatorRoomCategory(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
@@ -38,13 +38,13 @@ object NavigatorDao {
         }
     }
 
-    fun getNavigatorPromoCats() = HabboServer.database {
-        select("SELECT * FROM navigator_promocats WHERE visible = :visible",
+    fun getNavigatorEventCategories() = HabboServer.database {
+        select("SELECT * FROM navigator_event_categories WHERE visible = :visible",
                 mapOf(
                         "visible" to true
                 )
         ) {
-            NavigatorPromocat(
+            NavigatorEventCategory(
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")

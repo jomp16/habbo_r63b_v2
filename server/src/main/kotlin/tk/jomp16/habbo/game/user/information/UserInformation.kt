@@ -22,6 +22,7 @@ package tk.jomp16.habbo.game.user.information
 import tk.jomp16.habbo.database.clothing.ClothingDao
 import tk.jomp16.habbo.database.wardrobe.WardrobeDao
 import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -29,6 +30,7 @@ data class UserInformation(
         val id: Int,
         val username: String,
         val email: String,
+        val accountCreated: LocalDateTime,
         val realname: String,
         var rank: Int,
         var credits: AtomicInteger,

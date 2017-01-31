@@ -26,6 +26,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserPreferencesDao
@@ -264,7 +265,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (loading) {
             if (room.roomData.state == RoomState.PASSWORD && !HabboServer.habboGame.passwordEncryptor.checkPassword(password, room.roomData.password)) {
-                queuedHabboResponse += Outgoing.GENERIC_ERROR to arrayOf(-100002)
+                queuedHabboResponse += Outgoing.GENERIC_ERROR to arrayOf(MiscGenericErrorResponse.MiscGenericError.WRONG_PASSWORD)
                 queuedHabboResponse += Outgoing.ROOM_EXIT to arrayOf()
 
                 sendQueuedHabboResponse(queuedHabboResponse)

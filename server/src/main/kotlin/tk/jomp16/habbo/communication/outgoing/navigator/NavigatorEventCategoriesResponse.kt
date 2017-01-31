@@ -22,23 +22,19 @@ package tk.jomp16.habbo.communication.outgoing.navigator
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.navigator.NavigatorFlatcat
+import tk.jomp16.habbo.game.navigator.NavigatorEventCategory
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class NavigatorFlatCategoriesResponse {
-    @Response(Outgoing.NAVIGATOR_FLAT_CATEGORIES)
-    fun response(habboResponse: HabboResponse, flatCategories: Collection<NavigatorFlatcat>, rank: Int) {
+class NavigatorEventCategoriesResponse {
+    @Response(Outgoing.NAVIGATOR_EVENT_CATEGORIES)
+    fun response(habboResponse: HabboResponse, categories: Collection<NavigatorEventCategory>, rank: Int) {
         habboResponse.apply {
-            writeInt(flatCategories.size)
+            writeInt(categories.size)
 
-            flatCategories.forEach {
+            categories.forEach {
                 writeInt(it.id)
                 writeUTF(it.caption)
                 writeBoolean(it.minRank <= rank)
-                writeBoolean(false)
-                writeUTF("NONE")
-                writeUTF("")
-                writeBoolean(false)
             }
         }
     }

@@ -35,7 +35,6 @@ import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
 import java.time.Clock
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
@@ -86,6 +85,8 @@ class ItemManager {
         furniInteractor.put(InteractionType.ONE_WAY_GATE, OneWayGateFurniInteractor())
         furniInteractor.put(InteractionType.ROLLER, RollerFurniInteractor())
         furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
+        furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
+        furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
@@ -214,9 +215,9 @@ class ItemManager {
             InteractionType.BADGE_DISPLAY -> {
                 if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
 
-                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
+                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}"
             }
-            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}${9.toChar()}${extraData.trim()}"
+            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}${9.toChar()}${extraData.trim()}"
             else -> ""
         }
     }
