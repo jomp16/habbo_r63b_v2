@@ -1,12 +1,12 @@
 [submodule "pathfinding"]
 	path = pathfinding
-	url = https://git.jomp16.tk/git/Habbo/pathfinding.git
+	url = https://git.jomp16.tk/Habbo/pathfinding.git
 [submodule "plugins_src/plugin_webapp"]
 	path = plugins_src/plugin_webapp
-	url = https://git.jomp16.tk/git/Habbo/plugin_webapp.git
+	url = https://git.jomp16.tk/Habbo/plugin_webapp.git
 [submodule "habbo_imaging"]
 	path = habbo_imaging
-	url = https://git.jomp16.tk/git/Habbo/habbo_imaging.git
+	url = https://git.jomp16.tk/Habbo/habbo_imaging.git
 [submodule "plugin_manager"]
 	path = plugin_manager
-	url = https://git.jomp16.tk/git/jomp16/plugin_manager.git
+	url = https://git.jomp16.tk/Habbo/plugin_manager.git
