@@ -199,33 +199,33 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     internal fun rewardUser() {
         val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
 
-        var updateCredits = false
-        var updatePixels = false
+        var update = false
 
         if (LocalDateTime.now(Clock.systemUTC()).isAfter(localDateTime)) {
-            if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits.get() < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits.get() < Int.MAX_VALUE) {
+            if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && userInformation.credits.get() < HabboServer.habboConfig.rewardConfig.creditsMax || userInformation.credits.get() >= 0 && userInformation.credits.get() < Int.MAX_VALUE) {
                 userInformation.credits.set(userInformation.credits.get() + HabboServer.habboConfig.rewardConfig.credits)
 
-                updateCredits = true
+                update = true
             }
 
-            if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.pixels.get() < HabboServer.habboConfig.rewardConfig.pixelsMax || userInformation.pixels.get() < Int.MAX_VALUE) {
+            if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && userInformation.pixels.get() < HabboServer.habboConfig.rewardConfig.pixelsMax || userInformation.pixels.get() >= 0 && userInformation.pixels.get() < Int.MAX_VALUE) {
                 userInformation.pixels.set(userInformation.pixels.get() + HabboServer.habboConfig.rewardConfig.pixels)
 
-                updatePixels = true
+                update = true
             }
 
-            if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints.get() < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints.get() < Int.MAX_VALUE)) {
+            if (userInformation.vip && (HabboServer.habboConfig.rewardConfig.vipPointsMax < 0 && userInformation.vipPoints.get() < HabboServer.habboConfig.rewardConfig.vipPoints || userInformation.vipPoints.get() >= 0 && userInformation.vipPoints.get() < Int.MAX_VALUE)) {
                 userInformation.vipPoints.set(userInformation.vipPoints.get() + HabboServer.habboConfig.rewardConfig.vipPoints)
 
-                updatePixels = true
+                update = true
             }
-
-            userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
         }
 
-        if (updateCredits) sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits.get())
-        else if (updatePixels) sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels.get(), userInformation.vipPoints.get())
+        if (update) {
+            userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
+
+            updateAllCurrencies()
+        }
     }
 
     fun updateAllCurrencies() {
