@@ -20,10 +20,8 @@
 package tk.jomp16.habbo.kotlin
 
 import io.netty.channel.Channel
+import java.net.InetSocketAddress
 
 fun Channel.ip(): String {
-    var ip: String = remoteAddress().toString().replaceFirst("/", "")
-    ip = ip.substring(0, ip.indexOf(':'))
-
-    return ip
+    return (remoteAddress() as InetSocketAddress).address.hostAddress
 }
