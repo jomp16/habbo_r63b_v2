@@ -30,11 +30,14 @@ import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.urlUserAgent
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.io.FileOutputStream
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
@@ -87,6 +90,53 @@ class ItemManager {
         furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
         furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
         furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
+
+        val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
+
+        if (missingItems.isNotEmpty()) {
+            FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use {
+                it.apply {
+                    appendln()
+                    appendln("================")
+                    appendln(LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ISO_DATE_TIME))
+                    appendln()
+
+                    missingItems.forEach {
+                        appendln(it)
+                    }
+
+                    appendln()
+                    appendln("================")
+                }
+            }
+
+            HabboServer.database {
+                batchInsertAndGetGeneratedKeys("INSERT INTO furnishings (item_name, type, stack_height, can_stack, allow_recycle, allow_trade, allow_marketplace_sell, allow_gift, allow_inventory_stack, interaction_type, interaction_modes_count, vending_ids)" +
+                        " VALUES (:item_name, :type, :stack_height, :can_stack, :allow_recycle, :allow_trade, :allow_marketplace_sell, :allow_gift, :allow_inventory_stack, :interaction_type, :interaction_modes_count, :vending_ids)",
+                        missingItems.map {
+                            mapOf(
+                                    "item_name" to it,
+                                    "type" to if (!furniXMLInfos[it]!!.wallFurni) "s" else "i",
+                                    "stack_height" to "1",
+                                    "can_stack" to true,
+                                    "allow_recycle" to true,
+                                    "allow_trade" to true,
+                                    "allow_marketplace_sell" to true,
+                                    "allow_gift" to true,
+                                    "allow_inventory_stack" to true,
+                                    "interaction_type" to "default",
+                                    "interaction_modes_count" to 1,
+                                    "vending_ids" to "0"
+                            )
+                        }
+                )
+            }
+
+            log.info("Added more {} items to database!", furniXMLInfos.size - furnishings.size)
+
+            furnishings.clear()
+            furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
+        }
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
