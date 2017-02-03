@@ -102,14 +102,19 @@ class TeleportFurniInteractor : ItemInteractor() {
 
                 if (outgoingUser.currentVector3.vector2 != roomItem.position.vector2) {
                     outgoingUser.walkingBlocked = false
+
                     roomItem.interactingUsers.remove(1)
                 } else if (showUpdate) {
                     extraData = "2"
 
                     if (targetRoomItem != null) {
-                        outgoingUser.currentVector3 = Vector3(targetRoomItem.position.vector2, room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2))
-                        outgoingUser.headRotation = roomItem.rotation
-                        outgoingUser.bodyRotation = roomItem.rotation
+                        val newVector3 = Vector3(targetRoomItem.position.vector2, room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2))
+
+                        room.roomGamemap.updateRoomUserMovement(outgoingUser, outgoingUser.currentVector3.vector2, newVector3.vector2)
+
+                        outgoingUser.currentVector3 = newVector3
+                        outgoingUser.headRotation = targetRoomItem.rotation
+                        outgoingUser.bodyRotation = targetRoomItem.rotation
                         outgoingUser.updateNeeded = true
 
                         if (targetRoomItem.extraData != "2") {
@@ -126,8 +131,9 @@ class TeleportFurniInteractor : ItemInteractor() {
                 } else {
                     extraData = "1"
 
+                    outgoingUser.moveTo(roomItem.getFrontPosition(), ignoreBlocking = true)
                     outgoingUser.walkingBlocked = false
-                    outgoingUser.moveTo(roomItem.getFrontPosition())
+
                     roomItem.interactingUsers.remove(1)
                     roomItem.requestCycles(2)
                 }
@@ -141,8 +147,8 @@ class TeleportFurniInteractor : ItemInteractor() {
             } else {
                 extraData = "1"
 
+                incomingUser.moveTo(roomItem.getFrontPosition(), ignoreBlocking = true)
                 incomingUser.walkingBlocked = false
-                incomingUser.moveTo(roomItem.getFrontPosition())
 
                 roomItem.interactingUsers.remove(2)
                 roomItem.requestCycles(1)
