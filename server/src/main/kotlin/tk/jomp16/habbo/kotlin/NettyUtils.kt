@@ -23,5 +23,5 @@ import io.netty.channel.Channel
 import java.net.InetSocketAddress
 
 fun Channel.ip(): String {
-    return (remoteAddress() as InetSocketAddress).address.hostAddress
+    return (remoteAddress() as InetSocketAddress).address.hostAddress.replace("%0", "")
 }
