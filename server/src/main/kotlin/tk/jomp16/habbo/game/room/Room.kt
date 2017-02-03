@@ -25,6 +25,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.item.InteractionType
@@ -121,7 +122,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomUser == null) return
 
         if (roomUser.habboSession != null) {
-            if (kickNotification) roomUser.habboSession.sendHabboResponse(Outgoing.GENERIC_ERROR, 4008)
+            if (kickNotification) roomUser.habboSession.sendHabboResponse(Outgoing.GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
             if (notifyClient) roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
 
             roomUser.habboSession.roomUser = null
