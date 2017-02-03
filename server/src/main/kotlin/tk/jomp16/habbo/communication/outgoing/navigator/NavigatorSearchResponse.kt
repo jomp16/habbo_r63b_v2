@@ -94,7 +94,7 @@ class NavigatorSearchResponse {
                     }
 
                     writeInt(rooms.size)
-                    rooms.forEach { serialize(it, false, false) }
+                    rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
                 "popular" -> {
                     HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }.sortedBy { it.roomUsers.size }.let {
