@@ -29,7 +29,7 @@ class UserClothingsResponse {
     @Response(Outgoing.USER_CLOTHINGS)
     fun response(habboResponse: HabboResponse, clothings: Collection<String>) {
         habboResponse.apply {
-            val figureSetIds = HabboServer.habboGame.itemManager.furniXMLInfos.filterKeys { clothings.contains(it) }.flatMap { it.value.customParams.split(',').map(String::toInt) }
+            val figureSetIds = HabboServer.habboGame.itemManager.furniXMLInfos.filterKeys { clothings.contains(it) }.flatMap { it.value.customParams.split(',').map(String::trim).map(String::toInt) }
 
             writeInt(figureSetIds.size)
             figureSetIds.forEach { writeInt(it) }
