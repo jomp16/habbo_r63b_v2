@@ -226,14 +226,14 @@ class CatalogManager {
                         HabboServer.habboGame.itemManager.roomTeleportLinks.put(teleporterItem.id, 0)
                     }
                     userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
-                        insertAndGetGeneratedKey("INSERT INTO items_wired (item_id, extra1, extra2, extra3, extra4, extra5) VALUES (:item_id, :extra1, :extra2, :extra3, :extra4, :extra5)",
+                        insertAndGetGeneratedKey("INSERT INTO items_wired (item_id, extra1, extra2, extra3, extra4, extra5) VALUES (:item_id, :extra_a, :extra_b, :extra_c, :extra_d, :extra_e)",
                                 mapOf(
                                         "item_id" to userItem.id,
-                                        "extra1" to "",
-                                        "extra2" to "",
-                                        "extra3" to "",
-                                        "extra4" to "",
-                                        "extra5" to ""
+                                        "extra_a" to "",
+                                        "extra_b" to "",
+                                        "extra_c" to "",
+                                        "extra_d" to "",
+                                        "extra_e" to ""
                                 )
                         )
                     }

@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.room.tasks
 
 import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
@@ -89,7 +90,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             it.habboMessenger.notifyFriends()
 
-            // todo: wired
+            room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }
 
         room.roomUsers.put(roomUser.virtualID, roomUser)

@@ -47,5 +47,5 @@ data class UserInformation(
         get() = rank >= 7
 
     val wardrobes: MutableList<Wardrobe> = ArrayList(WardrobeDao.getWardrobes(id))
-    val clothings: MutableList<String> = ArrayList(ClothingDao.getClothings(id))
+    val clothings: MutableSet<String> = HashSet(ClothingDao.getClothings(id))
 }

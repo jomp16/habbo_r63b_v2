@@ -41,10 +41,10 @@ class RoomUserChatTalkHandler {
     }
 
     private fun parse(habboRequest: HabboRequest): Pair<String, Int>? {
-        var message = habboRequest.readUTF()
+        var message = habboRequest.readUTF().trim()
 
-        if (message.isEmpty()) return null
-        if (message.length > 100) message = message.substring(0, 100)
+        if (message.isBlank()) return null
+        if (message.length > Byte.MAX_VALUE) message = message.substring(0, Byte.MAX_VALUE.toInt())
 
         val bubble = habboRequest.readInt()
 

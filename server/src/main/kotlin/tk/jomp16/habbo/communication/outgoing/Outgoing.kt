@@ -68,6 +68,7 @@ object Outgoing {
     const val MESSENGER_FRIENDS = 2803 // 2900
     const val MESSENGER_FRIEND_UPDATE = 369 // 1190
     const val MESSENGER_INIT = 2048 // 1329
+    const val MESSENGER_INVITE = 444 // 2138
     const val MESSENGER_REQUESTS = 3588 // 177
     const val MESSENGER_REQUEST_FRIEND = 3733 // 1525
     const val MESSENGER_SEARCH_FRIENDS = 896 // 2823
@@ -136,6 +137,10 @@ object Outgoing {
     const val ROOM_WALL_ITEM_ADDED = 960 // 2236
     const val ROOM_WALL_ITEM_REMOVE = 2212 // 209
     const val ROOM_WALL_ITEM_UPDATE = 631 // 3408
+    const val ROOM_WIRED_CONDITION_DIALOG = 744 // 1775
+    const val ROOM_WIRED_EFFECT_DIALOG = 2350 // 1428
+    const val ROOM_WIRED_SAVED = 480 // 2430
+    const val ROOM_WIRED_TRIGGER_DIALOG = 556 // 21
     const val ROOM_WORD_FILTER = 419 // 1100
     const val SECRET_KEY = 676 // 696
     const val SUBSCRIPTION_STATUS = 3492 // 826

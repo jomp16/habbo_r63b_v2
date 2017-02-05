@@ -27,6 +27,7 @@ import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.item.InteractionType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 
@@ -42,7 +43,7 @@ class RoomTask : Runnable {
         log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         rooms += room
-        queuedTasks.put(room, ArrayDeque())
+        queuedTasks.put(room, ConcurrentLinkedQueue())
 
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
@@ -59,6 +60,8 @@ class RoomTask : Runnable {
 
         log.info("Closing room n° {} - name {}", room.roomData.id, room.roomData.name)
 
+        room.roomTask = null
+
         room.roomUsers.values.toList().forEach { room.removeUser(it, true, true) }
 
         rooms -= room
@@ -68,8 +71,6 @@ class RoomTask : Runnable {
         room.errorsCounter.set(0)
         room.rollerCounter.set(0)
 
-        room.roomTask = null
-
         room.saveQueuedItems()
         room.roomGamemap.clearUsers()
 
@@ -77,6 +78,7 @@ class RoomTask : Runnable {
     }
 
     fun addTask(room: Room, task: IRoomTask) {
+        // todo: REMOVE THIS SHIT RIGHT NOW!
         queuedTasks[room]?.offer(task)
     }
 
@@ -85,10 +87,6 @@ class RoomTask : Runnable {
             rooms.forEach { room ->
                 HabboServer.serverExecutor.execute {
                     try {
-                        val queue = queuedTasks[room] ?: return@execute
-
-                        while (queue.isNotEmpty()) queue.poll().executeTask(room)
-
                         room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
 
                         if (room.rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
@@ -117,6 +115,10 @@ class RoomTask : Runnable {
 
                             return@execute
                         }
+
+                        val queue = queuedTasks[room] ?: return@execute
+
+                        while (queue.isNotEmpty()) queue.poll().executeTask(room)
 
                         if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
                     } catch (e: Exception) {

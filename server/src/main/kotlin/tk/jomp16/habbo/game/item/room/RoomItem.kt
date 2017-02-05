@@ -24,10 +24,7 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.item.ItemDao
-import tk.jomp16.habbo.game.item.Furnishing
-import tk.jomp16.habbo.game.item.InteractionType
-import tk.jomp16.habbo.game.item.ItemType
-import tk.jomp16.habbo.game.item.LimitedItemData
+import tk.jomp16.habbo.game.item.*
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Rotation
@@ -46,6 +43,7 @@ data class RoomItem(
         var wallPosition: String
 ) : IHabboResponseSerialize {
     val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
+    val wiredData: WiredData? = ItemDao.getWiredData(id)
 
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!

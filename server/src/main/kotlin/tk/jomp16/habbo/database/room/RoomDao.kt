@@ -172,10 +172,6 @@ object RoomDao {
                         )
                     }
             )
-
-            // todo: dimmer
-            // todo: wired
-            // todo: teleport
         }
     }
 

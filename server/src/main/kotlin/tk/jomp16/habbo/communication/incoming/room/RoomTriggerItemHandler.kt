@@ -22,12 +22,12 @@ package tk.jomp16.habbo.communication.incoming.room
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomTriggerItemHandler {
-    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM, Incoming.ROOM_TRIGGER_ONE_WAY_GATE, Incoming.ROOM_TRIGGER_HABBO_WHEEL,
-            Incoming.ROOM_TRIGGER_CLOSE_DICE, Incoming.ROOM_TRIGGER_ROLL_DICE)
+    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM, Incoming.ROOM_TRIGGER_ONE_WAY_GATE, Incoming.ROOM_TRIGGER_HABBO_WHEEL, Incoming.ROOM_TRIGGER_CLOSE_DICE, Incoming.ROOM_TRIGGER_ROLL_DICE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
@@ -38,7 +38,10 @@ class RoomTriggerItemHandler {
 
             when {
                 interactor != null -> interactor.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
-                else -> habboSession.sendNotification("No interactor for this furnishing!\n\nInteractor type:\n\n${item.furnishing.interactionType.name}")
+                else -> {
+                    if (item.furnishing.interactionType != InteractionType.NOT_FOUND) habboSession.sendNotification("No interactor for this furnishing!\n\nInteractor type:\n\n${item.furnishing.interactionType.name}")
+                    else habboSession.sendNotification("I don't know which interactor this furni uses!\n\nItem name: ${item.itemName}")
+                }
             }
         }
     }

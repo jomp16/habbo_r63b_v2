@@ -31,12 +31,14 @@ import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.item.wired.WiredItem
 import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.game.room.gamemap.RoomGamemap
 import tk.jomp16.habbo.game.room.model.RoomModel
 import tk.jomp16.habbo.game.room.tasks.UserJoinRoomTask
 import tk.jomp16.habbo.game.room.tasks.UserPartRoomTask
 import tk.jomp16.habbo.game.room.user.RoomUser
+import tk.jomp16.habbo.game.room.wired.WiredHandler
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.util.Utils
 import tk.jomp16.habbo.util.Vector2
@@ -72,6 +74,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     val roomGamemap: RoomGamemap by lazy { RoomGamemap(this) }
     val pathfinder: IFinder by lazy { AStarFinder() }
+    val wiredHandler: WiredHandler by lazy { WiredHandler() }
 
     private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
 
@@ -82,6 +85,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun initialize() {
         if (!initialized) {
             roomItems.values.filter { it.furnishing.interactor != null }.forEach { it.furnishing.interactor?.onPlace(this, null, it) }
+            roomItems.values.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.forEach { roomItem ->
+                HabboServer.habboGame.itemManager.getWiredInstance(this, roomItem)?.let { wiredHandler.addWiredItem(roomItem.position.vector2, it) }
+            }
             roomItems.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let { roomDimmer = ItemDao.getRoomDimmer(it) }
         }
     }
@@ -196,6 +202,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
 
+        roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.let { if (it.isNotEmpty()) ItemDao.saveWireds(it) }
+
         if (roomDimmer != null && roomItemsToSave.any { it == roomDimmer!!.roomItem }) ItemDao.saveDimmer(roomDimmer!!)
 
         roomItemsToSave.clear()
@@ -216,6 +224,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         }
 
         val affectedTiles = HashSet<Vector2>()
+
+        val wiredItem: WiredItem? =
+                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+                    if (!newItem) wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
+                    else HabboServer.habboGame.itemManager.getWiredInstance(this, roomItem)
+                } else null
 
         if (!newItem) {
             roomGamemap.removeRoomItem(roomItem)
@@ -264,7 +278,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             affectedTiles += it
         }
 
-        // todo: wired
+        if (wiredItem != null) wiredHandler.addWiredItem(position, wiredItem)
+
         roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
 
         if (newItem) {
@@ -335,7 +350,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItems.remove(roomItem.id)
         roomGamemap.removeRoomItem(roomItem)
 
-        // todo: WIRED
+        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+            ItemDao.saveWireds(listOf(roomItem))
+
+            wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
+        }
+
         if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
             ItemDao.saveDimmer(roomDimmer!!)
 

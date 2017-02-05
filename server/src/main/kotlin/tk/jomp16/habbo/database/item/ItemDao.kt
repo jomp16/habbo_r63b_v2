@@ -22,10 +22,7 @@ package tk.jomp16.habbo.database.item
 import net.sf.ehcache.Ehcache
 import net.sf.ehcache.Element
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.game.item.Furnishing
-import tk.jomp16.habbo.game.item.InteractionType
-import tk.jomp16.habbo.game.item.ItemType
-import tk.jomp16.habbo.game.item.LimitedItemData
+import tk.jomp16.habbo.game.item.*
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
@@ -36,6 +33,7 @@ import tk.jomp16.habbo.util.Vector3
 object ItemDao {
     private val limitedItemDataCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("limitedItemDataCache")
     private val roomDimmerCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("roomDimmerCache")
+    private val wiredDataCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("wiredDataCache")
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>) = HabboServer.database {
         select("SELECT * FROM furnishings") {
@@ -128,6 +126,31 @@ object ItemDao {
         return limitedItemDataCache.get(itemId).objectValue as LimitedItemData?
     }
 
+    fun getWiredData(itemId: Int, cache: Boolean = true): WiredData? {
+        if (!cache || !wiredDataCache.isKeyInCache(itemId)) {
+            val wiredData = HabboServer.database {
+                select("SELECT * FROM items_wired WHERE item_id = :item_id",
+                        mapOf(
+                                "item_id" to itemId
+                        )
+                ) {
+                    WiredData(
+                            it.int("id"),
+                            it.string("extra1"),
+                            it.string("extra2"),
+                            it.string("extra3"),
+                            it.string("extra4"),
+                            it.string("extra5")
+                    )
+                }.firstOrNull()
+            }
+
+            wiredDataCache.put(Element(itemId, wiredData))
+        }
+
+        return wiredDataCache.get(itemId).objectValue as WiredData?
+    }
+
     fun getTeleportLinks() = HabboServer.database {
         select("SELECT * FROM items_teleport") {
             it.int("teleport_one_id") to it.int("teleport_two_id")
@@ -208,6 +231,23 @@ object ItemDao {
                             "preset_three" to roomDimmer.presets[2].toString(),
                             "id" to roomDimmer.id
                     )
+            )
+        }
+    }
+
+    fun saveWireds(wireds: List<RoomItem>) {
+        HabboServer.database {
+            batchUpdate("UPDATE items_wired SET extra1 = :extra_a, extra2 = :extra_b, extra3 = :extra_c, extra4 = :extra_d, extra5 = :extra_e WHERE id = :id",
+                    wireds.filter { it.wiredData != null }.map { it.wiredData!! }.map {
+                        mapOf(
+                                "extra_a" to it.extra1,
+                                "extra_b" to it.extra2,
+                                "extra_c" to it.extra3,
+                                "extra_d" to it.extra4,
+                                "extra_e" to it.extra5,
+                                "id" to it.id
+                        )
+                    }
             )
         }
     }

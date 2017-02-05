@@ -41,7 +41,7 @@ class MessengerChatHandler {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
 
         val userId = habboRequest.readInt()
-        val message = habboRequest.readUTF()
+        val message = habboRequest.readUTF().trim()
 
         if (message.isBlank()) return
 

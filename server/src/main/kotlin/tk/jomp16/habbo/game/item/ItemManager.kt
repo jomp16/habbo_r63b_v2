@@ -27,8 +27,12 @@ import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.interactors.*
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
+import tk.jomp16.habbo.game.item.wired.WiredItem
+import tk.jomp16.habbo.game.item.wired.action.actions.WiredActionShowMessage
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.urlUserAgent
@@ -90,6 +94,10 @@ class ItemManager {
         furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
         furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
         furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
+
+        val wiredFurniInteractor = WiredFurniInteractor()
+
+        InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach { furniInteractor.put(it, wiredFurniInteractor) }
 
         val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
 
@@ -172,6 +180,14 @@ class ItemManager {
             0,
             ""
     )
+
+    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? {
+        return when (roomItem.furnishing.interactionType) {
+            InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
+            InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
+            else -> null
+        }
+    }
 
     // todo: see if I can improve it
     fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?, magicRemove: Boolean = false) {
