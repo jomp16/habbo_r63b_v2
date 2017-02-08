@@ -33,7 +33,7 @@ class InventoryUpdateBadgesHandler {
 
         habboSession.habboBadge.resetSlots()
 
-        repeat(4) {
+        repeat(5) {
             val slot = habboRequest.readInt()
             val code = habboRequest.readUTF()
 
