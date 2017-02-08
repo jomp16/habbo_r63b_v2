@@ -136,11 +136,11 @@ object ItemDao {
                 ) {
                     WiredData(
                             it.int("id"),
-                            it.string("extra1"),
-                            it.string("extra2"),
-                            it.string("extra3"),
-                            it.string("extra4"),
-                            it.string("extra5")
+                            it.int("delay"),
+                            it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
+                            it.string("message"),
+                            it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
+                            it.string("extradata")
                     )
                 }.firstOrNull()
             }
@@ -237,14 +237,14 @@ object ItemDao {
 
     fun saveWireds(wireds: List<RoomItem>) {
         HabboServer.database {
-            batchUpdate("UPDATE items_wired SET extra1 = :extra_a, extra2 = :extra_b, extra3 = :extra_c, extra4 = :extra_d, extra5 = :extra_e WHERE id = :id",
+            batchUpdate("UPDATE items_wired SET delay = :delay, items = :items, message = :message, options = :options, extradata = :extradata WHERE id = :id",
                     wireds.filter { it.wiredData != null }.map { it.wiredData!! }.map {
                         mapOf(
-                                "extra_a" to it.extra1,
-                                "extra_b" to it.extra2,
-                                "extra_c" to it.extra3,
-                                "extra_d" to it.extra4,
-                                "extra_e" to it.extra5,
+                                "delay" to it.delay,
+                                "items" to it.items.joinToString(","),
+                                "message" to it.message,
+                                "options" to it.options.joinToString(","),
+                                "extradata" to it.extradata,
                                 "id" to it.id
                         )
                     }

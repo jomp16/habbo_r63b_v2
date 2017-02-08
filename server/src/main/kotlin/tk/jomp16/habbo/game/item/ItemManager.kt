@@ -30,6 +30,7 @@ import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.wired.WiredItem
 import tk.jomp16.habbo.game.item.wired.action.actions.WiredActionShowMessage
 import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.room.Room
@@ -184,6 +185,7 @@ class ItemManager {
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? {
         return when (roomItem.furnishing.interactionType) {
             InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
+            InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> WiredTriggerSaysSomething(room, roomItem)
             InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
             else -> null
         }
@@ -269,6 +271,40 @@ class ItemManager {
                     writeUTF(extraData)
                 }
             }
+        }
+    }
+
+    fun getWiredTypeId(roomItem: RoomItem): Int {
+        return when (roomItem.furnishing.interactionType) {
+            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI,
+            InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI,
+            InteractionType.WIRED_CONDITION_HAS_AVATARS -> 1
+
+            InteractionType.WIRED_ACTION_MATCH_TO_SCREENSHOT -> 3
+
+            InteractionType.WIRED_ACTION_MOVE_ROTATE,
+            InteractionType.WIRED_TRIGGER_STATE_CHANGED -> 4
+
+            InteractionType.WIRED_TRIGGER_PERIODICALLY -> 6
+
+            InteractionType.WIRED_TRIGGER_ENTER_ROOM,
+            InteractionType.WIRED_ACTION_SHOW_MESSAGE,
+            InteractionType.WIRED_ACTION_KICK_USER -> 7
+
+            InteractionType.WIRED_TRIGGER_GAME_STARTS,
+            InteractionType.WIRED_TRIGGER_GAME_ENDS,
+            InteractionType.WIRED_ACTION_TELEPORT_TO,
+            InteractionType.WIRED_ACTION_TOGGLE_STATE -> 8
+
+            InteractionType.WIRED_CONDITION_IN_GROUP -> 10
+
+            InteractionType.WIRED_TRIGGER_COLLISION -> 11
+
+            InteractionType.WIRED_ACTION_CALL_STACK -> 18
+
+            InteractionType.WIRED_CONDITION_NOT_IN_GROUP -> 21
+
+            else -> 0
         }
     }
 

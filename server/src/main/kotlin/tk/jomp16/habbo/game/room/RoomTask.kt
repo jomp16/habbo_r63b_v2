@@ -25,6 +25,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.item.InteractionType
+import tk.jomp16.habbo.game.room.tasks.WiredDelayTask
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -70,15 +71,14 @@ class RoomTask : Runnable {
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
         room.rollerCounter.set(0)
+        room.roomGamemap.clearUsers()
 
         room.saveQueuedItems()
-        room.roomGamemap.clearUsers()
 
         RoomDao.updateRoomData(room.roomData)
     }
 
     fun addTask(room: Room, task: IRoomTask) {
-        // todo: REMOVE THIS SHIT RIGHT NOW!
         queuedTasks[room]?.offer(task)
     }
 
@@ -87,6 +87,19 @@ class RoomTask : Runnable {
             rooms.forEach { room ->
                 HabboServer.serverExecutor.execute {
                     try {
+                        val queuedTasks = queuedTasks[room] ?: return@execute
+
+                        val wireds = mutableListOf<IRoomTask>()
+
+                        while (queuedTasks.isNotEmpty()) {
+                            val task = queuedTasks.poll()
+
+                            if (task is WiredDelayTask) wireds += task
+                            else task.executeTask(room)
+                        }
+
+                        wireds.forEach { it.executeTask(room) }
+
                         room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
 
                         if (room.rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
@@ -115,10 +128,6 @@ class RoomTask : Runnable {
 
                             return@execute
                         }
-
-                        val queue = queuedTasks[room] ?: return@execute
-
-                        while (queue.isNotEmpty()) queue.poll().executeTask(room)
 
                         if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
                     } catch (e: Exception) {

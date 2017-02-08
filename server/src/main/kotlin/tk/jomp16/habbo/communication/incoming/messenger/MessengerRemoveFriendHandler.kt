@@ -42,10 +42,10 @@ class MessengerRemoveFriendHandler {
 
         val messengerFriends: MutableList<MessengerFriend> = ArrayList()
 
-        (0..amount - 1).forEach {
+        repeat(amount) {
             val userId = habboRequest.readInt()
 
-            val messengerFriend = habboSession.habboMessenger.friends.remove(userId) ?: return@forEach
+            val messengerFriend = habboSession.habboMessenger.friends.remove(userId) ?: return@repeat
 
             messengerFriends += messengerFriend
         }

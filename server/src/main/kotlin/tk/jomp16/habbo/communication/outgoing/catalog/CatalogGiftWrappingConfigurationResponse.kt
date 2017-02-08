@@ -37,11 +37,11 @@ class CatalogGiftWrappingConfigurationResponse {
 
             writeInt(8)
 
-            (0..7).forEach { i -> writeInt(i) }
+            repeat(8) { writeInt(it) }
 
             writeInt(11)
 
-            (0..10).forEach { i -> writeInt(i) }
+            repeat(11) { writeInt(it) }
 
             writeInt(HabboServer.habboGame.itemManager.oldGiftWrapper.size)
 

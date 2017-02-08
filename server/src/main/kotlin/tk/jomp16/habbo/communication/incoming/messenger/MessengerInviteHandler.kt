@@ -15,7 +15,7 @@ class MessengerInviteHandler {
         val size = habboRequest.readInt()
         val friendsId = mutableListOf<Int>()
 
-        (0..size - 1).forEach { friendsId += habboRequest.readInt() }
+        repeat(size) { friendsId += habboRequest.readInt() }
 
         var message = habboRequest.readUTF().trim()
 

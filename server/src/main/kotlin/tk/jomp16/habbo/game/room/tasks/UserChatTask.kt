@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.room.tasks
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
 import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
@@ -32,7 +33,6 @@ class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, p
 
         val speechEmotion = getSpeechEmotion(message.toUpperCase())
 
-        // todo: wired trigger on chat in plugins
         if (!skipCommands) {
             HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))
 
@@ -42,6 +42,12 @@ class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, p
         var filterMessage = message
 
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
+
+        if (room.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)) {
+            roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, roomUser.virtualID, filterMessage, speechEmotion, bubble)
+
+            return
+        }
 
         if (type == ChatType.WHISPER) {
             roomUser.habboSession?.sendHabboResponse(Outgoing.ROOM_USER_WHISPER, virtualID, filterMessage, speechEmotion, bubble)

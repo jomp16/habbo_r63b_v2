@@ -2,9 +2,9 @@ package tk.jomp16.habbo.game.item
 
 data class WiredData(
         val id: Int,
-        var extra1: String,
-        var extra2: String,
-        var extra3: String,
-        var extra4: String,
-        var extra5: String
+        var delay: Int, // delay
+        var items: List<Int>, // items
+        var message: String, // text box
+        var options: List<Int>, // options
+        var extradata: String  // extra data
 )

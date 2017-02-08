@@ -202,7 +202,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
 
-        roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.let { if (it.isNotEmpty()) ItemDao.saveWireds(it) }
+        roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.filter { it.wiredData != null }.let { if (it.isNotEmpty()) ItemDao.saveWireds(it) }
 
         if (roomDimmer != null && roomItemsToSave.any { it == roomDimmer!!.roomItem }) ItemDao.saveDimmer(roomDimmer!!)
 

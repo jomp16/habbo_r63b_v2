@@ -33,12 +33,11 @@ class InventoryUpdateBadgesHandler {
 
         habboSession.habboBadge.resetSlots()
 
-        (0..4).forEach {
+        repeat(4) {
             val slot = habboRequest.readInt()
             val code = habboRequest.readUTF()
 
-            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(
-                    code) || slot < 1 || slot > 5) return@forEach
+            if (code.isBlank() || !habboSession.habboBadge.badges.containsKey(code) || slot < 1 || slot > 5) return@repeat
 
             habboSession.habboBadge.badges[code]?.slot = slot
         }

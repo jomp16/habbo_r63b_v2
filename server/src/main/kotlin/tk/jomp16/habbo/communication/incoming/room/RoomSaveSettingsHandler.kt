@@ -60,7 +60,7 @@ class RoomSaveSettingsHandler {
 
         val roomTagCount = habboRequest.readInt()
 
-        (0..roomTagCount - 1).forEach { i ->
+        repeat(roomTagCount) {
             val tag = habboRequest.readUTF().replace(",", "")
 
             if (!tag.isEmpty() && tag.length <= 30) tags += tag

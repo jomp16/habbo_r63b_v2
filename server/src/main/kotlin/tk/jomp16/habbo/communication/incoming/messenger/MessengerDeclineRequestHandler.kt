@@ -48,10 +48,10 @@ class MessengerDeclineRequestHandler {
 
         val ids: MutableList<Int> = ArrayList()
 
-        (0..amount - 1).forEach {
+        repeat(amount) {
             val userId = habboRequest.readInt()
 
-            val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@forEach
+            val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@repeat
 
             ids += messengerRequest.id
         }

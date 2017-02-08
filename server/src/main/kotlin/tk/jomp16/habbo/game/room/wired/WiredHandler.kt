@@ -24,7 +24,7 @@ class WiredHandler {
         return wiredStack[vector2]?.remove(roomItem.id)
     }
 
-    fun triggerWired(triggerClass: KClass<out WiredItem>, roomUser: RoomUser?, data: Any?): Boolean {
+    fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): Boolean {
         for ((vector2, wiredStackMap) in wiredStack) {
             wiredStackMap.values.forEach { wiredItem ->
                 if (wiredItem is WiredTrigger && triggerClass.java.isInstance(wiredItem) && wiredItem.onTrigger(roomUser, data)) {

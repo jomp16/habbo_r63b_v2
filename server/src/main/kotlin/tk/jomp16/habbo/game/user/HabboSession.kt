@@ -191,8 +191,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         UserInformationDao.saveInformation(userInformation, true, ip, "")
 
-        rewardUser()
-
         return true
     }
 

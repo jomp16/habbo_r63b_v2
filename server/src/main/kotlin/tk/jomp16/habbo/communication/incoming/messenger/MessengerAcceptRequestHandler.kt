@@ -43,11 +43,11 @@ class MessengerAcceptRequestHandler {
         val friendIds: MutableList<Int> = ArrayList()
         val requestIds: MutableList<Int> = ArrayList()
 
-        (0..amount - 1).forEach {
+        repeat(amount) {
             val userId = habboRequest.readInt()
 
-            if (habboSession.habboMessenger.friends.containsKey(userId)) return@forEach
-            val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@forEach
+            if (habboSession.habboMessenger.friends.containsKey(userId)) return@repeat
+            val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@repeat
 
             friendIds += userId
             requestIds += messengerRequest.id

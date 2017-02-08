@@ -15,8 +15,8 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
 
     init {
         if (roomItem.wiredData != null) {
-            message = roomItem.wiredData.extra2
-            delay = if (roomItem.wiredData.extra5.isEmpty()) 0 else roomItem.wiredData.extra5.toInt()
+            delay = roomItem.wiredData.delay
+            message = roomItem.wiredData.message
         }
     }
 
@@ -27,17 +27,21 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
             return
         }
 
-        if (roomUser != null && !message.isBlank()) roomUser.chat(roomUser.virtualID, message, 1, ChatType.WHISPER, true)
+        handleThing(roomUser)
     }
 
     override fun handle(event: WiredDelayEvent) {
         super.handle(event)
 
         if (event.counter.incrementAndGet() >= delay) {
-            if (event.roomUser != null && !message.isBlank()) event.roomUser.chat(event.roomUser.virtualID, message, 1, ChatType.WHISPER, true)
-
             event.finished = true
+
+            handleThing(event.roomUser)
         }
+    }
+
+    private fun handleThing(roomUser: RoomUser?) {
+        if (roomUser != null && !message.isBlank()) roomUser.chat(roomUser.virtualID, message, 1, ChatType.WHISPER, true)
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
@@ -47,7 +51,7 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
 
         message = habboRequest.readUTF().trim()
 
-        if (message.length > Byte.MAX_VALUE) message = message.substring(0, Byte.MAX_VALUE.toInt())
+        if (message.length > 100) message = message.substring(0, 100)
 
         habboRequest.readInt() // useless?
 
@@ -56,8 +60,8 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
         if (delay < 0) delay = 0
         if (delay > 20) delay = 20
 
-        roomItem.wiredData.extra2 = message
-        roomItem.wiredData.extra5 = delay.toString()
+        roomItem.wiredData.delay = delay
+        roomItem.wiredData.message = message
 
         return true
     }

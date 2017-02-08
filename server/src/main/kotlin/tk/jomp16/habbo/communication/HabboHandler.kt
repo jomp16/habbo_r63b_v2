@@ -24,6 +24,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
@@ -88,22 +89,24 @@ class HabboHandler {
     }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboRequest.use {
-            if (messageHandlers.containsKey(it.headerId)) {
-                val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
+        HabboServer.serverExecutor.execute {
+            habboRequest.use {
+                if (messageHandlers.containsKey(it.headerId)) {
+                    val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
 
-                try {
-                    methodHandle.invokeWithArguments(clazz, habboSession, it)
-                } catch (e: Exception) {
-                    log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - ${incomingNames[habboRequest.headerId]}!", e)
+                    try {
+                        methodHandle.invokeWithArguments(clazz, habboSession, it)
+                    } catch (e: Exception) {
+                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - ${incomingNames[habboRequest.headerId]}!", e)
 
-                    if (e is ClassCastException || e is WrongMethodTypeException) {
-                        log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
-                        log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
+                        if (e is ClassCastException || e is WrongMethodTypeException) {
+                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                            log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
+                        }
                     }
+                } else {
+                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
                 }
-            } else {
-                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
             }
         }
     }

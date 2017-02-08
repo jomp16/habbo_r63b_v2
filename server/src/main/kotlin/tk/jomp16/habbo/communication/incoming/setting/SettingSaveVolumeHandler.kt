@@ -32,7 +32,7 @@ class SettingSaveVolumeHandler {
 
         var volume = ""
 
-        (0..2).forEach {
+        repeat(3) {
             var volume1 = habboRequest.readInt()
 
             if (volume1 < 0) volume1 = 0

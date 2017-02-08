@@ -30,6 +30,9 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
 
+        room.roomUsers.put(roomUser.virtualID, roomUser)
+        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
+
         val queuedHabboResponse = QueuedHabboResponse()
 
         roomUser.habboSession?.let {
@@ -92,9 +95,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }
-
-        room.roomUsers.put(roomUser.virtualID, roomUser)
-        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         // todo: add support to bots
         roomUser.habboSession?.let {
