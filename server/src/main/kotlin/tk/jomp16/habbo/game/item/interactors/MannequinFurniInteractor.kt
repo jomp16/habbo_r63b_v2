@@ -39,12 +39,14 @@ class MannequinFurniInteractor : ItemInteractor() {
         val figures = HashMap<String, String>()
 
         mannequinFigureArray.forEach { figure ->
+            val key = figure.split('-')[0]
+
             userFigureArray.forEach { figure1 ->
-                val key = figure.split('-')[0]
                 val key1 = figure1.split('-')[0]
 
                 if (key1 == key) figures.put(key, figure)
                 else if (!figures.containsKey(key1)) figures.put(key1, figure1)
+                else if (!figures.containsKey(key)) figures.put(key, figure)
             }
         }
 
