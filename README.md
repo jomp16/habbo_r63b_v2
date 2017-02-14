@@ -1,8 +1,6 @@
 # habbo_r63b_v2
 > A Habbo R63B server made with Kotlin and Java. In development.
 
-[![Build Status](https://jenkins.jomp16.tk/job/habbo_r63b_v2/badge/icon)](https://jenkins.jomp16.tk/job/habbo_r63b_v2/)
-
 ## How to build
 
 `git clone https://git.jomp16.tk/Habbo/habbo_r63b_v2.git`
