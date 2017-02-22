@@ -9,6 +9,9 @@ classes/
 # Config, they contains sensitive info about my stuffs
 config.json
 
+# JRebel
+rebel.xml
+
 # MOTD
 motd/
 
