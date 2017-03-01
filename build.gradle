@@ -19,15 +19,23 @@
 
 import groovy.json.JsonOutput
 
-plugins {
-    //noinspection GrUnresolvedAccess
-    id "nebula.kotlin" version "1.0.6" apply false
-    //noinspection GrUnresolvedAccess
-    id "com.github.ben-manes.versions" version "0.13.0" apply false
+buildscript {
+    ext.kotlin_version = '1.1.0'
+
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.14.0"
+    }
 }
 
 subprojects {
-    apply plugin: "nebula.kotlin"
+    apply plugin: "kotlin"
     apply plugin: "com.github.ben-manes.versions"
     apply plugin: "idea"
 
@@ -71,7 +79,11 @@ subprojects {
         //noinspection GrUnresolvedAccess
         compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:$kotlinx_jdk8"
 
-        compile "org.jetbrains.kotlin:kotlin-reflect:1.0.6"
+        //noinspection GrUnresolvedAccess
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+        //noinspection GrUnresolvedAccess
+        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
