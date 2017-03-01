@@ -30,10 +30,10 @@ class CatalogConfigurationResponse {
         habboResponse.apply {
             writeBoolean(true)
             writeInt(1) // commission
+            writeInt(0)
+            writeInt(0)
             writeInt(1)
-            writeInt(4)
-            writeInt(1)
-            writeInt(1000)
+            writeInt(25000)
             writeInt(48)
             writeInt(7) // days
         }

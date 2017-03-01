@@ -20,7 +20,6 @@
 package tk.jomp16.habbo.game.permission
 
 import kotlinx.support.jdk7.use
-import kotlinx.support.jdk8.collections.putIfAbsent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
@@ -70,7 +69,7 @@ class PermissionManager {
         }
     }
 
-    private fun userHasCustomPermission(userId: Int) = this.permissionsUser.containsKey(userId)
+    fun userHasCustomPermission(userId: Int) = this.permissionsUser.containsKey(userId)
 
     fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.filter { it == permission }.isNotEmpty()
 

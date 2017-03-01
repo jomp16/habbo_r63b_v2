@@ -28,7 +28,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
     val friends: MutableMap<Int, MessengerFriend> = HashMap()
     val requests: MutableMap<Int, MessengerRequest> = HashMap()
 
-    var initializedMessenger: Boolean = false
+    var initialized: Boolean = false
 
     internal fun load() {
         if (habboSession.hasPermission("acc_server_console")) {
@@ -44,7 +44,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
     }
 
     fun notifyFriends() {
-        friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initializedMessenger ?: false }.forEach {
+        friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized ?: false }.forEach {
             it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), 0)
         }
     }

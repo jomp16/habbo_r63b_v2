@@ -33,12 +33,14 @@ object ClothingDao {
         }
     }
 
-    fun addClothing(userId: Int, itemName: String) = HabboServer.database {
-        insertAndGetGeneratedKey("INSERT INTO users_clothing (user_id, item_name) VALUES (:user_id, :item_name)",
-                mapOf(
-                        "user_id" to userId,
-                        "item_name" to itemName
-                )
-        )
+    fun addClothing(userId: Int, itemName: String) {
+        HabboServer.database {
+            insertAndGetGeneratedKey("INSERT INTO users_clothing (user_id, item_name) VALUES (:user_id, :item_name)",
+                    mapOf(
+                            "user_id" to userId,
+                            "item_name" to itemName
+                    )
+            )
+        }
     }
 }

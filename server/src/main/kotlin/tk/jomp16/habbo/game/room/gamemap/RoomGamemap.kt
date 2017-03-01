@@ -37,7 +37,7 @@ class RoomGamemap(private val room: Room) {
     val roomUserMap: MutableMap<Vector2, MutableSet<RoomUser>> = ConcurrentHashMap()
     val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
 
-    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { grid, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) })
+    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { _, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) })
 
     init {
         room.floorItems.values.forEach { addRoomItem(it) }

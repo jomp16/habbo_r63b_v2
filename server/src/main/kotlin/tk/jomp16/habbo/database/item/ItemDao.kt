@@ -35,7 +35,7 @@ object ItemDao {
     private val roomDimmerCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("roomDimmerCache")
     private val wiredDataCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("wiredDataCache")
 
-    fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>) = HabboServer.database {
+    fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>): List<Furnishing> = HabboServer.database {
         select("SELECT * FROM furnishings") {
             val itemName = it.string("item_name")
             val furniXMLInfo = furniXMLInfos[itemName]!!
@@ -65,7 +65,7 @@ object ItemDao {
         }
     }
 
-    fun getRoomItems(roomId: Int) = HabboServer.database {
+    fun getRoomItems(roomId: Int): List<RoomItem> = HabboServer.database {
         select("SELECT id, item_name, extra_data, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id = :room_id ORDER BY id DESC",
                 mapOf(
                         "room_id" to roomId
@@ -88,7 +88,7 @@ object ItemDao {
         }
     }
 
-    fun getUserItems(userId: Int) = HabboServer.database {
+    fun getUserItems(userId: Int): List<UserItem> = HabboServer.database {
         select("SELECT id, item_name, extra_data FROM items WHERE room_id = 0 AND user_id = :user_id",
                 mapOf(
                         "user_id" to userId
@@ -151,13 +151,13 @@ object ItemDao {
         return wiredDataCache.get(itemId).objectValue as WiredData?
     }
 
-    fun getTeleportLinks() = HabboServer.database {
+    fun getTeleportLinks(): List<Pair<Int, Int>> = HabboServer.database {
         select("SELECT * FROM items_teleport") {
             it.int("teleport_one_id") to it.int("teleport_two_id")
         }
     }
 
-    fun getLinkedTeleport(teleportId: Int) = HabboServer.database {
+    fun getLinkedTeleport(teleportId: Int): Int = HabboServer.database {
         select("SELECT room_id FROM items WHERE id = :teleport_id LIMIT 1",
                 mapOf(
                         "teleport_id" to teleportId

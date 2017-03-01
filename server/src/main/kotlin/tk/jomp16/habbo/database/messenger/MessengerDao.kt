@@ -32,7 +32,7 @@ import java.time.ZoneOffset
 import java.util.*
 
 object MessengerDao {
-    fun getFriends(userId: Int) = HabboServer.database {
+    fun getFriends(userId: Int): List<MessengerFriend> = HabboServer.database {
         select("SELECT id, user_two_id AS user_id FROM messenger_friendships WHERE user_one_id = :user_one_id",
                 mapOf(
                         "user_one_id" to userId
@@ -40,7 +40,7 @@ object MessengerDao {
         ) { createMessengerFriend(it) }
     }
 
-    fun getRequests(toUserId: Int) = HabboServer.database {
+    fun getRequests(toUserId: Int): List<MessengerRequest> = HabboServer.database {
         select("SELECT id, from_id FROM messenger_requests WHERE to_id = :to_id",
                 mapOf(
                         "to_id" to toUserId
@@ -53,7 +53,7 @@ object MessengerDao {
         }
     }
 
-    fun searchFriends(userId: Int, username: String) = HabboServer.database {
+    fun searchFriends(userId: Int, username: String): List<MessengerFriend> = HabboServer.database {
         select("SELECT id AS user_id FROM users WHERE username LIKE :username AND NOT id = :user_id LIMIT 50",
                 mapOf(
                         "username" to "$username%",
@@ -62,9 +62,7 @@ object MessengerDao {
         ) { createMessengerFriend(it) }
     }
 
-    private fun createMessengerFriend(row: Row) = MessengerFriend(
-            row.int("user_id")
-    )
+    private fun createMessengerFriend(row: Row): MessengerFriend = MessengerFriend(row.int("user_id"))
 
     fun removeFriendships(userId: Int, friendIds: List<Int>) {
         HabboServer.database {

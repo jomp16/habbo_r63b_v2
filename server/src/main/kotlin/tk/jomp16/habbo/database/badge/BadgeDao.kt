@@ -24,7 +24,7 @@ import tk.jomp16.habbo.game.user.badge.Badge
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object BadgeDao {
-    fun getBadges(userId: Int) = HabboServer.database {
+    fun getBadges(userId: Int): List<Badge> = HabboServer.database {
         select("SELECT * FROM users_badges WHERE user_id = :user_id",
                 mapOf(
                         "user_id" to userId
@@ -48,7 +48,7 @@ object BadgeDao {
         }
     }
 
-    fun addBadge(userId: Int, code: String, slot: Int) = HabboServer.database {
+    fun addBadge(userId: Int, code: String, slot: Int): Badge = HabboServer.database {
         val id = insertAndGetGeneratedKey(
                 "INSERT INTO users_badges (user_id, code, slot) VALUES (:user_id, :code, :slot)",
                 mapOf(

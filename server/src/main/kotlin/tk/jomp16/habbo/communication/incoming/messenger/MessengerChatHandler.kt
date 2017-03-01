@@ -38,7 +38,7 @@ import java.lang.management.ManagementFactory
 class MessengerChatHandler {
     @Handler(Incoming.MESSENGER_CHAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         val userId = habboRequest.readInt()
         val message = habboRequest.readUTF().trim()

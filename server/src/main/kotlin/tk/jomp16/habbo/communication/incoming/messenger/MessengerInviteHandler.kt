@@ -10,7 +10,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class MessengerInviteHandler {
     @Handler(Incoming.MESSENGER_INVITE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         val size = habboRequest.readInt()
         val friendsId = mutableListOf<Int>()

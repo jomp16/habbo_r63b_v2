@@ -28,7 +28,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class MessengerFriendBarStateHandler {
     @Handler(Incoming.MESSENGER_FRIEND_BAR_STATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         habboSession.userPreferences.friendBarOpen = habboRequest.readInt() == 1
     }

@@ -32,10 +32,10 @@ class LandingLoadWidgetHandler {
         if (!habboSession.authenticated) return
 
         val campaignString = habboRequest.readUTF()
-        var campaignName: String = ""
+        var campaignName = ""
 
-        campaignString.split(',').forEach {
-            if (!it.isNullOrEmpty() && !it.endsWith(',')) campaignName = it
+        campaignString.split(';').last().let {
+            if (!it.isNullOrEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
         }
 
         habboSession.sendHabboResponse(Outgoing.CAMPAIGN, campaignString, campaignName)
