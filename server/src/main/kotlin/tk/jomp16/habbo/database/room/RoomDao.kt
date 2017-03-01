@@ -31,13 +31,13 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.util.Vector3
 
 object RoomDao {
-    fun getRoomsData() = HabboServer.database {
+    fun getRoomsData(): List<RoomData> = HabboServer.database {
         select("SELECT * FROM rooms") {
             getRoomData(it)
         }
     }
 
-    fun getRoomData(roomId: Int) = HabboServer.database {
+    fun getRoomData(roomId: Int): RoomData = HabboServer.database {
         select("SELECT * FROM rooms WHERE id = :room_id",
                 mapOf(
                         "room_id" to roomId
@@ -47,7 +47,7 @@ object RoomDao {
         }.first()
     }
 
-    private fun getRoomData(row: Row) = RoomData(
+    private fun getRoomData(row: Row): RoomData = RoomData(
             row.int("id"),
             RoomType.valueOf(row.string("room_type").toUpperCase()),
             row.string("name"),
@@ -82,7 +82,7 @@ object RoomDao {
             row.boolean("allow_walk_through")
     )
 
-    fun getRoomModels() = HabboServer.database {
+    fun getRoomModels(): List<RoomModel> = HabboServer.database {
         select("SELECT * FROM rooms_models") {
             RoomModel(
                     it.string("id"),
@@ -99,7 +99,7 @@ object RoomDao {
         }
     }
 
-    fun getCustomRoomModels() = HabboServer.database {
+    fun getCustomRoomModels(): List<RoomModel> = HabboServer.database {
         select("SELECT * FROM rooms_models_customs") {
             RoomModel(
                     it.string("id"),
@@ -116,7 +116,7 @@ object RoomDao {
         }
     }
 
-    fun getRights(roomId: Int) = HabboServer.database {
+    fun getRights(roomId: Int): List<RightData> = HabboServer.database {
         select("SELECT id, user_id FROM rooms_rights WHERE room_id = :room_id",
                 mapOf(
                         "room_id" to roomId
@@ -129,7 +129,7 @@ object RoomDao {
         }
     }
 
-    fun getWordFilter(roomId: Int) = HabboServer.database {
+    fun getWordFilter(roomId: Int): List<String> = HabboServer.database {
         select("SELECT word FROM rooms_word_filter WHERE room_id = :room_id",
                 mapOf(
                         "room_id" to roomId
@@ -139,7 +139,7 @@ object RoomDao {
         }
     }
 
-    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int) = HabboServer.database {
+    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int = HabboServer.database {
         insertAndGetGeneratedKey(
                 "INSERT INTO rooms (name, description, owner_id, model_name, category, users_max, trade_state)" +
                         "VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
@@ -218,13 +218,15 @@ object RoomDao {
         }
     }
 
-    fun addWordFilter(roomId: Int, wordFilter: String) = HabboServer.database {
-        insertAndGetGeneratedKey("INSERT INTO rooms_word_filter (room_id, word) VALUES (:room_id, :word)",
-                mapOf(
-                        "room_id" to roomId,
-                        "word" to wordFilter
-                )
-        )
+    fun addWordFilter(roomId: Int, wordFilter: String) {
+        HabboServer.database {
+            insertAndGetGeneratedKey("INSERT INTO rooms_word_filter (room_id, word) VALUES (:room_id, :word)",
+                    mapOf(
+                            "room_id" to roomId,
+                            "word" to wordFilter
+                    )
+            )
+        }
     }
 
     fun removeWordFilter(roomId: Int, wordFilter: String) {

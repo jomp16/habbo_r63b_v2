@@ -29,7 +29,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class MessengerFriendsUpdateHandler {
     @Handler(Incoming.MESSENGER_FRIENDS_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, habboSession.habboMessenger.friends.values, 0)
     }

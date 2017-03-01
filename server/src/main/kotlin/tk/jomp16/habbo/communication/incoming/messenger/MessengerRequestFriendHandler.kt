@@ -33,7 +33,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class MessengerRequestFriendHandler {
     @Handler(Incoming.MESSENGER_REQUEST_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         val username = habboRequest.readUTF()
 
@@ -47,7 +47,7 @@ class MessengerRequestFriendHandler {
         val messengerRequest = MessengerDao.addRequest(habboSession.userInformation.id, userInformation.id)
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(userInformation.id) ?: return
 
-        if (!friendHabboSession.habboMessenger.initializedMessenger) return
+        if (!friendHabboSession.habboMessenger.initialized) return
 
         friendHabboSession.habboMessenger.requests.put(messengerRequest.fromId, messengerRequest)
         friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_REQUEST_FRIEND, messengerRequest)

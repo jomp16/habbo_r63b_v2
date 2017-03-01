@@ -24,7 +24,7 @@ import tk.jomp16.habbo.game.navigator.NavigatorEventCategory
 import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
 
 object NavigatorDao {
-    fun getNavigatorRoomCategories() = HabboServer.database {
+    fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = HabboServer.database {
         select("SELECT * FROM navigator_room_categories WHERE enabled = :enabled",
                 mapOf(
                         "enabled" to true
@@ -38,7 +38,7 @@ object NavigatorDao {
         }
     }
 
-    fun getNavigatorEventCategories() = HabboServer.database {
+    fun getNavigatorEventCategories(): List<NavigatorEventCategory> = HabboServer.database {
         select("SELECT * FROM navigator_event_categories WHERE visible = :visible",
                 mapOf(
                         "visible" to true

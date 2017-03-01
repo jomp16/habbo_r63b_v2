@@ -116,9 +116,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun sendQueuedHabboResponse(queuedHabboResponse: QueuedHabboResponse) {
         queuedHabboResponse.headerIds.forEach {
-            HabboServer.habboHandler.invokeResponse(it.first, *it.second)?.let {
-                sendHabboResponse(it, false)
-            }
+            sendHabboResponse(it.first, *it.second)
         }
 
         // flush channel

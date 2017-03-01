@@ -92,7 +92,8 @@ object UserInformationDao {
             }?.let { addCache(it) }
         }
 
-        return if (!userInformationByUsernameCache.isKeyInCache(username)) return null else userInformationByUsernameCache.get(username).objectValue as UserInformation?
+        return if (!userInformationByUsernameCache.isKeyInCache(username)) return null
+        else userInformationByUsernameCache.get(username).objectValue as UserInformation?
     }
 
     private fun addCache(userInformation: UserInformation) {
@@ -100,7 +101,7 @@ object UserInformationDao {
         userInformationByUsernameCache.put(Element(userInformation.username, userInformation))
     }
 
-    private fun getUserInformation(row: Row) = UserInformation(
+    private fun getUserInformation(row: Row): UserInformation = UserInformation(
             row.int("id"),
             row.string("username"),
             row.string("email"),

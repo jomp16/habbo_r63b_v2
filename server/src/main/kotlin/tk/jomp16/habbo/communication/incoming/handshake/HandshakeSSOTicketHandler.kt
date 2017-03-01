@@ -69,7 +69,7 @@ class HandshakeSSOTicketHandler {
         queuedHabboResponse += Outgoing.ACHIEVEMENT_SCORE to arrayOf(
                 habboSession.userStats.achievementScore
         )
-        queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID2 to arrayOf(false)
+        queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID2 to arrayOf(true)
         queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID3 to arrayOf("", "")
         queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf()
 //        queuedHabboResponse += Outgoing.CAMPAIGN_CALENDAR to arrayOf("xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())

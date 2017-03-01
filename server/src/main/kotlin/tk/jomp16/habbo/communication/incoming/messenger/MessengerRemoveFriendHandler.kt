@@ -33,7 +33,7 @@ import java.util.*
 class MessengerRemoveFriendHandler {
     @Handler(Incoming.MESSENGER_REMOVE_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         var amount = habboRequest.readInt()
 
@@ -55,7 +55,7 @@ class MessengerRemoveFriendHandler {
         messengerFriends.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
 
-            if (!friendHabboSession.habboMessenger.initializedMessenger) return@forEach
+            if (!friendHabboSession.habboMessenger.initialized) return@forEach
 
             val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id) ?: return@forEach
 

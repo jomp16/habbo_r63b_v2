@@ -30,7 +30,7 @@ import java.util.*
 class MessengerDeclineRequestHandler {
     @Handler(Incoming.MESSENGER_DECLINE_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         val declineAll = habboRequest.readBoolean()
         var amount = habboRequest.readInt()

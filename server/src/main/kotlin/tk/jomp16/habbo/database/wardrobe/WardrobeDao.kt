@@ -49,7 +49,7 @@ object WardrobeDao {
                 )
         )
 
-        return@database Wardrobe(id, slotId, figure, gender)
+        Wardrobe(id, slotId, figure, gender)
     }
 
     fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
@@ -62,6 +62,6 @@ object WardrobeDao {
                 )
         )
 
-        return@database Wardrobe(id, slotId, figure, gender)
+        Wardrobe(id, slotId, figure, gender)
     }
 }

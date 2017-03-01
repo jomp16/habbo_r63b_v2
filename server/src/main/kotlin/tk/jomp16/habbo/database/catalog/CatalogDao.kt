@@ -27,7 +27,7 @@ import tk.jomp16.habbo.game.catalog.CatalogPage
 import java.util.concurrent.atomic.AtomicInteger
 
 object CatalogDao {
-    fun getCatalogPages() = HabboServer.database {
+    fun getCatalogPages(): List<CatalogPage> = HabboServer.database {
         select("SELECT * FROM catalog_pages WHERE id != -1 AND id != -2") {
             CatalogPage(
                     it.int("id"),
@@ -54,7 +54,7 @@ object CatalogDao {
         }
     }
 
-    fun getCatalogItems() = HabboServer.database {
+    fun getCatalogItems(): List<CatalogItem> = HabboServer.database {
         select("SELECT * FROM catalog_items") {
             CatalogItem(
                     it.int("id"),
@@ -75,7 +75,7 @@ object CatalogDao {
         }
     }
 
-    fun getCatalogClubOffers() = HabboServer.database {
+    fun getCatalogClubOffers(): List<CatalogClubOffer> = HabboServer.database {
         select("SELECT * FROM catalog_club_offers") {
             CatalogClubOffer(
                     it.int("id"),
@@ -90,7 +90,7 @@ object CatalogDao {
         }
     }
 
-    fun getCatalogDeals() = HabboServer.database {
+    fun getCatalogDeals(): List<CatalogDeal> = HabboServer.database {
         select("SELECT * FROM catalog_deals") {
             CatalogDeal(
                     it.int("id"),

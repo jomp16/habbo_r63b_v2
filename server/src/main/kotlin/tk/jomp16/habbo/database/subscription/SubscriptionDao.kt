@@ -26,7 +26,7 @@ import tk.jomp16.habbo.kotlin.localDateTime
 import tk.jomp16.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
 
 object SubscriptionDao {
-    fun getSubscription(userId: Int) = HabboServer.database {
+    fun getSubscription(userId: Int): Subscription? = HabboServer.database {
         select("SELECT * FROM users_subscriptions WHERE user_id = :user_id LIMIT 1",
                 mapOf(
                         "user_id" to userId
@@ -40,7 +40,7 @@ object SubscriptionDao {
         }.firstOrNull()
     }
 
-    fun createSubscription(userId: Int, months: Long) = HabboServer.database {
+    fun createSubscription(userId: Int, months: Long): Subscription = HabboServer.database {
         val activated = localDateTimeNowWithoutSecondsAndNanos()
         val expire = localDateTimeNowWithoutSecondsAndNanos().plusMonths(months)
 

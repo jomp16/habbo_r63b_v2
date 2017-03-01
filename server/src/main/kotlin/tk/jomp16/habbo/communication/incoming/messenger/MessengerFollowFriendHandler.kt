@@ -30,7 +30,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class MessengerFollowFriendHandler {
     @Handler(Incoming.MESSENGER_FOLLOW_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initializedMessenger) return
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
         val friendId = habboRequest.readInt()
 
