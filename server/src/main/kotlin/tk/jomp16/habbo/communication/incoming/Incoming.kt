@@ -63,7 +63,7 @@ object Incoming {
     const val LANDING_PROMO_ARTICLES = 1431  // 2003
     const val LANDING_REWARD = 1592  // 581
     const val LOAD_INTERSTITIALS = 2449  // 2233
-    const val MESSENGER_ACCEPT_REQUEST = 1876  // 842
+    const val MESSENGER_ACCEPT_REQUEST = 1876  // 1785
     const val MESSENGER_CHAT = 3232  // 606
     const val MESSENGER_DECLINE_REQUEST = 2158  // 1357
     const val MESSENGER_FIND_NEW_FRIENDS = 503  // 535
@@ -72,7 +72,7 @@ object Incoming {
     const val MESSENGER_FRIEND_BAR_STATE = 2276  // 2327
     const val MESSENGER_INIT = 837  // 1837
     const val MESSENGER_INVITE = 199  // 2426
-    const val MESSENGER_REMOVE_FRIEND = 1876  // 842
+    const val MESSENGER_REMOVE_FRIEND = 2545  // 842
     const val MESSENGER_REQUESTS = 3895  // 3602
     const val MESSENGER_REQUEST_FRIEND = 2598  // 285
     const val MESSENGER_SEARCH_FRIENDS = 1554  // 411
