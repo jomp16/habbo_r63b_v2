@@ -180,11 +180,15 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
 
+        habboSubscription = HabboSubscription(this)
+        habboBadge = HabboBadge(this)
+        habboMessenger = HabboMessenger(this)
+        habboInventory = HabboInventory(this)
+
         HabboServer.serverExecutor.execute {
-            habboSubscription = HabboSubscription(this)
-            habboBadge = HabboBadge(this)
-            habboMessenger = HabboMessenger(this)
-            habboInventory = HabboInventory(this)
+            habboSubscription.load()
+            habboBadge.load()
+            habboInventory.load()
         }
 
         UserInformationDao.saveInformation(userInformation, true, ip, "")

@@ -35,10 +35,6 @@ class HabboSubscription(private val habboSession: HabboSession) {
     val validUserSubscription: Boolean
         get() = subscription != null && localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription?.expire)
 
-    init {
-        load()
-    }
-
     internal fun load() {
         subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
 

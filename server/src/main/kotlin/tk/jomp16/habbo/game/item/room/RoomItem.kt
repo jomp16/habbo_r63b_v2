@@ -96,7 +96,7 @@ data class RoomItem(
                 writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
 
-            writeInt(-1)
+            writeInt(-1) // seems this is related to rentals (time in seconds)
             writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
             writeInt(userId) // todo: is builder ? -12345678 : userId
         }
