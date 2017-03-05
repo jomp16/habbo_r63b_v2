@@ -31,7 +31,6 @@ class RoomFloorItemsResponse {
     fun response(habboResponse: HabboResponse, room: Room, floorItems: Collection<RoomItem>) {
         habboResponse.apply {
             // todo: group
-            // todo: add roomitems
             writeInt(1)
             writeInt(room.roomData.ownerId)
             writeUTF(room.roomData.ownerName)
