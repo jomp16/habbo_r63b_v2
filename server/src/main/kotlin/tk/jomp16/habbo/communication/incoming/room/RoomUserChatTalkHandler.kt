@@ -37,7 +37,7 @@ class RoomUserChatTalkHandler {
         // todo: check if user is muted
         // todo: word filter
 
-        habboSession.roomUser?.chat(habboSession.roomUser!!.virtualID, message, bubble, if (habboRequest.headerId == Incoming.ROOM_USER_SHOUT) ChatType.SHOUT else ChatType.CHAT, false)
+        habboSession.roomUser?.chat(habboSession.roomUser!!.virtualID, message, bubble, if (habboRequest.incoming == Incoming.ROOM_USER_SHOUT) ChatType.SHOUT else ChatType.CHAT, false)
     }
 
     private fun parse(habboRequest: HabboRequest): Pair<String, Int>? {

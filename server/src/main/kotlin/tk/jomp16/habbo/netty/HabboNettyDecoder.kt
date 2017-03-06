@@ -91,8 +91,19 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             if (log.isDebugEnabled) {
                 out.forEach {
-                    if (it is HabboRequest && it.headerId != Incoming.HABBO_CAMERA_DATA) {
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), HabboServer.habboHandler.incomingNames[it.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                    if (it is HabboRequest) {
+                        val incoming: String =
+                                if (headerId == 4000) {
+                                    it.byteBuf.markReaderIndex()
+
+                                    habboSession.release = it.readUTF()
+
+                                    it.byteBuf.resetReaderIndex()
+
+                                    Incoming.RELEASE_CHECK.name
+                                } else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
+
+                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
                     }
                 }
             }

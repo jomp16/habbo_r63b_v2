@@ -19,18 +19,19 @@
 
 package tk.jomp16.habbo.communication
 
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import java.util.*
 
 class QueuedHabboResponse {
-    val headerIds: MutableList<Pair<Int, Array<out Any>>> = ArrayList() // Do not change this, LinkedList is the only that keeps the insertion order
+    val headers: MutableList<Pair<Outgoing, Array<out Any>>> = ArrayList() // Do not change this, LinkedList is the only that keeps the insertion order
 
-    fun add(headerId: Int, args: Array<out Any>): QueuedHabboResponse {
-        headerIds.add(headerId to args)
+    fun add(outgoing: Outgoing, args: Array<out Any>): QueuedHabboResponse {
+        headers.add(outgoing to args)
 
         return this
     }
 
-    operator fun plusAssign(pair: Pair<Int, Array<out Any>>) {
+    operator fun plusAssign(pair: Pair<Outgoing, Array<out Any>>) {
         add(pair.first, pair.second)
     }
 }
