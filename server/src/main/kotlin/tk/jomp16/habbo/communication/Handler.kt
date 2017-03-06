@@ -19,6 +19,8 @@
 
 package tk.jomp16.habbo.communication
 
+import tk.jomp16.habbo.communication.incoming.Incoming
+
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class Handler(vararg val headerIds: Int)
+annotation class Handler(vararg val headers: Incoming)

@@ -30,6 +30,6 @@ class RoomUserTypingHandler {
     fun handleStartTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
-        habboSession.roomUser?.typing = habboRequest.headerId == Incoming.ROOM_USER_START_TYPING
+        habboSession.roomUser?.typing = habboRequest.incoming == Incoming.ROOM_USER_START_TYPING
     }
 }

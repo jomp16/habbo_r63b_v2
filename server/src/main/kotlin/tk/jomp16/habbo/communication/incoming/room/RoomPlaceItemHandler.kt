@@ -46,7 +46,7 @@ class RoomPlaceItemHandler {
         val rawDataSplit: List<String>
         val itemId: Int
 
-        if (habboRequest.headerId == Incoming.ROOM_PLACE_POST_IT) {
+        if (habboRequest.incoming == Incoming.ROOM_PLACE_POST_IT) {
             itemId = habboRequest.readInt()
             val extraData = habboRequest.readUTF().split(' ')
 
