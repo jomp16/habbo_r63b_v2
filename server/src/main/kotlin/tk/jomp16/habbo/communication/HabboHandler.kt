@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.release.ReleaseDao
 import tk.jomp16.habbo.game.user.HabboSession
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -36,24 +37,43 @@ import java.util.*
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val messageHandlers: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
-    private val messageResponses: MutableMap<Int, Pair<Any, MethodHandle>> = HashMap()
+    private val messageHandlers: MutableMap<Incoming, Pair<Any, MethodHandle>> = HashMap()
+    private val messageResponses: MutableMap<Outgoing, Pair<Any, MethodHandle>> = HashMap()
     private val instances: MutableMap<Class<*>, Any> = HashMap()
 
-    val incomingNames: MutableMap<Int, String> = HashMap()
-    val outgoingNames: MutableMap<Int, String> = HashMap()
+    val releases: MutableSet<String> = HashSet()
+
+    val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = HashMap()
+    val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = HashMap()
 
     val largestNameSize: Int
 
     init {
+        releases.addAll(ReleaseDao.getReleases())
+
+        val incomingHeaders = ReleaseDao.getIncomingHeaders()
+        val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
+
+        releases.forEach { release ->
+            val inHeaders = incomingHeaders.filter { it.release == release }
+            val outHeaders = outgoingHeaders.filter { it.release == release }
+
+            incomingNames.put(release, inHeaders.map { it.header to Incoming.valueOf(it.name) })
+            outgoingNames.put(release, outHeaders.map { it.header to Outgoing.valueOf(it.name) })
+        }
+
+        val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
+        val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
+
+        if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(outgoingNames.entries, exceptedOutgoingHeaders)) {
+            log.error("Missing headers... Fix it! Exiting!")
+
+            System.exit(1)
+        }
+
         val lookup = MethodHandles.lookup()
 
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
-
-        // Load incoming
-        Incoming::class.java.declaredFields.forEach {
-            if (it.type == Int::class.java) incomingNames.put(it.getInt(null), it.name)
-        }
 
         reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
             val clazz = getInstance(it.declaringClass)
@@ -61,14 +81,9 @@ class HabboHandler {
 
             val methodHandle = lookup.unreflect(it)
 
-            handler.headerIds.forEach { headerId ->
-                if (!messageHandlers.containsKey(headerId)) messageHandlers.put(headerId, Pair(clazz, methodHandle))
+            handler.headers.forEach { incoming ->
+                if (!messageHandlers.containsKey(incoming)) messageHandlers.put(incoming, Pair(clazz, methodHandle))
             }
-        }
-
-        // Load outgoing
-        Outgoing::class.java.declaredFields.forEach {
-            if (it.type == Int::class.java) outgoingNames.put(it.getInt(null), it.name)
         }
 
         reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
@@ -77,27 +92,66 @@ class HabboHandler {
 
             val methodHandle = lookup.unreflect(it)
 
-            response.headerIds.forEach { headerId ->
-                if (!messageResponses.containsKey(headerId)) messageResponses.put(headerId, Pair(clazz, methodHandle))
+            response.headers.forEach { outgoing ->
+                if (!messageResponses.containsKey(outgoing)) messageResponses.put(outgoing, Pair(clazz, methodHandle))
             }
         }
 
-        largestNameSize = incomingNames.plus(outgoingNames).values.sortedByDescending { it.length }.first().length
+        largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { it.second } }.map { it.name }.sortedByDescending { it.length }.first().length
 
+        log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
         log.info("Loaded {} Habbo request handlers", messageHandlers.size)
         log.info("Loaded {} Habbo response handlers", messageResponses.size)
+    }
+
+    private fun isMissingIncomingHeaders(availableHeadersEntries: MutableSet<MutableMap.MutableEntry<String, List<Pair<Int, Incoming>>>>, exceptedHeaders: List<Incoming>): Boolean {
+        var missing = false
+
+        availableHeadersEntries.forEach {
+            val missingHeaders = exceptedHeaders.minus(it.value.map { it.second })
+
+            if (missingHeaders.isNotEmpty()) {
+                log.error("Missing incoming headers for release={}, headers={}", it.key, missingHeaders.joinToString())
+
+                if (!missing) missing = true
+            }
+        }
+
+        return missing
+    }
+
+    private fun isMissingOutgoingHeaders(availableHeadersEntries: MutableSet<MutableMap.MutableEntry<String, List<Pair<Int, Outgoing>>>>, exceptedHeaders: List<Outgoing>): Boolean {
+        var missing = false
+
+        availableHeadersEntries.forEach {
+            val missingHeaders = exceptedHeaders.minus(it.value.map { it.second })
+
+            if (missingHeaders.isNotEmpty()) {
+                log.error("Missing outgoing headers for release={}, headers={}", it.key, missingHeaders.joinToString())
+
+                if (!missing) missing = true
+            }
+        }
+
+        return missing
     }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         HabboServer.serverExecutor.execute {
             habboRequest.use {
-                if (messageHandlers.containsKey(it.headerId)) {
-                    val (clazz, methodHandle) = messageHandlers[it.headerId] ?: return@use
+                val incomingEnum: Incoming? =
+                        if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
+                        else incomingNames[habboSession.release]?.find { it.first == habboRequest.headerId }?.second
+
+                if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
+                    val (clazz, methodHandle) = messageHandlers[incomingEnum] ?: return@use
 
                     try {
-                        methodHandle.invokeWithArguments(clazz, habboSession, it)
+                        habboRequest.incoming = incomingEnum
+
+                        methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                     } catch (e: Exception) {
-                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - ${incomingNames[habboRequest.headerId]}!", e)
+                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
 
                         if (e is ClassCastException || e is WrongMethodTypeException) {
                             log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
@@ -105,15 +159,17 @@ class HabboHandler {
                         }
                     }
                 } else {
-                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingNames[habboRequest.headerId])
+                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingEnum)
                 }
             }
         }
     }
 
-    fun invokeResponse(headerId: Int, vararg args: Any?): HabboResponse? {
-        if (messageResponses.containsKey(headerId)) {
-            val (clazz, methodHandle) = messageResponses[headerId] ?: return null
+    fun invokeResponse(habboSession: HabboSession, outgoing: Outgoing, vararg args: Any?): HabboResponse? {
+        val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first ?: return null
+
+        if (messageResponses.containsKey(outgoing)) {
+            val (clazz, methodHandle) = messageResponses[outgoing] ?: return null
 
             val habboResponse = HabboResponse(headerId)
 
@@ -122,7 +178,7 @@ class HabboHandler {
 
                 return habboResponse
             } catch (e: Exception) {
-                log.error("Error when invoking HabboResponse for $headerId - ${outgoingNames[headerId]}!", e)
+                log.error("Error when invoking HabboResponse for $headerId - $outgoing!", e)
 
                 if (e is ClassCastException || e is WrongMethodTypeException) {
                     log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
@@ -133,7 +189,7 @@ class HabboHandler {
                 habboResponse.close()
             }
         } else {
-            log.error("Non existent response header ID: {} - {}", headerId, outgoingNames[headerId])
+            log.error("Non existent response header ID: {} - {}", headerId, outgoing)
         }
 
         return null

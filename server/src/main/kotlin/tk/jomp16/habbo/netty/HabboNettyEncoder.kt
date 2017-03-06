@@ -28,6 +28,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
@@ -41,7 +42,9 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
         val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
         if (log.isDebugEnabled) {
-            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), HabboServer.habboHandler.outgoingNames[msg.headerId]?.padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
+            val outgoing: Outgoing = HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second!!
+
+            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), outgoing.name.padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
         }
 
         val byteBuf = msg.byteBuf
