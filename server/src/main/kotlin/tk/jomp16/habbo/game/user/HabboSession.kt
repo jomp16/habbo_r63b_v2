@@ -54,6 +54,8 @@ import javax.script.ScriptEngineManager
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
+    lateinit var release: String
+
     lateinit var diffieHellmanParams: DHParameterSpec
 
     lateinit var userInformation: UserInformation
@@ -104,7 +106,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var ping: Long = 0
     var sentLandingReward: Boolean = false
 
-    fun sendHabboResponse(headerId: Int, vararg args: Any?) = HabboServer.habboHandler.invokeResponse(headerId, *args)?.let {
+    fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) = HabboServer.habboHandler.invokeResponse(this, outgoing, *args)?.let {
         sendHabboResponse(it)
     }
 
@@ -115,7 +117,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendQueuedHabboResponse(queuedHabboResponse: QueuedHabboResponse) {
-        queuedHabboResponse.headerIds.forEach {
+        queuedHabboResponse.headers.forEach {
             sendHabboResponse(it.first, *it.second)
         }
 

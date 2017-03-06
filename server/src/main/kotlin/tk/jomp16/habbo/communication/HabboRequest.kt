@@ -22,9 +22,12 @@ package tk.jomp16.habbo.communication
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
 import io.netty.util.ReferenceCountUtil
+import tk.jomp16.habbo.communication.incoming.Incoming
 
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
+
+    lateinit var incoming: Incoming
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 

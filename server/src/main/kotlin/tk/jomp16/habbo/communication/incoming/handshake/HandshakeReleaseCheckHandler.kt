@@ -21,6 +21,7 @@ package tk.jomp16.habbo.communication.incoming.handshake
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
@@ -32,11 +33,8 @@ class HandshakeReleaseCheckHandler {
 
     @Handler(Incoming.RELEASE_CHECK)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val release = habboRequest.readUTF()
-
-        if (Incoming.RELEASE != release) {
-            log.warn("Client release isn't for this server. Client: {}, server: {}. Disconnecting user...", release,
-                    Incoming.RELEASE)
+        if (!HabboServer.habboHandler.releases.contains(habboSession.release)) {
+            log.warn("Server doesn't have this release. Client: {}, available releases: {}. Disconnecting user...", habboSession.release, HabboServer.habboHandler.releases.sorted().joinToString())
 
             habboSession.channel.disconnect()
         }
