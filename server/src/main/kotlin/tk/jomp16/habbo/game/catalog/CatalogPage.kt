@@ -61,7 +61,7 @@ data class CatalogPage(
             // todo: catalog item offers?
             writeInt(0)
 
-            val childCatalogPages = HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible }.sortedBy { it.orderNum }
+            val childCatalogPages = HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank }.sortedBy { it.orderNum }
 
             writeInt(childCatalogPages.size)
 
