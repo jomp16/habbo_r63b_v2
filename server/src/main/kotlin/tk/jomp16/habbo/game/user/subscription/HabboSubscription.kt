@@ -45,7 +45,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
         if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id, months.toLong())
         else SubscriptionDao.extendSubscription(subscription, months.toLong())
 
-        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1", 0)
+        if (validUserSubscription && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1")
 
         updateStatus()
     }
