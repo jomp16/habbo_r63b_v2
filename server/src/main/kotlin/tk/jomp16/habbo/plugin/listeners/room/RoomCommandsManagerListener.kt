@@ -90,7 +90,7 @@ class RoomCommandsManagerListener : PluginListener() {
                 return@forEach
             }
 
-            args[0] = if (roomUserChatEvent.message.length == args[0].length) "" else roomUserChatEvent.message.substring(args[0].length).trim()
+            args[0] = if (roomUserChatEvent.message.length == args[0].length) "" else roomUserChatEvent.message.substring(args[0].length + 1).trim()
 
             try {
                 it.methodHandle.invokeWithArguments(it.pluginListener, roomUserChatEvent.room, roomUserChatEvent.roomUser, args)
