@@ -275,7 +275,7 @@ class CatalogManager {
 
     fun redeemVoucher(habboSession: HabboSession, voucherCode: String) {
         // todo
-        if (voucherCode == "full" && habboSession.hasPermission("cmd_catalog_voucher_full")) {
+        if (voucherCode == "full" && habboSession.hasPermission("acc_catalog_voucher_full")) {
             habboSession.userInformation.credits.set(Int.MAX_VALUE)
             habboSession.userInformation.pixels.set(Int.MAX_VALUE)
             if (habboSession.userInformation.vip) habboSession.userInformation.vipPoints.set(Int.MAX_VALUE)
