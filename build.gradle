@@ -108,9 +108,10 @@ subprojects {
     }
 
     dependencyUpdates.resolutionStrategy = {
+        //noinspection GrUnresolvedAccess
         componentSelection { rules ->
             rules.all { ComponentSelection selection ->
-                boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'pr*'].any { qualifier ->
+                boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'pr'].any { qualifier ->
                     selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
                 }
 
