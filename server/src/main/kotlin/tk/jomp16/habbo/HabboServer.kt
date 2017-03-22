@@ -52,6 +52,7 @@ import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
+import tk.jomp16.habbo.plugin.listeners.room.badge.RoomBadgeCommandsListener
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
@@ -158,6 +159,7 @@ object HabboServer : AutoCloseable {
             log.info("Loading plugins...")
             pluginManager.addPlugin(RoomCommandsManagerListener())
             pluginManager.addPlugin(RoomCommandsListener())
+            pluginManager.addPlugin(RoomBadgeCommandsListener())
             pluginManager.addPlugin(CatalogCommandsListener())
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")
