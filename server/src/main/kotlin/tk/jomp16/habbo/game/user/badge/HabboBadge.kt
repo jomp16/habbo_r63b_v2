@@ -37,27 +37,24 @@ class HabboBadge(private val habboSession: HabboSession) {
     }
 
     fun addBadge(code: String) {
-        addBadge(code, 0)
-    }
-
-    fun addBadge(code: String, slot: Int) {
         if (badges.containsKey(code)) return
 
-        val badge = BadgeDao.addBadge(habboSession.userInformation.id, code, slot)
+        val badge = BadgeDao.addBadge(habboSession.userInformation.id, code, 0)
 
         badges.put(badge.code, badge)
 
         val queuedHabboResponse = QueuedHabboResponse()
 
         queuedHabboResponse += Outgoing.INVENTORY_BADGES to arrayOf(badges.values)
-        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(true, 4, badge.id)
+        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(true, 4, listOf(badge.id))
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }
 
-    @Suppress("unused")
     fun removeBadge(badgeCode: String) {
         val badge = badges.remove(badgeCode) ?: return
+
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
 
         BadgeDao.removeBadge(badge.id)
     }
