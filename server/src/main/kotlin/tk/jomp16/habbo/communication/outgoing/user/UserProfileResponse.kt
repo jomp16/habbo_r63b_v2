@@ -29,7 +29,7 @@ class UserProfileResponse {
             // todo: groups
             writeInt(0)
 
-            writeInt(Math.ceil(Instant.now(Clock.systemUTC()).epochSecond.toDouble() - userStats.lastOnline.toEpochSecond(ZoneOffset.UTC).toDouble()).toInt())
+            writeInt(if (isOnline) 0 else Math.ceil(Instant.now(Clock.systemUTC()).epochSecond.toDouble() - userStats.lastOnline.toEpochSecond(ZoneOffset.UTC).toDouble()).toInt())
             writeBoolean(showProfile)
         }
     }
