@@ -17,21 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.ajoberstar.grgit.Grgit
-
-plugins {
-    //noinspection GrUnresolvedAccess
-    id "de.fuerstenau.buildconfig" version "1.1.8"
-    //noinspection GrUnresolvedAccess
-    id "org.ajoberstar.grgit" version "1.6.0"
-}
-
-ext {
-    //noinspection GrUnresolvedAccess, GrDeprecatedAPIUsage
-    grgit = Grgit.open(rootProject.rootDir)
-    //noinspection GrUnresolvedAccess
-    gitRevisionLong = grgit.head().id
-}
+apply plugin: "de.fuerstenau.buildconfig"
 
 group "tk.jomp16.habbo"
 
@@ -75,7 +61,4 @@ dependencies {
 
 buildConfig {
     appName = "Habbo R63B v2"
-
-    //noinspection GrUnresolvedAccess
-    buildConfigField "String", "GIT_REVISION_LONG", "$gitRevisionLong"
 }
