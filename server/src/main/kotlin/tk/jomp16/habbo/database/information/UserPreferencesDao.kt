@@ -19,18 +19,15 @@
 
 package tk.jomp16.habbo.database.information
 
-import net.sf.ehcache.Ehcache
-import net.sf.ehcache.Element
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserPreferences
-import tk.jomp16.habbo.kotlin.addAndGetEhCache
 import tk.jomp16.habbo.kotlin.insertWithIntGeneratedKey
 
 object UserPreferencesDao {
-    private val userPreferencesCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userPreferencesCache")
+    private val userPreferencesCache: MutableMap<Int, UserPreferences> = HashMap()
 
     fun getUserPreferences(userId: Int, cache: Boolean = true): UserPreferences {
-        if (!cache || !userPreferencesCache.isKeyInCache(userId)) {
+        if (!cache || !userPreferencesCache.containsKey(userId)) {
             val userPreferences = HabboServer.database {
                 select("SELECT * FROM users_preferences WHERE user_id = :user_id LIMIT 1",
                         mapOf(
@@ -69,10 +66,10 @@ object UserPreferencesDao {
                 return getUserPreferences(userId, cache)
             }
 
-            userPreferencesCache.put(Element(userId, userPreferences))
+            userPreferencesCache.put(userId, userPreferences)
         }
 
-        return userPreferencesCache.get(userId).objectValue as UserPreferences
+        return userPreferencesCache[userId]!!
     }
 
     fun savePreferences(userPreferences: UserPreferences) {

@@ -19,26 +19,53 @@
 
 package tk.jomp16.habbo.database.subscription
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.SUBSCRIPTIONS_CACHE
 import tk.jomp16.habbo.game.user.subscription.Subscription
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.localDateTime
 import tk.jomp16.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
+import tk.jomp16.habbo.util.ICacheable
 
-object SubscriptionDao {
-    fun getSubscription(userId: Int): Subscription? = HabboServer.database {
-        select("SELECT * FROM users_subscriptions WHERE user_id = :user_id LIMIT 1",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
-            Subscription(
-                    it.int("id"),
-                    it.localDateTime("activated"),
-                    it.localDateTime("expire")
-            )
-        }.firstOrNull()
+@Suppress("UNCHECKED_CAST")
+object SubscriptionDao : ICacheable {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    private val subscriptionsCache: MutableMap<Int, Subscription> = mutableMapOf()
+
+    override fun cacheAll() {
+        cacheSubscriptions()
     }
+
+    override fun saveCache() {
+        HabboServer.saveCache(SUBSCRIPTIONS_CACHE, subscriptionsCache)
+    }
+
+    private fun cacheSubscriptions() {
+        val cache = HabboServer.loadCache(SUBSCRIPTIONS_CACHE) as MutableMap<Int, Subscription>?
+
+        if (cache != null) {
+            subscriptionsCache.putAll(cache)
+        } else {
+            log.info("Caching subscriptions...")
+
+            subscriptionsCache.putAll(HabboServer.database {
+                select("SELECT * FROM users_subscriptions") {
+                    it.int("user_id") to Subscription(
+                            it.int("id"),
+                            it.localDateTime("activated"),
+                            it.localDateTime("expire")
+                    )
+                }
+            })
+
+            log.info("Done!")
+        }
+    }
+
+    fun getSubscription(userId: Int): Subscription? = subscriptionsCache[userId]
 
     fun createSubscription(userId: Int, months: Long): Subscription = HabboServer.database {
         val activated = localDateTimeNowWithoutSecondsAndNanos()
@@ -53,7 +80,11 @@ object SubscriptionDao {
                 )
         )
 
-        Subscription(id, activated, expire)
+        val subscription = Subscription(id, activated, expire)
+
+        subscriptionsCache.put(userId, subscription)
+
+        return@database subscription
     }
 
     fun extendSubscription(subscription: Subscription?, months: Long) {
@@ -71,8 +102,10 @@ object SubscriptionDao {
         }
     }
 
-    fun clearSubscription(subscription: Subscription?) {
+    fun clearSubscription(userId: Int, subscription: Subscription?) {
         if (subscription == null) return
+
+        subscriptionsCache.remove(userId)
 
         HabboServer.database {
             update("DELETE FROM users_subscriptions WHERE id = :id",

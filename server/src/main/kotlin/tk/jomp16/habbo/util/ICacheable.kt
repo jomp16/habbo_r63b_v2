@@ -17,13 +17,10 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.kotlin
+package tk.jomp16.habbo.util
 
-import net.sf.ehcache.CacheManager
-import net.sf.ehcache.Ehcache
+interface ICacheable {
+    fun cacheAll()
 
-fun CacheManager.addAndGetEhCache(cacheName: String): Ehcache {
-    addCacheIfAbsent(cacheName)
-
-    return getEhcache(cacheName)
+    fun saveCache()
 }

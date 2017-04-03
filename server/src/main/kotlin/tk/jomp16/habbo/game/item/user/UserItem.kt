@@ -26,13 +26,15 @@ import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.ItemType
 import tk.jomp16.habbo.game.item.LimitedItemData
+import java.io.Serializable
 
 data class UserItem(
         val id: Int,
         var userId: Int,
         val itemName: String,
         var extraData: String
-) : IHabboResponseSerialize {
+) : IHabboResponseSerialize, Serializable {
+    @Transient
     val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
 
     val furnishing: Furnishing

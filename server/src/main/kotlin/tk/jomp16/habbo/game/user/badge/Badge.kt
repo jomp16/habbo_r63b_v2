@@ -19,8 +19,10 @@
 
 package tk.jomp16.habbo.game.user.badge
 
+import java.io.Serializable
+
 data class Badge(
         val id: Int,
         val code: String,
         var slot: Int
-)
+) : Serializable

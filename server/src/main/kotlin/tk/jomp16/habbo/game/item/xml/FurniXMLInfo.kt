@@ -19,6 +19,8 @@
 
 package tk.jomp16.habbo.game.item.xml
 
+import java.io.Serializable
+
 data class FurniXMLInfo(
         var spriteId: Int = 0,
         var itemName: String = "",
@@ -30,4 +32,4 @@ data class FurniXMLInfo(
         var canLayOn: Boolean = false,
         var wallFurni: Boolean = false,
         var customParams: String = ""
-)
+) : Serializable
