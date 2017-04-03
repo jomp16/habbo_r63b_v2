@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2015-2017 jomp16
+ *
+ * This file is part of habbo_r63b_v2.
+ *
+ * habbo_r63b_v2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b_v2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package tk.jomp16.habbo.plugin.listeners.room.badge
 
 import tk.jomp16.habbo.HabboServer
@@ -40,7 +59,7 @@ class RoomBadgeCommandsListener : PluginListener() {
             if (userId != null) {
                 val badges = BadgeDao.getBadges(userId)
 
-                if (!badges.any { it.code == badgeCode }) BadgeDao.addBadge(userId, badgeCode, 0)
+                if (!badges.any { it.value.code == badgeCode }) BadgeDao.addBadge(userId, badgeCode, 0)
 
                 return
             }
@@ -62,7 +81,7 @@ class RoomBadgeCommandsListener : PluginListener() {
 
         if (username == null && roomUser.habboSession != null) {
             // give badge to user calling command
-            giveBadge(roomUser.habboSession, badgeCode)
+            removeBadge(roomUser.habboSession, badgeCode)
         } else if (username != null) {
             val userHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)
 
@@ -77,7 +96,7 @@ class RoomBadgeCommandsListener : PluginListener() {
             if (userId != null) {
                 val badges = BadgeDao.getBadges(userId)
 
-                if (badges.any { it.code == badgeCode }) BadgeDao.removeBadge(badges.find { it.code == badgeCode }!!.id)
+                if (badges.any { it.value.code == badgeCode }) BadgeDao.removeBadge(badges.values.find { it.code == badgeCode }!!.id)
 
                 return
             }

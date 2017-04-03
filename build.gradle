@@ -57,7 +57,7 @@ subprojects {
         commons_lang_version = "3.5"
         mbassador_version = "1.3.0"
         bouncycastle_version = "1.56"
-        ehcache_version = "2.10.3"
+        fst_version = "2.48"
         pippo_version = "1.2.0"
     }
 

@@ -53,7 +53,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
     fun clearSubscription() {
         if (subscription == null) return
 
-        SubscriptionDao.clearSubscription(subscription)
+        SubscriptionDao.clearSubscription(habboSession.userInformation.id, subscription)
 
         subscription = null
 

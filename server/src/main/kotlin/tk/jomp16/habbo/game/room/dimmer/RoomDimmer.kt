@@ -20,6 +20,7 @@
 package tk.jomp16.habbo.game.room.dimmer
 
 import tk.jomp16.habbo.game.item.room.RoomItem
+import java.io.Serializable
 
 data class RoomDimmer(
         val id: Int,
@@ -27,7 +28,7 @@ data class RoomDimmer(
         var enabled: Boolean,
         var currentPreset: Int,
         val presets: MutableList<RoomDimmerPreset>
-) {
+) : Serializable {
     fun generateExtraData(roomDimmerPreset: RoomDimmerPreset = presets[currentPreset - 1]): String {
         return "${(if (enabled) 2 else 1)},$currentPreset,${if (roomDimmerPreset.backgroundOnly) 2 else 1},${roomDimmerPreset.colorCode},${roomDimmerPreset.colorIntensity}"
     }

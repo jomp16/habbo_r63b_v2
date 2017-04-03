@@ -189,8 +189,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         HabboServer.serverExecutor.execute {
             habboSubscription.load()
-            habboBadge.load()
-            habboInventory.load()
         }
 
         UserInformationDao.saveInformation(userInformation, true, ip, "")

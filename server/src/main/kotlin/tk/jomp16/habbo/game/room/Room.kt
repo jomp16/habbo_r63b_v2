@@ -46,7 +46,6 @@ import tk.jomp16.habbo.util.Vector3
 import tk.jomp16.utils.pathfinding.IFinder
 import tk.jomp16.utils.pathfinding.core.finders.AStarFinder
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSerialize {
@@ -59,7 +58,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val emptyCounter = AtomicInteger()
     val errorsCounter = AtomicInteger()
 
-    val roomItems: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(roomData.id).associateBy { it.id }) }
+    val roomItems: MutableMap<Int, RoomItem> by lazy { ItemDao.getRoomItems(roomData.id) }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem>
@@ -207,6 +206,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomDimmer != null && roomItemsToSave.any { it == roomDimmer!!.roomItem }) ItemDao.saveDimmer(roomDimmer!!)
 
         roomItemsToSave.clear()
+
+        ItemDao.saveCache()
     }
 
     fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = -1.toDouble(), rollerId: Int = -1): Boolean {

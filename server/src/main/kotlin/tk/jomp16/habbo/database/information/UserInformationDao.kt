@@ -20,22 +20,19 @@
 package tk.jomp16.habbo.database.information
 
 import com.github.andrewoma.kwery.core.Row
-import net.sf.ehcache.Ehcache
-import net.sf.ehcache.Element
 import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
-import tk.jomp16.habbo.kotlin.addAndGetEhCache
 import tk.jomp16.habbo.kotlin.localDateTime
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 
 object UserInformationDao {
-    private val userInformationByIdCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userInformationByIdCache")
-    private val userInformationByUsernameCache: Ehcache = HabboServer.cacheManager.addAndGetEhCache("userInformationByUsernameCache")
+    private val userInformationByIdCache: MutableMap<Int, UserInformation> = HashMap()
+    private val userInformationByUsernameCache: MutableMap<String, UserInformation> = HashMap()
 
     init {
-        userInformationByIdCache.put(Element(Int.MAX_VALUE, UserInformation(
+        userInformationByIdCache.put(Int.MAX_VALUE, UserInformation(
                 Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
                 "SERVER SCRIPTING CONSOLE", // name
                 "", // email, empty
@@ -50,11 +47,11 @@ object UserInformationDao {
                 "Version: ${BuildConfig.VERSION}", // motto
                 0, // homeroom
                 false // vip
-        )))
+        ))
     }
 
     fun getUserInformationById(id: Int, cache: Boolean = true): UserInformation? {
-        if (!cache || !userInformationByIdCache.isKeyInCache(id)) {
+        if (!cache || !userInformationByIdCache.containsKey(id)) {
             HabboServer.database {
                 select("SELECT * FROM users WHERE id = :id LIMIT 1",
                         mapOf(
@@ -64,7 +61,7 @@ object UserInformationDao {
             }?.let { addCache(it) }
         }
 
-        return if (!userInformationByIdCache.isKeyInCache(id)) return null else userInformationByIdCache.get(id).objectValue as UserInformation
+        return if (!userInformationByIdCache.containsKey(id)) return null else userInformationByIdCache[id]
     }
 
     fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
@@ -82,7 +79,7 @@ object UserInformationDao {
     }
 
     fun getUserInformationByUsername(username: String, cache: Boolean = true): UserInformation? {
-        if (!cache || !userInformationByUsernameCache.isKeyInCache(username)) {
+        if (!cache || !userInformationByUsernameCache.containsKey(username)) {
             HabboServer.database {
                 select("SELECT * FROM users WHERE username = :username",
                         mapOf(
@@ -92,13 +89,13 @@ object UserInformationDao {
             }?.let { addCache(it) }
         }
 
-        return if (!userInformationByUsernameCache.isKeyInCache(username)) return null
-        else userInformationByUsernameCache.get(username).objectValue as UserInformation?
+        return if (!userInformationByUsernameCache.containsKey(username)) return null
+        else userInformationByUsernameCache[username]
     }
 
     private fun addCache(userInformation: UserInformation) {
-        userInformationByIdCache.put(Element(userInformation.id, userInformation))
-        userInformationByUsernameCache.put(Element(userInformation.username, userInformation))
+        userInformationByIdCache.put(userInformation.id, userInformation)
+        userInformationByUsernameCache.put(userInformation.username, userInformation)
     }
 
     private fun getUserInformation(row: Row): UserInformation = UserInformation(

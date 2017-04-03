@@ -21,6 +21,8 @@ package tk.jomp16.habbo.game.item
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.habbo.FURNISHING_KEY_CACHE
+import tk.jomp16.habbo.FURNI_XML_KEY_CACHE
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.database.item.ItemDao
@@ -72,13 +74,22 @@ class ItemManager {
         teleportLinks.clear()
         roomTeleportLinks.clear()
 
-        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
-            val saxParser = SAXParserFactory.newInstance().newSAXParser()
-            val handler = FurniXMLHandler()
+        @Suppress("UNCHECKED_CAST")
+        val xmlCache = HabboServer.loadCache(FURNI_XML_KEY_CACHE) as MutableMap<String, FurniXMLInfo>?
 
-            saxParser.parse(it, handler)
+        if (xmlCache != null) {
+            furniXMLInfos.putAll(xmlCache)
+        } else {
+            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
+                val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                val handler = FurniXMLHandler()
 
-            furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+                saxParser.parse(it, handler)
+
+                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+            }
+
+            HabboServer.saveCache(FURNI_XML_KEY_CACHE, furniXMLInfos)
         }
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
@@ -142,6 +153,8 @@ class ItemManager {
             }
 
             log.info("Added more {} items to database!", furniXMLInfos.size - furnishings.size)
+
+            HabboServer.clearCache(FURNISHING_KEY_CACHE)
 
             furnishings.clear()
             furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }

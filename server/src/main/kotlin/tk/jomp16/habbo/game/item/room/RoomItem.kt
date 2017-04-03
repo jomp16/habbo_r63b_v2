@@ -30,6 +30,7 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Rotation
 import tk.jomp16.habbo.util.Vector2
 import tk.jomp16.habbo.util.Vector3
+import java.io.Serializable
 import java.util.*
 
 data class RoomItem(
@@ -41,8 +42,10 @@ data class RoomItem(
         var position: Vector3,
         var rotation: Int,
         var wallPosition: String
-) : IHabboResponseSerialize {
+) : IHabboResponseSerialize, Serializable {
+    @Transient
     val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
+    @Transient
     val wiredData: WiredData? = ItemDao.getWiredData(id)
 
     val furnishing: Furnishing
@@ -75,6 +78,7 @@ data class RoomItem(
     private var cycles: Int = 0
     private var currentCycles: Int = 0
 
+    @delegate:Transient
     val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

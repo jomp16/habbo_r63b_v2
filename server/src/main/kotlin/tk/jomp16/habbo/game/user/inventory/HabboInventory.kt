@@ -27,12 +27,8 @@ import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
 class HabboInventory(private val habboSession: HabboSession) {
-    val items: MutableMap<Int, UserItem> = HashMap()
+    val items: MutableMap<Int, UserItem> = ItemDao.getUserItems(habboSession.userInformation.id)
     val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
-
-    internal fun load() {
-        items += ItemDao.getUserItems(habboSession.userInformation.id).associateBy { it.id }
-    }
 
     fun addItems(userItems: List<UserItem>) {
         items += userItems.associateBy { it.id }

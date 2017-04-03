@@ -19,4 +19,6 @@
 
 package tk.jomp16.habbo.util
 
-data class Vector2(val x: Int, val y: Int)
+import java.io.Serializable
+
+data class Vector2(val x: Int, val y: Int) : Serializable

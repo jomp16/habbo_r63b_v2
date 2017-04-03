@@ -35,15 +35,27 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
-import net.sf.ehcache.CacheManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.nustaq.serialization.FSTConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.HabboHandler
 import tk.jomp16.habbo.config.HabboConfig
+import tk.jomp16.habbo.database.badge.BadgeDao
+import tk.jomp16.habbo.database.item.ItemDao
+import tk.jomp16.habbo.database.subscription.SubscriptionDao
 import tk.jomp16.habbo.encryption.HabboEncryptionHandler
 import tk.jomp16.habbo.game.HabboGame
+import tk.jomp16.habbo.game.item.Furnishing
+import tk.jomp16.habbo.game.item.LimitedItemData
+import tk.jomp16.habbo.game.item.WiredData
+import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.item.user.UserItem
+import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
+import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.game.user.HabboSessionManager
+import tk.jomp16.habbo.game.user.badge.Badge
+import tk.jomp16.habbo.game.user.subscription.Subscription
 import tk.jomp16.habbo.kotlin.cleanUpUsers
 import tk.jomp16.habbo.netty.HabboNettyDecoder
 import tk.jomp16.habbo.netty.HabboNettyEncoder
@@ -53,6 +65,9 @@ import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
 import tk.jomp16.habbo.plugin.listeners.room.badge.RoomBadgeCommandsListener
+import tk.jomp16.habbo.util.ICacheable
+import tk.jomp16.habbo.util.Vector2
+import tk.jomp16.habbo.util.Vector3
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
@@ -68,7 +83,30 @@ object HabboServer : AutoCloseable {
     lateinit var habboConfig: HabboConfig
 
     val pluginManager: PluginManager = PluginManager()
-    val cacheManager: CacheManager = CacheManager.newInstance()
+    val fstConfiguration: FSTConfiguration = FSTConfiguration.createDefaultConfiguration().apply {
+        registerClass(
+                Vector2::class.java,
+                Vector3::class.java,
+                UserItem::class.java,
+                RoomItem::class.java,
+                WiredData::class.java,
+                FurniXMLInfo::class.java,
+                Furnishing::class.java,
+                LimitedItemData::class.java,
+                RoomDimmer::class.java,
+                Badge::class.java,
+                Subscription::class.java,
+                Pair::class.java,
+                Triple::class.java
+        )
+    }
+
+    val cachePath: File = File("cache")
+    val cacheDao: List<ICacheable> = listOf(
+            BadgeDao,
+            ItemDao,
+            SubscriptionDao
+    )
 
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
@@ -96,8 +134,8 @@ object HabboServer : AutoCloseable {
     lateinit var serverExecutor: ExecutorService
         private set
 
-    val DATE_TIME_FORMATTER_WITH_HOURS = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-    val DATE_TIME_FORMATTER_ONLY_DAYS = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     val started: Boolean
         get() {
@@ -112,6 +150,50 @@ object HabboServer : AutoCloseable {
         Security.addProvider(BouncyCastleProvider())
 
         Runtime.getRuntime().addShutdownHook(Thread { close() })
+
+        if (!cachePath.exists()) cachePath.mkdirs()
+    }
+
+    fun saveCache(key: String, any: Any) {
+        log.debug("Saving $key to cache...")
+
+        val path = File(cachePath, key)
+
+        if (!path.exists()) path.mkdirs()
+
+        val f = File(path, "$key.cache")
+
+        if (f.exists()) f.delete()
+
+        f.writeBytes(fstConfiguration.asByteArray(any))
+
+        log.debug("Cache successfully saved!")
+    }
+
+    fun loadCache(key: String): Any? {
+        log.debug("Trying to get cache $key")
+
+        val path = File(cachePath, key)
+
+        if (!path.exists()) return null
+
+        val f = File(path, "$key.cache")
+
+        if (!f.exists()) return null
+
+        log.debug("Cache successfully fetched!")
+
+        return fstConfiguration.asObject(f.readBytes())
+    }
+
+    fun clearCache(key: String) {
+        log.debug("Clearing cache $key")
+
+        val path = File(cachePath, key)
+
+        if (path.exists()) path.delete()
+
+        log.debug("Cleared cache $key")
     }
 
     fun init() {
@@ -146,6 +228,15 @@ object HabboServer : AutoCloseable {
 
             // END USERS
             log.info("Done!")
+
+            // cache start
+            log.info("Caching all stuffs...")
+            cacheDao.forEach {
+                it.cacheAll()
+                it.saveCache()
+            }
+            log.info("Done!")
+            // cache end
 
             // Load HabboGame...
             log.info("Loading Habbo game...")
@@ -261,6 +352,10 @@ object HabboServer : AutoCloseable {
             cleanUpUsers()
             log.debug("Done!")
             // End database
+
+            log.info("Updating caches...")
+            cacheDao.forEach { it.saveCache() }
+            log.info("Done!")
 
             // Start plugins
             pluginManager.close()
