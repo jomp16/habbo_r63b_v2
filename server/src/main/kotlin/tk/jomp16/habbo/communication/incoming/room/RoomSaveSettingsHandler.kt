@@ -40,15 +40,15 @@ class RoomSaveSettingsHandler {
 
         if (!room.hasRights(habboSession, true)) return
 
-        var roomName = habboRequest.readUTF()
+        var roomName = habboRequest.readUTF().trim()
 
-        if (roomName.isEmpty()) return
+        if (roomName.isBlank()) return
 
-        var roomDescription = habboRequest.readUTF()
+        var roomDescription = habboRequest.readUTF().trim()
         var roomState = RoomState.fromIntValue(habboRequest.readInt())
-        var roomPassword = habboRequest.readUTF()
+        val roomPassword = habboRequest.readUTF().trim()
 
-        if (roomState === RoomState.PASSWORD && roomPassword.isEmpty()) roomState = RoomState.OPEN
+        if (roomState == RoomState.PASSWORD && roomPassword.isBlank()) roomState = RoomState.OPEN
 
         var roomMaxUsers = habboRequest.readInt()
 
@@ -61,9 +61,9 @@ class RoomSaveSettingsHandler {
         val roomTagCount = habboRequest.readInt()
 
         repeat(roomTagCount) {
-            val tag = habboRequest.readUTF().replace(",", "")
+            val tag = habboRequest.readUTF().replace(",", "").trim()
 
-            if (!tag.isEmpty() && tag.length <= 30) tags += tag
+            if (!tag.isBlank() && tag.length <= 30) tags += tag
         }
 
         val roomTradeState = habboRequest.readInt()
@@ -85,9 +85,8 @@ class RoomSaveSettingsHandler {
         if (roomHideWalls && !habboSession.habboSubscription.validUserSubscription) roomHideWalls = false
         if (roomWallThickness < -2 || roomWallThickness > 1) roomWallThickness = 0
         if (roomFloorThickness < -2 || roomFloorThickness > 1) roomFloorThickness = 0
-        if (roomName.length > 60) roomName = roomName.substring(0, 60)
-        if (roomDescription.length > 128) roomDescription = roomDescription.substring(0, 128)
-        if (roomPassword.length > 64) roomPassword = roomPassword.substring(0, 64)
+        if (roomName.length > 60) roomName = roomName.substring(0, 60).trim()
+        if (roomDescription.length > 128) roomDescription = roomDescription.substring(0, 128).trim()
         if (chatMaxDistance > 99) chatMaxDistance = 99
         if (chatFloodProtection > 2) chatFloodProtection = 2
 
