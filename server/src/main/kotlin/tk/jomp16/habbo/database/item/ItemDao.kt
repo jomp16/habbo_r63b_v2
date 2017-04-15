@@ -45,17 +45,17 @@ object ItemDao : ICacheable {
     override fun cacheAll() {
         cacheLimitedItems()
         cacheWiredItems()
+        cacheTeleportLinks()
         cacheRoomItems()
         cacheUserItems()
-        cacheTeleportLinks()
     }
 
     override fun saveCache() {
-        HabboServer.saveCache(ROOM_ITEMS_KEY_CACHE, roomItemsCache)
-        HabboServer.saveCache(USER_ITEMS_KEY_CACHE, userItemsCache)
         HabboServer.saveCache(LIMITED_ITEMS_KEY_CACHE, limitedItemDataCache)
         HabboServer.saveCache(WIREDS_DATA_KEY_CACHE, wiredDataCache)
         HabboServer.saveCache(TELEPORT_LINKS_KEY_CACHE, teleportLinksCache)
+        HabboServer.saveCache(ROOM_ITEMS_KEY_CACHE, roomItemsCache)
+        HabboServer.saveCache(USER_ITEMS_KEY_CACHE, userItemsCache)
     }
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>): List<Furnishing> {
@@ -92,6 +92,8 @@ object ItemDao : ICacheable {
                     )
                 }
             }
+
+            HabboServer.saveCache(FURNISHING_KEY_CACHE, furnishings)
 
             return furnishings
         }
@@ -206,9 +208,9 @@ object ItemDao : ICacheable {
         } else {
             log.info("Caching wired items...")
 
-            HabboServer.database {
+            wiredDataCache.putAll(HabboServer.database {
                 select("SELECT * FROM items_wired") {
-                    WiredData(
+                    it.int("item_id") to WiredData(
                             it.int("id"),
                             it.int("delay"),
                             it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
@@ -216,10 +218,8 @@ object ItemDao : ICacheable {
                             it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
                             it.string("extradata")
                     )
-                }.map { it.id to it }.forEach {
-                    wiredDataCache.put(it.first, it.second)
                 }
-            }
+            })
 
             log.info("Done!")
         }
