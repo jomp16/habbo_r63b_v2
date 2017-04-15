@@ -179,7 +179,8 @@ class RoomUser(
                     if (room.roomGamemap.roomUserMap[Vector2(step.x, step.y)]?.isNotEmpty() ?: false && !ignoreBlocking && !overrideBlocking) {
                         calculatePath()
 
-                        step = path.removeAt(0)
+                        if (path.isEmpty()) stopWalking()
+                        else step = path.removeAt(0)
                     }
 
                     if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {

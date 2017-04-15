@@ -26,9 +26,6 @@ enum class RoomState(val state: Int) {
     HIDDEN(3);
 
     companion object {
-        @Suppress("unused")
-        fun fromIntValue(state: Int): RoomState {
-            return RoomState.values().firstOrNull { it.state == state } ?: OPEN
-        }
+        fun fromIntValue(state: Int): RoomState = RoomState.values().firstOrNull { it.state == state } ?: OPEN
     }
 }
