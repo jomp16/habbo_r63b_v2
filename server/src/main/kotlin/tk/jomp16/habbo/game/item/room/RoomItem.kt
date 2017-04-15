@@ -78,8 +78,8 @@ data class RoomItem(
     private var cycles: Int = 0
     private var currentCycles: Int = 0
 
-    @delegate:Transient
-    val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
+    @Transient
+    val interactingUsers: MutableMap<Int, RoomUser> = HashMap()
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
