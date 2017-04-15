@@ -26,6 +26,7 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.habbo.game.user.badge.Badge
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserBadgesHandler {
@@ -34,8 +35,7 @@ class UserBadgesHandler {
         if (!habboSession.authenticated) return
 
         val userId = habboRequest.readInt()
-        val badges = HabboServer.habboSessionManager.getHabboSessionById(
-                userId)?.habboBadge?.badges?.values ?: BadgeDao.getBadges(userId)
+        val badges: Collection<Badge> = HabboServer.habboSessionManager.getHabboSessionById(userId)?.habboBadge?.badges?.values ?: BadgeDao.getBadges(userId).values
 
         habboSession.sendHabboResponse(Outgoing.USER_BADGES, userId, badges)
     }
