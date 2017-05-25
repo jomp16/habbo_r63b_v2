@@ -53,13 +53,13 @@ class UserInfoHandler {
                 Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
                 Triple("USE_GUIDE_TOOL", "", true),
                 Triple("BUILDER_AT_WORK", "", false),
-                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", false),
+                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", true),
                 Triple("TRADE", "", true),
                 Triple("HABBO_CLUB_OFFER_BETA", "", true),
                 Triple("JUDGE_CHAT_REVIEWS", "", true),
                 Triple("MOUSE_ZOOM", "", true),
                 Triple("VOTE_IN_COMPETITIONS", "", true),
-                Triple("CAMERA", "", false)
+                Triple("CAMERA", "", true)
         ))
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)

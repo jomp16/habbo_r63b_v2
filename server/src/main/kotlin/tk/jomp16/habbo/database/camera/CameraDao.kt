@@ -17,17 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.game.landing
+package tk.jomp16.habbo.database.camera
 
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.game.item.Furnishing
+import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
+import java.time.LocalDateTime
 
-data class LandingReward(
-        val id: Int,
-        val itemName: String,
-        val totalAmount: Int,
-        val randomRewards: List<String>
-) {
-    val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+object CameraDao {
+    fun savePictureDataToDatabase(userId: Int, ipAddress: String, fileName: String, createdAt: LocalDateTime): Int {
+        return HabboServer.database {
+            insertAndGetGeneratedKey("INSERT INTO camera_pictures (user_id, file_name, created_at, ip_address) VALUES (:user_id, :file_name, :created_at, :ip_address)",
+                    mapOf(
+                            "user_id" to userId,
+                            "file_name" to fileName,
+                            "created_at" to createdAt,
+                            "ip_address" to ipAddress
+                    )
+            )
+        }
+    }
 }

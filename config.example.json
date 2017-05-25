@@ -39,6 +39,14 @@
     "save_item_seconds": 300,
     "empty_room_seconds": 120
   },
+  "camera": {
+    "prices": {
+      "credits": 100,
+      "pixels": 100,
+      "pixels_publish_web": 10
+    },
+    "preview_timeout_minutes": 5
+  },
   "motd_enabled": true,
   "motd_file_path": "motd/welcome.txt",
   "server_console_figure": "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62"

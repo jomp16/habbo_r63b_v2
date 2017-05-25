@@ -34,6 +34,8 @@ class RoomTriggerItemHandler {
         habboSession.currentRoom?.let {
             val item = it.roomItems[habboRequest.readInt()] ?: return@let
 
+            if (item.furnishing.itemName == "external_image_wallitem_poster_small") return@let
+
             val interactor = item.furnishing.interactor
 
             when {

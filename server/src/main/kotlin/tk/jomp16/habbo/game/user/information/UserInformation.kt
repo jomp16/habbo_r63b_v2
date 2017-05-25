@@ -24,7 +24,6 @@ import tk.jomp16.habbo.database.wardrobe.WardrobeDao
 import tk.jomp16.habbo.game.user.wardrobe.Wardrobe
 import java.time.LocalDateTime
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 data class UserInformation(
         val id: Int,
@@ -33,9 +32,9 @@ data class UserInformation(
         val accountCreated: LocalDateTime,
         val realname: String,
         var rank: Int,
-        var credits: AtomicInteger,
-        var pixels: AtomicInteger,
-        var vipPoints: AtomicInteger,
+        var credits: Int,
+        var pixels: Int,
+        var vipPoints: Int,
         var figure: String,
         var gender: String,
         var motto: String,

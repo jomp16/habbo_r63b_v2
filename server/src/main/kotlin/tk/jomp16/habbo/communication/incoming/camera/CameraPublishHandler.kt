@@ -19,30 +19,17 @@
 
 package tk.jomp16.habbo.communication.incoming.camera
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.game.user.HabboSession
-import tk.jomp16.habbo.util.Utils
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class HabboCameraDataHandler {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    @Handler(Incoming.HABBO_CAMERA_DATA)
+class CameraPublishHandler {
+    @Handler(Incoming.CAMERA_PUBLISH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
 
-        val size = habboRequest.readInt()
-
-        ByteArray(size).let {
-            habboRequest.readBytes(it)
-
-            val cameraJson = String(Utils.inflate(it))
-
-            log.trace(cameraJson)
-        }
+        // todo
     }
 }

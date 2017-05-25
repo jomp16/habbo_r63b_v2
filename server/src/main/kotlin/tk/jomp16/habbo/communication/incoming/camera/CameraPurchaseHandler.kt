@@ -17,24 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.user
+package tk.jomp16.habbo.communication.incoming.camera
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserPerksResponse {
-    @Response(Outgoing.USER_PERKS)
-    fun response(habboResponse: HabboResponse, perksData: Array<Triple<String, String, Boolean>>) {
-        habboResponse.apply {
-            writeInt(perksData.size)
+class CameraPurchaseHandler {
+    @Handler(Incoming.CAMERA_PURCHASE)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
 
-            perksData.forEach { (name, requirement, enabled) ->
-                writeUTF(name)
-                writeUTF(requirement)
-                writeBoolean(enabled)
-            }
-        }
+        if (HabboServer.habboGame.cameraManager.purchaseCamera(habboSession)) habboSession.sendHabboResponse(Outgoing.CAMERA_FINISH_PURCHASE)
     }
 }

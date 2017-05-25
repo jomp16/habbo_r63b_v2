@@ -55,7 +55,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
         log.info("Disconnecting user {}", username)
 
-        if (!HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.warn("Disconnection of {} unsuccessful!", username)
+        if (HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.info("User {} disconnected with success!", username)
+        else log.warn("Disconnection of {} unsuccessful!", username)
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -79,11 +80,11 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                 return
             }
 
-            if (evt.state() == IdleState.READER_IDLE) {
+            if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking) {
                 log.error("User $username didn't reply ping! Disconnecting it.")
 
                 ctx.close()
-            } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || habboSession.handshaking)) {
+            } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || !habboSession.handshaking)) {
                 log.info("Didn't send any message to user $username, pinging it.")
 
                 habboSession.ping = System.nanoTime()

@@ -64,6 +64,7 @@ import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
 import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
 import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
+import tk.jomp16.habbo.plugin.listeners.room.about.RoomAboutCommandListener
 import tk.jomp16.habbo.plugin.listeners.room.badge.RoomBadgeCommandsListener
 import tk.jomp16.habbo.util.ICacheable
 import tk.jomp16.habbo.util.Vector2
@@ -191,9 +192,11 @@ object HabboServer : AutoCloseable {
 
         val path = File(cachePath, key)
 
-        if (path.exists()) path.delete()
+        if (path.exists()) {
+            path.deleteRecursively()
 
-        log.debug("Cleared cache $key")
+            log.debug("Cleared cache $key")
+        }
     }
 
     fun init() {
@@ -235,7 +238,6 @@ object HabboServer : AutoCloseable {
                 it.cacheAll()
                 it.saveCache()
             }
-            log.info("Done!")
             // cache end
 
             // Load HabboGame...
@@ -251,6 +253,7 @@ object HabboServer : AutoCloseable {
             pluginManager.addPlugin(RoomCommandsManagerListener())
             pluginManager.addPlugin(RoomCommandsListener())
             pluginManager.addPlugin(RoomBadgeCommandsListener())
+            pluginManager.addPlugin(RoomAboutCommandListener())
             pluginManager.addPlugin(CatalogCommandsListener())
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")

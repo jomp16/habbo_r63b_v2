@@ -22,21 +22,22 @@ package tk.jomp16.habbo.kotlin
 import com.github.andrewoma.kwery.core.Row
 import com.github.andrewoma.kwery.core.Session
 import com.github.andrewoma.kwery.core.StatementOptions
+import org.intellij.lang.annotations.Language
 import java.time.LocalDateTime
 
 
 /**
  * Inserts and fetch the rows affected and the generated key
  */
-fun Session.insertWithIntGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): Pair<Int, Int> = insert(sql, parameters, options) { it.int(columnName) }
+fun Session.insertWithIntGeneratedKey(@Language("SQL") sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): Pair<Int, Int> = insert(sql, parameters, options) { it.int(columnName) }
 
 /**
  * Inserts and fetch the rows affected and the generated key
  */
-fun Session.insertAndGetGeneratedKey(sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions): Int = insertWithIntGeneratedKey(sql, parameters, options).second
+fun Session.insertAndGetGeneratedKey(@Language("SQL") sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions): Int = insertWithIntGeneratedKey(sql, parameters, options).second
 
-fun Session.batchInsertWithIntGeneratedKey(sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): List<Pair<Int, Int>> = batchInsert(sql, parametersList, options) { it.int(columnName) }
+fun Session.batchInsertWithIntGeneratedKey(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): List<Pair<Int, Int>> = batchInsert(sql, parametersList, options) { it.int(columnName) }
 
-fun Session.batchInsertAndGetGeneratedKeys(sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
+fun Session.batchInsertAndGetGeneratedKeys(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
 fun Row.localDateTime(name: String): LocalDateTime = timestampOrNull(name)?.toLocalDateTime()!!

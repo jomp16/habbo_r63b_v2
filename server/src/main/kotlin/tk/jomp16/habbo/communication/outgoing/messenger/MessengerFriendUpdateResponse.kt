@@ -27,16 +27,25 @@ import tk.jomp16.habbo.game.user.messenger.MessengerFriend
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerFriendUpdateResponse {
     @Response(Outgoing.MESSENGER_FRIEND_UPDATE)
-    fun response(habboResponse: HabboResponse, messengerFriends: Collection<MessengerFriend>, mode: Int) {
+    fun response(habboResponse: HabboResponse, messengerFriends: Collection<MessengerFriend>, mode: MessengerFriendUpdateMode) {
         habboResponse.apply {
+            // todo: update categories
+
             writeInt(0) // size to update messenger category
             writeInt(messengerFriends.size)
-            writeInt(mode)
 
             messengerFriends.forEach {
-                if (mode == -1) writeInt(it.userId)
+                writeInt(mode.mode)
+
+                if (mode == MessengerFriendUpdateMode.REMOVE) writeInt(it.userId)
                 else serialize(it)
             }
         }
+    }
+
+    enum class MessengerFriendUpdateMode(val mode: Int) {
+        INSERT(1),
+        UPDATE(0),
+        REMOVE(-1)
     }
 }

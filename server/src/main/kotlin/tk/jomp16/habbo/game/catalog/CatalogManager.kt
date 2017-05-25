@@ -96,13 +96,15 @@ class CatalogManager {
                 return
             }
 
-            if (habboSession.userInformation.credits.get() < clubOffer.credits || (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels.get() < clubOffer.points else habboSession.userInformation.vipPoints.get() < clubOffer.points)) return
+            if (habboSession.userInformation.credits < clubOffer.credits ||
+                    (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
+                    else habboSession.userInformation.vipPoints < clubOffer.points)) return
 
-            habboSession.userInformation.credits.set(habboSession.userInformation.credits.get() - clubOffer.credits)
+            habboSession.userInformation.credits -= clubOffer.credits
 
             when (clubOffer.pointsType) {
-                0 -> habboSession.userInformation.pixels.set(habboSession.userInformation.pixels.get() - clubOffer.points)
-                else -> habboSession.userInformation.vipPoints.set(habboSession.userInformation.vipPoints.get() - clubOffer.points)
+                0 -> habboSession.userInformation.pixels -= clubOffer.points
+                else -> habboSession.userInformation.vipPoints -= clubOffer.points
             }
 
             habboSession.habboSubscription.addOrExtend(clubOffer.months)
@@ -122,9 +124,9 @@ class CatalogManager {
 
         val totalAmountToPurchase = amount - totalFreeAmount(amount)
 
-        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits.get() < catalogItem.costCredits * totalAmountToPurchase
-                || catalogItem.costPixels > 0 && habboSession.userInformation.pixels.get() < catalogItem.costPixels * totalAmountToPurchase
-                || catalogItem.costVip > 0 && habboSession.userInformation.vipPoints.get() < catalogItem.costVip * totalAmountToPurchase) {
+        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
+                || catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalAmountToPurchase
+                || catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalAmountToPurchase) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
             return
@@ -256,9 +258,9 @@ class CatalogManager {
         habboSession.habboInventory.addItems(userItems)
         habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems)
 
-        if (catalogItem.costCredits > 0) habboSession.userInformation.credits.set(habboSession.userInformation.credits.get() - catalogItem.costCredits * totalAmountToPurchase)
-        if (catalogItem.costPixels > 0) habboSession.userInformation.pixels.set(habboSession.userInformation.pixels.get() - catalogItem.costPixels * totalAmountToPurchase)
-        if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints.set(habboSession.userInformation.vipPoints.get() - catalogItem.costVip * totalAmountToPurchase)
+        if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
+        if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase
+        if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints -= catalogItem.costVip * totalAmountToPurchase
 
         habboSession.updateAllCurrencies()
 
@@ -276,9 +278,9 @@ class CatalogManager {
     fun redeemVoucher(habboSession: HabboSession, voucherCode: String) {
         // todo
         if (voucherCode == "full" && habboSession.hasPermission("acc_catalog_voucher_full")) {
-            habboSession.userInformation.credits.set(Int.MAX_VALUE)
-            habboSession.userInformation.pixels.set(Int.MAX_VALUE)
-            if (habboSession.userInformation.vip) habboSession.userInformation.vipPoints.set(Int.MAX_VALUE)
+            habboSession.userInformation.credits = Int.MAX_VALUE
+            habboSession.userInformation.pixels = Int.MAX_VALUE
+            if (habboSession.userInformation.vip) habboSession.userInformation.vipPoints = Int.MAX_VALUE
 
             habboSession.updateAllCurrencies()
 

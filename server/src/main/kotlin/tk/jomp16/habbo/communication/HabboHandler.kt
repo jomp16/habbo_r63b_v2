@@ -19,7 +19,6 @@
 
 package tk.jomp16.habbo.communication
 
-import kotlinx.support.jdk7.use
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger

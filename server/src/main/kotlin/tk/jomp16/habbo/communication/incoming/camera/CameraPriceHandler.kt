@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.communication.incoming.camera
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
@@ -31,6 +32,9 @@ class CameraPriceHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.CAMERA_PRICE, 10, 10, 10)
+        habboSession.sendHabboResponse(Outgoing.CAMERA_PRICE,
+                HabboServer.habboConfig.cameraConfig.prices.credits,
+                HabboServer.habboConfig.cameraConfig.prices.pixels,
+                HabboServer.habboConfig.cameraConfig.prices.pixelsPublishWeb)
     }
 }

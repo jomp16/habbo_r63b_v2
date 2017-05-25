@@ -100,7 +100,17 @@ object UserStatsDao {
             userStatsCache.put(userId, userStats)
         }
 
-        return userStatsCache[userId]!!
+        val userStats = userStatsCache[userId]!!
+
+        if (userStats.respectLastUpdate.plusDays(1).isBefore(LocalDateTime.now()) && (userStats.dailyRespectPoints < 3 || userStats.dailyPetRespectPoints < 3 || userStats.dailyCompetitionVotes < 3)) {
+            userStats.respectLastUpdate = LocalDateTime.now()
+
+            userStats.dailyRespectPoints = 3
+            userStats.dailyPetRespectPoints = 3
+            userStats.dailyCompetitionVotes = 3
+        }
+
+        return userStats
     }
 
     fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {

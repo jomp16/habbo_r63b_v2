@@ -19,7 +19,6 @@
 
 package tk.jomp16.habbo.game.permission
 
-import kotlinx.support.jdk7.use
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
@@ -59,7 +58,7 @@ class PermissionManager {
         while (resultSet.next()) {
             val permissions: MutableList<String> = ArrayList()
 
-            for (i in 3..metadata.columnCount) {
+            (3..metadata.columnCount).forEach { i ->
                 if (resultSet.getBoolean(i)) {
                     permissions.add(metadata.getColumnName(i))
                 }
