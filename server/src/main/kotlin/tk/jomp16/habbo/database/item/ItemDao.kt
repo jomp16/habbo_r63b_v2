@@ -27,6 +27,7 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
+import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.util.ICacheable
 import tk.jomp16.habbo.util.Vector3
 import java.util.concurrent.ConcurrentHashMap
@@ -324,9 +325,13 @@ object ItemDao : ICacheable {
     }
 
     fun saveWireds(wireds: List<RoomItem>) {
+        val wiredData = wireds.filter { it.wiredData != null }.map { it.wiredData!! }
+
+        if (wiredData.isEmpty()) return
+
         HabboServer.database {
             batchUpdate("UPDATE items_wired SET delay = :delay, items = :items, message = :message, options = :options, extradata = :extradata WHERE id = :id",
-                    wireds.filter { it.wiredData != null }.map { it.wiredData!! }.map {
+                    wiredData.map {
                         mapOf(
                                 "delay" to it.delay,
                                 "items" to it.items.joinToString(","),
@@ -338,5 +343,20 @@ object ItemDao : ICacheable {
                     }
             )
         }
+    }
+
+    fun addItem(userId: Int, furnishing: Furnishing, extraData: String): UserItem {
+        val itemId = HabboServer.database {
+            insertAndGetGeneratedKey("INSERT INTO items (user_id, item_name, extra_data, wall_pos) VALUES (:user_id, :item_name, :extra_data, :wall_pos)",
+                    mapOf(
+                            "user_id" to userId,
+                            "item_name" to furnishing.itemName,
+                            "extra_data" to extraData,
+                            "wall_pos" to ""
+                    )
+            )
+        }
+
+        return UserItem(itemId, userId, furnishing.itemName, extraData)
     }
 }

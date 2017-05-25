@@ -24,6 +24,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
@@ -58,7 +59,7 @@ class MessengerAcceptRequestHandler {
         val friends = MessengerDao.addFriends(habboSession.userInformation.id, friendIds)
 
         habboSession.habboMessenger.friends += friends.associateBy { it.userId }
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, friends, 0)
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, friends, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
 
         friendIds.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it) ?: return@forEach
@@ -69,7 +70,7 @@ class MessengerAcceptRequestHandler {
 
             friendHabboSession.habboMessenger.friends.put(messengerFriend.userId, messengerFriend)
 
-            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), 0)
+            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
         }
     }
 }

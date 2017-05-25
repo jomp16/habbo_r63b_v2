@@ -43,7 +43,8 @@ object LandingDao {
             LandingReward(
                     it.int("id"),
                     it.string("item_name"),
-                    it.int("total_amount")
+                    it.int("total_amount"),
+                    it.string("random_rewards").split(',')
             )
         }.firstOrNull()
     }

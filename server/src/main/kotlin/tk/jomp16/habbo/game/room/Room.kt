@@ -238,14 +238,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                 it.forEach { vector2 ->
                     roomGamemap.getUsersFromVector2(vector2).forEach {
-                        if (!onlyRotation) {
-                            roomItem.onUserWalksOff(it, true)
+                        roomItem.onUserWalksOff(it, true)
 
-                            it.removeUserStatuses()
+                        it.removeUserStatuses()
 
-                            it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                            it.updateNeeded = true
-                        }
+                        it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                        it.updateNeeded = true
                     }
                 }
 
@@ -265,14 +263,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItem.affectedTiles.let {
             it.forEach { vector2 ->
                 roomGamemap.getUsersFromVector2(vector2).forEach {
-                    if (!onlyRotation) {
-                        roomItem.onUserWalksOn(it, true)
+                    roomItem.onUserWalksOn(it, true)
 
-                        it.addUserStatuses(roomItem)
+                    it.addUserStatuses(roomItem)
 
-                        it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                        it.updateNeeded = true
-                    }
+                    it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                    it.updateNeeded = true
                 }
             }
 
@@ -351,7 +347,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItems.remove(roomItem.id)
         roomGamemap.removeRoomItem(roomItem)
 
-        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_") && roomItem.wiredData != null) {
             ItemDao.saveWireds(listOf(roomItem))
 
             wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)

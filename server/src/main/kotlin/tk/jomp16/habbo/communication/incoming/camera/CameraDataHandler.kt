@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.landing
+package tk.jomp16.habbo.communication.incoming.camera
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
@@ -25,17 +25,21 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
+import java.time.LocalDateTime
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class LandingRewardHandler {
-    @Handler(Incoming.LANDING_REWARD)
+class CameraDataHandler {
+    @Handler(Incoming.CAMERA_DATA)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated /*|| habboSession.sentLandingReward*/) return
+        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
 
-        HabboServer.habboGame.landingManager.landingReward?.let {
-            //            habboSession.sentLandingReward = true
+        ByteArray(habboRequest.readInt()).let {
+            habboRequest.readBytes(it)
 
-            habboSession.sendHabboResponse(Outgoing.LANDING_REWARD, it, habboSession.userStats.respect)
+            val (success, path) = HabboServer.habboGame.cameraManager.createCameraPreview(habboSession, it)
+
+            if (!success) habboSession.sendHabboResponse(Outgoing.CAMERA_FINISH_PUBLISH, false, LocalDateTime.now().plusHours(1).second, "")
+            else habboSession.sendHabboResponse(Outgoing.CAMERA_PREVIEW_URL, path)
         }
     }
 }

@@ -24,6 +24,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
@@ -50,7 +51,7 @@ class MessengerRemoveFriendHandler {
             messengerFriends += messengerFriend
         }
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, messengerFriends, -1)
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, messengerFriends, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE)
 
         messengerFriends.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
@@ -59,7 +60,7 @@ class MessengerRemoveFriendHandler {
 
             val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id) ?: return@forEach
 
-            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), -1)
+            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE)
         }
 
         MessengerDao.removeFriendships(habboSession.userInformation.id, messengerFriends.map { it.userId })

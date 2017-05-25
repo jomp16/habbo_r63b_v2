@@ -22,5 +22,6 @@ plugins/
 *.txt
 
 cache/
+camera_data/
 
 !server/src/main/resources/ascii_art.txt

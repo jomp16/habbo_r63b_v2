@@ -36,7 +36,7 @@ object Utils {
     val ramUsageString: String
         get() = humanReadableByteCount(ramUsage, true)
 
-    private fun humanReadableByteCount(bytes: Long, si: Boolean): String {
+    fun humanReadableByteCount(bytes: Long, si: Boolean): String {
         val unit = if (si) 1000 else 1024
 
         if (bytes < unit) return "$bytes B"

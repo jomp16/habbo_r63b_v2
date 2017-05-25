@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.landing
+package tk.jomp16.habbo.communication.incoming.room
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
@@ -27,15 +27,19 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class LandingRewardHandler {
-    @Handler(Incoming.LANDING_REWARD)
+class RoomUserRespectHandler {
+    @Handler(Incoming.ROOM_USER_RESPECT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated /*|| habboSession.sentLandingReward*/) return
+        if (!habboSession.authenticated || habboSession.currentRoom == null || habboSession.userStats.dailyRespectPoints <= 0) return
 
-        HabboServer.habboGame.landingManager.landingReward?.let {
-            //            habboSession.sentLandingReward = true
+        val targetUser = HabboServer.habboSessionManager.getHabboSessionById(habboRequest.readInt()) ?: return
 
-            habboSession.sendHabboResponse(Outgoing.LANDING_REWARD, it, habboSession.userStats.respect)
-        }
+        if (targetUser.currentRoom != habboSession.currentRoom) return
+
+        habboSession.userStats.dailyRespectPoints--
+        targetUser.userStats.respect++
+
+        habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_RESPECT_NOTIFICATION, targetUser.userInformation.id, targetUser.userStats.respect)
+        habboSession.roomUser?.action(7)
     }
 }

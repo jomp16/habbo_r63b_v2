@@ -25,7 +25,6 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserInformation
 import tk.jomp16.habbo.kotlin.localDateTime
 import java.time.LocalDateTime
-import java.util.concurrent.atomic.AtomicInteger
 
 object UserInformationDao {
     private val userInformationByIdCache: MutableMap<Int, UserInformation> = HashMap()
@@ -39,9 +38,9 @@ object UserInformationDao {
                 LocalDateTime.of(2015, 1, 1, 0, 0),
                 "${BuildConfig.NAME} scripting console.", // realname
                 7, // rank
-                AtomicInteger(0), // credits
-                AtomicInteger(0), // pixels
-                AtomicInteger(0), // vip points
+                0, // credits
+                0, // pixels
+                0, // vip points
                 HabboServer.habboConfig.serverConsoleFigure, // figure
                 "M", // gender
                 "Version: ${BuildConfig.VERSION}", // motto
@@ -105,9 +104,9 @@ object UserInformationDao {
             row.localDateTime("account_created"),
             row.string("realname"),
             row.int("rank"),
-            AtomicInteger(row.int("credits")),
-            AtomicInteger(row.int("pixels")),
-            AtomicInteger(row.int("vip_points")),
+            row.int("credits"),
+            row.int("pixels"),
+            row.int("vip_points"),
             row.string("figure"),
             row.string("gender"),
             row.string("motto"),
@@ -123,9 +122,9 @@ object UserInformationDao {
                             "ticket" to authTicket,
                             "online" to online,
                             "ip_last" to ip,
-                            "credits" to userInformation.credits.get(),
-                            "pixels" to userInformation.pixels.get(),
-                            "vip_points" to userInformation.vipPoints.get(),
+                            "credits" to userInformation.credits,
+                            "pixels" to userInformation.pixels,
+                            "vip_points" to userInformation.vipPoints,
                             "figure" to userInformation.figure,
                             "gender" to userInformation.gender,
                             "motto" to userInformation.motto,

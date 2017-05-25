@@ -45,6 +45,8 @@ data class HabboConfig(
         val timerConfig: TimerConfig,
         @JsonProperty("room_task")
         val roomTaskConfig: RoomTaskConfig,
+        @JsonProperty("camera")
+        val cameraConfig: CameraConfig,
         @JsonProperty("motd_enabled")
         val motdEnabled: Boolean,
         @JsonProperty("motd_file_path")

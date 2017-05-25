@@ -75,13 +75,21 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             val messageLength = msg.readInt()
 
-            if (messageLength < 2 || messageLength > 2048) return
+            if (messageLength < 2) {
+                log.warn("Message length less than 2! Waiting for new bytes!")
 
-            val headerId = msg.readShort().toInt()
+                msg.resetReaderIndex()
+
+                return
+            }
+
+            val headerId = msg.readUnsignedShort()
 
             val size = messageLength - 2
 
             if (msg.readableBytes() < size) {
+                log.warn("Received message length less than excepted message length {} < {}! Waiting for new bytes!", msg.readableBytes(), size)
+
                 msg.resetReaderIndex()
 
                 return

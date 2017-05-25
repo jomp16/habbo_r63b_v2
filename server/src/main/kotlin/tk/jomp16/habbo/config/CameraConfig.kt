@@ -17,24 +17,13 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.user
+package tk.jomp16.habbo.config
 
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
-import tk.jomp16.habbo.communication.outgoing.Outgoing
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class UserPerksResponse {
-    @Response(Outgoing.USER_PERKS)
-    fun response(habboResponse: HabboResponse, perksData: Array<Triple<String, String, Boolean>>) {
-        habboResponse.apply {
-            writeInt(perksData.size)
-
-            perksData.forEach { (name, requirement, enabled) ->
-                writeUTF(name)
-                writeUTF(requirement)
-                writeBoolean(enabled)
-            }
-        }
-    }
-}
+data class CameraConfig(
+        @JsonProperty("prices")
+        val prices: CameraPrices,
+        @JsonProperty("preview_timeout_minutes")
+        val previewTimeoutMinutes: Long
+)

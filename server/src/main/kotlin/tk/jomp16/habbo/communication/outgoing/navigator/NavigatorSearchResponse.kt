@@ -54,7 +54,7 @@ class NavigatorSearchResponse {
                 writeUTF("") // title if nothing found ^
                 writeInt(1) // 0 : no button - 1 : Show More - 2 : Show Back button
                 writeBoolean(staticId != "my" && staticId != "popular" && staticId != "official") // collapsed or not
-                writeInt(/*if (staticId == "official" || staticId == "popular") 1 else */0) // 0 : list - 1 : thumbnail
+                writeInt(if (staticId == "official" || staticId == "popular") 1 else 0) // 0 : list - 1 : thumbnail
             }
 
             when (staticId) {

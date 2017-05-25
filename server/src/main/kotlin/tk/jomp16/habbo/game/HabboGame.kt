@@ -22,6 +22,7 @@ package tk.jomp16.habbo.game
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.game.camera.CameraManager
 import tk.jomp16.habbo.game.catalog.CatalogManager
 import tk.jomp16.habbo.game.group.GroupManager
 import tk.jomp16.habbo.game.item.ItemManager
@@ -45,6 +46,7 @@ class HabboGame {
     val permissionManager: PermissionManager = PermissionManager()
     val moderationManager: ModerationManager = ModerationManager()
     val groupManager: GroupManager = GroupManager()
+    val cameraManager: CameraManager = CameraManager()
 
     init {
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({

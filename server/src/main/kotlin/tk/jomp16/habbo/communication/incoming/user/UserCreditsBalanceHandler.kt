@@ -31,6 +31,6 @@ class UserCreditsBalanceHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits.get())
+        habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits)
     }
 }

@@ -40,7 +40,7 @@ class RoomReedemExchangeItemHandler {
         val split = roomItem.itemName.split('_')
         val credits = if (split[1] == "diamond") split[2].toInt() else split[1].toInt()
 
-        habboSession.userInformation.credits.set(habboSession.userInformation.credits.get() + credits)
+        habboSession.userInformation.credits += credits
         habboSession.updateAllCurrencies()
 
         habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)

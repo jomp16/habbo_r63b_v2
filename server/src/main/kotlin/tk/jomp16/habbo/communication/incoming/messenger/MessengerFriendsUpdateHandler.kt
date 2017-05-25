@@ -23,6 +23,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -31,6 +32,6 @@ class MessengerFriendsUpdateHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, habboSession.habboMessenger.friends.values, 0)
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, habboSession.habboMessenger.friends.values, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
     }
 }

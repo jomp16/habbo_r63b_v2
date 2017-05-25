@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.landing
+package tk.jomp16.habbo.communication.incoming.camera
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
@@ -27,15 +27,17 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class LandingRewardHandler {
-    @Handler(Incoming.LANDING_REWARD)
+class CameraRoomThumbnailHandler {
+    @Handler(Incoming.CAMERA_ROOM_THUMBNAIL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated /*|| habboSession.sentLandingReward*/) return
+        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.hasPermission("acc_can_use_camera")) return
 
-        HabboServer.habboGame.landingManager.landingReward?.let {
-            //            habboSession.sentLandingReward = true
+        ByteArray(habboRequest.readInt()).let {
+            habboRequest.readBytes(it)
 
-            habboSession.sendHabboResponse(Outgoing.LANDING_REWARD, it, habboSession.userStats.respect)
+            val success = HabboServer.habboGame.cameraManager.createRoomThumbnail(habboSession, habboSession.currentRoom!!.roomData.id, it)
+
+            habboSession.sendHabboResponse(Outgoing.CAMERA_THUMBNAIL_ALERT, success, !success)
         }
     }
 }
