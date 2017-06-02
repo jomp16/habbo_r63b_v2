@@ -91,6 +91,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         }
     }
 
+    fun sendHabboResponse(habboResponse: HabboResponse) {
+        // todo: find a way to cache habbo response
+
+        roomUsers.values.forEach { it.habboSession?.sendHabboResponse(habboResponse) }
+    }
+
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
         // todo: find a way to cache habbo response
 
