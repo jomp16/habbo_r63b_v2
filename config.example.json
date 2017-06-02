@@ -47,6 +47,9 @@
     },
     "preview_timeout_minutes": 5
   },
+  "catalog": {
+    "show_how_many_items_title": false
+  },
   "motd_enabled": true,
   "motd_file_path": "motd/welcome.txt",
   "server_console_figure": "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62"
