@@ -17,21 +17,11 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.catalog
+package tk.jomp16.habbo.config
 
-import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.communication.HabboResponse
-import tk.jomp16.habbo.communication.Response
-import tk.jomp16.habbo.communication.outgoing.Outgoing
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class CatalogIndexResponse {
-    @Response(Outgoing.CATALOG_INDEX)
-    fun response(habboResponse: HabboResponse, type: String, rank: Int, club: Boolean) {
-        val rootCatalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == if (type == "NORMAL") -1 else -2 } ?: return
-
-        habboResponse.apply {
-            serialize(rootCatalogPage, rank, club)
-        }
-    }
-}
+data class CatalogConfig(
+        @JsonProperty("show_how_many_items_title")
+        val showHowManyItemsInTitle: Boolean
+)

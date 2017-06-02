@@ -36,7 +36,7 @@ class CatalogIndexHandler {
 
         queuedHabboResponse += Outgoing.CATALOG_OFFER_CONFIGURATION to arrayOf()
         queuedHabboResponse += Outgoing.CATALOG_BUILDERS_BORROWED to arrayOf()
-        queuedHabboResponse += Outgoing.CATALOG_INDEX to arrayOf("NORMAL", habboSession.userInformation.rank)
+        queuedHabboResponse += Outgoing.CATALOG_INDEX to arrayOf("NORMAL", habboSession.userInformation.rank, habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription)
 
         habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }

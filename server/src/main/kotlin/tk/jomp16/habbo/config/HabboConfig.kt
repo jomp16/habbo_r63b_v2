@@ -47,6 +47,8 @@ data class HabboConfig(
         val roomTaskConfig: RoomTaskConfig,
         @JsonProperty("camera")
         val cameraConfig: CameraConfig,
+        @JsonProperty("catalog")
+        val catalogConfig: CatalogConfig,
         @JsonProperty("motd_enabled")
         val motdEnabled: Boolean,
         @JsonProperty("motd_file_path")

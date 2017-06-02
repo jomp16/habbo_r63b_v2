@@ -51,22 +51,24 @@ data class CatalogPage(
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val rank = params[0] as Int
+            val club = params[1] as Boolean
 
             writeBoolean(visible)
             writeInt(iconImage)
             writeInt(if (pageLayout == "category") -1 else id)
             writeUTF(codename)
-            writeUTF(name)
+
+            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && parentId != -1) writeUTF("$name (${catalogItems.size})")
+            else writeUTF(name)
 
             // todo: catalog item offers?
             writeInt(0)
 
-            val childCatalogPages = HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank }.sortedBy { it.orderNum }
-
+            val childCatalogPages = HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true }.sortedBy { it.orderNum }
             writeInt(childCatalogPages.size)
 
             childCatalogPages.forEach {
-                it.serializeHabboResponse(habboResponse, rank)
+                it.serializeHabboResponse(habboResponse, rank, club)
             }
 
             if (id == -1 || id == -2) {
