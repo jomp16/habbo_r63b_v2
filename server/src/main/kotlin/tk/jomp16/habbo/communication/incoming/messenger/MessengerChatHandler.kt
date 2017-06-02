@@ -22,6 +22,7 @@ package tk.jomp16.habbo.communication.incoming.messenger
 import org.apache.commons.lang3.time.DurationFormatUtils
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
@@ -90,6 +91,51 @@ class MessengerChatHandler {
                             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, message1, 0, 0, "", "")
                         }
                     }
+                } else if (message.startsWith('h')) {
+                    // one line response messages
+                    val args1 = message.split("(?<!\\\\),".toRegex())
+
+                    val header = args1[0].substring(2).toInt()
+
+                    val habboResponse = HabboResponse(header)
+
+                    habboResponse.apply {
+                        args1.drop(1).forEach {
+                            val type = it.substring(0, 1)
+                            val param = it.substring(2)
+
+                            when (type) {
+                                "u" -> {
+                                    // string
+                                    writeUTF(param.replace("\\,", ","))
+                                }
+                                "i" -> {
+                                    // int
+                                    writeInt(param.toInt())
+                                }
+                                "s" -> {
+                                    // short
+                                    writeShort(param.toInt())
+                                }
+                                "b" -> {
+                                    // boolean
+                                    writeBoolean(param.toBoolean())
+                                }
+                                "d" -> {
+                                    // double
+                                    writeDouble(param.toDouble())
+                                }
+                                "v" -> {
+                                    // bytes
+                                    writeByte(param.toInt())
+                                }
+                            }
+                        }
+                    }
+
+                    habboSession.sendHabboResponse(habboResponse, true)
+
+                    habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, "Done!", 0, 0, "", "")
                 } else {
                     val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
 

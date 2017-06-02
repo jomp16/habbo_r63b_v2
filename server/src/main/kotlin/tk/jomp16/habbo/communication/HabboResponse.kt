@@ -41,7 +41,6 @@ class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : AutoClos
 
     fun writeBoolean(b: Boolean) = byteBufOutputStream.writeBoolean(b)
 
-    @Suppress("unused")
     fun writeByte(b: Int) {
         byteBufOutputStream.writeByte(b)
     }
