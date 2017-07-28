@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit
 
 class HabboGame {
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
-
     val landingManager: LandingManager = LandingManager()
     val roomManager: RoomManager = RoomManager()
     val itemManager: ItemManager = ItemManager()
@@ -48,7 +47,17 @@ class HabboGame {
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
 
-    init {
+    fun load() {
+        landingManager.load()
+        roomManager.load()
+        itemManager.load()
+        catalogManager.load()
+        navigatorManager.load()
+        permissionManager.load()
+        moderationManager.load()
+        groupManager.load()
+        cameraManager.load()
+
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }
         }, 0, 1, TimeUnit.MINUTES)

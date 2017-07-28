@@ -31,13 +31,10 @@ class MessengerSearchFriendsHandler {
     @Handler(Incoming.MESSENGER_SEARCH_FRIENDS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         val username = habboRequest.readUTF().replace("%", "")
 
         if (username.isBlank()) return
-
         val tmp = MessengerDao.searchFriends(habboSession.userInformation.id, username)
-
         val friends = tmp.filter { habboSession.habboMessenger.friends.containsKey(it.userId) }
         val nonFriends = tmp.filter { !habboSession.habboMessenger.friends.containsKey(it.userId) }
 

@@ -37,6 +37,6 @@ class RoomBotErrorNotificationResponse {
         BOTS_FORBIDDEN_IN_ROOM(1),
         BOT_LIMIT_REACHED(2),
         SELECTED_TILE_NOT_FREE_FOR_BOT(3),
-        BOT_NAME_NOT_ACCEPTED(4),
+        BOT_NAME_NOT_ACCEPTED(4)
     }
 }

@@ -29,7 +29,6 @@ class RoomItemMoveWallHandler {
     @Handler(Incoming.ROOM_MOVE_WALL_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         val itemId = habboRequest.readInt()
         val wallData = habboRequest.readUTF().split(' ')
 

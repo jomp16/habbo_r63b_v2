@@ -31,6 +31,7 @@ import java.lang.invoke.MethodHandles
 import java.util.*
 import java.util.regex.Pattern
 
+@Suppress("unused", "UNUSED_PARAMETER")
 class RoomCommandsManagerListener : PluginListener() {
     private val lookup = MethodHandles.lookup()
     private val commandsEvents: MutableSet<PluginCommandRegister> = HashSet()
@@ -68,11 +69,9 @@ class RoomCommandsManagerListener : PluginListener() {
     @Handler
     fun handleRoomUserChatEvent(roomUserChatEvent: RoomUserChatEvent) {
         if (roomUserChatEvent.message.isEmpty() || !roomUserChatEvent.message.startsWith(':')) return
-
         val args = parseLine(roomUserChatEvent.message.substring(1).trim())
 
         if (args == null || args.isEmpty()) return
-
         val commands = commandsEvents.filter { it.commands.contains(args[0]) }.filterNotNull()
 
         if (commands.isEmpty()) roomUserChatEvent.roomUser.chat(roomUserChatEvent.roomUser.virtualID, roomUserChatEvent.message, roomUserChatEvent.bubble, roomUserChatEvent.type, true)
@@ -90,7 +89,9 @@ class RoomCommandsManagerListener : PluginListener() {
                 return@forEach
             }
 
-            args[0] = if (roomUserChatEvent.message.length == args[0].length) "" else roomUserChatEvent.message.substring(args[0].length + 1).trim()
+            args[0] =
+                    if (roomUserChatEvent.message.length == args[0].length) ""
+                    else roomUserChatEvent.message.substring(args[0].length + 1).trim()
 
             try {
                 it.methodHandle.invokeWithArguments(it.pluginListener, roomUserChatEvent.room, roomUserChatEvent.roomUser, args)
@@ -118,9 +119,7 @@ class RoomCommandsManagerListener : PluginListener() {
         if (message == null || message.isEmpty()) {
             return null
         }
-
         val args: MutableList<String> = ArrayList()
-
         val matcher = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'").matcher(message)
 
         while (matcher.find()) {

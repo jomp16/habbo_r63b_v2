@@ -20,11 +20,11 @@
 package tk.jomp16.habbo.game.item
 
 import tk.jomp16.habbo.HabboServer
-import java.io.Serializable
 
 data class Furnishing(
         val itemName: String,
         val spriteId: Int,
+        val offerId: Int,
         val type: ItemType,
         val width: Int,
         val height: Int,
@@ -41,7 +41,7 @@ data class Furnishing(
         val interactionType: InteractionType,
         val interactionModesCount: Int,
         val vendingIds: List<Int>
-) : Serializable {
+) {
     val stackMultiple: Boolean = stackHeight.size > 1
     val interactor: ItemInteractor?
         get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]

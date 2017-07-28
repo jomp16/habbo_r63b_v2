@@ -21,7 +21,6 @@ package tk.jomp16.habbo.communication.incoming.user
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
@@ -32,9 +31,7 @@ class UserInfoHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.USER_OBJECT to arrayOf(
+        habboSession.sendHabboResponse(Outgoing.USER_OBJECT,
                 habboSession.userInformation.id,
                 habboSession.userInformation.username,
                 habboSession.userInformation.figure,
@@ -47,21 +44,21 @@ class UserInfoHandler {
                 false // todo can change name
         )
 
-        queuedHabboResponse += Outgoing.USER_PERKS to arrayOf(arrayOf(
-                Triple("CITIZEN", "", true),
-                Triple("CALL_ON_HELPERS", "", true),
-                Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
-                Triple("USE_GUIDE_TOOL", "", true),
-                Triple("BUILDER_AT_WORK", "", false),
-                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", true),
-                Triple("TRADE", "", true),
-                Triple("HABBO_CLUB_OFFER_BETA", "", true),
-                Triple("JUDGE_CHAT_REVIEWS", "", true),
-                Triple("MOUSE_ZOOM", "", true),
-                Triple("VOTE_IN_COMPETITIONS", "", true),
-                Triple("CAMERA", "", true)
-        ))
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
+        habboSession.sendHabboResponse(Outgoing.USER_PERKS,
+                arrayOf(
+                        Triple("CITIZEN", "", true),
+                        Triple("CALL_ON_HELPERS", "", true),
+                        Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
+                        Triple("USE_GUIDE_TOOL", "", true),
+                        Triple("BUILDER_AT_WORK", "", false),
+                        Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", true),
+                        Triple("TRADE", "", true),
+                        Triple("HABBO_CLUB_OFFER_BETA", "", true),
+                        Triple("JUDGE_CHAT_REVIEWS", "", true),
+                        Triple("MOUSE_ZOOM", "", true),
+                        Triple("VOTE_IN_COMPETITIONS", "", true),
+                        Triple("CAMERA", "", true)
+                )
+        )
     }
 }

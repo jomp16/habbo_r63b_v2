@@ -24,14 +24,13 @@ import io.netty.buffer.ByteBufInputStream
 import io.netty.util.ReferenceCountUtil
 import tk.jomp16.habbo.communication.incoming.Incoming
 
+@Suppress("unused")
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
-
     lateinit var incoming: Incoming
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 
-    @Suppress("unused")
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
     fun readInt(): Int = if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()

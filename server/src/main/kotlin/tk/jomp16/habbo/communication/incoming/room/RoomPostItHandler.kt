@@ -31,9 +31,7 @@ class RoomPostItHandler {
     @Handler(Incoming.ROOM_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return

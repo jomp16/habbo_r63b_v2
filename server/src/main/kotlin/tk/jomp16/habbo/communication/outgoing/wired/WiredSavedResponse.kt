@@ -17,15 +17,15 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.outgoing.wired
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomWiredSavedResponse {
-    @Response(Outgoing.ROOM_WIRED_SAVED)
+class WiredSavedResponse {
+    @Response(Outgoing.WIRED_SAVED)
     fun handle(habboResponse: HabboResponse) {
     }
 }

@@ -23,7 +23,6 @@ import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.release.ReleaseDao
@@ -32,24 +31,31 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
 import java.util.*
+import kotlin.collections.MutableMap.MutableEntry
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     private val messageHandlers: MutableMap<Incoming, Pair<Any, MethodHandle>> = HashMap()
     private val messageResponses: MutableMap<Outgoing, Pair<Any, MethodHandle>> = HashMap()
     private val instances: MutableMap<Class<*>, Any> = HashMap()
-
     val releases: MutableSet<String> = HashSet()
-
     val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = HashMap()
     val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = HashMap()
-
-    val largestNameSize: Int
+    var largestNameSize: Int = 0
 
     init {
-        releases.addAll(ReleaseDao.getReleases())
+        load()
+    }
 
+    fun load() {
+        releases.clear()
+        incomingNames.clear()
+        outgoingNames.clear()
+        messageHandlers.clear()
+        messageResponses.clear()
+        largestNameSize = 0
+
+        releases.addAll(ReleaseDao.getReleases())
         val incomingHeaders = ReleaseDao.getIncomingHeaders()
         val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
 
@@ -60,7 +66,6 @@ class HabboHandler {
             incomingNames.put(release, inHeaders.map { it.header to Incoming.valueOf(it.name) })
             outgoingNames.put(release, outHeaders.map { it.header to Outgoing.valueOf(it.name) })
         }
-
         val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
         val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
 
@@ -69,15 +74,12 @@ class HabboHandler {
 
             System.exit(1)
         }
-
         val lookup = MethodHandles.lookup()
-
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
         reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
             val clazz = getInstance(it.declaringClass)
             val handler = it.getAnnotation(Handler::class.java)
-
             val methodHandle = lookup.unreflect(it)
 
             handler.headers.forEach { incoming ->
@@ -88,7 +90,6 @@ class HabboHandler {
         reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
             val clazz = getInstance(it.declaringClass)
             val response = it.getAnnotation(Response::class.java)
-
             val methodHandle = lookup.unreflect(it)
 
             response.headers.forEach { outgoing ->
@@ -103,7 +104,7 @@ class HabboHandler {
         log.info("Loaded {} Habbo response handlers", messageResponses.size)
     }
 
-    private fun isMissingIncomingHeaders(availableHeadersEntries: MutableSet<MutableMap.MutableEntry<String, List<Pair<Int, Incoming>>>>, exceptedHeaders: List<Incoming>): Boolean {
+    private fun isMissingIncomingHeaders(availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Incoming>>>>, exceptedHeaders: List<Incoming>): Boolean {
         var missing = false
 
         availableHeadersEntries.forEach {
@@ -119,7 +120,7 @@ class HabboHandler {
         return missing
     }
 
-    private fun isMissingOutgoingHeaders(availableHeadersEntries: MutableSet<MutableMap.MutableEntry<String, List<Pair<Int, Outgoing>>>>, exceptedHeaders: List<Outgoing>): Boolean {
+    private fun isMissingOutgoingHeaders(availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Outgoing>>>>, exceptedHeaders: List<Outgoing>): Boolean {
         var missing = false
 
         availableHeadersEntries.forEach {
@@ -136,7 +137,7 @@ class HabboHandler {
     }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        HabboServer.serverExecutor.execute {
+        habboSession.incomingExecutor.execute {
             habboRequest.use {
                 val incomingEnum: Incoming? =
                         if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
@@ -169,7 +170,6 @@ class HabboHandler {
 
         if (messageResponses.containsKey(outgoing)) {
             val (clazz, methodHandle) = messageResponses[outgoing] ?: return null
-
             val habboResponse = HabboResponse(headerId)
 
             try {

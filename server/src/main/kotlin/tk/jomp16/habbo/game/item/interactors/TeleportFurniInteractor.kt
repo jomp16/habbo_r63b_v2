@@ -71,10 +71,8 @@ class TeleportFurniInteractor : ItemInteractor() {
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
-
         val outgoingUser = roomItem.interactingUsers[1]
         val incomingUser = roomItem.interactingUsers[2]
-
         var extraData = "0"
 
         if (outgoingUser != null && outgoingUser.habboSession != null) {

@@ -35,17 +35,14 @@ class MessengerRemoveFriendHandler {
     @Handler(Incoming.MESSENGER_REMOVE_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         var amount = habboRequest.readInt()
 
         if (amount < 0) return
         if (amount > 100) amount = 100
-
         val messengerFriends: MutableList<MessengerFriend> = ArrayList()
 
         repeat(amount) {
             val userId = habboRequest.readInt()
-
             val messengerFriend = habboSession.habboMessenger.friends.remove(userId) ?: return@repeat
 
             messengerFriends += messengerFriend
@@ -57,7 +54,6 @@ class MessengerRemoveFriendHandler {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
 
             if (!friendHabboSession.habboMessenger.initialized) return@forEach
-
             val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id) ?: return@forEach
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE)

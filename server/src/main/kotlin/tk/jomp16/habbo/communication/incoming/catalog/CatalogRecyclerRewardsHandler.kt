@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.communication.incoming.catalog
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
@@ -31,6 +32,6 @@ class CatalogRecyclerRewardsHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_RECYCLER_REWARDS)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_RECYCLER_REWARDS, HabboServer.habboGame.catalogManager.recyclerRewards)
     }
 }

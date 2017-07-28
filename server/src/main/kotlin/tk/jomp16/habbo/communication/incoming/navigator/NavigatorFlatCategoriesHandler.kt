@@ -32,10 +32,8 @@ class NavigatorFlatCategoriesHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(
-                Outgoing.NAVIGATOR_ROOM_CATEGORIES,
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_ROOM_CATEGORIES,
                 HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
-                habboSession.userInformation.rank
-        )
+                habboSession.userInformation.rank)
     }
 }

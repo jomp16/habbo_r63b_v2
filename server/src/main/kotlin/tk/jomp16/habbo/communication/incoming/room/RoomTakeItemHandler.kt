@@ -34,20 +34,22 @@ class RoomTakeItemHandler {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
 
         habboRequest.readInt() // useless
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
-        if (habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)) {
-            HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(listOf(UserItem(
-                    roomItem.id,
-                    roomItem.userId,
-                    roomItem.itemName,
-                    roomItem.extraData
-            )))
+        if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
+            HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(
+                    listOf(
+                            UserItem(
+                                    roomItem.id,
+                                    roomItem.userId,
+                                    roomItem.itemName,
+                                    roomItem.extraData
+                            )
+                    )
+            )
         }
 
         if (!habboSession.habboInventory.roomItemsToRemove.contains(roomItem)) habboSession.habboInventory.roomItemsToRemove += roomItem

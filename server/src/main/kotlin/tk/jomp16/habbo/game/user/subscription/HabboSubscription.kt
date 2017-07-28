@@ -31,14 +31,18 @@ import java.time.temporal.ChronoUnit
 class HabboSubscription(private val habboSession: HabboSession) {
     var subscription: Subscription? = null
         private set
-
     val validUserSubscription: Boolean
         get() = subscription != null && localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription?.expire)
+    private var initialized: Boolean = false
 
     internal fun load() {
-        subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
+        if (!initialized) {
+            subscription = SubscriptionDao.getSubscription(habboSession.userInformation.id)
 
-        if (!validUserSubscription) clearSubscription()
+            if (!validUserSubscription) clearSubscription()
+
+            initialized = true
+        }
     }
 
     fun addOrExtend(months: Int) {
@@ -53,7 +57,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
     fun clearSubscription() {
         if (subscription == null) return
 
-        SubscriptionDao.clearSubscription(habboSession.userInformation.id, subscription)
+        SubscriptionDao.clearSubscription(subscription)
 
         subscription = null
 

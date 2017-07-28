@@ -24,11 +24,12 @@ import tk.jomp16.habbo.game.room.IRoomTask
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 
-class UserPartRoomTask(private val roomUser: RoomUser) : IRoomTask {
+class UserPartRoomTask(
+        private val roomUser: RoomUser
+) : IRoomTask {
     override fun executeTask(room: Room) {
         // todo: item handling
         // todo: trade
-
         room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomUser.virtualID)
     }
 }

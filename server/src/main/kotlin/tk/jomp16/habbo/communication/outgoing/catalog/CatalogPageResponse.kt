@@ -32,7 +32,8 @@ class CatalogPageResponse {
             writeInt(catalogPage.id)
 
             when (catalogPage.pageLayout) {
-                "frontpage", "frontpage4" -> {
+                "frontpage",
+                "frontpage4" -> {
                     writeUTF("NORMAL")
                     writeUTF("frontpage4")
                     writeInt(2)
@@ -44,7 +45,6 @@ class CatalogPageResponse {
                     writeInt(0)
                     writeInt(-1)
                     writeBoolean(false)
-
                     val imagesSplit = catalogPage.pageTextDetails.split('-')
 
                     writeInt(imagesSplit.size)

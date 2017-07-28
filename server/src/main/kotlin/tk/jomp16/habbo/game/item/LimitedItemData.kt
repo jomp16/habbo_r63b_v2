@@ -19,11 +19,9 @@
 
 package tk.jomp16.habbo.game.item
 
-import java.io.Serializable
-
 data class LimitedItemData(
         val id: Int,
         val itemId: Int,
         val limitedNumber: Int,
         val limitedTotal: Int
-) : Serializable
+)

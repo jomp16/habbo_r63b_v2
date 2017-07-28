@@ -62,7 +62,6 @@ class OneWayGateFurniInteractor : ItemInteractor() {
 
             return
         }
-
         val behindVector2 = roomItem.getBehindPosition()
 
         if (room.roomGamemap.isBlocked(behindVector2)) return

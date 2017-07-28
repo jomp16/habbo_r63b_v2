@@ -31,13 +31,10 @@ class RoomUpdateWordFilterHandler {
     @Handler(Incoming.ROOM_UPDATE_WORD_FILTER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val roomId = habboRequest.readInt()
-
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
         if (!room.hasRights(habboSession, true)) return
-
         val addWordFilter = habboRequest.readBoolean()
         val wordFilter = habboRequest.readUTF()
 

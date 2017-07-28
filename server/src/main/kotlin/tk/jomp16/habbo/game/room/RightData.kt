@@ -25,6 +25,5 @@ data class RightData(
         val id: Int,
         val userId: Int
 ) {
-    val username: String
-        get() = UserInformationDao.getUserInformationById(userId)!!.username
+    val username: String by lazy { UserInformationDao.getUserInformationById(userId)!!.username }
 }

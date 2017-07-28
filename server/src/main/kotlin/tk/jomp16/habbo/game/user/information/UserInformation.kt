@@ -44,7 +44,6 @@ data class UserInformation(
     // todo
     val ambassador: Boolean
         get() = rank >= 7
-
     val wardrobes: MutableList<Wardrobe> = ArrayList(WardrobeDao.getWardrobes(id))
     val clothings: MutableSet<String> = HashSet(ClothingDao.getClothings(id))
 }

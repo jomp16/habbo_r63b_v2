@@ -17,14 +17,16 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo
+package tk.jomp16.habbo.game.item
 
-const val FURNISHING_KEY_CACHE = "FURNISHINGS"
-const val ROOM_ITEMS_KEY_CACHE = "ROOM_ITEMS"
-const val USER_ITEMS_KEY_CACHE = "USER_ITEMS"
-const val LIMITED_ITEMS_KEY_CACHE = "LIMITED_ITEMS"
-const val WIREDS_DATA_KEY_CACHE = "WIREDS_DATA"
-const val FURNI_XML_KEY_CACHE = "FURNI_XML"
-const val BADGES_KEY_CACHE = "BADGES"
-const val TELEPORT_LINKS_KEY_CACHE = "TELEPORT_LINKS"
-const val SUBSCRIPTIONS_CACHE = "SUBSCRIPTIONS"
+import tk.jomp16.habbo.HabboServer
+
+data class GiftData(
+        val id: Int,
+        val itemName: String,
+        val amount: Int,
+        val extradata: String
+) {
+    val furnishing: Furnishing
+        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+}

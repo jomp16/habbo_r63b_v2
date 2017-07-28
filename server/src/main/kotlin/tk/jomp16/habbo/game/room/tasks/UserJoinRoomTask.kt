@@ -19,7 +19,6 @@
 
 package tk.jomp16.habbo.game.room.tasks
 
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import tk.jomp16.habbo.game.room.IRoomTask
@@ -33,13 +32,11 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         room.roomUsers.put(roomUser.virtualID, roomUser)
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
-        val queuedHabboResponse = QueuedHabboResponse()
+        roomUser.habboSession?.let { habboSession ->
+            habboSession.roomUser = roomUser
 
-        roomUser.habboSession?.let {
-            it.roomUser = roomUser
-
-            if (it.teleporting) {
-                room.roomItems[it.targetTeleporterId]?.let { teleportItem ->
+            if (habboSession.teleporting) {
+                room.roomItems[habboSession.targetTeleporterId]?.let { teleportItem ->
                     if (!teleportItem.interactingUsers.containsKey(2)) {
                         roomUser.walkingBlocked = true
                         roomUser.currentVector3 = teleportItem.position
@@ -52,46 +49,46 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                         teleportItem.requestCycles(2)
                     }
 
-                    roomUser.habboSession.targetTeleporterId = 0
+                    habboSession.targetTeleporterId = 0
                 }
             }
 
-            queuedHabboResponse += Outgoing.ROOM_HEIGHTMAP to arrayOf(room)
-            queuedHabboResponse += Outgoing.ROOM_FLOORMAP to arrayOf(room)
-            queuedHabboResponse += Outgoing.ROOM_USERS to arrayOf(room.roomUsers.values)
-            queuedHabboResponse += Outgoing.ROOM_USERS_STATUSES to arrayOf(room.roomUsers.values)
-            queuedHabboResponse += Outgoing.ROOM_FLOOR_ITEMS to arrayOf(room, room.floorItems.values)
-            queuedHabboResponse += Outgoing.ROOM_WALL_ITEMS to arrayOf(room, room.wallItems.values)
-            queuedHabboResponse += Outgoing.ROOM_OWNERSHIP to arrayOf(room.roomData.id, room.hasRights(it, true))
-            queuedHabboResponse += Outgoing.ROOM_VISUALIZATION_THICKNESS to arrayOf(room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
+            habboSession.sendHabboResponse(Outgoing.ROOM_HEIGHTMAP, room)
+            habboSession.sendHabboResponse(Outgoing.ROOM_FLOORMAP, room)
+            habboSession.sendHabboResponse(Outgoing.ROOM_OWNERSHIP, room.roomData.id, room.hasRights(habboSession, true))
+            habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
 
             room.roomUsers.values.forEach {
-                if (it.idle) queuedHabboResponse += Outgoing.ROOM_USER_IDLE to arrayOf(it.virtualID, true)
-                if (it.danceId > 0) queuedHabboResponse += Outgoing.ROOM_USER_DANCE to arrayOf(it.virtualID, it.danceId)
+                if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
+                if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
                 // todo: carry item
             }
 
             // todo: events
-
-            if (room.hasRights(it)) {
-                if (room.hasRights(it, true)) {
+            if (room.hasRights(habboSession)) {
+                if (room.hasRights(habboSession, true)) {
                     roomUser.addStatus("flatctrl", "useradmin")
 
-                    queuedHabboResponse += Outgoing.ROOM_OWNER to arrayOf()
-                    queuedHabboResponse += Outgoing.ROOM_RIGHT_LEVEL to arrayOf(4)
+                    habboSession.sendHabboResponse(Outgoing.ROOM_OWNER)
+                    habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 4)
                 } else {
                     // todo: add group rights
                     roomUser.addStatus("flatctrl", "1")
 
-                    queuedHabboResponse += Outgoing.ROOM_RIGHT_LEVEL to arrayOf(1)
+                    habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
                 }
             } else {
-                queuedHabboResponse += Outgoing.ROOM_NO_RIGHTS to arrayOf()
+                habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS)
             }
 
-            it.sendQueuedHabboResponse(queuedHabboResponse)
+            habboSession.habboMessenger.notifyFriends()
 
-            it.habboMessenger.notifyFriends()
+            // items at end because optimization
+            habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.roomUsers.values)
+            habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.roomUsers.values)
+
+            habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
+            habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }

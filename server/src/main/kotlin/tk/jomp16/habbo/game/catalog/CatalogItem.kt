@@ -39,22 +39,22 @@ data class CatalogItem(
         val amount: Int,
         val clubOnly: Boolean,
         val limitedSells: AtomicInteger,
-        val limitedStack: Int,
+        val limitedTotal: Int,
         val offerActive: Boolean
 ) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
     val deal: CatalogDeal?
         get() = HabboServer.habboGame.catalogManager.catalogDeals.find { it.id == dealId }
-
-    val limited = limitedStack > 0
+    val offerId: Int
+        get() = furnishing.offerId
+    val limited = limitedTotal > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id)
             writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName)
             writeBoolean(false) // todo: is rentable
-
             writeInt(costCredits)
 
             if (costVip > 0) {
@@ -108,8 +108,8 @@ data class CatalogItem(
                 writeBoolean(limited)
 
                 if (limited) {
-                    writeInt(limitedStack)
-                    writeInt(limitedStack - limitedSells.get())
+                    writeInt(limitedTotal)
+                    writeInt(limitedTotal - limitedSells.get())
                 }
             }
         }

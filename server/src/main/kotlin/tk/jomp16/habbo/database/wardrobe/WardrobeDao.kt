@@ -25,7 +25,7 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object WardrobeDao {
     fun getWardrobes(userId: Int): List<Wardrobe> = HabboServer.database {
-        select("SELECT * FROM users_wardrobe WHERE user_id = :user_id",
+        select("SELECT * FROM `users_wardrobe` WHERE `user_id` = :user_id",
                 mapOf(
                         "user_id" to userId
                 )
@@ -40,7 +40,7 @@ object WardrobeDao {
     }
 
     fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
-        update("UPDATE users_wardrobe SET figure = :figure, gender = :gender, slot_id = :slot_id WHERE id = :id",
+        update("UPDATE `users_wardrobe` SET `figure` = :figure, `gender` = :gender, `slot_id` = :slot_id WHERE `id` = :id",
                 mapOf(
                         "figure" to figure,
                         "gender" to gender,
@@ -53,7 +53,7 @@ object WardrobeDao {
     }
 
     fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
-        val id = insertAndGetGeneratedKey("INSERT INTO users_wardrobe (user_id, slot_id, figure, gender) VALUES (:user_id, :slot_id, :figure, :gender)",
+        val id = insertAndGetGeneratedKey("INSERT INTO `users_wardrobe` (`user_id`, `slot_id`, `figure`, `gender`) VALUES (:user_id, :slot_id, :figure, :gender)",
                 mapOf(
                         "user_id" to userId,
                         "slot_id" to slotId,

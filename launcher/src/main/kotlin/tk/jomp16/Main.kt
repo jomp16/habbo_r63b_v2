@@ -30,6 +30,5 @@ fun main(args: Array<String>) {
     // todo: add update checking
     // todo: ???
     // todo: profit!
-
     habboServer(jacksonObjectMapper().readValue(File("config.json"))).start()
 }

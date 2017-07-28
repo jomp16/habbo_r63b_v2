@@ -32,27 +32,42 @@ class RoomItemUseClothingHandler {
     @Handler(Incoming.ROOM_ITEM_USE_CLOTHING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
-
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.userId != habboSession.userInformation.id || !roomItem.furnishing.itemName.startsWith("clothing_")) return
 
         if (habboSession.userInformation.clothings.contains(roomItem.itemName)) {
-            habboSession.sendSuperNotification("", "title", "\${notification.figureset.already.redeemed.title}", "message", "\${notification.figureset.already.redeemed.message}", "linkUrl", "\${notification.figureset.already.redeemed.linkUrl}", "linkTitle", "\${notification.figureset.already.redeemed.linkTitle}")
+            habboSession.sendSuperNotification("",
+                    "title",
+                    "\${notification.figureset.already.redeemed.title}",
+                    "message",
+                    "\${notification.figureset.already.redeemed.message}",
+                    "linkUrl",
+                    "\${notification.figureset.already.redeemed.linkUrl}",
+                    "linkTitle",
+                    "\${notification.figureset.already.redeemed.linkTitle}")
 
             return
         }
 
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)
 
         habboSession.userInformation.clothings += roomItem.itemName
 
         habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
 
-        habboSession.sendSuperNotification("", "title", "\${notification.figureset.redeemed.success.title}", "message", "\${notification.figureset.redeemed.success.message}", "linkUrl", "\${notification.figureset.redeemed.success.linkUrl}", "linkTitle", "\${notification.figureset.redeemed.success.linkTitle}")
+        habboSession.sendSuperNotification("",
+                "title",
+                "\${notification.figureset.redeemed.success.title}",
+                "message",
+                "\${notification.figureset.redeemed.success.message}",
+                "linkUrl",
+                "\${notification.figureset.redeemed.success.linkUrl}",
+                "linkTitle",
+                "\${notification.figureset.redeemed.success.linkTitle}")
 
         ClothingDao.addClothing(habboSession.userInformation.id, roomItem.itemName)
-        ItemDao.deleteItem(itemId)
+        ItemDao.deleteItems(listOf(itemId))
     }
 }

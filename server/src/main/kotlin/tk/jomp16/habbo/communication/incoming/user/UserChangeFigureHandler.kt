@@ -30,13 +30,11 @@ class UserChangeFigureHandler {
     @Handler(Incoming.USER_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val gender = habboRequest.readUTF().toUpperCase()
         val figure = habboRequest.readUTF()
 
         if (figure == habboSession.userInformation.figure) return
         // todo: add antimutant here
-
         habboSession.userInformation.figure = figure
         habboSession.userInformation.gender = gender
 

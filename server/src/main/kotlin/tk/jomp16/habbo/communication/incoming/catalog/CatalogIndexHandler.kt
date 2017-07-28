@@ -21,7 +21,6 @@ package tk.jomp16.habbo.communication.incoming.catalog
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
@@ -32,12 +31,11 @@ class CatalogIndexHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.CATALOG_OFFER_CONFIGURATION to arrayOf()
-        queuedHabboResponse += Outgoing.CATALOG_BUILDERS_BORROWED to arrayOf()
-        queuedHabboResponse += Outgoing.CATALOG_INDEX to arrayOf("NORMAL", habboSession.userInformation.rank, habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription)
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER_CONFIGURATION)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_BUILDERS_BORROWED)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_INDEX,
+                "NORMAL",
+                habboSession.userInformation.rank,
+                habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription)
     }
 }

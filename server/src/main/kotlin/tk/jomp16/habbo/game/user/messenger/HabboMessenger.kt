@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.user.messenger
 
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
+import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
@@ -28,20 +29,23 @@ import java.util.*
 class HabboMessenger(private val habboSession: HabboSession) {
     val friends: MutableMap<Int, MessengerFriend> = HashMap()
     val requests: MutableMap<Int, MessengerRequest> = HashMap()
-
     var initialized: Boolean = false
 
     internal fun load() {
-        if (habboSession.hasPermission("acc_server_console")) {
-            // server console!
-            friends += Int.MAX_VALUE to MessengerFriend(Int.MAX_VALUE)
+        if (!initialized) {
+            if (habboSession.hasPermission("acc_server_console")) {
+                // server console!
+                friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(UserInformationDao.serverConsoleUserInformation.id)
 
-            // stub group
-            // friends += -1 to MessengerFriend(-1)
+                // stub group
+                // friends += -1 to MessengerFriend(-1)
+            }
+
+            friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
+            requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
+
+            initialized = true
         }
-
-        friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
-        requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
     }
 
     fun notifyFriends() {

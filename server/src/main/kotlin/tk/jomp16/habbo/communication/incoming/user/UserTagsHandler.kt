@@ -31,7 +31,6 @@ class UserTagsHandler {
     @Handler(Incoming.USER_TAGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val userId = habboRequest.readInt()
         val tags = TagDao.getTags(userId)
 

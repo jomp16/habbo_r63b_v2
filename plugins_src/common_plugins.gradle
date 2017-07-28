@@ -39,6 +39,7 @@ dependencies {
 
 task copyLibs(type: Copy) {
     from {
+        //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
         (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
             !it.name.contains("server")
         }.collect { it }
@@ -55,13 +56,10 @@ jar {
     //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
     dependsOn copyLibs
 
-    // Keep jar clean:
-    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
-
     manifest {
+        //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
         attributes 'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
             !it.name.contains("server")
-        }
-        .collect { "lib/$project.name/$it.name" }.join(' ')
+        }.collect { "lib/$project.name/$it.name" }.join(' ')
     }
 }

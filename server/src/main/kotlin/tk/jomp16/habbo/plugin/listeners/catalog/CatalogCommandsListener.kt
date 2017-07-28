@@ -26,13 +26,15 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.plugin.event.events.room.annotation.Command
 import tk.jomp16.utils.plugin.api.PluginListener
 
-@Suppress("UNUSED_PARAMETER")
+@Suppress("unused", "UNUSED_PARAMETER")
 class CatalogCommandsListener : PluginListener() {
     @Command(arrayOf("update_catalog", "reload_catalog"), permissionName = "cmd_update_catalogue")
     fun updateCatalogue(room: Room, roomUser: RoomUser, args: List<String>) {
         HabboServer.habboGame.catalogManager.load()
 
-        HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.sendHabboResponse(Outgoing.CATALOG_UPDATE) }
+        HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+            it.sendHabboResponse(Outgoing.CATALOG_UPDATE)
+        }
 
         roomUser.habboSession!!.sendNotification("Catalog reloaded!")
     }

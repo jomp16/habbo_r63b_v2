@@ -32,11 +32,11 @@ class RoomDimmerInfoResponse {
             writeInt(roomDimmer.presets.size)
             writeInt(roomDimmer.currentPreset)
 
-            roomDimmer.presets.forEachIndexed { i, roomDimmerPreset ->
+            roomDimmer.presets.forEachIndexed { i, (colorCode, colorIntensity, backgroundOnly) ->
                 writeInt(i + 1)
-                writeInt(if (roomDimmerPreset.backgroundOnly) 2 else 1)
-                writeUTF(roomDimmerPreset.colorCode)
-                writeInt(roomDimmerPreset.colorIntensity)
+                writeInt(if (backgroundOnly) 2 else 1)
+                writeUTF(colorCode)
+                writeInt(colorIntensity)
             }
         }
     }

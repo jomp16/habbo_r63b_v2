@@ -36,7 +36,6 @@ class RoomGamemap(private val room: Room) {
     val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     val roomUserMap: MutableMap<Vector2, MutableSet<RoomUser>> = ConcurrentHashMap()
     val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
-
     val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY, { _, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) })
 
     init {
@@ -122,7 +121,6 @@ class RoomGamemap(private val room: Room) {
                     highestStack = it.totalHeight
                 }
             }
-
             val floorHeight = room.roomModel.floorHeight[x][y].toDouble()
             var stackHeight = highestStack - floorHeight
 

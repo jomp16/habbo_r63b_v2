@@ -30,18 +30,14 @@ class RoomSavePostItHandler {
     @Handler(Incoming.ROOM_SAVE_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
-
         val color = habboRequest.readUTF().trim().toUpperCase()
         val text = habboRequest.readUTF().trim()
 
         if (color != "FFFF33" && color != "FF9CFF" && color != "9CCEFF" && color != "9CFF9C" || text.length > Byte.MAX_VALUE) return
-
         val extraData = "$color $text"
 
         if (roomItem.extraData == extraData) return

@@ -30,7 +30,6 @@ class MessengerFriendUpdateResponse {
     fun response(habboResponse: HabboResponse, messengerFriends: Collection<MessengerFriend>, mode: MessengerFriendUpdateMode) {
         habboResponse.apply {
             // todo: update categories
-
             writeInt(0) // size to update messenger category
             writeInt(messengerFriends.size)
 

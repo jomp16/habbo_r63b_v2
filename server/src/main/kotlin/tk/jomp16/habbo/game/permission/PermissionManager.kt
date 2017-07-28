@@ -27,21 +27,23 @@ import java.util.*
 
 class PermissionManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val permissionsUser: MutableMap<Int, MutableList<String>> = HashMap()
     val permissionsRank: MutableMap<Int, MutableList<String>> = HashMap()
 
-    init {
+    fun load() {
         log.info("Loading permissions...")
 
+        permissionsUser.clear()
+        permissionsRank.clear()
+
         HabboServer.database {
-            connection.prepareStatement("SELECT * FROM permissions_users").use { preparedStatement ->
+            connection.prepareStatement("SELECT * FROM `permissions_users`").use { preparedStatement ->
                 preparedStatement.executeQuery().use { resultSet ->
                     readColumnsAndAddToMap(permissionsRank, resultSet, "user_id")
                 }
             }
 
-            connection.prepareStatement("SELECT * FROM permissions_ranks").use { preparedStatement ->
+            connection.prepareStatement("SELECT * FROM `permissions_ranks`").use { preparedStatement ->
                 preparedStatement.executeQuery().use { resultSet ->
                     readColumnsAndAddToMap(permissionsRank, resultSet, "rank")
                 }

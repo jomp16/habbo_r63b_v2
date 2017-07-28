@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.outgoing.room
+package tk.jomp16.habbo.communication.outgoing.wired
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
@@ -25,8 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.item.WiredData
 import tk.jomp16.habbo.game.item.room.RoomItem
-import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeBlockedTriggers
-import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeDelay
+import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeBlockedActions
 import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeEmptyItems
 import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeEmptySettings
 import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeItemInfo
@@ -34,11 +33,10 @@ import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeItems
 import tk.jomp16.habbo.game.item.wired.WiredItem.Companion.writeSettings
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class WiredEffectDialogResponse {
-    @Response(Outgoing.ROOM_WIRED_EFFECT_DIALOG)
+class WiredTriggerDialogResponse {
+    @Response(Outgoing.WIRED_TRIGGER_DIALOG)
     fun handle(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            // todo: add support to all teh effects
             writeBoolean(false)
 
             parseWired(roomItem, wiredData)
@@ -47,62 +45,41 @@ class WiredEffectDialogResponse {
 
     private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData) {
         when (roomItem.furnishing.interactionType) {
-            InteractionType.WIRED_ACTION_TOGGLE_STATE,
-            InteractionType.WIRED_ACTION_TELEPORT_TO -> {
-                writeItems(wiredData)
-                writeItemInfo(roomItem)
-                writeEmptySettings()
-                writeInt(8)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
-            }
-            InteractionType.WIRED_ACTION_KICK_USER -> {
+            InteractionType.WIRED_TRIGGER_ENTER_ROOM -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, emptyList(), 0)
                 writeInt(7)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedActions()
             }
-            InteractionType.WIRED_ACTION_MOVE_ROTATE -> {
+            InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> {
+                writeEmptyItems()
+                writeItemInfo(roomItem)
+                writeSettings(wiredData.message, wiredData.options, 1)
+                writeInt(0)
+                writeBlockedActions()
+            }
+            InteractionType.WIRED_TRIGGER_STATE_CHANGED -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
-                writeSettings("", wiredData.options, 2)
+                writeEmptySettings()
                 writeInt(4)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedActions()
             }
-            InteractionType.WIRED_ACTION_MATCH_TO_SCREENSHOT -> {
+            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI,
+            InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
-                writeSettings("", wiredData.options, 3)
-                writeInt(3)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
-            }
-            InteractionType.WIRED_ACTION_CALL_STACK -> {
-                writeItems(wiredData)
-                writeItemInfo(roomItem)
-                writeEmptySettings()
-                writeInt(18)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
-            }
-            InteractionType.WIRED_ACTION_SHOW_MESSAGE -> {
                 writeEmptyItems()
-                writeItemInfo(roomItem)
-                writeSettings(wiredData.message, emptyList(), 0)
-                writeInt(7)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeInt(1)
+                writeBlockedActions()
             }
             else -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeEmptySettings()
                 writeInt(0)
-                writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedActions()
             }
         }
     }

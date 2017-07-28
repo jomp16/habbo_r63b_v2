@@ -39,7 +39,6 @@ class GateFurniInteractor : ItemInteractor() {
         }
 
         // todo: wired
-
         /*if (roomUser != null) {
             room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
         }*/

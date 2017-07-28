@@ -87,21 +87,34 @@ class NavigatorSearchResponse {
                 "my" -> {
                     val rooms: MutableList<Room> = ArrayList()
 
-                    (0..habboSession.rooms.size - 1).forEach { i ->
-                        rooms.add(habboSession.rooms[i])
+                    habboSession.rooms.forEachIndexed { i, room ->
+                        rooms.add(room)
 
-                        if (i + 1 == (if (direct) 100 else 8)) return@forEach
+                        if (!direct && i + 1 == 8) return@forEachIndexed
                     }
 
                     writeInt(rooms.size)
                     rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
                 "popular" -> {
-                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }.sortedBy { it.roomUsers.size }.let {
+                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
+                            .sortedBy { it.roomUsers.size }.take(8).let {
                         writeInt(it.size)
 
                         it.forEach { habboResponse.serialize(it, false, false) }
                     }
+                }
+                "favorites" -> {
+                    val rooms: MutableList<Room> = ArrayList()
+
+                    habboSession.favoritesRooms.map { it.second }.forEachIndexed { i, roomId ->
+                        rooms.add(HabboServer.habboGame.roomManager.rooms[roomId]!!)
+
+                        if (!direct && i + 1 == 8) return@forEachIndexed
+                    }
+
+                    writeInt(rooms.size)
+                    rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
                 else -> writeInt(0)
             }
@@ -116,17 +129,20 @@ class NavigatorSearchResponse {
             writeInt(2)
             writeBoolean(false)
             writeInt(0)
-
             val rooms: List<Room> = HabboServer.habboGame.roomManager.rooms.values.filter {
                 when {
                     it.roomData.roomType == RoomType.PUBLIC -> false
                     searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
-                    searchTerm.startsWith("tag:") -> it.roomData.tags.any { it == searchTerm.substring(4) }
+                    searchTerm.startsWith("tag:") -> it.roomData.tags.any {
+                        it == searchTerm.substring(4)
+                    }
                     searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
                     it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    else -> it.roomData.tags.any { it.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex()) }
+                    else -> it.roomData.tags.any {
+                        it.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
+                    }
                 }
             }.sortedByDescending { it.roomUsers.size }
 
@@ -143,7 +159,13 @@ class NavigatorSearchResponse {
             writeInt(0)
             writeBoolean(true)
             writeInt(0)
-            writeInt(0) // todo: rooms
+
+            HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
+                    .filter { it.roomData.category == navigatorRoomCategory.id }.sortedBy { it.roomUsers.size }.take(8).let {
+                writeInt(it.size)
+
+                it.forEach { habboResponse.serialize(it, false, false) }
+            }
         }
     }
 

@@ -46,63 +46,49 @@ class RoomUser(
         var bodyRotation: Int
 ) : IHabboResponseSerialize {
     var updateNeeded: Boolean = false
-
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
-
     var oldCurrentVector3: Vector3? = null
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
     var objectiveItem: RoomItem? = null
-
     private var stepSeatedVector3: Vector3? = null
-
     val walking: Boolean
         get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
-
     private val stepSeated: Boolean
         get() = stepSeatedVector3 != null
-
     private var idleCount: Int = 0
-
     private var cycles: Int = 0
     private var currentCycles: Int = 0
     private var handItemCycle: Int = 0
     private var handItemCurrentCycles: Int = 0
-
     var walkingBlocked: Boolean = false
     var ignoreBlocking: Boolean = false
     var overrideBlocking: Boolean = false
     var rollerId: Int = -1
     var handleVendingId: Int = -1
-
     internal var path: MutableList<Path> = mutableListOf()
-
     var idle: Boolean = false
         set(newValue) {
             idleCount =
-                    if (newValue) (TimeUnit.SECONDS.toMillis(
-                            HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                    if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
                     else 0
 
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
 
             field = newValue
         }
-
     var typing: Boolean = false
         set(newValue) {
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
 
             field = newValue
         }
-
     var danceId: Int = 0
         set(newValue) {
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
 
             field = newValue
         }
-
     var handItem: Int = 0
         set(newValue) {
             if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, virtualID, newValue)
@@ -188,9 +174,7 @@ class RoomUser(
 
                         return
                     }
-
                     val vector2 = Vector2(step.x, step.y)
-
                     val roomItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
                     val roomItem1 = room.roomGamemap.getHighestItem(vector2)
 
@@ -206,7 +190,6 @@ class RoomUser(
                     }
 
                     room.roomGamemap.updateRoomUserMovement(this, currentVector3.vector2, vector2)
-
                     val z = room.roomGamemap.getAbsoluteHeight(vector2)
 
                     stepSeatedVector3 = Vector3(vector2, z)
@@ -321,7 +304,6 @@ class RoomUser(
                 writeInt(0)
                 writeUTF("")
                 // end group
-
                 writeUTF("")
                 writeInt(habboSession.userStats.achievementScore)
                 writeBoolean(false) // is member of builder club
@@ -334,7 +316,6 @@ class RoomUser(
         removeStatus("lay")
 
         // todo: remove effects
-
         updateNeeded = true
     }
 

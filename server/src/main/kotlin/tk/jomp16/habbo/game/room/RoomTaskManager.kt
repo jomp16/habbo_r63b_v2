@@ -33,9 +33,7 @@ class RoomTaskManager {
         if (rooms.contains(room)) return
 
         rooms += room
-
         val tmpTasks = scheduledFutureMap.keys.filter { it.rooms.size < HabboServer.habboConfig.roomTaskConfig.maxRoomPerThread }
-
         val roomTask = if (tmpTasks.isNotEmpty()) tmpTasks.random() else RoomTask()
 
         if (!scheduledFutureMap.containsKey(roomTask)) scheduledFutureMap.put(roomTask, HabboServer.serverScheduledExecutor.scheduleAtFixedRate(roomTask, 0, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS))

@@ -26,13 +26,8 @@ import java.util.*
 
 class ModerationManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val moderationCategories: MutableMap<Int, String> = HashMap()
     val moderationTopics: MutableMap<Int, ModerationTopic> = HashMap()
-
-    init {
-        load()
-    }
 
     fun load() {
         log.info("Loading moderation stuffs...")

@@ -30,9 +30,9 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
     var onlyOwner = false
 
     init {
-        if (roomItem.wiredData != null) {
-            message = roomItem.wiredData.message
-            onlyOwner = if (roomItem.wiredData.options.size == 1) roomItem.wiredData.options[0] == 1 else false
+        roomItem.wiredData?.let {
+            message = it.message
+            onlyOwner = if (it.options.size == 1) it.options[0] == 1 else false
         }
     }
 
@@ -43,18 +43,19 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
-        if (roomItem.wiredData == null) return false
+        roomItem.wiredData?.let {
+            habboRequest.readInt() // useless?
+            onlyOwner = habboRequest.readInt() == 1
+            message = habboRequest.readUTF().trim().toLowerCase()
 
-        habboRequest.readInt() // useless?
+            if (message.length > 100) message = message.substring(0, 100)
 
-        onlyOwner = habboRequest.readInt() == 1
-        message = habboRequest.readUTF().trim().toLowerCase()
+            it.message = message
+            it.options = listOf(if (onlyOwner) 1 else 0)
 
-        if (message.length > 100) message = message.substring(0, 100)
+            return true
+        }
 
-        roomItem.wiredData.message = message
-        roomItem.wiredData.options = listOf(if (onlyOwner) 1 else 0)
-
-        return true
+        return false
     }
 }

@@ -31,12 +31,10 @@ class CatalogPurchaseHandler {
     @Handler(Incoming.CATALOG_PURCHASE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val pageId = habboRequest.readInt()
         val itemId = habboRequest.readInt()
         val extraData = habboRequest.readUTF()
         var amount = habboRequest.readInt()
-
         val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }
 
         if (catalogPage == null) {

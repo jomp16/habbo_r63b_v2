@@ -44,7 +44,6 @@ class ModerationInitResponse {
             writeBoolean(true) // Ban users
             writeBoolean(true) // Caution etc
             writeBoolean(true) // ?
-
             // todo: room presets
             writeInt(0)
         }

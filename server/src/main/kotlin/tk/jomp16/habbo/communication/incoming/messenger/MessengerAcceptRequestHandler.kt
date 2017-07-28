@@ -35,12 +35,10 @@ class MessengerAcceptRequestHandler {
     @Handler(Incoming.MESSENGER_ACCEPT_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         var amount = habboRequest.readInt()
 
         if (amount < 0) return
         if (amount > 50) amount = 50
-
         val friendIds: MutableList<Int> = ArrayList()
         val requestIds: MutableList<Int> = ArrayList()
 
@@ -55,7 +53,6 @@ class MessengerAcceptRequestHandler {
         }
 
         MessengerDao.removeRequests(requestIds)
-
         val friends = MessengerDao.addFriends(habboSession.userInformation.id, friendIds)
 
         habboSession.habboMessenger.friends += friends.associateBy { it.userId }
@@ -65,7 +62,6 @@ class MessengerAcceptRequestHandler {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it) ?: return@forEach
 
             if (!friendHabboSession.habboMessenger.initialized) return@forEach
-
             val messengerFriend = MessengerFriend(habboSession.userInformation.id)
 
             friendHabboSession.habboMessenger.friends.put(messengerFriend.userId, messengerFriend)

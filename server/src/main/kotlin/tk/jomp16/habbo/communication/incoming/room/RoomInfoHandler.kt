@@ -31,7 +31,6 @@ class RoomInfoHandler {
     @Handler(Incoming.ROOM_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 

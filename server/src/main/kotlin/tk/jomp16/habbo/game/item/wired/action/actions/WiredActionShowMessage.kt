@@ -33,9 +33,9 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
     private var delay: Int = 0
 
     init {
-        if (roomItem.wiredData != null) {
-            delay = roomItem.wiredData.delay
-            message = roomItem.wiredData.message
+        roomItem.wiredData?.let {
+            delay = it.delay
+            message = it.message
         }
     }
 
@@ -64,24 +64,24 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
-        if (roomItem.wiredData == null) return false
+        roomItem.wiredData?.let {
+            habboRequest.readInt() // useless?
+            message = habboRequest.readUTF().trim()
 
-        habboRequest.readInt() // useless?
+            if (message.length > 100) message = message.substring(0, 100)
 
-        message = habboRequest.readUTF().trim()
+            habboRequest.readInt() // useless?
+            delay = habboRequest.readInt()
 
-        if (message.length > 100) message = message.substring(0, 100)
+            if (delay < 0) delay = 0
+            if (delay > 20) delay = 20
 
-        habboRequest.readInt() // useless?
+            it.delay = delay
+            it.message = message
 
-        delay = habboRequest.readInt()
+            return true
+        }
 
-        if (delay < 0) delay = 0
-        if (delay > 20) delay = 20
-
-        roomItem.wiredData.delay = delay
-        roomItem.wiredData.message = message
-
-        return true
+        return false
     }
 }

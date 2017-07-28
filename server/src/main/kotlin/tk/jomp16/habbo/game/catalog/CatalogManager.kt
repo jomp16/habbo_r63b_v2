@@ -26,24 +26,23 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
 import tk.jomp16.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
 import tk.jomp16.habbo.database.catalog.CatalogDao
+import tk.jomp16.habbo.database.item.ItemDao
+import tk.jomp16.habbo.game.item.Furnishing
 import tk.jomp16.habbo.game.item.InteractionType
-import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
-import java.util.*
+import tk.jomp16.habbo.kotlin.random
+import tk.jomp16.habbo.util.Utils
+import java.security.SecureRandom
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val catalogPages: MutableList<CatalogPage> = ArrayList()
     val catalogItems: MutableList<CatalogItem> = ArrayList()
     val catalogClubOffers: MutableList<CatalogClubOffer> = ArrayList()
     val catalogDeals: MutableList<CatalogDeal> = ArrayList()
-
-    init {
-        load()
-    }
+    val recyclerRewards: MutableMap<Int, List<String>> = HashMap()
 
     fun load() {
         log.info("Loading catalog...")
@@ -54,7 +53,6 @@ class CatalogManager {
         catalogClubOffers.clear()
         catalogDeals.clear()
         // done clear catalog
-
         // catalog root
         catalogPages += CatalogPage(-1, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "", "")
         // catalog builders
@@ -64,11 +62,13 @@ class CatalogManager {
         catalogItems += CatalogDao.getCatalogItems()
         catalogClubOffers += CatalogDao.getCatalogClubOffers()
         catalogDeals += CatalogDao.getCatalogDeals()
+        recyclerRewards += CatalogDao.getRecyclerRewards().groupBy { it.first }.mapValues { it.value.map { it.second } }
 
         log.info("Loaded {} catalog pages!", catalogPages.size - 2)
         log.info("Loaded {} catalog items!", catalogItems.size)
         log.info("Loaded {} club offers!", catalogClubOffers.size)
         log.info("Loaded {} catalog deals!", catalogDeals.size)
+        log.info("Loaded {} recycler levels and {} recycler rewards!", recyclerRewards.size, recyclerRewards.values.sumBy { it.size })
     }
 
     // todo: add gift support
@@ -81,13 +81,11 @@ class CatalogManager {
 
         if (catalogPage.pageLayout == "vip_buy") {
             // Habbo Club
-
             if (!catalogClubOffers.any { it.itemId == catalogItemId }) {
                 habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
                 return
             }
-
             val clubOffer = catalogClubOffers.find { it.itemId == catalogItemId }
 
             if (clubOffer == null) {
@@ -113,7 +111,6 @@ class CatalogManager {
 
             return
         }
-
         val catalogItem = catalogPage.catalogItems.find { it.id == catalogItemId }
 
         if (catalogItem == null || !catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
@@ -121,7 +118,6 @@ class CatalogManager {
 
             return
         }
-
         val totalAmountToPurchase = amount - totalFreeAmount(amount)
 
         if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
@@ -132,7 +128,7 @@ class CatalogManager {
             return
         }
 
-        if (catalogItem.limited && catalogItem.limitedSells.get() >= catalogItem.limitedStack) {
+        if (catalogItem.limited && catalogItem.limitedSells.get() >= catalogItem.limitedTotal) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_LIMITED_SOLD_OUT)
 
             return
@@ -160,44 +156,14 @@ class CatalogManager {
                 }
             }
         }
+        val userItems = ItemDao.addItems(habboSession.userInformation.id, furnishingToPurchase.map { it.furnishing }, furnishingToPurchase.map { it.extraData })
 
-        val userItems: MutableList<UserItem> = ArrayList()
+        furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
+            ItemDao.addLimitedItem(userItems[furnishingToPurchase.indexOf(it)].id, it.limitedNumber, catalogItem.limitedTotal)
+        }
 
+        // todo: move queries to ItemDao
         HabboServer.database {
-            val ids = batchInsertAndGetGeneratedKeys("INSERT INTO items (user_id, item_name, extra_data, wall_pos) VALUES (:user_id, :item_name, :extra_data, :wall_pos)",
-                    furnishingToPurchase.map {
-                        mapOf(
-                                "user_id" to habboSession.userInformation.id,
-                                "item_name" to it.furnishing.itemName,
-                                "extra_data" to it.extraData,
-                                "wall_pos" to ""
-                        )
-                    }
-            )
-
-            if (furnishingToPurchase.filter { it.limitedNum > 0 }.isNotEmpty()) {
-                val limitedIds = batchInsertAndGetGeneratedKeys("INSERT INTO items_limited (item_id, limited_num, limited_total) VALUES (:item_id, :limited_num, :limited_total)",
-                        furnishingToPurchase.filter { it.limitedNum > 0 }.map {
-                            mapOf(
-                                    "item_id" to ids[furnishingToPurchase.indexOf(it)],
-                                    "limited_num" to it.limitedNum,
-                                    "limited_total" to catalogItem.limitedStack
-                            )
-                        }
-                )
-
-                furnishingToPurchase.forEachIndexed { i, catalogPurchaseData -> catalogPurchaseData.limitedId = limitedIds[i] }
-            }
-
-            userItems += ids.mapIndexed { i, itemId ->
-                UserItem(
-                        itemId,
-                        habboSession.userInformation.id,
-                        furnishingToPurchase[i].furnishing.itemName,
-                        furnishingToPurchase[i].extraData
-                )
-            }
-
             val copyUserItems = ArrayList(userItems)
 
             userItems.forEach { userItem ->
@@ -209,7 +175,7 @@ class CatalogManager {
 
                         copyUserItems.remove(teleporterItem)
 
-                        batchInsertAndGetGeneratedKeys("INSERT INTO items_teleport (teleport_one_id, teleport_two_id) VALUES (:teleport_one_id, :teleport_two_id)",
+                        batchInsertAndGetGeneratedKeys("INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
                                 listOf(
                                         mapOf(
                                                 "teleport_one_id" to userItem.id,
@@ -228,7 +194,7 @@ class CatalogManager {
                         HabboServer.habboGame.itemManager.roomTeleportLinks.put(teleporterItem.id, 0)
                     }
                     userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
-                        insertAndGetGeneratedKey("INSERT INTO items_wired (item_id, delay, items, message, options, extradata) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
+                        insertAndGetGeneratedKey("INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
                                 mapOf(
                                         "item_id" to userItem.id,
                                         "delay" to 0,
@@ -240,7 +206,7 @@ class CatalogManager {
                         )
                     }
                     userItem.furnishing.interactionType == InteractionType.DIMMER -> {
-                        insertAndGetGeneratedKey("INSERT INTO items_dimmer (item_id, enabled, current_preset, preset_one, preset_two, preset_three) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
+                        insertAndGetGeneratedKey("INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
                                 mapOf(
                                         "item_id" to userItem.id,
                                         "enabled" to false,
@@ -268,7 +234,9 @@ class CatalogManager {
 
         if (catalogItem.limited) {
             // send new data to everyone logged in
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
+                it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
+            }
 
             // and save new limited sell to database
             CatalogDao.updateLimitedSells(catalogItem)
@@ -322,6 +290,24 @@ class CatalogManager {
         }
 
         return int1
+    }
+
+    private fun getRandomRecyclerLevel(): Int {
+        val random = SecureRandom()
+
+        HabboServer.habboConfig.recyclerConfig.odds.entries.filter { it.key != 1 }.filter {
+            recyclerRewards.containsKey(it.key)
+        }.sortedByDescending { it.key }.forEach {
+            if (Utils.randInt(1..it.value, random) == it.value) return it.key
+        }
+
+        return 1
+    }
+
+    fun getRandomRecyclerReward(): Furnishing? {
+        val level = getRandomRecyclerLevel()
+
+        return HabboServer.habboGame.itemManager.furnishings[recyclerRewards[level]!!.random()]
     }
 
     companion object {

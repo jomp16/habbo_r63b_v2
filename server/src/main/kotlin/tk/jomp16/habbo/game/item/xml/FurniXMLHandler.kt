@@ -25,7 +25,6 @@ import java.util.*
 
 class FurniXMLHandler : DefaultHandler() {
     val furniXMLInfos: MutableList<FurniXMLInfo> = ArrayList()
-
     private var wallFurni: Boolean = false
     private var furniXMLInfo: FurniXMLInfo? = null
     private var content: String = ""
@@ -53,6 +52,7 @@ class FurniXMLHandler : DefaultHandler() {
             "cansiton" -> furniXMLInfo?.canSitOn = content.trim() == "1"
             "canlayon" -> furniXMLInfo?.canLayOn = content.trim() == "1"
             "customparams" -> furniXMLInfo?.customParams = content.trim()
+            "offerid" -> furniXMLInfo?.offerId = content.trim().toInt()
         }
     }
 

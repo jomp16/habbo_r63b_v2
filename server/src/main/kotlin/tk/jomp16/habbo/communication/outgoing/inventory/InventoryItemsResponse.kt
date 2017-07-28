@@ -30,7 +30,7 @@ class InventoryItemsResponse {
     fun response(habboResponse: HabboResponse, items: Collection<UserItem>) {
         habboResponse.apply {
             writeInt(1)
-            writeInt(0)
+            writeInt(0) // inventory updated?
             writeInt(items.size)
 
             items.forEach { habboResponse.serialize(it) }

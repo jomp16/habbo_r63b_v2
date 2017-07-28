@@ -30,7 +30,6 @@ class RoomUserLookToHandler {
     @Handler(Incoming.ROOM_LOOK_TO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
 
@@ -39,10 +38,7 @@ class RoomUserLookToHandler {
                 || habboSession.roomUser!!.statusMap.containsKey("lay")) {
             return
         }
-
-        val rotation = Rotation.calculate(habboSession.roomUser!!.currentVector3.x,
-                habboSession.roomUser!!.currentVector3.y, x, y)
-
+        val rotation = Rotation.calculate(habboSession.roomUser!!.currentVector3.x, habboSession.roomUser!!.currentVector3.y, x, y)
         var update = false
 
         if (habboSession.roomUser?.bodyRotation != rotation) {

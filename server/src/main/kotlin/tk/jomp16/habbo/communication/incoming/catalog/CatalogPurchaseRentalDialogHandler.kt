@@ -32,9 +32,7 @@ class CatalogPurchaseRentalDialogHandler {
         if (!habboSession.authenticated) return
 
         // stub
-
         habboRequest.readBoolean() // useless?
-
         val itemName = habboRequest.readUTF()
 
         habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_RENTAL_DIALOG, itemName, 16, 0, 0)

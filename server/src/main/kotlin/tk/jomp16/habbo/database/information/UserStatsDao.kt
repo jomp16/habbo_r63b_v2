@@ -27,80 +27,69 @@ import java.time.Clock
 import java.time.LocalDateTime
 
 object UserStatsDao {
-    private val userStatsCache: MutableMap<Int, UserStats> = HashMap()
+    private val serverConsoleUserStats: UserStats = UserStats(UserInformationDao.serverConsoleUserInformation.id,
+            LocalDateTime.now(Clock.systemUTC()),
+            Int.MAX_VALUE.toLong(),
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            0,
+            0,
+            0,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            LocalDateTime.now(Clock.systemUTC()),
+            LocalDateTime.now(Clock.systemUTC()))
 
-    init {
-        userStatsCache.put(Int.MAX_VALUE, UserStats(
-                Int.MAX_VALUE,
-                LocalDateTime.now(Clock.systemUTC()),
-                Int.MAX_VALUE.toLong(),
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                0,
-                0,
-                0,
-                Int.MAX_VALUE,
-                Int.MAX_VALUE,
-                LocalDateTime.now(Clock.systemUTC()),
-                LocalDateTime.now(Clock.systemUTC())
-        ))
-    }
-
-    fun getUserStats(userId: Int, cache: Boolean = true): UserStats {
-        if (!cache || !userStatsCache.containsKey(userId)) {
-            val userStats = HabboServer.database {
-                select("SELECT * FROM users_stats WHERE user_id = :user_id LIMIT 1",
-                        mapOf(
-                                "user_id" to userId
-                        )
-                ) {
-                    UserStats(
-                            it.int("id"),
-                            it.localDateTime("last_online"),
-                            it.long("online_seconds"),
-                            it.int("room_visits"),
-                            it.int("respect"),
-                            it.int("gifts_given"),
-                            it.int("gifts_received"),
-                            it.int("daily_respect_points"),
-                            it.int("daily_pet_respect_points"),
-                            it.int("daily_competition_votes"),
-                            it.int("achievement_score"),
-                            it.int("quest_id"),
-                            it.int("quest_progress"),
-                            it.int("favorite_group"),
-                            it.int("tickets_answered"),
-                            it.int("marketplace_tickets"),
-                            it.localDateTime("credits_last_update"),
-                            it.localDateTime("respect_last_update")
+    fun getUserStats(userId: Int): UserStats {
+        if (userId == UserInformationDao.serverConsoleUserInformation.id) return serverConsoleUserStats
+        val userStats = HabboServer.database {
+            select(javaClass.getResource("/sql/users/stats/select_user_stats.sql").readText(),
+                    mapOf(
+                            "user_id" to userId
                     )
-                }.firstOrNull()
-            }
-
-            if (userStats == null) {
-                // no users stats, create it
-                HabboServer.database {
-                    insertAndGetGeneratedKey("INSERT INTO users_stats (user_id) VALUES (:id)",
-                            mapOf(
-                                    "id" to userId
-                            )
-                    )
-                }
-
-                // Now fetch it again, doing a one recursive call, and returns this
-                return getUserStats(userId)
-            }
-
-            userStatsCache.put(userId, userStats)
+            ) {
+                UserStats(
+                        it.int("id"),
+                        it.localDateTime("last_online"),
+                        it.long("online_seconds"),
+                        it.int("room_visits"),
+                        it.int("respect"),
+                        it.int("gifts_given"),
+                        it.int("gifts_received"),
+                        it.int("daily_respect_points"),
+                        it.int("daily_pet_respect_points"),
+                        it.int("daily_competition_votes"),
+                        it.int("achievement_score"),
+                        it.int("quest_id"),
+                        it.int("quest_progress"),
+                        it.int("favorite_group"),
+                        it.int("tickets_answered"),
+                        it.int("marketplace_tickets"),
+                        it.localDateTime("credits_last_update"),
+                        it.localDateTime("respect_last_update")
+                )
+            }.firstOrNull()
         }
 
-        val userStats = userStatsCache[userId]!!
+        if (userStats == null) {
+            // no users stats, create it
+            HabboServer.database {
+                insertAndGetGeneratedKey(javaClass.getResource("/sql/users/stats/insert_user_stats.sql").readText(),
+                        mapOf(
+                                "id" to userId
+                        )
+                )
+            }
+
+            // Now fetch it again, doing a one recursive call, and returns this
+            return getUserStats(userId)
+        }
 
         if (userStats.respectLastUpdate.plusDays(1).isBefore(LocalDateTime.now()) && (userStats.dailyRespectPoints < 3 || userStats.dailyPetRespectPoints < 3 || userStats.dailyCompetitionVotes < 3)) {
             userStats.respectLastUpdate = LocalDateTime.now()
@@ -115,10 +104,7 @@ object UserStatsDao {
 
     fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {
         HabboServer.database {
-            update("UPDATE users_stats SET last_online = :last_online, credits_last_update = :credits_last_update, " +
-                    "favorite_group = :favorite_group, online_seconds = :online_seconds, respect = :respect, " +
-                    "daily_respect_points = :daily_respect_points, daily_pet_respect_points = :daily_pet_respect_points, " +
-                    "respect_last_update = :respect_last_update, marketplace_tickets = :marketplace_tickets WHERE id = :id",
+            update(javaClass.getResource("/sql/users/stats/update_user_stats.sql").readText(),
                     mapOf(
                             "last_online" to lastOnline,
                             "credits_last_update" to userStats.creditsLastUpdate,

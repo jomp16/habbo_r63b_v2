@@ -30,7 +30,6 @@ class RoomItemMoveFloorHandler {
     @Handler(Incoming.ROOM_MOVE_FLOOR_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         val itemId = habboRequest.readInt()
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()

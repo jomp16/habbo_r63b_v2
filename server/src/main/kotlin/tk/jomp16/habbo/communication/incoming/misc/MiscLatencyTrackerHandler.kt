@@ -17,10 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.util
+package tk.jomp16.habbo.communication.incoming.misc
 
-interface ICacheable {
-    fun cacheAll()
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.game.user.HabboSession
 
-    fun saveCache()
+@Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
+class MiscLatencyTrackerHandler {
+    @Handler(Incoming.MISC_LATENCY_TRACKER)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
+        val int1 = habboRequest.readInt() // what the
+        val int2 = habboRequest.readInt() // fuck the
+        val int3 = habboRequest.readInt() // values is?
+
+        // 727 41 3
+        // 44 44 3
+        // 354 354 3
+    }
 }

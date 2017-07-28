@@ -38,7 +38,6 @@ class RoomUserStatusesResponse {
                 writeUTF(it.currentVector3.z.toString())
                 writeInt(it.headRotation)
                 writeInt(it.bodyRotation)
-
                 val stringBuilder = StringBuilder("/")
 
                 it.statusMap.entries.filter { it.key.isNotBlank() }.forEach {

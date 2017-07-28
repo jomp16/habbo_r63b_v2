@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscGenericErrorResponse {
-    @Response(Outgoing.GENERIC_ERROR)
+    @Response(Outgoing.MISC_GENERIC_ERROR)
     fun response(habboResponse: HabboResponse, miscGenericError: MiscGenericError) {
         habboResponse.apply {
             writeInt(miscGenericError.errorCode)

@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscSuperNotificationResponse {
-    @Response(Outgoing.SUPER_NOTIFICATION)
+    @Response(Outgoing.MISC_SUPER_NOTIFICATION)
     fun response(habboResponse: HabboResponse, type: String, strings: Array<String>) {
         habboResponse.apply {
             writeUTF(type)

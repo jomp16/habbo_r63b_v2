@@ -29,7 +29,6 @@ class NavigatorSaveSettingsHandler {
     @Handler(Incoming.NAVIGATOR_SAVE_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
         val width = habboRequest.readInt()

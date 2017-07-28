@@ -17,21 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication
+package tk.jomp16.habbo.communication.outgoing.catalog
 
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import java.util.*
 
-class QueuedHabboResponse {
-    val headers: MutableList<Pair<Outgoing, Array<out Any>>> = ArrayList() // Do not change this, LinkedList is the only that keeps the insertion order
-
-    fun add(outgoing: Outgoing, args: Array<out Any>): QueuedHabboResponse {
-        headers.add(outgoing to args)
-
-        return this
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogRecycleItemsResultResponse {
+    @Response(Outgoing.CATALOG_RECYCLE_ITEMS_RESULT)
+    fun response(habboResponse: HabboResponse, catalogRecycleItemsResult: CatalogRecycleItemsResult, itemId: Int) {
+        habboResponse.apply {
+            writeInt(catalogRecycleItemsResult.code)
+            writeInt(itemId)
+        }
     }
 
-    operator fun plusAssign(pair: Pair<Outgoing, Array<out Any>>) {
-        add(pair.first, pair.second)
+    enum class CatalogRecycleItemsResult(val code: Int) {
+        SUCCESS(1),
+        FAILURE(2)
     }
 }

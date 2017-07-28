@@ -21,7 +21,6 @@ package tk.jomp16.habbo.communication.incoming.messenger
 
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.messenger.MessengerDao
@@ -35,25 +34,12 @@ class MessengerInitializeHandler {
 
         habboSession.habboMessenger.load()
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.MESSENGER_INIT to arrayOf(
-                2000 // max friends
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 2000 // max friends
         ) // MessengerInitComposer
-
-        queuedHabboResponse += Outgoing.MESSENGER_FRIENDS to arrayOf(
-                habboSession.habboMessenger.friends.values
-        ) // BuddyListComposer
-
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            queuedHabboResponse += Outgoing.MESSENGER_CHAT to arrayOf(
-                    it.first,
-                    it.second,
-                    it.third
-            )
+            habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, it.first, it.second, it.third)
         }
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
 
         habboSession.habboMessenger.initialized = true
 
