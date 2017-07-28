@@ -28,7 +28,7 @@ import java.security.spec.RSAPublicKeySpec
 import javax.crypto.Cipher
 
 class RSAEncryption(n: String, d: String, e: String) {
-    private val cipher: Cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+    private val cipher: Cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC")
     private var publicKey: RSAPublicKey
     private var privateKey: RSAPrivateKey
 
@@ -36,7 +36,6 @@ class RSAEncryption(n: String, d: String, e: String) {
         val n1 = BigInteger(n, 16)
         val d1 = BigInteger(d, 16)
         val e1 = BigInteger(e, 16)
-
         val keyFactory = KeyFactory.getInstance("RSA", "BC")
         val pubKeySpec = RSAPublicKeySpec(n1, e1)
         val privKeySpec = RSAPrivateKeySpec(n1, d1)

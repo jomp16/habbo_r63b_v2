@@ -24,61 +24,51 @@ import tk.jomp16.habbo.game.user.information.UserPreferences
 import tk.jomp16.habbo.kotlin.insertWithIntGeneratedKey
 
 object UserPreferencesDao {
-    private val userPreferencesCache: MutableMap<Int, UserPreferences> = HashMap()
-
-    fun getUserPreferences(userId: Int, cache: Boolean = true): UserPreferences {
-        if (!cache || !userPreferencesCache.containsKey(userId)) {
-            val userPreferences = HabboServer.database {
-                select("SELECT * FROM users_preferences WHERE user_id = :user_id LIMIT 1",
-                        mapOf(
-                                "user_id" to userId
-                        )
-                ) {
-                    UserPreferences(
-                            it.int("id"),
-                            it.string("volume"),
-                            it.boolean("prefer_old_chat"),
-                            it.boolean("ignore_room_invite"),
-                            it.boolean("disable_camera_follow"),
-                            it.int("navigator_x"),
-                            it.int("navigator_y"),
-                            it.int("navigator_width"),
-                            it.int("navigator_height"),
-                            it.boolean("hide_in_room"),
-                            it.boolean("block_new_friends"),
-                            it.int("chat_color"),
-                            it.boolean("friend_bar_open")
+    fun getUserPreferences(userId: Int): UserPreferences {
+        val userPreferences = HabboServer.database {
+            select(javaClass.getResource("/sql/users/preferences/select_user_preferences.sql").readText(),
+                    mapOf(
+                            "user_id" to userId
                     )
-                }.firstOrNull()
-            }
-
-            if (userPreferences == null) {
-                // no users preferences, create it
-                HabboServer.database {
-                    insertWithIntGeneratedKey("INSERT INTO users_preferences (user_id) VALUES (:id)",
-                            mapOf(
-                                    "id" to userId
-                            )
-                    )
-                }
-
-                // Now fetch it again, doing a one recursive call, and returns this
-                return getUserPreferences(userId, cache)
-            }
-
-            userPreferencesCache.put(userId, userPreferences)
+            ) {
+                UserPreferences(
+                        it.int("id"),
+                        it.string("volume"),
+                        it.boolean("prefer_old_chat"),
+                        it.boolean("ignore_room_invite"),
+                        it.boolean("disable_camera_follow"),
+                        it.int("navigator_x"),
+                        it.int("navigator_y"),
+                        it.int("navigator_width"),
+                        it.int("navigator_height"),
+                        it.boolean("hide_in_room"),
+                        it.boolean("block_new_friends"),
+                        it.int("chat_color"),
+                        it.boolean("friend_bar_open")
+                )
+            }.firstOrNull()
         }
 
-        return userPreferencesCache[userId]!!
+        if (userPreferences == null) {
+            // no users preferences, create it
+            HabboServer.database {
+                insertWithIntGeneratedKey(javaClass.getResource("/sql/users/preferences/insert_user_preferences.sql").readText(),
+                        mapOf(
+                                "id" to userId
+                        )
+                )
+            }
+
+            // Now fetch it again, doing a one recursive call, and returns this
+            return getUserPreferences(userId)
+        }
+
+        return userPreferences
     }
 
     fun savePreferences(userPreferences: UserPreferences) {
         HabboServer.database {
-            update("UPDATE users_preferences SET volume = :volume, prefer_old_chat = :prefer_old_chat, " +
-                    "ignore_room_invite = :ignore_room_invite, disable_camera_follow = :disable_camera_follow, " +
-                    "navigator_x = :navigator_x, navigator_y = :navigator_y, navigator_width = :navigator_width, " +
-                    "navigator_height = :navigator_height, hide_in_room = :hide_in_room, block_new_friends = :block_new_friends, " +
-                    "chat_color = :chat_color, friend_bar_open = :friend_bar_open WHERE id = :id",
+            update(javaClass.getResource("/sql/users/preferences/update_user_preferences.sql").readText(),
                     mapOf(
                             "volume" to userPreferences.volume,
                             "prefer_old_chat" to userPreferences.preferOldChat,

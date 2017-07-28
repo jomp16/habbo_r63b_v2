@@ -28,7 +28,6 @@ import tk.jomp16.habbo.game.user.HabboSessionManager
 class HabboNettyRC4Decoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, incomingByteBuf: ByteBuf, out: MutableList<Any>) {
         val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-
         var bytes = ByteArray(incomingByteBuf.readableBytes())
 
         incomingByteBuf.readBytes(bytes)

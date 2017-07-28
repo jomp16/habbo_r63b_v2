@@ -36,11 +36,9 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
         fun HabboResponse.writeItems(wiredData: WiredData) {
             writeInt(5) // selectable items
-
             if (wiredData.items.isEmpty()) writeInt(0)
             else wiredData.items.let { roomItems ->
                 writeInt(roomItems.size) // how many selected items
-
                 roomItems.forEach { writeInt(it) } // items
             }
         }
@@ -80,11 +78,8 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             writeInt(exceptedSettingsSize)
 
             if (exceptedSettingsSize > 0) {
-                if (settings.size != exceptedSettingsSize) {
-                    (0..exceptedSettingsSize - 1).forEach { writeInt(0) }
-                } else {
-                    settings.forEach { writeInt(it) }
-                }
+                if (settings.size != exceptedSettingsSize) (0..exceptedSettingsSize - 1).forEach { writeInt(0) }
+                else settings.forEach { writeInt(it) }
             }
 
             writeInt(0) // ???

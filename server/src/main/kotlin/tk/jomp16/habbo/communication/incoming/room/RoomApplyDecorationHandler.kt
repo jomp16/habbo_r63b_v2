@@ -31,13 +31,10 @@ class RoomApplyDecorationHandler {
     @Handler(Incoming.ROOM_APPLY_DECORATION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         val itemId = habboRequest.readInt()
-
         val userItem = habboSession.habboInventory.items[itemId] ?: return
 
         if (userItem.furnishing.interactionType != InteractionType.ROOM_EFFECT && (userItem.furnishing.itemName != "floor" || userItem.furnishing.itemName != "wallpaper" || userItem.furnishing.itemName != "landscape")) return
-
         val key = userItem.furnishing.itemName
         val value = userItem.extraData
 
@@ -49,6 +46,6 @@ class RoomApplyDecorationHandler {
 
         habboSession.currentRoom?.sendHabboResponse(Outgoing.ROOM_DECORATION, key, value)
 
-        habboSession.habboInventory.removeItem(userItem, true)
+        habboSession.habboInventory.removeItems(listOf(itemId), true)
     }
 }

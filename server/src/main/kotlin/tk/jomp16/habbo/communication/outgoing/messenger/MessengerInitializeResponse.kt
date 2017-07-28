@@ -32,11 +32,9 @@ class MessengerInitializeResponse {
             writeInt(300)
             writeInt(800)
             writeInt(1) // category count
-
             // category structure:
             // int - id
             // string - name
-
             // groups category
             writeInt(1)
             writeUTF("Groups")

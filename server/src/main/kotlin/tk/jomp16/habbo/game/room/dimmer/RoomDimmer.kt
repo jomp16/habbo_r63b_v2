@@ -20,15 +20,14 @@
 package tk.jomp16.habbo.game.room.dimmer
 
 import tk.jomp16.habbo.game.item.room.RoomItem
-import java.io.Serializable
 
 data class RoomDimmer(
         val id: Int,
-        val roomItem: RoomItem,
+        var roomItem: RoomItem,
         var enabled: Boolean,
         var currentPreset: Int,
         val presets: MutableList<RoomDimmerPreset>
-) : Serializable {
+) {
     fun generateExtraData(roomDimmerPreset: RoomDimmerPreset = presets[currentPreset - 1]): String {
         return "${(if (enabled) 2 else 1)},$currentPreset,${if (roomDimmerPreset.backgroundOnly) 2 else 1},${roomDimmerPreset.colorCode},${roomDimmerPreset.colorIntensity}"
     }
@@ -69,6 +68,6 @@ data class RoomDimmer(
             return false
         }
 
-        fun isValidIntensity(colorIntensity: Int): Boolean = colorIntensity >= 0 && colorIntensity <= 255
+        fun isValidIntensity(colorIntensity: Int): Boolean = colorIntensity in 0..255
     }
 }

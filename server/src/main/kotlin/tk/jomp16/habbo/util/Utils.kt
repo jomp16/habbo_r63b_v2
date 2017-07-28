@@ -23,16 +23,15 @@ import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.security.SecureRandom
+import java.util.*
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 
 @Suppress("unused")
 object Utils {
     val random: SecureRandom = SecureRandom()
-
     private val ramUsage: Long
         get() = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-
     val ramUsageString: String
         get() = humanReadableByteCount(ramUsage, true)
 
@@ -40,14 +39,13 @@ object Utils {
         val unit = if (si) 1000 else 1024
 
         if (bytes < unit) return "$bytes B"
-
         val exp = (Math.log(bytes.toDouble()) / Math.log(unit.toDouble())).toInt()
         val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + (if (si) "" else "i")
 
         return "%.1f %sB".format(bytes / Math.pow(unit.toDouble(), exp.toDouble()), pre)
     }
 
-    fun randInt(range: IntRange): Int = random.nextInt((range.endInclusive - range.start) + 1) + range.start
+    fun randInt(range: IntRange, random1: Random = random): Int = random1.nextInt((range.endInclusive - range.start) + 1) + range.start
 
     fun round(value: Double, places: Int): Double {
         if (places < 0) throw IllegalArgumentException()

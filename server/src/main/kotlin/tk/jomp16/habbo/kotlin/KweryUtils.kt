@@ -25,7 +25,6 @@ import com.github.andrewoma.kwery.core.StatementOptions
 import org.intellij.lang.annotations.Language
 import java.time.LocalDateTime
 
-
 /**
  * Inserts and fetch the rows affected and the generated key
  */

@@ -95,7 +95,6 @@ class WiredHandler {
         val vector2 = roomItem.position.vector2
 
         if (!wiredStack.containsKey(vector2) || !wiredStack[vector2]!!.containsKey(roomItem.id)) return false
-
         val wiredItem = wiredStack[vector2]!![roomItem.id]!!
 
         if (wiredItem.setData(habboRequest)) {

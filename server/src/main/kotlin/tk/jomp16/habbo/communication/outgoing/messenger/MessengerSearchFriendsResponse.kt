@@ -27,8 +27,7 @@ import tk.jomp16.habbo.game.user.messenger.MessengerFriend
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerSearchFriendsResponse {
     @Response(Outgoing.MESSENGER_SEARCH_FRIENDS)
-    fun response(habboResponse: HabboResponse, friends: Collection<MessengerFriend>,
-                 nonFriends: Collection<MessengerFriend>) {
+    fun response(habboResponse: HabboResponse, friends: Collection<MessengerFriend>, nonFriends: Collection<MessengerFriend>) {
         habboResponse.apply {
             writeInt(friends.size)
 

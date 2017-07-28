@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object CatalogDao {
     fun getCatalogPages(): List<CatalogPage> = HabboServer.database {
-        select("SELECT * FROM catalog_pages WHERE id != -1 AND id != -2") {
+        select("SELECT * FROM `catalog_pages` WHERE `id` != -1 AND `id` != -2") {
             CatalogPage(
                     it.int("id"),
                     it.int("parent_id"),
@@ -55,7 +55,7 @@ object CatalogDao {
     }
 
     fun getCatalogItems(): List<CatalogItem> = HabboServer.database {
-        select("SELECT * FROM catalog_items") {
+        select("SELECT * FROM `catalog_items`") {
             CatalogItem(
                     it.int("id"),
                     it.int("page_id"),
@@ -76,7 +76,7 @@ object CatalogDao {
     }
 
     fun getCatalogClubOffers(): List<CatalogClubOffer> = HabboServer.database {
-        select("SELECT * FROM catalog_club_offers") {
+        select("SELECT * FROM `catalog_club_offers`") {
             CatalogClubOffer(
                     it.int("id"),
                     it.int("item_id"),
@@ -91,7 +91,7 @@ object CatalogDao {
     }
 
     fun getCatalogDeals(): List<CatalogDeal> = HabboServer.database {
-        select("SELECT * FROM catalog_deals") {
+        select("SELECT * FROM `catalog_deals`") {
             CatalogDeal(
                     it.int("id"),
                     it.string("item_names").split(','),
@@ -100,9 +100,15 @@ object CatalogDao {
         }
     }
 
+    fun getRecyclerRewards(): List<Pair<Int, String>> = HabboServer.database {
+        select("SELECT * FROM `catalog_recycler`") {
+            it.int("level") to it.string("item_name")
+        }
+    }
+
     fun updateLimitedSells(catalogItem: CatalogItem) {
         HabboServer.database {
-            update("UPDATE catalog_items SET limited_sells = :limited_sells WHERE id = :id",
+            update("UPDATE `catalog_items` SET `limited_sells` = :limited_sells WHERE `id` = :id",
                     mapOf(
                             "limited_sells" to catalogItem.limitedSells.get(),
                             "id" to catalogItem.id

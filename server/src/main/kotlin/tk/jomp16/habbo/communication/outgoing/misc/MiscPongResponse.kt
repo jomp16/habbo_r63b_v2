@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPongResponse {
-    @Response(Outgoing.PONG)
+    @Response(Outgoing.MISC_PONG)
     fun handle(habboResponse: HabboResponse, pong: Int) {
         habboResponse.apply {
             writeInt(pong)

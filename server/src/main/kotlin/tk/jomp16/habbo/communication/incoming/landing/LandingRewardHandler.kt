@@ -33,8 +33,7 @@ class LandingRewardHandler {
         if (!habboSession.authenticated /*|| habboSession.sentLandingReward*/) return
 
         HabboServer.habboGame.landingManager.landingReward?.let {
-            //            habboSession.sentLandingReward = true
-
+            // habboSession.sentLandingReward = true
             habboSession.sendHabboResponse(Outgoing.LANDING_REWARD, it, habboSession.userStats.respect)
         }
     }

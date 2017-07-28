@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit
 
 class RoomTask : Runnable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val rooms: MutableSet<Room> = CopyOnWriteArraySet()
     val queuedTasks: MutableMap<Room, Queue<IRoomTask>> = ConcurrentHashMap()
 
@@ -88,7 +87,6 @@ class RoomTask : Runnable {
                 HabboServer.serverExecutor.execute {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@execute
-
                         val wireds = mutableListOf<IRoomTask>()
 
                         while (queuedTasks.isNotEmpty()) {
@@ -120,10 +118,7 @@ class RoomTask : Runnable {
                             }
                         }
 
-                        if (room.roomUsers.isEmpty() &&
-                                TimeUnit.MILLISECONDS.toSeconds(
-                                        (room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
-                                        >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
+                        if (room.roomUsers.isEmpty() && TimeUnit.MILLISECONDS.toSeconds((room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
                             HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 
                             return@execute

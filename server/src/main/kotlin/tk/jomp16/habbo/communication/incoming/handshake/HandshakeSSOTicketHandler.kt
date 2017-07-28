@@ -25,7 +25,6 @@ import tk.jomp16.habbo.BuildConfig
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.misc.NotificationType
@@ -47,37 +46,31 @@ class HandshakeSSOTicketHandler {
 
         log.info("{} logged in!", habboSession.userInformation.username)
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.AUTHENTICATION_OK to arrayOf()
-        queuedHabboResponse += Outgoing.AVATAR_EFFECTS to arrayOf()
-        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(false, 0, listOf<Int>())
-        queuedHabboResponse += Outgoing.HOME_ROOM to arrayOf(
+        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_OK)
+        habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, false, 0, listOf<Int>())
+        habboSession.sendHabboResponse(Outgoing.HOME_ROOM,
                 habboSession.userInformation.homeRoom,
-                HabboServer.habboConfig.autoJoinRoom
-        )
-        queuedHabboResponse += Outgoing.USER_CLOTHINGS to arrayOf(habboSession.userInformation.clothings)
-        queuedHabboResponse += Outgoing.NAVIGATOR_FAVORITES to arrayOf()
-        queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID1 to arrayOf(0)
-        queuedHabboResponse += Outgoing.USER_RIGHTS to arrayOf(
+                HabboServer.habboConfig.autoJoinRoom)
+        habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
+        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID1, 0)
+        habboSession.sendHabboResponse(Outgoing.USER_RIGHTS,
                 if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
                 habboSession.userInformation.rank,
-                habboSession.userInformation.ambassador
-        )
-        queuedHabboResponse += Outgoing.AVAILABILITY_STATUS to arrayOf()
-        queuedHabboResponse += Outgoing.ENABLE_TRADING to arrayOf(true)
-        queuedHabboResponse += Outgoing.ACHIEVEMENT_SCORE to arrayOf(
-                habboSession.userStats.achievementScore
-        )
-        queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID2 to arrayOf(true)
-        queuedHabboResponse += Outgoing.AUTHENTICATION_UNKNOWN_ID3 to arrayOf("", "")
-        queuedHabboResponse += Outgoing.BUILDERS_CLUB_MEMBERSHIP to arrayOf()
-//        queuedHabboResponse += Outgoing.CAMPAIGN_CALENDAR to arrayOf("xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
-        queuedHabboResponse += Outgoing.MODERATION_TOPICS_INIT to arrayOf(HabboServer.habboGame.moderationManager.moderationCategories, HabboServer.habboGame.moderationManager.moderationTopics.values)
+                habboSession.userInformation.ambassador)
+        habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS)
+        habboSession.sendHabboResponse(Outgoing.ENABLE_TRADING, true)
+        habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
+        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID2, true)
+        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID3, "", "")
+        habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
+        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
+        habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,
+                HabboServer.habboGame.moderationManager.moderationCategories,
+                HabboServer.habboGame.moderationManager.moderationTopics.values)
 
-        if (habboSession.hasPermission("acc_mod_tools")) queuedHabboResponse += Outgoing.MODERATION_INIT to arrayOf()
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
+        if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)
 
         if (HabboServer.habboConfig.motdEnabled) {
             val motd = HabboServer.habboConfig.motdContents

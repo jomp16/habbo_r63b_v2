@@ -30,14 +30,11 @@ class RoomMannequinChangeNameHandler {
     @Handler(Incoming.ROOM_MANNEQUIN_CHANGE_NAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
-
         val itemId = habboRequest.readInt()
         val name = habboRequest.readUTF()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.MANNEQUIN) return
-
         val split = roomItem.extraData.split(7.toChar()).toTypedArray()
 
         roomItem.extraData = split[0] + 7.toChar() + split[1] + 7.toChar() + name

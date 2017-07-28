@@ -27,10 +27,10 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPingHandler {
-    @Handler(Incoming.PING)
+    @Handler(Incoming.MISC_PING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.PONG, habboRequest.readInt())
+        habboSession.sendHabboResponse(Outgoing.MISC_PONG, habboRequest.readInt())
     }
 }

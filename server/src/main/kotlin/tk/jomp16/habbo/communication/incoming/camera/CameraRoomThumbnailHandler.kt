@@ -34,7 +34,6 @@ class CameraRoomThumbnailHandler {
 
         ByteArray(habboRequest.readInt()).let {
             habboRequest.readBytes(it)
-
             val success = HabboServer.habboGame.cameraManager.createRoomThumbnail(habboSession, habboSession.currentRoom!!.roomData.id, it)
 
             habboSession.sendHabboResponse(Outgoing.CAMERA_THUMBNAIL_ALERT, success, !success)

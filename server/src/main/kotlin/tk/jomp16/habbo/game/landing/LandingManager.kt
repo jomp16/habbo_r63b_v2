@@ -26,14 +26,9 @@ import java.util.*
 
 class LandingManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val landingPromos: MutableList<LandingPromo> = ArrayList()
     var landingReward: LandingReward? = null
         private set
-
-    init {
-        load()
-    }
 
     fun load() {
         log.info("Loading landing...")

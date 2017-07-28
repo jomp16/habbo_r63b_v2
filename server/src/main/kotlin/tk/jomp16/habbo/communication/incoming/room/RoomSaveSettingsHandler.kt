@@ -22,7 +22,6 @@ package tk.jomp16.habbo.communication.incoming.room
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.RoomState
@@ -34,30 +33,23 @@ class RoomSaveSettingsHandler {
     @Handler(Incoming.ROOM_SAVE_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
         if (!room.hasRights(habboSession, true)) return
-
         var roomName = habboRequest.readUTF().trim()
 
         if (roomName.isBlank()) return
-
         var roomDescription = habboRequest.readUTF().trim()
         var roomState = RoomState.fromIntValue(habboRequest.readInt())
         val roomPassword = habboRequest.readUTF().trim()
 
         if (roomState == RoomState.PASSWORD && roomPassword.isBlank()) roomState = RoomState.OPEN
-
         var roomMaxUsers = habboRequest.readInt()
 
         if (roomMaxUsers < 10) roomMaxUsers = 10
-
         val roomCategoryId = habboRequest.readInt()
-
         val tags: MutableList<String> = ArrayList()
-
         val roomTagCount = habboRequest.readInt()
 
         repeat(roomTagCount) {
@@ -65,7 +57,6 @@ class RoomSaveSettingsHandler {
 
             if (!tag.isBlank() && tag.length <= 30) tags += tag
         }
-
         val roomTradeState = habboRequest.readInt()
         val roomAllowPets = habboRequest.readBoolean()
         val roomAllowPetsEat = habboRequest.readBoolean()
@@ -114,13 +105,9 @@ class RoomSaveSettingsHandler {
         room.roomData.chatFloodProtection = chatFloodProtection
 
         if (habboSession.currentRoom == null) {
-            val queuedHabboResponse = QueuedHabboResponse()
-
-            queuedHabboResponse += Outgoing.ROOM_SETTINGS_SAVED to arrayOf(roomId)
-            queuedHabboResponse += Outgoing.ROOM_INFO_UPDATED to arrayOf(roomId)
-            queuedHabboResponse += Outgoing.ROOM_VISUALIZATION_THICKNESS to arrayOf(room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
-
-            habboSession.sendQueuedHabboResponse(queuedHabboResponse)
+            habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS_SAVED, roomId)
+            habboSession.sendHabboResponse(Outgoing.ROOM_INFO_UPDATED, roomId)
+            habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
         }
 
         room.sendHabboResponse(Outgoing.ROOM_SETTINGS_SAVED, roomId)

@@ -31,7 +31,6 @@ class RoomUserRespectHandler {
     @Handler(Incoming.ROOM_USER_RESPECT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || habboSession.userStats.dailyRespectPoints <= 0) return
-
         val targetUser = HabboServer.habboSessionManager.getHabboSessionById(habboRequest.readInt()) ?: return
 
         if (targetUser.currentRoom != habboSession.currentRoom) return

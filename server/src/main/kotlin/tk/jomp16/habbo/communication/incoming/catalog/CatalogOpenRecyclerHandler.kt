@@ -17,24 +17,26 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.room
+package tk.jomp16.habbo.communication.incoming.catalog
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.catalog.CatalogOpenRecyclerResultResponse
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomWiredSaveHandler {
-    @Handler(Incoming.ROOM_WIRED_SAVE_TRIGGER, Incoming.ROOM_WIRED_SAVE_EFFECT, Incoming.ROOM_WIRED_SAVE_CONDITION)
+class CatalogOpenRecyclerHandler {
+    @Handler(Incoming.CATALOG_OPEN_RECYCLER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (!habboSession.authenticated) return
 
-        val itemId = habboRequest.readInt()
+        // todo: add recycler closed with timeout
+        val result = if (HabboServer.habboConfig.recyclerConfig.open) CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_OPEN
+        else CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_CLOSED
 
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
-
-        if (habboSession.currentRoom!!.wiredHandler.saveWired(roomItem, habboRequest)) habboSession.sendHabboResponse(Outgoing.ROOM_WIRED_SAVED)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_OPEN_RECYCLER_RESULT, result, 0)
     }
 }

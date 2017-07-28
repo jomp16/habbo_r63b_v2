@@ -34,16 +34,13 @@ class MessengerRequestFriendHandler {
     @Handler(Incoming.MESSENGER_REQUEST_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         val username = habboRequest.readUTF()
 
         if (username.isBlank()) return
-
         val userInformation = UserInformationDao.getUserInformationByUsername(username) ?: return
         val userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
 
         if (userPreferences.blockNewFriends) return
-
         val messengerRequest = MessengerDao.addRequest(habboSession.userInformation.id, userInformation.id)
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(userInformation.id) ?: return
 

@@ -29,7 +29,6 @@ class ModerationRequestTourHandler {
     @Handler(Incoming.MODERATION_TOUR_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val userId = habboRequest.readInt()
         val reason = habboRequest.readUTF()
     }

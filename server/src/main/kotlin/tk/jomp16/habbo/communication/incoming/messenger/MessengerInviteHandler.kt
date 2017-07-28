@@ -30,12 +30,10 @@ class MessengerInviteHandler {
     @Handler(Incoming.MESSENGER_INVITE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         val size = habboRequest.readInt()
         val friendsId = mutableListOf<Int>()
 
         repeat(size) { friendsId += habboRequest.readInt() }
-
         var message = habboRequest.readUTF().trim()
 
         if (message.isBlank()) return

@@ -19,8 +19,6 @@
 
 package tk.jomp16.habbo.game.item
 
-import java.io.Serializable
-
 data class WiredData(
         val id: Int,
         var delay: Int, // delay
@@ -28,4 +26,4 @@ data class WiredData(
         var message: String, // text box
         var options: List<Int>, // options
         var extradata: String  // extra data
-) : Serializable
+)

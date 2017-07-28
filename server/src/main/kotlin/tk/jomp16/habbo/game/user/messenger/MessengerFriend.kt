@@ -26,14 +26,11 @@ import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.information.UserStatsDao
 import tk.jomp16.habbo.game.user.HabboSession
 
-data class MessengerFriend(
-        val userId: Int
-) : IHabboResponseSerialize {
+data class MessengerFriend(val userId: Int) : IHabboResponseSerialize {
     val habboSession: HabboSession?
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
-
     val online: Boolean
-        get() = userId < 0 || userId == Int.MAX_VALUE || habboSession != null // todo: add appear offline here
+        get() = userId < 0 || userId == UserInformationDao.serverConsoleUserInformation.id || habboSession != null // todo: add appear offline here
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {

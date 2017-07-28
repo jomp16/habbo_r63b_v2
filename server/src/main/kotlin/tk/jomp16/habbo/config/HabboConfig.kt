@@ -49,6 +49,8 @@ data class HabboConfig(
         val cameraConfig: CameraConfig,
         @JsonProperty("catalog")
         val catalogConfig: CatalogConfig,
+        @JsonProperty("recycler")
+        val recyclerConfig: RecyclerConfig,
         @JsonProperty("motd_enabled")
         val motdEnabled: Boolean,
         @JsonProperty("motd_file_path")

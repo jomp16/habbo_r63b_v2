@@ -24,13 +24,13 @@ import tk.jomp16.habbo.game.moderation.ModerationTopic
 
 object ModerationDao {
     fun getCategories(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM moderation_categories") {
+        select("SELECT * FROM `moderation_categories`") {
             it.int("id") to it.string("name")
         }
     }
 
     fun getTopics(): List<ModerationTopic> = HabboServer.database {
-        select("SELECT * FROM moderation_topics") {
+        select("SELECT * FROM `moderation_topics`") {
             ModerationTopic(
                     it.int("id"),
                     it.int("category_id"),

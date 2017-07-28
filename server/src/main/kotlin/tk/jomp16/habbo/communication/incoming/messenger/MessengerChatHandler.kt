@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.messenger.MessengerChatErrorResponse
+import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.kotlin.urlUserAgent
@@ -40,21 +41,19 @@ class MessengerChatHandler {
     @Handler(Incoming.MESSENGER_CHAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         val userId = habboRequest.readInt()
         val message = habboRequest.readUTF().trim()
 
         if (message.isBlank()) return
 
-        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == Int.MAX_VALUE && !habboSession.hasPermission("acc_server_console")) {
+        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == UserInformationDao.serverConsoleUserInformation.id && !habboSession.hasPermission("acc_server_console")) {
             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT_ERROR, MessengerChatErrorResponse.MessengerChatError.NOT_FRIENDS, userId, message)
 
             return
         }
 
-        if (userId == Int.MAX_VALUE && habboSession.hasPermission("acc_server_console")) {
+        if (userId == UserInformationDao.serverConsoleUserInformation.id && habboSession.hasPermission("acc_server_console")) {
             // server console!
-
             val args = message.split(' ')
 
             if (args.isNotEmpty()) {
@@ -74,7 +73,6 @@ class MessengerChatHandler {
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false) + " up!", 0, 0, "", "")
                 } else if (args[0] == "plugin") {
                     if (args.size < 3) return
-
                     val pluginName = args[2].trim()
 
                     when (args[1]) {
@@ -91,12 +89,10 @@ class MessengerChatHandler {
                             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, message1, 0, 0, "", "")
                         }
                     }
-                } else if (message.startsWith('h')) {
+                } else if (message.startsWith("h:")) {
                     // one line response messages
                     val args1 = message.split("(?<!\\\\),".toRegex())
-
                     val header = args1[0].substring(2).toInt()
-
                     val habboResponse = HabboResponse(header)
 
                     habboResponse.apply {
@@ -133,7 +129,7 @@ class MessengerChatHandler {
                         }
                     }
 
-                    habboSession.sendHabboResponse(habboResponse, true)
+                    habboSession.sendHabboResponse(habboResponse)
 
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, "Done!", 0, 0, "", "")
                 } else {
@@ -156,7 +152,6 @@ class MessengerChatHandler {
 
                 return
             }
-
             val friendHabboSession = messengerBuddy.habboSession ?: return
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, habboSession.userInformation.id, message, 0, 0, "", "")

@@ -33,5 +33,4 @@ data class RoomTaskConfig(
         @JsonProperty("save_item_seconds")
         val saveItemSeconds: Int,
         @JsonProperty("empty_room_seconds")
-        val emptyRoomSeconds: Int
-)
+        val emptyRoomSeconds: Int)

@@ -26,10 +26,9 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class MiscEventTrackerHandler {
-    @Handler(Incoming.EVENT_TRACKER)
+    @Handler(Incoming.MISC_EVENT_TRACKER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val type = habboRequest.readUTF()
         val location = habboRequest.readUTF()
         val action = habboRequest.readUTF()

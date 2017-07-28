@@ -16,7 +16,7 @@
     "E": "3"
   },
   "rc4": true,
-  "furnidata_xml": "https://swf.habbixed.tk/gamedata/furnidata_xml/03_04_2017",
+  "furnidata_xml": "https://swf.habbixed.tk/gamedata/furnidata_xml/25_07_2017",
   "reward": {
     "credits": 10,
     "credits_max": -1,
@@ -49,6 +49,18 @@
   },
   "catalog": {
     "show_how_many_items_title": false
+  },
+  "recycler": {
+    "open": true,
+    "slots": 8,
+    "odds": {
+      "1": 1,
+      "2": 25,
+      "3": 50,
+      "4": 75,
+      "5": 100
+    },
+    "gift_box": "matic_box"
   },
   "motd_enabled": true,
   "motd_file_path": "motd/welcome.txt",

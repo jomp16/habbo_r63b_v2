@@ -19,199 +19,127 @@
 
 package tk.jomp16.habbo.database.item
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import tk.jomp16.habbo.*
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.item.*
 import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
+import tk.jomp16.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
-import tk.jomp16.habbo.util.ICacheable
 import tk.jomp16.habbo.util.Vector3
-import java.util.concurrent.ConcurrentHashMap
 
-@Suppress("UNCHECKED_CAST")
-object ItemDao : ICacheable {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    private val limitedItemDataCache: MutableMap<Int, LimitedItemData?> = mutableMapOf()
-    private val roomDimmerCache: MutableMap<Int, RoomDimmer?> = mutableMapOf()
-    private val wiredDataCache: MutableMap<Int, WiredData?> = mutableMapOf()
-    private val roomItemsCache: MutableMap<Int, MutableMap<Int, RoomItem>> = mutableMapOf()
-    private val userItemsCache: MutableMap<Int, MutableMap<Int, UserItem>> = mutableMapOf()
-    private val teleportLinksCache: MutableList<Pair<Int, Int>> = mutableListOf()
-
-    override fun cacheAll() {
-        cacheLimitedItems()
-        cacheWiredItems()
-        cacheTeleportLinks()
-        cacheRoomItems()
-        cacheUserItems()
-    }
-
-    override fun saveCache() {
-        HabboServer.saveCache(LIMITED_ITEMS_KEY_CACHE, limitedItemDataCache)
-        HabboServer.saveCache(WIREDS_DATA_KEY_CACHE, wiredDataCache)
-        HabboServer.saveCache(TELEPORT_LINKS_KEY_CACHE, teleportLinksCache)
-        HabboServer.saveCache(ROOM_ITEMS_KEY_CACHE, roomItemsCache)
-        HabboServer.saveCache(USER_ITEMS_KEY_CACHE, userItemsCache)
-    }
+object ItemDao {
+    // cache in memory all the information about items fam
+    private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = HashMap()
+    private val wiredDatas: MutableMap<Int, WiredData?> = HashMap()
+    private val roomDimmers: MutableMap<Int, RoomDimmer?> = HashMap()
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>): List<Furnishing> {
-        val cache = HabboServer.loadCache(FURNISHING_KEY_CACHE) as List<Furnishing>?
+        val furnishings = HabboServer.database {
+            select(javaClass.getResource("/sql/furnishings/select_furnishings.sql").readText()) {
+                val itemName = it.string("item_name")
+                val furniXMLInfo = furniXMLInfos[itemName]!!
+                val itemType = ItemType.fromString(it.string("type"))
+                val interactionType = InteractionType.fromString(it.string("interaction_type"))
 
-        if (cache != null) return cache
-        else {
-            val furnishings = HabboServer.database {
-                select("SELECT * FROM furnishings") {
-                    val itemName = it.string("item_name")
-                    val furniXMLInfo = furniXMLInfos[itemName]!!
-                    val itemType = ItemType.fromString(it.string("type"))
-                    val interactionType = InteractionType.fromString(it.string("interaction_type"))
-
-                    Furnishing(
-                            itemName,
-                            furniXMLInfo.spriteId,
-                            itemType,
-                            furniXMLInfo.xDim,
-                            furniXMLInfo.yDim,
-                            it.string("stack_height").split(';').map { it.trim().toDouble() },
-                            it.boolean("can_stack"),
-                            furniXMLInfo.canSitOn,
-                            furniXMLInfo.canLayOn,
-                            interactionType != InteractionType.GATE && furniXMLInfo.canStandOn,
-                            it.boolean("allow_recycle"),
-                            it.boolean("allow_trade"),
-                            it.boolean("allow_marketplace_sell"),
-                            it.boolean("allow_gift"),
-                            it.boolean("allow_inventory_stack"),
-                            interactionType,
-                            it.int("interaction_modes_count"),
-                            it.string("vending_ids").split(',').map { it.trim().toInt() }
-                    )
-                }
+                Furnishing(itemName,
+                        furniXMLInfo.spriteId,
+                        furniXMLInfo.offerId,
+                        itemType,
+                        furniXMLInfo.xDim,
+                        furniXMLInfo.yDim,
+                        it.string("stack_height").split(';').map { it.trim().toDouble() },
+                        it.boolean("can_stack"),
+                        furniXMLInfo.canSitOn,
+                        furniXMLInfo.canLayOn,
+                        interactionType != InteractionType.GATE && furniXMLInfo.canStandOn,
+                        it.boolean("allow_recycle"),
+                        it.boolean("allow_trade"),
+                        it.boolean("allow_marketplace_sell"),
+                        it.boolean("allow_gift"),
+                        it.boolean("allow_inventory_stack"),
+                        interactionType,
+                        it.int("interaction_modes_count"),
+                        it.string("vending_ids").split(',').map { it.trim().toInt() })
             }
+        }
 
-            HabboServer.saveCache(FURNISHING_KEY_CACHE, furnishings)
+        return furnishings
+    }
 
-            return furnishings
+    fun getRoomItems(roomId: Int): Map<Int, RoomItem> {
+        return HabboServer.database {
+            select(javaClass.getResource("/sql/items/room/select_room_items.sql").readText(),
+                    mapOf(
+                            "room_id" to roomId
+                    )
+            ) {
+                RoomItem(
+                        it.int("id"),
+                        it.int("user_id"),
+                        it.int("room_id"),
+                        it.string("item_name"),
+                        it.string("extra_data"),
+                        Vector3(it.int("x"), it.int("y"), it.double("z")),
+                        it.int("rot"),
+                        it.string("wall_pos")
+                )
+            }.associateBy { it.id }
         }
     }
 
-    private fun cacheRoomItems() {
-        val cache = HabboServer.loadCache(ROOM_ITEMS_KEY_CACHE) as MutableMap<Int, MutableMap<Int, RoomItem>>?
-
-        if (cache != null) {
-            roomItemsCache.putAll(cache)
-        } else {
-            log.info("Caching room items...")
-
-            HabboServer.database {
-                select("SELECT id, room_id, item_name, extra_data, x, y, z, rot, wall_pos, user_id FROM items WHERE room_id > 0 ORDER BY id DESC") {
-                    RoomItem(
-                            it.int("id"),
-                            it.int("user_id"),
-                            it.int("room_id"),
-                            it.string("item_name"),
-                            it.string("extra_data"),
-                            Vector3(
-                                    it.int("x"),
-                                    it.int("y"),
-                                    it.double("z")
-                            ),
-                            it.int("rot"),
-                            it.string("wall_pos")
+    fun getUserItems(userId: Int): Map<Int, UserItem> {
+        return HabboServer.database {
+            select(javaClass.getResource("/sql/items/user/select_user_items.sql").readText(),
+                    mapOf(
+                            "user_id" to userId
                     )
-                }.let { data ->
-                    data.map { it.roomId }.forEach { roomId ->
-                        roomItemsCache.put(roomId, ConcurrentHashMap<Int, RoomItem>().apply { putAll(data.filter { it.roomId == roomId }.associateBy { it.id }) })
-                    }
-                }
-            }
-
-            log.info("Done!")
+            ) {
+                UserItem(
+                        it.int("id"),
+                        it.int("user_id"),
+                        it.string("item_name"),
+                        it.string("extra_data"
+                        )
+                )
+            }.associateBy { it.id }
         }
     }
 
-    fun getRoomItems(roomId: Int): MutableMap<Int, RoomItem> {
-        if (!roomItemsCache.containsKey(roomId)) roomItemsCache.put(roomId, ConcurrentHashMap())
-
-        return roomItemsCache[roomId]!!
-    }
-
-    private fun cacheUserItems() {
-        val cache = HabboServer.loadCache(USER_ITEMS_KEY_CACHE) as MutableMap<Int, MutableMap<Int, UserItem>>?
-
-        if (cache != null) {
-            userItemsCache.putAll(cache)
-        } else {
-            log.info("Caching user items...")
-
-            HabboServer.database {
-                select("SELECT id, user_id, item_name, extra_data FROM items WHERE room_id = 0") {
-                    UserItem(
-                            it.int("id"),
-                            it.int("user_id"),
-                            it.string("item_name"),
-                            it.string("extra_data")
-                    )
-                }.let { data ->
-                    data.map { it.userId }.forEach { userId ->
-                        userItemsCache.put(userId, data.filter { it.userId == userId }.associateBy { it.id }.toMutableMap())
-                    }
-                }
-            }
-
-            log.info("Done!")
-        }
-    }
-
-    fun getUserItems(userId: Int): MutableMap<Int, UserItem> {
-        if (!userItemsCache.containsKey(userId)) userItemsCache.put(userId, mutableMapOf())
-
-        return userItemsCache[userId]!!
-    }
-
-    private fun cacheLimitedItems() {
-        val cache = HabboServer.loadCache(LIMITED_ITEMS_KEY_CACHE) as MutableMap<Int, LimitedItemData?>?
-
-        if (cache != null) {
-            limitedItemDataCache.putAll(cache)
-        } else {
-            log.info("Caching limited items...")
-
-            HabboServer.database {
-                select("SELECT * FROM items_limited") {
+    fun getLimitedData(itemId: Int): LimitedItemData? {
+        if (!limitedItemDatas.containsKey(itemId)) {
+            val limitedItemData = HabboServer.database {
+                select(javaClass.getResource("/sql/items/limited/select_limited.sql").readText(),
+                        mapOf(
+                                "item_id" to itemId
+                        )
+                ) {
                     LimitedItemData(
                             it.int("id"),
                             it.int("item_id"),
                             it.int("limited_num"),
-                            it.int("limited_total")
+                            it.int("limited_total"
+                            )
                     )
-                }.map { it.itemId to it }.forEach {
-                    limitedItemDataCache.put(it.first, it.second)
-                }
+                }.firstOrNull()
             }
 
-            log.info("Done!")
+            limitedItemDatas.put(itemId, limitedItemData)
         }
+
+        return limitedItemDatas[itemId]
     }
 
-    fun getLimitedData(itemId: Int): LimitedItemData? = limitedItemDataCache[itemId]
-
-    private fun cacheWiredItems() {
-        val cache = HabboServer.loadCache(WIREDS_DATA_KEY_CACHE) as MutableMap<Int, WiredData?>?
-
-        if (cache != null) {
-            wiredDataCache.putAll(cache)
-        } else {
-            log.info("Caching wired items...")
-
-            wiredDataCache.putAll(HabboServer.database {
-                select("SELECT * FROM items_wired") {
-                    it.int("item_id") to WiredData(
+    fun getWiredData(itemId: Int): WiredData? {
+        if (!wiredDatas.containsKey(itemId)) {
+            val wiredData = HabboServer.database {
+                select(javaClass.getResource("/sql/items/wired/select_wired_data.sql").readText(),
+                        mapOf(
+                                "item_id" to itemId
+                        )
+                ) {
+                    WiredData(
                             it.int("id"),
                             it.int("delay"),
                             it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
@@ -219,49 +147,37 @@ object ItemDao : ICacheable {
                             it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
                             it.string("extradata")
                     )
-                }
-            })
-
-            log.info("Done!")
-        }
-    }
-
-    fun getWiredData(itemId: Int): WiredData? = wiredDataCache[itemId]
-
-    internal fun cacheTeleportLinks() {
-        val cache = HabboServer.loadCache(TELEPORT_LINKS_KEY_CACHE) as MutableList<Pair<Int, Int>>?
-
-        if (cache != null) {
-            teleportLinksCache.addAll(cache)
-        } else {
-            val links = HabboServer.database {
-                select("SELECT * FROM items_teleport") {
-                    it.int("teleport_one_id") to it.int("teleport_two_id")
-                }
+                }.firstOrNull()
             }
 
-            teleportLinksCache.addAll(links)
+            wiredDatas.put(itemId, wiredData)
+        }
+
+        return wiredDatas[itemId]
+    }
+
+    fun getTeleportLinks(): List<Pair<Int, Int>> = HabboServer.database {
+        select(javaClass.getResource("/sql/items/teleport/select_teleport_links.sql").readText()) {
+            it.int("teleport_one_id") to it.int("teleport_two_id")
         }
     }
 
-    fun getTeleportLinks(): MutableList<Pair<Int, Int>> = teleportLinksCache
-
     fun getLinkedTeleport(teleportId: Int): Int = HabboServer.database {
-        select("SELECT room_id FROM items WHERE id = :teleport_id LIMIT 1",
+        select(javaClass.getResource("/sql/items/teleport/select_room_id_from_linked_teleport.sql").readText(),
                 mapOf(
                         "teleport_id" to teleportId
                 )
-        ) {
-            it.int("room_id")
-        }.first()
+        ) { it.int("room_id") }.first()
     }
 
-    fun deleteItem(itemId: Int) {
+    fun deleteItems(itemIds: List<Int>) {
         HabboServer.database {
-            update("DELETE FROM items WHERE id = :id",
-                    mapOf(
-                            "id" to itemId
-                    )
+            batchUpdate(javaClass.getResource("/sql/items/item/delete_item.sql").readText(),
+                    itemIds.map {
+                        mapOf(
+                                "id" to it
+                        )
+                    }
             )
         }
     }
@@ -270,7 +186,7 @@ object ItemDao : ICacheable {
         if (roomItemsToRemove.isEmpty()) return
 
         HabboServer.database {
-            batchUpdate("UPDATE items SET room_id = :room_id WHERE id = :id",
+            batchUpdate(javaClass.getResource("/sql/items/room/update_remove_item_from_room.sql").readText(),
                     roomItemsToRemove.map {
                         mapOf(
                                 "room_id" to 0,
@@ -281,10 +197,10 @@ object ItemDao : ICacheable {
         }
     }
 
-    fun getRoomDimmer(roomItem: RoomItem, cache: Boolean = true): RoomDimmer? {
-        if (!cache || !roomDimmerCache.containsKey(roomItem.id)) {
+    fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
+        if (!roomDimmers.containsKey(roomItem.id)) {
             val roomDimmer = HabboServer.database {
-                select("SELECT * FROM items_dimmer WHERE item_id = :item_id LIMIT 1",
+                select(javaClass.getResource("/sql/items/dimmer/select_dimmer.sql").readText(),
                         mapOf(
                                 "item_id" to roomItem.id
                         )
@@ -303,15 +219,18 @@ object ItemDao : ICacheable {
                 }.firstOrNull()
             }
 
-            roomDimmerCache.put(roomItem.id, roomDimmer)
+            roomDimmers.put(roomItem.id, roomDimmer)
         }
+        val roomDimmer = roomDimmers[roomItem.id] ?: return null
 
-        return roomDimmerCache[roomItem.id]
+        roomDimmer.roomItem = roomItem
+
+        return roomDimmer
     }
 
     fun saveDimmer(roomDimmer: RoomDimmer) {
         HabboServer.database {
-            update("UPDATE items_dimmer SET enabled = :enabled, current_preset = :current_preset, preset_one = :preset_one, preset_two = :preset_two, preset_three = :preset_three WHERE id = :id",
+            update(javaClass.getResource("/sql/items/dimmer/update_dimmer.sql").readText(),
                     mapOf(
                             "enabled" to roomDimmer.enabled,
                             "current_preset" to roomDimmer.currentPreset,
@@ -330,13 +249,13 @@ object ItemDao : ICacheable {
         if (wiredData.isEmpty()) return
 
         HabboServer.database {
-            batchUpdate("UPDATE items_wired SET delay = :delay, items = :items, message = :message, options = :options, extradata = :extradata WHERE id = :id",
+            batchUpdate(javaClass.getResource("/sql/items/wired/update_wired_data.sql").readText(),
                     wiredData.map {
                         mapOf(
                                 "delay" to it.delay,
                                 "items" to it.items.joinToString(","),
                                 "message" to it.message,
-                                "options" to it.options.joinToString(","),
+                                "options1" to it.options.joinToString(","),
                                 "extradata" to it.extradata,
                                 "id" to it.id
                         )
@@ -345,18 +264,80 @@ object ItemDao : ICacheable {
         }
     }
 
-    fun addItem(userId: Int, furnishing: Furnishing, extraData: String): UserItem {
-        val itemId = HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO items (user_id, item_name, extra_data, wall_pos) VALUES (:user_id, :item_name, :extra_data, :wall_pos)",
+    fun addItems(userId: Int, furnishings: List<Furnishing>, extraDatas: List<String>): List<UserItem> {
+        val itemIds = HabboServer.database {
+            batchInsertAndGetGeneratedKeys(javaClass.getResource("/sql/items/item/insert_item.sql").readText(),
+                    furnishings.mapIndexed { i, (itemName) ->
+                        mapOf(
+                                "user_id" to userId,
+                                "item_name" to itemName,
+                                "extra_data" to extraDatas[i],
+                                "wall_pos" to ""
+                        )
+                    }
+            )
+        }
+
+        return itemIds.mapIndexed { i, id ->
+            UserItem(id, userId, furnishings[i].itemName, extraDatas[i])
+        }
+    }
+
+    fun addGiftItem(userId: Int, giftFurnishing: Furnishing, amount: Int, giftExtradata: String, furnishing: Furnishing, extraData: String, limitedNumber: Int = 0, limitedTotal: Int = 0): UserItem {
+        val giftUserItem = addItems(userId, listOf(giftFurnishing), listOf(giftExtradata)).first()
+
+        if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
+
+        HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.getResource("/sql/items/gift/insert_gift.sql").readText(),
                     mapOf(
-                            "user_id" to userId,
+                            "item_id" to giftUserItem.id,
                             "item_name" to furnishing.itemName,
-                            "extra_data" to extraData,
-                            "wall_pos" to ""
+                            "amount" to amount,
+                            "extradata" to extraData
                     )
             )
         }
 
-        return UserItem(itemId, userId, furnishing.itemName, extraData)
+        return giftUserItem
+    }
+
+    fun getGiftData(itemId: Int): GiftData? {
+        return HabboServer.database {
+            select(javaClass.getResource("/sql/items/gift/select_gift.sql").readText(),
+                    mapOf(
+                            "item_id" to itemId
+                    )
+            ) {
+                GiftData(
+                        it.int("id"),
+                        it.string("item_name"),
+                        it.int("amount"),
+                        it.string("extradata")
+                )
+            }
+        }.firstOrNull()
+    }
+
+    fun addLimitedItem(itemId: Int, limitedNumber: Int, limitedTotal: Int): Int {
+        return HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.getResource("/sql/items/limited/insert_limited.sql").readText(),
+                    mapOf(
+                            "item_id" to itemId,
+                            "limited_num" to limitedNumber,
+                            "limited_total" to limitedTotal
+                    )
+            )
+        }
+    }
+
+    fun deleteGiftData(id: Int) {
+        HabboServer.database {
+            update(javaClass.getResource("/sql/items/gift/delete_gift.sql").readText(),
+                    mapOf(
+                            "id" to id
+                    )
+            )
+        }
     }
 }

@@ -33,7 +33,7 @@ import java.util.*
 
 object MessengerDao {
     fun getFriends(userId: Int): List<MessengerFriend> = HabboServer.database {
-        select("SELECT id, user_two_id AS user_id FROM messenger_friendships WHERE user_one_id = :user_one_id",
+        select("SELECT `id`, `user_two_id` AS `user_id` FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
                 mapOf(
                         "user_one_id" to userId
                 )
@@ -41,11 +41,7 @@ object MessengerDao {
     }
 
     fun getRequests(toUserId: Int): List<MessengerRequest> = HabboServer.database {
-        select("SELECT id, from_id FROM messenger_requests WHERE to_id = :to_id",
-                mapOf(
-                        "to_id" to toUserId
-                )
-        ) {
+        select("SELECT `id`, `from_id` FROM `messenger_requests` WHERE `to_id` = :to_id", mapOf("to_id" to toUserId)) {
             MessengerRequest(
                     it.int("id"),
                     it.int("from_id")
@@ -54,7 +50,7 @@ object MessengerDao {
     }
 
     fun searchFriends(userId: Int, username: String): List<MessengerFriend> = HabboServer.database {
-        select("SELECT id AS user_id FROM users WHERE username LIKE :username AND NOT id = :user_id LIMIT 50",
+        select("SELECT `id` AS `user_id` FROM `users` WHERE `username` LIKE :username AND NOT `id` = :user_id LIMIT 50",
                 mapOf(
                         "username" to "$username%",
                         "user_id" to userId
@@ -66,8 +62,7 @@ object MessengerDao {
 
     fun removeFriendships(userId: Int, friendIds: List<Int>) {
         HabboServer.database {
-            batchUpdate(
-                    "DELETE FROM messenger_friendships WHERE user_one_id = :user_one_id AND user_two_id = :user_two_id",
+            batchUpdate("DELETE FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id AND `user_two_id` = :user_two_id",
                     friendIds.map {
                         listOf(
                                 mapOf(
@@ -86,7 +81,7 @@ object MessengerDao {
 
     fun removeAllRequests(toUserId: Int) {
         HabboServer.database {
-            update("DELETE FROM messenger_requests WHERE to_id = :to_id",
+            update("DELETE FROM `messenger_requests` WHERE `to_id` = :to_id",
                     mapOf(
                             "to_id" to toUserId
                     )
@@ -96,7 +91,7 @@ object MessengerDao {
 
     fun removeRequests(requestIds: List<Int>) {
         HabboServer.database {
-            batchUpdate("DELETE FROM messenger_requests WHERE id = :id",
+            batchUpdate("DELETE FROM `messenger_requests` WHERE `id` = :id",
                     requestIds.map {
                         mapOf(
                                 "id" to it
@@ -111,8 +106,7 @@ object MessengerDao {
 
         HabboServer.database {
             friendIds.forEach {
-                batchInsertAndGetGeneratedKeys(
-                        "INSERT INTO messenger_friendships (user_one_id, user_two_id) VALUES (:user_one_id, :user_two_id)",
+                batchInsertAndGetGeneratedKeys("INSERT INTO `messenger_friendships` (`user_one_id`, `user_two_id`) VALUES (:user_one_id, :user_two_id)",
                         listOf(
                                 mapOf(
                                         "user_one_id" to userId,
@@ -134,7 +128,7 @@ object MessengerDao {
 
     fun addRequest(fromUserId: Int, toUserId: Int): MessengerRequest {
         val id = HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO messenger_requests (to_id, from_id) VALUES (:to_id, :from_id)",
+            insertAndGetGeneratedKey("INSERT INTO `messenger_requests` (`to_id`, `from_id`) VALUES (:to_id, :from_id)",
                     mapOf(
                             "to_id" to toUserId,
                             "from_id" to fromUserId
@@ -149,7 +143,7 @@ object MessengerDao {
         val offlineMessages: MutableSet<Triple<Int, String, Int>> = HashSet()
 
         HabboServer.database {
-            select("SELECT * FROM messenger_offline_messages WHERE to_id = :to_id",
+            select("SELECT * FROM `messenger_offline_messages` WHERE `to_id` = :to_id",
                     mapOf(
                             "to_id" to toUserId
                     )
@@ -162,7 +156,7 @@ object MessengerDao {
             }
 
             if (offlineMessages.isNotEmpty()) {
-                update("DELETE FROM messenger_offline_messages WHERE to_id = :to_id",
+                update("DELETE FROM `messenger_offline_messages` WHERE `to_id` = :to_id",
                         mapOf(
                                 "to_id" to toUserId
                         )
@@ -175,8 +169,7 @@ object MessengerDao {
 
     fun addOfflineMessage(fromUserId: Int, toUserId: Int, message: String) {
         HabboServer.database {
-            insertAndGetGeneratedKey(
-                    "INSERT INTO messenger_offline_messages (to_id, from_id, message) VALUES (:to_id, :from_id, :message)",
+            insertAndGetGeneratedKey("INSERT INTO `messenger_offline_messages` (`to_id`, `from_id`, `message`) VALUES (:to_id, :from_id, :message)",
                     mapOf(
                             "to_id" to toUserId,
                             "from_id" to fromUserId,

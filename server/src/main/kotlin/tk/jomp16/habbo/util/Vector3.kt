@@ -19,9 +19,11 @@
 
 package tk.jomp16.habbo.util
 
-import java.io.Serializable
-
-data class Vector3(val x: Int, val y: Int, val z: Double) : Serializable {
+data class Vector3(
+        val x: Int,
+        val y: Int,
+        val z: Double
+) {
     constructor(vector2: Vector2, z: Double) : this(vector2.x, vector2.y, z)
 
     val vector2: Vector2 = Vector2(x, y)

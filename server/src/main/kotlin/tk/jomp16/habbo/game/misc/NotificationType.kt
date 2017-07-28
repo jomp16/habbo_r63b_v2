@@ -21,5 +21,5 @@ package tk.jomp16.habbo.game.misc
 
 enum class NotificationType {
     BROADCAST_ALERT,
-    MOTD_ALERT,
+    MOTD_ALERT
 }

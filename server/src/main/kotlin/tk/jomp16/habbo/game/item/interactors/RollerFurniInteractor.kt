@@ -29,10 +29,8 @@ import tk.jomp16.habbo.util.Vector3
 class RollerFurniInteractor : ItemInteractor() {
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
-
         val frontVector2 = roomItem.getFrontPosition()
         val frontVector3 = Vector3(frontVector2, room.roomGamemap.getAbsoluteHeight(frontVector2))
-
         var reCycle = true
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {

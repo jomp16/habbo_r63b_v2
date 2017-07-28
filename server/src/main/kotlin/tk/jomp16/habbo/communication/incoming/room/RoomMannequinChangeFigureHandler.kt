@@ -30,13 +30,10 @@ class RoomMannequinChangeFigureHandler {
     @Handler(Incoming.ROOM_MANNEQUIN_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.MANNEQUIN) return
-
         val split = roomItem.extraData.split(7.toChar()).toTypedArray()
 
         split[0] = habboSession.userInformation.gender.toLowerCase()

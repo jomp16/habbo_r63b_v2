@@ -32,11 +32,9 @@ class UserRelationshipsHandler {
     @Handler(Incoming.USER_RELATIONSHIPS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val userId = habboRequest.readInt()
 
         // todo: relationships
-
         @Suppress("UNUSED_VARIABLE")
         val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
 

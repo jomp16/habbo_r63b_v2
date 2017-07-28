@@ -30,7 +30,6 @@ class UserChangeMottoHandler {
     @Handler(Incoming.USER_CHANGE_MOTTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
-
         var motto = habboRequest.readUTF()
 
         if (motto.isNullOrBlank() || motto == habboSession.userInformation.motto) return

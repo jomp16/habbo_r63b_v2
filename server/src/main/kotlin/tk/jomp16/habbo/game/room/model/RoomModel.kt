@@ -23,17 +23,9 @@ import tk.jomp16.habbo.kotlin.array2d
 import tk.jomp16.habbo.kotlin.array2dOfShort
 import tk.jomp16.habbo.util.Vector3
 
-data class RoomModel(
-        val id: String,
-        val roomId: Int,
-        val doorVector3: Vector3,
-        val doorDir: Int,
-        val heightmap: List<String>,
-        val clubOnly: Boolean
-) {
+data class RoomModel(val id: String, val roomId: Int, val doorVector3: Vector3, val doorDir: Int, val heightmap: List<String>, val clubOnly: Boolean) {
     val mapSizeX: Int = heightmap[0].length
     val mapSizeY: Int = heightmap.size
-
     val squareStates: Array<Array<SquareState>> = array2d(mapSizeX, mapSizeY) { SquareState.CLOSED }
     val floorHeight: Array<ShortArray> = array2dOfShort(mapSizeX, mapSizeY)
 

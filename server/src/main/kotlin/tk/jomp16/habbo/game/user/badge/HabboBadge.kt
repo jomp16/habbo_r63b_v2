@@ -19,13 +19,22 @@
 
 package tk.jomp16.habbo.game.user.badge
 
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.game.user.HabboSession
+import java.util.concurrent.ConcurrentHashMap
 
 class HabboBadge(private val habboSession: HabboSession) {
-    val badges: MutableMap<String, Badge> = BadgeDao.getBadges(habboSession.userInformation.id)
+    val badges: MutableMap<String, Badge> = ConcurrentHashMap()
+    private var initialized: Boolean = false
+
+    fun load() {
+        if (!initialized) {
+            badges.putAll(BadgeDao.getBadges(habboSession.userInformation.id))
+
+            initialized = true
+        }
+    }
 
     fun resetSlots() {
         badges.values.forEach { it.slot = 0 }
@@ -33,17 +42,12 @@ class HabboBadge(private val habboSession: HabboSession) {
 
     fun addBadge(code: String) {
         if (badges.containsKey(code)) return
-
         val badge = BadgeDao.addBadge(habboSession.userInformation.id, code, 0)
 
         badges.put(badge.code, badge)
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.INVENTORY_BADGES to arrayOf(badges.values)
-        queuedHabboResponse += Outgoing.INVENTORY_NEW_OBJECTS to arrayOf(true, 4, listOf(badge.id))
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 4, listOf(badge.id))
     }
 
     fun removeBadge(badgeCode: String) {

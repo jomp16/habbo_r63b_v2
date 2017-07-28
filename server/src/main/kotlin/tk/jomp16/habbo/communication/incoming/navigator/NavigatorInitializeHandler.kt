@@ -22,7 +22,6 @@ package tk.jomp16.habbo.communication.incoming.navigator
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.QueuedHabboResponse
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.Room
@@ -34,15 +33,9 @@ class NavigatorInitializeHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        val queuedHabboResponse = QueuedHabboResponse()
-
-        queuedHabboResponse += Outgoing.NAVIGATOR_METADATA to arrayOf(
-                HabboServer.habboGame.navigatorManager.navTabs
-        ) // NavigatorMetaDataParserComposer
-        queuedHabboResponse += Outgoing.NAVIGATOR_LIFTED_ROOMS to arrayOf(
-                arrayOf<Room>()
-        ) // NavigatorLiftedRoomsComposer
-        queuedHabboResponse += Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES to arrayOf(
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_METADATA, HabboServer.habboGame.navigatorManager.navTabs) // NavigatorMetaDataParserComposer
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_LIFTED_ROOMS, arrayOf<Room>()) // NavigatorLiftedRoomsComposer
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES,
                 HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values.map { "category__" + it.caption }.plus(
                         listOf(
                                 "new_ads",
@@ -65,14 +58,12 @@ class NavigatorInitializeHandler {
                 )
         )
 
-        queuedHabboResponse += Outgoing.NAVIGATOR_PREFERENCES to arrayOf(
+        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_PREFERENCES,
                 habboSession.userPreferences.navigatorX,
                 habboSession.userPreferences.navigatorY,
                 habboSession.userPreferences.navigatorWidth,
                 habboSession.userPreferences.navigatorHeight,
                 false // open search bar
         ) // NavigatorPreferencesComposer
-
-        habboSession.sendQueuedHabboResponse(queuedHabboResponse)
     }
 }

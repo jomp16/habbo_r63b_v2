@@ -30,7 +30,6 @@ class NavigatorHomeRoomHandler {
     @Handler(Incoming.NAVIGATOR_HOME_ROOM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val homeRoom = habboRequest.readInt()
 
         habboSession.userInformation.homeRoom = homeRoom

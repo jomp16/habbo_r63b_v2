@@ -23,33 +23,25 @@ import tk.jomp16.habbo.HabboServer
 
 object GroupDao {
     fun getGroupsBadgesBases(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM groups_badges_base") {
-            Triple(
-                    it.int("id"),
-                    it.string("value1"),
-                    it.string("value2")
-            )
+        select("SELECT * FROM `groups_badges_base`") {
+            Triple(it.int("id"), it.string("value1"), it.string("value2"))
         }
     }
 
     fun getGroupsBadgesSymbols(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM groups_badges_symbol") {
-            Triple(
-                    it.int("id"),
-                    it.string("value1"),
-                    it.string("value2")
-            )
+        select("SELECT * FROM `groups_badges_symbol`") {
+            Triple(it.int("id"), it.string("value1"), it.string("value2"))
         }
     }
 
     fun getGroupsBadgesBaseColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM groups_badges_base_color") {
+        select("SELECT * FROM `groups_badges_base_color`") {
             it.int("id") to it.string("color")
         }
     }
 
     fun getGroupsBadgesSymbolColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM groups_badges_symbol_color") {
+        select("SELECT * FROM `groups_badges_symbol_color`") {
             it.int("id") to it.string("color")
         }
     }

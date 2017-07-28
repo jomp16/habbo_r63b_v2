@@ -88,7 +88,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                 log.info("Didn't send any message to user $username, pinging it.")
 
                 habboSession.ping = System.nanoTime()
-                habboSession.sendHabboResponse(Outgoing.PING)
+                habboSession.sendHabboResponse(Outgoing.MISC_PING)
             }
         }
     }

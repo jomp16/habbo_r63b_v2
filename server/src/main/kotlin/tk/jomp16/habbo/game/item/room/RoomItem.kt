@@ -33,27 +33,14 @@ import tk.jomp16.habbo.util.Vector3
 import java.io.Serializable
 import java.util.*
 
-data class RoomItem(
-        val id: Int,
-        var userId: Int,
-        var roomId: Int,
-        val itemName: String,
-        var extraData: String,
-        var position: Vector3,
-        var rotation: Int,
-        var wallPosition: String
-) : IHabboResponseSerialize, Serializable {
-    @Transient
+data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName: String, var extraData: String, var position: Vector3, var rotation: Int, var wallPosition: String) : IHabboResponseSerialize, Serializable {
+    var magicRemove: Boolean = false
     val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
-    @Transient
-    val wiredData: WiredData? = ItemDao.getWiredData(id)
-
+    val wiredData: WiredData? by lazy { ItemDao.getWiredData(id) }
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
-
     val room: Room
         get() = HabboServer.habboGame.roomManager.rooms[roomId]!!
-
     val height: Double
         get() {
             if (furnishing.stackMultiple) {
@@ -68,18 +55,17 @@ data class RoomItem(
 
             return furnishing.stackHeight[0]
         }
-
     val totalHeight: Double
         get() = position.z + height
-
     val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, furnishing.width, furnishing.height)
-
+        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x,
+                position.y,
+                rotation,
+                furnishing.width,
+                furnishing.height)
     private var cycles: Int = 0
     private var currentCycles: Int = 0
-
-    @Transient
-    val interactingUsers: MutableMap<Int, RoomUser> = HashMap()
+    val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -92,7 +78,7 @@ data class RoomItem(
                 writeUTF(position.z.toString())
                 writeUTF(height.toString())
 
-                HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
+                HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData, magicRemove)
             } else {
                 writeUTF(id.toString())
                 writeInt(furnishing.spriteId)

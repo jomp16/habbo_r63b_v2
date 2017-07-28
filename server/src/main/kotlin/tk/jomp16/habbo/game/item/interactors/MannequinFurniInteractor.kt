@@ -31,11 +31,9 @@ class MannequinFurniInteractor : ItemInteractor() {
         super.onTrigger(room, roomUser, roomItem, hasRights, request)
 
         if (roomUser == null || roomUser.habboSession == null) return
-
         val mannequinDataArray = roomItem.extraData.split(7.toChar())
         val mannequinFigureArray = mannequinDataArray[1].split('.').toTypedArray()
         val userFigureArray = roomUser.habboSession.userInformation.figure.split('.')
-
         val figures = HashMap<String, String>()
 
         mannequinFigureArray.forEach { figure ->
@@ -49,7 +47,6 @@ class MannequinFurniInteractor : ItemInteractor() {
                 else if (!figures.containsKey(key)) figures.put(key, figure)
             }
         }
-
         val builder = StringBuilder()
 
         figures.values.forEach { s -> builder.append(s).append('.') }

@@ -31,7 +31,6 @@ class MessengerDeclineRequestHandler {
     @Handler(Incoming.MESSENGER_DECLINE_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
-
         val declineAll = habboRequest.readBoolean()
         var amount = habboRequest.readInt()
 
@@ -45,12 +44,10 @@ class MessengerDeclineRequestHandler {
 
             return
         }
-
         val ids: MutableList<Int> = ArrayList()
 
         repeat(amount) {
             val userId = habboRequest.readInt()
-
             val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@repeat
 
             ids += messengerRequest.id

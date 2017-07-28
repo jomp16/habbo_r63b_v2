@@ -31,9 +31,7 @@ class RoomWordFilterHandler {
     @Handler(Incoming.ROOM_WORD_FILTER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val roomId = habboRequest.readInt()
-
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
         if (!room.hasRights(habboSession, true)) return

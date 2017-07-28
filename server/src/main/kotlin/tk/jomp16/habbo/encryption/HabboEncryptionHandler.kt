@@ -37,11 +37,9 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
 
             genKeyPair()
         }
-
         val serverKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
             init(serverKeyPair.private)
         }
-
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
             generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
         }

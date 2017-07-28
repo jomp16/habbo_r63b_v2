@@ -27,7 +27,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserTypingHandler {
     @Handler(Incoming.ROOM_USER_START_TYPING, Incoming.ROOM_USER_STOP_TYPING)
-    fun handleStartTyping(habboSession: HabboSession, habboRequest: HabboRequest) {
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
         habboSession.roomUser?.typing = habboRequest.incoming == Incoming.ROOM_USER_START_TYPING

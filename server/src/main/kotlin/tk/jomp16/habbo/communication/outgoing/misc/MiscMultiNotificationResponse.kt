@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscMultiNotificationResponse {
-    @Response(Outgoing.MOTD_NOTIFICATION)
+    @Response(Outgoing.MISC_MOTD_NOTIFICATION)
     fun response(habboResponse: HabboResponse, message: String) {
         habboResponse.apply {
             writeInt(1)

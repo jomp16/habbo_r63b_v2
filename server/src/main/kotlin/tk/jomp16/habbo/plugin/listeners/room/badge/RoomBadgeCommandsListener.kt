@@ -20,6 +20,8 @@
 package tk.jomp16.habbo.plugin.listeners.room.badge
 
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.communication.outgoing.wired.WiredRewardNotificationResponse
 import tk.jomp16.habbo.database.badge.BadgeDao
 import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.game.room.Room
@@ -33,19 +35,20 @@ import tk.jomp16.utils.plugin.api.PluginListener
 class RoomBadgeCommandsListener : PluginListener() {
     @Command(arrayOf("givebadge"), permissionName = "cmd_givebadge")
     fun giveBadge(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (args.isEmpty()) {
+        if (args.size <= 1) {
             roomUser.chat(roomUser.virtualID, "Excepted params: badge_name or badge_name username", 0, ChatType.WHISPER, true)
 
             return
         }
 
+        if (roomUser.habboSession == null) return
         val badgeCode = args[1].toUpperCase()
         val username = if (args.size >= 3) args[2] else null
 
-        if (username == null && roomUser.habboSession != null) {
+        if (username == null) {
             // give badge to user calling command
             giveBadge(roomUser.habboSession, badgeCode)
-        } else if (username != null) {
+        } else {
             val userHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)
 
             if (userHabboSession != null) {
@@ -53,7 +56,6 @@ class RoomBadgeCommandsListener : PluginListener() {
 
                 return
             }
-
             val userId = UserInformationDao.getUserInformationByUsername(username)?.id
 
             if (userId != null) {
@@ -76,13 +78,14 @@ class RoomBadgeCommandsListener : PluginListener() {
             return
         }
 
+        if (roomUser.habboSession == null) return
         val badgeCode = args[1].toUpperCase()
         val username = if (args.size >= 3) args[2] else null
 
-        if (username == null && roomUser.habboSession != null) {
+        if (username == null) {
             // give badge to user calling command
             removeBadge(roomUser.habboSession, badgeCode)
-        } else if (username != null) {
+        } else {
             val userHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)
 
             if (userHabboSession != null) {
@@ -90,7 +93,6 @@ class RoomBadgeCommandsListener : PluginListener() {
 
                 return
             }
-
             val userId = UserInformationDao.getUserInformationByUsername(username)?.id
 
             if (userId != null) {
@@ -106,7 +108,11 @@ class RoomBadgeCommandsListener : PluginListener() {
     }
 
     private fun giveBadge(habboSession: HabboSession, badgeCode: String) {
-        if (!habboSession.habboBadge.badges.containsKey(badgeCode)) habboSession.habboBadge.addBadge(badgeCode)
+        if (!habboSession.habboBadge.badges.containsKey(badgeCode)) {
+            habboSession.habboBadge.addBadge(badgeCode)
+
+            habboSession.sendHabboResponse(Outgoing.WIRED_REWARD_NOTIFICATION, WiredRewardNotificationResponse.WiredRewardNotification.BADGE_REWARDED)
+        }
     }
 
     private fun removeBadge(habboSession: HabboSession, badgeCode: String) {

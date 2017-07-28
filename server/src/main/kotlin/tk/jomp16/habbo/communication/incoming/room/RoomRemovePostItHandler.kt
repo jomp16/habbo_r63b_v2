@@ -31,15 +31,13 @@ class RoomRemovePostItHandler {
     @Handler(Incoming.ROOM_REMOVE_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)
 
-        ItemDao.deleteItem(itemId)
+        ItemDao.deleteItems(listOf(itemId))
     }
 }

@@ -24,7 +24,5 @@ import tk.jomp16.habbo.game.item.Furnishing
 data class CatalogPurchaseData(
         val furnishing: Furnishing,
         val extraData: String,
-        val limitedNum: Int
-) {
-    var limitedId: Int = 0
-}
+        val limitedNumber: Int
+)

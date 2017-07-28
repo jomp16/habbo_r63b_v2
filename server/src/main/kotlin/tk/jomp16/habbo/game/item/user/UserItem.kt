@@ -34,9 +34,7 @@ data class UserItem(
         val itemName: String,
         var extraData: String
 ) : IHabboResponseSerialize, Serializable {
-    @Transient
     val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
-
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 
@@ -56,7 +54,6 @@ data class UserItem(
             writeInt(-1) // milliseconds to expire rental
             writeBoolean(true)
             writeInt(-1) // room id
-
             if (furnishing.type == ItemType.FLOOR) {
                 writeUTF("")
                 writeInt(0)

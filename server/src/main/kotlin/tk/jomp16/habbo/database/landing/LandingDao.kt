@@ -25,7 +25,7 @@ import tk.jomp16.habbo.game.landing.LandingReward
 
 object LandingDao {
     fun getLandingPromos(): List<LandingPromo> = HabboServer.database {
-        select("SELECT * FROM landing_promos") {
+        select("SELECT * FROM `landing_promos`") {
             LandingPromo(
                     it.int("id"),
                     it.string("header"),
@@ -39,7 +39,7 @@ object LandingDao {
     }
 
     fun getLandingReward(): LandingReward? = HabboServer.database {
-        select("SELECT * FROM landing_reward LIMIT 1") {
+        select("SELECT * FROM `landing_reward` LIMIT 1") {
             LandingReward(
                     it.int("id"),
                     it.string("item_name"),

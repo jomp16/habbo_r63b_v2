@@ -4,24 +4,21 @@ build/
 
 # IntelliJ IDEA
 .idea/
+*.iml
 classes/
+out/
 
 # Config, they contains sensitive info about my stuffs
 config.json
 
-# JRebel
-rebel.xml
-
 # MOTD
 motd/
 
-*.pro
-packet_infos/
 plugins/
 
 *.txt
+*.tar.xz
 
-cache/
 camera_data/
 
 !server/src/main/resources/ascii_art.txt

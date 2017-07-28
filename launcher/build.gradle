@@ -40,10 +40,8 @@ jar {
         it.tasks.getByName("jar")
     }
 
-    // Keep jar clean:
-    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
-
     manifest {
+        //noinspection GrUnresolvedAccess
         attributes 'Main-Class': 'tk.jomp16.MainKt',
                 'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
     }

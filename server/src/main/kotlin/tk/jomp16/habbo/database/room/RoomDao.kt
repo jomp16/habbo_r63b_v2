@@ -32,13 +32,13 @@ import tk.jomp16.habbo.util.Vector3
 
 object RoomDao {
     fun getRoomsData(): List<RoomData> = HabboServer.database {
-        select("SELECT * FROM rooms") {
+        select("SELECT * FROM `rooms`") {
             getRoomData(it)
         }
     }
 
     fun getRoomData(roomId: Int): RoomData = HabboServer.database {
-        select("SELECT * FROM rooms WHERE id = :room_id",
+        select("SELECT * FROM `rooms` WHERE `id` = :room_id",
                 mapOf(
                         "room_id" to roomId
                 )
@@ -83,7 +83,7 @@ object RoomDao {
     )
 
     fun getRoomModels(): List<RoomModel> = HabboServer.database {
-        select("SELECT * FROM rooms_models") {
+        select("SELECT * FROM `rooms_models`") {
             RoomModel(
                     it.string("id"),
                     0,
@@ -100,7 +100,7 @@ object RoomDao {
     }
 
     fun getCustomRoomModels(): List<RoomModel> = HabboServer.database {
-        select("SELECT * FROM rooms_models_customs") {
+        select("SELECT * FROM `rooms_models_customs`") {
             RoomModel(
                     it.string("id"),
                     it.int("room_id"),
@@ -117,7 +117,7 @@ object RoomDao {
     }
 
     fun getRights(roomId: Int): List<RightData> = HabboServer.database {
-        select("SELECT id, user_id FROM rooms_rights WHERE room_id = :room_id",
+        select("SELECT `id`, `user_id` FROM `rooms_rights` WHERE `room_id` = :room_id",
                 mapOf(
                         "room_id" to roomId
                 )
@@ -130,7 +130,7 @@ object RoomDao {
     }
 
     fun getWordFilter(roomId: Int): List<String> = HabboServer.database {
-        select("SELECT word FROM rooms_word_filter WHERE room_id = :room_id",
+        select("SELECT `word` FROM `rooms_word_filter` WHERE `room_id` = :room_id",
                 mapOf(
                         "room_id" to roomId
                 )
@@ -140,9 +140,7 @@ object RoomDao {
     }
 
     fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int = HabboServer.database {
-        insertAndGetGeneratedKey(
-                "INSERT INTO rooms (name, description, owner_id, model_name, category, users_max, trade_state)" +
-                        "VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
+        insertAndGetGeneratedKey("INSERT INTO rooms (name, description, owner_id, model_name, category, users_max, trade_state) VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
                 mapOf(
                         "name" to name,
                         "description" to description,
@@ -157,8 +155,7 @@ object RoomDao {
 
     fun saveItems(roomId: Int, roomItemsToSave: Collection<RoomItem>) {
         HabboServer.database {
-            batchUpdate(
-                    "UPDATE items SET room_id = :room_id, x = :x, y = :y, z = :z, rot = :rot, wall_pos = :wall_pos, extra_data = :extra_data WHERE id = :id",
+            batchUpdate("UPDATE `items` SET `room_id` = :room_id, `x` = :x, `y` = :y, `z` = :z, `rot` = :rot, `wall_pos` = :wall_pos, `extra_data` = :extra_data WHERE `id` = :id",
                     roomItemsToSave.map {
                         mapOf(
                                 "room_id" to roomId,
@@ -177,13 +174,7 @@ object RoomDao {
 
     fun updateRoomData(roomData: RoomData) {
         HabboServer.database {
-            update("UPDATE rooms SET name = :name, description = :description, state = :state, password = :password, " +
-                    "users_max = :users_max, category = :category, tags = :tags, trade_state = :trade_state, allow_pets = :allow_pets, " +
-                    "allow_pets_eat = :allow_pets_eat, allow_walk_through = :allow_walk_through, hide_wall = :hide_wall, " +
-                    "wall_thick = :wall_thick, floor_thick = :floor_thick, wall_height = :wall_height, mute_settings = :mute_settings, " +
-                    "kick_settings = :kick_settings, ban_settings = :ban_settings, chat_type = :chat_type, chat_balloon = :chat_balloon, " +
-                    "chat_speed = :chat_speed, chat_max_distance = :chat_max_distance, chat_flood_protection = :chat_flood_protection, " +
-                    "floor = :floor, wallpaper = :wallpaper, landscape = :landscape, group_id = :group_id WHERE id = :room_id",
+            update("UPDATE rooms SET name = :name, description = :description, state = :state, password = :password, " + "users_max = :users_max, category = :category, tags = :tags, trade_state = :trade_state, allow_pets = :allow_pets, " + "allow_pets_eat = :allow_pets_eat, allow_walk_through = :allow_walk_through, hide_wall = :hide_wall, " + "wall_thick = :wall_thick, floor_thick = :floor_thick, wall_height = :wall_height, mute_settings = :mute_settings, " + "kick_settings = :kick_settings, ban_settings = :ban_settings, chat_type = :chat_type, chat_balloon = :chat_balloon, " + "chat_speed = :chat_speed, chat_max_distance = :chat_max_distance, chat_flood_protection = :chat_flood_protection, " + "floor = :floor, wallpaper = :wallpaper, landscape = :landscape, group_id = :group_id WHERE id = :room_id",
                     mapOf(
                             "name" to roomData.name,
                             "description" to roomData.description,
@@ -220,7 +211,7 @@ object RoomDao {
 
     fun addWordFilter(roomId: Int, wordFilter: String) {
         HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO rooms_word_filter (room_id, word) VALUES (:room_id, :word)",
+            insertAndGetGeneratedKey("INSERT INTO `rooms_word_filter` (`room_id`, `word`) VALUES (:room_id, :word)",
                     mapOf(
                             "room_id" to roomId,
                             "word" to wordFilter
@@ -231,12 +222,24 @@ object RoomDao {
 
     fun removeWordFilter(roomId: Int, wordFilter: String) {
         HabboServer.database {
-            update("DELETE FROM rooms_word_filter WHERE room_id = :room_id AND word = :word",
+            update("DELETE FROM `rooms_word_filter` WHERE `room_id` = :room_id AND `word` = :word",
                     mapOf(
                             "room_id" to roomId,
                             "word" to wordFilter
                     )
             )
+        }
+    }
+
+    fun getFavoritesRooms(userId: Int): List<Pair<Int, Int>> {
+        return HabboServer.database {
+            select("SELECT * FROM `users_favorites` WHERE `user_id` = :user_id",
+                    mapOf(
+                            "user_id" to userId
+                    )
+            ) {
+                it.int("id") to it.int("room_id")
+            }
         }
     }
 }

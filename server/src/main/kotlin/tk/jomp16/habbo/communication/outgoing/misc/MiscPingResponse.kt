@@ -25,7 +25,7 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPingResponse {
-    @Response(Outgoing.PING)
+    @Response(Outgoing.MISC_PING)
     fun handle(habboResponse: HabboResponse) {
     }
 }

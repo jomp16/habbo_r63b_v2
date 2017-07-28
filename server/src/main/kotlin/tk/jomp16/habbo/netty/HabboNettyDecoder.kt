@@ -38,7 +38,6 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
         if (msg.readableBytes() < 6) return
 
         msg.markReaderIndex()
-
         val delimiter = msg.readByte()
 
         msg.resetReaderIndex()
@@ -72,7 +71,6 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             msg.markReaderIndex()
-
             val messageLength = msg.readInt()
 
             if (messageLength < 2) {
@@ -82,9 +80,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
                 return
             }
-
             val headerId = msg.readUnsignedShort()
-
             val size = messageLength - 2
 
             if (msg.readableBytes() < size) {

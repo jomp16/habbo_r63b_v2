@@ -35,7 +35,6 @@ class RoomFloorItemsResponse {
             writeInt(room.roomData.ownerId)
             writeUTF(room.roomData.ownerName)
             writeInt(floorItems.size) // size
-
             floorItems.forEach { serialize(it) }
         }
     }

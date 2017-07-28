@@ -26,19 +26,15 @@ import java.util.*
 
 class NavigatorManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-    val navTabs: Array<String> = arrayOf(
-            "official_view",
-            "hotel_view",
-            "roomads_view",
-            "myworld_view"
-    )
-
+    val navTabs: Array<String> = arrayOf("official_view", "hotel_view", "roomads_view", "myworld_view")
     val navigatorRoomCategories: MutableMap<Int, NavigatorRoomCategory> = HashMap()
     val navigatorEventCategories: MutableMap<Int, NavigatorEventCategory> = HashMap()
 
-    init {
+    fun load() {
         log.info("Loading navigator...")
+
+        navigatorRoomCategories.clear()
+        navigatorEventCategories.clear()
 
         navigatorRoomCategories += NavigatorDao.getNavigatorRoomCategories().associateBy { it.id }
         navigatorEventCategories += NavigatorDao.getNavigatorEventCategories().associateBy { it.id }

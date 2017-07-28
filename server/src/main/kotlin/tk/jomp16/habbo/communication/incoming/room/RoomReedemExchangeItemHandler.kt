@@ -30,20 +30,17 @@ class RoomReedemExchangeItemHandler {
     @Handler(Incoming.ROOM_REEDEM_EXCHANGE_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
-
         val itemId = habboRequest.readInt()
-
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (!roomItem.itemName.startsWith("CF_") && !roomItem.itemName.startsWith("CFC_")) return
-
         val split = roomItem.itemName.split('_')
         val credits = if (split[1] == "diamond") split[2].toInt() else split[1].toInt()
 
         habboSession.userInformation.credits += credits
         habboSession.updateAllCurrencies()
 
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser!!, roomItem)
-        ItemDao.deleteItem(itemId)
+        habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)
+        ItemDao.deleteItems(listOf(itemId))
     }
 }

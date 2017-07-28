@@ -19,11 +19,10 @@
 
 package tk.jomp16.habbo.game.user.subscription
 
-import java.io.Serializable
 import java.time.LocalDateTime
 
 data class Subscription(
         val id: Int,
         var activated: LocalDateTime,
         var expire: LocalDateTime
-) : Serializable
+)

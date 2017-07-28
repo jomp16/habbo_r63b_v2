@@ -24,7 +24,7 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object ClothingDao {
     fun getClothings(userId: Int): List<String> = HabboServer.database {
-        select("SELECT item_name FROM users_clothing WHERE user_id = :user_id",
+        select("SELECT `item_name` FROM `users_clothing` WHERE `user_id` = :user_id",
                 mapOf(
                         "user_id" to userId
                 )
@@ -35,7 +35,7 @@ object ClothingDao {
 
     fun addClothing(userId: Int, itemName: String) {
         HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO users_clothing (user_id, item_name) VALUES (:user_id, :item_name)",
+            insertAndGetGeneratedKey("INSERT INTO `users_clothing` (`user_id`, `item_name`) VALUES (:user_id, :item_name)",
                     mapOf(
                             "user_id" to userId,
                             "item_name" to itemName

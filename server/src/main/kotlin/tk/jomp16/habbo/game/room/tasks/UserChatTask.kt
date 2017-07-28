@@ -27,10 +27,16 @@ import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.plugin.event.events.room.RoomUserChatEvent
 
-class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, private val message: String, private val bubble: Int, private val type: ChatType, val skipCommands: Boolean) : IRoomTask {
+class UserChatTask(
+        private val roomUser: RoomUser,
+        private val virtualID: Int,
+        private val message: String,
+        private val bubble: Int,
+        private val type: ChatType,
+        val skipCommands: Boolean
+) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
-
         val speechEmotion = getSpeechEmotion(message.toUpperCase())
 
         if (!skipCommands) {
@@ -38,7 +44,6 @@ class UserChatTask(private val roomUser: RoomUser, private val virtualID: Int, p
 
             if (!skipCommands && message.startsWith(':')) return
         }
-
         var filterMessage = message
 
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }

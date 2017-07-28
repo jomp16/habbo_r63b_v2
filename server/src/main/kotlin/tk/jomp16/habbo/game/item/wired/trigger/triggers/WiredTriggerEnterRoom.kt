@@ -29,7 +29,9 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     private var username = ""
 
     init {
-        if (roomItem.wiredData != null) username = roomItem.wiredData.message
+        roomItem.wiredData?.let {
+            username = it.message
+        }
     }
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
@@ -39,13 +41,14 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
-        if (roomItem.wiredData == null) return false
+        roomItem.wiredData?.let {
+            habboRequest.readInt() // useless?
+            username = habboRequest.readUTF()
+            it.message = username
 
-        habboRequest.readInt() // useless?
+            return true
+        }
 
-        username = habboRequest.readUTF()
-        roomItem.wiredData.message = username
-
-        return true
+        return false
     }
 }

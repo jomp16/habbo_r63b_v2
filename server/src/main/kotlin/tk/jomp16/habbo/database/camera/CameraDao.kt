@@ -26,7 +26,7 @@ import java.time.LocalDateTime
 object CameraDao {
     fun savePictureDataToDatabase(userId: Int, ipAddress: String, fileName: String, createdAt: LocalDateTime): Int {
         return HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO camera_pictures (user_id, file_name, created_at, ip_address) VALUES (:user_id, :file_name, :created_at, :ip_address)",
+            insertAndGetGeneratedKey("INSERT INTO `camera_pictures` (`user_id`, `file_name`, `created_at`, `ip_address`) VALUES (:user_id, :file_name, :created_at, :ip_address)",
                     mapOf(
                             "user_id" to userId,
                             "file_name" to fileName,

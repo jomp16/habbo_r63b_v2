@@ -28,7 +28,6 @@ import tk.jomp16.utils.plugin.api.PluginListener
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomCommandsListener : PluginListener() {
     // todo: pickall
-
     @Command(arrayOf("unload", "close"))
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
         if (!room.hasRights(roomUser.habboSession, true)) return

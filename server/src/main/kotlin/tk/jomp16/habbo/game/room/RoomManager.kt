@@ -27,17 +27,19 @@ import java.util.*
 
 class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val rooms: MutableMap<Int, Room> = HashMap()
     val roomModels: MutableMap<String, RoomModel> = HashMap()
     val customRoomModels: MutableMap<Int, RoomModel> = HashMap()
-
     val roomTaskManager: RoomTaskManager = RoomTaskManager()
 
-    init {
+    fun load() {
         log.info("Loading rooms models...")
         log.info("Loading custom rooms models...")
         log.info("Loading rooms...")
+
+        roomModels.clear()
+        customRoomModels.clear()
+        rooms.clear()
 
         roomModels += RoomDao.getRoomModels().associateBy { it.id }
         customRoomModels += RoomDao.getCustomRoomModels().associateBy { it.roomId }
@@ -54,11 +56,9 @@ class RoomManager {
         val roomModel = roomModels[model]
 
         if (name.length < 3 || roomModel == null || roomModel.clubOnly && !validSubscription) return null
-
         val roomId = RoomDao.createRoom(userId, name, description, model, category, maxUsers, tradeSettings)
 
         log.info("Created new room n° {} - name {}", roomId, name)
-
         val room = RoomDao.getRoomData(roomId).let { Room(it, roomModel) }
 
         rooms.put(roomId, room)

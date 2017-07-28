@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.communication.outgoing.catalog
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
@@ -26,10 +27,23 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogRecyclerRewardsResponse {
     @Response(Outgoing.CATALOG_RECYCLER_REWARDS)
-    fun response(habboResponse: HabboResponse) {
-        // todo: add recycler rewards
+    fun response(habboResponse: HabboResponse, recyclerRewards: Map<Int, List<String>>) {
         habboResponse.apply {
-            writeInt(0)
+            writeInt(recyclerRewards.size) // levels
+            recyclerRewards.entries.sortedByDescending { it.key }.forEach {
+                writeInt(it.key) // level
+                writeInt(HabboServer.habboConfig.recyclerConfig.odds[it.key]!!) // odds
+                writeInt(it.value.size)
+
+                it.value.forEach {
+                    HabboServer.habboGame.itemManager.furnishings[it]?.let {
+                        writeUTF(it.itemName)
+                        writeInt(1) // enabled
+                        writeUTF(it.type.type)
+                        writeInt(it.spriteId)
+                    }
+                }
+            }
         }
     }
 }

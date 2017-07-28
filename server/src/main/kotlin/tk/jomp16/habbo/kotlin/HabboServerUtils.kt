@@ -32,13 +32,11 @@ fun habboServer(habboConfig: HabboConfig): HabboServer {
 
 fun HabboServer.cleanUpUsers() {
     database {
-        database {
-            update("UPDATE users SET auth_ticket = :ticket, online = :online",
-                    mapOf(
-                            "ticket" to "",
-                            "online" to false
-                    )
-            )
-        }
+        update("UPDATE `users` SET `auth_ticket` = :ticket, `online` = :online",
+                mapOf(
+                        "ticket" to "",
+                        "online" to false
+                )
+        )
     }
 }

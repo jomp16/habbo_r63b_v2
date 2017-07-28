@@ -25,10 +25,20 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 class HabboInventory(private val habboSession: HabboSession) {
-    val items: MutableMap<Int, UserItem> = ItemDao.getUserItems(habboSession.userInformation.id)
+    val items: MutableMap<Int, UserItem> = ConcurrentHashMap()
     val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
+    private var initialized: Boolean = false
+
+    fun load() {
+        if (!initialized) {
+            items.putAll(ItemDao.getUserItems(habboSession.userInformation.id))
+
+            initialized = true
+        }
+    }
 
     fun addItems(userItems: List<UserItem>) {
         items += userItems.associateBy { it.id }
@@ -37,13 +47,15 @@ class HabboInventory(private val habboSession: HabboSession) {
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
     }
 
-    fun removeItem(userItem: UserItem, delete: Boolean = false) {
-        if (!items.containsKey(userItem.id)) return
+    fun removeItems(itemIds: List<Int>, delete: Boolean = false) {
+        if (!items.keys.any { itemId -> itemIds.any { it == itemId } }) return
 
-        items.remove(userItem.id)
+        itemIds.forEach {
+            items.remove(it)
 
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, userItem.id)
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, it)
+        }
 
-        if (delete) ItemDao.deleteItem(userItem.id)
+        if (delete) ItemDao.deleteItems(itemIds)
     }
 }

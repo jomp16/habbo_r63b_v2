@@ -26,18 +26,18 @@ import java.util.*
 
 class GroupManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val groupBadgesBases: MutableList<Triple<Int, String, String>> = ArrayList()
     val groupBaseColors: MutableList<Pair<Int, String>> = ArrayList()
     val groupBadgesSymbols: MutableList<Triple<Int, String, String>> = ArrayList()
     val groupBadgeSymbolColors: MutableList<Pair<Int, String>> = ArrayList()
 
-    init {
-        load()
-    }
-
     fun load() {
         log.info("Loading group badges...")
+
+        groupBadgesBases.clear()
+        groupBaseColors.clear()
+        groupBadgesSymbols.clear()
+        groupBadgeSymbolColors.clear()
 
         groupBadgesBases += GroupDao.getGroupsBadgesBases()
         groupBaseColors += GroupDao.getGroupsBadgesBaseColors()

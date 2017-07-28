@@ -35,7 +35,6 @@ class SubscriptionInfoResponse {
         habboResponse.apply {
             if (subscription != null) {
                 // todo: stub
-
                 writeInt(1) // streakduration - in days
                 writeUTF(subscription.activated.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)) // Time joined HC
                 writeDouble((50.toDouble() / 100)) // credits multiplier / 10 -- %streakduration%

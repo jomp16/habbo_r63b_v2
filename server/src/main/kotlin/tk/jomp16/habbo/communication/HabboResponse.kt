@@ -24,10 +24,10 @@ import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
 
+@Suppress("unused")
 class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
-
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 

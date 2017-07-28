@@ -36,13 +36,11 @@ class RoomPlaceItemHandler {
         // floor = [0][7]3 8 4 2
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
-
         if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
             habboSession.sendSuperNotification("furni_placement_error", "message", "\${room.error.cant_set_not_owner}")
 
             return
         }
-
         val rawDataSplit: List<String>
         val itemId: Int
 
@@ -55,9 +53,7 @@ class RoomPlaceItemHandler {
             rawDataSplit = habboRequest.readUTF().split(' ')
             itemId = rawDataSplit[0].toInt()
         }
-
         val userItem = habboSession.habboInventory.items[itemId] ?: return
-
         val success: Boolean
 
         if (userItem.furnishing.type == ItemType.WALL) {
@@ -65,23 +61,21 @@ class RoomPlaceItemHandler {
             val correctedWallData = rawDataSplit.drop(1)
 
             if (correctedWallData.size < 3) return
-
-            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
+            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id,
+                    userItem)
 
             success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
         } else {
             // parse floor data
             if (rawDataSplit.size < 4) return
-
             val x = rawDataSplit[1].toInt()
             val y = rawDataSplit[2].toInt()
             val rot = rawDataSplit[3].toInt()
-
             val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
 
             success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
         }
 
-        if (success) habboSession.habboInventory.removeItem(userItem)
+        if (success) habboSession.habboInventory.removeItems(listOf(itemId))
     }
 }

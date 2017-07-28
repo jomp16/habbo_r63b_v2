@@ -21,8 +21,6 @@ package tk.jomp16.habbo.game.item
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import tk.jomp16.habbo.FURNISHING_KEY_CACHE
-import tk.jomp16.habbo.FURNI_XML_KEY_CACHE
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.database.item.ItemDao
@@ -50,19 +48,13 @@ import javax.xml.parsers.SAXParserFactory
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
-
     val furnishings: MutableMap<String, Furnishing> = HashMap()
     val oldGiftWrapper: MutableList<Furnishing> = ArrayList()
     val newGiftWrapper: MutableList<Furnishing> = ArrayList()
     val teleportLinks: MutableMap<Int, Int> = HashMap()
     val roomTeleportLinks: MutableMap<Int, Int> = HashMap()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
-
-    init {
-        load()
-    }
 
     fun load() {
         log.info("Loading furnishings...")
@@ -74,22 +66,13 @@ class ItemManager {
         teleportLinks.clear()
         roomTeleportLinks.clear()
 
-        @Suppress("UNCHECKED_CAST")
-        val xmlCache = HabboServer.loadCache(FURNI_XML_KEY_CACHE) as MutableMap<String, FurniXMLInfo>?
+        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
+            val saxParser = SAXParserFactory.newInstance().newSAXParser()
+            val handler = FurniXMLHandler()
 
-        if (xmlCache != null) {
-            furniXMLInfos.putAll(xmlCache)
-        } else {
-            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
-                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                val handler = FurniXMLHandler()
+            saxParser.parse(it, handler)
 
-                saxParser.parse(it, handler)
-
-                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
-            }
-
-            HabboServer.saveCache(FURNI_XML_KEY_CACHE, furniXMLInfos)
+            furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
         }
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
@@ -106,11 +89,11 @@ class ItemManager {
         furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
         furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
         furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
-
         val wiredFurniInteractor = WiredFurniInteractor()
 
-        InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach { furniInteractor.put(it, wiredFurniInteractor) }
-
+        InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach {
+            furniInteractor.put(it, wiredFurniInteractor)
+        }
         val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
 
         if (missingItems.isNotEmpty()) {
@@ -128,11 +111,12 @@ class ItemManager {
                     appendln()
                     appendln("================")
                 }
+
+                it.flush()
             }
 
             HabboServer.database {
-                batchInsertAndGetGeneratedKeys("INSERT INTO furnishings (item_name, type, stack_height, can_stack, allow_recycle, allow_trade, allow_marketplace_sell, allow_gift, allow_inventory_stack, interaction_type, interaction_modes_count, vending_ids)" +
-                        " VALUES (:item_name, :type, :stack_height, :can_stack, :allow_recycle, :allow_trade, :allow_marketplace_sell, :allow_gift, :allow_inventory_stack, :interaction_type, :interaction_modes_count, :vending_ids)",
+                batchInsertAndGetGeneratedKeys(javaClass.getResource("/sql/furnishings/insert_furnishings.sql").readText().trim(),
                         missingItems.map {
                             mapOf(
                                     "item_name" to it,
@@ -153,8 +137,6 @@ class ItemManager {
             }
 
             log.info("Added more {} items to database!", furniXMLInfos.size - furnishings.size)
-
-            HabboServer.clearCache(FURNISHING_KEY_CACHE)
 
             furnishings.clear()
             furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
@@ -184,16 +166,7 @@ class ItemManager {
         return list
     }
 
-    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(
-            userItem.id,
-            userItem.userId,
-            roomId,
-            userItem.itemName,
-            userItem.extraData,
-            Vector3(0, 0, 0.toDouble()),
-            0,
-            ""
-    )
+    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "")
 
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? {
         return when (roomItem.furnishing.interactionType) {

@@ -26,10 +26,14 @@ import tk.jomp16.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserFavoriteRoomsResponse {
     @Response(Outgoing.NAVIGATOR_FAVORITES)
-    fun response(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
         habboResponse.apply {
             writeInt(50)
-            writeInt(0) // todo: rooms
+            writeInt(favoritesRooms.size)
+
+            favoritesRooms.forEach {
+                writeInt(it)
+            }
         }
     }
 }

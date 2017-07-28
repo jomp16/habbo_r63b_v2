@@ -22,10 +22,11 @@ package tk.jomp16.habbo.database.navigator
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.navigator.NavigatorEventCategory
 import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
+import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object NavigatorDao {
     fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = HabboServer.database {
-        select("SELECT * FROM navigator_room_categories WHERE enabled = :enabled",
+        select(javaClass.getResource("/sql/navigator/categories/room/select_room_categories.sql").readText(),
                 mapOf(
                         "enabled" to true
                 )
@@ -39,7 +40,7 @@ object NavigatorDao {
     }
 
     fun getNavigatorEventCategories(): List<NavigatorEventCategory> = HabboServer.database {
-        select("SELECT * FROM navigator_event_categories WHERE visible = :visible",
+        select(javaClass.getResource("/sql/navigator/categories/event/select_event_categories.sql").readText(),
                 mapOf(
                         "visible" to true
                 )
@@ -48,6 +49,27 @@ object NavigatorDao {
                     it.int("id"),
                     it.string("caption"),
                     it.int("min_rank")
+            )
+        }
+    }
+
+    fun addFavoriteRoom(userId: Int, roomId: Int): Int {
+        return HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.getResource("/sql/navigator/favorite/insert_favorite_room.sql").readText(),
+                    mapOf(
+                            "user_id" to userId,
+                            "room_id" to roomId
+                    )
+            )
+        }
+    }
+
+    fun removeFavoriteRoom(id: Int) {
+        HabboServer.database {
+            update(javaClass.getResource("/sql/navigator/favorite/delete_favorite_room.sql").readText(),
+                    mapOf(
+                            "id" to id
+                    )
             )
         }
     }

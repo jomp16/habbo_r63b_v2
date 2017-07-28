@@ -26,10 +26,9 @@ import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class MiscClientVariablesHandler {
-    @Handler(Incoming.CLIENT_VARIABLES)
+    @Handler(Incoming.MISC_CLIENT_VARIABLES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         val gordonUrl = habboRequest.readUTF()
         val externalVariablesUrl = habboRequest.readUTF()
     }

@@ -29,13 +29,13 @@ class DefaultItemInteractor : ItemInteractor() {
         super.onTrigger(room, roomUser, roomItem, hasRights, request)
 
         if (!hasRights) return
-
         val modes = roomItem.furnishing.interactionModesCount - 1
         var currentMode = if (roomItem.extraData.isEmpty()) 0 else roomItem.extraData.toInt()
 
         if (modes == 0) return
 
-        if (currentMode >= modes) currentMode = 0 else currentMode++
+        // todo: check if this is working properly
+        if (++currentMode > modes) currentMode = 0
 
         roomItem.extraData = currentMode.toString()
 

@@ -36,108 +36,50 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.nustaq.serialization.FSTConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.communication.HabboHandler
 import tk.jomp16.habbo.config.HabboConfig
-import tk.jomp16.habbo.database.badge.BadgeDao
-import tk.jomp16.habbo.database.item.ItemDao
-import tk.jomp16.habbo.database.subscription.SubscriptionDao
 import tk.jomp16.habbo.encryption.HabboEncryptionHandler
 import tk.jomp16.habbo.game.HabboGame
-import tk.jomp16.habbo.game.item.Furnishing
-import tk.jomp16.habbo.game.item.LimitedItemData
-import tk.jomp16.habbo.game.item.WiredData
-import tk.jomp16.habbo.game.item.room.RoomItem
-import tk.jomp16.habbo.game.item.user.UserItem
-import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
-import tk.jomp16.habbo.game.room.dimmer.RoomDimmer
 import tk.jomp16.habbo.game.user.HabboSessionManager
-import tk.jomp16.habbo.game.user.badge.Badge
-import tk.jomp16.habbo.game.user.subscription.Subscription
 import tk.jomp16.habbo.kotlin.cleanUpUsers
 import tk.jomp16.habbo.netty.HabboNettyDecoder
 import tk.jomp16.habbo.netty.HabboNettyEncoder
 import tk.jomp16.habbo.netty.HabboNettyHandler
 import tk.jomp16.habbo.netty.HabboNettyRC4Decoder
-import tk.jomp16.habbo.plugin.listeners.catalog.CatalogCommandsListener
-import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsListener
-import tk.jomp16.habbo.plugin.listeners.room.RoomCommandsManagerListener
-import tk.jomp16.habbo.plugin.listeners.room.about.RoomAboutCommandListener
-import tk.jomp16.habbo.plugin.listeners.room.badge.RoomBadgeCommandsListener
-import tk.jomp16.habbo.util.ICacheable
-import tk.jomp16.habbo.util.Vector2
-import tk.jomp16.habbo.util.Vector3
 import tk.jomp16.utils.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-
     lateinit var habboConfig: HabboConfig
-
     val pluginManager: PluginManager = PluginManager()
-    val fstConfiguration: FSTConfiguration = FSTConfiguration.createDefaultConfiguration().apply {
-        registerClass(
-                Vector2::class.java,
-                Vector3::class.java,
-                UserItem::class.java,
-                RoomItem::class.java,
-                WiredData::class.java,
-                FurniXMLInfo::class.java,
-                Furnishing::class.java,
-                LimitedItemData::class.java,
-                RoomDimmer::class.java,
-                Badge::class.java,
-                Subscription::class.java,
-                Pair::class.java,
-                Triple::class.java
-        )
-    }
-
-    val cachePath: File = File("cache")
-    val cacheDao: List<ICacheable> = listOf(
-            BadgeDao,
-            ItemDao,
-            SubscriptionDao
-    )
-
     // SQL
     lateinit private var hikariDataSource: HikariDataSource
     lateinit var databaseFactory: SessionFactory
         private set
-
     // Netty
     lateinit private var serverBootstrap: ServerBootstrap
     lateinit private var workerGroup: EventLoopGroup
     lateinit private var bossGroup: EventLoopGroup
-
     // Habbo
-    lateinit var habboEncryptionHandler: HabboEncryptionHandler
-        private set
-    lateinit var habboGame: HabboGame
-        private set
-    lateinit var habboSessionManager: HabboSessionManager
-        private set
-    lateinit var habboHandler: HabboHandler
-        private set
-
+    val habboEncryptionHandler: HabboEncryptionHandler by lazy {
+        HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
+    }
+    val habboGame: HabboGame by lazy { HabboGame() }
+    val habboSessionManager: HabboSessionManager by lazy { HabboSessionManager() }
+    val habboHandler: HabboHandler by lazy { HabboHandler() }
     // Thread Executors
-    lateinit var serverScheduledExecutor: ScheduledExecutorService
-        private set
-    lateinit var serverExecutor: ExecutorService
-        private set
-
+    val serverScheduledExecutor: ScheduledExecutorService by lazy { Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads) }
+    val serverExecutor: ExecutorService by lazy { Executors.newCachedThreadPool() }
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
     val started: Boolean
         get() {
             try {
@@ -151,66 +93,16 @@ object HabboServer : AutoCloseable {
         Security.addProvider(BouncyCastleProvider())
 
         Runtime.getRuntime().addShutdownHook(Thread { close() })
-
-        if (!cachePath.exists()) cachePath.mkdirs()
-    }
-
-    fun saveCache(key: String, any: Any) {
-        log.debug("Saving $key to cache...")
-
-        val path = File(cachePath, key)
-
-        if (!path.exists()) path.mkdirs()
-
-        val f = File(path, "$key.cache")
-
-        if (f.exists()) f.delete()
-
-        f.writeBytes(fstConfiguration.asByteArray(any))
-
-        log.debug("Cache successfully saved!")
-    }
-
-    fun loadCache(key: String): Any? {
-        log.debug("Trying to get cache $key")
-
-        val path = File(cachePath, key)
-
-        if (!path.exists()) return null
-
-        val f = File(path, "$key.cache")
-
-        if (!f.exists()) return null
-
-        log.debug("Cache successfully fetched!")
-
-        return fstConfiguration.asObject(f.readBytes())
-    }
-
-    fun clearCache(key: String) {
-        log.debug("Clearing cache $key")
-
-        val path = File(cachePath, key)
-
-        if (path.exists()) {
-            path.deleteRecursively()
-
-            log.debug("Cleared cache $key")
-        }
     }
 
     fun init() {
-        // Instantiate thread executors
-        serverScheduledExecutor = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
-        serverExecutor = Executors.newCachedThreadPool()
-
         javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine { log.info(it) }
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
         log.info("By jomp16 and Lucas.")
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
-        log.info("Licensed under GPLv3. See http://www.gnu.org/licenses/")
+        log.info("Licensed under GPLv3. See https://www.gnu.org/licenses/gpl-3.0.en.html")
         log.info("")
         log.info("Loading ${BuildConfig.NAME} emulator...")
 
@@ -232,29 +124,14 @@ object HabboServer : AutoCloseable {
             // END USERS
             log.info("Done!")
 
-            // cache start
-            log.info("Caching all stuffs...")
-            cacheDao.forEach {
-                it.cacheAll()
-                it.saveCache()
-            }
-            // cache end
-
             // Load HabboGame...
             log.info("Loading Habbo game...")
-            habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
-            habboHandler = HabboHandler()
-            habboSessionManager = HabboSessionManager()
-            habboGame = HabboGame()
+            habboGame.load()
             log.info("Done!")
 
             // load plugins
             log.info("Loading plugins...")
-            pluginManager.addPlugin(RoomCommandsManagerListener())
-            pluginManager.addPlugin(RoomCommandsListener())
-            pluginManager.addPlugin(RoomBadgeCommandsListener())
-            pluginManager.addPlugin(RoomAboutCommandListener())
-            pluginManager.addPlugin(CatalogCommandsListener())
+            pluginManager.loadPluginsFromClassLoader(javaClass.classLoader)
             pluginManager.loadPluginsFromDir(File("plugins"))
             log.info("Done!")
         } catch (e: Exception) {
@@ -270,7 +147,6 @@ object HabboServer : AutoCloseable {
                 serverBootstrap = ServerBootstrap()
                 workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
                 bossGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
-
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
                 val habboNettyHandler = HabboNettyHandler()
@@ -294,7 +170,6 @@ object HabboServer : AutoCloseable {
                         })
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
-
                 val channelFuture = serverBootstrap.bind(habboConfig.port)
 
                 channelFuture.awaitUninterruptibly()
@@ -319,17 +194,13 @@ object HabboServer : AutoCloseable {
         }
     }
 
-    inline fun <R> database(rollbackTransaction: Boolean = false, crossinline task: Session.() -> R): R = serverExecutor.submit(
-            Callable {
-                databaseFactory.use { session ->
-                    session.transaction { transaction ->
-                        transaction.rollbackOnly = rollbackTransaction
+    inline fun <R> database(rollbackTransaction: Boolean = false, crossinline task: Session.() -> R): R = databaseFactory.use { session ->
+        session.transaction { transaction ->
+            transaction.rollbackOnly = rollbackTransaction
 
-                        session.task()
-                    }
-                }
-            }
-    ).get()
+            session.task()
+        }
+    }
 
     override fun close() {
         if (started) {
@@ -341,7 +212,6 @@ object HabboServer : AutoCloseable {
             workerGroup.shutdownGracefully().awaitUninterruptibly()
             log.debug("Done!")
             // End Netty
-
             // Start room
             log.debug("Closing all loaded rooms...")
             habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
@@ -349,21 +219,14 @@ object HabboServer : AutoCloseable {
             }
             log.debug("Done!")
             // End room
-
             // Start database
             log.debug("Fixing some data in users table...")
             cleanUpUsers()
             log.debug("Done!")
             // End database
-
-            log.info("Updating caches...")
-            cacheDao.forEach { it.saveCache() }
-            log.info("Done!")
-
             // Start plugins
             pluginManager.close()
             // End plugins
-
             log.info("Done!")
         }
     }

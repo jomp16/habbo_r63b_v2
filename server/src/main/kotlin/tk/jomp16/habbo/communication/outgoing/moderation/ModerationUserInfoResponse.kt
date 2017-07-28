@@ -52,7 +52,6 @@ class ModerationUserInfoResponse {
             writeInt(0) // todo: bans by id, probably
             writeUTF(userInformation.email)
             writeUTF("") // todo: user classification
-
             // more data available:
             // string -- last sanction time
             // int -- unknown

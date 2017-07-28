@@ -22,6 +22,7 @@ package tk.jomp16.habbo.communication.incoming.handshake
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -30,11 +31,10 @@ class HandshakeUniqueIDHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         // ignore this shit
         habboRequest.readUTF()
-
         val uniqueID = habboRequest.readUTF()
 
         habboSession.uniqueID = uniqueID
 
-//        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
     }
 }
