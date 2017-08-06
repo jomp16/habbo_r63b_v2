@@ -17,15 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16
+package tk.jomp16.fastfood.communication.outgoing
 
-import tk.jomp16.habbo.HabboServer
-
-fun main(args: Array<String>) {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
+enum class FFOutgoing(val headerId: Int) {
+    FAST_FOOD_MAINENTANCE(1),
+    USER_JOIN_GAME(3),
+    DROP_FOOD(4),
+    NEXT_PLATE(5),
+    END_GAME(6),
+    USE_BIG_PARACHUTE(9),
+    LAUNCH_MISSILE(10),
+    HANDSHAKE_AUTHENTICATION_OK(11),
+    ENABLE_SHIELD(12),
+    HANDSHAKE_SEND_CLIENT_LOCALIZATIONS(13),
+    POWER_UPS_INVENTORY(14),
+    POWER_UPS_PRICE(15),
+    USER_CREDITS(16),
+    GAME_COUNT(19),
+    USE_PARACHUTE(-1),
 }

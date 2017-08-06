@@ -44,17 +44,6 @@ class HabboHandler {
     var largestNameSize: Int = 0
 
     init {
-        load()
-    }
-
-    fun load() {
-        releases.clear()
-        incomingNames.clear()
-        outgoingNames.clear()
-        messageHandlers.clear()
-        messageResponses.clear()
-        largestNameSize = 0
-
         releases.addAll(ReleaseDao.getReleases())
         val incomingHeaders = ReleaseDao.getIncomingHeaders()
         val outgoingHeaders = ReleaseDao.getOutgoingHeaders()

@@ -59,20 +59,21 @@ class ItemManager {
     fun load() {
         log.info("Loading furnishings...")
 
-        furniXMLInfos.clear()
         oldGiftWrapper.clear()
         newGiftWrapper.clear()
         furniInteractor.clear()
         teleportLinks.clear()
         roomTeleportLinks.clear()
 
-        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
-            val saxParser = SAXParserFactory.newInstance().newSAXParser()
-            val handler = FurniXMLHandler()
+        if (furniXMLInfos.isEmpty()) {
+            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
+                val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                val handler = FurniXMLHandler()
 
-            saxParser.parse(it, handler)
+                saxParser.parse(it, handler)
 
-            furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+            }
         }
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }

@@ -32,24 +32,24 @@ object CatalogDao {
             CatalogPage(
                     it.int("id"),
                     it.int("parent_id"),
-                    it.string("name"),
-                    it.string("code_name"),
+                    it.string("name").trim(),
+                    it.string("code_name").trim(),
                     it.int("icon_image"),
                     it.boolean("visible"),
                     it.boolean("enabled"),
                     it.int("min_rank"),
                     it.boolean("club_only"),
                     it.int("order_num"),
-                    it.string("page_layout"),
-                    it.string("page_headline"),
-                    it.string("page_teaser"),
-                    it.string("page_special"),
-                    it.string("page_text1"),
-                    it.string("page_text2"),
-                    it.string("page_text_details"),
-                    it.string("page_text_teaser"),
-                    it.string("page_link_description"),
-                    it.string("page_link_pagename")
+                    it.string("page_layout").trim(),
+                    it.string("page_headline").trim(),
+                    it.string("page_teaser").trim(),
+                    it.string("page_special").trim(),
+                    it.string("page_text1").trim(),
+                    it.string("page_text2").trim(),
+                    it.string("page_text_details").trim(),
+                    it.string("page_text_teaser").trim(),
+                    it.string("page_link_description").trim(),
+                    it.string("page_link_pagename").trim()
             )
         }
     }
@@ -59,10 +59,10 @@ object CatalogDao {
             CatalogItem(
                     it.int("id"),
                     it.int("page_id"),
-                    it.string("item_name"),
+                    it.string("item_name").trim(),
                     it.intOrNull("deal_id") ?: 0,
-                    it.string("catalog_name"),
-                    it.string("badge"),
+                    it.string("catalog_name").trim(),
+                    it.string("badge").trim(),
                     it.int("cost_credits"),
                     it.int("cost_pixels"),
                     it.int("cost_vip"),
@@ -80,7 +80,7 @@ object CatalogDao {
             CatalogClubOffer(
                     it.int("id"),
                     it.int("item_id"),
-                    it.string("name"),
+                    it.string("name").trim(),
                     it.int("months"),
                     it.int("credits"),
                     it.int("points"),
@@ -94,7 +94,7 @@ object CatalogDao {
         select("SELECT * FROM `catalog_deals`") {
             CatalogDeal(
                     it.int("id"),
-                    it.string("item_names").split(','),
+                    it.string("item_names").split(',').map(String::trim),
                     it.string("amounts").split(',').map(String::toInt)
             )
         }
@@ -102,7 +102,7 @@ object CatalogDao {
 
     fun getRecyclerRewards(): List<Pair<Int, String>> = HabboServer.database {
         select("SELECT * FROM `catalog_recycler`") {
-            it.int("level") to it.string("item_name")
+            it.int("level") to it.string("item_name").trim()
         }
     }
 

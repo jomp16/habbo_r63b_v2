@@ -96,6 +96,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var rc4Encryption: RC4Encryption? = null
     var uniqueID: String = ""
     var ping: Long = 0
+    var gameSSOToken: String = ""
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) = outgoingExecutor.execute {
         HabboServer.habboHandler.invokeResponse(this, outgoing, *args)?.let {

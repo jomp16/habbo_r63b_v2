@@ -20,15 +20,6 @@
 package tk.jomp16.habbo.kotlin
 
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.config.HabboConfig
-
-fun habboServer(habboConfig: HabboConfig): HabboServer {
-    HabboServer.habboConfig = habboConfig
-
-    HabboServer.init()
-
-    return HabboServer
-}
 
 fun HabboServer.cleanUpUsers() {
     database {

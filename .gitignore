@@ -20,5 +20,6 @@ plugins/
 *.tar.xz
 
 camera_data/
+PACKET_INFOS/
 
 !server/src/main/resources/ascii_art.txt

@@ -17,15 +17,10 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16
+package tk.jomp16.fastfood.communication
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.fastfood.communication.incoming.FFIncoming
 
-fun main(args: Array<String>) {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
-}
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class FFHandler(vararg val headers: FFIncoming)

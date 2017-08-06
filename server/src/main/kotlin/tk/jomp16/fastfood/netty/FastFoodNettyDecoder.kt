@@ -17,22 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.netty
+package tk.jomp16.fastfood.netty
 
 import io.netty.buffer.ByteBuf
-import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tk.jomp16.fastfood.communication.incoming.FFIncoming
+import tk.jomp16.fastfood.game.FastFoodSession
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
-import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
 
-class HabboNettyDecoder : ByteToMessageDecoder() {
+class FastFoodNettyDecoder : ByteToMessageDecoder() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, out: MutableList<Any>) {
@@ -64,7 +63,6 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="*" />
 </cross-domain-policy>""")
-                    .addListener(ChannelFutureListener.CLOSE)
 
             return
         } else {
@@ -84,23 +82,12 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             out += HabboRequest(headerId, msg.readSlice(size).retain())
 
             if (log.isDebugEnabled) {
-                val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-                val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+                val fastFoodSession: FastFoodSession = ctx.channel().attr(HabboSessionManager.fastFoodAttributeKey).get()
+                val username = if (fastFoodSession.authenticated) fastFoodSession.habboSession!!.userInformation.username else fastFoodSession.channel.ip()
 
                 out.forEach {
                     if (it is HabboRequest) {
-                        val incoming: String =
-                                if (headerId == 4000) {
-                                    it.byteBuf.markReaderIndex()
-
-                                    habboSession.release = it.readUTF()
-
-                                    it.byteBuf.resetReaderIndex()
-
-                                    Incoming.RELEASE_CHECK.name
-                                } else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
-
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(2), FFIncoming.values().firstOrNull { it.headerId == headerId }?.name?.padEnd(HabboServer.fastFoodHandler.largestNameSize), it.toString())
                     }
                 }
             }
