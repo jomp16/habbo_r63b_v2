@@ -47,7 +47,7 @@ class HabboGame {
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
 
-    fun load() {
+    init {
         landingManager.load()
         roomManager.load()
         itemManager.load()

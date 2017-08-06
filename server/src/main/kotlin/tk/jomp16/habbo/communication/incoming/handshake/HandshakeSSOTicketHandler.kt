@@ -65,7 +65,7 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID2, true)
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID3, "", "")
         habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
-        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
+        //        habboSession.sendHabboResponse(FFOutgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
         habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,
                 HabboServer.habboGame.moderationManager.moderationCategories,
                 HabboServer.habboGame.moderationManager.moderationTopics.values)

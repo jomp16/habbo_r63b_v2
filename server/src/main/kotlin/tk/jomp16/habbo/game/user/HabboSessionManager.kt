@@ -20,22 +20,41 @@
 package tk.jomp16.habbo.game.user
 
 import io.netty.channel.Channel
+import io.netty.channel.ChannelId
 import io.netty.util.AttributeKey
-import java.util.*
+import tk.jomp16.fastfood.game.FastFoodSession
 
 class HabboSessionManager {
-    val habboSessions: MutableMap<Channel, HabboSession> = HashMap()
+    val habboSessions: MutableMap<ChannelId, HabboSession> = mutableMapOf()
+    val fastFoodSessions: MutableMap<ChannelId, FastFoodSession> = mutableMapOf()
 
     fun makeHabboSession(channel: Channel): Boolean {
         val habboSession = HabboSession(channel)
         channel.attr(habboSessionAttributeKey).set(habboSession)
 
-        return habboSessions.put(channel, habboSession) == null
+        return habboSessions.put(channel.id(), habboSession) == null
+    }
+
+    fun makeFastFoodSession(channel: Channel): Boolean {
+        val fastFoodSession = FastFoodSession(channel)
+        channel.attr(fastFoodAttributeKey).set(fastFoodSession)
+
+        return fastFoodSessions.put(channel.id(), fastFoodSession) == null
     }
 
     fun removeHabboSession(channel: Channel): Boolean {
-        if (habboSessions.containsKey(channel)) {
-            habboSessions.remove(channel)?.close()
+        if (habboSessions.containsKey(channel.id())) {
+            habboSessions.remove(channel.id())?.close()
+
+            return true
+        } else {
+            return false
+        }
+    }
+
+    fun removeFastFoodSession(channel: Channel): Boolean {
+        if (fastFoodSessions.containsKey(channel.id())) {
+            fastFoodSessions.remove(channel.id())?.close()
 
             return true
         } else {
@@ -51,5 +70,6 @@ class HabboSessionManager {
 
     companion object {
         val habboSessionAttributeKey: AttributeKey<HabboSession> = AttributeKey.valueOf<HabboSession>("HABBO_SESSION")
+        val fastFoodAttributeKey: AttributeKey<FastFoodSession> = AttributeKey.valueOf<FastFoodSession>("FAST_FOOD_SESSION")
     }
 }

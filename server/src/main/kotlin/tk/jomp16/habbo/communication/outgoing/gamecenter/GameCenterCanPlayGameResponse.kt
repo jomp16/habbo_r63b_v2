@@ -17,15 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16
+package tk.jomp16.habbo.communication.outgoing.gamecenter
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboResponse
+import tk.jomp16.habbo.communication.Response
+import tk.jomp16.habbo.communication.outgoing.Outgoing
 
-fun main(args: Array<String>) {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
+@Suppress("unused", "UNUSED_PARAMETER")
+class GameCenterCanPlayGameResponse {
+    @Response(Outgoing.GAME_CENTER_CAN_PLAY_GAME)
+    fun response(habboResponse: HabboResponse, gameId: Int, gameCenterCanPlayGameStatus: GameCenterCanPlayGameStatus) {
+        habboResponse.apply {
+            writeInt(gameId)
+            writeInt(gameCenterCanPlayGameStatus.status)
+        }
+    }
+
+    enum class GameCenterCanPlayGameStatus(val status: Int) {
+        OK(0),
+        ERROR(1)
+    }
 }

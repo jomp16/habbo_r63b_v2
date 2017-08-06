@@ -17,15 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16
+package tk.jomp16.fastfood.communication.outgoing.handshake
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.fastfood.communication.FFResponse
+import tk.jomp16.fastfood.communication.outgoing.FFOutgoing
+import tk.jomp16.habbo.communication.HabboResponse
 
-fun main(args: Array<String>) {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
+@Suppress("unused", "UNUSED_PARAMETER")
+class HandshakeMainentanceResponse {
+    @FFResponse(FFOutgoing.FAST_FOOD_MAINENTANCE)
+    fun response(habboResponse: HabboResponse, serverMainentance: Boolean) {
+        habboResponse.apply {
+            writeBoolean(false) // useless boolean
+            writeBoolean(serverMainentance)
+        }
+    }
 }

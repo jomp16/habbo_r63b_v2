@@ -25,7 +25,6 @@ dependencies {
     compile project(":pathfinding")
     compile project(":plugin_manager")
 
-    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
     compile "io.netty:netty-all:$netty_version"
     compile "io.netty:netty-transport-native-epoll:$netty_version"
     compile "com.github.andrewoma.kwery:core:$kwery_version"
@@ -35,6 +34,7 @@ dependencies {
     compile "org.jasypt:jasypt:$jasypt_version"
     compile "org.apache.commons:commons-lang3:$commons_lang_version"
     compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
 }
 
 buildConfig {

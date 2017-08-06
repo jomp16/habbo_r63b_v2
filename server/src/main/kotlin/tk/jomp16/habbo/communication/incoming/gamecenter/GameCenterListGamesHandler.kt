@@ -17,15 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16
+package tk.jomp16.habbo.communication.incoming.gamecenter
 
-import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.communication.HabboRequest
+import tk.jomp16.habbo.communication.Handler
+import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.user.HabboSession
 
-fun main(args: Array<String>) {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
+@Suppress("unused", "UNUSED_PARAMETER")
+class GameCenterListGamesHandler {
+    @Handler(Incoming.GAME_LISTING)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
+
+        // todo: check what's necessary to send to client
+        habboSession.sendHabboResponse(Outgoing.GAME_CENTER_LIST) // todo: add dynamic game listing
+    }
 }
