@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
 
 data class HabboConfig(
+        @JsonProperty("ip")
+        val ip: String,
         @JsonProperty("port")
         val port: Int,
         @JsonProperty("web_port")
@@ -35,6 +37,10 @@ data class HabboConfig(
         val rsaConfig: RSAConfig,
         @JsonProperty("rc4")
         val rc4: Boolean,
+        @JsonProperty("c_images_url")
+        val cImagesUrl: String,
+        @JsonProperty("games_url")
+        val gamesUrl: String,
         @JsonProperty("furnidata_xml")
         val furnidataXml: String,
         @JsonProperty("reward")

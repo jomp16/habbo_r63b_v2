@@ -17,22 +17,27 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.communication.incoming.gamecenter
+package tk.jomp16.utils.plugin.game.fastfood
 
 import tk.jomp16.habbo.HabboServer
-import tk.jomp16.habbo.communication.HabboRequest
-import tk.jomp16.habbo.communication.Handler
-import tk.jomp16.habbo.communication.incoming.Incoming
-import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.game.user.HabboSession
+import tk.jomp16.utils.plugin.api.PluginListener
+import tk.jomp16.utils.plugin.game.fastfood.impl.FastFoodGameHandler
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class GameCenterListGamesHandler {
-    @Handler(Incoming.GAME_LISTING)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+@Suppress("unused")
+class PluginFastFoodListener : PluginListener() {
+    private val fastFoodGameHandler: FastFoodGameHandler = FastFoodGameHandler()
 
-        // todo: check what's necessary to send to client
-        habboSession.sendHabboResponse(Outgoing.GAME_CENTER_LIST, HabboServer.habboGame.gameManager.gameHandlers.values.map { it.gameData }) // todo: add dynamic game listing
+    override fun onCreate() {
+        super.onCreate()
+
+        // Creates and registers a new FastFood game in HabboServer
+        HabboServer.habboGame.gameManager.registerGame(fastFoodGameHandler)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Destroys and unregister FastFood game in HabboServer
+        HabboServer.habboGame.gameManager.unregisterGame(fastFoodGameHandler)
     }
 }

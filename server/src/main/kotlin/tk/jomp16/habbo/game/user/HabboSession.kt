@@ -88,7 +88,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val authenticated: Boolean
         get() {
             try {
-                return userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
+                return gameSocket || userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
             } catch (exception: UninitializedPropertyAccessException) {
                 return false
             }
@@ -97,6 +97,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var uniqueID: String = ""
     var ping: Long = 0
     var gameSSOToken: String = ""
+    var gameSocket: Boolean = false
+    var gotReleasePacket: Boolean = false
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) = outgoingExecutor.execute {
         HabboServer.habboHandler.invokeResponse(this, outgoing, *args)?.let {

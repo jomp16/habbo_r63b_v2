@@ -19,23 +19,26 @@
 
 package tk.jomp16.habbo.communication.outgoing.gamecenter
 
+import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.Response
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.gamemanager.data.GameData
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GameCenterListGamesResponse {
     @Response(Outgoing.GAME_CENTER_LIST)
-    fun response(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse, games: Collection<GameData>) {
         habboResponse.apply {
-            writeInt(1) // available games
-            // BaseJump / Fast Food
-            writeInt(3) // id
-            writeUTF("basejump") // game name
-            writeUTF("68bbd2") // game background color
-            writeUTF("") // game text color
-            writeUTF("https://swf.hfinch.tk/c_images/gamecenter_basejump/") // todo: add dynamic c_images URL
-            writeUTF("") // idk
+            writeInt(games.size) // available games
+            games.forEach {
+                writeInt(it.id)
+                writeUTF(it.codeName)
+                writeUTF(it.backgroundColor)
+                writeUTF(it.textColor)
+                writeUTF("${HabboServer.habboConfig.cImagesUrl}/${it.imagesPath}")
+                writeUTF("") // idk
+            }
         }
     }
 }

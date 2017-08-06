@@ -58,16 +58,24 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             // flash policy
             msg.readerIndex(msg.readableBytes())
             msg.discardSomeReadBytes()
-
-            ctx.writeAndFlush("""<?xml version="1.0"?>
+            val channelFuture = ctx.writeAndFlush("""<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="*" />
 </cross-domain-policy>""")
-                    .addListener(ChannelFutureListener.CLOSE)
+            val habboSession = HabboServer.habboSessionManager.getHabboSessionByIp(ctx.channel().ip())
+
+            if (habboSession != null && habboSession.gameSSOToken.isNotBlank()) {
+                // socket for game server, for some reason it needs to be open at all times
+                ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get().gameSocket = true
+            } else {
+                channelFuture.addListener(ChannelFutureListener.CLOSE)
+            }
 
             return
         } else {
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+
             msg.markReaderIndex()
             val messageLength = msg.readInt()
             val headerId = msg.readUnsignedShort()
@@ -80,27 +88,44 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
                 return
             }
+            val habboRequest = HabboRequest(headerId, msg.readSlice(size).retain())
+            out.add(habboRequest)
 
-            out += HabboRequest(headerId, msg.readSlice(size).retain())
+            if (!habboSession.gotReleasePacket) {
+                if (headerId == 4000) {
+                    habboSession.gotReleasePacket = true
+                } else {
+                    // probably game?
+                    habboRequest.isGame = true
+                }
+            }
+
 
             if (log.isDebugEnabled) {
-                val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-                val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
-
                 out.forEach {
                     if (it is HabboRequest) {
-                        val incoming: String =
-                                if (headerId == 4000) {
-                                    it.byteBuf.markReaderIndex()
+                        if (!it.isGame) {
+                            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+                            val incoming: String =
+                                    if (headerId == 4000) {
+                                        it.byteBuf.markReaderIndex()
 
-                                    habboSession.release = it.readUTF()
+                                        habboSession.release = it.readUTF()
 
-                                    it.byteBuf.resetReaderIndex()
+                                        it.byteBuf.resetReaderIndex()
 
-                                    Incoming.RELEASE_CHECK.name
-                                } else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
+                                        Incoming.RELEASE_CHECK.name
+                                    } else {
+                                        HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
+                                    }
 
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                            log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                        } else {
+                            val gameHabboSession = HabboServer.habboSessionManager.getHabboSessionByIp(ctx.channel().ip())
+                            val gameUsername = if (gameHabboSession != null && gameHabboSession.gameSSOToken.isNotEmpty()) gameHabboSession.userInformation.username else ctx.channel().ip()
+
+                            log.trace("({}) - GOT  --> [{}][{}] -- {}", gameUsername, headerId.toString().padEnd(4), "GAME".padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
+                        }
                     }
                 }
             }

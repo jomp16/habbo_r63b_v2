@@ -23,6 +23,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 import io.netty.util.AttributeKey
 import tk.jomp16.fastfood.game.FastFoodSession
+import tk.jomp16.habbo.kotlin.ip
 
 class HabboSessionManager {
     val habboSessions: MutableMap<ChannelId, HabboSession> = mutableMapOf()
@@ -65,6 +66,8 @@ class HabboSessionManager {
     fun getHabboSessionById(id: Int) = habboSessions.values.find { it.authenticated && it.userInformation.id == id }
 
     fun getHabboSessionByUsername(username: String) = habboSessions.values.find { it.authenticated && it.userInformation.username == username }
+
+    fun getHabboSessionByIp(ip: String): HabboSession? = habboSessions.values.firstOrNull { it.channel.ip() == ip }
 
     fun containsHabboSessionById(id: Int) = getHabboSessionById(id) != null
 

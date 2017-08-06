@@ -41,9 +41,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.fastfood.communication.FastFoodHandler
-import tk.jomp16.fastfood.netty.FastFoodNettyDecoder
-import tk.jomp16.fastfood.netty.FastFoodNettyEncoder
-import tk.jomp16.fastfood.netty.FastFoodNettyHandler
 import tk.jomp16.habbo.communication.HabboHandler
 import tk.jomp16.habbo.config.HabboConfig
 import tk.jomp16.habbo.encryption.HabboEncryptionHandler
@@ -152,8 +149,8 @@ object HabboServer : AutoCloseable {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
                 val habboNettyHandler = HabboNettyHandler()
-                val fastFoodNettyEncoder = FastFoodNettyEncoder()
-                val fastFoodNettyHandler = FastFoodNettyHandler()
+                //                val fastFoodNettyEncoder = FastFoodNettyEncoder()
+                //                val fastFoodNettyHandler = FastFoodNettyHandler()
 
                 habboServerBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
@@ -175,7 +172,7 @@ object HabboServer : AutoCloseable {
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
 
-                fastFoodServerBootstrap.group(bossGroup, workerGroup)
+                /*fastFoodServerBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
@@ -190,20 +187,17 @@ object HabboServer : AutoCloseable {
                             }
                         })
                         .option(ChannelOption.SO_BACKLOG, 128)
-                        .childOption(ChannelOption.SO_KEEPALIVE, true)
-                val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
-                val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 1)
-
+                        .childOption(ChannelOption.SO_KEEPALIVE, true)*/
+                val habboChannelFuture = habboServerBootstrap.bind(habboConfig.ip, habboConfig.port)
+                //                val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.ip, habboConfig.port + 1)
                 habboChannelFuture.sync()
-                fastFoodChannelFuture.sync()
-
-                if (habboChannelFuture.isDone && fastFoodChannelFuture.isDone) {
-                    if (habboChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
-                        log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
-                        log.info("FastFood server started on port {}!", habboConfig.port + 1)
-
+                //                fastFoodChannelFuture.sync()
+                if (habboChannelFuture.isDone/* && fastFoodChannelFuture.isDone*/) {
+                    if (habboChannelFuture.isSuccess/* && fastFoodChannelFuture.isSuccess*/) {
+                        log.info("${BuildConfig.NAME} server started on ip {} and port {}!", habboConfig.ip, habboConfig.port)
+                        //                        log.info("FastFood server started on ip {} and port {}!", habboConfig.ip, habboConfig.port + 1)
                         habboChannelFuture.channel().closeFuture().sync()
-                        fastFoodChannelFuture.channel().closeFuture().sync()
+                        //                        fastFoodChannelFuture.channel().closeFuture().sync()
                     } else {
                         log.error("Error starting ${BuildConfig.NAME} server!", habboChannelFuture.cause())
 

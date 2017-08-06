@@ -28,6 +28,7 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
     lateinit var incoming: Incoming
+    var isGame: Boolean = false
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 

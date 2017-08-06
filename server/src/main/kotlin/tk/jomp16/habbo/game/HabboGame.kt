@@ -24,6 +24,7 @@ import org.jasypt.util.password.StrongPasswordEncryptor
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.camera.CameraManager
 import tk.jomp16.habbo.game.catalog.CatalogManager
+import tk.jomp16.habbo.game.gamemanager.GameManager
 import tk.jomp16.habbo.game.group.GroupManager
 import tk.jomp16.habbo.game.item.ItemManager
 import tk.jomp16.habbo.game.landing.LandingManager
@@ -46,6 +47,7 @@ class HabboGame {
     val moderationManager: ModerationManager = ModerationManager()
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
+    val gameManager: GameManager = GameManager()
 
     init {
         landingManager.load()
@@ -57,6 +59,7 @@ class HabboGame {
         moderationManager.load()
         groupManager.load()
         cameraManager.load()
+        gameManager.load()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }

@@ -17,15 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher",
-        ":plugin_manager",
-        ":plugin_impl1",
-        ":plugin_webapp",
-        ":plugin_game_fastfood",
-        ":pathfinding",
-        ":habbo_imaging",
-        ":server"
+package tk.jomp16.habbo.game.gamemanager.data
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
-project(":plugin_webapp").projectDir = new File("plugins_src/plugin_webapp")
-project(":plugin_game_fastfood").projectDir = new File("plugins_src/games/fastfood")
+data class GameData(
+        val id: Int,
+        val codeName: String,
+        val backgroundColor: String,
+        val textColor: String,
+        val imagesPath: String
+)
