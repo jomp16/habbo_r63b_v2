@@ -70,7 +70,7 @@ class WiredTriggerDialogResponse {
             InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
-                writeEmptyItems()
+                writeEmptySettings()
                 writeInt(1)
                 writeBlockedActions()
             }

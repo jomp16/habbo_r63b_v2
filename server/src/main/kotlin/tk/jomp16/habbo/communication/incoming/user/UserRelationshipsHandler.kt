@@ -23,7 +23,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.user.UserInformationDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.information.UserInformation
 

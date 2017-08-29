@@ -22,16 +22,16 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RewardConfig(
-        @JsonProperty("credits")
+        @JsonProperty("credits", required = true)
         val credits: Int,
-        @JsonProperty("credits_max")
+        @JsonProperty("credits_max", required = true)
         val creditsMax: Int,
-        @JsonProperty("pixels")
+        @JsonProperty("pixels", required = true)
         val pixels: Int,
-        @JsonProperty("pixels_max")
+        @JsonProperty("pixels_max", required = true)
         val pixelsMax: Int,
-        @JsonProperty("vip_points")
+        @JsonProperty("vip_points", required = true)
         val vipPoints: Int,
-        @JsonProperty("vip_points_max")
+        @JsonProperty("vip_points_max", required = true)
         val vipPointsMax: Int
 )

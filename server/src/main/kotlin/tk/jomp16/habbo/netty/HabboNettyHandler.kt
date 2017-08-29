@@ -95,6 +95,9 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     @Suppress("OverridingDeprecatedMember")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        log.error("An error happened while handling packet!", cause)
+        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
+        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+
+        log.error("An error happened while handling packet for user $username!", cause)
     }
 }

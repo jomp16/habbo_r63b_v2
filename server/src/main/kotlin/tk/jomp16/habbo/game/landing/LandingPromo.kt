@@ -24,12 +24,12 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 
 data class LandingPromo(
         val id: Int,
-        val header: String,
-        val body: String,
-        val button: String,
-        val showButton: Boolean,
-        val buttonLink: String,
-        val image: String
+        private val header: String,
+        private val body: String,
+        private val button: String,
+        private val showButton: Boolean,
+        private val buttonLink: String,
+        private val image: String
 ) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {

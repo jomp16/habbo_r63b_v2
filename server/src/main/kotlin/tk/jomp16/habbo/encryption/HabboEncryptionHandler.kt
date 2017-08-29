@@ -19,8 +19,10 @@
 
 package tk.jomp16.habbo.encryption
 
+import tk.jomp16.habbo.HabboServer
 import java.math.BigInteger
 import java.security.KeyFactory
+import java.security.KeyPair
 import java.security.KeyPairGenerator
 import javax.crypto.KeyAgreement
 import javax.crypto.interfaces.DHPublicKey
@@ -29,24 +31,60 @@ import javax.crypto.spec.DHPublicKeySpec
 import javax.xml.bind.DatatypeConverter
 
 class HabboEncryptionHandler(n: String, d: String, e: String) {
-    val rsaEncryption: RSAEncryption = RSAEncryption(n, d, e)
+    private val rsaEncryption: RSAEncryption = RSAEncryption(n, d, e)
+    private val diffieHellmanEncryption: DiffieHellmanEncryption = DiffieHellmanEncryption()
+    private var dhParameterSpec: DHParameterSpec? = null
+    private var serverKeyPair: KeyPair? = null
+    private var serverKeyAgree: KeyAgreement? = null
+
+    init {
+        if (!HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
+            dhParameterSpec = diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
+
+            serverKeyPair = KeyPairGenerator.getInstance("DH", "BC").run {
+                initialize(dhParameterSpec)
+
+                genKeyPair()
+            }
+
+            serverKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
+                init(serverKeyPair!!.private)
+            }
+        }
+    }
+
+    fun generateDiffieHellmanParameterSpec(): DHParameterSpec {
+        return when {
+            HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys -> diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
+            else -> dhParameterSpec!!
+        }
+    }
 
     fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<BigInteger, BigInteger> {
-        val serverKeyPair = KeyPairGenerator.getInstance("DH", "BC").run {
-            initialize(diffieHellmanParams)
-
-            genKeyPair()
-        }
-        val serverKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
-            init(serverKeyPair.private)
-        }
+        val serverKeyPair1: KeyPair
+        val serverKeyAgree1: KeyAgreement
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
             generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
         }
 
-        serverKeyAgree.doPhase(clientPublicKey, true)
+        if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
+            serverKeyPair1 = KeyPairGenerator.getInstance("DH", "BC").run {
+                initialize(diffieHellmanParams)
 
-        return (serverKeyPair.public as DHPublicKey).y to BigInteger(serverKeyAgree.generateSecret())
+                genKeyPair()
+            }
+
+            serverKeyAgree1 = KeyAgreement.getInstance("DH", "BC").apply {
+                init(serverKeyPair1.private)
+            }
+        } else {
+            serverKeyPair1 = serverKeyPair!!
+            serverKeyAgree1 = serverKeyAgree!!
+        }
+
+        serverKeyAgree1.doPhase(clientPublicKey, true)
+
+        return (serverKeyPair1.public as DHPublicKey).y to BigInteger(serverKeyAgree1.generateSecret())
     }
 
     fun getRsaStringEncrypted(bytes: ByteArray): String = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))

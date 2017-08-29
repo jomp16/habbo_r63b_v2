@@ -32,8 +32,8 @@ class RoomHeightmapResponse {
             writeInt(room.roomModel.mapSizeX)
             writeInt(room.roomModel.mapSizeX * room.roomModel.mapSizeY)
 
-            for (i in 0..room.roomModel.mapSizeY - 1) {
-                for (j in 0..room.roomModel.mapSizeX - 1) {
+            for (i in 0 until room.roomModel.mapSizeY) {
+                for (j in 0 until room.roomModel.mapSizeX) {
                     writeShort((room.roomGamemap.getAbsoluteHeight(j, i) * 256).toInt())
                 }
             }

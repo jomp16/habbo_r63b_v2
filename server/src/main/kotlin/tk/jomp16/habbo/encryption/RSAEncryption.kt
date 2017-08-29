@@ -45,44 +45,44 @@ class RSAEncryption(n: String, d: String, e: String) {
     }
 
     fun sign(src: ByteArray): ByteArray {
-        try {
+        return try {
             cipher.init(Cipher.ENCRYPT_MODE, privateKey)
 
-            return cipher.doFinal(src)
+            cipher.doFinal(src)
         } catch (e: Exception) {
-            return byteArrayOf()
+            byteArrayOf()
         }
     }
 
     @Suppress("unused")
     fun encrypt(src: ByteArray): ByteArray {
-        try {
+        return try {
             cipher.init(Cipher.ENCRYPT_MODE, publicKey)
 
-            return cipher.doFinal(src)
+            cipher.doFinal(src)
         } catch (e: Exception) {
-            return byteArrayOf()
+            byteArrayOf()
         }
     }
 
     fun verify(src: ByteArray): ByteArray {
-        try {
+        return try {
             cipher.init(Cipher.DECRYPT_MODE, privateKey)
 
-            return cipher.doFinal(src)
+            cipher.doFinal(src)
         } catch (e: Exception) {
-            return byteArrayOf()
+            byteArrayOf()
         }
     }
 
     @Suppress("unused")
     fun decrypt(src: ByteArray): ByteArray {
-        try {
+        return try {
             cipher.init(Cipher.DECRYPT_MODE, publicKey)
 
-            return cipher.doFinal(src)
+            cipher.doFinal(src)
         } catch (e: Exception) {
-            return byteArrayOf()
+            byteArrayOf()
         }
     }
 }

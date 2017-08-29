@@ -23,7 +23,7 @@ import org.bouncycastle.crypto.engines.RC4Engine
 import org.bouncycastle.crypto.params.KeyParameter
 
 class RC4Encryption(key: ByteArray) {
-    val rc4Engine = RC4Engine().apply { init(true, KeyParameter(key)) }
+    private val rc4Engine = RC4Engine().apply { init(true, KeyParameter(key)) }
 
     fun decrypt(byteArray: ByteArray): ByteArray {
         val bytes = ByteArray(byteArray.size)

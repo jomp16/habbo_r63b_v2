@@ -23,7 +23,7 @@ import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.wired.WiredRewardNotificationResponse
 import tk.jomp16.habbo.database.badge.BadgeDao
-import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.user.UserInformationDao
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.tasks.ChatType
 import tk.jomp16.habbo.game.room.user.RoomUser

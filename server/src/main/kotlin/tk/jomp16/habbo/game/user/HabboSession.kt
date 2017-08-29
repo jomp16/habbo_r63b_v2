@@ -27,11 +27,11 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import tk.jomp16.habbo.database.badge.BadgeDao
-import tk.jomp16.habbo.database.information.UserInformationDao
-import tk.jomp16.habbo.database.information.UserPreferencesDao
-import tk.jomp16.habbo.database.information.UserStatsDao
 import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.database.room.RoomDao
+import tk.jomp16.habbo.database.user.UserInformationDao
+import tk.jomp16.habbo.database.user.UserPreferencesDao
+import tk.jomp16.habbo.database.user.UserStatsDao
 import tk.jomp16.habbo.encryption.RC4Encryption
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.room.Room
@@ -56,7 +56,7 @@ import javax.script.ScriptEngineManager
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val incomingExecutor: Executor = Executors.newSingleThreadExecutor()
-    val outgoingExecutor: Executor = Executors.newSingleThreadExecutor()
+    private val outgoingExecutor: Executor = Executors.newSingleThreadExecutor()
     lateinit var release: String
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
@@ -87,10 +87,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         get() = targetTeleporterId != -1
     val authenticated: Boolean
         get() {
-            try {
-                return userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
+            return try {
+                userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
             } catch (exception: UninitializedPropertyAccessException) {
-                return false
+                false
             }
         }
     var rc4Encryption: RC4Encryption? = null

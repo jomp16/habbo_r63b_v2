@@ -22,10 +22,10 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CameraPrices(
-        @JsonProperty("credits")
+        @JsonProperty("credits", required = true)
         val credits: Int,
-        @JsonProperty("pixels")
+        @JsonProperty("pixels", required = true)
         val pixels: Int,
-        @JsonProperty("pixels_publish_web")
+        @JsonProperty("pixels_publish_web", required = true)
         val pixelsPublishWeb: Int
 )

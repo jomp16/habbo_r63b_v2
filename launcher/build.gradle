@@ -29,6 +29,8 @@ dependencies {
 
     //noinspection GrUnresolvedAccess
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
+
+    compile 'com.sun.mail:javax.mail:1.6.0'
 }
 
 jar {
@@ -40,7 +42,9 @@ jar {
     manifest {
         //noinspection GrUnresolvedAccess
         attributes 'Main-Class': 'tk.jomp16.MainKt',
-                'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
+                'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).collect {
+                    "lib/$it.name"
+                }.join(' ')
     }
 }
 
@@ -51,6 +55,7 @@ distributions {
 
             into("/") {
                 from { "$rootDir/config.example.json" }
+                from { "$rootDir/fastfood_localization.json" }
 
                 into("/plugins") {
                     from { "$rootDir/plugins" }

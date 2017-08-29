@@ -36,7 +36,7 @@ class UserWardrobeSaveHandler {
         if (slotId > 10) return
         val figure = habboRequest.readUTF()
         val gender = habboRequest.readUTF()
-        val wardrobeToRemove = habboSession.userInformation.wardrobes.filter { it.slotId == slotId }.firstOrNull()
+        val wardrobeToRemove = habboSession.userInformation.wardrobes.firstOrNull { it.slotId == slotId }
         val newWardrobe: Wardrobe = if (wardrobeToRemove != null) {
             habboSession.userInformation.wardrobes.remove(wardrobeToRemove)
 

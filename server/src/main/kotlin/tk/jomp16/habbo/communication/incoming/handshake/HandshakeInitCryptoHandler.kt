@@ -24,7 +24,6 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.encryption.DiffieHellmanEncryption
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -32,12 +31,11 @@ class HandshakeInitCryptoHandler {
     @Handler(Incoming.INIT_CRYPTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.handshaking = true
-        val dh = DiffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.diffieHellmanKeySize)
-
-        habboSession.diffieHellmanParams = dh
+        val dh = HabboServer.habboEncryptionHandler.generateDiffieHellmanParameterSpec()
         val prime = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.p.toString().toByteArray())
         val generator = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.g.toString().toByteArray())
 
+        habboSession.diffieHellmanParams = dh
         habboSession.sendHabboResponse(Outgoing.INIT_CRYPTO, prime, generator)
     }
 }

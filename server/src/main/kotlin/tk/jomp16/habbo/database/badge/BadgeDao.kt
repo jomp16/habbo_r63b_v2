@@ -26,7 +26,7 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 object BadgeDao {
     fun getBadges(userId: Int): Map<String, Badge> {
         return HabboServer.database {
-            select(javaClass.getResource("/sql/badges/select_badges.sql").readText(),
+            select(javaClass.classLoader.getResource("sql/badges/select_badges.sql").readText(),
                     mapOf(
                             "user_id" to userId
                     )
@@ -42,7 +42,7 @@ object BadgeDao {
 
     fun removeBadge(id: Int) {
         HabboServer.database {
-            update(javaClass.getResource("/sql/badges/delete_badge.sql").readText(),
+            update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
                     mapOf(
                             "id" to id
                     )
@@ -51,7 +51,7 @@ object BadgeDao {
     }
 
     fun addBadge(userId: Int, code: String, slot: Int): Badge = HabboServer.database {
-        val id = insertAndGetGeneratedKey(javaClass.getResource("/sql/badges/insert_badge.sql").readText(),
+        val id = insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/badges/insert_badge.sql").readText(),
                 mapOf(
                         "user_id" to userId,
                         "code" to code,
@@ -65,7 +65,7 @@ object BadgeDao {
     fun saveBadges(badges: Collection<Badge>) {
         if (badges.isNotEmpty()) {
             HabboServer.database {
-                batchUpdate(javaClass.getResource("/sql/badges/update_badge.sql").readText(),
+                batchUpdate(javaClass.classLoader.getResource("sql/badges/update_badge.sql").readText(),
                         badges.map {
                             mapOf(
                                     "slot" to it.slot,

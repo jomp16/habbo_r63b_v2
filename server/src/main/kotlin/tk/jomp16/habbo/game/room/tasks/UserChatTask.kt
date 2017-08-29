@@ -33,7 +33,7 @@ class UserChatTask(
         private val message: String,
         private val bubble: Int,
         private val type: ChatType,
-        val skipCommands: Boolean
+        private val skipCommands: Boolean
 ) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
@@ -42,7 +42,7 @@ class UserChatTask(
         if (!skipCommands) {
             HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))
 
-            if (!skipCommands && message.startsWith(':')) return
+            if (message.startsWith(':')) return
         }
         var filterMessage = message
 

@@ -19,43 +19,41 @@
 
 package tk.jomp16.habbo.config
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class HabboConfig(
-        @JsonProperty("port")
+        @JsonProperty("port", required = true)
         val port: Int,
-        @JsonProperty("web_port")
+        @JsonProperty("web_port", required = true)
         val webPort: Int,
-        @JsonProperty("database")
+        @JsonProperty("database", required = true)
         val databaseConfig: DatabaseConfig,
-        @JsonProperty("diffie_hellman_key_size")
-        val diffieHellmanKeySize: Int,
-        @JsonProperty("rsa")
-        val rsaConfig: RSAConfig,
-        @JsonProperty("rc4")
-        val rc4: Boolean,
-        @JsonProperty("furnidata_xml")
+        @JsonProperty("encryption", required = true)
+        val encryptionConfig: EncryptionConfig,
+        @JsonProperty("furnidata_xml", required = true)
         val furnidataXml: String,
-        @JsonProperty("reward")
+        @JsonProperty("reward", required = true)
         val rewardConfig: RewardConfig,
-        @JsonProperty("auto_join_room")
+        @JsonProperty("auto_join_room", required = true)
         val autoJoinRoom: Boolean,
-        @JsonProperty("timer")
+        @JsonProperty("timer", required = true)
         val timerConfig: TimerConfig,
-        @JsonProperty("room_task")
+        @JsonProperty("room_task", required = true)
         val roomTaskConfig: RoomTaskConfig,
-        @JsonProperty("camera")
+        @JsonProperty("camera", required = true)
         val cameraConfig: CameraConfig,
-        @JsonProperty("catalog")
+        @JsonProperty("catalog", required = true)
         val catalogConfig: CatalogConfig,
-        @JsonProperty("recycler")
+        @JsonProperty("recycler", required = true)
         val recyclerConfig: RecyclerConfig,
-        @JsonProperty("motd_enabled")
+        @JsonProperty("motd_enabled", required = true)
         val motdEnabled: Boolean,
-        @JsonProperty("motd_file_path")
-        val motdFilePath: String,
-        @JsonProperty("server_console_figure")
+        @JsonProperty("motd_file_path", required = true)
+        private val motdFilePath: String,
+        @JsonProperty("server_console_figure", required = true)
         val serverConsoleFigure: String
 ) {
     val motdContents: String by lazy {
@@ -67,3 +65,4 @@ data class HabboConfig(
         }
     }
 }
+

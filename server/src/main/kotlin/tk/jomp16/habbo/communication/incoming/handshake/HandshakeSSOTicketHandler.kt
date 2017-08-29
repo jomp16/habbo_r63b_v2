@@ -27,6 +27,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.database.user.UserUniqueIdDao
 import tk.jomp16.habbo.game.misc.NotificationType
 import tk.jomp16.habbo.game.user.HabboSession
 
@@ -65,7 +66,7 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID2, true)
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID3, "", "")
         habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
-        //        habboSession.sendHabboResponse(FFOutgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
+        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
         habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,
                 HabboServer.habboGame.moderationManager.moderationCategories,
                 HabboServer.habboGame.moderationManager.moderationTopics.values)
@@ -82,5 +83,10 @@ class HandshakeSSOTicketHandler {
         }
 
         habboSession.handshaking = false
+
+        if (!UserUniqueIdDao.containsUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)) {
+            // save unique id to database
+            UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)
+        }
     }
 }

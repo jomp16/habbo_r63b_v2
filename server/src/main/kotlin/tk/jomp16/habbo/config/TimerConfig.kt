@@ -22,10 +22,10 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class TimerConfig(
-        @JsonProperty("credits_seconds")
+        @JsonProperty("credits_seconds", required = true)
         val creditsSeconds: Int,
-        @JsonProperty("room_idle_seconds")
+        @JsonProperty("room_idle_seconds", required = true)
         val roomIdleSeconds: Int,
-        @JsonProperty("roller")
+        @JsonProperty("roller", required = true)
         val roller: Int
 )

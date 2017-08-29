@@ -21,5 +21,6 @@ plugins/
 
 camera_data/
 PACKET_INFOS/
+log4j2.private.xml
 
 !server/src/main/resources/ascii_art.txt

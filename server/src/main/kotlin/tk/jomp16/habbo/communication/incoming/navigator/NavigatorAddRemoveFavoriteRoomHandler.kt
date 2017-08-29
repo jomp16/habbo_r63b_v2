@@ -38,7 +38,7 @@ class NavigatorAddRemoveFavoriteRoomHandler {
             val id = NavigatorDao.addFavoriteRoom(habboSession.userInformation.id, roomId)
             habboSession.favoritesRooms.add(id to roomId)
         } else {
-            val favoritePair = habboSession.favoritesRooms.filter { it.second == roomId }.firstOrNull() ?: return
+            val favoritePair = habboSession.favoritesRooms.firstOrNull { it.second == roomId } ?: return
 
             habboSession.favoritesRooms.remove(favoritePair)
 

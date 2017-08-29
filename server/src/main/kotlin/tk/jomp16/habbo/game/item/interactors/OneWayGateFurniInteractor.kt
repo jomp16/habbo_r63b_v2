@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.item.interactors
 
 import tk.jomp16.habbo.game.item.ItemInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 
@@ -77,7 +78,6 @@ class OneWayGateFurniInteractor : ItemInteractor() {
             roomItem.requestCycles(3)
         }
 
-        // todo: wired
-        // room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
+        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 }

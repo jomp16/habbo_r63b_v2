@@ -32,7 +32,7 @@ class UserChangeMottoHandler {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
         var motto = habboRequest.readUTF()
 
-        if (motto.isNullOrBlank() || motto == habboSession.userInformation.motto) return
+        if (motto.isBlank() || motto == habboSession.userInformation.motto) return
 
         if (motto.length > 38) motto = motto.substring(0, 38)
 

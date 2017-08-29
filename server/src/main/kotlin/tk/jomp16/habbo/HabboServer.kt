@@ -41,9 +41,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.fastfood.communication.FastFoodHandler
-import tk.jomp16.fastfood.netty.FastFoodNettyDecoder
-import tk.jomp16.fastfood.netty.FastFoodNettyEncoder
-import tk.jomp16.fastfood.netty.FastFoodNettyHandler
 import tk.jomp16.habbo.communication.HabboHandler
 import tk.jomp16.habbo.config.HabboConfig
 import tk.jomp16.habbo.encryption.HabboEncryptionHandler
@@ -71,7 +68,7 @@ object HabboServer : AutoCloseable {
     val databaseFactory: SessionFactory
     // Netty
     private val habboServerBootstrap: ServerBootstrap
-    private val fastFoodServerBootstrap: ServerBootstrap
+    //private val fastFoodServerBootstrap: ServerBootstrap
     private val workerGroup: EventLoopGroup
     private val bossGroup: EventLoopGroup
     // Habbo
@@ -85,7 +82,7 @@ object HabboServer : AutoCloseable {
     val serverExecutor: ExecutorService = Executors.newCachedThreadPool()
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val started: Boolean
+    private val started: Boolean
         get() = !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
     init {
@@ -121,7 +118,7 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
 
         log.info("Loading Habbo encryption...")
-        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.rsaConfig.n, habboConfig.rsaConfig.d, habboConfig.rsaConfig.e)
+        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.encryptionConfig.rsaConfig.n, habboConfig.encryptionConfig.rsaConfig.d, habboConfig.encryptionConfig.rsaConfig.e)
         log.info("Done!")
 
         log.info("Loading Habbo game...")
@@ -135,13 +132,13 @@ object HabboServer : AutoCloseable {
         log.info("Loading Netty...")
         habboSessionManager = HabboSessionManager()
         habboServerBootstrap = ServerBootstrap()
-        fastFoodServerBootstrap = ServerBootstrap()
+        //fastFoodServerBootstrap = ServerBootstrap()
         workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
         bossGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
         log.info("Done!")
 
         log.info("Loading plugins...")
-        pluginManager.loadPluginsFromClassLoader(javaClass.classLoader)
+        pluginManager.loadPlugins()
         pluginManager.loadPluginsFromDir(File("plugins"))
         log.info("Done!")
     }
@@ -152,9 +149,8 @@ object HabboServer : AutoCloseable {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
                 val habboNettyHandler = HabboNettyHandler()
-                val fastFoodNettyEncoder = FastFoodNettyEncoder()
-                val fastFoodNettyHandler = FastFoodNettyHandler()
-
+                //val fastFoodNettyEncoder = FastFoodNettyEncoder()
+                //val fastFoodNettyHandler = FastFoodNettyHandler()
                 habboServerBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
@@ -165,7 +161,7 @@ object HabboServer : AutoCloseable {
                                     addLast(stringEncoder)
                                     addLast(habboNettyEncoder)
 
-                                    if (habboConfig.rc4) addLast(HabboNettyRC4Decoder())
+                                    if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
 
                                     addLast(HabboNettyDecoder())
                                     addLast(habboNettyHandler)
@@ -175,7 +171,7 @@ object HabboServer : AutoCloseable {
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
 
-                fastFoodServerBootstrap.group(bossGroup, workerGroup)
+                /*fastFoodServerBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
                             override fun initChannel(socketChannel: SocketChannel) {
@@ -190,20 +186,17 @@ object HabboServer : AutoCloseable {
                             }
                         })
                         .option(ChannelOption.SO_BACKLOG, 128)
-                        .childOption(ChannelOption.SO_KEEPALIVE, true)
+                        .childOption(ChannelOption.SO_KEEPALIVE, true)*/
                 val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
-                val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 1)
-
+                //val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 1)
                 habboChannelFuture.sync()
-                fastFoodChannelFuture.sync()
-
-                if (habboChannelFuture.isDone && fastFoodChannelFuture.isDone) {
-                    if (habboChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
+                //fastFoodChannelFuture.sync()
+                if (habboChannelFuture.isDone/* && fastFoodChannelFuture.isDone*/) {
+                    if (habboChannelFuture.isSuccess/* && fastFoodChannelFuture.isSuccess*/) {
                         log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
-                        log.info("FastFood server started on port {}!", habboConfig.port + 1)
-
+                        //log.info("FastFood server started on port {}!", habboConfig.port + 1)
                         habboChannelFuture.channel().closeFuture().sync()
-                        fastFoodChannelFuture.channel().closeFuture().sync()
+                        //fastFoodChannelFuture.channel().closeFuture().sync()
                     } else {
                         log.error("Error starting ${BuildConfig.NAME} server!", habboChannelFuture.cause())
 

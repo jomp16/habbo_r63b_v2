@@ -27,7 +27,7 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 
 class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
     var message = ""
-    var onlyOwner = false
+    private var onlyOwner = false
 
     init {
         roomItem.wiredData?.let {

@@ -85,7 +85,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
                     wiredHandler.addWiredItem(roomItem.position.vector2, it)
                 }
             }
-            roomItems.values.filter { it.furnishing.interactionType == InteractionType.DIMMER }.firstOrNull()?.let {
+            roomItems.values.firstOrNull { it.furnishing.interactionType == InteractionType.DIMMER }?.let {
                 roomDimmer = ItemDao.getRoomDimmer(it)
             }
         }
@@ -111,7 +111,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun addUser(habboSession: HabboSession) {
         roomTask?.let {
-            if (roomUsers.values.filter { it.habboSession == habboSession }.isNotEmpty()) return
+            if (roomUsers.values.any { it.habboSession == habboSession }) return
 
             // generate random virtual id
             var virtualId: Int
@@ -212,7 +212,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItemsToSave.clear()
     }
 
-    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = -1.toDouble(), rollerId: Int = -1): Boolean {
+    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = (-1).toDouble(), rollerId: Int = -1): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
         val onlyRotation = roomItem.rotation == rotation
 
@@ -220,7 +220,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
             if (onlyRotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it,
-                    true) && overrideZ == -1.toDouble()) {
+                    true) && overrideZ == (-1).toDouble()) {
                 // cannot set item, because at least one tile is blocked
                 return false
             }
@@ -253,7 +253,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         }
         val oldPosition = roomItem.position
 
-        roomItem.position = Vector3(position.x, position.y, if (overrideZ != -1.toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
+        roomItem.position = Vector3(position.x, position.y, if (overrideZ != (-1).toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
         roomItem.rotation = rotation
 
         roomGamemap.addRoomItem(roomItem)

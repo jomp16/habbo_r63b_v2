@@ -68,6 +68,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
             return
         } else {
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+
             msg.markReaderIndex()
             val messageLength = msg.readInt()
             val headerId = msg.readUnsignedShort()
@@ -80,29 +82,25 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
                 return
             }
+            val habboRequest = HabboRequest(headerId, msg.readSlice(size).retain())
 
-            out += HabboRequest(headerId, msg.readSlice(size).retain())
+            if (headerId == 4000) {
+                habboRequest.byteBuf.markReaderIndex()
+
+                habboSession.release = habboRequest.readUTF()
+
+                habboRequest.byteBuf.resetReaderIndex()
+            }
+
+            out += habboRequest
 
             if (log.isDebugEnabled) {
-                val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
                 val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+                val incoming: String =
+                        if (headerId == 4000) Incoming.RELEASE_CHECK.name
+                        else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
 
-                out.forEach {
-                    if (it is HabboRequest) {
-                        val incoming: String =
-                                if (headerId == 4000) {
-                                    it.byteBuf.markReaderIndex()
-
-                                    habboSession.release = it.readUTF()
-
-                                    it.byteBuf.resetReaderIndex()
-
-                                    Incoming.RELEASE_CHECK.name
-                                } else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
-
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), it.toString())
-                    }
-                }
+                log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), habboRequest.toString())
             }
         }
     }

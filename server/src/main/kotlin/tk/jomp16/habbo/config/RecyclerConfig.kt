@@ -22,12 +22,12 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RecyclerConfig(
-        @JsonProperty("open")
+        @JsonProperty("open", required = true)
         val open: Boolean,
-        @JsonProperty("slots")
+        @JsonProperty("slots", required = true)
         val slots: Int,
-        @JsonProperty("odds")
+        @JsonProperty("odds", required = true)
         val odds: Map<Int, Int>,
-        @JsonProperty("gift_box")
+        @JsonProperty("gift_box", required = true)
         val giftBox: String
 )

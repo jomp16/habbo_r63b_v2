@@ -41,12 +41,12 @@ import javax.imageio.ImageIO
 
 class CameraManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val cameraDirectory: Path = Paths.get("camera_data")
+    private val cameraDirectory: Path = Paths.get("camera_data")
     val cameraPreviewDirectory: Path = cameraDirectory.resolve("preview")
     val cameraPurchasedDirectory: Path = cameraDirectory.resolve("purchased")
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
-    val currentPictureForUsers: MutableMap<String, String> = mutableMapOf()
-    val jacksonJson = jacksonObjectMapper()
+    private val currentPictureForUsers: MutableMap<String, String> = mutableMapOf()
+    private val jacksonJson = jacksonObjectMapper()
 
     fun load() {
         log.info("Starting CameraManager...")

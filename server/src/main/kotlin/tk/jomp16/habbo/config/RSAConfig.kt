@@ -22,10 +22,10 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RSAConfig(
-        @JsonProperty("N")
+        @JsonProperty("N", required = true)
         val n: String,
-        @JsonProperty("D")
+        @JsonProperty("D", required = true)
         val d: String,
-        @JsonProperty("E")
+        @JsonProperty("E", required = true)
         val e: String
 )

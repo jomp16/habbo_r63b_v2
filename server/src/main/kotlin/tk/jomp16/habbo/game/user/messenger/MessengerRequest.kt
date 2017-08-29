@@ -21,7 +21,7 @@ package tk.jomp16.habbo.game.user.messenger
 
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
-import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.user.UserInformationDao
 
 data class MessengerRequest(val id: Int, val fromId: Int) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

@@ -31,7 +31,7 @@ import java.lang.invoke.MethodHandles
 import java.util.*
 import java.util.regex.Pattern
 
-@Suppress("unused", "UNUSED_PARAMETER")
+@Suppress("unused", "UNUSED_PARAMETER", "MemberVisibilityCanPrivate")
 class RoomCommandsManagerListener : PluginListener() {
     private val lookup = MethodHandles.lookup()
     private val commandsEvents: MutableSet<PluginCommandRegister> = HashSet()
@@ -72,7 +72,7 @@ class RoomCommandsManagerListener : PluginListener() {
         val args = parseLine(roomUserChatEvent.message.substring(1).trim())
 
         if (args == null || args.isEmpty()) return
-        val commands = commandsEvents.filter { it.commands.contains(args[0]) }.filterNotNull()
+        val commands = commandsEvents.filter { it.commands.contains(args[0]) }
 
         if (commands.isEmpty()) roomUserChatEvent.roomUser.chat(roomUserChatEvent.roomUser.virtualID, roomUserChatEvent.message, roomUserChatEvent.bubble, roomUserChatEvent.type, true)
 
@@ -123,15 +123,10 @@ class RoomCommandsManagerListener : PluginListener() {
         val matcher = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'").matcher(message)
 
         while (matcher.find()) {
-            if (matcher.group(1) != null) {
-                // Add double-quoted string without the quotes
-                args.add(matcher.group(1))
-            } else if (matcher.group(2) != null) {
-                // Add single-quoted string without the quotes
-                args.add(matcher.group(2))
-            } else {
-                // Add unquoted word
-                args.add(matcher.group())
+            when {
+                matcher.group(1) != null -> args.add(matcher.group(1))
+                matcher.group(2) != null -> args.add(matcher.group(2))
+                else -> args.add(matcher.group())
             }
         }
 

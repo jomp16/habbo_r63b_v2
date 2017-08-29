@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.information
+package tk.jomp16.habbo.database.user
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserStats
@@ -49,7 +49,7 @@ object UserStatsDao {
     fun getUserStats(userId: Int): UserStats {
         if (userId == UserInformationDao.serverConsoleUserInformation.id) return serverConsoleUserStats
         val userStats = HabboServer.database {
-            select(javaClass.getResource("/sql/users/stats/select_user_stats.sql").readText(),
+            select(javaClass.classLoader.getResource("sql/users/stats/select_user_stats.sql").readText(),
                     mapOf(
                             "user_id" to userId
                     )
@@ -80,7 +80,7 @@ object UserStatsDao {
         if (userStats == null) {
             // no users stats, create it
             HabboServer.database {
-                insertAndGetGeneratedKey(javaClass.getResource("/sql/users/stats/insert_user_stats.sql").readText(),
+                insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/users/stats/insert_user_stats.sql").readText(),
                         mapOf(
                                 "id" to userId
                         )
@@ -104,7 +104,7 @@ object UserStatsDao {
 
     fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {
         HabboServer.database {
-            update(javaClass.getResource("/sql/users/stats/update_user_stats.sql").readText(),
+            update(javaClass.classLoader.getResource("sql/users/stats/update_user_stats.sql").readText(),
                     mapOf(
                             "last_online" to lastOnline,
                             "credits_last_update" to userStats.creditsLastUpdate,

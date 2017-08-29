@@ -22,8 +22,8 @@ package tk.jomp16.habbo.game.user.messenger
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.IHabboResponseSerialize
-import tk.jomp16.habbo.database.information.UserInformationDao
-import tk.jomp16.habbo.database.information.UserStatsDao
+import tk.jomp16.habbo.database.user.UserInformationDao
+import tk.jomp16.habbo.database.user.UserStatsDao
 import tk.jomp16.habbo.game.user.HabboSession
 
 data class MessengerFriend(val userId: Int) : IHabboResponseSerialize {

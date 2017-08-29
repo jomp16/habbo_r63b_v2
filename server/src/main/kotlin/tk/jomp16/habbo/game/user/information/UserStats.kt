@@ -26,7 +26,7 @@ import java.time.LocalDateTime
 data class UserStats(
         val id: Int,
         var lastOnline: LocalDateTime,
-        var onlineSeconds: Long,
+        private var onlineSeconds: Long,
         var roomVisits: Int,
         var respect: Int,
         var giftsGiven: Int,

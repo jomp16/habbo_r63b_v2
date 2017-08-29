@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 class RoomTask : Runnable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val rooms: MutableSet<Room> = CopyOnWriteArraySet()
-    val queuedTasks: MutableMap<Room, Queue<IRoomTask>> = ConcurrentHashMap()
+    private val queuedTasks: MutableMap<Room, Queue<IRoomTask>> = ConcurrentHashMap()
 
     fun addRoom(room: Room) {
         if (rooms.contains(room)) return

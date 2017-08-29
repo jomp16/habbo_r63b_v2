@@ -21,6 +21,7 @@ package tk.jomp16.habbo.game.item.interactors
 
 import tk.jomp16.habbo.game.item.ItemInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Utils
@@ -40,12 +41,11 @@ class VendorFurniInteractor : ItemInteractor() {
         roomItem.extraData = "1"
         roomItem.update(false, true)
 
-        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(0..roomItem.furnishing.vendingIds.size - 1)])
+        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(0 until roomItem.furnishing.vendingIds.size)])
 
         roomItem.requestCycles(2)
 
-        // todo: wired
-        // room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
+        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
