@@ -31,7 +31,7 @@ import tk.jomp16.habbo.game.user.HabboSession
 class HandshakeSecretKeyHandler {
     @Handler(Incoming.SECRET_KEY)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (HabboServer.habboConfig.rc4) {
+        if (HabboServer.habboConfig.encryptionConfig.rc4) {
             val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(habboSession.diffieHellmanParams, habboRequest.readUTF())
 
             habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second.toByteArray())

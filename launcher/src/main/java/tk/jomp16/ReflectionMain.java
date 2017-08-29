@@ -21,11 +21,10 @@ package tk.jomp16;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
+import tk.jomp16.habbo.HabboServer;
 import tk.jomp16.habbo.config.HabboConfig;
-import tk.jomp16.habbo.kotlin.HabboServerUtilsKt;
 
 import java.io.File;
-import java.lang.reflect.Method;
 
 @SuppressWarnings("unchecked")
 class ReflectionMain {
@@ -34,18 +33,9 @@ class ReflectionMain {
         final HabboConfig habboConfig = objectMapper.readValue(new File("config.json"), HabboConfig.class);
 
         // REFLECTION: LOAD CLASS HabboServer DIRECTLY
-        /*final Class<HabboServer> habboServerClass = (Class<HabboServer>) Class.forName("tk.jomp16.habbo.HabboServer");
-
+        final Class<HabboServer> habboServerClass = (Class<HabboServer>) Class.forName("tk.jomp16.habbo.HabboServer");
         final HabboServer habboServer = (HabboServer) habboServerClass.getField("INSTANCE").get(null);
 
-        habboServer.setHabboConfig(habboConfig);
-
-        habboServer.init();*/
-
-        // REFLECTION: LOAD USING HabboServerUtilsKt
-        final Class<HabboServerUtilsKt> habboServerUtilsKtClass = (Class<HabboServerUtilsKt>) Class.forName("tk.jomp16.habbo.kotlin.HabboServerUtilsKt");
-        final Method method = habboServerUtilsKtClass.getDeclaredMethod("habboServer", HabboConfig.class);
-
-        method.invoke(null, habboConfig);
+        habboServer.start();
     }
 }

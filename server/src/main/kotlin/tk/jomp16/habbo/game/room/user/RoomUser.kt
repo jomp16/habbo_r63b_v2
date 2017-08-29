@@ -47,7 +47,7 @@ class RoomUser(
 ) : IHabboResponseSerialize {
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
-    var oldCurrentVector3: Vector3? = null
+    private var oldCurrentVector3: Vector3? = null
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
     var objectiveItem: RoomItem? = null
@@ -63,7 +63,7 @@ class RoomUser(
     private var handItemCurrentCycles: Int = 0
     var walkingBlocked: Boolean = false
     var ignoreBlocking: Boolean = false
-    var overrideBlocking: Boolean = false
+    private var overrideBlocking: Boolean = false
     var rollerId: Int = -1
     var handleVendingId: Int = -1
     internal var path: MutableList<Path> = mutableListOf()
@@ -162,7 +162,7 @@ class RoomUser(
                 } else {
                     var step = path.removeAt(0)
 
-                    if (room.roomGamemap.roomUserMap[Vector2(step.x, step.y)]?.isNotEmpty() ?: false && !ignoreBlocking && !overrideBlocking) {
+                    if (room.roomGamemap.roomUserMap[Vector2(step.x, step.y)]?.isNotEmpty() == true && !ignoreBlocking && !overrideBlocking) {
                         calculatePath()
 
                         if (path.isEmpty()) stopWalking()

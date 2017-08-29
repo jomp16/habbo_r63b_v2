@@ -26,7 +26,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class RoomTaskManager {
-    val scheduledFutureMap: MutableMap<RoomTask, ScheduledFuture<*>> = HashMap()
+    private val scheduledFutureMap: MutableMap<RoomTask, ScheduledFuture<*>> = HashMap()
     val rooms: MutableSet<Room> = HashSet()
 
     fun addRoomToTask(room: Room) {

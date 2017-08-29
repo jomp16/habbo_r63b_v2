@@ -23,18 +23,18 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.zaxxer.hikari.HikariConfig
 
 data class DatabaseConfig(
-        @JsonProperty("host")
-        val host: String,
-        @JsonProperty("port")
-        val port: Int,
-        @JsonProperty("user")
-        val user: String,
-        @JsonProperty("password")
-        val password: String,
-        @JsonProperty("name")
-        val name: String,
-        @JsonProperty("timeout")
-        val timeout: Long
+        @JsonProperty("host", required = true)
+        private val host: String,
+        @JsonProperty("port", required = true)
+        private val port: Int,
+        @JsonProperty("user", required = true)
+        private val user: String,
+        @JsonProperty("password", required = true)
+        private val password: String,
+        @JsonProperty("name", required = true)
+        private val name: String,
+        @JsonProperty("timeout", required = true)
+        private val timeout: Long
 ) {
     val hikariConfig: HikariConfig
         get() {
@@ -45,8 +45,6 @@ data class DatabaseConfig(
             config.password = password
             config.connectionTimeout = timeout
             config.maximumPoolSize = (Runtime.getRuntime().availableProcessors() * 2) + 1
-            config.idleTimeout = 0
-            config.maxLifetime = 0
 
             config.addDataSourceProperty("serverTimezone", "UTC")
             config.addDataSourceProperty("prepStmtCacheSize", "250")

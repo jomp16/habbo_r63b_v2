@@ -22,7 +22,7 @@ package tk.jomp16.habbo.encryption
 import java.security.AlgorithmParameterGenerator
 import javax.crypto.spec.DHParameterSpec
 
-object DiffieHellmanEncryption {
+class DiffieHellmanEncryption {
     fun getDHParameterSpec(length: Int = 1024): DHParameterSpec {
         val paramGen = AlgorithmParameterGenerator.getInstance("DH", "BC")
         paramGen.init(length)

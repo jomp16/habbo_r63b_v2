@@ -24,6 +24,7 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
+import tk.jomp16.habbo.game.catalog.CatalogItem
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,15 +38,27 @@ class CatalogPurchaseHandler {
         var amount = habboRequest.readInt()
         val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }
 
-        if (catalogPage == null) {
+        if (catalogPage != null && (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription)) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
             return
         }
 
-        if (amount < 1/* || amount > 1 && catalogItem.limited*/) amount = 1
+        if (catalogPage?.pageLayout == "vip_buy") {
+            // purchase HC
+            HabboServer.habboGame.catalogManager.purchaseHC(habboSession, itemId)
+        }
+        val catalogItem: CatalogItem? = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == itemId }
+
+        if (catalogItem == null) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+
+            return
+        }
+
+        if (amount < 1 || amount > 1 && catalogItem.limited) amount = 1
         else if (amount > 100) amount = 100
 
-        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogPage, itemId, extraData, amount)
+        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount)
     }
 }

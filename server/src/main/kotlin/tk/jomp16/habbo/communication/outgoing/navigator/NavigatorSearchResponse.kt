@@ -161,7 +161,8 @@ class NavigatorSearchResponse {
             writeInt(0)
 
             HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
-                    .filter { it.roomData.category == navigatorRoomCategory.id }.sortedBy { it.roomUsers.size }.take(8).let {
+                    .filter { it.roomData.category == navigatorRoomCategory.id }
+                    .sortedBy { it.roomUsers.size }.take(8).let {
                 writeInt(it.size)
 
                 it.forEach { habboResponse.serialize(it, false, false) }
@@ -181,12 +182,12 @@ class NavigatorSearchResponse {
     }
 
     private fun getNewNavigatorLength(category: String): Int {
-        when (category) {
-            "official_view" -> return 2
-            "myworld_view" -> return 4
-            "hotel_view" -> return HabboServer.habboGame.navigatorManager.navigatorRoomCategories.size + 2
-            "roomads_view" -> return HabboServer.habboGame.navigatorManager.navigatorEventCategories.size + 1
-            else -> return 1
+        return when (category) {
+            "official_view" -> 2
+            "myworld_view" -> 4
+            "hotel_view" -> HabboServer.habboGame.navigatorManager.navigatorRoomCategories.size + 2
+            "roomads_view" -> HabboServer.habboGame.navigatorManager.navigatorEventCategories.size + 1
+            else -> 1
         }
     }
 }

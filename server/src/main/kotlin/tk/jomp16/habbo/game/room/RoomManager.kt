@@ -28,8 +28,8 @@ import java.util.*
 class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val rooms: MutableMap<Int, Room> = HashMap()
-    val roomModels: MutableMap<String, RoomModel> = HashMap()
-    val customRoomModels: MutableMap<Int, RoomModel> = HashMap()
+    private val roomModels: MutableMap<String, RoomModel> = HashMap()
+    private val customRoomModels: MutableMap<Int, RoomModel> = HashMap()
     val roomTaskManager: RoomTaskManager = RoomTaskManager()
 
     fun load() {

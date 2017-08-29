@@ -22,15 +22,15 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RoomTaskConfig(
-        @JsonProperty("threads")
+        @JsonProperty("threads", required = true)
         val threads: Int,
-        @JsonProperty("max_room_per_thread")
+        @JsonProperty("max_room_per_thread", required = true)
         val maxRoomPerThread: Int,
-        @JsonProperty("delay_milliseconds")
+        @JsonProperty("delay_milliseconds", required = true)
         val delayMilliseconds: Int,
-        @JsonProperty("error_threshold")
+        @JsonProperty("error_threshold", required = true)
         val errorThreshold: Int,
-        @JsonProperty("save_item_seconds")
+        @JsonProperty("save_item_seconds", required = true)
         val saveItemSeconds: Int,
-        @JsonProperty("empty_room_seconds")
+        @JsonProperty("empty_room_seconds", required = true)
         val emptyRoomSeconds: Int)

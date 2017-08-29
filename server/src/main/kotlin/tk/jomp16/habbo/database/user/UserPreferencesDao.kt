@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.information
+package tk.jomp16.habbo.database.user
 
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.user.information.UserPreferences
@@ -26,7 +26,7 @@ import tk.jomp16.habbo.kotlin.insertWithIntGeneratedKey
 object UserPreferencesDao {
     fun getUserPreferences(userId: Int): UserPreferences {
         val userPreferences = HabboServer.database {
-            select(javaClass.getResource("/sql/users/preferences/select_user_preferences.sql").readText(),
+            select(javaClass.classLoader.getResource("sql/users/preferences/select_user_preferences.sql").readText(),
                     mapOf(
                             "user_id" to userId
                     )
@@ -52,7 +52,7 @@ object UserPreferencesDao {
         if (userPreferences == null) {
             // no users preferences, create it
             HabboServer.database {
-                insertWithIntGeneratedKey(javaClass.getResource("/sql/users/preferences/insert_user_preferences.sql").readText(),
+                insertWithIntGeneratedKey(javaClass.classLoader.getResource("sql/users/preferences/insert_user_preferences.sql").readText(),
                         mapOf(
                                 "id" to userId
                         )
@@ -68,7 +68,7 @@ object UserPreferencesDao {
 
     fun savePreferences(userPreferences: UserPreferences) {
         HabboServer.database {
-            update(javaClass.getResource("/sql/users/preferences/update_user_preferences.sql").readText(),
+            update(javaClass.classLoader.getResource("sql/users/preferences/update_user_preferences.sql").readText(),
                     mapOf(
                             "volume" to userPreferences.volume,
                             "prefer_old_chat" to userPreferences.preferOldChat,

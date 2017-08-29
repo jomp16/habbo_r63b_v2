@@ -24,9 +24,9 @@ import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
-import tk.jomp16.habbo.database.information.UserInformationDao
-import tk.jomp16.habbo.database.information.UserPreferencesDao
 import tk.jomp16.habbo.database.messenger.MessengerDao
+import tk.jomp16.habbo.database.user.UserInformationDao
+import tk.jomp16.habbo.database.user.UserPreferencesDao
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")

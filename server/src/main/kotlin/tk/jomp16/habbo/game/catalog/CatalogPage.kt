@@ -25,15 +25,15 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 
 data class CatalogPage(
         val id: Int,
-        val parentId: Int,
+        private val parentId: Int,
         val name: String,
-        val codename: String,
-        val iconImage: Int,
+        private val codename: String,
+        private val iconImage: Int,
         val visible: Boolean,
         val enabled: Boolean,
         val minRank: Int,
         val clubOnly: Boolean,
-        val orderNum: Int,
+        private val orderNum: Int,
         val pageLayout: String,
         val pageHeadline: String,
         val pageTeaser: String,
@@ -46,8 +46,8 @@ data class CatalogPage(
         val pageLinkPagename: String
 ) : IHabboResponseSerialize {
     val catalogItems: List<CatalogItem>
-        get() = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }.sortedBy { it.id }
-    val offerItems: List<CatalogItem>
+        get() = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }.sortedBy { it.id }.sortedBy { it.orderNum }
+    private val offerItems: List<CatalogItem>
         get() = catalogItems.filter { it.offerId != -1 }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

@@ -46,10 +46,12 @@ class WiredFurniInteractor : ItemInteractor() {
         roomItem.extraData = "1"
         roomItem.update(false, true)
         roomItem.requestCycles(1)
-        val outgoing = if (roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER")) Outgoing.WIRED_TRIGGER_DIALOG
-        else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_ACTION")) Outgoing.WIRED_EFFECT_DIALOG
-        else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) Outgoing.WIRED_EFFECT_DIALOG
-        else return
+        val outgoing = when {
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_ACTION") -> Outgoing.WIRED_EFFECT_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_EFFECT_DIALOG
+            else -> return
+        }
 
         roomUser?.habboSession?.sendHabboResponse(outgoing, roomItem, roomItem.wiredData)
     }

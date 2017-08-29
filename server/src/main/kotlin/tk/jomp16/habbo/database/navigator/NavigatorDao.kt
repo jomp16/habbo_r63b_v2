@@ -26,7 +26,7 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 
 object NavigatorDao {
     fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = HabboServer.database {
-        select(javaClass.getResource("/sql/navigator/categories/room/select_room_categories.sql").readText(),
+        select(javaClass.classLoader.getResource("sql/navigator/categories/room/select_room_categories.sql").readText(),
                 mapOf(
                         "enabled" to true
                 )
@@ -40,7 +40,7 @@ object NavigatorDao {
     }
 
     fun getNavigatorEventCategories(): List<NavigatorEventCategory> = HabboServer.database {
-        select(javaClass.getResource("/sql/navigator/categories/event/select_event_categories.sql").readText(),
+        select(javaClass.classLoader.getResource("sql/navigator/categories/event/select_event_categories.sql").readText(),
                 mapOf(
                         "visible" to true
                 )
@@ -55,7 +55,7 @@ object NavigatorDao {
 
     fun addFavoriteRoom(userId: Int, roomId: Int): Int {
         return HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.getResource("/sql/navigator/favorite/insert_favorite_room.sql").readText(),
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/navigator/favorite/insert_favorite_room.sql").readText(),
                     mapOf(
                             "user_id" to userId,
                             "room_id" to roomId
@@ -66,7 +66,7 @@ object NavigatorDao {
 
     fun removeFavoriteRoom(id: Int) {
         HabboServer.database {
-            update(javaClass.getResource("/sql/navigator/favorite/delete_favorite_room.sql").readText(),
+            update(javaClass.classLoader.getResource("sql/navigator/favorite/delete_favorite_room.sql").readText(),
                     mapOf(
                             "id" to id
                     )

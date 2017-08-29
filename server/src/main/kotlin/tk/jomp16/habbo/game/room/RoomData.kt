@@ -19,7 +19,7 @@
 
 package tk.jomp16.habbo.game.room
 
-import tk.jomp16.habbo.database.information.UserInformationDao
+import tk.jomp16.habbo.database.user.UserInformationDao
 
 data class RoomData(
         val id: Int,

@@ -22,8 +22,8 @@ package tk.jomp16.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CameraConfig(
-        @JsonProperty("prices")
+        @JsonProperty("prices", required = true)
         val prices: CameraPrices,
-        @JsonProperty("preview_timeout_minutes")
+        @JsonProperty("preview_timeout_minutes", required = true)
         val previewTimeoutMinutes: Long
 )

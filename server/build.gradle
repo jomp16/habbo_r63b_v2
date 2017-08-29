@@ -40,3 +40,10 @@ dependencies {
 buildConfig {
     appName = "Habbo R63B v2"
 }
+
+jar {
+    manifest {
+        //noinspection GrUnresolvedAccess
+        attributes 'Class-Path': configurations.runtime.files.collect { "$it.name" }.join(' ')
+    }
+}

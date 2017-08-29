@@ -27,8 +27,8 @@ import java.util.*
 
 class PermissionManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val permissionsUser: MutableMap<Int, MutableList<String>> = HashMap()
-    val permissionsRank: MutableMap<Int, MutableList<String>> = HashMap()
+    private val permissionsUser: MutableMap<Int, MutableList<String>> = HashMap()
+    private val permissionsRank: MutableMap<Int, MutableList<String>> = HashMap()
 
     fun load() {
         log.info("Loading permissions...")
@@ -72,7 +72,7 @@ class PermissionManager {
 
     fun userHasCustomPermission(userId: Int) = this.permissionsUser.containsKey(userId)
 
-    fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.filter { it == permission }.isNotEmpty()
+    fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.any { it == permission }
 
-    fun rankHasPermission(rankId: Int, permission: String) = this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.filter { it == permission }.isNotEmpty()
+    fun rankHasPermission(rankId: Int, permission: String) = this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.any { it == permission }
 }

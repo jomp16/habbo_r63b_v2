@@ -21,8 +21,8 @@ package tk.jomp16.habbo.game.user.messenger
 
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
-import tk.jomp16.habbo.database.information.UserInformationDao
 import tk.jomp16.habbo.database.messenger.MessengerDao
+import tk.jomp16.habbo.database.user.UserInformationDao
 import tk.jomp16.habbo.game.user.HabboSession
 import java.util.*
 
@@ -49,7 +49,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
     }
 
     fun notifyFriends() {
-        friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized ?: false }.forEach {
+        friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
             it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
         }
     }

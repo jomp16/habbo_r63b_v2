@@ -43,22 +43,22 @@ class HabboSessionManager {
     }
 
     fun removeHabboSession(channel: Channel): Boolean {
-        if (habboSessions.containsKey(channel.id())) {
+        return if (habboSessions.containsKey(channel.id())) {
             habboSessions.remove(channel.id())?.close()
 
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 
     fun removeFastFoodSession(channel: Channel): Boolean {
-        if (fastFoodSessions.containsKey(channel.id())) {
+        return if (fastFoodSessions.containsKey(channel.id())) {
             fastFoodSessions.remove(channel.id())?.close()
 
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 

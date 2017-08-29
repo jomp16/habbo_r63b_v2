@@ -34,7 +34,7 @@ class LandingLoadWidgetHandler {
         var campaignName = ""
 
         campaignString.split(';').last().let {
-            if (!it.isNullOrEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
+            if (!it.isEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
         }
 
         habboSession.sendHabboResponse(Outgoing.CAMPAIGN, campaignString, campaignName)

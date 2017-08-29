@@ -71,49 +71,41 @@ class CatalogManager {
         log.info("Loaded {} recycler levels and {} recycler rewards!", recyclerRewards.size, recyclerRewards.values.sumBy { it.size })
     }
 
-    // todo: add gift support
-    fun purchase(habboSession: HabboSession, catalogPage: CatalogPage, catalogItemId: Int, extraData: String, amount: Int) {
-        if (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
+    fun purchaseHC(habboSession: HabboSession, itemId: Int) {
+        if (!catalogClubOffers.any { it.itemId == itemId }) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+
+            return
+        }
+        val clubOffer = catalogClubOffers.find { it.itemId == itemId }
+
+        if (clubOffer == null) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
 
             return
         }
 
-        if (catalogPage.pageLayout == "vip_buy") {
-            // Habbo Club
-            if (!catalogClubOffers.any { it.itemId == catalogItemId }) {
-                habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+        if (habboSession.userInformation.credits < clubOffer.credits ||
+                (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
+                else habboSession.userInformation.vipPoints < clubOffer.points)) return
 
-                return
-            }
-            val clubOffer = catalogClubOffers.find { it.itemId == catalogItemId }
+        habboSession.userInformation.credits -= clubOffer.credits
 
-            if (clubOffer == null) {
-                habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
-
-                return
-            }
-
-            if (habboSession.userInformation.credits < clubOffer.credits ||
-                    (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
-                    else habboSession.userInformation.vipPoints < clubOffer.points)) return
-
-            habboSession.userInformation.credits -= clubOffer.credits
-
-            when (clubOffer.pointsType) {
-                0 -> habboSession.userInformation.pixels -= clubOffer.points
-                else -> habboSession.userInformation.vipPoints -= clubOffer.points
-            }
-
-            habboSession.habboSubscription.addOrExtend(clubOffer.months)
-
-            habboSession.updateAllCurrencies()
-
-            return
+        when (clubOffer.pointsType) {
+            0 -> habboSession.userInformation.pixels -= clubOffer.points
+            else -> habboSession.userInformation.vipPoints -= clubOffer.points
         }
-        val catalogItem = catalogPage.catalogItems.find { it.id == catalogItemId }
 
-        if (catalogItem == null || !catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
+        habboSession.habboSubscription.addOrExtend(clubOffer.months)
+
+        habboSession.updateAllCurrencies()
+
+        return
+    }
+
+    // todo: add gift support
+    fun purchase(habboSession: HabboSession, catalogItem: CatalogItem, extraData: String, amount: Int) {
+        if (!catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR, CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC)
 
             return
@@ -140,7 +132,7 @@ class CatalogManager {
         if (catalogItem.dealId > 0) {
             catalogItem.deal!!.furnishings.forEachIndexed { i, furnishing ->
                 HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, furnishing)?.let { extraData1 ->
-                    (0..catalogItem.deal!!.amounts[i] - 1).forEach {
+                    (0 until catalogItem.deal!!.amounts[i]).forEach {
                         furnishingToPurchase += CatalogPurchaseData(furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
 
                         if (furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
@@ -149,7 +141,7 @@ class CatalogManager {
             }
         } else {
             HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)?.let { extraData1 ->
-                (0..catalogItem.amount * amount - 1).forEach {
+                (0 until catalogItem.amount * amount).forEach {
                     furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
 
                     if (catalogItem.furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()

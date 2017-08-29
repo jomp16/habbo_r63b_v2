@@ -25,6 +25,8 @@ import tk.jomp16.habbo.communication.IHabboResponseSerialize
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.*
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Rotation
@@ -35,7 +37,7 @@ import java.util.*
 
 data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName: String, var extraData: String, var position: Vector3, var rotation: Int, var wallPosition: String) : IHabboResponseSerialize, Serializable {
     var magicRemove: Boolean = false
-    val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
+    private val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
     val wiredData: WiredData? by lazy { ItemDao.getWiredData(id) }
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
@@ -139,15 +141,13 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
     fun onUserWalksOn(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomUser, this)
 
-        // todo: wired
-        // room.getWiredHandler().triggerWired(WiredTriggerWalksOnFurni::class.java, roomUser, this)
+        room.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, this)
     }
 
     fun onUserWalksOff(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomUser, this)
 
-        // todo: wired
-        // room.getWiredHandler().triggerWired(WiredTriggerWalksOffFurni::class.java, roomUser, this)
+        room.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, this)
     }
 
     fun canClose(): Boolean {
@@ -165,20 +165,24 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
     private fun getFrontRotation(front: Vector2) = Rotation.calculate(front.x, front.y, position.x, position.y)
 
     fun getFrontRotation(): Int {
-        if (rotation == 2) return 6
-        else if (rotation == 6) return 2
-        else if (rotation == 0) return 4
-        else return 0
+        return when (rotation) {
+            2 -> 6
+            6 -> 2
+            0 -> 4
+            else -> 0
+        }
     }
 
     fun getFrontPosition(): Vector2 {
         var x = position.x
         var y = position.y
 
-        if (rotation == 0) y--
-        else if (rotation == 2) x++
-        else if (rotation == 4) y++
-        else if (rotation == 6) x--
+        when (rotation) {
+            0 -> y--
+            2 -> x++
+            4 -> y++
+            6 -> x--
+        }
 
         return Vector2(x, y)
     }
@@ -187,18 +191,20 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
         var x = position.x
         var y = position.y
 
-        if (rotation == 0) y++
-        else if (rotation == 2) x--
-        else if (rotation == 4) y--
-        else if (rotation == 6) x++
+        when (rotation) {
+            0 -> y++
+            2 -> x--
+            4 -> y--
+            6 -> x++
+        }
 
         return Vector2(x, y)
     }
 
-    fun isTouching(pos: Vector3, rotation: Int, z: Double = -1.toDouble()) = isTouching(pos, rotation, false, z)
+    fun isTouching(pos: Vector3, rotation: Int, z: Double = (-1).toDouble()) = isTouching(pos, rotation, false, z)
 
     private fun isTouching(vector3: Vector3, rotation: Int, ignoreItemRotation: Boolean, z: Double): Boolean {
-        if (z != -1.toDouble() && z - vector3.z > 3.toDouble()) return false
+        if (z != (-1).toDouble() && z - vector3.z > 3.toDouble()) return false
 
         if (ignoreItemRotation) return !(rotation != -1 && rotation != getFrontRotation(vector3.vector2)) && (position.x == vector3.x && position.y == vector3.y ||
                 vector3.x == position.x && vector3.y == position.y + 1 ||

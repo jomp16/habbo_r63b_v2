@@ -30,6 +30,7 @@ data class CatalogItem(
         val id: Int,
         val pageId: Int,
         val itemName: String,
+        val orderNum: Int,
         val dealId: Int,
         val catalogName: String,
         val badge: String,

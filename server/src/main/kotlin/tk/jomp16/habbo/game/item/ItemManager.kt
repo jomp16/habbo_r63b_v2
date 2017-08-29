@@ -29,8 +29,7 @@ import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.item.wired.WiredItem
 import tk.jomp16.habbo.game.item.wired.action.actions.WiredActionShowMessage
-import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
-import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.*
 import tk.jomp16.habbo.game.item.xml.FurniXMLHandler
 import tk.jomp16.habbo.game.item.xml.FurniXMLInfo
 import tk.jomp16.habbo.game.room.Room
@@ -90,6 +89,8 @@ class ItemManager {
         furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
         furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
         furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
+        furniInteractor.put(InteractionType.HABBO_WHEEL, HabboWheelFurniInteractor())
+        furniInteractor.put(InteractionType.DICE, DiceFurniInteractor())
         val wiredFurniInteractor = WiredFurniInteractor()
 
         InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach {
@@ -117,7 +118,7 @@ class ItemManager {
             }
 
             HabboServer.database {
-                batchInsertAndGetGeneratedKeys(javaClass.getResource("/sql/furnishings/insert_furnishings.sql").readText().trim(),
+                batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql").readText().trim(),
                         missingItems.map {
                             mapOf(
                                     "item_name" to it,
@@ -152,11 +153,11 @@ class ItemManager {
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
         val list: MutableList<Vector2> = ArrayList()
 
-        for (i in 0..width - 1) {
+        for (i in 0 until width) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x
             val y1 = if (rotation == 2 || rotation == 6) y + i else y
 
-            for (j in 0..height - 1) {
+            for (j in 0 until height) {
                 val xb = if (rotation == 2 || rotation == 6) x1 + j else x1
                 val xn = if (rotation == 0 || rotation == 4) y1 + j else y1
 
@@ -171,8 +172,13 @@ class ItemManager {
 
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? {
         return when (roomItem.furnishing.interactionType) {
+        // triggers
             InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
             InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> WiredTriggerSaysSomething(room, roomItem)
+            InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> WiredTriggerWalksOffFurni(room, roomItem)
+            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI -> WiredTriggerWalksOnFurni(room, roomItem)
+            InteractionType.WIRED_TRIGGER_STATE_CHANGED -> WiredTriggerStateChanged(room, roomItem)
+        // actions
             InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
             else -> null
         }

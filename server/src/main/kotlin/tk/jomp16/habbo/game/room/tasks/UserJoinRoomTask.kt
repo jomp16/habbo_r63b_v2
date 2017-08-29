@@ -58,12 +58,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.sendHabboResponse(Outgoing.ROOM_OWNERSHIP, room.roomData.id, room.hasRights(habboSession, true))
             habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
 
-            room.roomUsers.values.forEach {
-                if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
-                if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
-                // todo: carry item
-            }
-
             // todo: events
             if (room.hasRights(habboSession)) {
                 if (room.hasRights(habboSession, true)) {
@@ -89,6 +83,12 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
             habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
+
+            room.roomUsers.values.forEach {
+                if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
+                if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
+                // todo: carry item
+            }
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }

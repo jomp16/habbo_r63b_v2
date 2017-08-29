@@ -35,8 +35,8 @@ class RoomFloormapResponse {
             writeInt(room.roomData.wallHeight)
             val stringBuilder = StringBuilder()
 
-            for (i in 0..room.roomModel.mapSizeY - 1) {
-                for (j in 0..room.roomModel.mapSizeX - 1) {
+            for (i in 0 until room.roomModel.mapSizeY) {
+                for (j in 0 until room.roomModel.mapSizeX) {
                     if (j == room.roomModel.doorVector3.x && i == room.roomModel.doorVector3.y) {
                         if (room.roomModel.doorVector3.z > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.doorVector3.z.toInt() - 10])
                         else stringBuilder.append(room.roomModel.doorVector3.z.toInt())

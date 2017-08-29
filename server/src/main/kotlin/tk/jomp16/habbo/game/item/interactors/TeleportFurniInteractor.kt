@@ -22,6 +22,7 @@ package tk.jomp16.habbo.game.item.interactors
 import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.game.item.ItemInteractor
 import tk.jomp16.habbo.game.item.room.RoomItem
+import tk.jomp16.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.util.Vector3
@@ -65,8 +66,7 @@ class TeleportFurniInteractor : ItemInteractor() {
             roomItem.requestCycles(2)
         }
 
-        // todo: wired
-        // room.getWiredHandler().triggerWired(WiredTriggerStateChanged::class.java, roomUser, roomItem)
+        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
@@ -75,7 +75,7 @@ class TeleportFurniInteractor : ItemInteractor() {
         val incomingUser = roomItem.interactingUsers[2]
         var extraData = "0"
 
-        if (outgoingUser != null && outgoingUser.habboSession != null) {
+        if (outgoingUser?.habboSession != null) {
             if (roomItem.extraData == "2") {
                 if (outgoingUser.habboSession.teleporting) outgoingUser.habboSession.enterRoom(outgoingUser.habboSession.teleportRoom!!, bypassAuth = true)
 
@@ -98,47 +98,51 @@ class TeleportFurniInteractor : ItemInteractor() {
                     }
                 }
 
-                if (outgoingUser.currentVector3.vector2 != roomItem.position.vector2) {
-                    outgoingUser.walkingBlocked = false
+                when {
+                    outgoingUser.currentVector3.vector2 != roomItem.position.vector2 -> {
+                        outgoingUser.walkingBlocked = false
 
-                    roomItem.interactingUsers.remove(1)
-                } else if (showUpdate) {
-                    extraData = "2"
-
-                    if (targetRoomItem != null) {
-                        val newVector3 = Vector3(targetRoomItem.position.vector2, room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2))
-
-                        room.roomGamemap.updateRoomUserMovement(outgoingUser, outgoingUser.currentVector3.vector2, newVector3.vector2)
-
-                        outgoingUser.currentVector3 = newVector3
-                        outgoingUser.headRotation = targetRoomItem.rotation
-                        outgoingUser.bodyRotation = targetRoomItem.rotation
-                        outgoingUser.updateNeeded = true
-
-                        if (targetRoomItem.extraData != "2") {
-                            targetRoomItem.extraData = "2"
-                            targetRoomItem.update(false, true)
-                            targetRoomItem.requestCycles(2)
-                        }
-
-                        targetRoomItem.interactingUsers.put(2, outgoingUser)
                         roomItem.interactingUsers.remove(1)
                     }
+                    showUpdate -> {
+                        extraData = "2"
 
-                    roomItem.requestCycles(1)
-                } else {
-                    extraData = "1"
+                        if (targetRoomItem != null) {
+                            val newVector3 = Vector3(targetRoomItem.position.vector2, room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2))
 
-                    outgoingUser.moveTo(roomItem.getFrontPosition(), ignoreBlocking = true)
-                    outgoingUser.walkingBlocked = false
+                            room.roomGamemap.updateRoomUserMovement(outgoingUser, outgoingUser.currentVector3.vector2, newVector3.vector2)
 
-                    roomItem.interactingUsers.remove(1)
-                    roomItem.requestCycles(2)
+                            outgoingUser.currentVector3 = newVector3
+                            outgoingUser.headRotation = targetRoomItem.rotation
+                            outgoingUser.bodyRotation = targetRoomItem.rotation
+                            outgoingUser.updateNeeded = true
+
+                            if (targetRoomItem.extraData != "2") {
+                                targetRoomItem.extraData = "2"
+                                targetRoomItem.update(false, true)
+                                targetRoomItem.requestCycles(2)
+                            }
+
+                            targetRoomItem.interactingUsers.put(2, outgoingUser)
+                            roomItem.interactingUsers.remove(1)
+                        }
+
+                        roomItem.requestCycles(1)
+                    }
+                    else -> {
+                        extraData = "1"
+
+                        outgoingUser.moveTo(roomItem.getFrontPosition(), ignoreBlocking = true)
+                        outgoingUser.walkingBlocked = false
+
+                        roomItem.interactingUsers.remove(1)
+                        roomItem.requestCycles(2)
+                    }
                 }
             }
         }
 
-        if (incomingUser != null && incomingUser.habboSession != null) {
+        if (incomingUser?.habboSession != null) {
             if (incomingUser.currentVector3.vector2 != roomItem.position.vector2) {
                 incomingUser.walkingBlocked = false
                 roomItem.interactingUsers.remove(2)

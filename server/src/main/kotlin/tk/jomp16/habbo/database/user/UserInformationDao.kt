@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tk.jomp16.habbo.database.information
+package tk.jomp16.habbo.database.user
 
 import com.github.andrewoma.kwery.core.Row
 import tk.jomp16.habbo.BuildConfig
@@ -49,7 +49,7 @@ object UserInformationDao {
 
         if (!userInformationsList.containsKey(userId)) {
             val userInformation = HabboServer.database {
-                select(javaClass.getResource("/sql/users/information/select_user_information_from_id.sql").readText(),
+                select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_id.sql").readText(),
                         mapOf(
                                 "user_id" to userId
                         )
@@ -64,7 +64,7 @@ object UserInformationDao {
 
     fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
         return HabboServer.database {
-            select(javaClass.getResource("/sql/users/information/select_user_information_from_auth_ticket.sql").readText(),
+            select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_auth_ticket.sql").readText(),
                     mapOf(
                             "ticket" to ssoTicket
                     )
@@ -75,10 +75,10 @@ object UserInformationDao {
     fun getUserInformationByUsername(username: String): UserInformation? {
         val userInformation: UserInformation? = userInformationsList.values.find { it.username == username }
 
-        if (userInformation != null) return userInformation
+        return if (userInformation != null) userInformation
         else {
             val userInformation1 = HabboServer.database {
-                select(javaClass.getResource("/sql/users/information/select_user_information_from_username.sql").readText(),
+                select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_username.sql").readText(),
                         mapOf(
                                 "username" to username
                         )
@@ -87,13 +87,13 @@ object UserInformationDao {
 
             userInformationsList.put(userInformation1.id, userInformation1)
 
-            return userInformation1
+            userInformation1
         }
     }
 
     fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String, authTicket: String = "") {
         HabboServer.database {
-            update(javaClass.getResource("/sql/users/information/update_user_information.sql").readText(),
+            update(javaClass.classLoader.getResource("sql/users/information/update_user_information.sql").readText(),
                     mapOf(
                             "ticket" to authTicket,
                             "online" to online,
