@@ -47,6 +47,8 @@ class CatalogPurchaseHandler {
         if (catalogPage?.pageLayout == "vip_buy") {
             // purchase HC
             HabboServer.habboGame.catalogManager.purchaseHC(habboSession, itemId)
+
+            return
         }
         val catalogItem: CatalogItem? = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == itemId }
 
