@@ -54,7 +54,7 @@ subprojects {
         slf4j_version = "1.7.25"
         kwery_version = "0.17"
         mysql_version = "6.0.6"
-        hikari_version = "2.6.3"
+        hikari_version = "2.7.0"
         reflections_version = "0.9.11"
         jasypt_version = "1.9.2"
         commons_lang_version = "3.6"
