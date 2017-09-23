@@ -19,6 +19,7 @@
 
 package tk.jomp16.habbo.encryption
 
+import org.bouncycastle.util.encoders.Hex
 import tk.jomp16.habbo.HabboServer
 import java.math.BigInteger
 import java.security.KeyFactory
@@ -28,7 +29,6 @@ import javax.crypto.KeyAgreement
 import javax.crypto.interfaces.DHPublicKey
 import javax.crypto.spec.DHParameterSpec
 import javax.crypto.spec.DHPublicKeySpec
-import javax.xml.bind.DatatypeConverter
 
 class HabboEncryptionHandler(n: String, d: String, e: String) {
     private val rsaEncryption: RSAEncryption = RSAEncryption(n, d, e)
@@ -64,7 +64,7 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         val serverKeyPair1: KeyPair
         val serverKeyAgree1: KeyAgreement
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
-            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(DatatypeConverter.parseHexBinary(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
+            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(Hex.decode(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
         }
 
         if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
@@ -87,5 +87,5 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         return (serverKeyPair1.public as DHPublicKey).y to BigInteger(serverKeyAgree1.generateSecret())
     }
 
-    fun getRsaStringEncrypted(bytes: ByteArray): String = DatatypeConverter.printHexBinary(rsaEncryption.sign(bytes))
+    fun getRsaStringEncrypted(bytes: ByteArray): String = Hex.toHexString(rsaEncryption.sign(bytes))
 }
