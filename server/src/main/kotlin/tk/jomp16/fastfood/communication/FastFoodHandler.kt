@@ -125,7 +125,7 @@ class FastFoodHandler {
         val clazz1: Any
 
         if (!instances.containsKey(clazz)) {
-            clazz1 = clazz.newInstance()
+            clazz1 = clazz.getDeclaredConstructor().newInstance()
 
             instances.put(clazz, clazz1)
         } else {
