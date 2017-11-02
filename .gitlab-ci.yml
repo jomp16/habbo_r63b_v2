@@ -15,8 +15,15 @@ build:
   cache:
     key: $CI_COMMIT_REF_NAME
     paths:
-      - $CI_PROJECT_DIR/build
       - $CI_PROJECT_DIR/.gradle
+      - $CI_PROJECT_DIR/build
+      - $CI_PROJECT_DIR/launcher/build
+      - $CI_PROJECT_DIR/habbo_imaging/build
+      - $CI_PROJECT_DIR/plugins_src/plugin_impl1/build
+      - $CI_PROJECT_DIR/plugins_src/plugin_webapp/build
+      - $CI_PROJECT_DIR/pathfinding/build
+      - $CI_PROJECT_DIR/server/build
+      - $CI_PROJECT_DIR/plugin_manager/build
   artifacts:
     name: ${CI_PROJECT_NAME}-commit_${CI_COMMIT_SHA}
     paths:
