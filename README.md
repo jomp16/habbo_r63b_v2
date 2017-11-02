@@ -1,6 +1,8 @@
 # habbo_r63b_v2
 > A Habbo R63B server made with Kotlin and Java. In development.
 
+[![pipeline status](https://git.jomp16.tk/Habbo/habbo_r63b_v2/badges/master/pipeline.svg)](https://git.jomp16.tk/Habbo/habbo_r63b_v2/commits/master)
+
 ## Supported releases
 
 See [SUPPORTED_RELEASES.md](SUPPORTED_RELEASES.md) file.
