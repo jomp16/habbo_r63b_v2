@@ -86,7 +86,7 @@ subprojects {
         compile "org.slf4j:slf4j-api:$slf4j_version"
 
         //noinspection GrUnresolvedAccess
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
         //noinspection GrUnresolvedAccess
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
