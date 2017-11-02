@@ -170,18 +170,16 @@ class ItemManager {
 
     fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "")
 
-    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? {
-        return when (roomItem.furnishing.interactionType) {
-        // triggers
-            InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
-            InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> WiredTriggerSaysSomething(room, roomItem)
-            InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> WiredTriggerWalksOffFurni(room, roomItem)
-            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI -> WiredTriggerWalksOnFurni(room, roomItem)
-            InteractionType.WIRED_TRIGGER_STATE_CHANGED -> WiredTriggerStateChanged(room, roomItem)
-        // actions
-            InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
-            else -> null
-        }
+    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = when (roomItem.furnishing.interactionType) {
+    // triggers
+        InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
+        InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> WiredTriggerSaysSomething(room, roomItem)
+        InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> WiredTriggerWalksOffFurni(room, roomItem)
+        InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI -> WiredTriggerWalksOnFurni(room, roomItem)
+        InteractionType.WIRED_TRIGGER_STATE_CHANGED -> WiredTriggerStateChanged(room, roomItem)
+    // actions
+        InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
+        else -> null
     }
 
     // todo: see if I can improve it

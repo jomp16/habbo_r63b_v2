@@ -53,11 +53,9 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         }
     }
 
-    fun generateDiffieHellmanParameterSpec(): DHParameterSpec {
-        return when {
-            HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys -> diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
-            else -> dhParameterSpec!!
-        }
+    fun generateDiffieHellmanParameterSpec(): DHParameterSpec = when {
+        HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys -> diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
+        else -> dhParameterSpec!!
     }
 
     fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<BigInteger, BigInteger> {

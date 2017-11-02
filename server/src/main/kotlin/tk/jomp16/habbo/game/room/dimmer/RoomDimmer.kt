@@ -28,9 +28,7 @@ data class RoomDimmer(
         var currentPreset: Int,
         val presets: MutableList<RoomDimmerPreset>
 ) {
-    fun generateExtraData(roomDimmerPreset: RoomDimmerPreset = presets[currentPreset - 1]): String {
-        return "${(if (enabled) 2 else 1)},$currentPreset,${if (roomDimmerPreset.backgroundOnly) 2 else 1},${roomDimmerPreset.colorCode},${roomDimmerPreset.colorIntensity}"
-    }
+    fun generateExtraData(roomDimmerPreset: RoomDimmerPreset = presets[currentPreset - 1]): String = "${(if (enabled) 2 else 1)},$currentPreset,${if (roomDimmerPreset.backgroundOnly) 2 else 1},${roomDimmerPreset.colorCode},${roomDimmerPreset.colorIntensity}"
 
     fun switchState() {
         enabled = !enabled

@@ -28,14 +28,14 @@ import tk.jomp16.utils.plugin.api.PluginListener
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomCommandsListener : PluginListener() {
     // todo: pickall
-    @Command(arrayOf("unload", "close"))
+    @Command(["unload", "close"])
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
         if (!room.hasRights(roomUser.habboSession, true)) return
 
         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
     }
 
-    @Command(arrayOf("coords"))
+    @Command(["coords"])
     fun coords(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("X: ${roomUser.currentVector3.x}\n\nY: ${roomUser.currentVector3.y}\n\nZ: ${roomUser.currentVector3.z}\n\nHead rotation: ${roomUser.headRotation}\n\nBody rotation: ${roomUser.bodyRotation}")
     }

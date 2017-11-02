@@ -253,13 +253,9 @@ class CatalogManager {
         habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID)
     }
 
-    private fun totalFreeAmount(amount: Int): Int {
-        return blackBoxMath1(amount) + blackBoxMath2(amount) + blackBoxMath3(amount)
-    }
+    private fun totalFreeAmount(amount: Int): Int = blackBoxMath1(amount) + blackBoxMath2(amount) + blackBoxMath3(amount)
 
-    private fun blackBoxMath1(amount: Int): Int {
-        return (amount / FREE_AMOUNT) * 1
-    }
+    private fun blackBoxMath1(amount: Int): Int = (amount / FREE_AMOUNT) * 1
 
     private fun blackBoxMath2(amount: Int): Int {
         var int1 = 0

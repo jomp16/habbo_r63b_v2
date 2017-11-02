@@ -39,9 +39,7 @@ class WiredHandler {
         wiredStack[vector2]!!.put(wiredItem.roomItem.id, wiredItem)
     }
 
-    fun removeWiredItem(vector2: Vector2, roomItem: RoomItem): WiredItem? {
-        return wiredStack[vector2]?.remove(roomItem.id)
-    }
+    fun removeWiredItem(vector2: Vector2, roomItem: RoomItem): WiredItem? = wiredStack[vector2]?.remove(roomItem.id)
 
     fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): Boolean {
         for ((vector2, wiredStackMap) in wiredStack) {

@@ -33,7 +33,7 @@ import tk.jomp16.utils.plugin.api.PluginListener
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomBadgeCommandsListener : PluginListener() {
-    @Command(arrayOf("givebadge"), permissionName = "cmd_givebadge")
+    @Command(["givebadge"], permissionName = "cmd_givebadge")
     fun giveBadge(room: Room, roomUser: RoomUser, args: List<String>) {
         if (args.size <= 1) {
             roomUser.chat(roomUser.virtualID, "Excepted params: badge_name or badge_name username", 0, ChatType.WHISPER, true)
@@ -70,7 +70,7 @@ class RoomBadgeCommandsListener : PluginListener() {
         }
     }
 
-    @Command(arrayOf("removebadge"), permissionName = "cmd_removebadge")
+    @Command(["removebadge"], permissionName = "cmd_removebadge")
     fun removeBadge(room: Room, roomUser: RoomUser, args: List<String>) {
         if (args.isEmpty()) {
             roomUser.chat(roomUser.virtualID, "Excepted params: badge_name or badge_name username", 0, ChatType.WHISPER, true)

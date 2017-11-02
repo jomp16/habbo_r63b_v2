@@ -31,6 +31,7 @@ import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
 
 @ChannelHandler.Sharable
+@Suppress("unused")
 class FastFoodNettyHandler : ChannelInboundHandlerAdapter() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -64,9 +65,4 @@ class FastFoodNettyHandler : ChannelInboundHandlerAdapter() {
         }
     }
 
-    override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
-        super.userEventTriggered(ctx, evt)
-
-        // todo: ping?
-    }
 }

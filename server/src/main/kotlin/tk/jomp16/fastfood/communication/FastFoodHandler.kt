@@ -72,15 +72,15 @@ class FastFoodHandler {
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         fastFoodSession.incomingExecutor.execute {
             habboRequest.use {
-                val FFIncomingEnum: FFIncoming? = FFIncoming.values().firstOrNull { it.headerId == habboRequest.headerId }
+                val ffIncoming: FFIncoming? = FFIncoming.values().firstOrNull { it.headerId == habboRequest.headerId }
 
-                if (FFIncomingEnum != null && fastFoodMessageHandlers.containsKey(FFIncomingEnum)) {
-                    val (clazz, methodHandle) = fastFoodMessageHandlers[FFIncomingEnum] ?: return@use
+                if (ffIncoming != null && fastFoodMessageHandlers.containsKey(ffIncoming)) {
+                    val (clazz, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
 
                     try {
                         methodHandle.invokeWithArguments(clazz, fastFoodSession, habboRequest)
                     } catch (e: Exception) {
-                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $FFIncomingEnum!", e)
+                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
 
                         if (e is ClassCastException || e is WrongMethodTypeException) {
                             log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
@@ -88,7 +88,7 @@ class FastFoodHandler {
                         }
                     }
                 } else {
-                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, FFIncomingEnum)
+                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, ffIncoming)
                 }
             }
         }

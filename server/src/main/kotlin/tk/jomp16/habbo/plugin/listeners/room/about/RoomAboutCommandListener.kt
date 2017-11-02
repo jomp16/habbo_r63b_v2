@@ -32,7 +32,7 @@ import java.lang.management.ManagementFactory
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomAboutCommandListener : PluginListener() {
-    @Command(arrayOf("about", "info", "online", "server"))
+    @Command(["about", "info", "online", "server"])
     fun about(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification(NotificationType.MOTD_ALERT,
                 BuildConfig.NAME +

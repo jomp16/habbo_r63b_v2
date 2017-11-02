@@ -244,6 +244,7 @@ class RoomUser(
         room.roomTask?.addTask(room, UserVendingMachineTask(this, handItem))
     }
 
+    @Suppress("MemberVisibilityCanPrivate")
     fun carryHandItem(handItem: Int) {
         room.roomTask?.addTask(room, UserHandItemTask(this, handItem))
     }

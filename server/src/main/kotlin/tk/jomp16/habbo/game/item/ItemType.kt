@@ -29,8 +29,6 @@ enum class ItemType(val type: String) {
     BOT("r");
 
     companion object {
-        fun fromString(value: String): ItemType {
-            return values().firstOrNull { it.type == value } ?: FLOOR
-        }
+        fun fromString(value: String): ItemType = values().firstOrNull { it.type == value } ?: FLOOR
     }
 }

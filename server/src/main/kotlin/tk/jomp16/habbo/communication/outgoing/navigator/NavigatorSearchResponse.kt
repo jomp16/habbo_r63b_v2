@@ -181,13 +181,11 @@ class NavigatorSearchResponse {
         }
     }
 
-    private fun getNewNavigatorLength(category: String): Int {
-        return when (category) {
-            "official_view" -> 2
-            "myworld_view" -> 4
-            "hotel_view" -> HabboServer.habboGame.navigatorManager.navigatorRoomCategories.size + 2
-            "roomads_view" -> HabboServer.habboGame.navigatorManager.navigatorEventCategories.size + 1
-            else -> 1
-        }
+    private fun getNewNavigatorLength(category: String): Int = when (category) {
+        "official_view" -> 2
+        "myworld_view" -> 4
+        "hotel_view" -> HabboServer.habboGame.navigatorManager.navigatorRoomCategories.size + 2
+        "roomads_view" -> HabboServer.habboGame.navigatorManager.navigatorEventCategories.size + 1
+        else -> 1
     }
 }

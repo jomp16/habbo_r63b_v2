@@ -22,7 +22,7 @@ package tk.jomp16.habbo.plugin.event.events.room.annotation
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class Command(
-        val commands: Array<String> = arrayOf(""),
+        val commands: Array<String> = [""],
         val rank: Int = 1,
         val permissionName: String = ""
 )

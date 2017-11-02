@@ -34,6 +34,7 @@ import tk.jomp16.habbo.game.user.HabboSessionManager
 import tk.jomp16.habbo.kotlin.ip
 
 @ChannelHandler.Sharable
+@Suppress("unused")
 class FastFoodNettyEncoder : MessageToByteEncoder<HabboResponse>() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
