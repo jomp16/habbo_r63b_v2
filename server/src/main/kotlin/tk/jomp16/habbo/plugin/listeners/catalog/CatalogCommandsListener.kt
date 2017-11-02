@@ -28,7 +28,7 @@ import tk.jomp16.utils.plugin.api.PluginListener
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogCommandsListener : PluginListener() {
-    @Command(arrayOf("update_catalog", "reload_catalog"), permissionName = "cmd_update_catalogue")
+    @Command(["update_catalog", "reload_catalog"], permissionName = "cmd_update_catalogue")
     fun updateCatalogue(room: Room, roomUser: RoomUser, args: List<String>) {
         HabboServer.habboGame.catalogManager.load()
 
@@ -39,7 +39,7 @@ class CatalogCommandsListener : PluginListener() {
         roomUser.habboSession!!.sendNotification("Catalog reloaded!")
     }
 
-    @Command(arrayOf("update_items", "reload_items"), permissionName = "cmd_update_items")
+    @Command(["update_items", "reload_items"], permissionName = "cmd_update_items")
     fun updateItems(room: Room, roomUser: RoomUser, args: List<String>) {
         HabboServer.habboGame.itemManager.load()
 

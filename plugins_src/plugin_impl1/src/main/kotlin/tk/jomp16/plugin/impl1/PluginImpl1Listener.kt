@@ -30,27 +30,27 @@ class PluginImpl1Listener : PluginListener() {
 
     override fun onDestroy() = log.trace("Tchau mundo de ${javaClass.simpleName}!")
 
-    @Command(arrayOf("hello_world1"))
+    @Command(["hello_world1"])
     fun handleHelloWorld1(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("Hello World 1!")
     }
 
-    @Command(arrayOf("hello_world2"), rank = 7)
+    @Command(["hello_world2"], rank = 7)
     fun handleHelloWorld2(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("Hello World 2 with rank 7!")
     }
 
-    @Command(arrayOf("hello_world3"), rank = 7, permissionName = "acc_mod_tools")
+    @Command(["hello_world3"], rank = 7, permissionName = "acc_mod_tools")
     fun handleHelloWorld3(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("Hello World 2 with rank 7 and acc_mod_tools!")
     }
 
-    @Command(arrayOf("hello_world4"), rank = Int.MAX_VALUE, permissionName = "acc_mod_tools")
+    @Command(["hello_world4"], rank = Int.MAX_VALUE, permissionName = "acc_mod_tools")
     fun handleHelloWorld4(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("Hello World 2 with rank ${Int.MAX_VALUE} and acc_mod_tools!")
     }
 
-    @Command(arrayOf("hello_world5"), permissionName = "acc_mod_tools")
+    @Command(["hello_world5"], permissionName = "acc_mod_tools")
     fun handleHelloWorld5(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("Hello World 2 with acc_mod_tools!")
     }

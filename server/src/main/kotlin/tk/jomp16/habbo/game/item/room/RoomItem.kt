@@ -164,13 +164,11 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
 
     private fun getFrontRotation(front: Vector2) = Rotation.calculate(front.x, front.y, position.x, position.y)
 
-    fun getFrontRotation(): Int {
-        return when (rotation) {
-            2 -> 6
-            6 -> 2
-            0 -> 4
-            else -> 0
-        }
+    fun getFrontRotation(): Int = when (rotation) {
+        2 -> 6
+        6 -> 2
+        0 -> 4
+        else -> 0
     }
 
     fun getFrontPosition(): Vector2 {
@@ -216,9 +214,11 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
                 vector3.x == position.x + 1 && vector3.y == position.y ||
                 vector3.x == position.x - 1 && vector3.y == position.y - 1)
 
-        if (rotation != -1 && rotation != getFrontRotation()) return false
-        if (position.x == vector3.x && position.y == vector3.y) return true
-        if (rotation == 2 || rotation == 6) return vector3.x == (if (rotation == 6) position.x + 1 else position.x - 1) && vector3.y >= position.y && vector3.y < position.y + furnishing.width
-        else return vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.height
+        return when {
+            rotation != -1 && rotation != getFrontRotation() -> false
+            position.x == vector3.x && position.y == vector3.y -> true
+            else -> if (rotation == 2 || rotation == 6) vector3.x == (if (rotation == 6) position.x + 1 else position.x - 1) && vector3.y >= position.y && vector3.y < position.y + furnishing.width
+            else vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.height
+        }
     }
 }

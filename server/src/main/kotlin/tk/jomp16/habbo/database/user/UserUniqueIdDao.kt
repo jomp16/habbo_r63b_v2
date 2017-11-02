@@ -22,6 +22,7 @@ package tk.jomp16.habbo.database.user
 import tk.jomp16.habbo.HabboServer
 
 object UserUniqueIdDao {
+    @Suppress("unused")
     fun getUniqueIdsForUser(userId: Int): List<String> {
         return HabboServer.database {
             select(javaClass.getResource("/sql/users/unique_ids/select_unique_ids.sql").readText(),

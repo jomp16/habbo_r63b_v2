@@ -26,6 +26,7 @@ import tk.jomp16.fastfood.game.FastFoodSession
 
 class HabboSessionManager {
     val habboSessions: MutableMap<ChannelId, HabboSession> = mutableMapOf()
+    @Suppress("MemberVisibilityCanPrivate")
     val fastFoodSessions: MutableMap<ChannelId, FastFoodSession> = mutableMapOf()
 
     fun makeHabboSession(channel: Channel): Boolean {

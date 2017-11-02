@@ -69,10 +69,9 @@ object Utils {
         }
     }
 
-    fun deflate(source: ByteArray): ByteArray {
-        return deflate(source, Deflater.DEFAULT_COMPRESSION)
-    }
+    fun deflate(source: ByteArray): ByteArray = deflate(source, Deflater.DEFAULT_COMPRESSION)
 
+    @Suppress("MemberVisibilityCanPrivate")
     fun deflate(source: ByteArray, compression: Int): ByteArray {
         val deflater = Deflater(compression)
         deflater.setInput(source)
