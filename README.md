@@ -7,6 +7,9 @@
 
 See [SUPPORTED_RELEASES.md](SUPPORTED_RELEASES.md) file.
 
+## Download latest artifact
+[Get the latest artifact from GitLab CI server](https://git.jomp16.tk/Habbo/habbo_r63b_v2/-/jobs/artifacts/master/download?build)
+
 ## How to build
 
 `git clone https://git.jomp16.tk/Habbo/habbo_r63b_v2.git`
