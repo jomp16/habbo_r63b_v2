@@ -207,7 +207,6 @@ class RoomUser(
         } else {
             if (!idle) {
                 idleCount++
-
                 // check and commit idle state to room
                 if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
             }
@@ -299,7 +298,6 @@ class RoomUser(
                 writeInt(0)
                 writeInt(1) // 1 for user, 2 for pet, 3 for bot.
                 writeUTF(it.userInformation.gender.toLowerCase())
-
                 // todo: groups
                 writeInt(-1)
                 writeInt(0)
@@ -315,7 +313,6 @@ class RoomUser(
     fun removeUserStatuses() {
         removeStatus("sit")
         removeStatus("lay")
-
         // todo: remove effects
         updateNeeded = true
     }
@@ -325,7 +322,6 @@ class RoomUser(
             addStatus(if (roomItem.furnishing.canSit) "sit" else "lay", roomItem.height.toString())
             bodyRotation = roomItem.rotation
             headRotation = roomItem.rotation
-
             // todo: add effects
         }
 

@@ -44,7 +44,6 @@ class RollerFurniInteractor : ItemInteractor() {
                     reCycle = false
                 }
             }
-
             // Moving items
             room.roomGamemap.roomItemMap[roomItem.position.vector2]?.filter { it.id != roomItem.id && it.position.z > roomItem.position.z }?.let {
                 val roomItems = if (it.size > 10) it.take(10) else it

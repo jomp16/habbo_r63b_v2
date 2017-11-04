@@ -21,10 +21,9 @@ package tk.jomp16.habbo.game.item.xml
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
-import java.util.*
 
 class FurniXMLHandler : DefaultHandler() {
-    val furniXMLInfos: MutableList<FurniXMLInfo> = ArrayList()
+    val furniXMLInfos: MutableList<FurniXMLInfo> = mutableListOf()
     private var wallFurni: Boolean = false
     private var furniXMLInfo: FurniXMLInfo? = null
     private var content: String = ""

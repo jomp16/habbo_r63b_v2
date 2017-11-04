@@ -35,12 +35,12 @@ import kotlin.collections.MutableMap.MutableEntry
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val messageHandlers: MutableMap<Incoming, Pair<Any, MethodHandle>> = HashMap()
-    private val messageResponses: MutableMap<Outgoing, Pair<Any, MethodHandle>> = HashMap()
-    private val instances: MutableMap<Class<*>, Any> = HashMap()
+    private val messageHandlers: MutableMap<Incoming, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val messageResponses: MutableMap<Outgoing, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     val releases: MutableSet<String> = HashSet()
-    val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = HashMap()
-    val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = HashMap()
+    val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = mutableMapOf()
+    val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = mutableMapOf()
     var largestNameSize: Int = 0
 
     init {
@@ -172,7 +172,6 @@ class HabboHandler {
                     log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
                     log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
                 }
-
                 // Close the Habbo Response
                 habboResponse.close()
             }

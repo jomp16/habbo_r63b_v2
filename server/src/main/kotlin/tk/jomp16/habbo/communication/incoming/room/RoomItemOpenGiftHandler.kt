@@ -57,7 +57,6 @@ class RoomItemOpenGiftHandler {
 
     private fun openBox(habboSession: HabboSession, giftRoomItem: RoomItem) {
         val giftData = ItemDao.getGiftData(giftRoomItem.id) ?: return
-
         // replace current gift item to the gifted item
         habboSession.currentRoom!!.removeItem(habboSession.roomUser, giftRoomItem)
         val shouldAddToRoom = giftData.furnishing.type == ItemType.FLOOR && giftData.amount == 1

@@ -34,8 +34,8 @@ class FastFoodSession(val channel: Channel) : AutoCloseable {
     val incomingExecutor: Executor = Executors.newSingleThreadExecutor()
     private val outgoingExecutor: Executor = Executors.newSingleThreadExecutor()
 
-    fun sendHabboResponse(FFOutgoing: FFOutgoing, vararg args: Any?) = outgoingExecutor.execute {
-        HabboServer.fastFoodHandler.invokeResponse(FFOutgoing, *args)?.let {
+    fun sendHabboResponse(ffOutgoing: FFOutgoing, vararg args: Any?) = outgoingExecutor.execute {
+        HabboServer.fastFoodHandler.invokeResponse(ffOutgoing, *args)?.let {
             sendHabboResponse(it)
         }
     }

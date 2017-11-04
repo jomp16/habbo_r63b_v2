@@ -44,7 +44,6 @@ class UserProfileResponse {
             writeBoolean(isFriend)
             writeBoolean(isRequest)
             writeBoolean(isOnline)
-
             // todo: groups
             writeInt(0)
 

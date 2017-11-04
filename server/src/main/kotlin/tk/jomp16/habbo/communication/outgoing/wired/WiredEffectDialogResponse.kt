@@ -54,7 +54,7 @@ class WiredEffectDialogResponse {
                 writeEmptySettings()
                 writeInt(8)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             InteractionType.WIRED_ACTION_KICK_USER -> {
                 writeEmptyItems()
@@ -62,7 +62,7 @@ class WiredEffectDialogResponse {
                 writeSettings(wiredData.message, emptyList(), 0)
                 writeInt(7)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             InteractionType.WIRED_ACTION_MOVE_ROTATE -> {
                 writeItems(wiredData)
@@ -70,7 +70,7 @@ class WiredEffectDialogResponse {
                 writeSettings("", wiredData.options, 2)
                 writeInt(4)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             InteractionType.WIRED_ACTION_MATCH_TO_SCREENSHOT -> {
                 writeItems(wiredData)
@@ -78,7 +78,7 @@ class WiredEffectDialogResponse {
                 writeSettings("", wiredData.options, 3)
                 writeInt(3)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             InteractionType.WIRED_ACTION_CALL_STACK -> {
                 writeItems(wiredData)
@@ -86,7 +86,7 @@ class WiredEffectDialogResponse {
                 writeEmptySettings()
                 writeInt(18)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             InteractionType.WIRED_ACTION_SHOW_MESSAGE -> {
                 writeEmptyItems()
@@ -94,7 +94,7 @@ class WiredEffectDialogResponse {
                 writeSettings(wiredData.message, emptyList(), 0)
                 writeInt(7)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
             else -> {
                 writeEmptyItems()
@@ -102,7 +102,7 @@ class WiredEffectDialogResponse {
                 writeEmptySettings()
                 writeInt(0)
                 writeDelay(wiredData)
-                writeBlockedTriggers()
+                writeBlockedTriggers(wiredData)
             }
         }
     }

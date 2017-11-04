@@ -20,6 +20,8 @@
 package tk.jomp16.habbo.plugin.listeners.room
 
 import tk.jomp16.habbo.HabboServer
+import tk.jomp16.habbo.database.item.ItemDao
+import tk.jomp16.habbo.game.item.InteractionType
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.user.RoomUser
 import tk.jomp16.habbo.plugin.event.events.room.annotation.Command
@@ -27,7 +29,6 @@ import tk.jomp16.utils.plugin.api.PluginListener
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomCommandsListener : PluginListener() {
-    // todo: pickall
     @Command(["unload", "close"])
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
         if (!room.hasRights(roomUser.habboSession, true)) return
@@ -38,5 +39,16 @@ class RoomCommandsListener : PluginListener() {
     @Command(["coords"])
     fun coords(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession?.sendNotification("X: ${roomUser.currentVector3.x}\n\nY: ${roomUser.currentVector3.y}\n\nZ: ${roomUser.currentVector3.z}\n\nHead rotation: ${roomUser.headRotation}\n\nBody rotation: ${roomUser.bodyRotation}")
+    }
+
+    @Command(["pickall"])
+    fun pickall(habboServer: HabboServer, roomUser: RoomUser, rawMessage: String, args: List<String>) {
+        if (roomUser.room.hasRights(roomUser.habboSession, true)) {
+            val roomItemsRemoved = roomUser.room.roomItems.values.toList()
+                    .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
+                    .filter { roomItem -> roomUser.room.removeItem(roomUser, roomItem) }
+
+            ItemDao.addRoomItemInventory(roomItemsRemoved)
+        }
     }
 }

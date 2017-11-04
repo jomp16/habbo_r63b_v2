@@ -28,7 +28,6 @@ import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateRes
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
 import tk.jomp16.habbo.game.user.messenger.MessengerFriend
-import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRemoveFriendHandler {
@@ -39,7 +38,7 @@ class MessengerRemoveFriendHandler {
 
         if (amount < 0) return
         if (amount > 100) amount = 100
-        val messengerFriends: MutableList<MessengerFriend> = ArrayList()
+        val messengerFriends: MutableList<MessengerFriend> = mutableListOf()
 
         repeat(amount) {
             val userId = habboRequest.readInt()

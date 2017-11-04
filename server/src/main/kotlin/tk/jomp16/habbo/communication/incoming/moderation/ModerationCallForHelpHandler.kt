@@ -29,7 +29,6 @@ class ModerationCallForHelpHandler {
     @Handler(Incoming.MODERATION_CALL_FOR_HELP)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         // [716 ][null] -- [0]%olá mundo! aeeeeeeeeeeeeeeeeeeeeeeee[0][0][0][3]����[0][0][0][1][0][0][0][0]
         // [716 ][null] -- [0]3eu sou jomp16![13][13]mas tem alguém dizendo ser jomp16![0][0][0][17]����[0][0][0][1][0][0][0][0]
         val message = habboRequest.readUTF().trim()
@@ -37,7 +36,6 @@ class ModerationCallForHelpHandler {
         val reportedUserId = habboRequest.readInt()
         val roomId = habboRequest.readInt()
         val chatlogs = habboRequest.readInt() // ???
-
         // structure users envolved in the help:
         // int - user id
         // string - chat -- ???

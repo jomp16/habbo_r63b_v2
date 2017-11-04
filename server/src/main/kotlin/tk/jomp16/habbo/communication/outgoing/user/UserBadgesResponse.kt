@@ -30,7 +30,6 @@ class UserBadgesResponse {
     fun response(habboResponse: HabboResponse, id: Int, badges: Collection<Badge>) {
         habboResponse.apply {
             val equippedBadges = badges.filter { it.slot > 0 }
-
             // todo: make sure if it's always user id or use virtualID when if in room
             writeInt(id)
             writeInt(equippedBadges.size)

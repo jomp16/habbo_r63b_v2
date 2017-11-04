@@ -50,21 +50,21 @@ class WiredTriggerDialogResponse {
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, emptyList(), 0)
                 writeInt(7)
-                writeBlockedActions()
+                writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, wiredData.options, 1)
                 writeInt(0)
-                writeBlockedActions()
+                writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_STATE_CHANGED -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeEmptySettings()
                 writeInt(4)
-                writeBlockedActions()
+                writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI,
             InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> {
@@ -72,14 +72,14 @@ class WiredTriggerDialogResponse {
                 writeItemInfo(roomItem)
                 writeEmptySettings()
                 writeInt(1)
-                writeBlockedActions()
+                writeBlockedActions(wiredData)
             }
             else -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeEmptySettings()
                 writeInt(0)
-                writeBlockedActions()
+                writeBlockedActions(wiredData)
             }
         }
     }

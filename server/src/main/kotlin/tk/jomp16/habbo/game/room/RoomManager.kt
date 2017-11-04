@@ -23,13 +23,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.game.room.model.RoomModel
-import java.util.*
 
 class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val rooms: MutableMap<Int, Room> = HashMap()
-    private val roomModels: MutableMap<String, RoomModel> = HashMap()
-    private val customRoomModels: MutableMap<Int, RoomModel> = HashMap()
+    val rooms: MutableMap<Int, Room> = mutableMapOf()
+    private val roomModels: MutableMap<String, RoomModel> = mutableMapOf()
+    private val customRoomModels: MutableMap<Int, RoomModel> = mutableMapOf()
     val roomTaskManager: RoomTaskManager = RoomTaskManager()
 
     fun load() {

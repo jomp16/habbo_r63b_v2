@@ -33,7 +33,6 @@ class RoomInfoHandler {
         if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
         // todo: allows user to reenter room?
         val isLoading = habboRequest.readInt() == 1 || habboSession.currentRoom == room
         val checkEntry = habboRequest.readInt() == 1

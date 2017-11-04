@@ -35,18 +35,18 @@ import tk.jomp16.habbo.kotlin.insertAndGetGeneratedKey
 import tk.jomp16.habbo.kotlin.random
 import tk.jomp16.habbo.util.Utils
 import java.security.SecureRandom
+import java.util.*
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val catalogPages: MutableList<CatalogPage> = ArrayList()
-    val catalogItems: MutableList<CatalogItem> = ArrayList()
-    val catalogClubOffers: MutableList<CatalogClubOffer> = ArrayList()
-    val catalogDeals: MutableList<CatalogDeal> = ArrayList()
-    val recyclerRewards: MutableMap<Int, List<String>> = HashMap()
+    val catalogPages: MutableList<CatalogPage> = mutableListOf()
+    val catalogItems: MutableList<CatalogItem> = mutableListOf()
+    val catalogClubOffers: MutableList<CatalogClubOffer> = mutableListOf()
+    val catalogDeals: MutableList<CatalogDeal> = mutableListOf()
+    val recyclerRewards: MutableMap<Int, List<String>> = mutableMapOf()
 
     fun load() {
         log.info("Loading catalog...")
-
         // clear catalog
         catalogPages.clear()
         catalogItems.clear()
@@ -125,9 +125,8 @@ class CatalogManager {
 
             return
         }
-
         // todo
-        val furnishingToPurchase: MutableList<CatalogPurchaseData> = ArrayList()
+        val furnishingToPurchase: MutableList<CatalogPurchaseData> = mutableListOf()
 
         if (catalogItem.dealId > 0) {
             catalogItem.deal!!.furnishings.forEachIndexed { i, furnishing ->
@@ -153,7 +152,6 @@ class CatalogManager {
         furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
             ItemDao.addLimitedItem(userItems[furnishingToPurchase.indexOf(it)].id, it.limitedNumber, catalogItem.limitedTotal)
         }
-
         // todo: move queries to ItemDao
         HabboServer.database {
             val copyUserItems = ArrayList(userItems)
@@ -229,7 +227,6 @@ class CatalogManager {
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
                 it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
             }
-
             // and save new limited sell to database
             CatalogDao.updateLimitedSells(catalogItem)
         }
@@ -248,7 +245,6 @@ class CatalogManager {
 
             return
         }
-
         // todo: add a voucher table and redeem
         habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID)
     }
@@ -280,9 +276,7 @@ class CatalogManager {
         return int1
     }
 
-    private fun getRandomRecyclerLevel(): Int {
-        val random = SecureRandom()
-
+    private fun getRandomRecyclerLevel(random: Random): Int {
         HabboServer.habboConfig.recyclerConfig.odds.entries.filter { it.key != 1 }.filter {
             recyclerRewards.containsKey(it.key)
         }.sortedByDescending { it.key }.forEach {
@@ -293,9 +287,10 @@ class CatalogManager {
     }
 
     fun getRandomRecyclerReward(): Furnishing? {
-        val level = getRandomRecyclerLevel()
+        val random = SecureRandom()
+        val level = getRandomRecyclerLevel(random)
 
-        return HabboServer.habboGame.itemManager.furnishings[recyclerRewards[level]!!.random()]
+        return HabboServer.habboGame.itemManager.furnishings[recyclerRewards[level]!!.random(random)]
     }
 
     companion object {

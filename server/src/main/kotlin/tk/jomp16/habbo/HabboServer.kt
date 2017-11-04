@@ -99,7 +99,6 @@ object HabboServer : AutoCloseable {
         log.info("Licensed under GPLv3. See https://www.gnu.org/licenses/gpl-3.0.en.html")
         log.info("")
         log.info("Loading ${BuildConfig.NAME} emulator...")
-
         // Initialize database
         log.info("Initializing database...")
 
@@ -170,7 +169,6 @@ object HabboServer : AutoCloseable {
                         })
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
-
                 /*fastFoodServerBootstrap.group(bossGroup, workerGroup)
                         .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
                         .childHandler(object : ChannelInitializer<SocketChannel>() {
@@ -223,7 +221,6 @@ object HabboServer : AutoCloseable {
     override fun close() {
         if (started) {
             log.info("Shutting down ${BuildConfig.NAME} server...")
-
             // Start Netty
             log.debug("Shutting down Netty server...")
             bossGroup.shutdownGracefully().awaitUninterruptibly()

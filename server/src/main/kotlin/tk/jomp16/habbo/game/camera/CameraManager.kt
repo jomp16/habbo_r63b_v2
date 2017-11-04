@@ -71,6 +71,15 @@ class CameraManager {
                     }
                 }
             }
+            // Delete old navigator thumbnail that room doesn't exists anymore
+            Files.walk(cameraNavigatorThumbnailDirectory).use {
+                it.filter { Files.isRegularFile(it) }
+                        .filter { path -> !HabboServer.habboGame.roomManager.rooms.keys.contains(path.fileName.toString().replace(".png", "").toInt()) }
+                        .forEach { path ->
+                            // No more room fam, remove this image.
+                            if (!Files.deleteIfExists(path)) log.error("Couldn't delete camera navigator thumbnail: {}", path.fileName)
+                        }
+            }
         }, 0, 5, TimeUnit.SECONDS)
 
         log.info("Done!")

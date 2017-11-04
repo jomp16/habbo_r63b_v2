@@ -42,18 +42,17 @@ import java.io.FileOutputStream
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = HashMap()
-    val furnishings: MutableMap<String, Furnishing> = HashMap()
-    val oldGiftWrapper: MutableList<Furnishing> = ArrayList()
-    val newGiftWrapper: MutableList<Furnishing> = ArrayList()
-    val teleportLinks: MutableMap<Int, Int> = HashMap()
-    val roomTeleportLinks: MutableMap<Int, Int> = HashMap()
-    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = HashMap()
+    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = mutableMapOf()
+    val furnishings: MutableMap<String, Furnishing> = mutableMapOf()
+    val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
+    val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
+    val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
+    val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
+    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
 
     fun load() {
         log.info("Loading furnishings...")
@@ -151,7 +150,7 @@ class ItemManager {
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
-        val list: MutableList<Vector2> = ArrayList()
+        val list: MutableList<Vector2> = mutableListOf()
 
         for (i in 0 until width) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x
