@@ -42,11 +42,11 @@ class RoomCommandsListener : PluginListener() {
     }
 
     @Command(["pickall"])
-    fun pickall(habboServer: HabboServer, roomUser: RoomUser, rawMessage: String, args: List<String>) {
-        if (roomUser.room.hasRights(roomUser.habboSession, true)) {
-            val roomItemsRemoved = roomUser.room.roomItems.values.toList()
+    fun pickall(room: Room, roomUser: RoomUser, args: List<String>) {
+        if (room.hasRights(roomUser.habboSession, true)) {
+            val roomItemsRemoved = room.roomItems.values.toList()
                     .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
-                    .filter { roomItem -> roomUser.room.removeItem(roomUser, roomItem) }
+                    .filter { roomItem -> room.removeItem(roomUser, roomItem) }
 
             ItemDao.addRoomItemInventory(roomItemsRemoved)
         }
