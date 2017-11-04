@@ -33,7 +33,6 @@ class HandshakeSSOTicketHandler {
         val ssoTicket = habboRequest.readUTF()
         @Suppress("UNUSED_VARIABLE")
         val hotelHost = habboRequest.readUTF()
-
         // todo: authenticate with sso ticket please
         val habboSession = HabboServer.habboSessionManager.habboSessions.values.filter { it.gameSSOToken.isNotBlank() }.firstOrNull { it.gameSSOToken == ssoTicket }
 

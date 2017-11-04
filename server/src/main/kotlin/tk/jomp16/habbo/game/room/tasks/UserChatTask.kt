@@ -85,7 +85,6 @@ private fun getSpeechEmotion(message: String): Int {
             message.contains(":-D")) {
         return 1
     }
-
     // Angry face
     if (message.contains(">:(") ||
             message.contains(">;(") ||
@@ -96,7 +95,6 @@ private fun getSpeechEmotion(message: String): Int {
             message.contains(":@")) {
         return 2
     }
-
     // Surprised face
     if (message.contains(":O") ||
             message.contains(";O") ||
@@ -110,7 +108,6 @@ private fun getSpeechEmotion(message: String): Int {
             message.contains(">=O")) {
         return 3
     }
-
     // Sad face
     if (message.contains(":(") ||
             message.contains(":[") ||
@@ -129,7 +126,6 @@ private fun getSpeechEmotion(message: String): Int {
             message.contains(":-(")) {
         return 4
     }
-
     // Normal face
     return 0
 }

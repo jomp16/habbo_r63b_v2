@@ -24,11 +24,10 @@ import tk.jomp16.habbo.communication.outgoing.messenger.MessengerFriendUpdateRes
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.database.user.UserInformationDao
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.*
 
 class HabboMessenger(private val habboSession: HabboSession) {
-    val friends: MutableMap<Int, MessengerFriend> = HashMap()
-    val requests: MutableMap<Int, MessengerRequest> = HashMap()
+    val friends: MutableMap<Int, MessengerFriend> = mutableMapOf()
+    val requests: MutableMap<Int, MessengerRequest> = mutableMapOf()
     var initialized: Boolean = false
 
     internal fun load() {
@@ -36,7 +35,6 @@ class HabboMessenger(private val habboSession: HabboSession) {
             if (habboSession.hasPermission("acc_server_console")) {
                 // server console!
                 friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(UserInformationDao.serverConsoleUserInformation.id)
-
                 // stub group
                 // friends += -1 to MessengerFriend(-1)
             }

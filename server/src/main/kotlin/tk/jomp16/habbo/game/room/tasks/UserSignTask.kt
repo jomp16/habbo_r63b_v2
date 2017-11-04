@@ -26,7 +26,6 @@ import tk.jomp16.habbo.game.room.user.RoomUser
 class UserSignTask(private val roomUser: RoomUser, private val sign: Int) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
-
         // 500 millis
         roomUser.addStatus("sign", sign.toString(), 500)
     }

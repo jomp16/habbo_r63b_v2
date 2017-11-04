@@ -34,7 +34,6 @@ class DefaultItemInteractor : ItemInteractor() {
         var currentMode = if (roomItem.extraData.isEmpty()) 0 else roomItem.extraData.toInt()
 
         if (modes == 0) return
-
         // todo: check if this is working properly
         if (++currentMode > modes) currentMode = 0
 

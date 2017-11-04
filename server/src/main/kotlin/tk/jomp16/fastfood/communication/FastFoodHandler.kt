@@ -34,9 +34,9 @@ import java.lang.invoke.WrongMethodTypeException
 
 class FastFoodHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val fastFoodMessageHandlers: MutableMap<FFIncoming, Pair<Any, MethodHandle>> = HashMap()
-    private val fastFoodMessageResponses: MutableMap<FFOutgoing, Pair<Any, MethodHandle>> = HashMap()
-    private val instances: MutableMap<Class<*>, Any> = HashMap()
+    private val fastFoodMessageHandlers: MutableMap<FFIncoming, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val fastFoodMessageResponses: MutableMap<FFOutgoing, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     var largestNameSize: Int = 0
 
     init {
@@ -94,28 +94,27 @@ class FastFoodHandler {
         }
     }
 
-    fun invokeResponse(FFOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
-        if (fastFoodMessageResponses.containsKey(FFOutgoing)) {
-            val (clazz, methodHandle) = fastFoodMessageResponses[FFOutgoing] ?: return null
-            val habboResponse = HabboResponse(FFOutgoing.headerId)
+    fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
+        if (fastFoodMessageResponses.containsKey(ffOutgoing)) {
+            val (clazz, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
+            val habboResponse = HabboResponse(ffOutgoing.headerId)
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)
 
                 return habboResponse
             } catch (e: Exception) {
-                log.error("Error when invoking HabboResponse for ${FFOutgoing.headerId} - $FFOutgoing!", e)
+                log.error("Error when invoking HabboResponse for ${ffOutgoing.headerId} - $ffOutgoing!", e)
 
                 if (e is ClassCastException || e is WrongMethodTypeException) {
                     log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
                     log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
                 }
-
                 // Close the Habbo Response
                 habboResponse.close()
             }
         } else {
-            log.error("Non existent response header ID: {} - {}", FFOutgoing.headerId, FFOutgoing)
+            log.error("Non existent response header ID: {} - {}", ffOutgoing.headerId, ffOutgoing)
         }
 
         return null

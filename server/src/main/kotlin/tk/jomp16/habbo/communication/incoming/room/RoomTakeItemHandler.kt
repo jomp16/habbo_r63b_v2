@@ -19,12 +19,11 @@
 
 package tk.jomp16.habbo.communication.incoming.room
 
-import tk.jomp16.habbo.HabboServer
 import tk.jomp16.habbo.communication.HabboRequest
 import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
+import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.game.item.InteractionType
-import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -40,18 +39,7 @@ class RoomTakeItemHandler {
         if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
         if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
-            HabboServer.habboSessionManager.getHabboSessionById(roomItem.userId)?.habboInventory?.addItems(
-                    listOf(
-                            UserItem(
-                                    roomItem.id,
-                                    roomItem.userId,
-                                    roomItem.itemName,
-                                    roomItem.extraData
-                            )
-                    )
-            )
+            ItemDao.addRoomItemInventory(mutableListOf(roomItem))
         }
-
-        if (!habboSession.habboInventory.roomItemsToRemove.contains(roomItem)) habboSession.habboInventory.roomItemsToRemove += roomItem
     }
 }

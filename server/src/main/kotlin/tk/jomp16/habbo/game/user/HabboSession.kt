@@ -27,7 +27,6 @@ import tk.jomp16.habbo.communication.HabboResponse
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import tk.jomp16.habbo.database.badge.BadgeDao
-import tk.jomp16.habbo.database.item.ItemDao
 import tk.jomp16.habbo.database.room.RoomDao
 import tk.jomp16.habbo.database.user.UserInformationDao
 import tk.jomp16.habbo.database.user.UserPreferencesDao
@@ -272,7 +271,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         currentRoom = room
-
         // todo: group
         sendHabboResponse(Outgoing.ROOM_OPEN)
         sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
@@ -298,8 +296,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     internal fun saveAllQueuedStuffs() {
-        ItemDao.removeRoomItems(habboInventory.roomItemsToRemove)
 
-        habboInventory.roomItemsToRemove.clear()
     }
 }

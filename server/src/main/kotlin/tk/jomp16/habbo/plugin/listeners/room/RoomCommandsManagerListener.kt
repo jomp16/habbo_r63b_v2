@@ -102,7 +102,7 @@ class RoomCommandsManagerListener : PluginListener() {
     }
 
     private fun searchCommands(pluginListener: PluginListener): List<PluginCommandRegister> {
-        val commands: MutableList<PluginCommandRegister> = ArrayList()
+        val commands: MutableList<PluginCommandRegister> = mutableListOf()
 
         pluginListener.javaClass.declaredMethods.forEach {
             val commandAnnotation = it.getAnnotation(Command::class.java) ?: return@forEach
@@ -119,7 +119,7 @@ class RoomCommandsManagerListener : PluginListener() {
         if (message == null || message.isEmpty()) {
             return null
         }
-        val args: MutableList<String> = ArrayList()
+        val args: MutableList<String> = mutableListOf()
         val matcher = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'").matcher(message)
 
         while (matcher.find()) {

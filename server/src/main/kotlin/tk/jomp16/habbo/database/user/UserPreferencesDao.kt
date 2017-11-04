@@ -58,7 +58,6 @@ object UserPreferencesDao {
                         )
                 )
             }
-
             // Now fetch it again, doing a one recursive call, and returns this
             return getUserPreferences(userId)
         }

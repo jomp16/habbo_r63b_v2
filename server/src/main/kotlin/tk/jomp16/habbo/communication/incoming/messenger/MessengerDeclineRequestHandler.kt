@@ -24,7 +24,6 @@ import tk.jomp16.habbo.communication.Handler
 import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.database.messenger.MessengerDao
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerDeclineRequestHandler {
@@ -44,7 +43,7 @@ class MessengerDeclineRequestHandler {
 
             return
         }
-        val ids: MutableList<Int> = ArrayList()
+        val ids: MutableList<Int> = mutableListOf()
 
         repeat(amount) {
             val userId = habboRequest.readInt()

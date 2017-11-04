@@ -33,9 +33,9 @@ class UserActionTask(private val roomUser: RoomUser, private val action: Int) : 
         }
 
         roomUser.idle = false
+        roomUser.handItem = 0
+        roomUser.danceId = 0
 
-        // todo: unset dance
-        // todo: unset carry
         room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action)
     }
 }

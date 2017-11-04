@@ -28,7 +28,6 @@ import tk.jomp16.habbo.game.navigator.NavigatorRoomCategory
 import tk.jomp16.habbo.game.room.Room
 import tk.jomp16.habbo.game.room.RoomType
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchResponse {
@@ -85,7 +84,7 @@ class NavigatorSearchResponse {
                     serializeSearchResultList("recommended", false, habboResponse, habboSession)
                 }
                 "my" -> {
-                    val rooms: MutableList<Room> = ArrayList()
+                    val rooms: MutableList<Room> = mutableListOf()
 
                     habboSession.rooms.forEachIndexed { i, room ->
                         rooms.add(room)
@@ -105,7 +104,7 @@ class NavigatorSearchResponse {
                     }
                 }
                 "favorites" -> {
-                    val rooms: MutableList<Room> = ArrayList()
+                    val rooms: MutableList<Room> = mutableListOf()
 
                     habboSession.favoritesRooms.map { it.second }.forEachIndexed { i, roomId ->
                         rooms.add(HabboServer.habboGame.roomManager.rooms[roomId]!!)

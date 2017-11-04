@@ -23,12 +23,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.HabboServer
 import java.sql.ResultSet
-import java.util.*
 
 class PermissionManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val permissionsUser: MutableMap<Int, MutableList<String>> = HashMap()
-    private val permissionsRank: MutableMap<Int, MutableList<String>> = HashMap()
+    private val permissionsUser: MutableMap<Int, MutableList<String>> = mutableMapOf()
+    private val permissionsRank: MutableMap<Int, MutableList<String>> = mutableMapOf()
 
     fun load() {
         log.info("Loading permissions...")
@@ -58,7 +57,7 @@ class PermissionManager {
         val metadata = resultSet.metaData
 
         while (resultSet.next()) {
-            val permissions: MutableList<String> = ArrayList()
+            val permissions: MutableList<String> = mutableListOf()
 
             (3..metadata.columnCount).forEach { i ->
                 if (resultSet.getBoolean(i)) {

@@ -104,7 +104,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false): Boolean {
         if (habboSession == null) return false
         val isOwner = roomData.ownerId == habboSession.userInformation.id && habboSession.hasPermission("acc_any_room_owner")
-
         // todo: add groups
         return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id }
     }
@@ -112,7 +111,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun addUser(habboSession: HabboSession) {
         roomTask?.let {
             if (roomUsers.values.any { it.habboSession == habboSession }) return
-
             // generate random virtual id
             var virtualId: Int
 
@@ -166,7 +164,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomData.tags.forEach { writeUTF(it) }
             var value = if (enterRoom) 32 else 0
-
             // todo: groups
             /*val group = getGroup()
 
@@ -184,7 +181,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             if (roomData.allowPets) value += 16
 
             writeInt(value)
-
             // todo: groups
             /*if (group != null) {
                 writeInt(group!!.getId())
@@ -318,7 +314,6 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         if (newItem) {
             if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
-                // todo: dimmer
                 if (roomDimmer != null) return false
 
                 roomDimmer = ItemDao.getRoomDimmer(roomItem)

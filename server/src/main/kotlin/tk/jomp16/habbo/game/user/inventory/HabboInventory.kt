@@ -21,15 +21,12 @@ package tk.jomp16.habbo.game.user.inventory
 
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.item.ItemDao
-import tk.jomp16.habbo.game.item.room.RoomItem
 import tk.jomp16.habbo.game.item.user.UserItem
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class HabboInventory(private val habboSession: HabboSession) {
     val items: MutableMap<Int, UserItem> = ConcurrentHashMap()
-    val roomItemsToRemove: MutableList<RoomItem> by lazy { ArrayList<RoomItem>() }
     private var initialized: Boolean = false
 
     fun load() {

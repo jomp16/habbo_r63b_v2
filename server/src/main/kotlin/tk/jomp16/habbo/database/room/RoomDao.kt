@@ -140,7 +140,7 @@ object RoomDao {
     }
 
     fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int = HabboServer.database {
-        insertAndGetGeneratedKey("INSERT INTO rooms (name, description, owner_id, model_name, category, users_max, trade_state) VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
+        insertAndGetGeneratedKey("INSERT INTO `rooms` (`name`, `description`, `owner_id`, `model_name`, `category`, `users_max`, `trade_state`) VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
                 mapOf(
                         "name" to name,
                         "description" to description,

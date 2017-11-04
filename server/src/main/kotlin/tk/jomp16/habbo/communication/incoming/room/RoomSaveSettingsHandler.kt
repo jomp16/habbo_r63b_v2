@@ -26,7 +26,6 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.game.room.RoomState
 import tk.jomp16.habbo.game.user.HabboSession
-import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSaveSettingsHandler {
@@ -49,7 +48,7 @@ class RoomSaveSettingsHandler {
 
         if (roomMaxUsers < 10) roomMaxUsers = 10
         val roomCategoryId = habboRequest.readInt()
-        val tags: MutableList<String> = ArrayList()
+        val tags: MutableList<String> = mutableListOf()
         val roomTagCount = habboRequest.readInt()
 
         repeat(roomTagCount) {

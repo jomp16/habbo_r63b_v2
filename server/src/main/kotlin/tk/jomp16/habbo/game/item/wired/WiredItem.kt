@@ -52,7 +52,8 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             writeInt(wiredData.delay)
         }
 
-        fun HabboResponse.writeBlockedTriggers() {
+        @Suppress("UNUSED_PARAMETER")
+        fun HabboResponse.writeBlockedTriggers(wiredData: WiredData) {
             // todo
             /*val blockedTriggers = mutableSetOf<Int>()
 
@@ -62,7 +63,8 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             writeInt(0)
         }
 
-        fun HabboResponse.writeBlockedActions() {
+        @Suppress("UNUSED_PARAMETER")
+        fun HabboResponse.writeBlockedActions(wiredData: WiredData) {
             // todo
             writeInt(0)
         }

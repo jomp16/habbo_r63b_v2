@@ -31,9 +31,9 @@ import tk.jomp16.habbo.util.Vector3
 
 object ItemDao {
     // cache in memory all the information about items fam
-    private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = HashMap()
-    private val wiredDatas: MutableMap<Int, WiredData?> = HashMap()
-    private val roomDimmers: MutableMap<Int, RoomDimmer?> = HashMap()
+    private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = mutableMapOf()
+    private val wiredDatas: MutableMap<Int, WiredData?> = mutableMapOf()
+    private val roomDimmers: MutableMap<Int, RoomDimmer?> = mutableMapOf()
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>): List<Furnishing> {
         return HabboServer.database {
@@ -180,7 +180,7 @@ object ItemDao {
         }
     }
 
-    fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
+    private fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
         if (roomItemsToRemove.isEmpty()) return
 
         HabboServer.database {
@@ -337,5 +337,24 @@ object ItemDao {
                     )
             )
         }
+    }
+
+    fun addRoomItemInventory(roomItems: List<RoomItem>) {
+        val roomItemsGrouped = roomItems.groupBy { it.userId }
+
+        roomItemsGrouped.keys.forEach { userId ->
+            val habboSession = HabboServer.habboSessionManager.getHabboSessionById(userId)
+
+            habboSession?.habboInventory?.addItems(roomItemsGrouped[userId]!!.map {
+                UserItem(
+                        it.id,
+                        it.userId,
+                        it.itemName,
+                        it.extraData
+                )
+            })
+        }
+
+        removeRoomItems(roomItems)
     }
 }

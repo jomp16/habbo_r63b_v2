@@ -31,7 +31,6 @@ class NavigatorCreateRoomHandler {
     @Handler(Incoming.NAVIGATOR_CREATE_ROOM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
-
         // [0][5]asdfg[0][6]asdfgh[0][7]model_a[0][0][0][1][0][0][0]2[0][0][0][2]
         // todo: perform sanity check here, pretty please?
         val name = habboRequest.readUTF()
@@ -41,7 +40,6 @@ class NavigatorCreateRoomHandler {
         val maxUsers = habboRequest.readInt() // 10 = min, 50 = max
         val tradeSettings = habboRequest.readInt() // 2 = All can trade, 1 = owner only, 0 = no trading.
         val room = HabboServer.habboGame.roomManager.createRoom(habboSession.userInformation.id, habboSession.habboSubscription.validUserSubscription, name, description, model, category, maxUsers, tradeSettings) ?: return
-
         // FlatCreatedComposer id, name
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
     }

@@ -32,7 +32,6 @@ class MiscLatencyTrackerHandler {
         val int1 = habboRequest.readInt() // what the
         val int2 = habboRequest.readInt() // fuck the
         val int3 = habboRequest.readInt() // values is?
-
         // 727 41 3
         // 44 44 3
         // 354 354 3

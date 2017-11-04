@@ -57,7 +57,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.sendHabboResponse(Outgoing.ROOM_FLOORMAP, room)
             habboSession.sendHabboResponse(Outgoing.ROOM_OWNERSHIP, room.roomData.id, room.hasRights(habboSession, true))
             habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
-
             // todo: events
             if (room.hasRights(habboSession)) {
                 if (room.hasRights(habboSession, true)) {
@@ -76,7 +75,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             }
 
             habboSession.habboMessenger.notifyFriends()
-
             // items at end because optimization
             habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.roomUsers.values)
             habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.roomUsers.values)
@@ -87,19 +85,17 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             room.roomUsers.values.forEach {
                 if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
                 if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
-                // todo: carry item
+                if (it.handItem > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, it.virtualID, it.handItem)
             }
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }
-
         // todo: add support to bots
         roomUser.habboSession?.let {
             room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
             room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, it.userInformation.figure, it.userInformation.gender, it.userInformation.motto, it.userStats.achievementScore)
             room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomUser))
         }
-
         // Reset empty counter
         if (room.emptyCounter.get() > 0) room.emptyCounter.set(0)
     }

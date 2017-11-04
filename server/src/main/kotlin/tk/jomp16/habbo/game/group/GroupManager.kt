@@ -22,14 +22,13 @@ package tk.jomp16.habbo.game.group
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tk.jomp16.habbo.database.group.GroupDao
-import java.util.*
 
 class GroupManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val groupBadgesBases: MutableList<Triple<Int, String, String>> = ArrayList()
-    val groupBaseColors: MutableList<Pair<Int, String>> = ArrayList()
-    val groupBadgesSymbols: MutableList<Triple<Int, String, String>> = ArrayList()
-    val groupBadgeSymbolColors: MutableList<Pair<Int, String>> = ArrayList()
+    val groupBadgesBases: MutableList<Triple<Int, String, String>> = mutableListOf()
+    val groupBaseColors: MutableList<Pair<Int, String>> = mutableListOf()
+    val groupBadgesSymbols: MutableList<Triple<Int, String, String>> = mutableListOf()
+    val groupBadgeSymbolColors: MutableList<Pair<Int, String>> = mutableListOf()
 
     fun load() {
         log.info("Loading group badges...")

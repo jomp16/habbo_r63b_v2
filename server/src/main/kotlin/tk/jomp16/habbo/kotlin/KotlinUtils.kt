@@ -24,6 +24,7 @@ import java.net.URL
 import java.net.URLConnection
 import java.time.Clock
 import java.time.LocalDateTime
+import java.util.*
 
 fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now(Clock.systemUTC()).withNano(0).withSecond(0)
 
@@ -31,7 +32,7 @@ inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline inne
 
 fun array2dOfShort(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ShortArray(sizeInner) }
 
-fun <E> List<E>.random(): E = this[Utils.random.nextInt(this.size)]
+fun <E> List<E>.random(random1: Random = Utils.random): E = this[random1.nextInt(this.size)]
 
 fun urlUserAgent(url: String, userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {
     val urlConnection = URL(url).openConnection()

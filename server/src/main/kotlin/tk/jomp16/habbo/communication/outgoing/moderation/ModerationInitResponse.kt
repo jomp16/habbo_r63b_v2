@@ -30,10 +30,8 @@ class ModerationInitResponse {
         habboResponse.apply {
             // todo: tickets
             writeInt(0)
-
             // todo: user presets
             writeInt(0)
-
             // todo: user actions presets, but it's useless on Habbo.swf
             writeInt(0)
 

@@ -32,7 +32,6 @@ class RoomUserChatTalkHandler {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
 
         val (message, bubble) = parse(habboRequest) ?: return
-
         // todo: check if user can use bubble
         // todo: check if user is muted
         // todo: word filter
