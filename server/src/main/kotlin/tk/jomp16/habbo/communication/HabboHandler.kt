@@ -27,8 +27,6 @@ import tk.jomp16.habbo.communication.incoming.Incoming
 import tk.jomp16.habbo.communication.outgoing.Outgoing
 import tk.jomp16.habbo.database.release.ReleaseDao
 import tk.jomp16.habbo.game.user.HabboSession
-import tk.jomp16.habbo.util.Utils
-import tk.jomp16.habbo.util.UtilsJava
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
@@ -140,7 +138,7 @@ class HabboHandler {
                     try {
                         habboRequest.incoming = incomingEnum
 
-                        UtilsJava.invokeExact(methodHandle, clazz, habboSession, habboRequest)
+                        methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                     } catch (e: Exception) {
                         log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
 
@@ -164,7 +162,7 @@ class HabboHandler {
             val habboResponse = HabboResponse(headerId)
 
             try {
-                UtilsJava.invokeExact(methodHandle, clazz, habboResponse, *args);
+                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
 
                 return habboResponse
             } catch (e: Exception) {
