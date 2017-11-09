@@ -138,7 +138,7 @@ class HabboHandler {
                     try {
                         habboRequest.incoming = incomingEnum
 
-                        methodHandle.invokeExact(clazz, habboSession, habboRequest)
+                        methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                     } catch (e: Exception) {
                         log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
 
@@ -162,7 +162,7 @@ class HabboHandler {
             val habboResponse = HabboResponse(headerId)
 
             try {
-                methodHandle.invokeExact(clazz, habboResponse, *args)
+                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
 
                 return habboResponse
             } catch (e: Exception) {
