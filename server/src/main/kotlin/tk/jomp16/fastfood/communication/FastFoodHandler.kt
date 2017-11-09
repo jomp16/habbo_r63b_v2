@@ -78,7 +78,7 @@ class FastFoodHandler {
                     val (clazz, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
 
                     try {
-                        methodHandle.invokeWithArguments(clazz, fastFoodSession, habboRequest)
+                        methodHandle.invokeExact(clazz, fastFoodSession, habboRequest)
                     } catch (e: Exception) {
                         log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
 
@@ -100,7 +100,7 @@ class FastFoodHandler {
             val habboResponse = HabboResponse(ffOutgoing.headerId)
 
             try {
-                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
+                methodHandle.invokeExact(clazz, habboResponse, *args)
 
                 return habboResponse
             } catch (e: Exception) {

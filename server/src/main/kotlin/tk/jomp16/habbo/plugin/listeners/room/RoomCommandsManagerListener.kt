@@ -94,7 +94,7 @@ class RoomCommandsManagerListener : PluginListener() {
                     else roomUserChatEvent.message.substring(args[0].length + 1).trim()
 
             try {
-                it.methodHandle.invokeWithArguments(it.pluginListener, roomUserChatEvent.room, roomUserChatEvent.roomUser, args)
+                it.methodHandle.invokeExact(it.pluginListener, roomUserChatEvent.room, roomUserChatEvent.roomUser, args)
             } catch (e: Exception) {
                 log.error("Error when trying to invoke command ${args[0]}!", e)
             }
