@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16
+ * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,7 @@
 
 apply plugin: 'java-library-distribution'
 
-group "tk.jomp16"
+group "ovh.rwx"
 
 dependencies {
     compile project(":server")
@@ -41,7 +41,7 @@ jar {
 
     manifest {
         //noinspection GrUnresolvedAccess
-        attributes 'Main-Class': 'tk.jomp16.MainKt',
+        attributes 'Main-Class': 'ovh.rwx.MainKt',
                 'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).collect {
                     "lib/$it.name"
                 }.join(' ')
