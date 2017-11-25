@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16
+ * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,7 +20,7 @@
 import groovy.json.JsonOutput
 
 buildscript {
-    ext.kotlin_version = '1.2.0-rc-39'
+    ext.kotlin_version = '1.2.0-rc-84'
 
     repositories {
         maven {
@@ -54,7 +54,7 @@ subprojects {
         slf4j_version = "1.7.25"
         kwery_version = "0.17"
         mysql_version = "6.0.6"
-        hikari_version = "2.7.3"
+        hikari_version = "2.7.4"
         reflections_version = "0.9.11"
         jasypt_version = "1.9.2"
         commons_lang_version = "3.7"
