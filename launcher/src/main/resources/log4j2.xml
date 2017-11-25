@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (C) 2015-2017 jomp16
+  ~ Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
   ~
   ~ This file is part of habbo_r63b_v2.
   ~
@@ -29,7 +29,7 @@
             <AppenderRef ref="Console"/>
         </Root>
 
-        <Logger name="tk.jomp16" level="trace"/>
+        <Logger name="ovh.rwx" level="trace"/>
         <Logger name="com.github.andrewoma.kwery" level="error"/>
         <Logger name="io.netty" level="error"/>
         <Logger name="com.zaxxer" level="error"/>

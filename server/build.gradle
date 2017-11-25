@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16
+ * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,7 @@
 
 apply plugin: "de.fuerstenau.buildconfig"
 
-group "tk.jomp16.habbo"
+group "ovh.rwx.habbo"
 
 dependencies {
     compile project(":pathfinding")
