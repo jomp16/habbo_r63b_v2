@@ -91,11 +91,10 @@ object UserInformationDao {
         }
     }
 
-    fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String, authTicket: String = "") {
+    fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/information/update_user_information.sql").readText(),
                     mapOf(
-                            "ticket" to authTicket,
                             "online" to online,
                             "ip_last" to ip,
                             "credits" to userInformation.credits,
@@ -105,6 +104,17 @@ object UserInformationDao {
                             "gender" to userInformation.gender,
                             "motto" to userInformation.motto,
                             "home_room" to userInformation.homeRoom,
+                            "id" to userInformation.id
+                    )
+            )
+        }
+    }
+
+    fun updateAuthTicket(userInformation: UserInformation, authTicket: String = "") {
+        HabboServer.database {
+            update(javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql").readText(),
+                    mapOf(
+                            "auth_ticket" to authTicket,
                             "id" to userInformation.id
                     )
             )

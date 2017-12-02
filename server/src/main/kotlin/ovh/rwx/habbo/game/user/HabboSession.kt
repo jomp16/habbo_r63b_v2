@@ -178,7 +178,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
         }
 
-        UserInformationDao.saveInformation(userInformation, true, ip, "")
+        UserInformationDao.updateAuthTicket(userInformation, "")
+        UserInformationDao.saveInformation(userInformation, true, ip)
+        UserStatsDao.saveStats(userStats)
 
         return true
     }
@@ -284,8 +286,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (authenticated) {
             currentRoom?.removeUser(roomUser, false, false)
 
+            userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
+
             BadgeDao.saveBadges(habboBadge.badges.values)
-            UserInformationDao.saveInformation(userInformation, false, channel.ip(), "")
+            UserInformationDao.saveInformation(userInformation, false, channel.ip())
             UserPreferencesDao.savePreferences(userPreferences)
             UserStatsDao.saveStats(userStats)
 
