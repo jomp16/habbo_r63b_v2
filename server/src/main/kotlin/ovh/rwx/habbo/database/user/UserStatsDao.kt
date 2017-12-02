@@ -101,11 +101,11 @@ object UserStatsDao {
         return userStats
     }
 
-    fun saveStats(userStats: UserStats, lastOnline: LocalDateTime = LocalDateTime.now(Clock.systemUTC())) {
+    fun saveStats(userStats: UserStats) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/stats/update_user_stats.sql").readText(),
                     mapOf(
-                            "last_online" to lastOnline,
+                            "last_online" to userStats.lastOnline,
                             "credits_last_update" to userStats.creditsLastUpdate,
                             "favorite_group" to userStats.favoriteGroup,
                             "online_seconds" to userStats.totalOnlineSeconds,
