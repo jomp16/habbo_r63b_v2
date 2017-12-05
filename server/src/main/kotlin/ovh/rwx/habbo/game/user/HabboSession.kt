@@ -85,13 +85,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val teleporting: Boolean
         get() = targetTeleporterId != -1
     val authenticated: Boolean
-        get() {
-            return try {
-                userInformation.id > 0 && userStats.id > 0 && userPreferences.id > 0
-            } catch (exception: UninitializedPropertyAccessException) {
-                false
-            }
-        }
+        get() = ::userInformation.isInitialized && userInformation.id > 0 && ::userStats.isInitialized && userStats.id > 0 && ::userPreferences.isInitialized && userPreferences.id > 0
     var rc4Encryption: RC4Encryption? = null
     var uniqueID: String = ""
     var ping: Long = 0
