@@ -49,8 +49,8 @@ class HabboHandler {
         val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
 
         releases.forEach { release ->
-            val inHeaders = incomingHeaders.filter { it.release == release }
-            val outHeaders = outgoingHeaders.filter { it.release == release }
+            val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { it.name }.contains(it.name) }
+            val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { it.name }.contains(it.name) }
 
             incomingNames.put(release, inHeaders.map { it.header to Incoming.valueOf(it.name) })
             outgoingNames.put(release, outHeaders.map { it.header to Outgoing.valueOf(it.name) })
