@@ -51,6 +51,8 @@ data class DatabaseConfig(
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
             config.addDataSourceProperty("cachePrepStmts", true)
             config.addDataSourceProperty("useServerPrepStmts", true)
+            config.addDataSourceProperty("characterEncoding", "UTF-8")
+            config.addDataSourceProperty("useUnicode", "true")
 
             return config
         }
