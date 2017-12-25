@@ -68,7 +68,7 @@ object UserStatsDao {
                         it.int("achievement_score"),
                         it.int("quest_id"),
                         it.int("quest_progress"),
-                        it.int("favorite_group"),
+                        it.intOrNull("favorite_group") ?: 0,
                         it.int("tickets_answered"),
                         it.int("marketplace_tickets"),
                         it.localDateTime("credits_last_update"),
@@ -107,7 +107,7 @@ object UserStatsDao {
                     mapOf(
                             "last_online" to userStats.lastOnline,
                             "credits_last_update" to userStats.creditsLastUpdate,
-                            "favorite_group" to userStats.favoriteGroup,
+                            "favorite_group" to if (userStats.favoriteGroupId == 0) null else userStats.favoriteGroupId,
                             "online_seconds" to userStats.totalOnlineSeconds,
                             "respect" to userStats.respect,
                             "daily_respect_points" to userStats.dailyRespectPoints,

@@ -25,10 +25,12 @@ import ovh.rwx.habbo.database.group.GroupDao
 
 class GroupManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+    val groups: MutableMap<Int, Group> = mutableMapOf()
     val groupBadgesBases: MutableList<Triple<Int, String, String>> = mutableListOf()
     val groupBaseColors: MutableList<Pair<Int, String>> = mutableListOf()
     val groupBadgesSymbols: MutableList<Triple<Int, String, String>> = mutableListOf()
     val groupBadgeSymbolColors: MutableList<Pair<Int, String>> = mutableListOf()
+    val groupBadgeBackgroundColors: MutableList<Pair<Int, String>> = mutableListOf()
 
     fun load() {
         log.info("Loading group badges...")
@@ -37,15 +39,44 @@ class GroupManager {
         groupBaseColors.clear()
         groupBadgesSymbols.clear()
         groupBadgeSymbolColors.clear()
+        groupBadgeBackgroundColors.clear()
+        groups.clear()
 
+        groups += GroupDao.getGroupsData().associateBy({ it.id }, { Group(it) })
         groupBadgesBases += GroupDao.getGroupsBadgesBases()
         groupBaseColors += GroupDao.getGroupsBadgesBaseColors()
         groupBadgesSymbols += GroupDao.getGroupsBadgesSymbols()
         groupBadgeSymbolColors += GroupDao.getGroupsBadgesSymbolColors()
+        groupBadgeBackgroundColors += GroupDao.getGroupsBadgesBackgroundColors()
 
+        log.info("Loaded ${groups.size} groups!")
         log.info("Loaded ${groupBadgesBases.size} group badges base!")
         log.info("Loaded ${groupBaseColors.size} group badges base colors!")
         log.info("Loaded ${groupBadgesSymbols.size} group badges symbol!")
         log.info("Loaded ${groupBadgeSymbolColors.size} group badges symbol colors!")
+        log.info("Loaded ${groupBadgeBackgroundColors.size} group badges background colors!")
+    }
+
+    fun generateBadge(badgeParts: List<Int>): String {
+        val badgeStringBuilder = StringBuilder(String.format("b%02d%02d", badgeParts[0], badgeParts[1]))
+
+        badgeStringBuilder.append(badgeParts.drop(3).chunked(3).joinToString("") { String.format("s%02d%02d%d", it[0], it[1], it[2]) })
+
+        return badgeStringBuilder.toString()
+    }
+
+    fun createGroup(name: String, description: String, groupBadge: String, ownerId: Int, roomId: Int, backgroundColorPrimary: Int, backgroundColorSecondary: Int): Group {
+        val groupId = GroupDao.createGroup(name, description, groupBadge, ownerId, roomId, GroupMembershipState.OPEN, backgroundColorPrimary, backgroundColorSecondary, false)
+        GroupDao.addMember(groupId, ownerId, 2)
+
+        // todo: delete room rights
+
+        log.info("Created new group n° {} - name {}", groupId, name)
+        val groupData = GroupDao.getGroupData(groupId)
+        val group = Group(groupData)
+
+        groups.put(groupId, group)
+
+        return group
     }
 }

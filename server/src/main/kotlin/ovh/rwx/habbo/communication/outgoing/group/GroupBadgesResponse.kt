@@ -17,26 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.handshake
+package ovh.rwx.habbo.communication.outgoing.group
 
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.group.Group
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class HandshakeUniqueIDHandler {
-    @Handler(Incoming.UNIQUE_ID)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // ignore this shit
-        habboRequest.readUTF()
-        val uniqueID = habboRequest.readUTF()
-        val osInformation = habboRequest.readUTF()
+class GroupBadgesResponse {
+    @Response(Outgoing.GROUP_BADGES)
+    fun handle(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
+        habboResponse.apply {
+            writeInt(loadedGroups.size) // size
 
-        habboSession.uniqueID = uniqueID
-        habboSession.osInformation = osInformation
-
-        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+            loadedGroups.forEach {
+                writeInt(it.groupData.id)
+                writeUTF(it.groupData.badge)
+            }
+        }
     }
 }

@@ -86,7 +86,7 @@ class HandshakeSSOTicketHandler {
 
         if (!UserUniqueIdDao.containsUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)) {
             // save unique id to database
-            UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)
+            UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID, habboSession.osInformation)
         }
     }
 }

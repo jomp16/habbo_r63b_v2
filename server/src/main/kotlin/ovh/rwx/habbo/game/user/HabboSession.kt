@@ -88,6 +88,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         get() = ::userInformation.isInitialized && userInformation.id > 0 && ::userStats.isInitialized && userStats.id > 0 && ::userPreferences.isInitialized && userPreferences.id > 0
     var rc4Encryption: RC4Encryption? = null
     var uniqueID: String = ""
+    var osInformation: String = ""
     var ping: Long = 0
     var gameSSOToken: String = ""
 
@@ -267,8 +268,15 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         currentRoom = room
-        // todo: group
+
+        userStats.favoriteGroup?.let {
+            room.loadedGroups.add(it)
+
+            room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+        }
+
         sendHabboResponse(Outgoing.ROOM_OPEN)
+        sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
         sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 
         if (room.roomData.wallpaper != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)

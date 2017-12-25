@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.game.user.information
 
+import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.group.Group
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDateTime
@@ -37,7 +39,7 @@ data class UserStats(
         var achievementScore: Int,
         var questId: Int,
         var questProgress: Int,
-        var favoriteGroup: Int,
+        var favoriteGroupId: Int,
         var ticketsAnswered: Int,
         var marketplaceTickets: Int,
         var creditsLastUpdate: LocalDateTime,
@@ -45,4 +47,6 @@ data class UserStats(
 ) {
     val totalOnlineSeconds: Long
         get() = Duration.between(lastOnline, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
+    val favoriteGroup: Group?
+        get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
 }

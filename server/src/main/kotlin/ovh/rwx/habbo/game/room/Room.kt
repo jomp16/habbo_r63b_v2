@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -48,6 +49,7 @@ import ovh.rwx.utils.pathfinding.core.finders.AStarFinder
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.HashSet
 
 class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSerialize {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -72,13 +74,14 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
     var roomDimmer: RoomDimmer? = null
     private var initialized: Boolean = false
+    val group: Group?
+        get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
+    val loadedGroups: MutableSet<Group> by lazy { HashSet<Group>() }
 
     fun initialize() {
         if (!initialized) {
             roomItems.values.filter { it.furnishing.interactor != null }.forEach {
-                it.furnishing.interactor?.onPlace(this,
-                        null,
-                        it)
+                it.furnishing.interactor?.onPlace(this, null, it)
             }
             roomItems.values.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.forEach { roomItem ->
                 HabboServer.habboGame.itemManager.getWiredInstance(this, roomItem)?.let {
@@ -87,6 +90,10 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             }
             roomItems.values.firstOrNull { it.furnishing.interactionType == InteractionType.DIMMER }?.let {
                 roomDimmer = ItemDao.getRoomDimmer(it)
+            }
+
+            group?.let {
+                loadedGroups.add(it)
             }
         }
     }
@@ -164,12 +171,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomData.tags.forEach { writeUTF(it) }
             var value = if (enterRoom) 32 else 0
-            // todo: groups
-            /*val group = getGroup()
 
-            if (group != null) {
-                value += 2
-            }*/
+            group?.let { value += 2 }
 
             if (showEvents) {
                 // todo: events
@@ -181,12 +184,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             if (roomData.allowPets) value += 16
 
             writeInt(value)
-            // todo: groups
-            /*if (group != null) {
-                writeInt(group!!.getId())
-                writeUTF(group!!.getName())
-                writeUTF(group!!.getBadge())
-            }*/
+
+            group?.let {
+                writeInt(it.groupData.id)
+                writeUTF(it.groupData.name)
+                writeUTF(it.groupData.badge)
+            }
         }
     }
 
@@ -215,8 +218,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
-            if (onlyRotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it,
-                    true) && overrideZ == (-1).toDouble()) {
+            if (onlyRotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it, true) && overrideZ == (-1).toDouble()) {
                 // cannot set item, because at least one tile is blocked
                 return false
             }
