@@ -35,23 +35,24 @@ object UserUniqueIdDao {
         }
     }
 
-    fun addUniqueIdForUser(userId: Int, uniqueId: String) {
+    fun addUniqueIdForUser(userId: Int, uniqueID: String, osInformation: String) {
         HabboServer.database {
             update(javaClass.getResource("/sql/users/unique_ids/insert_unique_ids.sql").readText(),
                     mapOf(
                             "user_id" to userId,
-                            "unique_id" to uniqueId
+                            "unique_id" to uniqueID,
+                            "os_information" to osInformation
                     )
             )
         }
     }
 
-    fun containsUniqueIdForUser(userId: Int, uniqueId: String): Boolean {
+    fun containsUniqueIdForUser(userId: Int, uniqueID: String): Boolean {
         return HabboServer.database {
             select(javaClass.getResource("/sql/users/unique_ids/select_count_unique_id.sql").readText(),
                     mapOf(
                             "user_id" to userId,
-                            "unique_id" to uniqueId
+                            "unique_id" to uniqueID
                     )
             ) {
                 it.boolean("unique_id_exists")

@@ -76,10 +76,10 @@ object RoomDao {
             row.int("chat_speed"),
             row.int("chat_max_distance"),
             row.int("chat_flood_protection"),
-            row.int("group_id"),
             row.boolean("allow_pets"),
             row.boolean("allow_pets_eat"),
-            row.boolean("allow_walk_through")
+            row.boolean("allow_walk_through"),
+            row.intOrNull("group_id") ?: 0
     )
 
     fun getRoomModels(): List<RoomModel> = HabboServer.database {
@@ -202,7 +202,7 @@ object RoomDao {
                             "floor" to roomData.floor,
                             "wallpaper" to roomData.wallpaper,
                             "landscape" to roomData.landscape,
-                            "group_id" to roomData.groupId,
+                            "group_id" to if (roomData.groupId == 0) null else roomData.groupId,
                             "room_id" to roomData.id
                     )
             )

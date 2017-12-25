@@ -298,11 +298,19 @@ class RoomUser(
                 writeInt(0)
                 writeInt(1) // 1 for user, 2 for pet, 3 for bot.
                 writeUTF(it.userInformation.gender.toLowerCase())
-                // todo: groups
-                writeInt(-1)
-                writeInt(0)
-                writeUTF("")
-                // end group
+
+                val group = habboSession.userStats.favoriteGroup
+
+                if (group == null) {
+                    writeInt(-1)
+                    writeInt(0)
+                    writeUTF("")
+                } else {
+                    writeInt(group.groupData.id)
+                    writeInt(0)
+                    writeUTF(group.groupData.name)
+                }
+
                 writeUTF("")
                 writeInt(habboSession.userStats.achievementScore)
                 writeBoolean(false) // is member of builder club

@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.handshake
+package ovh.rwx.habbo.communication.incoming.group
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
@@ -26,17 +26,11 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class HandshakeUniqueIDHandler {
-    @Handler(Incoming.UNIQUE_ID)
+class GroupPurchasePageHandler {
+    @Handler(Incoming.GROUP_PURCHASE_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // ignore this shit
-        habboRequest.readUTF()
-        val uniqueID = habboRequest.readUTF()
-        val osInformation = habboRequest.readUTF()
+        if (!habboSession.authenticated) return
 
-        habboSession.uniqueID = uniqueID
-        habboSession.osInformation = osInformation
-
-        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+        habboSession.sendHabboResponse(Outgoing.GROUP_PURCHASE_PAGE, habboSession.rooms.filter { it.group == null })
     }
 }

@@ -20,7 +20,7 @@
 import groovy.json.JsonOutput
 
 buildscript {
-    ext.kotlin_version = '1.2.0'
+    ext.kotlin_version = '1.2.10'
 
     repositories {
         maven {
@@ -48,8 +48,8 @@ subprojects {
 
     ext {
         junit_version = "4.12"
-        jackson_version = "2.9.2"
-        netty_version = "4.1.17.Final"
+        jackson_version = "2.9.3"
+        netty_version = "4.1.19.Final"
         log4j2_version = "2.10.0"
         slf4j_version = "1.7.25"
         kwery_version = "0.17"

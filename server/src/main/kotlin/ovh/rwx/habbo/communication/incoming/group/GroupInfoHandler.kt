@@ -17,8 +17,9 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.handshake
+package ovh.rwx.habbo.communication.incoming.group
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -26,17 +27,16 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class HandshakeUniqueIDHandler {
-    @Handler(Incoming.UNIQUE_ID)
+class GroupInfoHandler {
+    @Handler(Incoming.GROUP_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // ignore this shit
-        habboRequest.readUTF()
-        val uniqueID = habboRequest.readUTF()
-        val osInformation = habboRequest.readUTF()
+        if (!habboSession.authenticated) return
 
-        habboSession.uniqueID = uniqueID
-        habboSession.osInformation = osInformation
+        val groupId = habboRequest.readInt()
+        val newWindow = habboRequest.readBoolean()
 
-        habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+        val group = HabboServer.habboGame.groupManager.groups[groupId] ?: return
+
+        habboSession.sendHabboResponse(Outgoing.GROUP_INFO, habboSession.userInformation.id, habboSession.userStats.favoriteGroupId == groupId, group, newWindow)
     }
 }
