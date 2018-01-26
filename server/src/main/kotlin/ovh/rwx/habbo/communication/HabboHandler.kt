@@ -52,8 +52,8 @@ class HabboHandler {
             val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { it.name }.contains(it.name) }
             val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { it.name }.contains(it.name) }
 
-            incomingNames.put(release, inHeaders.map { it.header to Incoming.valueOf(it.name) })
-            outgoingNames.put(release, outHeaders.map { it.header to Outgoing.valueOf(it.name) })
+            incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
+            outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
         }
         val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
         val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
@@ -72,7 +72,7 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             handler.headers.forEach { incoming ->
-                if (!messageHandlers.containsKey(incoming)) messageHandlers.put(incoming, Pair(clazz, methodHandle))
+                if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = Pair(clazz, methodHandle)
             }
         }
 
@@ -82,7 +82,7 @@ class HabboHandler {
             val methodHandle = lookup.unreflect(it)
 
             response.headers.forEach { outgoing ->
-                if (!messageResponses.containsKey(outgoing)) messageResponses.put(outgoing, Pair(clazz, methodHandle))
+                if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = Pair(clazz, methodHandle)
             }
         }
 
@@ -188,7 +188,7 @@ class HabboHandler {
         if (!instances.containsKey(clazz)) {
             clazz1 = clazz.getDeclaredConstructor().newInstance()
 
-            instances.put(clazz, clazz1)
+            instances[clazz] = clazz1
         } else {
             clazz1 = instances[clazz]!!
         }

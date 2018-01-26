@@ -31,7 +31,7 @@ import java.lang.invoke.MethodHandles
 import java.util.*
 import java.util.regex.Pattern
 
-@Suppress("unused", "UNUSED_PARAMETER", "MemberVisibilityCanPrivate")
+@Suppress("unused", "UNUSED_PARAMETER", "MemberVisibilityCanBePrivate")
 class RoomCommandsManagerListener : PluginListener() {
     private val lookup = MethodHandles.lookup()
     private val commandsEvents: MutableSet<PluginCommandRegister> = HashSet()
@@ -45,6 +45,7 @@ class RoomCommandsManagerListener : PluginListener() {
     }
 
     @Handler
+    @Suppress("MemberVisibilityCanBePrivate")
     fun handlePluginListenerAdded(pluginListenerAddedEvent: PluginListenerAddedEvent) {
         log.trace("Searching commands for class ${pluginListenerAddedEvent.pluginListener.javaClass.simpleName}")
 

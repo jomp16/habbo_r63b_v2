@@ -29,7 +29,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
 
-        room.roomUsers.put(roomUser.virtualID, roomUser)
+        room.roomUsers[roomUser.virtualID] = roomUser
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         roomUser.habboSession?.let { habboSession ->
@@ -43,7 +43,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                         roomUser.headRotation = teleportItem.rotation
                         roomUser.bodyRotation = teleportItem.rotation
 
-                        teleportItem.interactingUsers.put(2, roomUser)
+                        teleportItem.interactingUsers[2] = roomUser
                         teleportItem.extraData = "2"
                         teleportItem.update(false, true)
                         teleportItem.requestCycles(2)

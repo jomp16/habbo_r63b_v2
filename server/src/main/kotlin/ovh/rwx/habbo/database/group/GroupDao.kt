@@ -24,6 +24,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.group.GroupData
 import ovh.rwx.habbo.game.group.GroupMember
 import ovh.rwx.habbo.game.group.GroupMembershipState
+import ovh.rwx.habbo.game.group.GroupRequest
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.localDateTime
 
@@ -117,7 +118,47 @@ object GroupDao {
         }
     }
 
-    private fun getGroupData(row: Row): GroupData = GroupData(
+    fun getGroupRequests(groupId: Int): List<GroupRequest> {
+        return HabboServer.database {
+            select(javaClass.getResource("/sql/groups/request/select_group_requests_from_group_id.sql").readText(),
+                    mapOf(
+                            "group_id" to groupId
+                    )
+            ) {
+                getGroupRequests(it)
+            }
+        }
+    }
+
+    fun addRequest(groupId: Int, userId: Int): Int {
+        return HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/request/insert_group_request.sql").readText(),
+                    mapOf(
+                            "group_id" to groupId,
+                            "user_id" to userId
+                    )
+            )
+        }
+    }
+
+    fun updateGroupData(groupData: GroupData) {
+        HabboServer.database {
+            update(javaClass.getResource("/sql/groups/update_group.sql").readText(),
+                    mapOf(
+                            "name" to groupData.name,
+                            "description" to groupData.description,
+                            "badge" to groupData.badge,
+                            "state" to groupData.membershipState.state.toString(),
+                            "symbol_color" to groupData.symbolColor,
+                            "background_color" to groupData.backgroundColor,
+                            "only_admin_can_decorate" to groupData.onlyAdminCanDecorateRoom,
+                            "group_id" to groupData.id
+                    )
+            )
+        }
+    }
+
+    private fun getGroupData(row: Row) = GroupData(
             row.int("id"),
             row.string("name"),
             row.string("description"),
@@ -131,10 +172,16 @@ object GroupDao {
             row.localDateTime("created_at")
     )
 
-    private fun getGroupMember(row: Row): GroupMember = GroupMember(
+    private fun getGroupMember(row: Row) = GroupMember(
             row.int("id"),
             row.int("user_id"),
             row.int("rank"),
+            row.localDateTime("created_at")
+    )
+
+    private fun getGroupRequests(row: Row) = GroupRequest(
+            row.int("id"),
+            row.int("user_id"),
             row.localDateTime("created_at")
     )
 }

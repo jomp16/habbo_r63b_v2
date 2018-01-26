@@ -42,9 +42,9 @@ class MannequinFurniInteractor : ItemInteractor() {
             userFigureArray.forEach { figure1 ->
                 val key1 = figure1.split('-')[0]
 
-                if (key1 == key) figures.put(key, figure)
-                else if (!figures.containsKey(key1)) figures.put(key1, figure1)
-                else if (!figures.containsKey(key)) figures.put(key, figure)
+                if (key1 == key) figures[key] = figure
+                else if (!figures.containsKey(key1)) figures[key1] = figure1
+                else if (!figures.containsKey(key)) figures[key] = figure
             }
         }
         val builder = StringBuilder()

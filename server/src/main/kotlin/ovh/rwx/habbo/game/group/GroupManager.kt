@@ -75,8 +75,21 @@ class GroupManager {
         val groupData = GroupDao.getGroupData(groupId)
         val group = Group(groupData)
 
-        groups.put(groupId, group)
+        groups[groupId] = group
 
         return group
+    }
+
+    fun getParts(code: String, isSymbol: Boolean): List<String> {
+        val tmp = if (isSymbol) groupBadgesSymbols else groupBadgesBases
+        val partKey = StringBuilder()
+
+        if (code.startsWith('0')) partKey.append('0').append(tmp.map { it.first }.filter { it < 10 }.find { code.startsWith("0$it") }
+                ?: "0")
+        else partKey.append(tmp.map { it.first }.filter { it > 10 }.find { code.startsWith("$it") } ?: "0")
+        val partColor = code.substring(partKey.length, if (isSymbol) code.length - 1 else code.length)
+        val partPos = if (isSymbol) code.substring(code.length - 1) else "0"
+
+        return listOf(partKey.toString(), partColor, partPos)
     }
 }

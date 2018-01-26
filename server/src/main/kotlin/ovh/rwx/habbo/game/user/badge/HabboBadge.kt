@@ -44,7 +44,7 @@ class HabboBadge(private val habboSession: HabboSession) {
         if (badges.containsKey(code)) return
         val badge = BadgeDao.addBadge(habboSession.userInformation.id, code, 0)
 
-        badges.put(badge.code, badge)
+        badges[badge.code] = badge
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
         habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 4, listOf(badge.id))

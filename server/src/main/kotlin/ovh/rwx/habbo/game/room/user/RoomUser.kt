@@ -97,10 +97,9 @@ class RoomUser(
         }
 
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
-        statusMap.put(key, Pair(
+        statusMap[key] = Pair(
                 if (milliseconds == -1) null
                 else LocalDateTime.now(Clock.systemUTC()).plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value)
-        )
 
         updateNeeded = true
     }
@@ -243,7 +242,7 @@ class RoomUser(
         room.roomTask?.addTask(room, UserVendingMachineTask(this, handItem))
     }
 
-    @Suppress("MemberVisibilityCanPrivate")
+    @Suppress("MemberVisibilityCanBePrivate")
     fun carryHandItem(handItem: Int) {
         room.roomTask?.addTask(room, UserHandItemTask(this, handItem))
     }

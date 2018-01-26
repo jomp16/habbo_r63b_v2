@@ -49,7 +49,7 @@ class FastFoodHandler {
             val methodHandle = lookup.unreflect(it)
 
             handler.headers.forEach { incoming ->
-                if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers.put(incoming, Pair(clazz, methodHandle))
+                if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers[incoming] = Pair(clazz, methodHandle)
             }
         }
 
@@ -59,7 +59,7 @@ class FastFoodHandler {
             val methodHandle = lookup.unreflect(it)
 
             response.headers.forEach { outgoing ->
-                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses.put(outgoing, Pair(clazz, methodHandle))
+                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] = Pair(clazz, methodHandle)
             }
         }
 
@@ -126,7 +126,7 @@ class FastFoodHandler {
         if (!instances.containsKey(clazz)) {
             clazz1 = clazz.getDeclaredConstructor().newInstance()
 
-            instances.put(clazz, clazz1)
+            instances[clazz] = clazz1
         } else {
             clazz1 = instances[clazz]!!
         }

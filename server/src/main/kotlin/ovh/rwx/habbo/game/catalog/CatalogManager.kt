@@ -178,10 +178,10 @@ class CatalogManager {
                                 )
                         )
 
-                        HabboServer.habboGame.itemManager.teleportLinks.put(userItem.id, teleporterItem.id)
-                        HabboServer.habboGame.itemManager.roomTeleportLinks.put(userItem.id, 0)
-                        HabboServer.habboGame.itemManager.teleportLinks.put(teleporterItem.id, userItem.id)
-                        HabboServer.habboGame.itemManager.roomTeleportLinks.put(teleporterItem.id, 0)
+                        HabboServer.habboGame.itemManager.teleportLinks[userItem.id] = teleporterItem.id
+                        HabboServer.habboGame.itemManager.roomTeleportLinks[userItem.id] = 0
+                        HabboServer.habboGame.itemManager.teleportLinks[teleporterItem.id] = userItem.id
+                        HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
                     }
                     userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
                         insertAndGetGeneratedKey("INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",

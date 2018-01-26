@@ -68,7 +68,7 @@ class OneWayGateFurniInteractor : ItemInteractor() {
         if (room.roomGamemap.isBlocked(behindVector2)) return
 
         if (roomItem.interactingUsers.isEmpty()) {
-            roomItem.interactingUsers.put(1, roomUser)
+            roomItem.interactingUsers[1] = roomUser
             roomItem.extraData = "1"
             roomItem.update(false, true)
 

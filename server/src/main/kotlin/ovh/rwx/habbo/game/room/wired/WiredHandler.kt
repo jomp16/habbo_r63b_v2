@@ -34,9 +34,9 @@ class WiredHandler {
     private val wiredStack: MutableMap<Vector2, MutableMap<Int, WiredItem>> = ConcurrentHashMap()
 
     fun addWiredItem(vector2: Vector2, wiredItem: WiredItem) {
-        if (!wiredStack.containsKey(vector2)) wiredStack.put(vector2, mutableMapOf())
+        if (!wiredStack.containsKey(vector2)) wiredStack[vector2] = mutableMapOf()
 
-        wiredStack[vector2]!!.put(wiredItem.roomItem.id, wiredItem)
+        wiredStack[vector2]!![wiredItem.roomItem.id] = wiredItem
     }
 
     fun removeWiredItem(vector2: Vector2, roomItem: RoomItem): WiredItem? = wiredStack[vector2]?.remove(roomItem.id)

@@ -123,7 +123,7 @@ object ItemDao {
                 }.firstOrNull()
             }
 
-            limitedItemDatas.put(itemId, limitedItemData)
+            limitedItemDatas[itemId] = limitedItemData
         }
 
         return limitedItemDatas[itemId]
@@ -148,7 +148,7 @@ object ItemDao {
                 }.firstOrNull()
             }
 
-            wiredDatas.put(itemId, wiredData)
+            wiredDatas[itemId] = wiredData
         }
 
         return wiredDatas[itemId]
@@ -217,7 +217,7 @@ object ItemDao {
                 }.firstOrNull()
             }
 
-            roomDimmers.put(roomItem.id, roomDimmer)
+            roomDimmers[roomItem.id] = roomDimmer
         }
         val roomDimmer = roomDimmers[roomItem.id] ?: return null
 

@@ -60,7 +60,7 @@ class RoomManager {
         log.info("Created new room n° {} - name {}", roomId, name)
         val room = RoomDao.getRoomData(roomId).let { Room(it, roomModel) }
 
-        rooms.put(roomId, room)
+        rooms[roomId] = room
 
         return room
     }

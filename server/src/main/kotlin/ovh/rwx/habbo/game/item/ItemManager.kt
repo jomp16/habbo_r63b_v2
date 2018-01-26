@@ -79,21 +79,21 @@ class ItemManager {
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
         teleportLinks += ItemDao.getTeleportLinks()
 
-        teleportLinks.keys.forEach { roomTeleportLinks.put(it, ItemDao.getLinkedTeleport(it)) }
+        teleportLinks.keys.forEach { roomTeleportLinks[it] = ItemDao.getLinkedTeleport(it) }
 
-        furniInteractor.put(InteractionType.DEFAULT, DefaultItemInteractor())
-        furniInteractor.put(InteractionType.MANNEQUIN, MannequinFurniInteractor())
-        furniInteractor.put(InteractionType.ONE_WAY_GATE, OneWayGateFurniInteractor())
-        furniInteractor.put(InteractionType.ROLLER, RollerFurniInteractor())
-        furniInteractor.put(InteractionType.TELEPORT, TeleportFurniInteractor())
-        furniInteractor.put(InteractionType.GATE, GateFurniInteractor())
-        furniInteractor.put(InteractionType.VENDING_MACHINE, VendorFurniInteractor())
-        furniInteractor.put(InteractionType.HABBO_WHEEL, HabboWheelFurniInteractor())
-        furniInteractor.put(InteractionType.DICE, DiceFurniInteractor())
+        furniInteractor[InteractionType.DEFAULT] = DefaultItemInteractor()
+        furniInteractor[InteractionType.MANNEQUIN] = MannequinFurniInteractor()
+        furniInteractor[InteractionType.ONE_WAY_GATE] = OneWayGateFurniInteractor()
+        furniInteractor[InteractionType.ROLLER] = RollerFurniInteractor()
+        furniInteractor[InteractionType.TELEPORT] = TeleportFurniInteractor()
+        furniInteractor[InteractionType.GATE] = GateFurniInteractor()
+        furniInteractor[InteractionType.VENDING_MACHINE] = VendorFurniInteractor()
+        furniInteractor[InteractionType.HABBO_WHEEL] = HabboWheelFurniInteractor()
+        furniInteractor[InteractionType.DICE] = DiceFurniInteractor()
         val wiredFurniInteractor = WiredFurniInteractor()
 
         InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach {
-            furniInteractor.put(it, wiredFurniInteractor)
+            furniInteractor[it] = wiredFurniInteractor
         }
         val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
 

@@ -63,7 +63,7 @@ class MessengerAcceptRequestHandler {
             if (!friendHabboSession.habboMessenger.initialized) return@forEach
             val messengerFriend = MessengerFriend(habboSession.userInformation.id)
 
-            friendHabboSession.habboMessenger.friends.put(messengerFriend.userId, messengerFriend)
+            friendHabboSession.habboMessenger.friends[messengerFriend.userId] = messengerFriend
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
         }
