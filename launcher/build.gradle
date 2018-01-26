@@ -22,7 +22,7 @@ apply plugin: 'java-library-distribution'
 group "ovh.rwx"
 
 dependencies {
-    compileOnly project(":server")
+    compile project(":server")
 
     //noinspection GrUnresolvedAccess
     compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
@@ -42,7 +42,7 @@ jar {
     manifest {
         //noinspection GrUnresolvedAccess
         attributes 'Main-Class': 'ovh.rwx.MainKt',
-                'Class-Path': (project.configurations.runtime.files).collect {
+                'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).collect {
                     "lib/$it.name"
                 }.join(' ')
     }
