@@ -71,8 +71,8 @@ subprojects {
         //noinspection GrUnresolvedAccess
         compile "org.slf4j:slf4j-api:$slf4j_version"
 
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-        compile "org.jetbrains.kotlin:kotlin-reflect"
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.20"
+        compile "org.jetbrains.kotlin:kotlin-reflect:1.2.20"
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
