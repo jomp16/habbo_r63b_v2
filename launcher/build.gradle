@@ -42,7 +42,7 @@ jar {
     manifest {
         //noinspection GrUnresolvedAccess
         attributes 'Main-Class': 'ovh.rwx.MainKt',
-                'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).collect {
+                'Class-Path': (project.configurations.runtime.files).collect {
                     "lib/$it.name"
                 }.join(' ')
     }
