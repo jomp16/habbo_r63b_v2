@@ -39,7 +39,7 @@ class GroupInfoResponse {
             writeInt(group.groupData.roomId)
             writeUTF(group.groupData.room.roomData.description)
             writeInt(if (userId == group.groupData.ownerId) 3 else 0) // todo: request status
-            writeInt(group.groupMembers.size)
+            writeInt(group.members.size)
             writeBoolean(favoriteGroup)
             writeUTF(group.groupData.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
             writeBoolean(userId == group.groupData.ownerId) // is owner

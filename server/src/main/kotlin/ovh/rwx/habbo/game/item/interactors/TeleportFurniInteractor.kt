@@ -33,7 +33,7 @@ class TeleportFurniInteractor : ItemInteractor() {
 
         roomItem.extraData = "0"
 
-        HabboServer.habboGame.itemManager.roomTeleportLinks.put(roomItem.id, room.roomData.id)
+        HabboServer.habboGame.itemManager.roomTeleportLinks[roomItem.id] = room.roomData.id
     }
 
     override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
@@ -56,7 +56,7 @@ class TeleportFurniInteractor : ItemInteractor() {
         }
 
         if (roomItem.extraData == "0" && roomItem.interactingUsers.isEmpty()) {
-            roomItem.interactingUsers.put(1, roomUser)
+            roomItem.interactingUsers[1] = roomUser
 
             roomUser.walkingBlocked = true
             roomUser.moveTo(roomItem.position.vector2, ignoreBlocking = true)
@@ -123,7 +123,7 @@ class TeleportFurniInteractor : ItemInteractor() {
                                 targetRoomItem.requestCycles(2)
                             }
 
-                            targetRoomItem.interactingUsers.put(2, outgoingUser)
+                            targetRoomItem.interactingUsers[2] = outgoingUser
                             roomItem.interactingUsers.remove(1)
                         }
 

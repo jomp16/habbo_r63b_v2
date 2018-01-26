@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
+import ovh.rwx.habbo.database.group.GroupDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.group.Group
@@ -197,7 +198,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (!roomItemsToSave.contains(roomItem)) roomItemsToSave += roomItem
     }
 
-    fun saveQueuedItems() {
+    fun saveRoom() {
+        // Save room data on database
+        RoomDao.updateRoomData(roomData)
+        // Save group data on database, if it exists
+        group?.let { GroupDao.updateGroupData(it.groupData) }
+
         if (roomItemsToSave.isEmpty()) return
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
@@ -276,7 +282,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
 
         if (newItem) {
-            roomItems.put(roomItem.id, roomItem)
+            roomItems[roomItem.id] = roomItem
 
             roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
@@ -322,7 +328,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
                 roomItem.extraData = roomDimmer!!.generateExtraData()
             }
 
-            roomItems.put(roomItem.id, roomItem)
+            roomItems[roomItem.id] = roomItem
 
             roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
@@ -379,5 +385,15 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         if (roomItemsToSave.contains(roomItem)) roomItemsToSave.remove(roomItem)
 
         return true
+    }
+
+    fun updateGroupInfo() {
+        group?.let { group ->
+            roomUsers.values.filter { it.habboSession != null }.forEach {
+                it.habboSession?.let {
+                    it.sendHabboResponse(Outgoing.GROUP_INFO, it.userInformation.id, it.userStats.favoriteGroupId == group.groupData.id, false)
+                }
+            }
+        }
     }
 }

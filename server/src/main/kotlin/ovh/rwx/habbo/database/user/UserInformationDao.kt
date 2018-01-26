@@ -56,7 +56,7 @@ object UserInformationDao {
                 ) { getUserInformation(it) }.firstOrNull()
             } ?: return null
 
-            userInformationsList.put(userId, userInformation)
+            userInformationsList[userId] = userInformation
         }
 
         return userInformationsList[userId]
@@ -85,7 +85,7 @@ object UserInformationDao {
                 ) { getUserInformation(it) }.firstOrNull()
             } ?: return null
 
-            userInformationsList.put(userInformation1.id, userInformation1)
+            userInformationsList[userInformation1.id] = userInformation1
 
             userInformation1
         }

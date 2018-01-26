@@ -71,7 +71,7 @@ object Utils {
 
     fun deflate(source: ByteArray): ByteArray = deflate(source, Deflater.DEFAULT_COMPRESSION)
 
-    @Suppress("MemberVisibilityCanPrivate")
+    @Suppress("MemberVisibilityCanBePrivate")
     fun deflate(source: ByteArray, compression: Int): ByteArray {
         val deflater = Deflater(compression)
         deflater.setInput(source)

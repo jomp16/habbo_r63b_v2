@@ -46,6 +46,6 @@ data class RoomModel(val id: String, val roomId: Int, val doorVector3: Vector3, 
     }
 
     companion object {
-        val letters = "abcdefghijklmnopqrstuvw"
+        const val letters = "abcdefghijklmnopqrstuvw"
     }
 }

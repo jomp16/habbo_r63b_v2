@@ -23,7 +23,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import java.util.*
@@ -43,7 +42,7 @@ class RoomTask : Runnable {
         log.info("Loading room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         rooms += room
-        queuedTasks.put(room, ConcurrentLinkedQueue())
+        queuedTasks[room] = ConcurrentLinkedQueue()
 
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
@@ -72,9 +71,8 @@ class RoomTask : Runnable {
         room.rollerCounter.set(0)
         room.roomGamemap.clearUsers()
 
-        room.saveQueuedItems()
-
-        RoomDao.updateRoomData(room.roomData)
+        // This method already saves room data and group data
+        room.saveRoom()
     }
 
     fun addTask(room: Room, task: IRoomTask) {

@@ -58,7 +58,7 @@ class RoomGamemap(private val room: Room) {
             val roomUsers: MutableSet<RoomUser> = CopyOnWriteArraySet()
             roomUsers.add(roomUser)
 
-            roomUserMap.put(vector2, roomUsers)
+            roomUserMap[vector2] = roomUsers
         } else if (!roomUserMap[vector2]!!.contains(roomUser)) {
             roomUserMap[vector2]?.add(roomUser)
         }
@@ -82,7 +82,7 @@ class RoomGamemap(private val room: Room) {
     private fun setRoomItem(vector2: Vector2, roomItem: RoomItem) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
-        if (!roomItemMap.containsKey(vector2)) roomItemMap.put(vector2, CopyOnWriteArraySet())
+        if (!roomItemMap.containsKey(vector2)) roomItemMap[vector2] = CopyOnWriteArraySet()
 
         if (roomItemMap[vector2]!!.contains(roomItem)) return
 

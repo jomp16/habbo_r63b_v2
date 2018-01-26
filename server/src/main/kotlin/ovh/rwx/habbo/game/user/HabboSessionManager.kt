@@ -26,7 +26,7 @@ import ovh.rwx.fastfood.game.FastFoodSession
 
 class HabboSessionManager {
     val habboSessions: MutableMap<ChannelId, HabboSession> = mutableMapOf()
-    @Suppress("MemberVisibilityCanPrivate")
+    @Suppress("MemberVisibilityCanBePrivate")
     val fastFoodSessions: MutableMap<ChannelId, FastFoodSession> = mutableMapOf()
 
     fun makeHabboSession(channel: Channel): Boolean {

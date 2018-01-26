@@ -22,6 +22,8 @@ package ovh.rwx.habbo.game.group
 import ovh.rwx.habbo.database.group.GroupDao
 
 class Group(val groupData: GroupData) {
-    val groupMembers: MutableSet<GroupMember> by lazy { HashSet(GroupDao.getGroupMembers(groupData.id)) }
-
+    val members: MutableSet<GroupMember> by lazy { HashSet(GroupDao.getGroupMembers(groupData.id)) }
+    val requests: MutableSet<GroupRequest> by lazy { HashSet(GroupDao.getGroupRequests(groupData.id)) }
+    val admins: List<GroupMember>
+        get() = members.filter { it.rank == 1 || it.rank == 2 }
 }

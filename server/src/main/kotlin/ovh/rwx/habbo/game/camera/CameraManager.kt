@@ -32,10 +32,12 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 
@@ -45,7 +47,7 @@ class CameraManager {
     val cameraPreviewDirectory: Path = cameraDirectory.resolve("preview")
     val cameraPurchasedDirectory: Path = cameraDirectory.resolve("purchased")
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
-    private val currentPictureForUsers: MutableMap<String, String> = mutableMapOf()
+    private val currentPictureForUsers: MutableMap<String, Pair<LocalDateTime, String>> = mutableMapOf()
     private val jacksonJson = jacksonObjectMapper()
 
     fun load() {
@@ -59,7 +61,8 @@ class CameraManager {
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             Files.walk(cameraPreviewDirectory).use {
                 it.filter { Files.isRegularFile(it) }.forEach { path ->
-                    val localDateTime = LocalDateTime.parse(path.fileName.toString().replace(".png", ""))
+                    val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+                    val localDateTime = LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.of("UTC"))
 
                     if (localDateTime.plusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes).isBefore(LocalDateTime.now(Clock.systemUTC()))) {
                         // expired image, delete this now
@@ -90,11 +93,11 @@ class CameraManager {
         val cameraPreviewUserPath = cameraPreviewDirectory.resolve(habboSession.userInformation.username)
 
         if (Files.notExists(cameraPreviewUserPath)) Files.createDirectory(cameraPreviewUserPath)
-        val cameraPreviewPath = cameraPreviewUserPath.resolve("${LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)}.png")
+        val cameraPreviewPath = cameraPreviewUserPath.resolve("${UUID.randomUUID()}.png")
 
         cameraPreviewPath.toFile().writeBytes(cameraBytes)
 
-        currentPictureForUsers.put(habboSession.userInformation.username, cameraPreviewPath.fileName.toString())
+        currentPictureForUsers[habboSession.userInformation.username] = LocalDateTime.now(Clock.systemUTC()) to cameraPreviewPath.fileName.toString()
 
         return true to "preview/${habboSession.userInformation.username}/${cameraPreviewPath.fileName}"
     }
@@ -111,9 +114,10 @@ class CameraManager {
     fun purchaseCamera(habboSession: HabboSession): Boolean {
         if (!habboSession.hasPermission("acc_can_use_camera")) return false
         if (!currentPictureForUsers.containsKey(habboSession.userInformation.username)) return false
-        val picName = currentPictureForUsers.remove(habboSession.userInformation.username) ?: return false
-        val createdAt = LocalDateTime.parse(picName.replace(".png", ""))
-        val tmpPath = "${habboSession.userInformation.username}/$createdAt"
+        val picturePair = currentPictureForUsers.remove(habboSession.userInformation.username) ?: return false
+        val picName = picturePair.second.replace(".png", "")
+        val createdAt = picturePair.first
+        val tmpPath = "${habboSession.userInformation.username}/$picName"
         val previewPicturePath = cameraPreviewDirectory.resolve("$tmpPath.png")
         val purchasedPicturePath = cameraPurchasedDirectory.resolve("$tmpPath.png")
         val photoFurnishing = HabboServer.habboGame.itemManager.furnishings["external_image_wallitem_poster_small"] ?: return false
