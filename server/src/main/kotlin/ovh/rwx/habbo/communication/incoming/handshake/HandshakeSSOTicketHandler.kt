@@ -27,9 +27,11 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.database.user.UserIPDao
 import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.kotlin.ip
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -87,6 +89,11 @@ class HandshakeSSOTicketHandler {
         if (!UserUniqueIdDao.containsUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)) {
             // save unique id to database
             UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID, habboSession.osInformation)
+        }
+
+        if (!UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
+            // save IP to database
+            UserIPDao.addIPForUser(habboSession.userInformation.id, habboSession.channel.ip())
         }
     }
 }
