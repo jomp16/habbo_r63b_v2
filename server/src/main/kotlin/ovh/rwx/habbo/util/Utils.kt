@@ -37,7 +37,7 @@ object Utils {
         get() = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
     val ramUsageString: String
         get() = humanReadableByteCount(ramUsage, true)
-    private const val ipInfoApiURL: String = "https://freegeoip.net/json/"
+    private const val ipInfoApiURL: String = "https://freegeoip.net/json"
 
     fun humanReadableByteCount(bytes: Long, si: Boolean): String {
         val unit = if (si) 1000 else 1024
