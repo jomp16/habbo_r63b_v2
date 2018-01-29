@@ -97,7 +97,7 @@ class HandshakeSSOTicketHandler {
         if (HabboServer.habboConfig.analyticsConfig.ip && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
             // save IP to database
             val isInternalIP = (habboSession.channel.remoteAddress() as InetSocketAddress).address.isSiteLocalAddress
-            UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo())
+            UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo(ip = habboSession.channel.ip()))
         }
     }
 }
