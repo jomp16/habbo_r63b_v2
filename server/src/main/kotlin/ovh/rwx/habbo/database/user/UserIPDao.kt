@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.database.user
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.util.IpInfo
 
 object UserIPDao {
     @Suppress("unused")
@@ -35,12 +36,19 @@ object UserIPDao {
         }
     }
 
-    fun addIPForUser(userId: Int, ip: String) {
+    fun addIPForUser(userId: Int, ipInfo: IpInfo) {
         HabboServer.database {
             update(javaClass.getResource("/sql/users/ips/insert_ip.sql").readText(),
                     mapOf(
                             "user_id" to userId,
-                            "ip" to ip
+                            "ip" to ipInfo.ip,
+                            "country_code" to ipInfo.countryCode,
+                            "country" to ipInfo.countryName,
+                            "region_code" to ipInfo.regionCode,
+                            "region" to ipInfo.regionName,
+                            "timezone" to ipInfo.timeZone,
+                            "latitude" to ipInfo.latitude,
+                            "longitude" to ipInfo.longitude
                     )
             )
         }

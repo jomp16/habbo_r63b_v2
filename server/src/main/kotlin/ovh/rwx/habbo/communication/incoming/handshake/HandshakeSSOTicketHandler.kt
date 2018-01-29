@@ -32,6 +32,7 @@ import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -86,14 +87,14 @@ class HandshakeSSOTicketHandler {
 
         habboSession.handshaking = false
 
-        if (!UserUniqueIdDao.containsUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)) {
+        if (HabboServer.habboConfig.analyticsConfig.uniqueId && !UserUniqueIdDao.containsUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID)) {
             // save unique id to database
             UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID, habboSession.osInformation)
         }
 
-        if (!UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
+        if (HabboServer.habboConfig.analyticsConfig.ip && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
             // save IP to database
-            UserIPDao.addIPForUser(habboSession.userInformation.id, habboSession.channel.ip())
+            UserIPDao.addIPForUser(habboSession.userInformation.id, Utils.getIpInfo(habboSession.channel.ip()))
         }
     }
 }

@@ -69,5 +69,9 @@
   },
   "motd_enabled": true,
   "motd_file_path": "motd/welcome.txt",
-  "server_console_figure": "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62"
+  "server_console_figure": "ch-3185-92.lg-285-91.hr-828-61.hd-190-3.sh-290-62",
+  "analytics": {
+    "unique_id": true,
+    "ip": true
+  }
 }

@@ -54,7 +54,9 @@ data class HabboConfig(
         @JsonProperty("motd_file_path", required = true)
         private val motdFilePath: String,
         @JsonProperty("server_console_figure", required = true)
-        val serverConsoleFigure: String
+        val serverConsoleFigure: String,
+        @JsonProperty("analytics", required = true)
+        val analyticsConfig: AnalyticsConfig
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)
