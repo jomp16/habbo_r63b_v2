@@ -32,7 +32,9 @@ import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.util.IpInfo
 import ovh.rwx.habbo.util.Utils
+import java.net.InetSocketAddress
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -94,7 +96,8 @@ class HandshakeSSOTicketHandler {
 
         if (HabboServer.habboConfig.analyticsConfig.ip && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
             // save IP to database
-            UserIPDao.addIPForUser(habboSession.userInformation.id, Utils.getIpInfo(habboSession.channel.ip()))
+            val isInternalIP = (habboSession.channel.remoteAddress() as InetSocketAddress).address.isSiteLocalAddress
+            UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo())
         }
     }
 }
