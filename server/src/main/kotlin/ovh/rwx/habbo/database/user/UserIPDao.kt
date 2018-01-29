@@ -36,12 +36,13 @@ object UserIPDao {
         }
     }
 
-    fun addIPForUser(userId: Int, ipInfo: IpInfo) {
+    fun addIPForUser(userId: Int, isInternalIP: Boolean, ipInfo: IpInfo) {
         HabboServer.database {
             update(javaClass.getResource("/sql/users/ips/insert_ip.sql").readText(),
                     mapOf(
                             "user_id" to userId,
                             "ip" to ipInfo.ip,
+                            "internal" to isInternalIP,
                             "country_code" to ipInfo.countryCode,
                             "country" to ipInfo.countryName,
                             "region_code" to ipInfo.regionCode,
