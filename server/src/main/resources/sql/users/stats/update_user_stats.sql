@@ -9,6 +9,7 @@ SET
   `daily_respect_points`     = :daily_respect_points,
   `daily_pet_respect_points` = :daily_pet_respect_points,
   `respect_last_update`      = :respect_last_update,
-  `marketplace_tickets`      = :marketplace_tickets
+  `marketplace_tickets`      = :marketplace_tickets,
+  `room_visits`              = :room_visits
 WHERE
   `id` = :id

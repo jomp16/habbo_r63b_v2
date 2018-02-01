@@ -268,6 +268,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             }
         }
 
+        userStats.roomVisits++
+
         currentRoom = room
 
         userStats.favoriteGroup?.let {
