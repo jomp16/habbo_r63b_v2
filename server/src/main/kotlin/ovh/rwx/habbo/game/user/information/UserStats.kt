@@ -28,7 +28,7 @@ import java.time.LocalDateTime
 data class UserStats(
         val id: Int,
         var lastOnline: LocalDateTime,
-        private var lastOnlineDatabase: LocalDateTime,
+        var lastOnlineDatabase: LocalDateTime,
         private var onlineSeconds: Long,
         var roomVisits: Int,
         var respect: Int,
@@ -47,7 +47,7 @@ data class UserStats(
         var respectLastUpdate: LocalDateTime
 ) {
     val totalOnlineSeconds: Long
-        get() = Duration.between(lastOnlineDatabase, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
+        get() = Duration.between(lastOnline, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
     val favoriteGroup: Group?
         get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
 }
