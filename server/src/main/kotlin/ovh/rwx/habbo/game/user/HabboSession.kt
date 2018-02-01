@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -157,6 +157,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
 
         userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
+        userStats.lastOnlineDatabase = userStats.lastOnline
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
@@ -288,7 +289,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (authenticated) {
             currentRoom?.removeUser(roomUser, false, false)
 
-            userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
+            userStats.lastOnlineDatabase = LocalDateTime.now(Clock.systemUTC())
 
             BadgeDao.saveBadges(habboBadge.badges.values)
             UserInformationDao.saveInformation(userInformation, false, channel.ip())

@@ -57,7 +57,7 @@ object UserStatsDao {
             ) {
                 UserStats(
                         it.int("id"),
-                        it.localDateTime("last_online"),
+                        LocalDateTime.now(Clock.systemUTC()),
                         it.localDateTime("last_online"),
                         it.long("online_seconds"),
                         it.int("room_visits"),
@@ -107,7 +107,7 @@ object UserStatsDao {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/stats/update_user_stats.sql").readText(),
                     mapOf(
-                            "last_online" to userStats.lastOnline,
+                            "last_online" to userStats.lastOnlineDatabase,
                             "credits_last_update" to userStats.creditsLastUpdate,
                             "favorite_group" to if (userStats.favoriteGroupId == 0) null else userStats.favoriteGroupId,
                             "online_seconds" to userStats.totalOnlineSeconds,
