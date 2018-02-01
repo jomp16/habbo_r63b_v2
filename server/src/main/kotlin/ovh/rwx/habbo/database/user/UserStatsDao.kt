@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,6 +29,7 @@ import java.time.LocalDateTime
 object UserStatsDao {
     private val serverConsoleUserStats: UserStats = UserStats(UserInformationDao.serverConsoleUserInformation.id,
             LocalDateTime.now(Clock.systemUTC()),
+            LocalDateTime.now(Clock.systemUTC()),
             Int.MAX_VALUE.toLong(),
             Int.MAX_VALUE,
             Int.MAX_VALUE,
@@ -56,6 +57,7 @@ object UserStatsDao {
             ) {
                 UserStats(
                         it.int("id"),
+                        it.localDateTime("last_online"),
                         it.localDateTime("last_online"),
                         it.long("online_seconds"),
                         it.int("room_visits"),

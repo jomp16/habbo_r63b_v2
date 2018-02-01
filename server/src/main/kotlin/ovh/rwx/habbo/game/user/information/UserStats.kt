@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import java.time.LocalDateTime
 data class UserStats(
         val id: Int,
         var lastOnline: LocalDateTime,
+        private var lastOnlineDatabase: LocalDateTime,
         private var onlineSeconds: Long,
         var roomVisits: Int,
         var respect: Int,
@@ -46,7 +47,7 @@ data class UserStats(
         var respectLastUpdate: LocalDateTime
 ) {
     val totalOnlineSeconds: Long
-        get() = Duration.between(lastOnline, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
+        get() = Duration.between(lastOnlineDatabase, LocalDateTime.now(Clock.systemUTC())).seconds + onlineSeconds
     val favoriteGroup: Group?
         get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
 }
