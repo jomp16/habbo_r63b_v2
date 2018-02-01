@@ -116,6 +116,7 @@ object UserStatsDao {
                             "daily_pet_respect_points" to userStats.dailyPetRespectPoints,
                             "respect_last_update" to userStats.respectLastUpdate,
                             "marketplace_tickets" to userStats.marketplaceTickets,
+                            "room_visits" to userStats.roomVisits,
                             "id" to userStats.id
                     )
             )
