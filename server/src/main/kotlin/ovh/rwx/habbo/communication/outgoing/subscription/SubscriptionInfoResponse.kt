@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,7 +24,6 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.subscription.Subscription
-import java.time.Clock
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -43,7 +42,7 @@ class SubscriptionInfoResponse {
                 writeInt(100) // credits spent on catalog
                 writeInt(5) // credits bonus
                 writeInt(150) // credits to receive with multiplier
-                writeInt(Duration.between(LocalDateTime.now(Clock.systemUTC()), LocalDateTime.now(Clock.systemUTC()).plusMonths(2)).toMinutes().toInt()) // how long in minutes to get next bonus
+                writeInt(Duration.between(LocalDateTime.now(), LocalDateTime.now().plusMonths(2)).toMinutes().toInt()) // how long in minutes to get next bonus
             } else {
                 writeInt(0)
                 writeUTF("")

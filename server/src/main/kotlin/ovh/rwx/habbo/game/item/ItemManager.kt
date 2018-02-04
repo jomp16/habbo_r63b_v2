@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -39,7 +39,6 @@ import ovh.rwx.habbo.kotlin.urlUserAgent
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.FileOutputStream
-import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
@@ -102,7 +101,7 @@ class ItemManager {
                 it.apply {
                     appendln()
                     appendln("================")
-                    appendln(LocalDateTime.now(Clock.systemUTC()).format(DateTimeFormatter.ISO_DATE_TIME))
+                    appendln(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                     appendln()
 
                     missingItems.forEach {
@@ -273,9 +272,9 @@ class ItemManager {
             InteractionType.BADGE_DISPLAY -> {
                 if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
 
-                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}"
+                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}"
             }
-            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now(Clock.systemUTC()).format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}${9.toChar()}${extraData.trim()}"
+            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}${9.toChar()}${extraData.trim()}"
             else -> ""
         }
     }

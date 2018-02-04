@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,7 +32,6 @@ import ovh.rwx.habbo.util.Rotation
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import ovh.rwx.utils.pathfinding.core.Path
-import java.time.Clock
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -99,7 +98,7 @@ class RoomUser(
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         statusMap[key] = Pair(
                 if (milliseconds == -1) null
-                else LocalDateTime.now(Clock.systemUTC()).plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value)
+                else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value)
 
         updateNeeded = true
     }
@@ -112,7 +111,7 @@ class RoomUser(
 
     fun onCycle() {
         statusMap.entries.forEach {
-            if (it.value.first != null && LocalDateTime.now(Clock.systemUTC()).isAfter(it.value.first)) removeStatus(it.key)
+            if (it.value.first != null && LocalDateTime.now().isAfter(it.value.first)) removeStatus(it.key)
         }
 
         if (stepSeated) {

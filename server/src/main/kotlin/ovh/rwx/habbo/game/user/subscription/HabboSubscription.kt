@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,7 +23,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
-import java.time.Clock
 import java.time.LocalDate
 import java.time.Period
 import java.time.temporal.ChronoUnit
@@ -78,7 +77,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
             months = ChronoUnit.MONTHS.between(currentTime, subscription?.expire).toInt()
             elapsedDays = ChronoUnit.DAYS.between(subscription?.activated, currentTime).toInt()
             minutes = ChronoUnit.MINUTES.between(currentTime, subscription?.expire).toInt()
-            days = Period.between(LocalDate.now(Clock.systemUTC()), LocalDate.now(Clock.systemUTC()).plusDays(days.toLong()).minusMonths(months.toLong())).days
+            days = Period.between(LocalDate.now(), LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())).days
 
             if (days == 0) days = 1
         }

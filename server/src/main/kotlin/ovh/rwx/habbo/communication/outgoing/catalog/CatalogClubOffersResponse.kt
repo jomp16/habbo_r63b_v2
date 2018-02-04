@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,7 +23,6 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
-import java.time.Clock
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -35,7 +34,7 @@ class CatalogClubOffersResponse {
             writeInt(clubOffers.size)
 
             clubOffers.forEach {
-                val now = LocalDateTime.now(Clock.systemUTC())
+                val now = LocalDateTime.now()
                 val localDateTime = now.plusMonths(it.months.toLong())
 
                 writeInt(it.itemId)
