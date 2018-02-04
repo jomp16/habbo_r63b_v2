@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,11 +22,10 @@ package ovh.rwx.habbo.kotlin
 import ovh.rwx.habbo.util.Utils
 import java.net.URL
 import java.net.URLConnection
-import java.time.Clock
 import java.time.LocalDateTime
 import java.util.*
 
-fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now(Clock.systemUTC()).withNano(0).withSecond(0)
+fun localDateTimeNowWithoutSecondsAndNanos(): LocalDateTime = LocalDateTime.now().withNano(0).withSecond(0)
 
 inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER) = Array(sizeOuter) { Array(sizeInner, innerInit) }
 

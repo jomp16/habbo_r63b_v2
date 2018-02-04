@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -71,7 +71,7 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID2, true)
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID3, "", "")
         habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
-        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now(Clock.systemUTC()).dayOfMonth - 1, LocalDate.now(Clock.systemUTC()).lengthOfMonth(), intArrayOf(), intArrayOf())
+        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
         habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,
                 HabboServer.habboGame.moderationManager.moderationCategories,
                 HabboServer.habboGame.moderationManager.moderationTopics.values)
@@ -96,7 +96,7 @@ class HandshakeSSOTicketHandler {
 
         if (HabboServer.habboConfig.analyticsConfig.ip && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
             // save IP to database
-            val isInternalIP = (habboSession.channel.remoteAddress() as InetSocketAddress).address.isSiteLocalAddress
+            val isInternalIP = (habboSession.channel.remoteAddress() as InetSocketAddress).address.let { it.isLoopbackAddress || it.isSiteLocalAddress }
             UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo(ip = habboSession.channel.ip()))
         }
     }

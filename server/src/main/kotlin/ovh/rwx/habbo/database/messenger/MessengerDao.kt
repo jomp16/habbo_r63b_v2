@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,9 +26,8 @@ import ovh.rwx.habbo.game.user.messenger.MessengerRequest
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.localDateTime
-import java.time.Clock
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.util.*
 
 object MessengerDao {
@@ -151,7 +150,7 @@ object MessengerDao {
                 offlineMessages += Triple(
                         it.int("from_id"),
                         it.string("message"),
-                        (Instant.now(Clock.systemUTC()).epochSecond - it.localDateTime("timestamp").toEpochSecond(ZoneOffset.UTC)).toInt()
+                        (Instant.now().epochSecond - it.localDateTime("timestamp").atZone(ZoneId.systemDefault()).toEpochSecond()).toInt()
                 )
             }
 

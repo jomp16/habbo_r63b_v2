@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,7 +33,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
-import java.time.Clock
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -62,9 +61,9 @@ class CameraManager {
             Files.walk(cameraPreviewDirectory).use {
                 it.filter { Files.isRegularFile(it) }.forEach { path ->
                     val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)
-                    val localDateTime = LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.of("UTC"))
+                    val localDateTime = LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.systemDefault())
 
-                    if (localDateTime.plusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes).isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+                    if (localDateTime.plusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes).isBefore(LocalDateTime.now())) {
                         // expired image, delete this now
                         if (!Files.deleteIfExists(path)) log.error("Couldn't delete camera preview: {}", path.fileName)
 
@@ -97,7 +96,7 @@ class CameraManager {
 
         cameraPreviewPath.toFile().writeBytes(cameraBytes)
 
-        currentPictureForUsers[habboSession.userInformation.username] = LocalDateTime.now(Clock.systemUTC()) to cameraPreviewPath.fileName.toString()
+        currentPictureForUsers[habboSession.userInformation.username] = LocalDateTime.now() to cameraPreviewPath.fileName.toString()
 
         return true to "preview/${habboSession.userInformation.username}/${cameraPreviewPath.fileName}"
     }
@@ -146,7 +145,7 @@ class CameraManager {
                 "s" to habboSession.userInformation.id,
                 "n" to habboSession.userInformation.username,
                 "u" to "$pictureId",
-                "t" to "${TimeUnit.SECONDS.toMillis(createdAt.toEpochSecond(ZoneOffset.UTC))}"
+                "t" to "${TimeUnit.SECONDS.toMillis(createdAt.atZone(ZoneOffset.systemDefault()).toEpochSecond())}"
         )
         val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
         val userItem = ItemDao.addItems(habboSession.userInformation.id, listOf(photoFurnishing), listOf(jsonExtradata)).first()

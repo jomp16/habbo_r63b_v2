@@ -23,13 +23,12 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserStats
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.localDateTime
-import java.time.Clock
 import java.time.LocalDateTime
 
 object UserStatsDao {
     private val serverConsoleUserStats: UserStats = UserStats(UserInformationDao.serverConsoleUserInformation.id,
-            LocalDateTime.now(Clock.systemUTC()),
-            LocalDateTime.now(Clock.systemUTC()),
+            LocalDateTime.now(),
+            LocalDateTime.now(),
             Int.MAX_VALUE.toLong(),
             Int.MAX_VALUE,
             Int.MAX_VALUE,
@@ -44,8 +43,8 @@ object UserStatsDao {
             0,
             Int.MAX_VALUE,
             Int.MAX_VALUE,
-            LocalDateTime.now(Clock.systemUTC()),
-            LocalDateTime.now(Clock.systemUTC()))
+            LocalDateTime.now(),
+            LocalDateTime.now())
 
     fun getUserStats(userId: Int): UserStats {
         if (userId == UserInformationDao.serverConsoleUserInformation.id) return serverConsoleUserStats
@@ -57,7 +56,7 @@ object UserStatsDao {
             ) {
                 UserStats(
                         it.int("id"),
-                        LocalDateTime.now(Clock.systemUTC()),
+                        LocalDateTime.now(),
                         it.localDateTime("last_online"),
                         it.long("online_seconds"),
                         it.int("room_visits"),

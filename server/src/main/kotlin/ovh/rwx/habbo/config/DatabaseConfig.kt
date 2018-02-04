@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -46,7 +46,6 @@ data class DatabaseConfig(
             config.connectionTimeout = timeout
             config.maximumPoolSize = (Runtime.getRuntime().availableProcessors() * 2) + 1
 
-            config.addDataSourceProperty("serverTimezone", "UTC")
             config.addDataSourceProperty("prepStmtCacheSize", "250")
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
             config.addDataSourceProperty("cachePrepStmts", true)

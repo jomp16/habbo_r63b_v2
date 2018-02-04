@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,9 +25,8 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.information.UserInformation
 import ovh.rwx.habbo.game.user.information.UserStats
-import java.time.Clock
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -39,7 +38,7 @@ class ModerationUserInfoResponse {
             writeUTF(userInformation.username)
             writeUTF(userInformation.figure)
             writeInt(0) // todo: account created
-            writeInt(TimeUnit.SECONDS.toMinutes(Math.ceil(Instant.now(Clock.systemUTC()).epochSecond.toDouble() - userStats.lastOnline.toEpochSecond(ZoneOffset.UTC).toDouble()).toLong()).toInt())
+            writeInt(TimeUnit.SECONDS.toMinutes(Math.ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toLong()).toInt())
             writeBoolean(HabboServer.habboSessionManager.getHabboSessionById(userInformation.id) != null)
             writeInt(0) // todo: cfhs created
             writeInt(0) // todo: cfhs abusive

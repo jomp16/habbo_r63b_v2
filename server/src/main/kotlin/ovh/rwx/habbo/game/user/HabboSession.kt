@@ -44,7 +44,6 @@ import ovh.rwx.habbo.game.user.inventory.HabboInventory
 import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
-import java.time.Clock
 import java.time.LocalDateTime
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -156,7 +155,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         userStats = UserStatsDao.getUserStats(userInformation.id)
         userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
 
-        userStats.lastOnline = LocalDateTime.now(Clock.systemUTC())
+        userStats.lastOnline = LocalDateTime.now()
         userStats.lastOnlineDatabase = userStats.lastOnline
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
@@ -185,7 +184,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
         var update = false
 
-        if (LocalDateTime.now(Clock.systemUTC()).isAfter(localDateTime)) {
+        if (LocalDateTime.now().isAfter(localDateTime)) {
             if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && HabboServer.habboConfig.rewardConfig.credits > 0
                     && userInformation.credits < Int.MAX_VALUE) {
                 userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
@@ -210,7 +209,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         if (update) {
-            userStats.creditsLastUpdate = LocalDateTime.now(Clock.systemUTC())
+            userStats.creditsLastUpdate = LocalDateTime.now()
 
             updateAllCurrencies()
         }
@@ -291,7 +290,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (authenticated) {
             currentRoom?.removeUser(roomUser, false, false)
 
-            userStats.lastOnlineDatabase = LocalDateTime.now(Clock.systemUTC())
+            userStats.lastOnlineDatabase = LocalDateTime.now()
 
             BadgeDao.saveBadges(habboBadge.badges.values)
             UserInformationDao.saveInformation(userInformation, false, channel.ip())
