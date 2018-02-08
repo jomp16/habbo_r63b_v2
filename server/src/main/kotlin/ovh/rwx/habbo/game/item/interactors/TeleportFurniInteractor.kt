@@ -93,7 +93,7 @@ class TeleportFurniInteractor : ItemInteractor() {
                     HabboServer.habboGame.roomManager.rooms[HabboServer.habboGame.itemManager.roomTeleportLinks[teleportTwoId]]?.let {
                         showUpdate = true
 
-                        outgoingUser.habboSession.targetTeleporterId = teleportTwoId
+                        outgoingUser.habboSession.targetTeleportId = teleportTwoId
                         outgoingUser.habboSession.teleportRoom = it
                     }
                 }

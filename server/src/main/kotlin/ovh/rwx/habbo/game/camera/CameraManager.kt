@@ -26,7 +26,6 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.camera.CameraDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.kotlin.ip
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.Files
@@ -119,7 +118,8 @@ class CameraManager {
         val tmpPath = "${habboSession.userInformation.username}/$picName"
         val previewPicturePath = cameraPreviewDirectory.resolve("$tmpPath.png")
         val purchasedPicturePath = cameraPurchasedDirectory.resolve("$tmpPath.png")
-        val photoFurnishing = HabboServer.habboGame.itemManager.furnishings["external_image_wallitem_poster_small"] ?: return false
+        val photoFurnishing = HabboServer.habboGame.itemManager.furnishings["external_image_wallitem_poster_small"]
+                ?: return false
 
         if (habboSession.userInformation.credits < HabboServer.habboConfig.cameraConfig.prices.credits || habboSession.userInformation.pixels < HabboServer.habboConfig.cameraConfig.prices.pixels) {
             Files.delete(previewPicturePath)
@@ -139,7 +139,7 @@ class CameraManager {
         thumbnailImage.createGraphics().drawImage(ImageIO.read(purchasedPicturePath.toFile()).getScaledInstance(100, 100, 0), 0, 0, null)
 
         ImageIO.write(thumbnailImage, "png", File(cameraPurchasedDirectory.toFile(), "${tmpPath}_small.png"))
-        val pictureId = CameraDao.savePictureDataToDatabase(habboSession.userInformation.id, habboSession.channel.ip(), picName, createdAt)
+        val pictureId = CameraDao.savePictureDataToDatabase(habboSession.userInformation.id, picName)
         val cameraInfoMap = mapOf(
                 "w" to "purchased/$tmpPath.png",
                 "s" to habboSession.userInformation.id,

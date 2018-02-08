@@ -36,7 +36,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.roomUser = roomUser
 
             if (habboSession.teleporting) {
-                room.roomItems[habboSession.targetTeleporterId]?.let { teleportItem ->
+                room.roomItems[habboSession.targetTeleportId]?.let { teleportItem ->
                     if (!teleportItem.interactingUsers.containsKey(2)) {
                         roomUser.walkingBlocked = true
                         roomUser.currentVector3 = teleportItem.position
@@ -49,7 +49,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                         teleportItem.requestCycles(2)
                     }
 
-                    habboSession.targetTeleporterId = 0
+                    habboSession.targetTeleportId = 0
                 }
             }
 

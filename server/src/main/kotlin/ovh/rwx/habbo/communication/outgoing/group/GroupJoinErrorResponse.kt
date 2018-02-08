@@ -17,20 +17,27 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.database.camera
+package ovh.rwx.habbo.communication.outgoing.group
 
-import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 
-object CameraDao {
-    fun savePictureDataToDatabase(userId: Int, fileName: String): Int {
-        return HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO `camera_pictures` (`user_id`, `file_name`) VALUES (:user_id, :file_name)",
-                    mapOf(
-                            "user_id" to userId,
-                            "file_name" to fileName
-                    )
-            )
+@Suppress("unused", "UNUSED_PARAMETER")
+class GroupJoinErrorResponse {
+    @Response(Outgoing.GROUP_JOIN_ERROR)
+    fun handle(habboResponse: HabboResponse, groupJoinError: GroupJoinError) {
+        habboResponse.apply {
+            writeInt(groupJoinError.errorCode)
         }
+    }
+
+    enum class GroupJoinError(val errorCode: Int) {
+        MAX_MEMBERS_LIMIT(0),
+        MAX_GROUPS_LIMIT(1),
+        CLOSED_GROUP(2),
+        NOT_ACCEPTING_REQUEST(3),
+        NOT_HC_LIMIT(5),
+        MAX_GROUPS_LIMIT_1(6),
     }
 }
