@@ -32,6 +32,7 @@ import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.encryption.RC4Encryption
+import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomState
@@ -73,16 +74,18 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         private set
     val rooms: List<Room>
         get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true) }
+    val groups: List<Group>
+        get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { it.userId == userInformation.id } }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
         private set
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
     var handshaking: Boolean = false
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
-    var targetTeleporterId: Int = -1
+    var targetTeleportId: Int = -1
     var teleportRoom: Room? = null
     val teleporting: Boolean
-        get() = targetTeleporterId != -1
+        get() = targetTeleportId != -1
     val authenticated: Boolean
         get() = ::userInformation.isInitialized && userInformation.id > 0 && ::userStats.isInitialized && userStats.id > 0 && ::userPreferences.isInitialized && userPreferences.id > 0
     var rc4Encryption: RC4Encryption? = null
