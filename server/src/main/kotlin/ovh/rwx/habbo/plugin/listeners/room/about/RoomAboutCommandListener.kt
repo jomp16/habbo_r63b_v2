@@ -29,6 +29,7 @@ import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.utils.plugin.api.PluginListener
 import java.lang.management.ManagementFactory
+import java.time.ZoneId
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomAboutCommandListener : PluginListener() {
@@ -38,6 +39,10 @@ class RoomAboutCommandListener : PluginListener() {
                 BuildConfig.NAME +
                         "\n\n" +
                         "Version: ${BuildConfig.VERSION}" +
+                        "\n\n" +
+                        "Built at: ${HabboServer.DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}" +
+                        "\n\n" +
+                        "Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}. Dirty: ${BuildConfig.GIT_IS_DIRTY}" +
                         "\n\n" +
                         "Written in Java and Kotlin by jomp16 and Lucas." +
                         "\n\n" +
