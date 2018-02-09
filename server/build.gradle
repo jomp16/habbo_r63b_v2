@@ -18,6 +18,7 @@
  */
 
 apply plugin: "de.fuerstenau.buildconfig"
+apply plugin: "com.palantir.git-version"
 
 group "ovh.rwx.habbo"
 
@@ -40,6 +41,11 @@ dependencies {
 
 buildConfig {
     appName = "Habbo R63B v2"
+
+    buildConfigField 'String', 'GIT_COMMIT_SHORT', "${versionDetails().gitHash}"
+    buildConfigField 'String', 'GIT_COMMIT_FULL', "${versionDetails().gitHashFull}"
+    buildConfigField 'boolean', 'GIT_IS_DIRTY', "${!versionDetails().isCleanTag}"
+    buildConfigField 'java.time.Instant', 'BUILD_INSTANT', 'java.time.Instant.ofEpochMilli(' + System.currentTimeMillis() + 'L)'
 }
 
 jar {
