@@ -54,6 +54,7 @@ import ovh.rwx.habbo.netty.HabboNettyRC4Decoder
 import ovh.rwx.utils.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -94,11 +95,13 @@ object HabboServer : AutoCloseable {
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
+        log.info("Built in: ${DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}")
+        log.info("Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}. Dirty: ${BuildConfig.GIT_IS_DIRTY}")
         log.info("By jomp16 and Lucas.")
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See https://www.gnu.org/licenses/gpl-3.0.en.html")
         log.info("")
-        log.info("Loading ${BuildConfig.NAME} emulator...")
+        log.info("Loading ${BuildConfig.NAME} server...")
         // Initialize database
         log.info("Initializing database...")
 
