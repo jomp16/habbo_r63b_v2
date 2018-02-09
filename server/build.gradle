@@ -18,7 +18,7 @@
  */
 
 apply plugin: "de.fuerstenau.buildconfig"
-apply plugin: "com.palantir.git-version"
+apply plugin: "org.ajoberstar.grgit"
 
 group "ovh.rwx.habbo"
 
@@ -40,11 +40,13 @@ dependencies {
 }
 
 buildConfig {
+    def repo = grgit.open()
+
     appName = "Habbo R63B v2"
 
-    buildConfigField 'String', 'GIT_COMMIT_SHORT', "${versionDetails().gitHash}"
-    buildConfigField 'String', 'GIT_COMMIT_FULL', "${versionDetails().gitHashFull}"
-    buildConfigField 'boolean', 'GIT_IS_DIRTY', "${!versionDetails().isCleanTag}"
+    buildConfigField 'String', 'GIT_COMMIT_SHORT', "${repo.head().abbreviatedId}"
+    buildConfigField 'String', 'GIT_COMMIT_FULL', "${repo.head().id}"
+    buildConfigField 'boolean', 'GIT_IS_DIRTY', "${!repo.status().clean}"
     buildConfigField 'java.time.Instant', 'BUILD_INSTANT', 'java.time.Instant.ofEpochMilli(' + System.currentTimeMillis() + 'L)'
 }
 
