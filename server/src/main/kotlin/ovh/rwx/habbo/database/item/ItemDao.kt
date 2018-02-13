@@ -98,8 +98,7 @@ object ItemDao {
                         it.int("id"),
                         it.int("user_id"),
                         it.string("item_name"),
-                        it.string("extra_data"
-                        )
+                        it.string("extra_data")
                 )
             }.associateBy { it.id }
         }
@@ -117,8 +116,7 @@ object ItemDao {
                             it.int("id"),
                             it.int("item_id"),
                             it.int("limited_num"),
-                            it.int("limited_total"
-                            )
+                            it.int("limited_total")
                     )
                 }.firstOrNull()
             }
@@ -184,10 +182,10 @@ object ItemDao {
         if (roomItemsToRemove.isEmpty()) return
 
         HabboServer.database {
-            batchUpdate(javaClass.classLoader.getResource("sql/items/room/update_remove_item_from_room.sql").readText(),
+            batchUpdate(javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
                     roomItemsToRemove.map {
                         mapOf(
-                                "room_id" to 0,
+                                "room_id" to null,
                                 "id" to it.id
                         )
                     }
