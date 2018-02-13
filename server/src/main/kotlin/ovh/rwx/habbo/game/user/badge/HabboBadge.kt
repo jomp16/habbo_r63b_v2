@@ -19,18 +19,31 @@
 
 package ovh.rwx.habbo.game.user.badge
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.game.user.HabboSession
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
+@Suppress("UNCHECKED_CAST")
 class HabboBadge(private val habboSession: HabboSession) {
     val badges: MutableMap<String, Badge> = ConcurrentHashMap()
     private var initialized: Boolean = false
+    private val badgeCachePath: File = File(HabboServer.cachePath, "badges/${habboSession.userInformation.username}").apply {
+        if (!exists()) mkdirs()
+    }
+    private val badgesCachePath: File = File(badgeCachePath, "badges.bin")
 
     fun load() {
         if (!initialized) {
-            badges.putAll(BadgeDao.getBadges(habboSession.userInformation.id))
+            if (badgesCachePath.exists()) {
+                badges.putAll(HabboServer.fstConfiguration.asObject(badgesCachePath.readBytes()) as MutableMap<String, Badge>)
+            } else {
+                badges.putAll(BadgeDao.getBadges(habboSession.userInformation.id))
+
+                badgesCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(badges))
+            }
 
             initialized = true
         }
@@ -56,5 +69,9 @@ class HabboBadge(private val habboSession: HabboSession) {
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
 
         BadgeDao.removeBadge(badge.id)
+    }
+
+    fun saveCache() {
+        badgesCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(badges))
     }
 }

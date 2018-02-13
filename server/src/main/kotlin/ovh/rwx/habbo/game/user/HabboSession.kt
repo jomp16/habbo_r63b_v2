@@ -300,13 +300,14 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             UserPreferencesDao.savePreferences(userPreferences)
             UserStatsDao.saveStats(userStats)
 
-            saveAllQueuedStuffs()
+            saveCache()
 
             habboMessenger.notifyFriends()
         }
     }
 
-    internal fun saveAllQueuedStuffs() {
-
+    fun saveCache() {
+        habboInventory.saveCache()
+        habboBadge.saveCache()
     }
 }

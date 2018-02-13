@@ -38,6 +38,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.nustaq.serialization.FSTConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.FastFoodHandler
@@ -45,7 +46,13 @@ import ovh.rwx.habbo.communication.HabboHandler
 import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
+import ovh.rwx.habbo.game.item.Furnishing
+import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.ItemType
+import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.user.HabboSessionManager
+import ovh.rwx.habbo.game.user.badge.Badge
 import ovh.rwx.habbo.kotlin.cleanUpUsers
 import ovh.rwx.habbo.netty.HabboNettyDecoder
 import ovh.rwx.habbo.netty.HabboNettyEncoder
@@ -54,6 +61,8 @@ import ovh.rwx.habbo.netty.HabboNettyRC4Decoder
 import ovh.rwx.utils.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ExecutorService
@@ -85,6 +94,23 @@ object HabboServer : AutoCloseable {
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val started: Boolean
         get() = !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
+    val fstConfiguration: FSTConfiguration = FSTConfiguration.createUnsafeBinaryConfiguration().apply {
+        registerClass(
+                FurniXMLInfo::class.java,
+                Furnishing::class.java,
+                UserItem::class.java,
+                Badge::class.java,
+                LinkedHashMap::class.java,
+                LocalDate::class.java,
+                LocalDateTime::class.java,
+                InteractionType::class.java,
+                ItemType::class.java
+        )
+    }
+    val cachePath: File = File("cache").apply {
+        // create cache path
+        if (!exists()) mkdirs()
+    }
 
     init {
         Security.addProvider(BouncyCastleProvider())

@@ -37,6 +37,7 @@ dependencies {
     compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile 'commons-codec:commons-codec:1.11'
+    compile 'de.ruedigermoeller:fst:2.57'
 }
 
 buildConfig {

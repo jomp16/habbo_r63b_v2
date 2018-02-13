@@ -38,11 +38,13 @@ import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.urlUserAgent
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
+import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
 
+@Suppress("UNCHECKED_CAST")
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val furniXMLInfos: MutableMap<String, FurniXMLInfo> = mutableMapOf()
@@ -52,6 +54,13 @@ class ItemManager {
     val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
+    private val furniCachePath: File = File(HabboServer.cachePath, "furni").apply { if (!exists()) mkdirs() }
+    private val furniXMLInfosCachePath = File(furniCachePath, "furniXMLInfos.bin")
+    private val furnishingsCachePath = File(furniCachePath, "furnishings.bin")
+    private val oldGiftWrapperCachePath = File(furniCachePath, "oldGiftWrapper.bin")
+    private val newGiftWrapperCachePath = File(furniCachePath, "newGiftWrapper.bin")
+    private val teleportLinksCachePath = File(furniCachePath, "teleportLinks.bin")
+    private val roomTeleportLinksCachePath = File(furniCachePath, "roomTeleportLinks.bin")
 
     fun load() {
         log.info("Loading furnishings...")
@@ -63,22 +72,62 @@ class ItemManager {
         roomTeleportLinks.clear()
 
         if (furniXMLInfos.isEmpty()) {
-            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
-                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                val handler = FurniXMLHandler()
+            if (furniXMLInfosCachePath.exists()) {
+                furniXMLInfos.putAll(HabboServer.fstConfiguration.asObject(furniXMLInfosCachePath.readBytes()) as MutableMap<String, FurniXMLInfo>)
+            } else {
+                urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
+                    val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                    val handler = FurniXMLHandler()
 
-                saxParser.parse(it, handler)
+                    saxParser.parse(it, handler)
 
-                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+                    furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+                }
+
+                // Save cache
+                furniXMLInfosCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(furniXMLInfos))
             }
         }
 
-        furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
-        oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
-        newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
-        teleportLinks += ItemDao.getTeleportLinks()
+        if (furnishingsCachePath.exists()) {
+            furnishings.putAll(HabboServer.fstConfiguration.asObject(furnishingsCachePath.readBytes()) as MutableMap<String, Furnishing>)
+        } else {
+            furnishings.putAll(ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName })
 
-        teleportLinks.keys.forEach { roomTeleportLinks[it] = ItemDao.getLinkedTeleport(it) }
+            furnishingsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(furnishings))
+        }
+
+        if (oldGiftWrapperCachePath.exists()) {
+            oldGiftWrapper.addAll(HabboServer.fstConfiguration.asObject(oldGiftWrapperCachePath.readBytes()) as MutableList<Furnishing>)
+        } else {
+            oldGiftWrapper.addAll(furnishings.filterKeys { it.startsWith("present_gen") }.values)
+
+            oldGiftWrapperCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(oldGiftWrapper))
+        }
+
+        if (newGiftWrapperCachePath.exists()) {
+            newGiftWrapper.addAll(HabboServer.fstConfiguration.asObject(newGiftWrapperCachePath.readBytes()) as MutableList<Furnishing>)
+        } else {
+            newGiftWrapper.addAll(furnishings.filterKeys { it.startsWith("present_wrap*") }.values)
+
+            newGiftWrapperCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(newGiftWrapper))
+        }
+
+        if (teleportLinksCachePath.exists()) {
+            teleportLinks.putAll(HabboServer.fstConfiguration.asObject(teleportLinksCachePath.readBytes()) as MutableMap<Int, Int>)
+        } else {
+            teleportLinks.putAll(ItemDao.getTeleportLinks().toMap())
+
+            teleportLinksCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(teleportLinks))
+        }
+
+        if (roomTeleportLinksCachePath.exists()) {
+            roomTeleportLinks.putAll(HabboServer.fstConfiguration.asObject(roomTeleportLinksCachePath.readBytes()) as MutableMap<Int, Int>)
+        } else {
+            teleportLinks.keys.forEach { roomTeleportLinks[it] = ItemDao.getLinkedTeleport(it) }
+
+            roomTeleportLinksCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(roomTeleportLinks))
+        }
 
         furniInteractor[InteractionType.DEFAULT] = DefaultItemInteractor()
         furniInteractor[InteractionType.MANNEQUIN] = MannequinFurniInteractor()
@@ -140,6 +189,7 @@ class ItemManager {
 
             furnishings.clear()
             furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
+            furnishingsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(furnishings))
         }
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)

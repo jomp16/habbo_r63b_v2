@@ -19,19 +19,32 @@
 
 package ovh.rwx.habbo.game.user.inventory
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.user.HabboSession
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
+@Suppress("UNCHECKED_CAST")
 class HabboInventory(private val habboSession: HabboSession) {
     val items: MutableMap<Int, UserItem> = ConcurrentHashMap()
     private var initialized: Boolean = false
+    private val inventoryCachePath: File = File(HabboServer.cachePath, "inventory/${habboSession.userInformation.username}").apply {
+        if (!exists()) mkdirs()
+    }
+    private val itemsCachePath: File = File(inventoryCachePath, "items.bin")
 
     fun load() {
         if (!initialized) {
-            items.putAll(ItemDao.getUserItems(habboSession.userInformation.id))
+            if (itemsCachePath.exists()) {
+                items.putAll(HabboServer.fstConfiguration.asObject(itemsCachePath.readBytes()) as MutableMap<Int, UserItem>)
+            } else {
+                items.putAll(ItemDao.getUserItems(habboSession.userInformation.id))
+
+                itemsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(items))
+            }
 
             initialized = true
         }
@@ -54,5 +67,9 @@ class HabboInventory(private val habboSession: HabboSession) {
         }
 
         if (delete) ItemDao.deleteItems(itemIds)
+    }
+
+    fun saveCache() {
+        itemsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(items))
     }
 }
