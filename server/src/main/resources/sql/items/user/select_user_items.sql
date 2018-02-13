@@ -6,6 +6,6 @@ SELECT
 FROM
   `items`
 WHERE
-  `room_id` = 0
+  `room_id` IS NULL
   AND
   `user_id` = :user_id
