@@ -37,9 +37,9 @@ class GroupRequestJoinHandler {
         val groupId = habboRequest.readInt()
         val group = HabboServer.habboGame.groupManager.groups[groupId] ?: return
 
-        if (habboSession.groups.size >= 3 && !habboSession.habboSubscription.validUserSubscription) {
-            // Seems Habbo only allows a user to join to 3 groups max
-            habboSession.sendHabboResponse(Outgoing.GROUP_JOIN_ERROR, GroupJoinErrorResponse.GroupJoinError.NOT_HC_LIMIT)
+        if (habboSession.groups.size >= 50 && !habboSession.habboSubscription.validUserSubscription) {
+            // Seems Habbo only allows a user to join to 50 groups max non HC
+            habboSession.sendHabboResponse(Outgoing.GROUP_JOIN_ERROR, GroupJoinErrorResponse.GroupJoinError.NOT_HC_LIMIT_PURCHASE)
 
             return
         }
