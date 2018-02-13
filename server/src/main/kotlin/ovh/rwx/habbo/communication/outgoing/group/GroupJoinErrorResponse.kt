@@ -37,6 +37,7 @@ class GroupJoinErrorResponse {
         MAX_GROUPS_LIMIT(1),
         CLOSED_GROUP(2),
         NOT_ACCEPTING_REQUEST(3),
+        NOT_HC_LIMIT_PURCHASE(4),
         NOT_HC_LIMIT(5),
         MAX_GROUPS_LIMIT_1(6),
     }

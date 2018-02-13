@@ -26,8 +26,9 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupMembershipManagementErrorResponse {
     @Response(Outgoing.GROUP_MEMBER_MANAGEMENT_ERROR)
-    fun handle(habboResponse: HabboResponse, groupMembershipManagementError: GroupMembershipManagementError) {
+    fun handle(habboResponse: HabboResponse, groupId: Int, groupMembershipManagementError: GroupMembershipManagementError) {
         habboResponse.apply {
+            writeInt(groupId)
             writeInt(groupMembershipManagementError.errorCode)
         }
     }
