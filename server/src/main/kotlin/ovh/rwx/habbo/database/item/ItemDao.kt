@@ -163,7 +163,7 @@ object ItemDao {
                 mapOf(
                         "teleport_id" to teleportId
                 )
-        ) { it.int("room_id") }.first()
+        ) { it.intOrNull("room_id") ?: 0 }.first()
     }
 
     fun deleteItems(itemIds: List<Int>) {
