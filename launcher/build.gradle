@@ -30,7 +30,7 @@ dependencies {
     //noinspection GrUnresolvedAccess
     compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
 
-    compile 'com.sun.mail:javax.mail:1.6.0'
+    compile 'com.sun.mail:javax.mail:1.6.1'
 }
 
 jar {
