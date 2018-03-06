@@ -20,7 +20,7 @@
 import groovy.json.JsonOutput
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.2.21" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.2.30" apply false
     id "com.github.ben-manes.versions" version "0.17.0" apply false
     id "de.fuerstenau.buildconfig" version "1.1.8" apply false
     id "org.zeroturnaround.gradle.jrebel" version "1.1.8" apply false
@@ -35,13 +35,13 @@ subprojects {
 
     ext {
         junit_version = "4.12"
-        jackson_version = "2.9.4"
-        netty_version = "4.1.21.Final"
+        jackson_version = "2.9.4.1"
+        netty_version = "4.1.22.Final"
         log4j2_version = "2.10.0"
         slf4j_version = "1.7.25"
         kwery_version = "0.17"
         mysql_version = "6.0.6"
-        hikari_version = "2.7.7"
+        hikari_version = "2.7.8"
         reflections_version = "0.9.11"
         jasypt_version = "1.9.2"
         commons_lang_version = "3.7"
