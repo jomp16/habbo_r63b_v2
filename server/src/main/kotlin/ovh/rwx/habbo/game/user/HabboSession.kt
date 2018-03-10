@@ -176,7 +176,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
         }
 
-        UserInformationDao.updateAuthTicket(userInformation, "")
+        UserInformationDao.updateAuthTicket(userInformation, null)
         UserInformationDao.saveInformation(userInformation, true, ip)
         UserStatsDao.saveStats(userStats)
 
