@@ -110,7 +110,7 @@ object UserInformationDao {
         }
     }
 
-    fun updateAuthTicket(userInformation: UserInformation, authTicket: String = "") {
+    fun updateAuthTicket(userInformation: UserInformation, authTicket: String? = null) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql").readText(),
                     mapOf(

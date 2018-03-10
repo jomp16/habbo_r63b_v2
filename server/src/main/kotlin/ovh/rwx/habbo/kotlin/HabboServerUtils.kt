@@ -25,7 +25,7 @@ fun HabboServer.cleanUpUsers() {
     database {
         update("UPDATE `users` SET `auth_ticket` = :ticket, `online` = :online",
                 mapOf(
-                        "ticket" to "",
+                        "ticket" to null,
                         "online" to false
                 )
         )
