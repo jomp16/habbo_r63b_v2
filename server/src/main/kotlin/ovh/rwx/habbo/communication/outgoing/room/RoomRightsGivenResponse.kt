@@ -17,16 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.group
+package ovh.rwx.habbo.communication.outgoing.room
 
-enum class GroupMembershipState(val state: Int) {
-    OPEN(0),
-    ADMIN_APPROVAL(1),
-    CLOSED(2);
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 
-    companion object {
-        fun valueOf(state: Int): GroupMembershipState {
-            return values().singleOrNull { it.state == state } ?: OPEN
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomRightsGivenResponse {
+    @Response(Outgoing.ROOM_RIGHTS_GIVEN)
+    fun response(habboResponse: HabboResponse, roomId: Int, userId:Int, username: String) {
+        habboResponse.apply {
+            writeInt(roomId)
+            writeInt(userId)
+            writeUTF(username)
         }
     }
 }

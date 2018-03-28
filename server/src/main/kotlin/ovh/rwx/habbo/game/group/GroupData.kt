@@ -31,10 +31,10 @@ data class GroupData(
         var badge: String,
         val ownerId: Int,
         val roomId: Int,
-        val membershipState: GroupMembershipState,
-        val symbolColor: Int,
-        val backgroundColor: Int,
-        val onlyAdminCanDecorateRoom: Boolean,
+        var membershipState: GroupMembershipState,
+        var symbolColor: Int,
+        var backgroundColor: Int,
+        var onlyAdminCanDecorateRoom: Boolean,
         val createdAt: LocalDateTime
 ) {
     val ownerName: String by lazy { UserInformationDao.getUserInformationById(ownerId)?.username ?: "null" }

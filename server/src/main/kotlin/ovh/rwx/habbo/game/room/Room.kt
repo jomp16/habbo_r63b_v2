@@ -112,8 +112,16 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false): Boolean {
         if (habboSession == null) return false
         val isOwner = roomData.ownerId == habboSession.userInformation.id && habboSession.hasPermission("acc_any_room_owner")
-        // todo: add groups
-        return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id }
+
+        if (group != null) {
+            group?.let { group ->
+                return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id } ||
+                        if (group.groupData.onlyAdminCanDecorateRoom) group.admins.singleOrNull { it.userId == habboSession.userInformation.id } != null || !habboSession.hasPermission("acc_any_group_admin")
+                        else group.members.singleOrNull { it.userId == habboSession.userInformation.id } != null
+            }
+        }
+
+        return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id }// || group != null && if (group!!.groupData.onlyAdminCanDecorateRoom) group!!.admins.(habboSession.getHabboUserInformation().getId()) else group.getMembers().containsKey(habboSession.getHabboUserInformation().getId());
     }
 
     fun addUser(habboSession: HabboSession) {
@@ -391,7 +399,25 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         group?.let { group ->
             roomUsers.values.filter { it.habboSession != null }.forEach {
                 it.habboSession?.let {
-                    it.sendHabboResponse(Outgoing.GROUP_INFO, it.userInformation.id, it.userStats.favoriteGroupId == group.groupData.id, false)
+                    it.sendHabboResponse(Outgoing.GROUP_INFO, it.userInformation.id, it.userStats.favoriteGroupId == group.groupData.id, group, false)
+                }
+            }
+        }
+    }
+
+    fun updateGroupRights() {
+        group?.let { group ->
+            roomUsers.values.filter { it.habboSession != null }.filter { it.habboSession?.userInformation?.id != group.groupData.ownerId }.forEach { roomUser ->
+                roomUser.habboSession?.let { habboSession ->
+                    if (hasRights(habboSession, false)) {
+                        roomUser.addStatus("flatctrl", "1")
+
+                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                    } else if (roomUser.statusMap.containsKey("flatctrl")) {
+                        roomUser.removeStatus("flatctrl")
+
+                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                    }
                 }
             }
         }
