@@ -242,4 +242,29 @@ object RoomDao {
             }
         }
     }
+
+    fun addRight(userId: Int, roomId: Int): RightData {
+        val id = HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/rights/insert_right.sql").readText(),
+                    mapOf(
+                            "user_id" to userId,
+                            "room_id" to roomId
+                    )
+            )
+        }
+
+        return RightData(id, userId)
+    }
+
+    fun removeRights(ids: List<Int>) {
+        HabboServer.database {
+            batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql").readText(),
+                    ids.map {
+                        mapOf(
+                                "id" to it
+                        )
+                    }
+            )
+        }
+    }
 }
