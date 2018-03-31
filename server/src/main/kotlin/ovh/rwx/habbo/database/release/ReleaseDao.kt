@@ -33,7 +33,7 @@ object ReleaseDao {
             ReleaseHeaderInfo(
                     it.string("release_name"),
                     it.string("name"),
-                    it.int("header"),
+                    it.intOrNull("header") ?: 0,
                     it.stringOrNull("override_method")
             )
         }
@@ -44,7 +44,7 @@ object ReleaseDao {
             ReleaseHeaderInfo(
                     it.string("release_name"),
                     it.string("name"),
-                    it.int("header"),
+                    it.intOrNull("header") ?: 0,
                     it.stringOrNull("override_method")
             )
         }
