@@ -10,7 +10,6 @@ INSERT INTO
     `country`,
     `region_code`,
     `region`,
-    `timezone`,
     `latitude`,
     `longitude`
   )
@@ -25,7 +24,6 @@ VALUES (
   :country,
   :region_code,
   :region,
-  :timezone,
   :latitude,
   :longitude
 )
