@@ -19,11 +19,19 @@
 
 package ovh.rwx.habbo.util
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IpInfo(
         @JsonProperty("ip")
         val ip: String = "",
+        @JsonProperty("type")
+        val type: String = "",
+        @JsonProperty("continent_code")
+        val continentCode: String = "",
+        @JsonProperty("continent_name")
+        val continentName: String = "",
         @JsonProperty("country_code")
         val countryCode: String = "",
         @JsonProperty("country_name")
@@ -34,14 +42,8 @@ data class IpInfo(
         val regionName: String = "",
         @JsonProperty("city")
         val city: String = "",
-        @JsonProperty("zip_code")
-        val zipCode: String = "",
-        @JsonProperty("time_zone")
-        val timeZone: String = "",
         @JsonProperty("latitude")
         val latitude: Double = 0.toDouble(),
         @JsonProperty("longitude")
-        val longitude: Double = 0.toDouble(),
-        @JsonProperty("metro_code")
-        val metroCode: Int = 0
+        val longitude: Double = 0.toDouble()
 )

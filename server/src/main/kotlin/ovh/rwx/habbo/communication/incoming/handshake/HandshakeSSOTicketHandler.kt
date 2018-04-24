@@ -34,6 +34,8 @@ import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.ip
 import ovh.rwx.habbo.util.IpInfo
 import ovh.rwx.habbo.util.Utils
+import java.net.Inet4Address
+import java.net.Inet6Address
 import java.net.InetSocketAddress
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -94,10 +96,16 @@ class HandshakeSSOTicketHandler {
             UserUniqueIdDao.addUniqueIdForUser(habboSession.userInformation.id, habboSession.uniqueID, habboSession.osInformation)
         }
 
-        if (HabboServer.habboConfig.analyticsConfig.ip && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
+        if (HabboServer.habboConfig.analyticsConfig.ipConfig.enabled && !UserIPDao.containsIPForUser(habboSession.userInformation.id, habboSession.channel.ip())) {
             // save IP to database
             val isInternalIP = (habboSession.channel.remoteAddress() as InetSocketAddress).address.let { it.isLoopbackAddress || it.isSiteLocalAddress }
-            UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo(ip = habboSession.channel.ip()))
+            UserIPDao.addIPForUser(habboSession.userInformation.id, isInternalIP, if (!isInternalIP) Utils.getIpInfo(habboSession.channel.ip()) else IpInfo(ip = habboSession.channel.ip(),
+                    type = when ((habboSession.channel.remoteAddress() as InetSocketAddress).address) {
+                        is Inet4Address -> "ipv4"
+                        is Inet6Address -> "ipv6"
+                        else -> "unknown"
+                    })
+            )
         }
     }
 }

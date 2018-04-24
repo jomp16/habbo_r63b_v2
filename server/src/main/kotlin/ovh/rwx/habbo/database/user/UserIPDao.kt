@@ -42,12 +42,14 @@ object UserIPDao {
                     mapOf(
                             "user_id" to userId,
                             "ip" to ipInfo.ip,
+                            "ip_type" to ipInfo.type,
                             "internal" to isInternalIP,
+                            "continent_code" to ipInfo.continentCode,
+                            "continent" to ipInfo.continentName,
                             "country_code" to ipInfo.countryCode,
                             "country" to ipInfo.countryName,
                             "region_code" to ipInfo.regionCode,
                             "region" to ipInfo.regionName,
-                            "timezone" to ipInfo.timeZone,
                             "latitude" to ipInfo.latitude,
                             "longitude" to ipInfo.longitude
                     )
