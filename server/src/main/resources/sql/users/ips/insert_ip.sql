@@ -2,7 +2,10 @@ INSERT INTO
   `users_ips` (
     `user_id`,
     `ip`,
+    `ip_type`,
     `internal`,
+    `continent_code`,
+    `continent`,
     `country_code`,
     `country`,
     `region_code`,
@@ -14,7 +17,10 @@ INSERT INTO
 VALUES (
   :user_id,
   :ip,
+  :ip_type,
   :internal,
+  :continent_code,
+  :continent,
   :country_code,
   :country,
   :region_code,
