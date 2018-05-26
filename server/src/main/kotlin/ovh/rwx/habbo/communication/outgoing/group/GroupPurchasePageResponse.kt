@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.Room
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupPurchasePageResponse {
     @Response(Outgoing.GROUP_PURCHASE_PAGE)
-    fun handle(habboResponse: HabboResponse, rooms: List<Room>) {
+    fun response(habboResponse: HabboResponse, rooms: List<Room>) {
         habboResponse.apply {
             writeInt(10)
             writeInt(rooms.size)

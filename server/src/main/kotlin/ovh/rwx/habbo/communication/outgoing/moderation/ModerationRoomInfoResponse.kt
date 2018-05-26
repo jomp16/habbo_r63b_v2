@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.Room
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationRoomInfoResponse {
     @Response(Outgoing.MODERATION_ROOM_INFO)
-    fun handle(habboResponse: HabboResponse, room: Room) {
+    fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeInt(room.roomData.id)
             writeInt(room.roomUsers.size)

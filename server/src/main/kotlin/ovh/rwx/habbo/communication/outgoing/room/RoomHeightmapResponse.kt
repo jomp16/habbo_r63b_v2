@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.Room
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomHeightmapResponse {
     @Response(Outgoing.ROOM_HEIGHTMAP)
-    fun handle(habboResponse: HabboResponse, room: Room) {
+    fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeInt(room.roomModel.mapSizeX)
             writeInt(room.roomModel.mapSizeX * room.roomModel.mapSizeY)

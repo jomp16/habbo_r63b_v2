@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserInfoFeedEnableResponse {
     @Response(Outgoing.ENABLE_TRADING)
-    fun handle(habboResponse: HabboResponse, enabled: Boolean) {
+    fun response(habboResponse: HabboResponse, enabled: Boolean) {
         habboResponse.apply {
             writeBoolean(enabled)
         }

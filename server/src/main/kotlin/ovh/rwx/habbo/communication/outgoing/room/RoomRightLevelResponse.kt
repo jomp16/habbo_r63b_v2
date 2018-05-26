@@ -31,4 +31,12 @@ class RoomRightLevelResponse {
             writeInt(rightLevel)
         }
     }
+
+    @Response(Outgoing.ROOM_RIGHT_LEVEL)
+    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, rightLevel: Int) {
+        habboResponse.apply {
+            writeInt(roomId)
+            writeInt(rightLevel)
+        }
+    }
 }

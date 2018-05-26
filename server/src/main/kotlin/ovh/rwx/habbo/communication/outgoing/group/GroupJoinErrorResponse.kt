@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupJoinErrorResponse {
     @Response(Outgoing.GROUP_JOIN_ERROR)
-    fun handle(habboResponse: HabboResponse, groupJoinError: GroupJoinError) {
+    fun response(habboResponse: HabboResponse, groupJoinError: GroupJoinError) {
         habboResponse.apply {
             writeInt(groupJoinError.errorCode)
         }

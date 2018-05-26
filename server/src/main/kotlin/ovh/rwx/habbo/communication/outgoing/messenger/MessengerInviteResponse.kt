@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInviteResponse {
     @Response(Outgoing.MESSENGER_INVITE)
-    fun handle(habboResponse: HabboResponse, userId: Int, message: String) {
+    fun response(habboResponse: HabboResponse, userId: Int, message: String) {
         habboResponse.apply {
             writeInt(userId)
             writeUTF(message)

@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationUserInfoResponse {
     @Response(Outgoing.MODERATION_USER_INFO)
-    fun handle(habboResponse: HabboResponse, userInformation: UserInformation, userStats: UserStats) {
+    fun response(habboResponse: HabboResponse, userInformation: UserInformation, userStats: UserStats) {
         habboResponse.apply {
             writeInt(userInformation.id)
             writeUTF(userInformation.username)

@@ -111,7 +111,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false): Boolean {
         if (habboSession == null) return false
-        val isOwner = roomData.ownerId == habboSession.userInformation.id && habboSession.hasPermission("acc_any_room_owner")
+        val isOwner = roomData.ownerId == habboSession.userInformation.id || habboSession.hasPermission("acc_any_room_owner")
 
         if (group != null) {
             group?.let { group ->
@@ -409,14 +409,19 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         group?.let { group ->
             roomUsers.values.filter { it.habboSession != null }.filter { it.habboSession?.userInformation?.id != group.groupData.ownerId }.forEach { roomUser ->
                 roomUser.habboSession?.let { habboSession ->
+                    val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == habboSession.release) }?.overrideMethod
+                            ?: "response"
+
                     if (hasRights(habboSession, false)) {
                         roomUser.addStatus("flatctrl", "1")
 
-                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                        if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                        else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 1)
                     } else if (roomUser.statusMap.containsKey("flatctrl")) {
                         roomUser.removeStatus("flatctrl")
 
-                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                        if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                        else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 0)
                     }
                 }
             }

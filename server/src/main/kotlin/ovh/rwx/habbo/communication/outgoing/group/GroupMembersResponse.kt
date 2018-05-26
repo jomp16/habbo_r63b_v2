@@ -31,7 +31,7 @@ class GroupMembersResponse {
     private val membersPerPage = 14
 
     @Response(Outgoing.GROUP_MEMBERS)
-    fun handle(habboResponse: HabboResponse, group: Group, members: Collection<GroupMembersHandler.GroupMemberInfo>, isOwner: Boolean, page: Int, searchValue: String, requestType: Int) {
+    fun response(habboResponse: HabboResponse, group: Group, members: Collection<GroupMembersHandler.GroupMemberInfo>, isOwner: Boolean, page: Int, searchValue: String, requestType: Int) {
         val chunkedMembers = members.chunked(membersPerPage)
 
         habboResponse.apply {

@@ -232,6 +232,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
+        if (!bypassAuth && room == currentRoom) return
+        val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == release) }?.overrideMethod
+                ?: "response"
+
         currentRoom?.removeUser(roomUser, false, false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
@@ -254,7 +258,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 val roomUsersWithRights = room.roomUsersWithRights
 
                 if (roomUsersWithRights.isEmpty()) {
-                    sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+                    if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+                    else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, room.roomData.id, "")
+
                     sendHabboResponse(Outgoing.ROOM_EXIT)
                 } else {
                     currentRoom = room
@@ -280,7 +286,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
         }
 
-        sendHabboResponse(Outgoing.ROOM_OPEN)
+        if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
+        else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
+
         sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
         sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 

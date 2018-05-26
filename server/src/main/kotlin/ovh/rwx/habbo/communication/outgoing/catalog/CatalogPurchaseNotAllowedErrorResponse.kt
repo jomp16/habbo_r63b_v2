@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseNotAllowedErrorResponse {
     @Response(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR)
-    fun handle(habboResponse: HabboResponse, catalogPurchaseNotAllowedError: CatalogPurchaseNotAllowedError) {
+    fun response(habboResponse: HabboResponse, catalogPurchaseNotAllowedError: CatalogPurchaseNotAllowedError) {
         habboResponse.apply {
             writeInt(catalogPurchaseNotAllowedError.errorCode)
         }

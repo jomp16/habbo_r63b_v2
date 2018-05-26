@@ -30,6 +30,15 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomDoorbellHandler {
     @Handler(Incoming.ROOM_DOORBELL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    @Handler(Incoming.ROOM_DOORBELL)
+    fun handleWithRoomId(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null) return
         val username = habboRequest.readUTF()
         val accept = habboRequest.readBoolean()
@@ -38,18 +47,35 @@ class RoomDoorbellHandler {
         if (requestHabboSession == null || requestHabboSession.currentRoom != habboSession.currentRoom) return
 
         if (accept) {
-            requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, "")
+            if (habboRequest.methodName == "handle") {
+                requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, "")
+            } else if (habboRequest.methodName == "handleWithRoomId") {
+                requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.currentRoom!!.roomData.id, "")
+                requestHabboSession.enterRoom(habboSession.currentRoom!!, "", true)
+            }
 
             habboSession.currentRoom?.roomUsersWithRights?.forEach {
-                it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.userInformation.username)
+                if (habboRequest.methodName == "handle") {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.userInformation.username)
+                } else if (habboRequest.methodName == "handleWithRoomId") {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, habboSession.currentRoom!!.roomData.id, habboSession.userInformation.username)
+                }
             }
         } else {
             requestHabboSession.currentRoom = null
 
-            requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+            if (habboRequest.methodName == "handle") {
+                requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+            } else if (habboRequest.methodName == "handleWithRoomId") {
+                requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.currentRoom!!.roomData.id, "")
+            }
 
             habboSession.currentRoom?.roomUsersWithRights?.forEach {
-                it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.userInformation.username)
+                if (habboRequest.methodName == "handle") {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.userInformation.username)
+                } else if (habboRequest.methodName == "handleWithRoomId") {
+                    it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, habboSession.currentRoom!!.roomData.id, habboSession.userInformation.username)
+                }
             }
         }
     }

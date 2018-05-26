@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.group.Group
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupBadgesResponse {
     @Response(Outgoing.GROUP_BADGES)
-    fun handle(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
+    fun response(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
         habboResponse.apply {
             writeInt(loadedGroups.size) // size
 

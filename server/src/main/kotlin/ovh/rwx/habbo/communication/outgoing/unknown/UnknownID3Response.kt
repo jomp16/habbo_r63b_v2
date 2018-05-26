@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UnknownID3Response {
     @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID3)
-    fun handle(habboResponse: HabboResponse, string1: String, string2: String) {
+    fun response(habboResponse: HabboResponse, string1: String, string2: String) {
         habboResponse.apply {
             writeUTF(string1)
             writeUTF(string2)

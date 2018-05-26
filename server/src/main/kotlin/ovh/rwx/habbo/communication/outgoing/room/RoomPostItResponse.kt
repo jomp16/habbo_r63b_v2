@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomPostItResponse {
     @Response(Outgoing.ROOM_POST_IT)
-    fun handle(habboResponse: HabboResponse, itemId: Int, extraData: String) {
+    fun response(habboResponse: HabboResponse, itemId: Int, extraData: String) {
         habboResponse.apply {
             writeUTF(itemId.toString())
             writeUTF(extraData)

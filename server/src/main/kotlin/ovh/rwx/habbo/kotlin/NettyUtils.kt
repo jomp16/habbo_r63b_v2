@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.kotlin
 
 import io.netty.channel.Channel
+import io.netty.util.NetUtil
 import java.net.InetSocketAddress
 
-fun Channel.ip(): String = (remoteAddress() as InetSocketAddress).address.hostAddress.replace("%0", "")
+fun Channel.ip(): String = NetUtil.toAddressString((remoteAddress() as InetSocketAddress).address)

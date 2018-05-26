@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.RightData
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRightsResponse {
     @Response(Outgoing.ROOM_RIGHTS)
-    fun handle(habboResponse: HabboResponse, roomId: Int, rights: Collection<RightData>) {
+    fun response(habboResponse: HabboResponse, roomId: Int, rights: Collection<RightData>) {
         habboResponse.apply {
             writeInt(roomId)
             writeInt(rights.size)

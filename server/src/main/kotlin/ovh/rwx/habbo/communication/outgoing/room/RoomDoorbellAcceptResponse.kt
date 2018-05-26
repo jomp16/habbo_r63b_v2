@@ -31,4 +31,12 @@ class RoomDoorbellAcceptResponse {
             writeUTF(username)
         }
     }
+
+    @Response(Outgoing.ROOM_DOORBELL_ACCEPT)
+    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, username: String) {
+        habboResponse.apply {
+            writeInt(roomId)
+            writeUTF(username)
+        }
+    }
 }

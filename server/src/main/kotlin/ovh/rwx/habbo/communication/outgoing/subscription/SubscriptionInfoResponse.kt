@@ -30,7 +30,7 @@ import java.time.LocalDateTime
 @Suppress("unused", "UNUSED_PARAMETER")
 class SubscriptionInfoResponse {
     @Response(Outgoing.HABBO_CLUB_INFO)
-    fun handle(habboResponse: HabboResponse, subscription: Subscription?) {
+    fun response(habboResponse: HabboResponse, subscription: Subscription?) {
         habboResponse.apply {
             if (subscription != null) {
                 // todo: stub

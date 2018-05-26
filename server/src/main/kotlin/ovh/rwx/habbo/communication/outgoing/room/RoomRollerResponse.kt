@@ -27,7 +27,7 @@ import ovh.rwx.habbo.util.Vector3
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRollerResponse {
     @Response(Outgoing.ROOM_ROLLER)
-    fun handle(habboResponse: HabboResponse, source: Vector3, target: Vector3, virtualId: Int, rollerId: Int, itemId: Int) {
+    fun response(habboResponse: HabboResponse, source: Vector3, target: Vector3, virtualId: Int, rollerId: Int, itemId: Int) {
         habboResponse.apply {
             writeInt(source.x)
             writeInt(source.y)

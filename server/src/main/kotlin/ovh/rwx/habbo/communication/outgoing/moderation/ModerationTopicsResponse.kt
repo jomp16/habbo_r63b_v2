@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.moderation.ModerationTopic
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationTopicsResponse {
     @Response(Outgoing.MODERATION_TOPICS_INIT)
-    fun handle(habboResponse: HabboResponse, moderationCategories: Map<Int, String>, moderationTopics: Collection<ModerationTopic>) {
+    fun response(habboResponse: HabboResponse, moderationCategories: Map<Int, String>, moderationTopics: Collection<ModerationTopic>) {
         habboResponse.apply {
             writeInt(moderationCategories.size)
             moderationCategories.forEach { category ->

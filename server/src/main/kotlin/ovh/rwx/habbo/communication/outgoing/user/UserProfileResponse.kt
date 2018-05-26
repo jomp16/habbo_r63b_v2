@@ -31,7 +31,7 @@ import java.time.ZoneId
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserProfileResponse {
     @Response(Outgoing.USER_PROFILE)
-    fun handle(habboResponse: HabboResponse, userInformation: UserInformation, userStats: UserStats, showProfile: Boolean, friends: Int, isFriend: Boolean, isRequest: Boolean, isOnline: Boolean) {
+    fun response(habboResponse: HabboResponse, userInformation: UserInformation, userStats: UserStats, showProfile: Boolean, friends: Int, isFriend: Boolean, isRequest: Boolean, isOnline: Boolean) {
         habboResponse.apply {
             writeInt(userInformation.id)
             writeUTF(userInformation.username)

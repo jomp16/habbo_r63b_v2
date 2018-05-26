@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UnknownID2Response {
     @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID2)
-    fun handle(habboResponse: HabboResponse, enabled: Boolean) {
+    fun response(habboResponse: HabboResponse, enabled: Boolean) {
         habboResponse.apply {
             writeBoolean(enabled)
         }

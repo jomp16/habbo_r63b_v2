@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.landing.LandingReward
 @Suppress("unused", "UNUSED_PARAMETER")
 class LandingRewardResponse {
     @Response(Outgoing.LANDING_REWARD)
-    fun handle(habboResponse: HabboResponse, landingReward: LandingReward, respects: Int) {
+    fun response(habboResponse: HabboResponse, landingReward: LandingReward, respects: Int) {
         habboResponse.apply {
             var remaining = landingReward.totalAmount - respects
             if (remaining < 0) remaining = 0

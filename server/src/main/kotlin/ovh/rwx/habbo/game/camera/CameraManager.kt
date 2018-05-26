@@ -49,7 +49,7 @@ class CameraManager {
     private val jacksonJson = jacksonObjectMapper()
 
     fun load() {
-        log.info("Starting CameraManager...")
+        log.info("Loading camera...")
 
         if (Files.notExists(cameraDirectory)) Files.createDirectory(cameraDirectory)
         if (Files.notExists(cameraPreviewDirectory)) Files.createDirectory(cameraPreviewDirectory)

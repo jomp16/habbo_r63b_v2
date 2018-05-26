@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.user.information.UserInformation
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserRelationshipsResponse {
     @Response(Outgoing.USER_RELATIONSHIPS)
-    fun handle(habboResponse: HabboResponse, userId: Int, relationships: Collection<UserInformation>, loves: Int, likes: Int, hates: Int) {
+    fun response(habboResponse: HabboResponse, userId: Int, relationships: Collection<UserInformation>, loves: Int, likes: Int, hates: Int) {
         // todo: relationships
         habboResponse.apply {
             writeInt(userId)

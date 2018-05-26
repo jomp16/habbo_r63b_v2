@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.group.Group
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupManageResponse {
     @Response(Outgoing.GROUP_MANAGE)
-    fun handle(habboResponse: HabboResponse, group: Group) {
+    fun response(habboResponse: HabboResponse, group: Group) {
         habboResponse.apply {
             writeInt(0)
             writeBoolean(true)
