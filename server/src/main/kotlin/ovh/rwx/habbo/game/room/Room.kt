@@ -412,16 +412,26 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
                     val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == habboSession.release) }?.overrideMethod
                             ?: "response"
 
-                    if (hasRights(habboSession, false)) {
-                        roomUser.addStatus("flatctrl", "1")
+                    when {
+                        hasRights(habboSession, false) -> {
+                            roomUser.addStatus("flatctrl", "1")
 
-                        if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
-                        else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 1)
-                    } else if (roomUser.statusMap.containsKey("flatctrl")) {
-                        roomUser.removeStatus("flatctrl")
+                            when (methodName) {
+                                "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                                "responseWithRoomId" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 1)
+                                else -> log.error("Couldn't send response!")
+                            }
+                        }
+                        roomUser.statusMap.containsKey("flatctrl") -> {
+                            roomUser.removeStatus("flatctrl")
 
-                        if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
-                        else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 0)
+                            when (methodName) {
+                                "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                                "responseWithRoomId" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 0)
+                                else -> log.error("Couldn't send response!")
+                            }
+                        }
+                        else -> log.error("Couldn't send response!")
                     }
                 }
             }

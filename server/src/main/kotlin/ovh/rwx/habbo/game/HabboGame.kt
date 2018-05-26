@@ -19,8 +19,10 @@
 
 package ovh.rwx.habbo.game
 
+import kotlinx.coroutines.experimental.async
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.achievement.AchievementManager
 import ovh.rwx.habbo.game.camera.CameraManager
@@ -33,10 +35,11 @@ import ovh.rwx.habbo.game.navigator.NavigatorManager
 import ovh.rwx.habbo.game.permission.PermissionManager
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
-import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
     val landingManager: LandingManager = LandingManager()
     val roomManager: RoomManager = RoomManager()
@@ -50,31 +53,31 @@ class HabboGame {
     val achievementManager: AchievementManager = AchievementManager()
 
     init {
-        landingManager.load()
-        roomManager.load()
-        itemManager.load()
-        catalogManager.load()
-        navigatorManager.load()
-        permissionManager.load()
-        moderationManager.load()
-        groupManager.load()
-        cameraManager.load()
-        achievementManager.load()
+        async { landingManager.load() }
+        async { roomManager.load() }
+        async { itemManager.load() }
+        async { catalogManager.load() }
+        async { navigatorManager.load() }
+        async { permissionManager.load() }
+        async { moderationManager.load() }
+        async { groupManager.load() }
+        async { cameraManager.load() }
+        async { achievementManager.load() }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { async { it.habboSubscription.clearSubscription() } }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach(HabboSession::rewardUser)
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { async { it.rewardUser() } }
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { it.saveAllQueuedStuffs() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { async { it.saveAllQueuedStuffs() } }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

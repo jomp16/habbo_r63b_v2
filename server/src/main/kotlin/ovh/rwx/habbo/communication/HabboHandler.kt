@@ -134,41 +134,39 @@ class HabboHandler {
     }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.incomingExecutor.execute {
-            habboRequest.use {
-                val incomingEnum: Incoming? =
-                        if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
-                        else incomingNames[habboSession.release]?.find { it.first == habboRequest.headerId }?.second
+        habboRequest.use {
+            val incomingEnum: Incoming? =
+                    if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
+                    else incomingNames[habboSession.release]?.find { it.first == habboRequest.headerId }?.second
 
-                if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
-                    val methodName = incomingHeaders.find { it.header == habboRequest.headerId && (it.release == habboSession.release) }?.overrideMethod
-                            ?: "handle"
-                    val pair = messageHandlers[incomingEnum]!![methodName]
+            if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
+                val methodName = incomingHeaders.find { it.header == habboRequest.headerId && (it.release == habboSession.release) }?.overrideMethod
+                        ?: "handle"
+                val pair = messageHandlers[incomingEnum]!![methodName]
 
-                    if (pair == null) {
-                        log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
+                if (pair == null) {
+                    log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
 
-                        return@use
-                    }
-
-                    val (clazz, methodHandle) = pair
-
-                    try {
-                        habboRequest.incoming = incomingEnum
-                        habboRequest.methodName = methodName
-
-                        methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
-                    } catch (e: Exception) {
-                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
-
-                        if (e is ClassCastException || e is WrongMethodTypeException) {
-                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
-                            log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
-                        }
-                    }
-                } else {
-                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingEnum)
+                    return@use
                 }
+
+                val (clazz, methodHandle) = pair
+
+                try {
+                    habboRequest.incoming = incomingEnum
+                    habboRequest.methodName = methodName
+
+                    methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
+                } catch (e: Exception) {
+                    log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
+
+                    if (e is ClassCastException || e is WrongMethodTypeException) {
+                        log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                        log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
+                    }
+                }
+            } else {
+                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingEnum)
             }
         }
     }

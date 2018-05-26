@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
+import kotlinx.coroutines.experimental.async
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -46,16 +47,12 @@ import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
 import java.time.LocalDateTime
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val incomingExecutor: Executor = Executors.newSingleThreadExecutor()
-    private val outgoingExecutor: Executor = Executors.newSingleThreadExecutor()
     lateinit var release: String
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
@@ -94,14 +91,16 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var ping: Long = 0
     var gameSSOToken: String = ""
 
-    fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) = outgoingExecutor.execute {
-        HabboServer.habboHandler.invokeResponse(this, outgoing, *args)?.let {
+    fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
+        HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
             sendHabboResponse(it)
         }
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        habboResponse?.let { channel.writeAndFlush(it) }
+        async {
+            habboResponse?.let { channel.writeAndFlush(it) }
+        }
     }
 
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
@@ -163,11 +162,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        HabboServer.serverExecutor.execute {
-            habboMessenger = HabboMessenger(this)
-            habboSubscription = HabboSubscription(this)
-            habboBadge = HabboBadge(this)
-            habboInventory = HabboInventory(this)
+        async {
+            habboMessenger = HabboMessenger(this@HabboSession)
+            habboSubscription = HabboSubscription(this@HabboSession)
+            habboBadge = HabboBadge(this@HabboSession)
+            habboInventory = HabboInventory(this@HabboSession)
 
             habboSubscription.load()
             habboBadge.load()

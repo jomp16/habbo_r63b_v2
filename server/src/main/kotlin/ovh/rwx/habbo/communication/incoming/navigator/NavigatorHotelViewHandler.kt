@@ -22,14 +22,16 @@ package ovh.rwx.habbo.communication.incoming.navigator
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorHotelViewHandler {
     @Handler(Incoming.GO_TO_HOTEL_VIEW)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (!habboSession.authenticated) return
 
-        habboSession.currentRoom?.removeUser(habboSession.roomUser, true, false)
+        if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
+        else habboSession.currentRoom?.removeUser(habboSession.roomUser, true, false)
     }
 }
