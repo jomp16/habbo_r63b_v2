@@ -75,6 +75,7 @@ subprojects {
 
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
         compile "org.jetbrains.kotlin:kotlin-reflect"
+        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
@@ -106,7 +107,7 @@ subprojects {
         //noinspection GrUnresolvedAccess
         componentSelection { rules ->
             rules.all { ComponentSelection selection ->
-                boolean rejected = selection.candidate.group != 'org.jetbrains.kotlin' && ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr'].any { qualifier ->
+                boolean rejected = selection.candidate.group != 'org.jetbrains.kotlin' && ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr', 'dev'].any { qualifier ->
                     selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
                 }
 
@@ -122,5 +123,11 @@ subprojects {
 
         // Keep jar clean:
         exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF', 'rebel.xml'
+    }
+
+    kotlin {
+        experimental {
+            coroutines "enable"
+        }
     }
 }
