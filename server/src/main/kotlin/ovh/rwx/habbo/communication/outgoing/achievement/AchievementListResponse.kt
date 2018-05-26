@@ -19,38 +19,38 @@
 
 package ovh.rwx.habbo.communication.outgoing.achievement
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.achievement.Achievement
+import ovh.rwx.habbo.game.achievement.AchievementGroup
 import ovh.rwx.habbo.game.achievement.AchievementUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementListResponse {
     @Response(Outgoing.USER_ACHIEVEMENT)
-    fun response(habboResponse: HabboResponse, achievementUsers: List<AchievementUser>, achievements: List<Achievement>) {
+    fun response(habboResponse: HabboResponse, achievementUsers: List<AchievementUser>, achievementGroups: Map<String, AchievementGroup>, groupedAchievements: Map<AchievementGroup, List<Achievement>>) {
         habboResponse.apply {
-            writeInt(achievements.size)
+            writeInt(achievementGroups.size)
 
-            achievements.forEach { achievement ->
-                val userAchievement = achievementUsers.find { it.group == achievement.group }
+            achievementGroups.values.forEach { achievementGroup ->
+                val userAchievement = achievementUsers.find { it.group == achievementGroup }
 
                 var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-                val totalLevels = achievement.totalLevels
+                val totalLevels = achievementGroup.totalLevels
                 targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-                val targetAchievement = HabboServer.habboGame.achievementManager.groupedAchievements[achievement.group]!!.find { it.level == targetLevel }!!
+                val targetAchievement = groupedAchievements[achievementGroup]?.find { it.level == targetLevel }!!
 
-                writeInt(achievement.id)
+                writeInt(achievementGroup.id)
                 writeInt(targetLevel)
-                writeUTF(achievement.group.name + targetLevel)
+                writeUTF(achievementGroup.name + targetLevel)
                 writeInt(1)
                 writeInt(targetAchievement.progressRequirement)
                 writeInt(targetAchievement.rewardActivityPoints)
                 writeInt(0) // type of reward
                 writeInt(userAchievement?.progress ?: 0)
                 writeBoolean((userAchievement?.level ?: 0) >= totalLevels) // is 100% complete
-                writeUTF(achievement.category.category)
+                writeUTF(achievementGroup.category.category)
                 writeUTF("")
                 writeInt(totalLevels)
                 writeInt(0)

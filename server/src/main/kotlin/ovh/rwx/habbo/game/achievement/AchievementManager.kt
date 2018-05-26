@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class AchievementManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val achievementGroups: MutableMap<String, AchievementGroup> = mutableMapOf()
-    val achievements: MutableList<Achievement> = mutableListOf()
+    private val achievements: MutableList<Achievement> = mutableListOf()
     val groupedAchievements: Map<AchievementGroup, List<Achievement>>
         get() = achievements.groupBy { it.group }
 

@@ -24,7 +24,6 @@ import ovh.rwx.habbo.HabboServer
 data class Achievement(
         val id: Int,
         val groupId: Int,
-        val category: AchievementCategory,
         val level: Int,
         val rewardActivityPoints: Int,
         val rewardAchievementPoints: Int,
@@ -32,7 +31,4 @@ data class Achievement(
         val enabled: Boolean
 ) {
     val group: AchievementGroup by lazy { HabboServer.habboGame.achievementManager.achievementGroups.values.find { it.id == groupId }!! }
-
-    val totalLevels: Int
-        get() = HabboServer.habboGame.achievementManager.groupedAchievements[group]!!.size
 }

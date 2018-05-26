@@ -19,7 +19,13 @@
 
 package ovh.rwx.habbo.game.achievement
 
+import ovh.rwx.habbo.HabboServer
+
 data class AchievementGroup(
         val id: Int,
-        val name: String
-)
+        val name: String,
+        val category: AchievementCategory
+) {
+    val totalLevels: Int
+        get() = HabboServer.habboGame.achievementManager.groupedAchievements[this]?.size ?: 0
+}

@@ -32,6 +32,6 @@ class AchievementListHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.USER_ACHIEVEMENT, habboSession.userInformation.achievementUsers, HabboServer.habboGame.achievementManager.achievements)
+        habboSession.sendHabboResponse(Outgoing.USER_ACHIEVEMENT, habboSession.userInformation.achievementUsers, HabboServer.habboGame.achievementManager.achievementGroups, HabboServer.habboGame.achievementManager.groupedAchievements)
     }
 }
