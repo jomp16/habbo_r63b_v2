@@ -31,7 +31,8 @@ object AchievementDao {
             select(javaClass.getResource("/sql/achievement/select_achievement_groups.sql").readText()) {
                 it.string("name") to AchievementGroup(
                         it.int("id"),
-                        it.string("name")
+                        it.string("name"),
+                        AchievementCategory.valueOf(it.string("category").toUpperCase())
                 )
             }
         }
@@ -43,7 +44,6 @@ object AchievementDao {
                 Achievement(
                         it.int("id"),
                         it.int("achievement_group_id"),
-                        AchievementCategory.valueOf(it.string("category").toUpperCase()),
                         it.int("level"),
                         it.int("reward_activity_points"),
                         it.int("reward_achievement_points"),
