@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.tasks
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import ovh.rwx.habbo.game.room.IRoomTask
@@ -28,6 +29,9 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
+
+        val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == roomUser.habboSession!!.release) }?.overrideMethod
+                ?: "response"
 
         room.roomUsers[roomUser.virtualID] = roomUser
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
@@ -62,16 +66,26 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 if (room.hasRights(habboSession, true)) {
                     roomUser.addStatus("flatctrl", "useradmin")
 
-                    habboSession.sendHabboResponse(Outgoing.ROOM_OWNER)
-                    habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 4)
+                    if (methodName == "response") {
+                        habboSession.sendHabboResponse(Outgoing.ROOM_OWNER)
+                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 4)
+                    } else if (methodName == "responseWithRoomId") {
+                        habboSession.sendHabboResponse(Outgoing.ROOM_OWNER, room.roomData.id)
+                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, room.roomData.id, 4)
+                    }
                 } else {
                     // todo: add group rights
                     roomUser.addStatus("flatctrl", "1")
 
-                    habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                    if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                    else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, room.roomData.id, 1)
                 }
             } else {
-                habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS)
+                if (methodName == "response") {
+                    habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS)
+                } else if (methodName == "responseWithRoomId") {
+                    habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS, room.roomData.id)
+                }
             }
 
             habboSession.habboMessenger.notifyFriends()

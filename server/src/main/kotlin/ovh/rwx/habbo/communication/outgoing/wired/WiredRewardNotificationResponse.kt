@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredRewardNotificationResponse {
     @Response(Outgoing.WIRED_REWARD_NOTIFICATION)
-    fun handle(habboResponse: HabboResponse, wiredRewardNotification: WiredRewardNotification) {
+    fun response(habboResponse: HabboResponse, wiredRewardNotification: WiredRewardNotification) {
         habboResponse.apply {
             writeInt(wiredRewardNotification.code)
         }

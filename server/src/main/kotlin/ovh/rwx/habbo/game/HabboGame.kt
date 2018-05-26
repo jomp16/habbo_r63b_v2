@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.achievement.AchievementManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.group.GroupManager
@@ -46,6 +47,7 @@ class HabboGame {
     val moderationManager: ModerationManager = ModerationManager()
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
+    val achievementManager: AchievementManager = AchievementManager()
 
     init {
         landingManager.load()
@@ -57,6 +59,7 @@ class HabboGame {
         moderationManager.load()
         groupManager.load()
         cameraManager.load()
+        achievementManager.load()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }

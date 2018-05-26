@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupUpdateFavoriteResponse {
     @Response(Outgoing.GROUP_UPDATE_FAVORITE)
-    fun handle(habboResponse: HabboResponse, virtualId: Int, groupId: Int, groupName: String, status: Int) {
+    fun response(habboResponse: HabboResponse, virtualId: Int, groupId: Int, groupName: String, status: Int) {
         habboResponse.apply {
             writeInt(virtualId)
             writeInt(groupId)

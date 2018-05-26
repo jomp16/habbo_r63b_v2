@@ -26,6 +26,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogLimitedSoldOutResponse {
     @Response(Outgoing.CATALOG_LIMITED_SOLD_OUT)
-    fun handle(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
     }
 }

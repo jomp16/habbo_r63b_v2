@@ -35,7 +35,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeSettings
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredTriggerDialogResponse {
     @Response(Outgoing.WIRED_TRIGGER_DIALOG)
-    fun handle(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
+    fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
             writeBoolean(false)
 

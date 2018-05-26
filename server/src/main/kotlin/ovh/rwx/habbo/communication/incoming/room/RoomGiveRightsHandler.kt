@@ -32,6 +32,15 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomGiveRightsHandler {
     @Handler(Incoming.ROOM_GIVE_RIGHTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    @Handler(Incoming.ROOM_GIVE_RIGHTS)
+    fun handleWithRoomId(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         val userId = habboRequest.readInt()
@@ -53,10 +62,19 @@ class RoomGiveRightsHandler {
             if (habboSession1.currentRoom == habboSession.currentRoom) {
                 // Update rights
                 habboSession1.roomUser!!.addStatus("flatctrl", "1")
-                habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+
+                if (habboRequest.methodName == "handle") {
+                    habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                } else if (habboRequest.methodName == "handleWithRoomId") {
+                    habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, habboSession.currentRoom!!.roomData.id, 1)
+                }
             }
         }
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_GIVEN, habboSession.currentRoom!!.roomData.id, userInformation.id, userInformation.username)
+        if (habboRequest.methodName == "handle") {
+            habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_GIVEN, userInformation.id, userInformation.username)
+        } else if (habboRequest.methodName == "handleWithRoomId") {
+            habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_GIVEN, habboSession.currentRoom!!.roomData.id, userInformation.id, userInformation.username)
+        }
     }
 }

@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogUpdateResponse {
     @Response(Outgoing.CATALOG_UPDATE)
-    fun handle(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
             writeBoolean(false)
         }

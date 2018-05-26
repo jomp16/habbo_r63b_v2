@@ -26,6 +26,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPingResponse {
     @Response(Outgoing.MISC_PING)
-    fun handle(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
     }
 }

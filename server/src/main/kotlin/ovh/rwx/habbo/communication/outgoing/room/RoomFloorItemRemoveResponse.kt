@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloorItemRemoveResponse {
     @Response(Outgoing.ROOM_FLOOR_ITEM_REMOVE)
-    fun handle(habboResponse: HabboResponse, roomItem: RoomItem, expired: Boolean, delay: Int) {
+    fun response(habboResponse: HabboResponse, roomItem: RoomItem, expired: Boolean, delay: Int) {
         habboResponse.apply {
             writeUTF(roomItem.id.toString())
             writeBoolean(expired)

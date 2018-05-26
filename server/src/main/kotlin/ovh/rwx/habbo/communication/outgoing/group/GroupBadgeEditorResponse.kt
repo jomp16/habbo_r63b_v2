@@ -26,12 +26,12 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupBadgeEditorResponse {
     @Response(Outgoing.GROUP_BADGE_EDITOR)
-    fun handle(habboResponse: HabboResponse,
-               badgeBases: Collection<Triple<Int, String, String>>,
-               badgeSymbols: Collection<Triple<Int, String, String>>,
-               badgeBaseColors: Collection<Pair<Int, String>>,
-               badgeSymbolColors: Collection<Pair<Int, String>>,
-               badgeBackgroundColors: Collection<Pair<Int, String>>) {
+    fun response(habboResponse: HabboResponse,
+                 badgeBases: Collection<Triple<Int, String, String>>,
+                 badgeSymbols: Collection<Triple<Int, String, String>>,
+                 badgeBaseColors: Collection<Pair<Int, String>>,
+                 badgeSymbolColors: Collection<Pair<Int, String>>,
+                 badgeBackgroundColors: Collection<Pair<Int, String>>) {
         habboResponse.apply {
             writeInt(badgeBases.size)
 

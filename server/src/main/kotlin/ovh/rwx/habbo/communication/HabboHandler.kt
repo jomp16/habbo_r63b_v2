@@ -35,18 +35,20 @@ import kotlin.collections.MutableMap.MutableEntry
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val messageHandlers: MutableMap<Incoming, Pair<Any, MethodHandle>> = mutableMapOf()
-    private val messageResponses: MutableMap<Outgoing, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val messageHandlers: MutableMap<Incoming, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
+    private val messageResponses: MutableMap<Outgoing, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
-    val releases: MutableSet<String> = HashSet()
+    @Suppress("MemberVisibilityCanBePrivate")
+    val incomingHeaders = ReleaseDao.getIncomingHeaders()
+    val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
+
+    val releases: MutableSet<String> = HashSet(ReleaseDao.getReleases())
     val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = mutableMapOf()
     val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = mutableMapOf()
     var largestNameSize: Int = 0
 
     init {
         releases.addAll(ReleaseDao.getReleases())
-        val incomingHeaders = ReleaseDao.getIncomingHeaders()
-        val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
 
         releases.forEach { release ->
             val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { it.name }.contains(it.name) }
@@ -70,9 +72,12 @@ class HabboHandler {
             val clazz = getInstance(it.declaringClass)
             val handler = it.getAnnotation(Handler::class.java)
             val methodHandle = lookup.unreflect(it)
+            val methodName = it.name
 
             handler.headers.forEach { incoming ->
-                if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = Pair(clazz, methodHandle)
+                if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
+
+                messageHandlers[incoming]!![methodName] = Pair(clazz, methodHandle)
             }
         }
 
@@ -80,9 +85,12 @@ class HabboHandler {
             val clazz = getInstance(it.declaringClass)
             val response = it.getAnnotation(Response::class.java)
             val methodHandle = lookup.unreflect(it)
+            val methodName = it.name
 
             response.headers.forEach { outgoing ->
-                if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = Pair(clazz, methodHandle)
+                if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = mutableMapOf()
+
+                messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
             }
         }
 
@@ -133,10 +141,21 @@ class HabboHandler {
                         else incomingNames[habboSession.release]?.find { it.first == habboRequest.headerId }?.second
 
                 if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
-                    val (clazz, methodHandle) = messageHandlers[incomingEnum] ?: return@use
+                    val methodName = incomingHeaders.find { it.header == habboRequest.headerId && (it.release == habboSession.release) }?.overrideMethod
+                            ?: "handle"
+                    val pair = messageHandlers[incomingEnum]!![methodName]
+
+                    if (pair == null) {
+                        log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
+
+                        return@use
+                    }
+
+                    val (clazz, methodHandle) = pair
 
                     try {
                         habboRequest.incoming = incomingEnum
+                        habboRequest.methodName = methodName
 
                         methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                     } catch (e: Exception) {
@@ -158,7 +177,19 @@ class HabboHandler {
         val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first ?: return null
 
         if (messageResponses.containsKey(outgoing)) {
-            val (clazz, methodHandle) = messageResponses[outgoing] ?: return null
+            val methodName = outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
+                    ?: "response"
+
+            val pair = messageResponses[outgoing]!![methodName]
+
+            if (pair == null) {
+                log.warn("No method with name '{}' found for {}!", methodName, outgoing)
+
+                return null
+            }
+
+            val (clazz, methodHandle) = pair
+
             val habboResponse = HabboResponse(headerId)
 
             try {

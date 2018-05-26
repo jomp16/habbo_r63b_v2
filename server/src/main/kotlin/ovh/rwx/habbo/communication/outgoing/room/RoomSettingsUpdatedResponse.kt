@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSettingsUpdatedResponse {
     @Response(Outgoing.ROOM_SETTINGS_SAVED, Outgoing.ROOM_INFO_UPDATED)
-    fun handle(habboResponse: HabboResponse, roomId: Int) {
+    fun response(habboResponse: HabboResponse, roomId: Int) {
         habboResponse.apply {
             writeInt(roomId)
         }

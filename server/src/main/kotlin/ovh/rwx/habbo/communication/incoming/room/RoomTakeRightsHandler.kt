@@ -33,6 +33,15 @@ import ovh.rwx.habbo.game.user.information.UserInformation
 class RoomTakeRightsHandler {
     @Handler(Incoming.ROOM_REMOVE_RIGHTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    @Handler(Incoming.ROOM_REMOVE_RIGHTS)
+    fun handleWithRoomId(habboSession: HabboSession, habboRequest: HabboRequest) {
+        this.parse(habboSession, habboRequest)
+    }
+
+    private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         val amount = habboRequest.readInt()
@@ -57,11 +66,20 @@ class RoomTakeRightsHandler {
                 if (habboSession1.currentRoom == habboSession.currentRoom) {
                     // Update rights
                     habboSession1.roomUser!!.removeStatus("flatctrl")
-                    habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+
+                    if (habboRequest.methodName == "handle") {
+                        habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, habboSession.currentRoom!!.roomData.id, 0)
+                    } else if (habboRequest.methodName == "handleWithRoomId") {
+                        habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                    }
                 }
             }
 
-            habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_REMOVED, habboSession.currentRoom!!.roomData.id, it.userId)
+            if (habboRequest.methodName == "handle") {
+                habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_REMOVED, habboSession.currentRoom!!.roomData.id, it.userId)
+            } else if (habboRequest.methodName == "handleWithRoomId") {
+                habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_REMOVED, it.userId)
+            }
         }
 
         RoomDao.removeRights(rightsData.map { it.userId })

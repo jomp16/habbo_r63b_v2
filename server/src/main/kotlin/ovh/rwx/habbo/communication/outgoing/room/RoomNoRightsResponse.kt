@@ -28,4 +28,11 @@ class RoomNoRightsResponse {
     @Response(Outgoing.ROOM_NO_RIGHTS)
     fun response(habboResponse: HabboResponse) {
     }
+
+    @Response(Outgoing.ROOM_NO_RIGHTS)
+    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int) {
+        habboResponse.apply {
+            writeInt(roomId)
+        }
+    }
 }

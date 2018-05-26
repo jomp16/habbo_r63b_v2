@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.catalog.CatalogItem
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogOfferResponse {
     @Response(Outgoing.CATALOG_OFFER)
-    fun handle(habboResponse: HabboResponse, catalogItem: CatalogItem) {
+    fun response(habboResponse: HabboResponse, catalogItem: CatalogItem) {
         habboResponse.apply {
             serialize(catalogItem)
         }

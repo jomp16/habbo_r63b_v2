@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomPetErrorNotificationResponse {
     @Response(Outgoing.ROOM_PET_ERROR_NOTIFICATION)
-    fun handle(habboResponse: HabboResponse, roomPetErrorNotification: RoomPetErrorNotification) {
+    fun response(habboResponse: HabboResponse, roomPetErrorNotification: RoomPetErrorNotification) {
         habboResponse.apply {
             writeInt(roomPetErrorNotification.errorCode)
         }

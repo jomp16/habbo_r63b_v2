@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class LandingCampaignCalendarResponse {
     @Response(Outgoing.CAMPAIGN_CALENDAR)
-    fun handle(habboResponse: HabboResponse, campaignName: String, unknown: String, currentDay: Int, daysOfCampaign: Int, openedBoxes: IntArray, lateBoxes: IntArray) {
+    fun response(habboResponse: HabboResponse, campaignName: String, unknown: String, currentDay: Int, daysOfCampaign: Int, openedBoxes: IntArray, lateBoxes: IntArray) {
         habboResponse.apply {
             writeUTF(campaignName)
             writeUTF(unknown) // useless

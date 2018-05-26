@@ -26,6 +26,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredSavedResponse {
     @Response(Outgoing.WIRED_SAVED)
-    fun handle(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
     }
 }
