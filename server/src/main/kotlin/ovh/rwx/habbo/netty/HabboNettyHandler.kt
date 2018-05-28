@@ -39,29 +39,25 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun channelRegistered(ctx: ChannelHandlerContext) {
-        async {
-            val ip = ctx.channel().ip()
+        val ip = ctx.channel().ip()
 
-            log.info("New connection of {}!", ip)
+        log.info("New connection of {}!", ip)
 
-            if (!HabboServer.habboSessionManager.makeHabboSession(ctx.channel())) {
-                log.error("Connection of {} unsuccessful!", ip)
+        if (!HabboServer.habboSessionManager.makeHabboSession(ctx.channel())) {
+            log.error("Connection of {} unsuccessful!", ip)
 
-                ctx.disconnect()
-            }
+            ctx.disconnect()
         }
     }
 
     override fun channelUnregistered(ctx: ChannelHandlerContext) {
-        async {
-            val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+        val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-            log.info("Disconnecting user {}", username)
+        log.info("Disconnecting user {}", username)
 
-            if (HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.info("User {} disconnected with success!", username)
-            else log.warn("Disconnection of {} unsuccessful!", username)
-        }
+        if (HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.info("User {} disconnected with success!", username)
+        else log.warn("Disconnection of {} unsuccessful!", username)
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
