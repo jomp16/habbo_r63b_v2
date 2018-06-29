@@ -42,7 +42,8 @@ data class UserInformation(
         var gender: String,
         var motto: String,
         var homeRoom: Int,
-        var vip: Boolean
+        var vip: Boolean,
+        val password: String
 ) {
     // todo
     val ambassador: Boolean
