@@ -19,28 +19,49 @@
 
 package ovh.rwx.habbo.game.user.messenger
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.user.HabboSession
+import java.io.File
 
+@Suppress("UNCHECKED_CAST")
 class HabboMessenger(private val habboSession: HabboSession) {
     val friends: MutableMap<Int, MessengerFriend> = mutableMapOf()
     val requests: MutableMap<Int, MessengerRequest> = mutableMapOf()
     var initialized: Boolean = false
+    private val messengerCachePath: File = File(HabboServer.cachePath, "messenger/${habboSession.userInformation.username}").apply {
+        if (!exists()) mkdirs()
+    }
+    private val friendsCachePath: File = File(messengerCachePath, "friends.bin")
+    private val requestsCachePath: File = File(messengerCachePath, "requests.bin")
 
     internal fun load() {
         if (!initialized) {
-            if (habboSession.hasPermission("acc_server_console")) {
-                // server console!
-                friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(UserInformationDao.serverConsoleUserInformation.id)
-                // stub group
-                // friends += -1 to MessengerFriend(-1)
+            if (friendsCachePath.exists()) {
+                friends.putAll(HabboServer.fstConfiguration.asObject(friendsCachePath.readBytes()) as MutableMap<Int, MessengerFriend>)
+            } else {
+                if (habboSession.hasPermission("acc_server_console")) {
+                    // server console!
+                    friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(UserInformationDao.serverConsoleUserInformation.id)
+                    // stub group
+                    // friends += -1 to MessengerFriend(-1)
+                }
+
+                friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
+
+                friendsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(friends))
             }
 
-            friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
-            requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
+            if (requestsCachePath.exists()) {
+                requests.putAll(HabboServer.fstConfiguration.asObject(requestsCachePath.readBytes()) as MutableMap<Int, MessengerRequest>)
+            } else {
+                requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
+
+                requestsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(requests))
+            }
 
             initialized = true
         }
@@ -50,5 +71,10 @@ class HabboMessenger(private val habboSession: HabboSession) {
         friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
             it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
         }
+    }
+
+    fun saveCache() {
+        friendsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(friends))
+        requestsCachePath.writeBytes(HabboServer.fstConfiguration.asByteArray(requests))
     }
 }

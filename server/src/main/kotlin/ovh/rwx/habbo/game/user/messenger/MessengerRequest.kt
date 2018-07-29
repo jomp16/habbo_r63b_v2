@@ -22,8 +22,9 @@ package ovh.rwx.habbo.game.user.messenger
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.database.user.UserInformationDao
+import java.io.Serializable
 
-data class MessengerRequest(val id: Int, val fromId: Int) : IHabboResponseSerialize {
+data class MessengerRequest(val id: Int, val fromId: Int) : Serializable, IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val userInformation = UserInformationDao.getUserInformationById(fromId) ?: return

@@ -80,7 +80,7 @@ class HabboGame {
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { launch { it.saveAllQueuedStuffs() } }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { launch { it.saveCache() } }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

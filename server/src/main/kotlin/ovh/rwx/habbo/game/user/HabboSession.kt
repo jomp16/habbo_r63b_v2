@@ -315,5 +315,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     fun saveCache() {
         habboInventory.saveCache()
         habboBadge.saveCache()
+        habboMessenger.saveCache()
     }
 }

@@ -25,8 +25,9 @@ import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
+import java.io.Serializable
 
-data class MessengerFriend(val userId: Int) : IHabboResponseSerialize {
+data class MessengerFriend(val userId: Int) : Serializable, IHabboResponseSerialize {
     val habboSession: HabboSession?
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
     val online: Boolean
