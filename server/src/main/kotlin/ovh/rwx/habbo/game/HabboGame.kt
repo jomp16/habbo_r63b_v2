@@ -25,6 +25,7 @@ import org.jasypt.util.password.StrongPasswordEncryptor
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.achievement.AchievementManager
+import ovh.rwx.habbo.game.antimutant.AntiMutantManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.group.GroupManager
@@ -51,6 +52,7 @@ class HabboGame {
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
     val achievementManager: AchievementManager = AchievementManager()
+    val antiMutantManager: AntiMutantManager = AntiMutantManager()
 
     init {
         launch { landingManager.load() }
@@ -63,6 +65,7 @@ class HabboGame {
         launch { groupManager.load() }
         launch { cameraManager.load() }
         launch { achievementManager.load() }
+        launch { antiMutantManager.load() }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { launch { it.habboSubscription.clearSubscription() } }

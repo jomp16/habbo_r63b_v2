@@ -21,7 +21,8 @@
     },
     "rc4": true
   },
-  "furnidata_xml": "https://swf.habbo.rwx.ovh/gamedata/furnidata_xml/23_09_2017",
+  "furnidata_xml": "https://swf.habbo.rwx.ovh/gamedata/furnidata_xml/01_07_2018",
+  "figuredata_xml": "https://swf.habbo.rwx.ovh/gamedata/figuredata/01_07_2018",
   "reward": {
     "credits": 10,
     "credits_max": -1,
