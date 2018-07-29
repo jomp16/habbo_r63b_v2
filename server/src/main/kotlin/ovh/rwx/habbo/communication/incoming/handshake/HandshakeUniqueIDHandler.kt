@@ -29,9 +29,9 @@ import ovh.rwx.habbo.game.user.HabboSession
 class HandshakeUniqueIDHandler {
     @Handler(Incoming.UNIQUE_ID)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val uniqueID = habboRequest.readUTF()
         // ignore this shit
         habboRequest.readUTF()
-        val uniqueID = habboRequest.readUTF()
         val osInformation = habboRequest.readUTF()
 
         habboSession.uniqueID = uniqueID

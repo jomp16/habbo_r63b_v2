@@ -30,9 +30,6 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
 
-        val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == roomUser.habboSession!!.release) }?.overrideMethod
-                ?: "response"
-
         room.roomUsers[roomUser.virtualID] = roomUser
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
@@ -62,6 +59,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.sendHabboResponse(Outgoing.ROOM_OWNERSHIP, room.roomData.id, room.hasRights(habboSession, true))
             habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
             // todo: events
+            val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
+
             if (room.hasRights(habboSession)) {
                 if (room.hasRights(habboSession, true)) {
                     roomUser.addStatus("flatctrl", "useradmin")

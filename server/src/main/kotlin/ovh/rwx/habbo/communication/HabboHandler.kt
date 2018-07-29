@@ -23,6 +23,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.release.ReleaseDao
@@ -172,7 +173,13 @@ class HabboHandler {
     }
 
     fun invokeResponse(habboSession: HabboSession, outgoing: Outgoing, vararg args: Any?): HabboResponse? {
-        val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first ?: return null
+        val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first
+
+        if (headerId == null) {
+            log.error("Non existent response header {} for release {}", outgoing, habboSession.release)
+
+            return null
+        }
 
         if (messageResponses.containsKey(outgoing)) {
             val methodName = outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
@@ -181,7 +188,9 @@ class HabboHandler {
             val pair = messageResponses[outgoing]!![methodName]
 
             if (pair == null) {
-                log.warn("No method with name '{}' found for {}!", methodName, outgoing)
+                if (methodName != "DISABLED") {
+                    log.warn("No method with name '{}' found for {}!", methodName, outgoing)
+                }
 
                 return null
             }
@@ -223,5 +232,10 @@ class HabboHandler {
         }
 
         return clazz1
+    }
+
+    fun getOverrideMethodForHeader(outgoing: Outgoing, release: String): String {
+        return HabboServer.habboHandler.outgoingHeaders.find { it.release == release && it.name == outgoing.name }?.overrideMethod
+                ?: "response"
     }
 }

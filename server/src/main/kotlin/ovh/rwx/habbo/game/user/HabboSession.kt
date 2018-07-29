@@ -20,7 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -98,7 +98,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        async {
+        launch {
             habboResponse?.let { channel.writeAndFlush(it) }
         }
     }
@@ -162,7 +162,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        async {
+        launch {
             habboMessenger = HabboMessenger(this@HabboSession)
             habboSubscription = HabboSubscription(this@HabboSession)
             habboBadge = HabboBadge(this@HabboSession)
@@ -232,8 +232,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
         if (!bypassAuth && room == currentRoom) return
-        val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == release) }?.overrideMethod
-                ?: "response"
+        val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
         currentRoom?.removeUser(roomUser, false, false)
 
