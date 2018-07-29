@@ -95,7 +95,7 @@ object Utils {
     }
 
     fun getIpInfo(ipOrDomain: String): IpInfo {
-        val url = URL("$ipInfoApiURL/$ipOrDomain?access_key=${HabboServer.habboConfig.analyticsConfig.ipConfig.apiKey}")
+        val url = URL("$ipInfoApiURL/$ipOrDomain?access_key=${HabboServer.habboConfig.analyticsConfig.ipConfig.apiKey}&hostname=1")
 
         url.openStream().use {
             return jacksonObjectMapper().readValue(it)
