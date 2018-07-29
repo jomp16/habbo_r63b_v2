@@ -24,7 +24,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -61,7 +61,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-        async {
+        launch {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
@@ -71,9 +71,9 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-        async {
+        launch {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-                    ?: return@async
+                    ?: return@launch
             val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             if (evt is IdleStateEvent) {
@@ -82,7 +82,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                     habboSession.channel.disconnect()
 
-                    return@async
+                    return@launch
                 }
 
                 if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking) {
@@ -101,9 +101,9 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     @Suppress("OverridingDeprecatedMember")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        async {
+        launch {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-                    ?: return@async
+                    ?: return@launch
             val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             log.error("An error happened while handling packet for user $username!", cause)

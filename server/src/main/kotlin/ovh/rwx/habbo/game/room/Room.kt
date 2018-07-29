@@ -409,8 +409,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         group?.let { group ->
             roomUsers.values.filter { it.habboSession != null }.filter { it.habboSession?.userInformation?.id != group.groupData.ownerId }.forEach { roomUser ->
                 roomUser.habboSession?.let { habboSession ->
-                    val methodName = HabboServer.habboHandler.outgoingHeaders.find { it.name == "ROOM_OWNER" && (it.release == habboSession.release) }?.overrideMethod
-                            ?: "response"
+                    val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
 
                     when {
                         hasRights(habboSession, false) -> {
