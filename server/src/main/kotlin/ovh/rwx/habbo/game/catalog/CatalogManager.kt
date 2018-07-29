@@ -154,14 +154,15 @@ class CatalogManager {
         }
         // todo: move queries to ItemDao
         HabboServer.database {
-            val copyUserItems = ArrayList(userItems)
+            val copyUserItems = userItems.toMutableList()
 
             userItems.forEach { userItem ->
                 if (!copyUserItems.contains(userItem)) return@forEach
 
                 when {
                     userItem.furnishing.interactionType == InteractionType.TELEPORT -> {
-                        val teleporterItem = copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem } ?: return@forEach
+                        val teleporterItem = copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem }
+                                ?: return@forEach
 
                         copyUserItems.remove(teleporterItem)
 

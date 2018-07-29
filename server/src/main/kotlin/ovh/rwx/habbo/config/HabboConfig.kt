@@ -35,6 +35,8 @@ data class HabboConfig(
         val encryptionConfig: EncryptionConfig,
         @JsonProperty("furnidata_xml", required = true)
         val furnidataXml: String,
+        @JsonProperty("figuredata_xml", required = true)
+        val figuredataXml: String,
         @JsonProperty("reward", required = true)
         val rewardConfig: RewardConfig,
         @JsonProperty("auto_join_room", required = true)
