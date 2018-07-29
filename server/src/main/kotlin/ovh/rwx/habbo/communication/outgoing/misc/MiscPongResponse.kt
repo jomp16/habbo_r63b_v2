@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPongResponse {
     @Response(Outgoing.MISC_PONG)
-    fun handle(habboResponse: HabboResponse, pong: Int) {
+    fun response(habboResponse: HabboResponse, pong: Int) {
         habboResponse.apply {
             writeInt(pong)
         }

@@ -20,7 +20,7 @@
 import groovy.json.JsonOutput
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.2.21" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.2.51" apply false
     id "com.github.ben-manes.versions" version "0.17.0" apply false
     id "de.fuerstenau.buildconfig" version "1.1.8" apply false
     id "org.zeroturnaround.gradle.jrebel" version "1.1.8" apply false
@@ -32,21 +32,22 @@ subprojects {
     apply plugin: "idea"
     apply plugin: "com.github.ben-manes.versions"
     apply plugin: "org.zeroturnaround.gradle.jrebel"
+    apply plugin: "project-report"
 
     ext {
         junit_version = "4.12"
-        jackson_version = "2.9.4"
-        netty_version = "4.1.21.Final"
-        log4j2_version = "2.10.0"
+        jackson_version = "2.9.6"
+        netty_version = "4.1.28.Final"
+        log4j2_version = "2.11.0"
         slf4j_version = "1.7.25"
         kwery_version = "0.17"
-        mysql_version = "6.0.6"
-        hikari_version = "2.7.7"
+        mysql_version = "8.0.11"
         reflections_version = "0.9.11"
         jasypt_version = "1.9.2"
         commons_lang_version = "3.7"
-        mbassador_version = "1.3.1"
-        bouncycastle_version = "1.59"
+        mbassador_version = "1.3.2"
+        bouncycastle_version = "1.60"
+        hikari_version = "3.2.0"
     }
 
     //noinspection GrUnresolvedAccess
@@ -74,6 +75,7 @@ subprojects {
 
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
         compile "org.jetbrains.kotlin:kotlin-reflect"
+        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0'
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
@@ -105,7 +107,7 @@ subprojects {
         //noinspection GrUnresolvedAccess
         componentSelection { rules ->
             rules.all { ComponentSelection selection ->
-                boolean rejected = selection.candidate.group != 'org.jetbrains.kotlin' && ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr'].any { qualifier ->
+                boolean rejected = selection.candidate.group != 'org.jetbrains.kotlin' && ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr', 'dev'].any { qualifier ->
                     selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
                 }
 
@@ -121,5 +123,11 @@ subprojects {
 
         // Keep jar clean:
         exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF', 'rebel.xml'
+    }
+
+    kotlin {
+        experimental {
+            coroutines "enable"
+        }
     }
 }

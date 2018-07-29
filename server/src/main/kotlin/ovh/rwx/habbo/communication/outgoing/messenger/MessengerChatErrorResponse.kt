@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatErrorResponse {
     @Response(Outgoing.MESSENGER_CHAT_ERROR)
-    fun handle(habboResponse: HabboResponse, messengerChatError: MessengerChatError, userId: Int, message: String) {
+    fun response(habboResponse: HabboResponse, messengerChatError: MessengerChatError, userId: Int, message: String) {
         habboResponse.apply {
             writeInt(messengerChatError.errorCode)
             writeInt(userId)

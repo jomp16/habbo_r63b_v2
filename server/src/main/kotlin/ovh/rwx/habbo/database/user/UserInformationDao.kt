@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.database.user
 
 import com.github.andrewoma.kwery.core.Row
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt
 import ovh.rwx.habbo.BuildConfig
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserInformation
@@ -41,7 +42,8 @@ object UserInformationDao {
             "M", // gender
             "Version: ${BuildConfig.VERSION}", // motto
             0, // homeroom
-            false // vip
+            false, // vip
+            ""
     )
 
     fun getUserInformationById(userId: Int): UserInformation? {
@@ -91,6 +93,22 @@ object UserInformationDao {
         }
     }
 
+    fun getUserInformationByEmailAndPassword(email: String, password: String): UserInformation? {
+        val userInformation = HabboServer.database {
+            select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql").readText(),
+                    mapOf(
+                            "email" to email
+                    )
+            ) { getUserInformation(it) }.firstOrNull()
+        } ?: return null
+
+        if (OpenBSDBCrypt.checkPassword(userInformation.password, password.toCharArray())) {
+            return userInformation
+        }
+
+        return null
+    }
+
     fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/information/update_user_information.sql").readText(),
@@ -110,7 +128,7 @@ object UserInformationDao {
         }
     }
 
-    fun updateAuthTicket(userInformation: UserInformation, authTicket: String = "") {
+    fun updateAuthTicket(userInformation: UserInformation, authTicket: String? = null) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql").readText(),
                     mapOf(
@@ -135,6 +153,7 @@ object UserInformationDao {
             row.string("gender"),
             row.string("motto"),
             row.int("home_room"),
-            row.boolean("vip")
+            row.boolean("vip"),
+            row.string("password")
     )
 }

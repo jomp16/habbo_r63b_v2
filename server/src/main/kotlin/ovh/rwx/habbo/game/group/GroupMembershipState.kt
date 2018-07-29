@@ -20,9 +20,9 @@
 package ovh.rwx.habbo.game.group
 
 enum class GroupMembershipState(val state: Int) {
-    OPEN(1),
-    ADMIN_APPROVAL(2),
-    CLOSED(3);
+    OPEN(0),
+    ADMIN_APPROVAL(1),
+    CLOSED(2);
 
     companion object {
         fun valueOf(state: Int): GroupMembershipState {

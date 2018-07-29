@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
+import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -46,16 +47,12 @@ import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
 import java.time.LocalDateTime
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val incomingExecutor: Executor = Executors.newSingleThreadExecutor()
-    private val outgoingExecutor: Executor = Executors.newSingleThreadExecutor()
     lateinit var release: String
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
@@ -94,14 +91,16 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var ping: Long = 0
     var gameSSOToken: String = ""
 
-    fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) = outgoingExecutor.execute {
-        HabboServer.habboHandler.invokeResponse(this, outgoing, *args)?.let {
+    fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
+        HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
             sendHabboResponse(it)
         }
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        habboResponse?.let { channel.writeAndFlush(it) }
+        launch {
+            habboResponse?.let { channel.writeAndFlush(it) }
+        }
     }
 
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
@@ -163,11 +162,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        HabboServer.serverExecutor.execute {
-            habboMessenger = HabboMessenger(this)
-            habboSubscription = HabboSubscription(this)
-            habboBadge = HabboBadge(this)
-            habboInventory = HabboInventory(this)
+        launch {
+            habboMessenger = HabboMessenger(this@HabboSession)
+            habboSubscription = HabboSubscription(this@HabboSession)
+            habboBadge = HabboBadge(this@HabboSession)
+            habboInventory = HabboInventory(this@HabboSession)
 
             habboSubscription.load()
             habboBadge.load()
@@ -176,7 +175,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
         }
 
-        UserInformationDao.updateAuthTicket(userInformation, "")
+        UserInformationDao.updateAuthTicket(userInformation, null)
         UserInformationDao.saveInformation(userInformation, true, ip)
         UserStatsDao.saveStats(userStats)
 
@@ -232,6 +231,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
+        if (!bypassAuth && room == currentRoom) return
+        val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
+
         currentRoom?.removeUser(roomUser, false, false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
@@ -254,7 +256,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 val roomUsersWithRights = room.roomUsersWithRights
 
                 if (roomUsersWithRights.isEmpty()) {
-                    sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+                    if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
+                    else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, room.roomData.id, "")
+
                     sendHabboResponse(Outgoing.ROOM_EXIT)
                 } else {
                     currentRoom = room
@@ -280,7 +284,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
         }
 
-        sendHabboResponse(Outgoing.ROOM_OPEN)
+        if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
+        else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
+
         sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
         sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 

@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogBuildersBorrowedResponse {
     @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun handle(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
             // todo
             writeInt(0)

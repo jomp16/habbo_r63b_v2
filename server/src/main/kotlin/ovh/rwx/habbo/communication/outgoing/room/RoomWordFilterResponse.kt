@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomWordFilterResponse {
     @Response(Outgoing.ROOM_WORD_FILTER)
-    fun handle(habboResponse: HabboResponse, wordFilter: Collection<String>) {
+    fun response(habboResponse: HabboResponse, wordFilter: Collection<String>) {
         habboResponse.apply {
             writeInt(wordFilter.size)
 

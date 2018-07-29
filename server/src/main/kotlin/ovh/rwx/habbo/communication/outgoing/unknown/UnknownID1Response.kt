@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UnknownID1Response {
     @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID1)
-    fun handle(habboResponse: HabboResponse, noobStatus: Int) {
+    fun response(habboResponse: HabboResponse, noobStatus: Int) {
         // I guess this is the noob status (0, 1, 2)
         habboResponse.apply {
             writeInt(noobStatus)

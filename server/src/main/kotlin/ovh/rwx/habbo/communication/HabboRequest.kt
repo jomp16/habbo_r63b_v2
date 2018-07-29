@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
     lateinit var incoming: Incoming
+    lateinit var methodName: String
 
     fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
 

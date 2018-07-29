@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -82,9 +83,9 @@ class RoomTask : Runnable {
     override fun run() {
         try {
             rooms.forEach { room ->
-                HabboServer.serverExecutor.execute {
+                launch {
                     try {
-                        val queuedTasks = queuedTasks[room] ?: return@execute
+                        val queuedTasks = queuedTasks[room] ?: return@launch
                         val wireds = mutableListOf<IRoomTask>()
 
                         while (queuedTasks.isNotEmpty()) {
@@ -119,7 +120,7 @@ class RoomTask : Runnable {
                         if (room.roomUsers.isEmpty() && TimeUnit.MILLISECONDS.toSeconds((room.emptyCounter.incrementAndGet() * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
                             HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 
-                            return@execute
+                            return@launch
                         }
 
                         if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)

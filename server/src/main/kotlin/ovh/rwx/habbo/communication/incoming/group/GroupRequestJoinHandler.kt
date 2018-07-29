@@ -44,12 +44,14 @@ class GroupRequestJoinHandler {
             return
         }
 
-        if (group.groupData.membershipState == GroupMembershipState.OPEN) {
-            // Add user to members right now
-        } else if (group.groupData.membershipState == GroupMembershipState.ADMIN_APPROVAL) {
-            // Add group request and send it to the admins
-        } else {
-            habboSession.sendHabboResponse(Outgoing.GROUP_JOIN_ERROR, GroupJoinErrorResponse.GroupJoinError.NOT_ACCEPTING_REQUEST)
+        when {
+            group.groupData.membershipState == GroupMembershipState.OPEN -> {
+                // Add user to members right now
+            }
+            group.groupData.membershipState == GroupMembershipState.ADMIN_APPROVAL -> {
+                // Add group request and send it to the admins
+            }
+            else -> habboSession.sendHabboResponse(Outgoing.GROUP_JOIN_ERROR, GroupJoinErrorResponse.GroupJoinError.NOT_ACCEPTING_REQUEST)
         }
     }
 }

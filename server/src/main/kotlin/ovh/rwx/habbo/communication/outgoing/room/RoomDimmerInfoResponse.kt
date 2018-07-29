@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDimmerInfoResponse {
     @Response(Outgoing.ROOM_DIMMER_INFO)
-    fun handle(habboResponse: HabboResponse, roomDimmer: RoomDimmer) {
+    fun response(habboResponse: HabboResponse, roomDimmer: RoomDimmer) {
         habboResponse.apply {
             writeInt(roomDimmer.presets.size)
             writeInt(roomDimmer.currentPreset)

@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.user
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -34,7 +35,13 @@ class UserChangeFigureHandler {
         val figure = habboRequest.readUTF()
 
         if (figure == habboSession.userInformation.figure) return
-        // todo: add antimutant here
+
+        if (!HabboServer.habboGame.antiMutantManager.isValidFigureSet(figure, gender, habboSession.habboSubscription.validUserSubscription)) {
+            habboSession.sendNotification("Trying to script it eh?")
+
+            return
+        }
+
         habboSession.userInformation.figure = figure
         habboSession.userInformation.gender = gender
 

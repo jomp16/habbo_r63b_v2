@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryBotsResponse {
     @Response(Outgoing.INVENTORY_BOTS)
-    fun handle(habboResponse: HabboResponse, bots: List<Nothing>) {
+    fun response(habboResponse: HabboResponse, bots: List<Nothing>) {
         habboResponse.apply {
             writeInt(bots.size)
 

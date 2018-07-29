@@ -19,9 +19,13 @@
 
 package ovh.rwx.habbo.game
 
+import kotlinx.coroutines.experimental.launch
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.achievement.AchievementManager
+import ovh.rwx.habbo.game.antimutant.AntiMutantManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.group.GroupManager
@@ -32,10 +36,11 @@ import ovh.rwx.habbo.game.navigator.NavigatorManager
 import ovh.rwx.habbo.game.permission.PermissionManager
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
-import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
     val landingManager: LandingManager = LandingManager()
     val roomManager: RoomManager = RoomManager()
@@ -46,32 +51,36 @@ class HabboGame {
     val moderationManager: ModerationManager = ModerationManager()
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
+    val achievementManager: AchievementManager = AchievementManager()
+    val antiMutantManager: AntiMutantManager = AntiMutantManager()
 
     init {
-        landingManager.load()
-        roomManager.load()
-        itemManager.load()
-        catalogManager.load()
-        navigatorManager.load()
-        permissionManager.load()
-        moderationManager.load()
-        groupManager.load()
-        cameraManager.load()
+        launch { landingManager.load() }
+        launch { roomManager.load() }
+        launch { itemManager.load() }
+        launch { catalogManager.load() }
+        launch { navigatorManager.load() }
+        launch { permissionManager.load() }
+        launch { moderationManager.load() }
+        launch { groupManager.load() }
+        launch { cameraManager.load() }
+        launch { achievementManager.load() }
+        launch { antiMutantManager.load() }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { it.habboSubscription.clearSubscription() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { launch { it.habboSubscription.clearSubscription() } }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach(HabboSession::rewardUser)
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { launch { it.rewardUser() } }
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { it.saveCache() }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { launch { it.saveAllQueuedStuffs() } }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

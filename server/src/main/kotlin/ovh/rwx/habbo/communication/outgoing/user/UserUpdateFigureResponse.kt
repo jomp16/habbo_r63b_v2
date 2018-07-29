@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserUpdateFigureResponse {
     @Response(Outgoing.USER_UPDATE_FIGURE)
-    fun handle(habboResponse: HabboResponse, figure: String, gender: String) {
+    fun response(habboResponse: HabboResponse, figure: String, gender: String) {
         habboResponse.apply {
             writeUTF(figure)
             writeUTF(gender)

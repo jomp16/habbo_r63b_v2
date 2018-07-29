@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.room.Room
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSettingsResponse {
     @Response(Outgoing.ROOM_SETTINGS)
-    fun handle(habboResponse: HabboResponse, room: Room) {
+    fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeInt(room.roomData.id)
             writeUTF(room.roomData.name)

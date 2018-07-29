@@ -44,18 +44,14 @@ class GroupPurchaseHandler {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
-        if (room.group != null) {
-            return
-        }
+        if (room.group != null) return
 
         val symbolColor = habboRequest.readInt()
         val backgroundColor = habboRequest.readInt()
         val badgePartsSize = habboRequest.readInt()
         val badgeParts = mutableListOf<Int>()
 
-        repeat(badgePartsSize) {
-            badgeParts += habboRequest.readInt()
-        }
+        repeat(badgePartsSize) { badgeParts += habboRequest.readInt() }
 
         val groupBadge = HabboServer.habboGame.groupManager.generateBadge(badgeParts)
 

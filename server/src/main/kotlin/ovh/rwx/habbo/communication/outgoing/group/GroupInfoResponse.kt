@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.group.Group
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupInfoResponse {
     @Response(Outgoing.GROUP_INFO)
-    fun handle(habboResponse: HabboResponse, userId: Int, favoriteGroup: Boolean, group: Group, newWindow: Boolean) {
+    fun response(habboResponse: HabboResponse, userId: Int, favoriteGroup: Boolean, group: Group, newWindow: Boolean) {
         habboResponse.apply {
             writeInt(group.groupData.id)
             writeBoolean(true) // ???

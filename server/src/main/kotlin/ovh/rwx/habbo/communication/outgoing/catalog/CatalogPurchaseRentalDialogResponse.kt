@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseRentalDialogResponse {
     @Response(Outgoing.CATALOG_PURCHASE_RENTAL_DIALOG)
-    fun handle(habboResponse: HabboResponse, itemName: String, credits: Int, points: Int, pointsType: Int) {
+    fun response(habboResponse: HabboResponse, itemName: String, credits: Int, points: Int, pointsType: Int) {
         habboResponse.apply {
             writeBoolean(false) // useless
             writeUTF(itemName) // item name?

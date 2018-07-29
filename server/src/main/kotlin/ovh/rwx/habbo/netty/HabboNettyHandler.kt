@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
+import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -60,44 +61,52 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-        if (msg is HabboRequest) {
-            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+        launch {
+            if (msg is HabboRequest) {
+                val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-            HabboServer.habboHandler.handle(habboSession, msg)
+                HabboServer.habboHandler.handle(habboSession, msg)
+            }
         }
     }
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
-        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+        launch {
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+                    ?: return@launch
+            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-        if (evt is IdleStateEvent) {
-            if (!habboSession.authenticated && !habboSession.handshaking) {
-                log.error("Found an connected user $username without doing the handshake! Disconnecting it!")
+            if (evt is IdleStateEvent) {
+                if (!habboSession.authenticated && !habboSession.handshaking) {
+                    log.error("Found an connected user $username without doing the handshake! Disconnecting it!")
 
-                habboSession.channel.disconnect()
+                    habboSession.channel.disconnect()
 
-                return
-            }
+                    return@launch
+                }
 
-            if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking) {
-                log.error("User $username didn't reply ping! Disconnecting it.")
+                if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking) {
+                    log.error("User $username didn't reply ping! Disconnecting it.")
 
-                ctx.close()
-            } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || !habboSession.handshaking)) {
-                log.info("Didn't send any message to user $username, pinging it.")
+                    ctx.close()
+                } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || !habboSession.handshaking)) {
+                    log.info("Didn't send any message to user $username, pinging it.")
 
-                habboSession.ping = System.nanoTime()
-                habboSession.sendHabboResponse(Outgoing.MISC_PING)
+                    habboSession.ping = System.nanoTime()
+                    habboSession.sendHabboResponse(Outgoing.MISC_PING)
+                }
             }
         }
     }
 
     @Suppress("OverridingDeprecatedMember")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() ?: return
-        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+        launch {
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+                    ?: return@launch
+            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-        log.error("An error happened while handling packet for user $username!", cause)
+            log.error("An error happened while handling packet for user $username!", cause)
+        }
     }
 }

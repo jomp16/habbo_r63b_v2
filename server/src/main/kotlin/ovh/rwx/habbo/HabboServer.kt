@@ -37,6 +37,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
+import kotlinx.coroutines.experimental.launch
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.nustaq.serialization.FSTConfiguration
 import org.slf4j.Logger
@@ -65,7 +66,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
@@ -89,7 +89,6 @@ object HabboServer : AutoCloseable {
     val habboGame: HabboGame
     // Thread Executors
     val serverScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
-    val serverExecutor: ExecutorService = Executors.newCachedThreadPool()
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val started: Boolean
@@ -152,7 +151,6 @@ object HabboServer : AutoCloseable {
         log.info("Loading Habbo game...")
         habboGame = HabboGame()
         log.info("Done!")
-
         log.info("Loading FastFood handler...")
         fastFoodHandler = FastFoodHandler()
         log.info("Done!")
@@ -172,7 +170,7 @@ object HabboServer : AutoCloseable {
     }
 
     fun start() {
-        serverExecutor.execute {
+        launch {
             try {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
@@ -250,12 +248,6 @@ object HabboServer : AutoCloseable {
     override fun close() {
         if (started) {
             log.info("Shutting down ${BuildConfig.NAME} server...")
-            // Start Netty
-            log.debug("Shutting down Netty server...")
-            bossGroup.shutdownGracefully().awaitUninterruptibly()
-            workerGroup.shutdownGracefully().awaitUninterruptibly()
-            log.debug("Done!")
-            // End Netty
             // Start room
             log.debug("Closing all loaded rooms...")
             habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
@@ -263,6 +255,12 @@ object HabboServer : AutoCloseable {
             }
             log.debug("Done!")
             // End room
+            // Start Netty
+            log.debug("Shutting down Netty server...")
+            bossGroup.shutdownGracefully().awaitUninterruptibly()
+            workerGroup.shutdownGracefully().awaitUninterruptibly()
+            log.debug("Done!")
+            // End Netty
             // Start database
             log.debug("Fixing some data in users table...")
             cleanUpUsers()

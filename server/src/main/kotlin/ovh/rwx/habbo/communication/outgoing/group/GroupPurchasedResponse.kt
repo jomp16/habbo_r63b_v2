@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupPurchasedResponse {
     @Response(Outgoing.GROUP_PURCHASED)
-    fun handle(habboResponse: HabboResponse, roomId: Int, groupId: Int) {
+    fun response(habboResponse: HabboResponse, roomId: Int, groupId: Int) {
         habboResponse.apply {
             writeInt(roomId)
             writeInt(groupId)

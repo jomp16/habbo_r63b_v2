@@ -21,6 +21,7 @@ package ovh.rwx.habbo.util
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import ovh.rwx.habbo.HabboServer
 import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -37,7 +38,7 @@ object Utils {
         get() = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
     val ramUsageString: String
         get() = humanReadableByteCount(ramUsage, true)
-    private const val ipInfoApiURL: String = "https://freegeoip.net/json"
+    private const val ipInfoApiURL: String = "http://api.ipstack.com/"
 
     fun humanReadableByteCount(bytes: Long, si: Boolean): String {
         val unit = if (si) 1000 else 1024
@@ -94,7 +95,7 @@ object Utils {
     }
 
     fun getIpInfo(ipOrDomain: String): IpInfo {
-        val url = URL("$ipInfoApiURL/$ipOrDomain")
+        val url = URL("$ipInfoApiURL/$ipOrDomain?access_key=${HabboServer.habboConfig.analyticsConfig.ipConfig.apiKey}&hostname=1")
 
         url.openStream().use {
             return jacksonObjectMapper().readValue(it)

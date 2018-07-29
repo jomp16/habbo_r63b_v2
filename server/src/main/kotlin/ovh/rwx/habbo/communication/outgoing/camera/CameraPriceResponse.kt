@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CameraPriceResponse {
     @Response(Outgoing.CAMERA_PRICE)
-    fun handle(habboResponse: HabboResponse, credits: Int, pixels: Int, pixelsToPublishWeb: Int) {
+    fun response(habboResponse: HabboResponse, credits: Int, pixels: Int, pixelsToPublishWeb: Int) {
         habboResponse.apply {
             writeInt(credits)
             writeInt(pixels)

@@ -19,11 +19,14 @@
 
 package ovh.rwx.habbo.game.user.information
 
+import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.database.clothing.ClothingDao
 import ovh.rwx.habbo.database.wardrobe.WardrobeDao
+import ovh.rwx.habbo.game.achievement.AchievementUser
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.collections.ArrayList
 
 data class UserInformation(
         val id: Int,
@@ -39,11 +42,13 @@ data class UserInformation(
         var gender: String,
         var motto: String,
         var homeRoom: Int,
-        var vip: Boolean
+        var vip: Boolean,
+        val password: String
 ) {
     // todo
     val ambassador: Boolean
         get() = rank >= 7
     val wardrobes: MutableList<Wardrobe> = ArrayList(WardrobeDao.getWardrobes(id))
     val clothings: MutableSet<String> = HashSet(ClothingDao.getClothings(id))
+    val achievementUsers: MutableList<AchievementUser> = ArrayList(AchievementDao.loadUserAchievements(id))
 }
