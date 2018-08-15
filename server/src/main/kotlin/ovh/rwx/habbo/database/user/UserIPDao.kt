@@ -42,6 +42,7 @@ object UserIPDao {
                     mapOf(
                             "user_id" to userId,
                             "ip" to ipInfo.ip,
+                            "hostname" to ipInfo.hostname,
                             "ip_type" to ipInfo.type,
                             "internal" to isInternalIP,
                             "continent_code" to ipInfo.continentCode,
