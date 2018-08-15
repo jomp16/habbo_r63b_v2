@@ -5,7 +5,7 @@ INSERT INTO
     `hostname`,
     `ip_type`,
     `internal`,
-    `continent_code`, 
+    `continent_code`,
     `continent`,
     `country_code`,
     `country`,
