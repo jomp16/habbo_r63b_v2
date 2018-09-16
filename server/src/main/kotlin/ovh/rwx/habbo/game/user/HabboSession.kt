@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -98,7 +99,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        launch {
+        GlobalScope.launch {
             habboResponse?.let { channel.writeAndFlush(it) }
         }
     }
@@ -162,7 +163,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        launch {
+        GlobalScope.launch {
             habboMessenger = HabboMessenger(this@HabboSession)
             habboSubscription = HabboSubscription(this@HabboSession)
             habboBadge = HabboBadge(this@HabboSession)

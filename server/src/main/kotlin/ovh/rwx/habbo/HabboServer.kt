@@ -37,6 +37,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
@@ -144,7 +145,7 @@ object HabboServer : AutoCloseable {
     }
 
     fun start() {
-        launch {
+        GlobalScope.launch {
             try {
                 val stringEncoder = StringEncoder(Charsets.UTF_8)
                 val habboNettyEncoder = HabboNettyEncoder()
