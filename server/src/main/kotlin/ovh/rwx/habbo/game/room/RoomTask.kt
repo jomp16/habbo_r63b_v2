@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -83,7 +84,7 @@ class RoomTask : Runnable {
     override fun run() {
         try {
             rooms.forEach { room ->
-                launch {
+                GlobalScope.launch {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@launch
                         val wireds = mutableListOf<IRoomTask>()

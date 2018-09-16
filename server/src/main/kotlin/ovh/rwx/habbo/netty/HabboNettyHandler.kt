@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -61,7 +62,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-        launch {
+        GlobalScope.launch {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
@@ -71,7 +72,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-        launch {
+        GlobalScope.launch {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
                     ?: return@launch
             val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
@@ -101,7 +102,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     @Suppress("OverridingDeprecatedMember")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        launch {
+        GlobalScope.launch {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
                     ?: return@launch
             val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
