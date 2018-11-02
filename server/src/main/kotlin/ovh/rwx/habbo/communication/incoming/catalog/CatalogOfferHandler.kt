@@ -34,7 +34,8 @@ class CatalogOfferHandler {
         val catalogOfferId = habboRequest.readInt()
 
         if (catalogOfferId == -1) return
-        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.offerId == catalogOfferId } ?: return
+        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.offerId == catalogOfferId }
+                ?: return
 
         habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
     }

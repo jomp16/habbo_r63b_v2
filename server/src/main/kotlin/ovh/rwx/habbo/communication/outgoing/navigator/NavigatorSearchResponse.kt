@@ -98,10 +98,10 @@ class NavigatorSearchResponse {
                 "popular" -> {
                     HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
                             .sortedBy { it.roomUsers.size }.take(8).let {
-                        writeInt(it.size)
+                                writeInt(it.size)
 
-                        it.forEach { habboResponse.serialize(it, false, false) }
-                    }
+                                it.forEach { room -> habboResponse.serialize(room, false, false) }
+                            }
                 }
                 "favorites" -> {
                     val rooms: MutableList<Room> = mutableListOf()
@@ -132,15 +132,15 @@ class NavigatorSearchResponse {
                 when {
                     it.roomData.roomType == RoomType.PUBLIC -> false
                     searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
-                    searchTerm.startsWith("tag:") -> it.roomData.tags.any {
-                        it == searchTerm.substring(4)
+                    searchTerm.startsWith("tag:") -> it.roomData.tags.any { s ->
+                        s == searchTerm.substring(4)
                     }
                     searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
                     it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    else -> it.roomData.tags.any {
-                        it.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
+                    else -> it.roomData.tags.any { s ->
+                        s.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
                     }
                 }
             }.sortedByDescending { it.roomUsers.size }
@@ -162,10 +162,10 @@ class NavigatorSearchResponse {
             HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
                     .filter { it.roomData.category == navigatorRoomCategory.id }
                     .sortedBy { it.roomUsers.size }.take(8).let {
-                writeInt(it.size)
+                        writeInt(it.size)
 
-                it.forEach { habboResponse.serialize(it, false, false) }
-            }
+                        it.forEach { room -> habboResponse.serialize(room, false, false) }
+                    }
         }
     }
 

@@ -1,6 +1,4 @@
 SELECT *
-FROM
-  `users`
-WHERE
-  `email` = :email
+FROM `users`
+WHERE `email` = :email
 LIMIT 1

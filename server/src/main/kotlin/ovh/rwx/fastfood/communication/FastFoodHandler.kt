@@ -72,7 +72,7 @@ class FastFoodHandler {
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         fastFoodSession.incomingExecutor.execute {
             habboRequest.use {
-                val ffIncoming: FFIncoming? = FFIncoming.values().firstOrNull { it.headerId == habboRequest.headerId }
+                val ffIncoming: FFIncoming? = FFIncoming.values().firstOrNull { ffIncoming -> ffIncoming.headerId == habboRequest.headerId }
 
                 if (ffIncoming != null && fastFoodMessageHandlers.containsKey(ffIncoming)) {
                     val (clazz, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
@@ -83,7 +83,7 @@ class FastFoodHandler {
                         log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
 
                         if (e is ClassCastException || e is WrongMethodTypeException) {
-                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
                             log.error("Received parameters: {}", listOf(FastFoodSession::class.java.simpleName, HabboRequest::class.java))
                         }
                     }

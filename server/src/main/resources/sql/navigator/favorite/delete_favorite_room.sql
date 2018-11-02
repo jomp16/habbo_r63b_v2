@@ -1,4 +1,3 @@
-DELETE FROM
-  `users_favorites`
-WHERE
-  `id` = :id
+DELETE
+FROM `users_favorites`
+WHERE `id` = :id

@@ -1,7 +1,2 @@
-INSERT INTO
-  `users_stats` (
-    `user_id`
-  )
-VALUES (
-  :id
-)
+INSERT INTO `users_stats` (`user_id`)
+VALUES (:id)

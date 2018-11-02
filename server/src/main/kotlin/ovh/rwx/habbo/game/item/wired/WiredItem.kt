@@ -80,6 +80,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             writeInt(exceptedSettingsSize)
 
             if (exceptedSettingsSize > 0) {
+                @Suppress("ForEachParameterNotUsed")
                 if (settings.size != exceptedSettingsSize) (0 until exceptedSettingsSize).forEach { writeInt(0) }
                 else settings.forEach { writeInt(it) }
             }

@@ -48,8 +48,8 @@ class RollerFurniInteractor : ItemInteractor() {
             room.roomGamemap.roomItemMap[roomItem.position.vector2]?.filter { it.id != roomItem.id && it.position.z > roomItem.position.z }?.let {
                 val roomItems = if (it.size > 10) it.take(10) else it
 
-                roomItems.forEach {
-                    if (room.setFloorItem(it, frontVector2, it.rotation, null, rollerId = roomItem.id)) reCycle = false
+                roomItems.forEach { roomItem1 ->
+                    if (room.setFloorItem(roomItem1, frontVector2, roomItem1.rotation, null, rollerId = roomItem.id)) reCycle = false
                 }
             }
         }

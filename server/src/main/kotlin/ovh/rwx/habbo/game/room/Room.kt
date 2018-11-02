@@ -126,7 +126,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun addUser(habboSession: HabboSession) {
         roomTask?.let {
-            if (roomUsers.values.any { it.habboSession == habboSession }) return
+            if (roomUsers.values.any { roomUser -> roomUser.habboSession == habboSession }) return
             // generate random virtual id
             var virtualId: Int
 
@@ -248,13 +248,13 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                 it.forEach { vector2 ->
-                    roomGamemap.getUsersFromVector2(vector2).forEach {
-                        roomItem.onUserWalksOff(it, true)
+                    roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
+                        roomItem.onUserWalksOff(roomUser1, true)
 
-                        it.removeUserStatuses()
+                        roomUser1.removeUserStatuses()
 
-                        it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                        it.updateNeeded = true
+                        roomUser1.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                        roomUser1.updateNeeded = true
                     }
                 }
 
@@ -272,13 +272,13 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
         roomItem.affectedTiles.let {
             it.forEach { vector2 ->
-                roomGamemap.getUsersFromVector2(vector2).forEach {
-                    roomItem.onUserWalksOn(it, true)
+                roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
+                    roomItem.onUserWalksOn(roomUser1, true)
 
-                    it.addUserStatuses(roomItem)
+                    roomUser1.addUserStatuses(roomItem)
 
-                    it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                    it.updateNeeded = true
+                    roomUser1.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                    roomUser1.updateNeeded = true
                 }
             }
 
@@ -372,13 +372,13 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
                 HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
                     it.forEach { vector2 ->
-                        roomGamemap.getUsersFromVector2(vector2).forEach {
-                            roomItem.onUserWalksOff(it, true)
+                        roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
+                            roomItem.onUserWalksOff(roomUser1, true)
 
-                            it.removeUserStatuses()
+                            roomUser1.removeUserStatuses()
 
-                            it.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                            it.updateNeeded = true
+                            roomUser1.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                            roomUser1.updateNeeded = true
                         }
                     }
 
@@ -398,8 +398,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     fun updateGroupInfo() {
         group?.let { group ->
             roomUsers.values.filter { it.habboSession != null }.forEach {
-                it.habboSession?.let {
-                    it.sendHabboResponse(Outgoing.GROUP_INFO, it.userInformation.id, it.userStats.favoriteGroupId == group.groupData.id, group, false)
+                it.habboSession?.let { habboSession ->
+                    habboSession.sendHabboResponse(Outgoing.GROUP_INFO, habboSession.userInformation.id, habboSession.userStats.favoriteGroupId == group.groupData.id, group, false)
                 }
             }
         }

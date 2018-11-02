@@ -1,4 +1,2 @@
-SELECT
-  *
-FROM
-  `furnishings`
+SELECT *
+FROM `furnishings`

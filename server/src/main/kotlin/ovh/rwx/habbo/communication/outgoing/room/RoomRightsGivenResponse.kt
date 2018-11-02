@@ -26,7 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRightsGivenResponse {
     @Response(Outgoing.ROOM_RIGHTS_GIVEN)
-    fun response(habboResponse: HabboResponse, roomId: Int, userId:Int, username: String) {
+    fun response(habboResponse: HabboResponse, roomId: Int, userId: Int, username: String) {
         habboResponse.apply {
             writeInt(roomId)
             writeInt(userId)

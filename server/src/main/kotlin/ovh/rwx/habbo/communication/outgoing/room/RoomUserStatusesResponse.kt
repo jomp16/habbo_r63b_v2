@@ -40,10 +40,10 @@ class RoomUserStatusesResponse {
                 writeInt(it.bodyRotation)
                 val stringBuilder = StringBuilder("/")
 
-                it.statusMap.entries.filter { it.key.isNotBlank() }.forEach {
-                    stringBuilder.append(it.key)
+                it.statusMap.entries.filter { mutableEntry -> mutableEntry.key.isNotBlank() }.forEach { mutableEntry ->
+                    stringBuilder.append(mutableEntry.key)
 
-                    if (it.value.second.isNotBlank()) stringBuilder.append(' ').append(it.value.second)
+                    if (mutableEntry.value.second.isNotBlank()) stringBuilder.append(' ').append(mutableEntry.value.second)
 
                     stringBuilder.append('/')
                 }

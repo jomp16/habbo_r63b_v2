@@ -48,12 +48,12 @@ class GroupMembersResponse {
                 chunkedMembers[page].let {
                     writeInt(it.size)
 
-                    it.forEach {
-                        writeInt(if (it.rank == 2) 0 else if (it.rank == 1) 1 else if (it.rank == 3) 3 else 2)
-                        writeInt(it.userId)
-                        writeUTF(it.userName)
-                        writeUTF(it.figure)
-                        writeUTF(it.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
+                    it.forEach { groupMemberInfo ->
+                        writeInt(if (groupMemberInfo.rank == 2) 0 else if (groupMemberInfo.rank == 1) 1 else if (groupMemberInfo.rank == 3) 3 else 2)
+                        writeInt(groupMemberInfo.userId)
+                        writeUTF(groupMemberInfo.userName)
+                        writeUTF(groupMemberInfo.figure)
+                        writeUTF(groupMemberInfo.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
                     }
                 }
             }

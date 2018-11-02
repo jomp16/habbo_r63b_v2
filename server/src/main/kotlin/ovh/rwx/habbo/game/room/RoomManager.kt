@@ -58,7 +58,7 @@ class RoomManager {
         val roomId = RoomDao.createRoom(userId, name, description, model, category, maxUsers, tradeSettings)
 
         log.info("Created new room n° {} - name {}", roomId, name)
-        val room = RoomDao.getRoomData(roomId).let { Room(it, roomModel) }
+        val room = Room(RoomDao.getRoomData(roomId), roomModel)
 
         rooms[roomId] = room
 

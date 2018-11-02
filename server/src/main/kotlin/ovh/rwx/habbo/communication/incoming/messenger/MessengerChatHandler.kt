@@ -64,7 +64,8 @@ class MessengerChatHandler {
                 habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
 
                 if (args[0] == "load" && args.size >= 2) {
-                    val jsOutput = habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString() ?: "null"
+                    val jsOutput = habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString()
+                            ?: "null"
 
                     habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, jsOutput, 0, 0, "", "")
                 } else if (args[0] == "ram") {

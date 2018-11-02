@@ -1,4 +1,2 @@
-SELECT
-  *
-FROM
-  `items_teleport`
+SELECT *
+FROM `items_teleport`

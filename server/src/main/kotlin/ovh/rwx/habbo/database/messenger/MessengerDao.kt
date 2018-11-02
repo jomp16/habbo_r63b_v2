@@ -73,7 +73,7 @@ object MessengerDao {
                                         "user_two_id" to userId
                                 )
                         )
-                    }.flatMap { it }
+                    }.flatten()
             )
         }
     }

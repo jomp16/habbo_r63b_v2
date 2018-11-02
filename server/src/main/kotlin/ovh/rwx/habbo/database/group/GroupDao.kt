@@ -130,6 +130,7 @@ object GroupDao {
         }
     }
 
+    @Suppress("unused")
     fun addRequest(groupId: Int, userId: Int): Int {
         return HabboServer.database {
             insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/request/insert_group_request.sql").readText(),

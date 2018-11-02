@@ -49,7 +49,7 @@ object ItemDao {
                         itemType,
                         furniXMLInfo.xDim,
                         furniXMLInfo.yDim,
-                        it.string("stack_height").split(';').map { it.trim().toDouble() },
+                        it.string("stack_height").split(';').map { s -> s.trim().toDouble() },
                         it.boolean("can_stack"),
                         furniXMLInfo.canSitOn,
                         furniXMLInfo.canLayOn,
@@ -61,7 +61,7 @@ object ItemDao {
                         it.boolean("allow_inventory_stack"),
                         interactionType,
                         it.int("interaction_modes_count"),
-                        it.string("vending_ids").split(',').map { it.trim().toInt() })
+                        it.string("vending_ids").split(',').map { s -> s.trim().toInt() })
             }
         }
     }

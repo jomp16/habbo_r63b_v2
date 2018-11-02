@@ -1,4 +1,3 @@
-DELETE FROM
-  `items_gift`
-WHERE
-  `id` = :id
+DELETE
+FROM `items_gift`
+WHERE `id` = :id
