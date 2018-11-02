@@ -98,7 +98,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
                 val incoming: String =
                         if (headerId == 4000) Incoming.RELEASE_CHECK.name
-                        else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name ?: "null"
+                        else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name
+                                ?: "null"
 
                 log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), habboRequest.toString())
             }

@@ -52,7 +52,7 @@ class RoomCommandsManagerListener : PluginListener() {
         searchCommands(pluginListenerAddedEvent.pluginListener).let {
             commandsEvents += it
 
-            log.trace("Found ${it.map { it.commands.size }.sum()} commands for class ${pluginListenerAddedEvent.pluginListener.javaClass.simpleName}")
+            log.trace("Found ${it.map { pluginCommandRegister -> pluginCommandRegister.commands.size }.sum()} commands for class ${pluginListenerAddedEvent.pluginListener.javaClass.simpleName}")
         }
     }
 
@@ -63,7 +63,7 @@ class RoomCommandsManagerListener : PluginListener() {
         commandsEvents.filter { it.pluginListener == pluginListenerRemovedEvent.pluginListener }.let {
             commandsEvents -= it
 
-            log.trace("Removed ${it.map { it.commands.size }.sum()} commands for class ${pluginListenerRemovedEvent.pluginListener.javaClass.simpleName}")
+            log.trace("Removed ${it.map { pluginCommandRegister -> pluginCommandRegister.commands.size }.sum()} commands for class ${pluginListenerRemovedEvent.pluginListener.javaClass.simpleName}")
         }
     }
 

@@ -58,7 +58,7 @@ class CameraManager {
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             Files.walk(cameraPreviewDirectory).use {
-                it.filter { Files.isRegularFile(it) }.forEach { path ->
+                it.filter { path -> Files.isRegularFile(path) }.forEach { path ->
                     val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)
                     val localDateTime = LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.systemDefault())
 
@@ -66,15 +66,15 @@ class CameraManager {
                         // expired image, delete this now
                         if (!Files.deleteIfExists(path)) log.error("Couldn't delete camera preview: {}", path.fileName)
 
-                        Files.newDirectoryStream(path.parent).use {
-                            if (!it.iterator().hasNext()) Files.deleteIfExists(path.parent)
+                        Files.newDirectoryStream(path.parent).use { directoryStream ->
+                            if (!directoryStream.iterator().hasNext()) Files.deleteIfExists(path.parent)
                         }
                     }
                 }
             }
             // Delete old navigator thumbnail that room doesn't exists anymore
             Files.walk(cameraNavigatorThumbnailDirectory).use {
-                it.filter { Files.isRegularFile(it) }
+                it.filter { path -> Files.isRegularFile(path) }
                         .filter { path -> !HabboServer.habboGame.roomManager.rooms.keys.contains(path.fileName.toString().replace(".png", "").toInt()) }
                         .forEach { path ->
                             // No more room fam, remove this image.

@@ -30,6 +30,7 @@ import java.io.File;
 class ReflectionMain {
     public static void main(String[] args) throws Exception {
         final ObjectMapper objectMapper = new ObjectMapper().registerModule(new KotlinModule());
+        //noinspection unused
         final HabboConfig habboConfig = objectMapper.readValue(new File("config.json"), HabboConfig.class);
 
         // REFLECTION: LOAD CLASS HabboServer DIRECTLY

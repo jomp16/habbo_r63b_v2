@@ -44,7 +44,8 @@ class AchievementManager {
         log.info("Loaded {} achievements!", achievements.size)
     }
 
-    fun progressAchievement(habboSession: HabboSession, achievementGroup: AchievementGroup) {
+    @Suppress("unused")
+    fun progressAchievement(@Suppress("UNUSED_PARAMETER") habboSession: HabboSession, @Suppress("UNUSED_PARAMETER") achievementGroup: AchievementGroup) {
 
     }
 }

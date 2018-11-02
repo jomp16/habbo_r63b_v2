@@ -62,7 +62,7 @@ class CatalogManager {
         catalogItems += CatalogDao.getCatalogItems()
         catalogClubOffers += CatalogDao.getCatalogClubOffers()
         catalogDeals += CatalogDao.getCatalogDeals()
-        recyclerRewards += CatalogDao.getRecyclerRewards().groupBy { it.first }.mapValues { it.value.map { it.second } }
+        recyclerRewards += CatalogDao.getRecyclerRewards().groupBy { it.first }.mapValues { it.value.map { pair -> pair.second } }
 
         log.info("Loaded {} catalog pages!", catalogPages.size - 2)
         log.info("Loaded {} catalog items!", catalogItems.size)
@@ -131,6 +131,7 @@ class CatalogManager {
         if (catalogItem.dealId > 0) {
             catalogItem.deal!!.furnishings.forEachIndexed { i, furnishing ->
                 HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, furnishing)?.let { extraData1 ->
+                    @Suppress("ForEachParameterNotUsed")
                     (0 until catalogItem.deal!!.amounts[i]).forEach {
                         furnishingToPurchase += CatalogPurchaseData(furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
 
@@ -140,6 +141,7 @@ class CatalogManager {
             }
         } else {
             HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)?.let { extraData1 ->
+                @Suppress("ForEachParameterNotUsed")
                 (0 until catalogItem.amount * amount).forEach {
                     furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
 

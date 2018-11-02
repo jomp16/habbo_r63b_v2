@@ -20,8 +20,8 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -73,7 +73,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val rooms: List<Room>
         get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true) }
     val groups: List<Group>
-        get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { it.userId == userInformation.id } }
+        get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == userInformation.id } }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
         private set
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }

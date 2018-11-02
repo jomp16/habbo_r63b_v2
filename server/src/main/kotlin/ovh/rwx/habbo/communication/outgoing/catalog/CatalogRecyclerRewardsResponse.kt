@@ -30,17 +30,17 @@ class CatalogRecyclerRewardsResponse {
     fun response(habboResponse: HabboResponse, recyclerRewards: Map<Int, List<String>>) {
         habboResponse.apply {
             writeInt(recyclerRewards.size) // levels
-            recyclerRewards.entries.sortedByDescending { it.key }.forEach {
-                writeInt(it.key) // level
-                writeInt(HabboServer.habboConfig.recyclerConfig.odds[it.key]!!) // odds
-                writeInt(it.value.size)
+            recyclerRewards.entries.sortedByDescending { it.key }.forEach { entry ->
+                writeInt(entry.key) // level
+                writeInt(HabboServer.habboConfig.recyclerConfig.odds[entry.key]!!) // odds
+                writeInt(entry.value.size)
 
-                it.value.forEach {
-                    HabboServer.habboGame.itemManager.furnishings[it]?.let {
-                        writeUTF(it.itemName)
+                entry.value.forEach { s ->
+                    HabboServer.habboGame.itemManager.furnishings[s]?.let { furnishing ->
+                        writeUTF(furnishing.itemName)
                         writeInt(1) // enabled
-                        writeUTF(it.type.type)
-                        writeInt(it.spriteId)
+                        writeUTF(furnishing.type.type)
+                        writeInt(furnishing.spriteId)
                     }
                 }
             }

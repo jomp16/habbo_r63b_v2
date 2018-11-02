@@ -34,8 +34,9 @@ class UserBadgesHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
         val userId = habboRequest.readInt()
-        val badges: Collection<Badge> = HabboServer.habboSessionManager.getHabboSessionById(userId)?.habboBadge?.badges?.values ?: BadgeDao.getBadges(
-                userId).values
+        val badges: Collection<Badge> = HabboServer.habboSessionManager.getHabboSessionById(userId)?.habboBadge?.badges?.values
+                ?: BadgeDao.getBadges(
+                        userId).values
 
         habboSession.sendHabboResponse(Outgoing.USER_BADGES, userId, badges)
     }

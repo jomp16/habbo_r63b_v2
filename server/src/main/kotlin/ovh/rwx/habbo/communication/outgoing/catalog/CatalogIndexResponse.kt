@@ -28,7 +28,8 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 class CatalogIndexResponse {
     @Response(Outgoing.CATALOG_INDEX)
     fun response(habboResponse: HabboResponse, type: String, rank: Int, club: Boolean) {
-        val rootCatalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == if (type == "NORMAL") -1 else -2 } ?: return
+        val rootCatalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == if (type == "NORMAL") -1 else -2 }
+                ?: return
 
         habboResponse.apply {
             serialize(rootCatalogPage, rank, club)

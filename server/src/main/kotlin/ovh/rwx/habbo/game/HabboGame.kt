@@ -19,8 +19,8 @@
 
 package ovh.rwx.habbo.game
 
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import org.slf4j.LoggerFactory
@@ -40,6 +40,7 @@ import ovh.rwx.habbo.game.room.RoomManager
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
+    @Suppress("unused")
     private val log = LoggerFactory.getLogger(javaClass)
 
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()

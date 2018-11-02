@@ -36,10 +36,10 @@ class ModerationTopicsResponse {
                 moderationTopics.filter { it.categoryId == category.key }.let {
                     writeInt(it.size)
 
-                    it.forEach {
-                        writeUTF(it.name)
-                        writeInt(it.topicId)
-                        writeUTF(it.consequence)
+                    it.forEach { moderationTopic ->
+                        writeUTF(moderationTopic.name)
+                        writeInt(moderationTopic.topicId)
+                        writeUTF(moderationTopic.consequence)
                     }
                 }
             }

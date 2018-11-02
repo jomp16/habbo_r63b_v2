@@ -1,4 +1,3 @@
-DELETE FROM
-  `rooms_rights`
-WHERE
-  `id` = :id
+DELETE
+FROM `rooms_rights`
+WHERE `id` = :id

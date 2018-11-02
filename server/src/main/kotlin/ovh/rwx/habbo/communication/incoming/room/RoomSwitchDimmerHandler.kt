@@ -29,8 +29,8 @@ class RoomSwitchDimmerHandler {
     @Handler(Incoming.ROOM_DIMMER_SWITCH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
-                habboSession,
-                true) || habboSession.currentRoom!!.roomDimmer == null) return
+                        habboSession,
+                        true) || habboSession.currentRoom!!.roomDimmer == null) return
 
         habboSession.currentRoom!!.roomDimmer!!.switchState()
     }

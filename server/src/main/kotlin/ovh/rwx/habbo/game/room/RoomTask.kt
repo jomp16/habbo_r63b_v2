@@ -19,8 +19,8 @@
 
 package ovh.rwx.habbo.game.room
 
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -107,13 +107,13 @@ class RoomTask : Runnable {
                         }
 
                         room.roomUsers.values.let {
-                            it.forEach { it.onCycle() }
+                            it.forEach { roomUser -> roomUser.onCycle() }
 
-                            it.filter { it.updateNeeded }.let {
-                                if (it.isNotEmpty()) {
-                                    room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, it)
+                            it.filter { roomUser -> roomUser.updateNeeded }.let { list ->
+                                if (list.isNotEmpty()) {
+                                    room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, list)
 
-                                    it.forEach { it.updateNeeded = false }
+                                    list.forEach { roomUser -> roomUser.updateNeeded = false }
                                 }
                             }
                         }

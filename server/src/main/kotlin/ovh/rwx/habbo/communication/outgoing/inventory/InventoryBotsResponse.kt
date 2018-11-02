@@ -30,6 +30,7 @@ class InventoryBotsResponse {
         habboResponse.apply {
             writeInt(bots.size)
 
+            @Suppress("ForEachParameterNotUsed")
             bots.forEach {
                 // Todo: when adding support to bots, rewrite this part
             }

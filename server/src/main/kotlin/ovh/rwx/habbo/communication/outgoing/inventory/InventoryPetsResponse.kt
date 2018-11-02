@@ -32,6 +32,7 @@ class InventoryPetsResponse {
             writeInt(1)
             writeInt(pets.size)
 
+            @Suppress("ForEachParameterNotUsed")
             pets.forEach {
                 // Todo: when adding support to pets, rewrite this part
             }

@@ -41,6 +41,7 @@ class HabboHandler {
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     @Suppress("MemberVisibilityCanBePrivate")
     val incomingHeaders = ReleaseDao.getIncomingHeaders()
+    @Suppress("MemberVisibilityCanBePrivate")
     val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
 
     val releases: MutableSet<String> = HashSet(ReleaseDao.getReleases())
@@ -52,8 +53,8 @@ class HabboHandler {
         releases.addAll(ReleaseDao.getReleases())
 
         releases.forEach { release ->
-            val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { it.name }.contains(it.name) }
-            val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { it.name }.contains(it.name) }
+            val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
+            val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
 
             incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
             outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
@@ -95,7 +96,7 @@ class HabboHandler {
             }
         }
 
-        largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { it.second } }.map { it.name }.sortedByDescending { it.length }.first().length
+        largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.sortedByDescending { it.length }.first().length
 
         log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
         log.info("Loaded {} Habbo request handlers", messageHandlers.size)
@@ -106,7 +107,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { it.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing incoming headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -122,7 +123,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { it.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing outgoing headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -138,10 +139,10 @@ class HabboHandler {
         habboRequest.use {
             val incomingEnum: Incoming? =
                     if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
-                    else incomingNames[habboSession.release]?.find { it.first == habboRequest.headerId }?.second
+                    else incomingNames[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
 
             if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
-                val methodName = incomingHeaders.find { it.header == habboRequest.headerId && (it.release == habboSession.release) }?.overrideMethod
+                val methodName = incomingHeaders.find { releaseHeaderInfo -> releaseHeaderInfo.header == habboRequest.headerId && (releaseHeaderInfo.release == habboSession.release) }?.overrideMethod
                         ?: "handle"
                 val pair = messageHandlers[incomingEnum]!![methodName]
 
@@ -162,7 +163,7 @@ class HabboHandler {
                     log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
 
                     if (e is ClassCastException || e is WrongMethodTypeException) {
-                        log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                        log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
                         log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
                     }
                 }

@@ -39,7 +39,8 @@ class RoomUserWhisperHandler {
         if (message.length > 100) message = message.substring(0, 100)
 
         if (habboSession.userInformation.username == targetName) return
-        val targetRoomUser = habboSession.currentRoom!!.roomUsers.values.filter { it.habboSession != null }.find { it.habboSession!!.userInformation.username == targetName } ?: return
+        val targetRoomUser = habboSession.currentRoom!!.roomUsers.values.filter { it.habboSession != null }.find { it.habboSession!!.userInformation.username == targetName }
+                ?: return
 
         habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER, true)
         targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER, true)

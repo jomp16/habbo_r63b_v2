@@ -88,7 +88,7 @@ class FastFoodNettyDecoder : ByteToMessageDecoder() {
 
                 out.forEach {
                     if (it is HabboRequest) {
-                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(2), FFIncoming.values().firstOrNull { it.headerId == headerId }?.name?.padEnd(HabboServer.fastFoodHandler.largestNameSize), it.toString())
+                        log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(2), FFIncoming.values().firstOrNull { ffIncoming -> ffIncoming.headerId == headerId }?.name?.padEnd(HabboServer.fastFoodHandler.largestNameSize), it.toString())
                     }
                 }
             }
