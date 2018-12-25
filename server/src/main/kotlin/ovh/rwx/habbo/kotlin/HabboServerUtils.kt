@@ -21,6 +21,7 @@ package ovh.rwx.habbo.kotlin
 
 import ovh.rwx.habbo.HabboServer
 
+@Suppress("SqlWithoutWhere")
 fun HabboServer.cleanUpUsers() {
     database {
         update("UPDATE `users` SET `auth_ticket` = :ticket, `online` = :online",

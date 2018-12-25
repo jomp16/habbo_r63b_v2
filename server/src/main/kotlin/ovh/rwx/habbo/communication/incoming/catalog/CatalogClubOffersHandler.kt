@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
+import java.time.LocalDateTime
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogClubOffersHandler {
@@ -32,6 +33,7 @@ class CatalogClubOffersHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticated) return
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(), HabboServer.habboGame.catalogManager.catalogClubOffers)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(), HabboServer.habboGame.catalogManager.catalogClubOffers, habboSession.habboSubscription.subscription?.expire
+                ?: LocalDateTime.now())
     }
 }
