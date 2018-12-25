@@ -65,7 +65,7 @@ class GroupManageResponse {
 
             // pad the remaining badges
             if (split.size < 5) {
-                for (i in 0 until 5 - split.size) {
+                (0 until 5 - split.size).forEach { i ->
                     writeInt(0)
                     writeInt(0)
                     writeInt(0)

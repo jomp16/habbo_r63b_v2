@@ -29,13 +29,12 @@ import java.time.temporal.ChronoUnit
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogClubOffersResponse {
     @Response(Outgoing.CATALOG_HABBO_CLUB_PAGE)
-    fun response(habboResponse: HabboResponse, windowId: Int, clubOffers: Collection<CatalogClubOffer>) {
+    fun response(habboResponse: HabboResponse, windowId: Int, clubOffers: Collection<CatalogClubOffer>, lastExpireOffer: LocalDateTime) {
         habboResponse.apply {
             writeInt(clubOffers.size)
 
             clubOffers.forEach {
-                val now = LocalDateTime.now()
-                val localDateTime = now.plusMonths(it.months.toLong())
+                val localDateTime = lastExpireOffer.plusMonths(it.months.toLong())
 
                 writeInt(it.itemId)
                 writeUTF(it.name)
@@ -44,10 +43,10 @@ class CatalogClubOffersResponse {
                 writeInt(it.points) // points
                 writeInt(it.pointsType) // type: 0 - pixel, > 0 - vip points (5 = diamonds)
                 writeBoolean(true)
-                writeInt(ChronoUnit.MONTHS.between(now, localDateTime).toInt())
-                writeInt(ChronoUnit.DAYS.between(now, localDateTime).toInt())
+                writeInt(ChronoUnit.MONTHS.between(lastExpireOffer, localDateTime).toInt())
+                writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
                 writeBoolean(it.giftable)
-                writeInt(ChronoUnit.DAYS.between(now, localDateTime).toInt())
+                writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
                 writeInt(localDateTime.year)
                 writeInt(localDateTime.monthValue)
                 writeInt(localDateTime.dayOfMonth)

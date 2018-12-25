@@ -35,6 +35,7 @@ import ovh.rwx.habbo.util.Utils
 import java.io.File
 import java.io.InputStreamReader
 import java.lang.management.ManagementFactory
+import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatHandler {
@@ -90,6 +91,13 @@ class MessengerChatHandler {
                             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, message1, 0, 0, "", "")
                         }
                     }
+                } else if (message == "reload_handlers") {
+                    HabboServer.habboHandler.load()
+
+                    HabboServer.serverScheduledExecutor.schedule({
+                        habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, "Done!", 0, 0, "", "")
+
+                    }, 1, TimeUnit.SECONDS)
                 } else if (message.startsWith("h:")) {
                     // one line response messages
                     val args1 = message.split("(?<!\\\\),".toRegex())

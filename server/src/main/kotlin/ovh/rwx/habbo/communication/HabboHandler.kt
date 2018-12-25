@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.communication
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
@@ -27,11 +29,11 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.release.ReleaseDao
+import ovh.rwx.habbo.database.release.ReleaseHeaderInfo
 import ovh.rwx.habbo.game.user.HabboSession
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
-import java.util.*
 import kotlin.collections.MutableMap.MutableEntry
 
 class HabboHandler {
@@ -40,67 +42,81 @@ class HabboHandler {
     private val messageResponses: MutableMap<Outgoing, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     @Suppress("MemberVisibilityCanBePrivate")
-    val incomingHeaders = ReleaseDao.getIncomingHeaders()
+    val incomingHeaders: List<ReleaseHeaderInfo> by lazy { ReleaseDao.getIncomingHeaders() }
     @Suppress("MemberVisibilityCanBePrivate")
-    val outgoingHeaders = ReleaseDao.getOutgoingHeaders()
+    val outgoingHeaders: List<ReleaseHeaderInfo> by lazy { ReleaseDao.getOutgoingHeaders() }
 
-    val releases: MutableSet<String> = HashSet(ReleaseDao.getReleases())
+    val releases: MutableSet<String> by lazy { HashSet(ReleaseDao.getReleases()) }
     val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = mutableMapOf()
     val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = mutableMapOf()
     var largestNameSize: Int = 0
 
     init {
-        releases.addAll(ReleaseDao.getReleases())
+        load()
+    }
 
-        releases.forEach { release ->
-            val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
-            val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
+    fun load() {
+        log.info("Loading handlers...")
 
-            incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
-            outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
+        messageHandlers.clear()
+        messageResponses.clear()
+
+        if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
+            releases.forEach { release ->
+                val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
+                val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
+
+                incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
+                outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
+            }
+            val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
+            val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
+
+            if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(outgoingNames.entries, exceptedOutgoingHeaders)) {
+                log.error("Missing headers... Fix it! Exiting!")
+
+                System.exit(1)
+            }
+
+            largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.sortedByDescending { it.length }.first().length
+
+            log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
         }
-        val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
-        val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
 
-        if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(outgoingNames.entries, exceptedOutgoingHeaders)) {
-            log.error("Missing headers... Fix it! Exiting!")
-
-            System.exit(1)
-        }
         val lookup = MethodHandles.lookup()
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
-        reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
-            val clazz = getInstance(it.declaringClass)
-            val handler = it.getAnnotation(Handler::class.java)
-            val methodHandle = lookup.unreflect(it)
-            val methodName = it.name
+        GlobalScope.launch {
+            reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
+                val clazz = getInstance(it.declaringClass)
+                val handler = it.getAnnotation(Handler::class.java)
+                val methodHandle = lookup.unreflect(it)
+                val methodName = it.name
 
-            handler.headers.forEach { incoming ->
-                if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
+                handler.headers.forEach { incoming ->
+                    if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
 
-                messageHandlers[incoming]!![methodName] = Pair(clazz, methodHandle)
+                    messageHandlers[incoming]!![methodName] = Pair(clazz, methodHandle)
+                }
             }
+            log.info("Loaded {} Habbo request handlers", messageHandlers.size)
         }
 
-        reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
-            val clazz = getInstance(it.declaringClass)
-            val response = it.getAnnotation(Response::class.java)
-            val methodHandle = lookup.unreflect(it)
-            val methodName = it.name
+        GlobalScope.launch {
+            reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
+                val clazz = getInstance(it.declaringClass)
+                val response = it.getAnnotation(Response::class.java)
+                val methodHandle = lookup.unreflect(it)
+                val methodName = it.name
 
-            response.headers.forEach { outgoing ->
-                if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = mutableMapOf()
+                response.headers.forEach { outgoing ->
+                    if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = mutableMapOf()
 
-                messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
+                    messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
+                }
             }
+            log.info("Loaded {} Habbo response handlers", messageResponses.size)
         }
-
-        largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.sortedByDescending { it.length }.first().length
-
-        log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
-        log.info("Loaded {} Habbo request handlers", messageHandlers.size)
-        log.info("Loaded {} Habbo response handlers", messageResponses.size)
     }
 
     private fun isMissingIncomingHeaders(availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Incoming>>>>, exceptedHeaders: List<Incoming>): Boolean {
