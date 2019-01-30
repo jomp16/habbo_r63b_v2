@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -84,9 +86,11 @@ class RoomTask : Runnable {
     override fun run() {
         try {
             rooms.forEach { room ->
-                GlobalScope.launch {
+                GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@launch
+
+
                         val wireds = mutableListOf<IRoomTask>()
 
                         while (queuedTasks.isNotEmpty()) {
@@ -98,6 +102,10 @@ class RoomTask : Runnable {
 
                         wireds.forEach { it.executeTask(room) }
 
+                        // Trigger wired periodically
+                        room.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, null)
+                        room.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, null)
+
                         room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
 
                         if (room.rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
@@ -107,6 +115,9 @@ class RoomTask : Runnable {
                         }
 
                         room.roomUsers.values.let {
+                            it.filter { roomUser -> roomUser.habboSession?.currentRoom != room }.forEach { roomUser ->
+                                room.removeUser(roomUser, false, false)
+                            }
                             it.forEach { roomUser -> roomUser.onCycle() }
 
                             it.filter { roomUser -> roomUser.updateNeeded }.let { list ->

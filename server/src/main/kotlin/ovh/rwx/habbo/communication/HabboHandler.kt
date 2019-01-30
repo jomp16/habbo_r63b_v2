@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -86,7 +86,7 @@ class HabboHandler {
         val lookup = MethodHandles.lookup()
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
-        GlobalScope.launch {
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
             reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
                 val clazz = getInstance(it.declaringClass)
                 val handler = it.getAnnotation(Handler::class.java)
@@ -102,7 +102,7 @@ class HabboHandler {
             log.info("Loaded {} Habbo request handlers", messageHandlers.size)
         }
 
-        GlobalScope.launch {
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
             reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
                 val clazz = getInstance(it.declaringClass)
                 val response = it.getAnnotation(Response::class.java)

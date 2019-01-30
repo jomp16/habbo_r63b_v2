@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -65,7 +65,7 @@ class GroupManageResponse {
 
             // pad the remaining badges
             if (split.size < 5) {
-                (0 until 5 - split.size).forEach { i ->
+                (0 until 5 - split.size).forEach { _ ->
                     writeInt(0)
                     writeInt(0)
                     writeInt(0)

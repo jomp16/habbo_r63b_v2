@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,12 +20,16 @@
 package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 class WiredFurniInteractor : ItemInteractor() {
+    override val interactionType = InteractionType.values().filter { it.name.startsWith("WIRED") }
+
     override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onPlace(room, roomUser, roomItem)
 

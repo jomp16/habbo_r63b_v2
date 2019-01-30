@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -61,6 +61,7 @@ enum class Outgoing {
     ENABLE_TRADING,
     FLOOR_PLAN_DOOR,
     FLOOR_PLAN_GAMEMAP,
+    //    FORUM_LIST,
     GAME_CENTER_ACCOUNT_STATUS,
     GAME_CENTER_ACHIEVEMENTS,
     GAME_CENTER_CAN_PLAY_GAME,

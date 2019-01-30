@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -40,8 +40,6 @@ class GroupUpdateSettingsHandler {
         val membershipState = GroupMembershipState.valueOf(habboRequest.readInt())
         val onlyAdminCanDecorateRoom = habboRequest.readInt() == 1
 
-        println("membershipState=$membershipState")
-        println("onlyAdminCanDecorateRoom=$onlyAdminCanDecorateRoom")
         // Optimization: if both are the same, don't update and send update request to client.
         if (group.groupData.membershipState == membershipState && group.groupData.onlyAdminCanDecorateRoom == onlyAdminCanDecorateRoom) return
 

@@ -26,19 +26,18 @@ import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.action.WiredAction
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_ACTION_SHOW_MESSAGE)
-class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
-    private var message: String = ""
+@WiredItemInteractor(InteractionType.WIRED_ACTION_TELEPORT_TO)
+class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
+    private val roomItemsIds: MutableList<Int> = mutableListOf()
     private var delay: Int = 0
 
     init {
         roomItem.wiredData?.let {
+            roomItemsIds.addAll(it.items)
             delay = it.delay
-            message = it.message
         }
     }
 
@@ -63,27 +62,62 @@ class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room,
     }
 
     private fun handleThing(roomUser: RoomUser?) {
-        if (!message.isBlank()) {
-            if (roomUser != null) roomUser.chat(roomUser.virtualID, message, 1, ChatType.WHISPER, true)
-            else room.roomUsers.values.forEach { it.chat(it.virtualID, message, 1, ChatType.WHISPER, true) }
-        }
+        if (roomUser == null) return
+
+        TODO("IMPLEMENT THIS PIECE OF FUCKING SHIT!")
+
+        /*val roomItemId = roomItemsIds.random()
+
+        if (!room.roomItems.containsKey(roomItemId)) return
+
+        val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
+
+        roomItem?.onUserWalksOff(roomUser, true)
+
+        val roomItem1 = room.roomItems[roomItemId] ?: return
+
+        val affectedTiles = roomItem1.affectedTiles
+
+        (0 until affectedTiles.size - 1).forEach {
+            val tile = affectedTiles.random()
+
+            if (!room.roomGamemap.isBlocked(tile)) {
+                roomUser.stopWalking()
+
+                roomUser.currentVector3 = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
+
+                roomUser.updateNeeded = true
+
+                roomItem1.onUserWalksOn(roomUser, true)
+
+                return@forEach
+            }
+        }*/
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
         roomItem.wiredData?.let {
             habboRequest.readInt() // useless?
-            message = habboRequest.readUTF().trim()
+            habboRequest.readUTF() // useless
 
-            if (message.length > 100) message = message.substring(0, 100)
+            val amount = habboRequest.readInt()
 
-            habboRequest.readInt() // useless?
-            delay = habboRequest.readInt()
+            repeat(amount) {
+                val itemId = habboRequest.readInt()
+
+                if (room.roomItems.containsKey(itemId)) {
+                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
+
+                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
+                }
+            }
+
 
             if (delay < 0) delay = 0
             if (delay > 20) delay = 20
 
             it.delay = delay
-            it.message = message
+            it.items = roomItemsIds.toList()
 
             return true
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -147,9 +147,11 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             if (kickNotification) roomUser.habboSession.sendHabboResponse(Outgoing.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
             if (notifyClient) roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
 
-            roomUser.habboSession.roomUser = null
-            roomUser.habboSession.currentRoom = null
-            roomUser.habboSession.habboMessenger.notifyFriends()
+            if (roomUser.habboSession.currentRoom == this) {
+                roomUser.habboSession.roomUser = null
+                roomUser.habboSession.currentRoom = null
+                roomUser.habboSession.habboMessenger.notifyFriends()
+            }
         }
 
         roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
@@ -227,12 +229,12 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = (-1).toDouble(), rollerId: Int = -1): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
-        val onlyRotation = roomItem.rotation == rotation
+        val onlyRotation = roomItem.position.vector2 == position && roomItem.rotation != rotation
 
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
-            if (onlyRotation && roomGamemap.cannotStackItem[it.x][it.y] && roomGamemap.isBlocked(it, true) && overrideZ == (-1).toDouble()) {
+            if (!onlyRotation && (roomGamemap.isBlocked(it, true) || roomGamemap.cannotStackItem[it.x][it.y])) {
                 // cannot set item, because at least one tile is blocked
                 return false
             }
@@ -264,6 +266,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
         }
         val oldPosition = roomItem.position
+        val oldRotation = roomItem.rotation
 
         roomItem.position = Vector3(position.x, position.y, if (overrideZ != (-1).toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
         roomItem.rotation = rotation
@@ -294,7 +297,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
-            if (rollerId == -1) {
+            if (rollerId == -1 || roomItem.rotation != oldRotation) {
                 roomItem.update(true, true)
             } else {
                 sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
