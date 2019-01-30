@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -72,6 +72,20 @@ class WiredTriggerDialogResponse {
                 writeItemInfo(roomItem)
                 writeEmptySettings()
                 writeInt(1)
+                writeBlockedActions(wiredData)
+            }
+            InteractionType.WIRED_TRIGGER_PERIODICALLY -> {
+                writeEmptyItems()
+                writeItemInfo(roomItem)
+                writeSettings(wiredData.message, wiredData.options, 1)
+                writeInt(6)
+                writeBlockedActions(wiredData)
+            }
+            InteractionType.WIRED_TRIGGER_PERIODICALLY_LONG -> {
+                writeEmptyItems()
+                writeItemInfo(roomItem)
+                writeSettings(wiredData.message, wiredData.options, 1)
+                writeInt(12)
                 writeBlockedActions(wiredData)
             }
             else -> {

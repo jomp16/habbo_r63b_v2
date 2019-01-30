@@ -3,6 +3,6 @@ UPDATE
 SET `delay`     = :delay,
     `items`     = :items,
     `message`   = :message,
-    `options`   = :options1,
+    `options`   = :options,
     `extradata` = :extradata
 WHERE `id` = :id

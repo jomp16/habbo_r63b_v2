@@ -27,37 +27,39 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
-class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private val roomItemsIds: MutableList<Int> = mutableListOf()
+@WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIODICALLY_LONG)
+class WiredTriggerPeriodicallyLong(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+    private var delay = 0
+    private var delayState = 0
 
     init {
         roomItem.wiredData?.let {
-            roomItemsIds.addAll(it.items)
+            delay = if (it.options.size == 1) it.options[0] * 10 else 10
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean = data != null && data is RoomItem && roomItemsIds.any { it == data.id }
+    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+        if (++delayState >= delay) {
+            delayState = 0
+
+            return true
+        }
+
+        return false
+    }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
         roomItem.wiredData?.let {
-            roomItemsIds.clear()
-
             habboRequest.readInt() // useless?
-            habboRequest.readUTF() // useless?
-            val amount = habboRequest.readInt()
+            delay = habboRequest.readInt()
 
-            repeat(amount) {
-                val itemId = habboRequest.readInt()
+            if (delay < 0) delay = 1
+            else if (delay > 120) delay = 120
 
-                if (room.roomItems.containsKey(itemId)) {
-                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
+            it.options = listOf(delay)
 
-                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
-                }
-            }
-
-            it.items = roomItemsIds.toList()
+            delayState = 0
+            delay *= 10
 
             return true
         }

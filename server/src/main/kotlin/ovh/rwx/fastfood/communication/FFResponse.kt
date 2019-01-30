@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,4 +23,4 @@ import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class FFResponse(vararg val headers: FFOutgoing)
+internal annotation class FFResponse(vararg val headers: FFOutgoing)

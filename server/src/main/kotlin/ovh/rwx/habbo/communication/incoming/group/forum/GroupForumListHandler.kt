@@ -17,10 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication
+package ovh.rwx.habbo.communication.incoming.group.forum
 
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.user.HabboSession
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-internal annotation class Handler(vararg val headers: Incoming)
+@Suppress("unused", "UNUSED_PARAMETER")
+class GroupForumListHandler {
+    @Handler(Incoming.FORUM_LIST)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.authenticated) return
+
+        val mode = habboRequest.readInt()
+        val page = habboRequest.readInt()
+        val amount = habboRequest.readInt()
+
+//        habboSession.sendHabboResponse(Outgoing.FORUM_LIST, listOf<Group>(), mode)
+    }
+}

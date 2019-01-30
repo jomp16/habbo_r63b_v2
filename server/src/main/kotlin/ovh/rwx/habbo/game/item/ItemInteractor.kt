@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,8 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 abstract class ItemInteractor {
+    abstract val interactionType: List<InteractionType>
+
     open fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         roomItem.affectedTiles.forEach { vector2 ->
             val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach

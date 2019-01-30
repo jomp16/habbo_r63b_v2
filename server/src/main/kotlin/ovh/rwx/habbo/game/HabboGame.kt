@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -57,32 +57,32 @@ class HabboGame {
     val antiMutantManager: AntiMutantManager = AntiMutantManager()
 
     init {
-        GlobalScope.launch { landingManager.load() }
-        GlobalScope.launch { roomManager.load() }
-        GlobalScope.launch { itemManager.load() }
-        GlobalScope.launch { catalogManager.load() }
-        GlobalScope.launch { navigatorManager.load() }
-        GlobalScope.launch { permissionManager.load() }
-        GlobalScope.launch { moderationManager.load() }
-        GlobalScope.launch { groupManager.load() }
-        GlobalScope.launch { cameraManager.load() }
-        GlobalScope.launch { achievementManager.load() }
-        GlobalScope.launch { antiMutantManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { landingManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { roomManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { itemManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { catalogManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { navigatorManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { permissionManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { moderationManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { groupManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { cameraManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { achievementManager.load() }
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { antiMutantManager.load() }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { GlobalScope.launch { it.habboSubscription.clearSubscription() } }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.habboSubscription.clearSubscription() } }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch { it.rewardUser() } }
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.rewardUser() } }
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch { it.saveAllQueuedStuffs() } }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.saveAllQueuedStuffs() } }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

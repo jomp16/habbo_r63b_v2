@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,11 +20,14 @@
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@WiredItemInteractor(InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI)
 class WiredTriggerWalksOnFurni(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
     private val roomItemsIds: MutableList<Int> = mutableListOf()
 

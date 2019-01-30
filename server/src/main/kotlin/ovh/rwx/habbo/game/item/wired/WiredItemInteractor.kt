@@ -17,10 +17,12 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication
+package ovh.rwx.habbo.game.item.wired
 
-import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.item.InteractionType
 
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-internal annotation class Handler(vararg val headers: Incoming)
+@Target(AnnotationTarget.CLASS)
+internal annotation class WiredItemInteractor(
+        vararg val interactionType: InteractionType
+)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,12 +24,10 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.database.item.ItemDao
-import ovh.rwx.habbo.game.item.interactors.*
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.item.wired.action.actions.WiredActionShowMessage
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.*
+import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.xml.FurniXMLHandler
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.Room
@@ -39,6 +37,7 @@ import ovh.rwx.habbo.kotlin.urlUserAgent
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.FileOutputStream
+import java.lang.reflect.Constructor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
@@ -52,6 +51,7 @@ class ItemManager {
     val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
+    private val wiredItems: MutableMap<InteractionType, Constructor<out WiredItem>> = mutableMapOf()
 
     fun load() {
         log.info("Loading furnishings...")
@@ -61,6 +61,7 @@ class ItemManager {
         furniInteractor.clear()
         teleportLinks.clear()
         roomTeleportLinks.clear()
+        wiredItems.clear()
 
         if (furniXMLInfos.isEmpty()) {
             urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
@@ -80,20 +81,23 @@ class ItemManager {
 
         teleportLinks.keys.forEach { roomTeleportLinks[it] = ItemDao.getLinkedTeleport(it) }
 
-        furniInteractor[InteractionType.DEFAULT] = DefaultItemInteractor()
-        furniInteractor[InteractionType.MANNEQUIN] = MannequinFurniInteractor()
-        furniInteractor[InteractionType.ONE_WAY_GATE] = OneWayGateFurniInteractor()
-        furniInteractor[InteractionType.ROLLER] = RollerFurniInteractor()
-        furniInteractor[InteractionType.TELEPORT] = TeleportFurniInteractor()
-        furniInteractor[InteractionType.GATE] = GateFurniInteractor()
-        furniInteractor[InteractionType.VENDING_MACHINE] = VendorFurniInteractor()
-        furniInteractor[InteractionType.HABBO_WHEEL] = HabboWheelFurniInteractor()
-        furniInteractor[InteractionType.DICE] = DiceFurniInteractor()
-        val wiredFurniInteractor = WiredFurniInteractor()
+        val interactors = HabboServer.reflections.getSubTypesOf(ItemInteractor::class.java)
 
-        InteractionType.values().filter { it.name.startsWith("WIRED") }.forEach {
-            furniInteractor[it] = wiredFurniInteractor
+        interactors.map { it.getConstructor().newInstance() }.forEach { interactor ->
+            interactor.interactionType.forEach { furniInteractor[it] = interactor }
         }
+
+        val wiredItemsInteractor = HabboServer.reflections.getTypesAnnotatedWith(WiredItemInteractor::class.java)
+
+        wiredItemsInteractor.forEach { wiredItemClasses ->
+            val wiredItemInteractor = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
+
+            wiredItemInteractor.interactionType.forEach {
+                @Suppress("UNCHECKED_CAST")
+                wiredItems[it] = (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
+            }
+        }
+
         val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
 
         if (missingItems.isNotEmpty()) {
@@ -146,6 +150,7 @@ class ItemManager {
         log.info("Loaded {} furnishings!", furnishings.size)
         log.info("Loaded {} teleport links!", teleportLinks.size / 2)
         log.info("Loaded {} item interactors!", furniInteractor.size)
+        log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
@@ -168,17 +173,7 @@ class ItemManager {
 
     fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "")
 
-    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = when (roomItem.furnishing.interactionType) {
-        // triggers
-        InteractionType.WIRED_TRIGGER_ENTER_ROOM -> WiredTriggerEnterRoom(room, roomItem)
-        InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> WiredTriggerSaysSomething(room, roomItem)
-        InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> WiredTriggerWalksOffFurni(room, roomItem)
-        InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI -> WiredTriggerWalksOnFurni(room, roomItem)
-        InteractionType.WIRED_TRIGGER_STATE_CHANGED -> WiredTriggerStateChanged(room, roomItem)
-        // actions
-        InteractionType.WIRED_ACTION_SHOW_MESSAGE -> WiredActionShowMessage(room, roomItem)
-        else -> null
-    }
+    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
 
     // todo: see if I can improve it
     fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?, magicRemove: Boolean = false) {

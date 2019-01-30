@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -105,7 +105,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         }
         // todo: add support to bots
         roomUser.habboSession?.let {
-            room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
+            //            room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
             room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, it.userInformation.figure, it.userInformation.gender, it.userInformation.motto, it.userStats.achievementScore)
             room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomUser))
         }

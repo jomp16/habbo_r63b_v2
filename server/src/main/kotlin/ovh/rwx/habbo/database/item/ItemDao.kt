@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -251,7 +251,7 @@ object ItemDao {
                                 "delay" to it.delay,
                                 "items" to it.items.joinToString(","),
                                 "message" to it.message,
-                                "options1" to it.options.joinToString(","),
+                                "options" to it.options.joinToString(","),
                                 "extradata" to it.extradata,
                                 "id" to it.id
                         )

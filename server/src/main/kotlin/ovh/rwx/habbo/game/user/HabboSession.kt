@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -99,9 +99,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        GlobalScope.launch {
-            habboResponse?.let { channel.writeAndFlush(it) }
-        }
+        habboResponse?.let { channel.writeAndFlush(it) }
     }
 
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
@@ -163,7 +161,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        GlobalScope.launch {
+        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
             habboMessenger = HabboMessenger(this@HabboSession)
             habboSubscription = HabboSubscription(this@HabboSession)
             habboBadge = HabboBadge(this@HabboSession)
