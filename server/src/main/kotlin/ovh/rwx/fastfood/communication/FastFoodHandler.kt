@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -97,7 +97,7 @@ class FastFoodHandler {
     fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
         if (fastFoodMessageResponses.containsKey(ffOutgoing)) {
             val (clazz, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
-            val habboResponse = HabboResponse(ffOutgoing.headerId)
+            val habboResponse = HabboResponse(ffOutgoing.headerId, null)
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

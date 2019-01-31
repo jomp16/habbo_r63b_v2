@@ -94,6 +94,14 @@ class RoomUser(
 
             field = newValue
         }
+    var effect: RoomUserEffect? = null
+        set(newValue) {
+            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
+
+            field = newValue
+            lastEffect = newValue
+        }
+    private var lastEffect: RoomUserEffect? = null
 
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         statusMap[key] = Pair(
@@ -130,6 +138,10 @@ class RoomUser(
                     carryHandItem(0)
                 }
             }
+        }
+
+        effect?.let {
+            if (it.hasEffect && it.duration-- <= 0) effect = null
         }
 
         if (cycles > 0) {
@@ -255,6 +267,7 @@ class RoomUser(
 
     fun stopWalking() {
         path = mutableListOf()
+        stepSeatedVector3 = null
         objectiveVector2 = null
         ignoreBlocking = false
 

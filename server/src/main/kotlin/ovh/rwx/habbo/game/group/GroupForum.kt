@@ -17,21 +17,26 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.game.group
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.IHabboResponseSerialize
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserActionsResponse {
-    @Response(Outgoing.ROOM_USER_ACTION, Outgoing.ROOM_USER_DANCE, Outgoing.ROOM_USER_HANDITEM, Outgoing.ROOM_USER_TYPING, Outgoing.ROOM_USER_EFFECT)
-    fun response(habboResponse: HabboResponse, virtualId: Int, id: Int) {
+class GroupForum(private val group: Group) : IHabboResponseSerialize {
+    override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            writeInt(virtualId)
-            writeInt(id)
-
-            if (habboResponse.outgoing == Outgoing.ROOM_USER_EFFECT) writeInt(0)
+            writeInt(group.groupData.id)
+            writeUTF(group.groupData.name)
+            writeUTF(group.groupData.description)
+            writeUTF(group.groupData.badge)
+            writeInt(0) // todo: total threads
+            writeInt(0) // todo: leaderboard score
+            writeInt(0) // TODO: keep a count of all messages (threads+replies)
+            writeInt(0) //unread messages
+            writeInt(0) //last message id
+            writeInt(0) //last message author id
+            writeUTF("") //last message author name
+            writeInt(0) //last message time
         }
     }
 }

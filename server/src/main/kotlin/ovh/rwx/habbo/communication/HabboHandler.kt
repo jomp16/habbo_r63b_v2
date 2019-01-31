@@ -58,6 +58,7 @@ class HabboHandler {
     fun load() {
         log.info("Loading handlers...")
 
+        instances.clear()
         messageHandlers.clear()
         messageResponses.clear()
 
@@ -214,7 +215,7 @@ class HabboHandler {
 
             val (clazz, methodHandle) = pair
 
-            val habboResponse = HabboResponse(headerId)
+            val habboResponse = HabboResponse(headerId, outgoing)
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

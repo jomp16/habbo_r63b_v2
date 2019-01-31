@@ -82,6 +82,7 @@ class WiredActionMoveRotate(room: Room, roomItem: RoomItem) : WiredAction(room, 
     override fun setData(habboRequest: HabboRequest): Boolean {
         roomItem.wiredData?.let {
             roomItemsIds.clear()
+
             habboRequest.readInt() // useless?
             direction = DirectionState.getDirectionState(habboRequest.readInt())
             rotation = RotationState.getRotationState(habboRequest.readInt())
