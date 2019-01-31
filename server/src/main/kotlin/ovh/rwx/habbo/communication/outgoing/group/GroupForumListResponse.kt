@@ -17,24 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.group.forum
+package ovh.rwx.habbo.communication.outgoing.group
 
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.group.Group
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class GroupForumListHandler {
-    @Handler(Incoming.FORUM_LIST)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
+class GroupForumListResponse {
+    @Response(Outgoing.FORUM_LIST)
+    fun response(habboResponse: HabboResponse, groups: List<Group>, mode: Int) {
+        habboResponse.apply {
+            writeInt(mode)
+            writeInt(groups.size)
+            writeInt(0) // ???
+            writeInt(groups.size)
 
-        val mode = habboRequest.readInt()
-        val page = habboRequest.readInt()
-        val amount = habboRequest.readInt()
-
-        habboSession.sendHabboResponse(Outgoing.FORUM_LIST, habboSession.groups.chunked(amount)[page], mode)
+            groups.forEach { serialize(it.forum) }
+        }
     }
 }

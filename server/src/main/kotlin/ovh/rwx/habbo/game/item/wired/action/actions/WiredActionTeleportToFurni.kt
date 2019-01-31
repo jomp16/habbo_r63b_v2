@@ -28,6 +28,8 @@ import ovh.rwx.habbo.game.item.wired.action.WiredAction
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomUserEffect
+import ovh.rwx.habbo.util.Vector3
 
 @WiredItemInteractor(InteractionType.WIRED_ACTION_TELEPORT_TO)
 class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
@@ -64,9 +66,7 @@ class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(r
     private fun handleThing(roomUser: RoomUser?) {
         if (roomUser == null) return
 
-        TODO("IMPLEMENT THIS PIECE OF FUCKING SHIT!")
-
-        /*val roomItemId = roomItemsIds.random()
+        val roomItemId = roomItemsIds.random()
 
         if (!room.roomItems.containsKey(roomItemId)) return
 
@@ -78,25 +78,33 @@ class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(r
 
         val affectedTiles = roomItem1.affectedTiles
 
-        (0 until affectedTiles.size - 1).forEach {
+        affectedTiles.forEach { _ ->
             val tile = affectedTiles.random()
 
             if (!room.roomGamemap.isBlocked(tile)) {
+                val newPosition = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
+
                 roomUser.stopWalking()
 
-                roomUser.currentVector3 = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
+                room.roomGamemap.updateRoomUserMovement(roomUser, roomUser.currentVector3.vector2, newPosition.vector2)
 
-                roomUser.updateNeeded = true
+                roomUser.effect = RoomUserEffect(4, 5)
+                roomUser.headRotation = roomItem1.rotation
+                roomUser.bodyRotation = roomItem1.rotation
+                roomUser.currentVector3 = newPosition
+                roomUser.addUserStatuses(roomItem1)
 
                 roomItem1.onUserWalksOn(roomUser, true)
 
                 return@forEach
             }
-        }*/
+        }
     }
 
     override fun setData(habboRequest: HabboRequest): Boolean {
         roomItem.wiredData?.let {
+            roomItemsIds.clear()
+
             habboRequest.readInt() // useless?
             habboRequest.readUTF() // useless
 
@@ -112,6 +120,7 @@ class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(r
                 }
             }
 
+            delay = habboRequest.readInt()
 
             if (delay < 0) delay = 0
             if (delay > 20) delay = 20

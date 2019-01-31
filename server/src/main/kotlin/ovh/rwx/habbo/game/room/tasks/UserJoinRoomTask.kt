@@ -99,6 +99,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
                 if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
                 if (it.handItem > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, it.virtualID, it.handItem)
+                it.effect?.let { effect -> habboSession.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, it.virtualID, effect.effectId) }
             }
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)

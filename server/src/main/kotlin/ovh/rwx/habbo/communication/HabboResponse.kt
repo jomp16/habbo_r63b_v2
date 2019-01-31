@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,9 +23,10 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused")
-class HabboResponse(val headerId: Int, val keepCopy: Boolean = false) : AutoCloseable {
+class HabboResponse(val headerId: Int, val outgoing: Outgoing?, val keepCopy: Boolean = false) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
     val byteBuf: ByteBuf

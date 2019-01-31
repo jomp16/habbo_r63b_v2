@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -102,7 +102,7 @@ class MessengerChatHandler {
                     // one line response messages
                     val args1 = message.split("(?<!\\\\),".toRegex())
                     val header = args1[0].substring(2).toInt()
-                    val habboResponse = HabboResponse(header)
+                    val habboResponse = HabboResponse(header, null)
 
                     habboResponse.apply {
                         args1.drop(1).forEach {

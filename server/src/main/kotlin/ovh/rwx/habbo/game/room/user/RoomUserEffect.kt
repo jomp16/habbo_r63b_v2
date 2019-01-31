@@ -17,14 +17,11 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.group
+package ovh.rwx.habbo.game.room.user
 
-import ovh.rwx.habbo.database.group.GroupDao
-
-class Group(val groupData: GroupData) {
-    val members: MutableSet<GroupMember> by lazy { HashSet(GroupDao.getGroupMembers(groupData.id)) }
-    val requests: MutableSet<GroupRequest> by lazy { HashSet(GroupDao.getGroupRequests(groupData.id)) }
-    val admins: List<GroupMember>
-        get() = members.filter { it.rank == 1 || it.rank == 2 }
-    val forum: GroupForum by lazy { GroupForum(this) }
+data class RoomUserEffect(
+        val effectId: Int,
+        var duration: Int
+) {
+    val hasEffect: Boolean by lazy { duration > 0 }
 }
