@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,7 +36,7 @@ dependencies {
     compile "org.apache.commons:commons-lang3:$commons_lang_version"
     compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
-    compile 'commons-codec:commons-codec:1.11'
+    compile 'commons-codec:commons-codec:1.12'
 }
 
 buildConfig {
