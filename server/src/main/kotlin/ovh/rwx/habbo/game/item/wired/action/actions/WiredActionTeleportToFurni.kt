@@ -66,11 +66,11 @@ class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(r
     private fun handleThing(roomUser: RoomUser?) {
         if (roomUser == null) return
 
-        val roomItemId = roomItemsIds.random()
+        val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
+
+        val roomItemId = if (roomItem != null) roomItemsIds.minus(roomItem.id).random() else roomItemsIds.random()
 
         if (!room.roomItems.containsKey(roomItemId)) return
-
-        val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
 
         roomItem?.onUserWalksOff(roomUser, true)
 
