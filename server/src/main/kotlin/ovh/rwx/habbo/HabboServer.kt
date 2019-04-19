@@ -26,6 +26,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.andrewoma.kwery.core.Session
 import com.github.andrewoma.kwery.core.SessionFactory
 import com.github.andrewoma.kwery.core.dialect.MysqlDialect
+import com.github.andrewoma.kwery.core.interceptor.LoggingInterceptor
 import com.zaxxer.hikari.HikariDataSource
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
@@ -113,7 +114,7 @@ object HabboServer : AutoCloseable {
         log.info("Initializing database...")
 
         hikariDataSource = HikariDataSource(habboConfig.databaseConfig.hikariConfig)
-        databaseFactory = SessionFactory(hikariDataSource, MysqlDialect())
+        databaseFactory = SessionFactory(hikariDataSource, MysqlDialect(), LoggingInterceptor())
 
         log.info("Database initialized!")
         log.info("Cleaning up some things in database...")
@@ -217,12 +218,8 @@ object HabboServer : AutoCloseable {
         }
     }
 
-    inline fun <R> database(rollbackTransaction: Boolean = false, crossinline task: Session.() -> R): R = databaseFactory.use { session ->
-        session.transaction { transaction ->
-            transaction.rollbackOnly = rollbackTransaction
-
-            session.task()
-        }
+    inline fun <R> database(crossinline task: Session.() -> R): R = databaseFactory.use { session ->
+        session.task()
     }
 
     override fun close() {

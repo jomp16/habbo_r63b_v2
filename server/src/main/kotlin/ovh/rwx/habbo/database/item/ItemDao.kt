@@ -81,7 +81,8 @@ object ItemDao {
                         it.string("extra_data"),
                         Vector3(it.int("x"), it.int("y"), it.double("z")),
                         it.int("rot"),
-                        it.string("wall_pos")
+                        it.string("wall_pos"),
+                        it.boolean("is_limited")
                 )
             }.associateBy { it.id }
         }
@@ -98,7 +99,8 @@ object ItemDao {
                         it.int("id"),
                         it.int("user_id"),
                         it.string("item_name"),
-                        it.string("extra_data")
+                        it.string("extra_data"),
+                        it.boolean("is_limited")
                 )
             }.associateBy { it.id }
         }
@@ -158,12 +160,12 @@ object ItemDao {
         }
     }
 
-    fun getLinkedTeleport(teleportId: Int): Int = HabboServer.database {
+    fun getLinkedTeleport(teleportIds: Set<Int>): List<Pair<Int, Int>> = HabboServer.database {
         select(javaClass.classLoader.getResource("sql/items/teleport/select_room_id_from_linked_teleport.sql").readText(),
                 mapOf(
-                        "teleport_id" to teleportId
+                        "teleport_ids" to teleportIds
                 )
-        ) { it.intOrNull("room_id") ?: 0 }.first()
+        ) { it.int("teleport_id") to (it.intOrNull("room_id") ?: 0) }
     }
 
     fun deleteItems(itemIds: List<Int>) {
@@ -260,14 +262,14 @@ object ItemDao {
         }
     }
 
-    fun addItems(userId: Int, furnishings: List<Furnishing>, extraDatas: List<String>): List<UserItem> {
+    fun addItems(userId: Int, itemPurchaseDatas: List<ItemPurchaseData>): List<UserItem> {
         val itemIds = HabboServer.database {
             batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/items/item/insert_item.sql").readText(),
-                    furnishings.mapIndexed { i, (itemName) ->
+                    itemPurchaseDatas.map { itemPurchaseData ->
                         mapOf(
                                 "user_id" to userId,
-                                "item_name" to itemName,
-                                "extra_data" to extraDatas[i],
+                                "item_name" to itemPurchaseData.furnishing.itemName,
+                                "extra_data" to itemPurchaseData.extraData,
                                 "wall_pos" to ""
                         )
                     }
@@ -275,12 +277,12 @@ object ItemDao {
         }
 
         return itemIds.mapIndexed { i, id ->
-            UserItem(id, userId, furnishings[i].itemName, extraDatas[i])
+            UserItem(id, userId, itemPurchaseDatas[i].furnishing.itemName, itemPurchaseDatas[i].extraData, itemPurchaseDatas[i].limited)
         }
     }
 
     fun addGiftItem(userId: Int, giftFurnishing: Furnishing, amount: Int, giftExtradata: String, furnishing: Furnishing, extraData: String, limitedNumber: Int = 0, limitedTotal: Int = 0): UserItem {
-        val giftUserItem = addItems(userId, listOf(giftFurnishing), listOf(giftExtradata)).first()
+        val giftUserItem = addItems(userId, listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0))).first()
 
         if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
 
@@ -309,7 +311,8 @@ object ItemDao {
                         it.int("id"),
                         it.string("item_name"),
                         it.int("amount"),
-                        it.string("extradata")
+                        it.string("extradata"),
+                        it.boolean("is_limited")
                 )
             }
         }.firstOrNull()
@@ -348,7 +351,8 @@ object ItemDao {
                         it.id,
                         it.userId,
                         it.itemName,
-                        it.extraData
+                        it.extraData,
+                        it.limited
                 )
             })
         }
@@ -356,3 +360,9 @@ object ItemDao {
         removeRoomItems(roomItems)
     }
 }
+
+data class ItemPurchaseData(
+        val furnishing: Furnishing,
+        val extraData: String,
+        val limited: Boolean
+)

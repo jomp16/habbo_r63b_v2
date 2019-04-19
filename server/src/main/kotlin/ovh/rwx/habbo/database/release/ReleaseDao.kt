@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,25 +23,15 @@ import ovh.rwx.habbo.HabboServer
 
 object ReleaseDao {
     fun getReleases(): List<String> = HabboServer.database {
-        select("SELECT `release_name` FROM `releases`") {
+        select(javaClass.classLoader.getResource("sql/release/select_releases.sql").readText()) {
             it.string("release_name")
         }
     }
 
-    fun getIncomingHeaders(): List<ReleaseHeaderInfo> = HabboServer.database {
-        select("SELECT * FROM `releases_incoming_headers`") {
+    fun getHeaders(): List<ReleaseHeaderInfo> = HabboServer.database {
+        select(javaClass.classLoader.getResource("sql/release/select_headers.sql").readText()) {
             ReleaseHeaderInfo(
-                    it.string("release_name"),
-                    it.string("name"),
-                    it.intOrNull("header") ?: 0,
-                    it.stringOrNull("override_method")
-            )
-        }
-    }
-
-    fun getOutgoingHeaders(): List<ReleaseHeaderInfo> = HabboServer.database {
-        select("SELECT * FROM `releases_outgoing_headers`") {
-            ReleaseHeaderInfo(
+                    ReleaseType.valueOf(it.string("type").toUpperCase()),
                     it.string("release_name"),
                     it.string("name"),
                     it.intOrNull("header") ?: 0,
@@ -52,8 +42,14 @@ object ReleaseDao {
 }
 
 data class ReleaseHeaderInfo(
+        val type: ReleaseType,
         val release: String,
         val name: String,
         val header: Int,
         val overrideMethod: String?
 )
+
+enum class ReleaseType {
+    INCOMING,
+    OUTGOING
+}

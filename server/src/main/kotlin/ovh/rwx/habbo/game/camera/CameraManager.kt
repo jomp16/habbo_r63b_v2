@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.camera.CameraDao
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.user.HabboSession
 import java.awt.image.BufferedImage
 import java.io.File
@@ -148,7 +149,7 @@ class CameraManager {
                 "t" to "${TimeUnit.SECONDS.toMillis(createdAt.atZone(ZoneOffset.systemDefault()).toEpochSecond())}"
         )
         val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
-        val userItem = ItemDao.addItems(habboSession.userInformation.id, listOf(photoFurnishing), listOf(jsonExtradata)).first()
+        val userItem = ItemDao.addItems(habboSession.userInformation.id, listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, false))).first()
 
         habboSession.habboInventory.addItems(listOf(userItem))
 

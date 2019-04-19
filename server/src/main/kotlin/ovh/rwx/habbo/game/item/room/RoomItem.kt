@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,9 +35,19 @@ import ovh.rwx.habbo.util.Vector3
 import java.io.Serializable
 import java.util.*
 
-data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName: String, var extraData: String, var position: Vector3, var rotation: Int, var wallPosition: String) : IHabboResponseSerialize, Serializable {
+data class RoomItem(
+        val id: Int,
+        var userId: Int,
+        var roomId: Int,
+        val itemName: String,
+        var extraData: String,
+        var position: Vector3,
+        var rotation: Int,
+        var wallPosition: String,
+        val limited: Boolean
+) : IHabboResponseSerialize, Serializable {
     var magicRemove: Boolean = false
-    private val limitedItemData: LimitedItemData? = ItemDao.getLimitedData(id)
+    private val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
     val wiredData: WiredData? by lazy { ItemDao.getWiredData(id) }
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
@@ -49,7 +59,7 @@ data class RoomItem(val id: Int, var userId: Int, var roomId: Int, val itemName:
                 if (extraData.isBlank()) {
                     extraData = "0"
 
-                    update(true, true)
+                    update(updateDb = true, updateClient = true)
                 }
 
                 return furnishing.stackHeight[extraData.toInt()]
