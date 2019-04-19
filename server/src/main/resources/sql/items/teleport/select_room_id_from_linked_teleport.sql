@@ -1,4 +1,4 @@
-SELECT `room_id`
+SELECT `id` as `teleport_id`, `room_id`
 FROM `items`
-WHERE `id` = :teleport_id
+WHERE `id` in (:teleport_ids)
 LIMIT 1

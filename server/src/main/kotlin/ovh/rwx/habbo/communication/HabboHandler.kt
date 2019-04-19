@@ -30,6 +30,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.release.ReleaseDao
 import ovh.rwx.habbo.database.release.ReleaseHeaderInfo
+import ovh.rwx.habbo.database.release.ReleaseType
 import ovh.rwx.habbo.game.user.HabboSession
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -41,10 +42,8 @@ class HabboHandler {
     private val messageHandlers: MutableMap<Incoming, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
     private val messageResponses: MutableMap<Outgoing, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
-    @Suppress("MemberVisibilityCanBePrivate")
-    val incomingHeaders: List<ReleaseHeaderInfo> by lazy { ReleaseDao.getIncomingHeaders() }
-    @Suppress("MemberVisibilityCanBePrivate")
-    val outgoingHeaders: List<ReleaseHeaderInfo> by lazy { ReleaseDao.getOutgoingHeaders() }
+    private var incomingHeaders: List<ReleaseHeaderInfo> = emptyList()
+    private var outgoingHeaders: List<ReleaseHeaderInfo> = emptyList()
 
     val releases: MutableSet<String> by lazy { HashSet(ReleaseDao.getReleases()) }
     val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = mutableMapOf()
@@ -61,6 +60,11 @@ class HabboHandler {
         instances.clear()
         messageHandlers.clear()
         messageResponses.clear()
+
+        val headers = ReleaseDao.getHeaders().groupBy { it.type }
+
+        incomingHeaders = headers[ReleaseType.INCOMING] ?: error("Couldn't find the incoming headers!")
+        outgoingHeaders = headers[ReleaseType.OUTGOING] ?: error("Couldn't find the outgoing headers!")
 
         if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
             releases.forEach { release ->

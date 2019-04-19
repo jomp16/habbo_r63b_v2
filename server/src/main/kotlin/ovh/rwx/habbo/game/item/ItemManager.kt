@@ -79,7 +79,7 @@ class ItemManager {
         newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
         teleportLinks += ItemDao.getTeleportLinks()
 
-        teleportLinks.keys.forEach { roomTeleportLinks[it] = ItemDao.getLinkedTeleport(it) }
+        roomTeleportLinks.putAll(ItemDao.getLinkedTeleport(teleportLinks.keys))
 
         val interactors = HabboServer.reflections.getSubTypesOf(ItemInteractor::class.java)
 
@@ -171,7 +171,7 @@ class ItemManager {
         return list
     }
 
-    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "")
+    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "", userItem.limited)
 
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
 

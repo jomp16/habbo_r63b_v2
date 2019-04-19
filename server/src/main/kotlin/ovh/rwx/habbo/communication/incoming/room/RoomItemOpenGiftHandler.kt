@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.item.ItemDao
-import ovh.rwx.habbo.game.item.Furnishing
+import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -62,21 +62,19 @@ class RoomItemOpenGiftHandler {
         val shouldAddToRoom = giftData.furnishing.type == ItemType.FLOOR && giftData.amount == 1
 
         if (shouldAddToRoom) {
-            val roomItem = RoomItem(giftRoomItem.id, giftRoomItem.userId, giftRoomItem.roomId, giftData.itemName, giftData.extradata, Vector3(0, 0, 0.toDouble()), 0, "")
+            val roomItem = RoomItem(giftRoomItem.id, giftRoomItem.userId, giftRoomItem.roomId, giftData.itemName, giftData.extradata, Vector3(0, 0, 0.toDouble()), 0, "", giftData.limited)
 
             habboSession.currentRoom!!.setFloorItem(roomItem, giftRoomItem.position.vector2, giftRoomItem.rotation, habboSession.roomUser)
         } else if (giftData.furnishing.interactionType == InteractionType.TELEPORT) {
             // todo: add custom item types here, like teleports, dimmers, etc
             // either gift isn't a floor item, or amount > 1
-            val furnishings = mutableListOf<Furnishing>()
-            val extraDatas = mutableListOf<String>()
+            val itemPurchaseDatas = mutableListOf<ItemPurchaseData>()
 
             repeat(giftData.amount) {
-                furnishings += giftData.furnishing
-                extraDatas += giftData.extradata
+                itemPurchaseDatas += ItemPurchaseData(giftData.furnishing, giftData.extradata, giftData.limited)
             }
 
-            habboSession.habboInventory.addItems(ItemDao.addItems(habboSession.userInformation.id, furnishings, extraDatas))
+            habboSession.habboInventory.addItems(ItemDao.addItems(habboSession.userInformation.id, itemPurchaseDatas))
         }
 
         habboSession.sendHabboResponse(Outgoing.ROOM_ITEM_OPEN_GIFT_RESULT, giftRoomItem.id, giftRoomItem.extraData, giftRoomItem.furnishing, shouldAddToRoom)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErr
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -149,7 +150,7 @@ class CatalogManager {
                 }
             }
         }
-        val userItems = ItemDao.addItems(habboSession.userInformation.id, furnishingToPurchase.map { it.furnishing }, furnishingToPurchase.map { it.extraData })
+        val userItems = ItemDao.addItems(habboSession.userInformation.id, furnishingToPurchase.map { ItemPurchaseData(it.furnishing, it.extraData, it.limitedNumber > 0) })
 
         furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
             ItemDao.addLimitedItem(userItems[furnishingToPurchase.indexOf(it)].id, it.limitedNumber, catalogItem.limitedTotal)
