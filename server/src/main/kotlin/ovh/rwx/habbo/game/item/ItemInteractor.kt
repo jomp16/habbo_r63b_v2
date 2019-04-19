@@ -32,7 +32,7 @@ abstract class ItemInteractor {
 
             if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomItem1.extraData == "0") {
                 roomItem1.extraData = "1"
-                roomItem1.update(false, true)
+                roomItem1.update(updateDb = false, updateClient = true)
             }
         }
     }
@@ -43,7 +43,7 @@ abstract class ItemInteractor {
 
             if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomItem1.extraData == "1") {
                 roomItem1.extraData = "0"
-                roomItem1.update(false, true)
+                roomItem1.update(updateDb = false, updateClient = true)
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,7 +30,7 @@ class HandshakeClientLocalizationResponse {
         habboResponse.apply {
             writeInt(localizations.size)
 
-            localizations.forEach { key, value ->
+            localizations.forEach { (key, value) ->
                 writeUTF(key)
                 writeUTF(value)
             }

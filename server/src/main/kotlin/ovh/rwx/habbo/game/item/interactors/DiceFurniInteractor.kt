@@ -52,10 +52,10 @@ class DiceFurniInteractor : ItemInteractor() {
             if (roomItem.extraData != "-1") {
                 if (request == -1) {
                     roomItem.extraData = "0"
-                    roomItem.update(true, true)
+                    roomItem.update(updateDb = true, updateClient = true)
                 } else {
                     roomItem.extraData = "-1"
-                    roomItem.update(false, true)
+                    roomItem.update(updateDb = false, updateClient = true)
                     roomItem.requestCycles(4)
                 }
             }
@@ -71,6 +71,6 @@ class DiceFurniInteractor : ItemInteractor() {
 
         roomItem.extraData = Utils.randInt(1 until 6).toString()
 
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 }

@@ -66,7 +66,7 @@ class TeleportFurniInteractor : ItemInteractor() {
             roomUser.moveTo(roomItem.position.vector2, ignoreBlocking = true)
 
             roomItem.extraData = "1"
-            roomItem.update(false, true)
+            roomItem.update(updateDb = false, updateClient = true)
             roomItem.requestCycles(2)
         }
 
@@ -123,7 +123,7 @@ class TeleportFurniInteractor : ItemInteractor() {
 
                             if (targetRoomItem.extraData != "2") {
                                 targetRoomItem.extraData = "2"
-                                targetRoomItem.update(false, true)
+                                targetRoomItem.update(updateDb = false, updateClient = true)
                                 targetRoomItem.requestCycles(2)
                             }
 
@@ -163,7 +163,7 @@ class TeleportFurniInteractor : ItemInteractor() {
 
         if (roomItem.extraData != extraData) {
             roomItem.extraData = extraData
-            roomItem.update(false, true)
+            roomItem.update(updateDb = false, updateClient = true)
         }
     }
 }

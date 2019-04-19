@@ -194,7 +194,7 @@ class RoomUser(
                     }
 
                     if (vector2 == room.roomModel.doorVector3.vector2) {
-                        room.removeUser(this, true, false)
+                        room.removeUser(this, notifyClient = true, kickNotification = false)
 
                         return
                     }

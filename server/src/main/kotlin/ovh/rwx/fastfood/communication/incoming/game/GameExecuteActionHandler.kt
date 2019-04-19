@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,9 +29,8 @@ class GameExecuteActionHandler {
     @FFHandler(FFIncoming.EXECUTE_ACTION)
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         if (!fastFoodSession.authenticated) return
-        val action = habboRequest.readInt()
 
-        when (action) {
+        when (habboRequest.readInt()) {
             0 -> {
                 // drop food
             }

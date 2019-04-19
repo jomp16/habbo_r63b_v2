@@ -49,7 +49,7 @@ class RoomItemOpenGiftHandler {
         } else {
             // normal gift, do a magic remove and then open box
             giftRoomItem.magicRemove = true
-            giftRoomItem.update(false, true)
+            giftRoomItem.update(updateDb = false, updateClient = true)
 
             HabboServer.serverScheduledExecutor.schedule({ openBox(habboSession, giftRoomItem) }, 3, TimeUnit.SECONDS)
         }

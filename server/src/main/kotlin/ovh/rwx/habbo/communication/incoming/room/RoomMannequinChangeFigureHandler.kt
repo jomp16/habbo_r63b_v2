@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -47,6 +47,6 @@ class RoomMannequinChangeFigureHandler {
 
         roomItem.extraData = split[0] + 7.toChar() + split[1] + 7.toChar() + split[2]
 
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 }

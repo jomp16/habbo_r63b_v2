@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -34,7 +34,7 @@ class LandingLoadWidgetHandler {
         var campaignName = ""
 
         campaignString.split(';').last().let {
-            if (!it.isEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
+            if (it.isNotEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
         }
 
         habboSession.sendHabboResponse(Outgoing.CAMPAIGN, campaignString, campaignName)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,7 @@ data class RoomDimmer(
 
         roomItem.extraData = generateExtraData()
 
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 
     fun updatePreset(preset: Int, colorCode: String, intensity: Int, backgroundOnly: Boolean) {
@@ -46,7 +46,7 @@ data class RoomDimmer(
         currentPreset = preset
 
         roomItem.extraData = generateExtraData()
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 
     companion object {

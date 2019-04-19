@@ -48,7 +48,7 @@ class DefaultItemInteractor : ItemInteractor() {
             room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser, roomItem.totalHeight)
         }
 
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
 
         if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }

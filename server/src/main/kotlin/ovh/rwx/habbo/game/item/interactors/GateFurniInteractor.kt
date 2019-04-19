@@ -40,7 +40,7 @@ class GateFurniInteractor : ItemInteractor() {
 
             roomItem.extraData = if (roomItem.extraData == "0") "1" else "0"
 
-            roomItem.update(true, true)
+            roomItem.update(updateDb = true, updateClient = true)
         }
 
         if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)

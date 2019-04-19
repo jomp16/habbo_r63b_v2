@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,10 +26,10 @@ processResources {
 clean {
     doLast {
         //noinspection GrUnresolvedAccess
-        jar.archivePath.delete()
+        jar.archiveFile.delete()
 
         //noinspection GrUnresolvedAccess
-        file("$jar.destinationDir/lib/$project.name").deleteDir()
+        file("$jar.destinationDirectory/lib/$project.name").deleteDir()
     }
 }
 
@@ -46,12 +46,12 @@ task copyLibs(type: Copy) {
     }
     into {
         //noinspection GrUnresolvedAccess
-        "$jar.destinationDir/lib/$project.name"
+        "$jar.destinationDirectory/lib/$project.name"
     }
 }
 
 jar {
-    destinationDir = file("$rootDir/plugins")
+    destinationDirectory = file("$rootDir/plugins")
 
     //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
     dependsOn copyLibs

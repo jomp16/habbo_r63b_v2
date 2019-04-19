@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -85,7 +85,7 @@ class WiredHandler {
         if (wiredItem.roomItem.extraData == "1") return
 
         wiredItem.roomItem.extraData = "1"
-        wiredItem.roomItem.update(false, true)
+        wiredItem.roomItem.update(updateDb = false, updateClient = true)
         wiredItem.roomItem.requestCycles(1)
     }
 
@@ -96,7 +96,7 @@ class WiredHandler {
         val wiredItem = wiredStack[vector2]!![roomItem.id]!!
 
         if (wiredItem.setData(habboRequest)) {
-            roomItem.update(true, false)
+            roomItem.update(updateDb = true, updateClient = false)
 
             return true
         }
