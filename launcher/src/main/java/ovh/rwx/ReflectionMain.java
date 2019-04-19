@@ -20,6 +20,7 @@
 package ovh.rwx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import ovh.rwx.habbo.HabboServer;
 import ovh.rwx.habbo.config.HabboConfig;
@@ -29,9 +30,9 @@ import java.io.File;
 @SuppressWarnings("unchecked")
 class ReflectionMain {
     public static void main(String[] args) throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new KotlinModule());
+        final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory()).registerModule(new KotlinModule());
         //noinspection unused
-        final HabboConfig habboConfig = objectMapper.readValue(new File("config.json"), HabboConfig.class);
+        final HabboConfig habboConfig = objectMapper.readValue(new File("config.yaml"), HabboConfig.class);
 
         // REFLECTION: LOAD CLASS HabboServer DIRECTLY
         final Class<HabboServer> habboServerClass = (Class<HabboServer>) Class.forName("ovh.rwx.habbo.HabboServer");

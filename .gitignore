@@ -10,6 +10,7 @@ out/
 
 # Config, they contains sensitive info about my stuffs
 config.json
+config.yaml
 
 # MOTD
 motd/
