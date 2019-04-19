@@ -233,7 +233,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (!bypassAuth && room == currentRoom) return
         val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
-        currentRoom?.removeUser(roomUser, false, false)
+        currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
@@ -296,7 +296,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     override fun close() {
         if (authenticated) {
-            currentRoom?.removeUser(roomUser, false, false)
+            currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
 
             userStats.lastOnlineDatabase = LocalDateTime.now()
 

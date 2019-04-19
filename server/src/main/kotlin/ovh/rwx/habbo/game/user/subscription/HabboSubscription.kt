@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -82,7 +82,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
             if (days == 0) days = 1
         }
 
-        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, HabboSubscription.CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
+        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
         habboSession.sendHabboResponse(Outgoing.USER_RIGHTS, if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0, habboSession.userInformation.rank, habboSession.userInformation.ambassador)
     }
 

@@ -50,7 +50,7 @@ class HabboWheelFurniInteractor : ItemInteractor() {
 
         if (roomItem.extraData != "-1") {
             roomItem.extraData = "-1"
-            roomItem.update(false, true)
+            roomItem.update(updateDb = false, updateClient = true)
             roomItem.requestCycles(10)
         }
 
@@ -62,6 +62,6 @@ class HabboWheelFurniInteractor : ItemInteractor() {
 
         roomItem.extraData = Utils.randInt(1 until 10).toString()
 
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 }

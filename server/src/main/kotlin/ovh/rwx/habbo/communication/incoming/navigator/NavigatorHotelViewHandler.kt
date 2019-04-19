@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,6 +32,6 @@ class NavigatorHotelViewHandler {
         if (!habboSession.authenticated) return
 
         if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
-        else habboSession.currentRoom?.removeUser(habboSession.roomUser, true, false)
+        else habboSession.currentRoom?.removeUser(habboSession.roomUser, notifyClient = true, kickNotification = false)
     }
 }

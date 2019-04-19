@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,6 +26,6 @@ enum class RoomState(val state: Int) {
     HIDDEN(3);
 
     companion object {
-        fun fromIntValue(state: Int): RoomState = RoomState.values().firstOrNull { it.state == state } ?: OPEN
+        fun fromIntValue(state: Int): RoomState = values().firstOrNull { it.state == state } ?: OPEN
     }
 }

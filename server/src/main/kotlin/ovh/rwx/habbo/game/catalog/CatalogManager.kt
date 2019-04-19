@@ -224,7 +224,7 @@ class CatalogManager {
 
         habboSession.updateAllCurrencies()
 
-        if (!catalogItem.badge.isEmpty()) habboSession.habboBadge.addBadge(catalogItem.badge)
+        if (catalogItem.badge.isNotEmpty()) habboSession.habboBadge.addBadge(catalogItem.badge)
 
         if (catalogItem.limited) {
             // send new data to everyone logged in

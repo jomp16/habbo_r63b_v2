@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,7 +32,8 @@ class CatalogRecyclerRewardsResponse {
             writeInt(recyclerRewards.size) // levels
             recyclerRewards.entries.sortedByDescending { it.key }.forEach { entry ->
                 writeInt(entry.key) // level
-                writeInt(HabboServer.habboConfig.recyclerConfig.odds[entry.key]!!) // odds
+                writeInt(HabboServer.habboConfig.recyclerConfig.odds[entry.key]
+                        ?: error("Can't find the odds!")) // odds
                 writeInt(entry.value.size)
 
                 entry.value.forEach { s ->

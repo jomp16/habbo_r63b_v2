@@ -52,7 +52,7 @@ class OneWayGateFurniInteractor : ItemInteractor() {
                 it.walkingBlocked = false
 
                 roomItem.extraData = "0"
-                roomItem.update(false, true)
+                roomItem.update(updateDb = false, updateClient = true)
             }
         }
     }
@@ -74,7 +74,7 @@ class OneWayGateFurniInteractor : ItemInteractor() {
         if (roomItem.interactingUsers.isEmpty()) {
             roomItem.interactingUsers[1] = roomUser
             roomItem.extraData = "1"
-            roomItem.update(false, true)
+            roomItem.update(updateDb = false, updateClient = true)
 
             roomUser.walkingBlocked = true
             roomUser.moveTo(roomItem.getBehindPosition(), ignoreBlocking = true)

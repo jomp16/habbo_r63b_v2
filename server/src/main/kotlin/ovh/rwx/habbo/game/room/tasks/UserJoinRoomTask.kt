@@ -46,7 +46,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
                         teleportItem.interactingUsers[2] = roomUser
                         teleportItem.extraData = "2"
-                        teleportItem.update(false, true)
+                        teleportItem.update(updateDb = false, updateClient = true)
                         teleportItem.requestCycles(2)
                     }
 

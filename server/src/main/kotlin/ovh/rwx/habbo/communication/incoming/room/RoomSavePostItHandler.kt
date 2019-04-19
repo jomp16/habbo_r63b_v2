@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -43,6 +43,6 @@ class RoomSavePostItHandler {
         if (roomItem.extraData == extraData) return
 
         roomItem.extraData = extraData
-        roomItem.update(true, true)
+        roomItem.update(updateDb = true, updateClient = true)
     }
 }

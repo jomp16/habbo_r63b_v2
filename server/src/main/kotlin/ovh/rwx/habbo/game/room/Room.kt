@@ -298,7 +298,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
             roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             if (rollerId == -1 || roomItem.rotation != oldRotation) {
-                roomItem.update(true, true)
+                roomItem.update(updateDb = true, updateClient = true)
             } else {
                 sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
 
@@ -343,7 +343,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
             roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
-            roomItem.update(true, true)
+            roomItem.update(updateDb = true, updateClient = true)
         }
 
         return true

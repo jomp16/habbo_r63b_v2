@@ -39,7 +39,7 @@ object ItemDao {
         return HabboServer.database {
             select(javaClass.classLoader.getResource("sql/furnishings/select_furnishings.sql").readText()) {
                 val itemName = it.string("item_name")
-                val furniXMLInfo = furniXMLInfos[itemName]!!
+                val furniXMLInfo = furniXMLInfos[itemName] ?: error("Can't find the XML info for the furni!")
                 val itemType = ItemType.fromString(it.string("type"))
                 val interactionType = InteractionType.fromString(it.string("interaction_type"))
 
@@ -346,7 +346,8 @@ object ItemDao {
         roomItemsGrouped.keys.forEach { userId ->
             val habboSession = HabboServer.habboSessionManager.getHabboSessionById(userId)
 
-            habboSession?.habboInventory?.addItems(roomItemsGrouped[userId]!!.map {
+            habboSession?.habboInventory?.addItems((roomItemsGrouped[userId]
+                    ?: error("Can't find the room items!")).map {
                 UserItem(
                         it.id,
                         it.userId,

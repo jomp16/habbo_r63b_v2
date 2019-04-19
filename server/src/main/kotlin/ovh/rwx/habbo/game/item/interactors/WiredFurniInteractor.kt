@@ -48,7 +48,7 @@ class WiredFurniInteractor : ItemInteractor() {
         if (!hasRights || roomItem.wiredData == null) return
 
         roomItem.extraData = "1"
-        roomItem.update(false, true)
+        roomItem.update(updateDb = false, updateClient = true)
         roomItem.requestCycles(1)
         val outgoing = when {
             roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
@@ -66,7 +66,7 @@ class WiredFurniInteractor : ItemInteractor() {
         if (roomItem.extraData == "1") {
             roomItem.extraData = "0"
 
-            roomItem.update(false, true)
+            roomItem.update(updateDb = false, updateClient = true)
         }
     }
 }

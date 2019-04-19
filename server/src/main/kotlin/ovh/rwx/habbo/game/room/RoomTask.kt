@@ -65,7 +65,7 @@ class RoomTask : Runnable {
 
         room.roomTask = null
 
-        room.roomUsers.values.toList().forEach { room.removeUser(it, true, true) }
+        room.roomUsers.values.toList().forEach { room.removeUser(it, notifyClient = true, kickNotification = true) }
 
         rooms -= room
         queuedTasks.remove(room)
@@ -116,7 +116,7 @@ class RoomTask : Runnable {
 
                         room.roomUsers.values.let {
                             it.filter { roomUser -> roomUser.habboSession?.currentRoom != room }.forEach { roomUser ->
-                                room.removeUser(roomUser, false, false)
+                                room.removeUser(roomUser, notifyClient = false, kickNotification = false)
                             }
                             it.forEach { roomUser -> roomUser.onCycle() }
 
