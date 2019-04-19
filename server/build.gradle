@@ -36,6 +36,7 @@ dependencies {
     compile "org.apache.commons:commons-lang3:$commons_lang_version"
     compile "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
     compile 'commons-codec:commons-codec:1.12'
 }
 

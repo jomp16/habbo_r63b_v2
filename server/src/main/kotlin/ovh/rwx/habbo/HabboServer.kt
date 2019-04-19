@@ -19,8 +19,10 @@
 
 package ovh.rwx.habbo
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.andrewoma.kwery.core.Session
 import com.github.andrewoma.kwery.core.SessionFactory
 import com.github.andrewoma.kwery.core.dialect.MysqlDialect
@@ -65,7 +67,7 @@ import java.util.concurrent.ScheduledExecutorService
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val habboConfig: HabboConfig = jacksonObjectMapper().readValue(File("config.json"))
+    val habboConfig: HabboConfig = ObjectMapper(YAMLFactory()).registerKotlinModule().readValue(File("config.yaml"))
     val pluginManager: PluginManager = PluginManager()
     // SQL
     private val hikariDataSource: HikariDataSource

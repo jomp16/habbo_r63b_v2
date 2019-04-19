@@ -21,7 +21,7 @@ package ovh.rwx
 
 import ovh.rwx.habbo.HabboServer
 
-fun main(args: Array<String>) {
+fun main() {
     // todo: LOAD FROM JAR!
     // todo: add news
     // todo: add update checking

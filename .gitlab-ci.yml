@@ -29,6 +29,6 @@ build:
     paths:
       - $CI_PROJECT_DIR/lib
       - $CI_PROJECT_DIR/plugins
-      - $CI_PROJECT_DIR/config.example.json
+      - $CI_PROJECT_DIR/config.example.yaml
       - $CI_PROJECT_DIR/fastfood_localization.json
       - $CI_PROJECT_DIR/launcher-*.jar
