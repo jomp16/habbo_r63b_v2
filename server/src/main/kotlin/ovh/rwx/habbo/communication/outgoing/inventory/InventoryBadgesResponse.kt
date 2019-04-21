@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -42,6 +42,21 @@ class InventoryBadgesResponse {
 
             equippedBadges.forEach {
                 writeInt(it.slot)
+                writeUTF(it.code)
+            }
+        }
+    }
+
+    @Response(Outgoing.INVENTORY_BADGES)
+    fun simplifiedInventoryBadgeResponse(habboResponse: HabboResponse, badges: Collection<Badge>) {
+        habboResponse.apply {
+            writeInt(1) // ???
+            writeInt(0) // ???
+
+            writeInt(badges.size)
+
+            badges.forEach {
+                writeInt(1)
                 writeUTF(it.code)
             }
         }
