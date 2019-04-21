@@ -34,7 +34,7 @@ object ReleaseDao {
                     ReleaseType.valueOf(it.string("type").toUpperCase()),
                     it.string("release_name"),
                     it.string("name"),
-                    it.intOrNull("header") ?: 0,
+                    it.intOrNull("header") ?: -1,
                     it.stringOrNull("override_method")
             )
         }
