@@ -46,12 +46,12 @@ task copyLibs(type: Copy) {
     }
     into {
         //noinspection GrUnresolvedAccess
-        "$jar.destinationDirectory/lib/$project.name"
+        "${jar.destinationDirectory.asFile.get().absolutePath}/lib/$project.name"
     }
 }
 
 jar {
-    destinationDirectory = file("$rootDir/plugins")
+    destinationDirectory.set(file("$rootDir/plugins"))
 
     //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
     dependsOn copyLibs
