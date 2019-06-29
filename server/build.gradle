@@ -41,7 +41,7 @@ dependencies {
 }
 
 buildConfig {
-    def repo = grgit.open()
+    def repo = grgit.open(currentDir: project.rootDir)
 
     appName = "Habbo R63B v2"
 
