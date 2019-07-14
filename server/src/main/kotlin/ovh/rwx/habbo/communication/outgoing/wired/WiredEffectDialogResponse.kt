@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,6 +32,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeEmptySettings
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeItemInfo
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeItems
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeSettings
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredEffectDialogResponse {
@@ -47,52 +48,59 @@ class WiredEffectDialogResponse {
 
     private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData) {
         when (roomItem.furnishing.interactionType) {
-            InteractionType.WIRED_ACTION_TOGGLE_STATE,
-            InteractionType.WIRED_ACTION_TELEPORT_TO -> {
+            InteractionType.WIRED_EFFECT_TOGGLE_STATE -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(8)
+                writeInt(WiredEffectType.TOGGLE_STATE.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
-            InteractionType.WIRED_ACTION_KICK_USER -> {
+            InteractionType.WIRED_EFFECT_TELEPORT_TO -> {
+                writeItems(wiredData)
+                writeItemInfo(roomItem)
+                writeEmptySettings()
+                writeInt(WiredEffectType.TELEPORT.code)
+                writeDelay(wiredData)
+                writeBlockedTriggers(wiredData)
+            }
+            InteractionType.WIRED_EFFECT_KICK_USER -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, emptyList(), 0)
-                writeInt(7)
+                writeInt(WiredEffectType.KICK_USER.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
-            InteractionType.WIRED_ACTION_MOVE_ROTATE -> {
+            InteractionType.WIRED_EFFECT_MOVE_ROTATE -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeSettings("", wiredData.options, 2)
-                writeInt(4)
+                writeInt(WiredEffectType.MOVE_ROTATE.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
-            InteractionType.WIRED_ACTION_MATCH_TO_SCREENSHOT -> {
+            InteractionType.WIRED_EFFECT_MATCH_TO_SCREENSHOT -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeSettings("", wiredData.options, 3)
-                writeInt(3)
+                writeInt(WiredEffectType.MATCH_SSHOT.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
-            InteractionType.WIRED_ACTION_CALL_STACK -> {
+            InteractionType.WIRED_EFFECT_CALL_STACK -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(18)
+                writeInt(WiredEffectType.CALL_STACKS.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
-            InteractionType.WIRED_ACTION_SHOW_MESSAGE -> {
+            InteractionType.WIRED_EFFECT_SHOW_MESSAGE -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, emptyList(), 0)
-                writeInt(7)
+                writeInt(WiredEffectType.SHOW_MESSAGE.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }
@@ -100,7 +108,7 @@ class WiredEffectDialogResponse {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(0)
+                writeInt(WiredEffectType.TOGGLE_STATE.code)
                 writeDelay(wiredData)
                 writeBlockedTriggers(wiredData)
             }

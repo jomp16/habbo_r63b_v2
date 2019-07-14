@@ -17,16 +17,17 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.room.tasks
+package ovh.rwx.habbo.game.item.wired.effect
 
+import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
-import ovh.rwx.habbo.game.room.IRoomTask
+import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
-class WiredDelayTask(private val wiredDelayEvent: WiredDelayEvent) : IRoomTask {
-    override fun executeTask(room: Room) {
-        wiredDelayEvent.wiredEffect.handle(wiredDelayEvent)
+abstract class WiredEffect(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
+    abstract fun handle(roomUser: RoomUser?)
 
-        if (!wiredDelayEvent.finished) room.roomTask?.addTask(room, this)
+    open fun handle(event: WiredDelayEvent) {
     }
 }

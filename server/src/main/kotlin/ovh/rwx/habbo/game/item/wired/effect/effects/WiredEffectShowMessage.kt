@@ -17,21 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.action.actions
+package ovh.rwx.habbo.game.item.wired.effect.effects
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.action.WiredAction
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.ChatType
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_ACTION_SHOW_MESSAGE)
-class WiredActionShowMessage(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_EFFECT_SHOW_MESSAGE)
+class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     private var message: String = ""
     private var delay: Int = 0
 

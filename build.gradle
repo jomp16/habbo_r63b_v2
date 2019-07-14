@@ -20,10 +20,9 @@
 import groovy.json.JsonOutput
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.3.40" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.3.41" apply false
     id "com.github.ben-manes.versions" version "0.21.0" apply false
     id "de.fuerstenau.buildconfig" version "1.1.8" apply false
-    id "org.zeroturnaround.gradle.jrebel" version "1.1.8" apply false
     id "org.ajoberstar.grgit" version "3.1.1" apply false
 }
 
@@ -31,7 +30,6 @@ subprojects {
     apply plugin: "kotlin"
     apply plugin: "idea"
     apply plugin: "com.github.ben-manes.versions"
-    apply plugin: "org.zeroturnaround.gradle.jrebel"
     apply plugin: "project-report"
 
     ext {
@@ -119,8 +117,6 @@ subprojects {
     }
 
     jar {
-        dependsOn generateRebel
-
         // Keep jar clean:
         exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF', 'rebel.xml'
     }

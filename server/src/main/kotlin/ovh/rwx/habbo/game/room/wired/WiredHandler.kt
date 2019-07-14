@@ -22,8 +22,8 @@ package ovh.rwx.habbo.game.room.wired
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.item.wired.action.WiredAction
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector2
@@ -72,8 +72,8 @@ class WiredHandler {
     }
 
     private fun triggerAction(vector2: Vector2, roomUser: RoomUser?) {
-        wiredStack[vector2]!!.values.filter { it is WiredAction }.forEach { wiredItem ->
-            if (wiredItem is WiredAction) {
+        wiredStack[vector2]!!.values.filter { it is WiredEffect }.forEach { wiredItem ->
+            if (wiredItem is WiredEffect) {
                 lightWired(wiredItem)
 
                 wiredItem.handle(roomUser)
