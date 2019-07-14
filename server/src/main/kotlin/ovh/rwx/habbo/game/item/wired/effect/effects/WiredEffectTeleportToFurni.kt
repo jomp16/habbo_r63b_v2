@@ -17,22 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.action.actions
+package ovh.rwx.habbo.game.item.wired.effect.effects
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.action.WiredAction
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Vector3
 
-@WiredItemInteractor(InteractionType.WIRED_ACTION_TELEPORT_TO)
-class WiredActionTeleportToFurni(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_EFFECT_TELEPORT_TO)
+class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     private val roomItemsIds: MutableList<Int> = mutableListOf()
     private var delay: Int = 0
 

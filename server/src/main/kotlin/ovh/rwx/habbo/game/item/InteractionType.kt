@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -61,16 +61,16 @@ enum class InteractionType(val type: String) {
     TROPHY("trophy"),
     VENDING_MACHINE("vendingmachine"),
     WATER("water"),
-    WIRED_ACTION_CALL_STACK("wf_act_call_stacks"),
-    WIRED_ACTION_CHASE_USER("wf_act_chase"),
-    WIRED_ACTION_FLEE_USER("wf_act_flee"),
-    WIRED_ACTION_KICK_USER("wf_act_kick_user"),
-    WIRED_ACTION_MATCH_TO_SCREENSHOT("wf_act_match_to_sshot"),
-    WIRED_ACTION_MOVE_ROTATE("wf_act_move_rotate"),
-    WIRED_ACTION_ROTATE_ITEM("wf_act_move_to_dir"),
-    WIRED_ACTION_SHOW_MESSAGE("wf_act_show_message"),
-    WIRED_ACTION_TELEPORT_TO("wf_act_teleport_to"),
-    WIRED_ACTION_TOGGLE_STATE("wf_act_toggle_state"),
+    WIRED_EFFECT_CALL_STACK("wf_act_call_stacks"),
+    WIRED_EFFECT_CHASE_USER("wf_act_chase"),
+    WIRED_EFFECT_FLEE_USER("wf_act_flee"),
+    WIRED_EFFECT_KICK_USER("wf_act_kick_user"),
+    WIRED_EFFECT_MATCH_TO_SCREENSHOT("wf_act_match_to_sshot"),
+    WIRED_EFFECT_MOVE_ROTATE("wf_act_move_rotate"),
+    WIRED_EFFECT_ROTATE_ITEM("wf_act_move_to_dir"),
+    WIRED_EFFECT_SHOW_MESSAGE("wf_act_show_message"),
+    WIRED_EFFECT_TELEPORT_TO("wf_act_teleport_to"),
+    WIRED_EFFECT_TOGGLE_STATE("wf_act_toggle_state"),
     WIRED_CONDITION_HAS_AVATARS("wf_cnd_furnis_hv_avtrs"),
     WIRED_CONDITION_HAS_NO_AVATARS("wf_cnd_not_hv_avtrs"),
     WIRED_CONDITION_IN_GROUP("wf_cnd_actor_in_group"),

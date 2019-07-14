@@ -34,6 +34,7 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.urlUserAgent
+import ovh.rwx.habbo.util.ReplacingInputStream
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.FileOutputStream
@@ -64,13 +65,21 @@ class ItemManager {
         wiredItems.clear()
 
         if (furniXMLInfos.isEmpty()) {
-            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.buffered().use {
-                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                val handler = FurniXMLHandler()
+            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use { inputStream ->
+                ReplacingInputStream(inputStream, "&#25;", "").use { replacingFileInputOne ->
+                    ReplacingInputStream(replacingFileInputOne, "&#28;", "").use { replacingFileInputTwo ->
+                        ReplacingInputStream(replacingFileInputTwo, "&#29;", "").use { replacingFileInputFinal ->
+                            replacingFileInputFinal.buffered().use { bufferedInputStream ->
+                                val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                                val handler = FurniXMLHandler()
 
-                saxParser.parse(it, handler)
+                                saxParser.parse(bufferedInputStream, handler)
 
-                furniXMLInfos += handler.furniXMLInfos.associateBy { furniXMLInfo -> furniXMLInfo.itemName }
+                                furniXMLInfos += handler.furniXMLInfos.associateBy { furniXMLInfo -> furniXMLInfo.itemName }
+                            }
+                        }
+                    }
+                }
             }
         }
 

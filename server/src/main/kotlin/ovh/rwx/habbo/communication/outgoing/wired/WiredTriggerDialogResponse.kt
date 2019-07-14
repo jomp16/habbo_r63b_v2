@@ -31,6 +31,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeEmptySettings
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeItemInfo
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeItems
 import ovh.rwx.habbo.game.item.wired.WiredItem.Companion.writeSettings
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredTriggerDialogResponse {
@@ -49,50 +50,56 @@ class WiredTriggerDialogResponse {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, emptyList(), 0)
-                writeInt(7)
+                writeInt(WiredTriggerType.ENTER_ROOM.code)
                 writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_SAYS_SOMETHING -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, wiredData.options, 1)
-                writeInt(0)
+                writeInt(WiredTriggerType.SAY_SOMETHING.code)
                 writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_STATE_CHANGED -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(4)
+                writeInt(WiredTriggerType.STATE_CHANGED.code)
                 writeBlockedActions(wiredData)
             }
-            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI,
+            InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI -> {
+                writeItems(wiredData)
+                writeItemInfo(roomItem)
+                writeEmptySettings()
+                writeInt(WiredTriggerType.WALKS_ON_FURNI.code)
+                writeBlockedActions(wiredData)
+            }
             InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI -> {
                 writeItems(wiredData)
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(1)
+                writeInt(WiredTriggerType.WALKS_OFF_FURNI.code)
                 writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_PERIODICALLY -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, wiredData.options, 1)
-                writeInt(6)
+                writeInt(WiredTriggerType.PERIODICALLY.code)
                 writeBlockedActions(wiredData)
             }
             InteractionType.WIRED_TRIGGER_PERIODICALLY_LONG -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeSettings(wiredData.message, wiredData.options, 1)
-                writeInt(12)
+                writeInt(WiredTriggerType.PERIODICALLY_LONG.code)
                 writeBlockedActions(wiredData)
             }
             else -> {
                 writeEmptyItems()
                 writeItemInfo(roomItem)
                 writeEmptySettings()
-                writeInt(0)
+                writeInt(WiredTriggerType.SAY_SOMETHING.code)
                 writeBlockedActions(wiredData)
             }
         }

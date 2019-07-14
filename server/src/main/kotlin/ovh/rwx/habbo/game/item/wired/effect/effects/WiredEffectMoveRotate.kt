@@ -17,23 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.action.actions
+package ovh.rwx.habbo.game.item.wired.effect.effects
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.action.WiredAction
-import ovh.rwx.habbo.game.item.wired.action.actions.WiredActionMoveRotate.RotationState.*
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
+import ovh.rwx.habbo.game.item.wired.effect.effects.WiredEffectMoveRotate.RotationState.*
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
-@WiredItemInteractor(InteractionType.WIRED_ACTION_MOVE_ROTATE)
-class WiredActionMoveRotate(room: Room, roomItem: RoomItem) : WiredAction(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_EFFECT_MOVE_ROTATE)
+class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     private val roomItemsIds: MutableList<Int> = mutableListOf()
     private var direction: DirectionState = DirectionState.NONE
     private var rotation: RotationState = NONE
