@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,33 +25,36 @@ import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.information.UserInformation
 
-data class MessengerFriend(val userId: Int) : IHabboResponseSerialize {
+data class MessengerFriend(val id: Int, val userId: Int, var relationship: MessengerRelationship = MessengerRelationship.NONE) : IHabboResponseSerialize {
     val habboSession: HabboSession?
         get() = HabboServer.habboSessionManager.getHabboSessionById(userId)
     val online: Boolean
         get() = userId < 0 || userId == UserInformationDao.serverConsoleUserInformation.id || habboSession != null // todo: add appear offline here
+    val userInformation: UserInformation?
+        get() = UserInformationDao.getUserInformationById(userId)
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(userId)
 
             if (userId > 0) {
-                val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
-
-                writeUTF(userInformation.username)
-                writeInt(1)
-                writeBoolean(online)
-                writeBoolean(online && habboSession?.currentRoom != null)
-                writeUTF(userInformation.figure)
-                writeInt(0) // todo: add ability to add friend on custom category
-                writeUTF(userInformation.motto)
-                writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
-                writeUTF(userInformation.realname)
-                writeBoolean(true) // allows offline messaging
-                writeBoolean(false) // useless
-                writeBoolean(false) // uses phone
-                writeShort(0) // todo relationship type
+                userInformation?.let {
+                    writeUTF(it.username)
+                    writeInt(1)
+                    writeBoolean(online)
+                    writeBoolean(online && habboSession?.currentRoom != null)
+                    writeUTF(it.figure)
+                    writeInt(0) // todo: add ability to add friend on custom category
+                    writeUTF(it.motto)
+                    writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
+                    writeUTF(it.realname)
+                    writeBoolean(true) // allows offline messaging
+                    writeBoolean(false) // useless
+                    writeBoolean(false) // uses phone
+                    writeShort(relationship.type) // relationship type
+                }
             } else {
                 // todo: group, this is a stub
                 writeUTF("GRUPO TESTE #1")
@@ -73,17 +76,17 @@ data class MessengerFriend(val userId: Int) : IHabboResponseSerialize {
 
     fun serializeHabboResponseSearch(habboResponse: HabboResponse) {
         habboResponse.apply {
-            val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
-
-            writeInt(userInformation.id)
-            writeUTF(userInformation.username)
-            writeUTF(userInformation.motto)
-            writeBoolean(online)
-            writeBoolean(false)
-            writeUTF("")
-            writeInt(0) // ?
-            writeUTF(userInformation.figure)
-            writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
+            userInformation?.let {
+                writeInt(it.id)
+                writeUTF(it.username)
+                writeUTF(it.motto)
+                writeBoolean(online)
+                writeBoolean(false)
+                writeUTF("")
+                writeInt(0) // ?
+                writeUTF(it.figure)
+                writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
+            }
         }
     }
 }
