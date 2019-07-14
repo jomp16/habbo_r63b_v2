@@ -17,39 +17,31 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.effect;
+package ovh.rwx.habbo.game.item.wired.condition
 
-public enum WiredEffectType {
-    TOGGLE_STATE(0),
-    RESET_TIMERS(1),
-    MATCH_SSHOT(3),
-    MOVE_ROTATE(4),
-    GIVE_SCORE(6),
-    SHOW_MESSAGE(7),
-    TELEPORT(8),
-    JOIN_TEAM(9),
-    LEAVE_TEAM(10),
-    CHASE(11),
-    FLEE(12),
-    MOVE_DIRECTION(13),
-    GIVE_SCORE_TEAM(14),
-    TOGGLE_RANDOM(15),
-    MOVE_FURNI_TO(16),
-    GIVE_REWARD(17),
-    CALL_STACKS(18),
-    KICK_USER(19),
-    MUTE_TRIGGER(20),
-    BOT_TELEPORT(21),
-    BOT_MOVE(22),
-    BOT_TALK(23),
-    BOT_GIVE_HANDITEM(24),
-    BOT_FOLLOW_AVATAR(25),
-    BOT_CLOTHES(26),
-    BOT_TALK_TO_AVATAR(27);
-
-    public final int code;
-
-    WiredEffectType(int code) {
-        this.code = code;
-    }
+enum class WiredConditionType(val code: Int) {
+    MATCH_SSHOT(0),
+    FURNI_HAVE_HABBO(1),
+    TRIGGER_ON_FURNI(2),
+    TIME_MORE_THAN(3),
+    TIME_LESS_THAN(4),
+    USER_COUNT(5),
+    ACTOR_IN_TEAM(6),
+    FURNI_HAS_FURNI(7),
+    STUFF_IS(8),
+    ACTOR_IN_GROUP(10),
+    ACTOR_WEARS_BADGE(11),
+    ACTOR_WEARS_EFFECT(12),
+    NOT_MATCH_SSHOT(13),
+    NOT_FURNI_HAVE_HABBO(14),
+    NOT_ACTOR_ON_FURNI(15),
+    NOT_USER_COUNT(16),
+    NOT_ACTOR_IN_TEAM(17),
+    NOT_FURNI_HAVE_FURNI(18),
+    NOT_STUFF_IS(19),
+    NOT_ACTOR_IN_GROUP(21),
+    NOT_ACTOR_WEARS_BADGE(22),
+    NOT_ACTOR_WEARS_EFFECT(23),
+    DATE_RANGE(24),
+    ACTOR_HAS_HANDITEM(25)
 }

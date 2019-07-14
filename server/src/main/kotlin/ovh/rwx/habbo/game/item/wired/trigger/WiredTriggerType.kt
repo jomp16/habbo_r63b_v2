@@ -17,9 +17,9 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger;
+package ovh.rwx.habbo.game.item.wired.trigger
 
-public enum WiredTriggerType {
+enum class WiredTriggerType(val code: Int) {
     SAY_SOMETHING(0),
     WALKS_ON_FURNI(1),
     WALKS_OFF_FURNI(2),
@@ -39,11 +39,5 @@ public enum WiredTriggerType {
     UNIDLES(11),
     CUSTOM(13),
     STARTS_DANCING(11),
-    STOPS_DANCING(11);
-
-    public final int code;
-
-    WiredTriggerType(int code) {
-        this.code = code;
-    }
+    STOPS_DANCING(11)
 }
