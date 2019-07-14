@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -34,7 +34,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
         if (!initialized) {
             if (habboSession.hasPermission("acc_server_console")) {
                 // server console!
-                friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(UserInformationDao.serverConsoleUserInformation.id)
+                friends += UserInformationDao.serverConsoleUserInformation.id to MessengerFriend(0, UserInformationDao.serverConsoleUserInformation.id, MessengerRelationship.NONE)
                 // stub group
                 // friends += -1 to MessengerFriend(-1)
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.database.messenger
 import com.github.andrewoma.kwery.core.Row
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.messenger.MessengerFriend
+import ovh.rwx.habbo.game.user.messenger.MessengerRelationship
 import ovh.rwx.habbo.game.user.messenger.MessengerRequest
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
@@ -32,7 +33,7 @@ import java.util.*
 
 object MessengerDao {
     fun getFriends(userId: Int): List<MessengerFriend> = HabboServer.database {
-        select("SELECT `id`, `user_two_id` AS `user_id` FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
+        select(javaClass.classLoader.getResource("sql/messenger/select_friends.sql")!!.readText(),
                 mapOf(
                         "user_one_id" to userId
                 )
@@ -40,7 +41,11 @@ object MessengerDao {
     }
 
     fun getRequests(toUserId: Int): List<MessengerRequest> = HabboServer.database {
-        select("SELECT `id`, `from_id` FROM `messenger_requests` WHERE `to_id` = :to_id", mapOf("to_id" to toUserId)) {
+        select(javaClass.classLoader.getResource("sql/messenger/select_requests.sql")!!.readText(),
+                mapOf(
+                        "to_id" to toUserId
+                )
+        ) {
             MessengerRequest(
                     it.int("id"),
                     it.int("from_id")
@@ -49,7 +54,7 @@ object MessengerDao {
     }
 
     fun searchFriends(userId: Int, username: String): List<MessengerFriend> = HabboServer.database {
-        select("SELECT `id` AS `user_id` FROM `users` WHERE `username` LIKE :username AND NOT `id` = :user_id LIMIT 50",
+        select(javaClass.classLoader.getResource("sql/messenger/select_search_friends.sql")!!.readText(),
                 mapOf(
                         "username" to "$username%",
                         "user_id" to userId
@@ -57,11 +62,11 @@ object MessengerDao {
         ) { createMessengerFriend(it) }
     }
 
-    private fun createMessengerFriend(row: Row): MessengerFriend = MessengerFriend(row.int("user_id"))
+    private fun createMessengerFriend(row: Row): MessengerFriend = MessengerFriend(row.int("id"), row.int("user_id"), MessengerRelationship.findByType(row.int("relationship")))
 
     fun removeFriendships(userId: Int, friendIds: List<Int>) {
         HabboServer.database {
-            batchUpdate("DELETE FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id AND `user_two_id` = :user_two_id",
+            batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_friends.sql")!!.readText(),
                     friendIds.map {
                         listOf(
                                 mapOf(
@@ -80,7 +85,7 @@ object MessengerDao {
 
     fun removeAllRequests(toUserId: Int) {
         HabboServer.database {
-            update("DELETE FROM `messenger_requests` WHERE `to_id` = :to_id",
+            update(javaClass.classLoader.getResource("sql/messenger/delete_all_requests.sql")!!.readText(),
                     mapOf(
                             "to_id" to toUserId
                     )
@@ -90,7 +95,7 @@ object MessengerDao {
 
     fun removeRequests(requestIds: List<Int>) {
         HabboServer.database {
-            batchUpdate("DELETE FROM `messenger_requests` WHERE `id` = :id",
+            batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_request.sql")!!.readText(),
                     requestIds.map {
                         mapOf(
                                 "id" to it
@@ -105,7 +110,7 @@ object MessengerDao {
 
         HabboServer.database {
             friendIds.forEach {
-                batchInsertAndGetGeneratedKeys("INSERT INTO `messenger_friendships` (`user_one_id`, `user_two_id`) VALUES (:user_one_id, :user_two_id)",
+                val ids = batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/messenger/insert_friends.sql")!!.readText(),
                         listOf(
                                 mapOf(
                                         "user_one_id" to userId,
@@ -118,7 +123,7 @@ object MessengerDao {
                         )
                 )
 
-                friends += MessengerFriend(it)
+                friends += ids.map { id -> MessengerFriend(id, it, MessengerRelationship.NONE) }
             }
         }
 
@@ -127,7 +132,7 @@ object MessengerDao {
 
     fun addRequest(fromUserId: Int, toUserId: Int): MessengerRequest {
         val id = HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO `messenger_requests` (`to_id`, `from_id`) VALUES (:to_id, :from_id)",
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/messenger/insert_request.sql")!!.readText(),
                     mapOf(
                             "to_id" to toUserId,
                             "from_id" to fromUserId
@@ -142,7 +147,7 @@ object MessengerDao {
         val offlineMessages: MutableSet<Triple<Int, String, Int>> = HashSet()
 
         HabboServer.database {
-            select("SELECT * FROM `messenger_offline_messages` WHERE `to_id` = :to_id",
+            select(javaClass.classLoader.getResource("sql/messenger/select_offline_messages.sql")!!.readText(),
                     mapOf(
                             "to_id" to toUserId
                     )
@@ -155,7 +160,7 @@ object MessengerDao {
             }
 
             if (offlineMessages.isNotEmpty()) {
-                update("DELETE FROM `messenger_offline_messages` WHERE `to_id` = :to_id",
+                update(javaClass.classLoader.getResource("sql/messenger/delete_offline_messages.sql")!!.readText(),
                         mapOf(
                                 "to_id" to toUserId
                         )
@@ -168,11 +173,22 @@ object MessengerDao {
 
     fun addOfflineMessage(fromUserId: Int, toUserId: Int, message: String) {
         HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO `messenger_offline_messages` (`to_id`, `from_id`, `message`) VALUES (:to_id, :from_id, :message)",
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/messenger/insert_offline_message.sql")!!.readText(),
                     mapOf(
                             "to_id" to toUserId,
                             "from_id" to fromUserId,
                             "message" to message
+                    )
+            )
+        }
+    }
+
+    fun updateRelationship(messengerFriend: MessengerFriend) {
+        HabboServer.database {
+            update(javaClass.classLoader.getResource("sql/messenger/update_relationship.sql")!!.readText(),
+                    mapOf(
+                            "relationship" to messengerFriend.relationship.type,
+                            "id" to messengerFriend.id
                     )
             )
         }

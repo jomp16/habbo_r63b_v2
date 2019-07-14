@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,23 +22,24 @@ package ovh.rwx.habbo.communication.outgoing.user
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.game.user.information.UserInformation
+import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserRelationshipsResponse {
     @Response(Outgoing.USER_RELATIONSHIPS)
-    fun response(habboResponse: HabboResponse, userId: Int, relationships: Collection<UserInformation>, loves: Int, likes: Int, hates: Int) {
-        // todo: relationships
+    fun response(habboResponse: HabboResponse, userId: Int, relationships: Collection<MessengerFriend>) {
         habboResponse.apply {
             writeInt(userId)
             writeInt(relationships.size)
 
-            relationships.forEach {
-                writeInt(1) // todo: relationship type
-                writeInt(loves) // todo: relationship type
-                writeInt(it.id)
-                writeUTF(it.username)
-                writeUTF(it.figure)
+            relationships.forEach { messengerFriend ->
+                messengerFriend.userInformation?.let { userInformation ->
+                    writeInt(messengerFriend.relationship.type)
+                    writeInt(relationships.filter { it.relationship == messengerFriend.relationship }.size)
+                    writeInt(messengerFriend.userId)
+                    writeUTF(userInformation.username)
+                    writeUTF(userInformation.figure)
+                }
             }
         }
     }

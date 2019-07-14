@@ -17,22 +17,32 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.user
+package ovh.rwx.habbo.communication.incoming.messenger
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.messenger.MessengerRelationship
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserRelationshipsHandler {
-    @Handler(Incoming.USER_RELATIONSHIPS)
+class MessengerRelationshipRequestHandler {
+    @Handler(Incoming.MESSENGER_SET_RELATIONSHIP)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-        val userId = habboRequest.readInt()
+        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        val friendId = habboRequest.readInt()
+        var relationship = habboRequest.readInt()
 
-        habboSession.sendHabboResponse(Outgoing.USER_RELATIONSHIPS, userId, MessengerDao.getFriends(userId))
+        if (relationship < 0 || relationship > 3) relationship = 0
+
+        val messengerFriend = habboSession.habboMessenger.friends[friendId] ?: return
+        messengerFriend.relationship = MessengerRelationship.findByType(relationship)
+
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
+
+        MessengerDao.updateRelationship(messengerFriend)
     }
 }

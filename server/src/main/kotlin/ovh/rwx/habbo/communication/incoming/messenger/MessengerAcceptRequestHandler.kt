@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,7 +27,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerAcceptRequestHandler {
@@ -52,16 +51,17 @@ class MessengerAcceptRequestHandler {
         }
 
         MessengerDao.removeRequests(requestIds)
-        val friends = MessengerDao.addFriends(habboSession.userInformation.id, friendIds)
+        val friends = MessengerDao.addFriends(habboSession.userInformation.id, friendIds).associateBy { it.userId }
 
-        habboSession.habboMessenger.friends += friends.associateBy { it.userId }
+        habboSession.habboMessenger.friends += friends.filterKeys { it == habboSession.userInformation.id }
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, friends, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
 
-        friendIds.forEach {
-            val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it) ?: return@forEach
+        friends.filterKeys { it != habboSession.userInformation.id }.forEach {
+            val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.value.userId)
+                    ?: return@forEach
 
             if (!friendHabboSession.habboMessenger.initialized) return@forEach
-            val messengerFriend = MessengerFriend(habboSession.userInformation.id)
+            val messengerFriend = it.value
 
             friendHabboSession.habboMessenger.friends[messengerFriend.userId] = messengerFriend
 
