@@ -42,9 +42,9 @@ import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.reflections.Reflections
-import org.reflections.util.ClasspathHelper
-import org.reflections.util.ConfigurationBuilder
+import org.reflections8.Reflections
+import org.reflections8.util.ClasspathHelper
+import org.reflections8.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.FastFoodHandler
@@ -97,9 +97,7 @@ object HabboServer : AutoCloseable {
     init {
         Security.addProvider(BouncyCastleProvider())
 
-        Runtime.getRuntime().addShutdownHook(Thread { close() })
-
-        javaClass.classLoader.getResourceAsStream("ascii_art.txt").bufferedReader().forEachLine { log.info(it) }
+        javaClass.classLoader.getResourceAsStream("ascii_art.txt")?.bufferedReader()?.forEachLine { log.info(it) }
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
@@ -149,6 +147,10 @@ object HabboServer : AutoCloseable {
         log.info("Loading plugins...")
         pluginManager.loadPlugins()
         pluginManager.loadPluginsFromDir(File("plugins"))
+        log.info("Done!")
+
+        log.info("Adding shutdown hook...")
+        Runtime.getRuntime().addShutdownHook(Thread { close() })
         log.info("Done!")
     }
 

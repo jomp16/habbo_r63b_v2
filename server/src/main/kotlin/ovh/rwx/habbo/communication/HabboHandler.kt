@@ -21,8 +21,8 @@ package ovh.rwx.habbo.communication
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.reflections.Reflections
-import org.reflections.scanners.MethodAnnotationsScanner
+import org.reflections8.Reflections
+import org.reflections8.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer

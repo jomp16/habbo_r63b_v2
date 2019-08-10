@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+  ~ Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
   ~
   ~ This file is part of habbo_r63b_v2.
   ~
@@ -33,7 +33,7 @@
         <Logger name="com.github.andrewoma.kwery" level="error"/>
         <Logger name="io.netty" level="error"/>
         <Logger name="com.zaxxer" level="error"/>
-        <Logger name="org.reflections" level="error"/>
+        <Logger name="org.reflections8" level="error"/>
         <Logger name="org.hibernate" level="error"/>
         <Logger name="io.undertow" level="error"/>
         <Logger name="org.xnio" level="error"/>
