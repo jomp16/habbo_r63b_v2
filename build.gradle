@@ -40,7 +40,7 @@ subprojects {
         slf4j_version = "1.7.26"
         kwery_version = "0.17"
         mysql_version = "8.0.16"
-        reflections_version = "0.9.11"
+        reflections_version = "0.11.5"
         jasypt_version = "1.9.3"
         commons_lang_version = "3.9"
         mbassador_version = "1.3.2"
