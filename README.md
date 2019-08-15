@@ -1,7 +1,7 @@
 # habbo_r63b_v2
 > A Habbo R63B server made with Kotlin and Java. In development.
 
-[![pipeline status](https://git.rwx.ovh/Habbo/habbo_r63b_v2/badges/master/pipeline.svg)](https://git.rwx.ovh/Habbo/habbo_r63b_v2/commits/master)
+[![Build Status](https://drone.rwx.ovh/api/badges/Habbo/habbo_r63b_v2/status.svg)](https://drone.rwx.ovh/Habbo/habbo_r63b_v2)
 
 ## Supported releases
 
