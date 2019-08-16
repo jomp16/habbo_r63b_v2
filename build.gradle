@@ -35,11 +35,11 @@ subprojects {
     ext {
         junit_version = "4.12"
         jackson_version = "2.9.9"
-        netty_version = "4.1.37.Final"
-        log4j2_version = "2.12.0"
-        slf4j_version = "1.7.26"
+        netty_version = "4.1.39.Final"
+        log4j2_version = "2.12.1"
+        slf4j_version = "1.7.28"
         kwery_version = "0.17"
-        mysql_version = "8.0.16"
+        mysql_version = "8.0.17"
         reflections_version = "0.11.5"
         jasypt_version = "1.9.3"
         commons_lang_version = "3.9"
@@ -105,7 +105,7 @@ subprojects {
         //noinspection GrUnresolvedAccess
         componentSelection { rules ->
             rules.all { ComponentSelection selection ->
-                boolean rejected = selection.candidate.group != 'org.jetbrains.kotlin' && ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr', 'dev'].any { qualifier ->
+                boolean rejected = /*selection.candidate.group != 'org.jetbrains.kotlin' &&*/ ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'dmr', 'dev', 'eap'].any { qualifier ->
                     selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
                 }
 
