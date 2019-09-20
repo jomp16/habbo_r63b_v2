@@ -17,25 +17,6 @@ steps:
   commands:
   - gradle assemble check --stacktrace
 
-- name: upload
-  image: plugins/s3
-  when:
-    branch:
-    - master
-    event:
-    - push
-  settings:
-    bucket: drone
-    access_key:
-      from_secret: aws_access_key_id
-    secret_key:
-      from_secret: aws_secret_access_key
-    source: launcher/build/distributions/launcher-*.tbz2
-    target: /
-    strip_prefix: launcher/build/distributions/
-    path_style: true
-    endpoint: https://minio.rwx.ovh
-
 trigger:
   event:
     include:
@@ -48,6 +29,21 @@ type: docker
 name: deploy
 
 steps:
+- name: upload
+  image: plugins/s3
+  when:
+  settings:
+    bucket: drone
+    access_key:
+      from_secret: aws_access_key_id
+    secret_key:
+      from_secret: aws_secret_access_key
+    source: launcher/build/distributions/launcher-*.tbz2
+    target: /
+    strip_prefix: launcher/build/distributions/
+    path_style: true
+    endpoint: https://minio.rwx.ovh
+
 - name: deploy
   image: appleboy/drone-ssh
   settings:
