@@ -59,8 +59,8 @@ steps:
     - sh /home/jomp16/update_habbo.sh
 
 trigger:
-  event:
-  - tag
+  ref:
+  - refs/tags/*
     
 
 depends_on:
