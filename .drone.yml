@@ -1,8 +1,9 @@
 kind: pipeline
+type: docker
 name: default
 
 clone:
-  depth: 50
+  depth: 1
 
 steps:
 - name: submodules
@@ -34,3 +35,37 @@ steps:
     strip_prefix: launcher/build/distributions/
     path_style: true
     endpoint: https://minio.rwx.ovh
+
+trigger:
+  event:
+    include:
+    - push
+    
+---
+
+kind: pipeline
+type: docker
+name: deploy
+
+steps:
+- name: deploy
+  image: appleboy/drone-ssh
+  settings:
+    host: 
+      from_secret: ssh_server
+    username:
+      from_secret: ssh_user
+    password:
+      from_secret: ssh_password
+    port:
+      from_secret: ssh_port
+    script:
+    - sh /home/jomp16/update_habbo.sh
+
+trigger:
+  event:
+  - tag
+    
+
+depends_on:
+- default
