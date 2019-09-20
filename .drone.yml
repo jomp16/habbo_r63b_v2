@@ -17,18 +17,6 @@ steps:
   commands:
   - gradle assemble check --stacktrace
 
-trigger:
-  event:
-    include:
-    - push
-    
----
-
-kind: pipeline
-type: docker
-name: deploy
-
-steps:
 - name: upload
   image: plugins/s3
   when:
@@ -43,6 +31,27 @@ steps:
     strip_prefix: launcher/build/distributions/
     path_style: true
     endpoint: https://minio.rwx.ovh
+  when:
+    event: tag
+
+- name: gitea_release
+  image: plugins/gitea-release
+  settings:
+    api_key:
+    	from_secret: gitea_api_key
+    base_url:
+    	from_secret: gitea_url
+    files:
+      - launcher/build/distributions/launcher-*.tbz2
+   checksum:
+      - md5
+      - sha1
+      - sha256
+      - sha512
+      - adler32
+      - crc32
+  when:
+    event: tag
 
 - name: deploy
   image: appleboy/drone-ssh
@@ -57,11 +66,11 @@ steps:
       from_secret: ssh_port
     script:
     - sh /home/jomp16/update_habbo.sh
+  when:
+    event: tag
 
 trigger:
-  ref:
-  - refs/tags/*
-    
-
-depends_on:
-- default
+  event:
+    include:
+    - push
+    - tag
