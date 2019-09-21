@@ -50,6 +50,8 @@ steps:
       - sha512
       - adler32
       - crc32
+    prerelease: true
+    draft: true
   when:
     event: tag
 
