@@ -6,73 +6,71 @@ clone:
   depth: 1
 
 steps:
-- name: submodules
-  image: docker:git
-  commands:
-  - git submodule init
-  - git submodule update --recursive --remote
+  - name: submodules
+    image: docker:git
+    commands:
+      - git submodule init
+      - git submodule update --recursive --remote
 
-- name: build-test
-  image: gradle:latest
-  commands:
-  - gradle assemble check --stacktrace
+  - name: build-test
+    image: gradle:latest
+    commands:
+      - gradle assemble check --stacktrace
 
-- name: upload
-  image: plugins/s3
-  when:
-  settings:
-    bucket: drone
-    access_key:
-      from_secret: aws_access_key_id
-    secret_key:
-      from_secret: aws_secret_access_key
-    source: launcher/build/distributions/launcher-*.tbz2
-    target: /
-    strip_prefix: launcher/build/distributions/
-    path_style: true
-    endpoint: https://minio.rwx.ovh
-  when:
-    event: tag
+  - name: upload
+    image: plugins/s3
+    settings:
+      bucket: drone
+      access_key:
+        from_secret: aws_access_key_id
+      secret_key:
+        from_secret: aws_secret_access_key
+      source: launcher/build/distributions/launcher-*.tbz2
+      target: /
+      strip_prefix: launcher/build/distributions/
+      path_style: true
+      endpoint: https://minio.rwx.ovh
+    when:
+      event: tag
 
-- name: gitea_release
-  image: plugins/gitea-release
-  settings:
-    api_key:
-      from_secret: gitea_api_key
-    base_url:
-      from_secret: gitea_url
-    files:
-      - launcher/build/distributions/launcher-*.tbz2
-    checksum:
-      - md5
-      - sha1
-      - sha256
-      - sha512
-      - adler32
-      - crc32
-    prerelease: true
-    draft: true
-  when:
-    event: tag
+  - name: gitea_release
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: gitea_api_key
+      base_url:
+        from_secret: gitea_url
+      files:
+        - launcher/build/distributions/launcher-*.tbz2
+      checksum:
+        - md5
+        - sha1
+        - sha256
+        - sha512
+        - adler32
+        - crc32
+      prerelease: true
+      draft: true
+    when:
+      event: tag
 
-- name: deploy
-  image: appleboy/drone-ssh
-  settings:
-    host: 
-      from_secret: ssh_server
-    username:
-      from_secret: ssh_user
-    password:
-      from_secret: ssh_password
-    port:
-      from_secret: ssh_port
-    script:
-    - sh /home/jomp16/update_habbo.sh
-  when:
-    event: tag
+  - name: deploy
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: ssh_server
+      username:
+        from_secret: ssh_user
+      password:
+        from_secret: ssh_password
+      port:
+        from_secret: ssh_port
+      script:
+        - sh /home/jomp16/update_habbo.sh
+    when:
+      event: tag
 
 trigger:
   event:
-    include:
     - push
     - tag
