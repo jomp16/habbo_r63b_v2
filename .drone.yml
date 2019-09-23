@@ -7,7 +7,7 @@ clone:
 
 steps:
   - name: submodules
-    image: alpine:git
+    image: alpine/git
     commands:
       - git submodule update --recursive --remote
 
