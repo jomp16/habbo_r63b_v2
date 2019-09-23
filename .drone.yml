@@ -3,8 +3,9 @@ type: docker
 name: default
 
 clone:
-  depth: 1
+  depth: 50
   recursive: true
+  submodule_update_remote: true
 
 steps:
   - name: build-test
