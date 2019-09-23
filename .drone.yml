@@ -4,14 +4,9 @@ name: default
 
 clone:
   depth: 1
+  recursive: true
 
 steps:
-  - name: submodules
-    image: docker:git
-    commands:
-      - git submodule init
-      - git submodule update --recursive --remote
-
   - name: build-test
     image: gradle:latest
     commands:
