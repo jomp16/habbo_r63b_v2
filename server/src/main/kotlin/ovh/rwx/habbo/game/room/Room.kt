@@ -109,9 +109,9 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
         roomUsers.values.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
     }
 
-    fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false): Boolean {
+    fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false, ignorePermissionAnyRoomOwner: Boolean = false): Boolean {
         if (habboSession == null) return false
-        val isOwner = roomData.ownerId == habboSession.userInformation.id || habboSession.hasPermission("acc_any_room_owner")
+        val isOwner = roomData.ownerId == habboSession.userInformation.id || (!ignorePermissionAnyRoomOwner && habboSession.hasPermission("acc_any_room_owner"))
 
         if (group != null) {
             group?.let { group ->

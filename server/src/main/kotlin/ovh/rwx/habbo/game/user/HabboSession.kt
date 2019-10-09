@@ -71,7 +71,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var habboInventory: HabboInventory
         private set
     val rooms: List<Room>
-        get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true) }
+        get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, true, true) }
     val groups: List<Group>
         get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == userInformation.id } }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
