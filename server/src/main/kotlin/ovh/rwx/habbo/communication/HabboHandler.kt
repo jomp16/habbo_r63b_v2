@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
 import kotlin.collections.MutableMap.MutableEntry
+import kotlin.system.exitProcess
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -60,6 +61,8 @@ class HabboHandler {
         instances.clear()
         messageHandlers.clear()
         messageResponses.clear()
+        incomingNames.clear()
+        outgoingNames.clear()
 
         val headers = ReleaseDao.getHeaders().groupBy { it.type }
 
@@ -80,7 +83,7 @@ class HabboHandler {
             if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(outgoingNames.entries, exceptedOutgoingHeaders)) {
                 log.error("Missing headers... Fix it! Exiting!")
 
-                System.exit(1)
+                exitProcess(1)
             }
 
             largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.sortedByDescending { it.length }.first().length
