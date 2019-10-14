@@ -28,6 +28,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
@@ -111,7 +112,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
     }
 
-    fun sendSuperNotification(type: String, vararg strings: String) {
+    fun sendSuperNotification(type: MiscSuperNotificationResponse.MiscSuperNotificationKeys, vararg strings: String) {
         if (strings.size % 2 != 0) {
             log.warn("Tried to send a super notification with an odd length of array!")
 

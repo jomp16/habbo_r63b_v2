@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -37,7 +38,7 @@ class RoomPlaceItemHandler {
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
         if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
-            habboSession.sendSuperNotification("furni_placement_error", "message", "\${room.error.cant_set_not_owner}")
+            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.cant_set_not_owner}")
 
             return
         }
@@ -52,7 +53,7 @@ class RoomPlaceItemHandler {
 
             // Check if room has more or equals than 50 post it
             if (habboSession.currentRoom!!.wallItems.values.filter { it.furnishing.interactionType == InteractionType.POST_IT }.count() >= 50) {
-                habboSession.sendSuperNotification("furni_placement_error", "message", "\${room.error.max_stickies}")
+                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.max_stickies}")
 
                 return
             }
@@ -83,6 +84,6 @@ class RoomPlaceItemHandler {
         }
 
         if (success) habboSession.habboInventory.removeItems(listOf(itemId))
-        else habboSession.sendSuperNotification("furni_placement_error", "message", "\${room.error.cant_set_item}")
+        else habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.cant_set_item}")
     }
 }
