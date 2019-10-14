@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -34,14 +35,23 @@ class RoomFloorPlanSaveHandler {
         val doorX = habboRequest.readInt()
         val doorY = habboRequest.readInt()
         val doorDir = habboRequest.readInt()
-        var wallThickness = habboRequest.readInt()
-        var floorThickness = habboRequest.readInt()
-        var wallHeight = habboRequest.readInt()
+        val wallThickness = habboRequest.readInt()
+        val floorThickness = habboRequest.readInt()
+        val wallHeight = habboRequest.readInt()
 
         if (heightmap.isEmpty() || heightmap.length < 2) return
-        if (wallThickness < -2 || wallThickness > 1) wallThickness = 0
-        if (floorThickness < -2 || floorThickness > 1) floorThickness = 2
-        if (wallHeight < -1 || wallHeight > 16) wallHeight = -1
+        if (wallThickness < -2 || wallThickness > 1) {
+            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_wall_thickness%%%")
+            return
+        }
+        if (floorThickness < -2 || floorThickness > 1) {
+            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_floor_thickness%%%")
+            return
+        }
+        if (wallHeight < -1 || wallHeight > 15) {
+            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_walls_fixed_height%%%")
+            return
+        }
 
         // TODO: FINISH IMPLEMENTATION
     }
