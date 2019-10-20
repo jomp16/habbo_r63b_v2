@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -174,7 +174,7 @@ object RoomDao {
 
     fun updateRoomData(roomData: RoomData) {
         HabboServer.database {
-            update("UPDATE rooms SET name = :name, description = :description, state = :state, password = :password, " + "users_max = :users_max, category = :category, tags = :tags, trade_state = :trade_state, allow_pets = :allow_pets, " + "allow_pets_eat = :allow_pets_eat, allow_walk_through = :allow_walk_through, hide_wall = :hide_wall, " + "wall_thick = :wall_thick, floor_thick = :floor_thick, wall_height = :wall_height, mute_settings = :mute_settings, " + "kick_settings = :kick_settings, ban_settings = :ban_settings, chat_type = :chat_type, chat_balloon = :chat_balloon, " + "chat_speed = :chat_speed, chat_max_distance = :chat_max_distance, chat_flood_protection = :chat_flood_protection, " + "floor = :floor, wallpaper = :wallpaper, landscape = :landscape, group_id = :group_id WHERE id = :room_id",
+            update(javaClass.classLoader.getResource("sql/rooms/data/update_room_data.sql")!!.readText(),
                     mapOf(
                             "name" to roomData.name,
                             "description" to roomData.description,
@@ -203,6 +203,7 @@ object RoomDao {
                             "wallpaper" to roomData.wallpaper,
                             "landscape" to roomData.landscape,
                             "group_id" to if (roomData.groupId == 0) null else roomData.groupId,
+                            "model_name" to roomData.modelName,
                             "room_id" to roomData.id
                     )
             )
@@ -245,7 +246,7 @@ object RoomDao {
 
     fun addRight(userId: Int, roomId: Int): RightData {
         val id = HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/rights/insert_right.sql").readText(),
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/rights/insert_right.sql")!!.readText(),
                     mapOf(
                             "user_id" to userId,
                             "room_id" to roomId
@@ -258,7 +259,7 @@ object RoomDao {
 
     fun removeRights(ids: List<Int>) {
         HabboServer.database {
-            batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql").readText(),
+            batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql")!!.readText(),
                     ids.map {
                         mapOf(
                                 "id" to it
@@ -266,5 +267,37 @@ object RoomDao {
                     }
             )
         }
+    }
+
+    fun updateCustomRoomModel(roomModel: RoomModel) {
+        HabboServer.database {
+            update(javaClass.classLoader.getResource("sql/rooms/model/update_custom_model.sql")!!.readText(),
+                    mapOf(
+                            "door_x" to roomModel.doorVector3.x,
+                            "door_y" to roomModel.doorVector3.y,
+                            "door_z" to roomModel.doorVector3.z,
+                            "door_dir" to roomModel.doorDir,
+                            "heightmap" to roomModel.heightmap.joinToString("\n"),
+                            "id" to roomModel.id.toInt()
+                    )
+            )
+        }
+    }
+
+    fun insertCustomRoomModel(roomModel: RoomModel) {
+        val id = HabboServer.database {
+            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/model/insert_custom_model.sql")!!.readText(),
+                    mapOf(
+                            "room_id" to roomModel.roomId,
+                            "door_x" to roomModel.doorVector3.x,
+                            "door_y" to roomModel.doorVector3.y,
+                            "door_z" to roomModel.doorVector3.z,
+                            "door_dir" to roomModel.doorDir,
+                            "heightmap" to roomModel.heightmap.joinToString("\n")
+                    )
+            )
+        }
+
+        roomModel.id = id.toString()
     }
 }
