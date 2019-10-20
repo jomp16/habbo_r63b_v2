@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,7 +28,7 @@ class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val rooms: MutableMap<Int, Room> = mutableMapOf()
     private val roomModels: MutableMap<String, RoomModel> = mutableMapOf()
-    private val customRoomModels: MutableMap<Int, RoomModel> = mutableMapOf()
+    val customRoomModels: MutableMap<Int, RoomModel> = mutableMapOf()
     val roomTaskManager: RoomTaskManager = RoomTaskManager()
 
     fun load() {

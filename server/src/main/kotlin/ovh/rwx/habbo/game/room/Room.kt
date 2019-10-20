@@ -52,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.HashSet
 
-class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSerialize {
+class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     // for room task
     var roomTask: RoomTask? = null
@@ -69,7 +69,7 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
     val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
     val roomUsersWithRights: Set<RoomUser>
         get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
-    val roomGamemap: RoomGamemap by lazy { RoomGamemap(this) }
+    lateinit var roomGamemap: RoomGamemap
     val pathfinder: IFinder by lazy { AStarFinder() }
     val wiredHandler: WiredHandler by lazy { WiredHandler() }
     private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
@@ -81,6 +81,8 @@ class Room(val roomData: RoomData, val roomModel: RoomModel) : IHabboResponseSer
 
     fun initialize() {
         if (!initialized) {
+            roomGamemap = RoomGamemap(this)
+
             roomItems.values.filter { it.furnishing.interactor != null }.forEach {
                 it.furnishing.interactor?.onPlace(this, null, it)
             }
