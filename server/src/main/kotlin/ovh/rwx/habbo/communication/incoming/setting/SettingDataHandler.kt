@@ -28,8 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SettingDataHandler {
     @Handler(Incoming.USER_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendSettings()
     }
 }

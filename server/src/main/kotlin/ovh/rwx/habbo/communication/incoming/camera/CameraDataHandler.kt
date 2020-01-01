@@ -31,7 +31,7 @@ import java.time.LocalDateTime
 class CameraDataHandler {
     @Handler(Incoming.CAMERA_DATA)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
+        if (!habboSession.hasPermission("acc_can_use_camera")) return
 
         ByteArray(habboRequest.readInt()).let {
             habboRequest.readBytes(it)

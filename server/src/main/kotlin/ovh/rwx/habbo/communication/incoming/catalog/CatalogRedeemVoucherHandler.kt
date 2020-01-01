@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogRedeemVoucherHandler {
     @Handler(Incoming.CATALOG_REDEEM_VOUCHER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         HabboServer.habboGame.catalogManager.redeemVoucher(habboSession, habboRequest.readUTF())
     }
 }

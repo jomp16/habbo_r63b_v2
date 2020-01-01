@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerSearchFriendsHandler {
     @Handler(Incoming.MESSENGER_SEARCH_FRIENDS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         val username = habboRequest.readUTF().replace("%", "")
 
         if (username.isBlank()) return

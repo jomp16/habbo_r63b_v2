@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.habboMessenger.initialized) return
+        if (habboSession.habboMessenger.initialized) return
 
         habboSession.habboMessenger.load()
 

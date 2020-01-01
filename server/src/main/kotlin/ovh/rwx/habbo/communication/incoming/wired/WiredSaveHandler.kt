@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class WiredSaveHandler {
     @Handler(Incoming.WIRED_SAVE_TRIGGER, Incoming.WIRED_SAVE_EFFECT, Incoming.WIRED_SAVE_CONDITION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 

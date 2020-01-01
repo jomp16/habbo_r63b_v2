@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupUpdateColorHandler {
     @Handler(Incoming.GROUP_UPDATE_COLORS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val groupId = habboRequest.readInt()
         val group = HabboServer.habboGame.groupManager.groups[groupId] ?: return
 

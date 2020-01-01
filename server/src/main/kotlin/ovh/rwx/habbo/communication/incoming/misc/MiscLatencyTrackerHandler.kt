@@ -28,7 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MiscLatencyTrackerHandler {
     @Handler(Incoming.MISC_LATENCY_TRACKER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val int1 = habboRequest.readInt() // what the
         val int2 = habboRequest.readInt() // fuck the
         val int3 = habboRequest.readInt() // values is?

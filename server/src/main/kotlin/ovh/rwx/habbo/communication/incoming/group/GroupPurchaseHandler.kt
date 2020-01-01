@@ -32,8 +32,6 @@ class GroupPurchaseHandler {
 
     @Handler(Incoming.GROUP_PURCHASE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         // [0][4]aaaa[0][4]aaaa[0][0][0][2][0][0][0]�[0][0][0][1][0][0][0][6][0][0][0][8][0][0][0][1][0][0][0][4][0][0][0][26][0][0][0][11][0][0][0][4]
 
         // how much credits to remove from user?

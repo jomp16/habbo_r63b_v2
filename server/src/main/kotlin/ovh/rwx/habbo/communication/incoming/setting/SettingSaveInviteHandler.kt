@@ -28,8 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SettingSaveInviteHandler {
     @Handler(Incoming.SETTINGS_SAVE_INVITES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.userPreferences.ignoreRoomInvite = habboRequest.readBoolean()
     }
 }

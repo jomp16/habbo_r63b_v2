@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogConfigurationHandler {
     @Handler(Incoming.CATALOG_CONFIGURATION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_CONFIGURATION)
     }
 }

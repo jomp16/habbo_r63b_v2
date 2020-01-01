@@ -39,7 +39,7 @@ class RoomDoorbellHandler {
     }
 
     private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val username = habboRequest.readUTF()
         val accept = habboRequest.readBoolean()
         val requestHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)

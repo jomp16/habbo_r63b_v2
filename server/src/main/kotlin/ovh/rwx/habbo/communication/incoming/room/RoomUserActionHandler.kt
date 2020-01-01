@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserActionHandler {
     @Handler(Incoming.ROOM_USER_ACTION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val action = habboRequest.readInt()
 
         habboSession.roomUser?.action(action)

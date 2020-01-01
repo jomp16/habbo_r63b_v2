@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogIndexHandler {
     @Handler(Incoming.CATALOG_INDEX)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER_CONFIGURATION)
         habboSession.sendHabboResponse(Outgoing.CATALOG_BUILDERS_BORROWED)
         habboSession.sendHabboResponse(Outgoing.CATALOG_INDEX,

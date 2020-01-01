@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogPurchaseRentalDialogHandler {
     @Handler(Incoming.CATALOG_PURCHASE_RENTAL_DIALOG)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // stub
         habboRequest.readBoolean() // useless?
         val itemName = habboRequest.readUTF()

@@ -31,7 +31,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomSaveSettingsHandler {
     @Handler(Incoming.ROOM_SAVE_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 

@@ -28,7 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SettingSaveVolumeHandler {
     @Handler(Incoming.SETTINGS_SAVE_VOLUME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         var volume = ""
 
         repeat(3) {

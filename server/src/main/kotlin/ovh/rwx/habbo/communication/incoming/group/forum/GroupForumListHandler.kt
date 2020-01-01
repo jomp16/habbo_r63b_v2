@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupForumListHandler {
     @Handler(Incoming.FORUM_LIST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val mode = habboRequest.readInt()
         val page = habboRequest.readInt()
         val amount = habboRequest.readInt()

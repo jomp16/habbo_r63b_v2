@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MiscPingHandler {
     @Handler(Incoming.MISC_PING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.MISC_PONG, habboRequest.readInt())
     }
 }

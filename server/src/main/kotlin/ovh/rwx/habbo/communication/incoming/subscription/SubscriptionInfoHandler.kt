@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SubscriptionInfoHandler {
     @Handler(Incoming.HABBO_CLUB_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.habboSubscription.load()
 
         habboSession.sendHabboResponse(Outgoing.HABBO_CLUB_INFO, habboSession.habboSubscription.subscription)

@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class InventoryUpdateBadgesHandler {
     @Handler(Incoming.INVENTORY_UPDATE_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.habboBadge.resetSlots()
 
         repeat(5) {

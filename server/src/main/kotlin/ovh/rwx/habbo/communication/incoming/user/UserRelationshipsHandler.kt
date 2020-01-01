@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserRelationshipsHandler {
     @Handler(Incoming.USER_RELATIONSHIPS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val userId = habboRequest.readInt()
 
         habboSession.sendHabboResponse(Outgoing.USER_RELATIONSHIPS, userId, MessengerDao.getFriends(userId))

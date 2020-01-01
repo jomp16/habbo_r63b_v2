@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class InventoryItemsHandler {
     @Handler(Incoming.INVENTORY_ITEMS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, habboSession.habboInventory.items.values)
     }
 }

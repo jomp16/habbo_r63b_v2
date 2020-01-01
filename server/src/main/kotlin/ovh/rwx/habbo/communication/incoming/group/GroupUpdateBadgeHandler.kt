@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupUpdateBadgeHandler {
     @Handler(Incoming.GROUP_UPDATE_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val groupId = habboRequest.readInt()
         val group = HabboServer.habboGame.groupManager.groups[groupId] ?: return
 

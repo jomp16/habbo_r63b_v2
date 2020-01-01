@@ -32,7 +32,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserProfileHandler {
     @Handler(Incoming.USER_PROFILE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val userId = habboRequest.readInt()
         val showProfile = habboRequest.readBoolean()
         val userInformation = UserInformationDao.getUserInformationById(userId) ?: return

@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserChangeFigureHandler {
     @Handler(Incoming.USER_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val gender = habboRequest.readUTF().toUpperCase()
         val figure = habboRequest.readUTF()
 

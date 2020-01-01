@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomDimmerInfoHandler {
     @Handler(Incoming.ROOM_DIMMER_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
 
         habboSession.sendHabboResponse(Outgoing.ROOM_DIMMER_INFO, habboSession.currentRoom!!.roomDimmer!!)
     }

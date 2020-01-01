@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUpdateDimmerHandler {
     @Handler(Incoming.ROOM_DIMMER_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true) || habboSession.currentRoom!!.roomDimmer == null) return
         val preset = habboRequest.readInt()
         val backgroundOnly = habboRequest.readInt() >= 2
         val colorCode = habboRequest.readUTF()

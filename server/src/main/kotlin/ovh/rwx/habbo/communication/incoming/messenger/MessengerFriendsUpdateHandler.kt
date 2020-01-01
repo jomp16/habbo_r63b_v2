@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerFriendsUpdateHandler {
     @Handler(Incoming.MESSENGER_FRIENDS_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, habboSession.habboMessenger.friends.values, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
     }

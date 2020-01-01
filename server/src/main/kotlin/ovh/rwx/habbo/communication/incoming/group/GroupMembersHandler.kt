@@ -31,8 +31,6 @@ import java.time.LocalDateTime
 class GroupMembersHandler {
     @Handler(Incoming.GROUP_MEMBERS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val groupId = habboRequest.readInt()
         val page = habboRequest.readInt()
         val searchValue = habboRequest.readUTF()

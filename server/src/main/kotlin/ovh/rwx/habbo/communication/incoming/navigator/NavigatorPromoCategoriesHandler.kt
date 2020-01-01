@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorPromoCategoriesHandler {
     @Handler(Incoming.NAVIGATOR_PROMO_CATEGORIES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_EVENT_CATEGORIES, HabboServer.habboGame.navigatorManager.navigatorEventCategories.values, habboSession.userInformation.rank)
     }
 }

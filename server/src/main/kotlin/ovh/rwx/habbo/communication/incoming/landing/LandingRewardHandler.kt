@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class LandingRewardHandler {
     @Handler(Incoming.LANDING_REWARD)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated /*|| habboSession.sentLandingReward*/) return
+//        if (habboSession.sentLandingReward) return
 
         HabboServer.habboGame.landingManager.landingReward?.let {
             // habboSession.sentLandingReward = true

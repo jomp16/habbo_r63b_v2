@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomMannequinChangeFigureHandler {
     @Handler(Incoming.ROOM_MANNEQUIN_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 

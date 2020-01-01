@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserSignHandler {
     @Handler(Incoming.ROOM_USER_SIGN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val sign = habboRequest.readInt()
 
         habboSession.roomUser?.sign(sign)

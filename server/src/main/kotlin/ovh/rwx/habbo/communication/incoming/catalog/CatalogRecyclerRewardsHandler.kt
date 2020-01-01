@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogRecyclerRewardsHandler {
     @Handler(Incoming.CATALOG_RECYCLER_REWARDS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_RECYCLER_REWARDS, HabboServer.habboGame.catalogManager.recyclerRewards)
     }
 }

@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserActivityPointsBalanceHandler {
     @Handler(Incoming.ACTIVITY_POINTS_BALANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
     }
 }

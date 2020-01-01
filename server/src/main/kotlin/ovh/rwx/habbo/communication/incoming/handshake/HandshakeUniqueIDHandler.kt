@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeUniqueIDHandler {
-    @Handler(Incoming.UNIQUE_ID)
+    @Handler(Incoming.UNIQUE_ID, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val uniqueID = habboRequest.readUTF()
         // ignore this shit

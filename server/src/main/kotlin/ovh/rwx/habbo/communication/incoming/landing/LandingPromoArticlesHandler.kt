@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class LandingPromoArticlesHandler {
     @Handler(Incoming.LANDING_PROMO_ARTICLES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.LANDING_PROMO_ARTICLES,
                 HabboServer.habboGame.landingManager.landingPromos)
     }

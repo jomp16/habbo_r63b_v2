@@ -28,8 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SubscriptionStatusHandler {
     @Handler(Incoming.SUBSCRIPTION_STATUS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.habboSubscription.updateStatus()
     }
 }

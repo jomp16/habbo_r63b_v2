@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class ModerationRoomInfoHandler {
     @Handler(Incoming.MODERATION_ROOM_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.hasPermission("acc_mod_tools")) return
+        if (!habboSession.hasPermission("acc_mod_tools")) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 

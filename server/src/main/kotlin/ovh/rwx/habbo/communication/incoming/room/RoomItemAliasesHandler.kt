@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomItemAliasesHandler {
     @Handler(Incoming.ROOM_ITEM_ALIASES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
 
         habboSession.sendHabboResponse(Outgoing.ROOM_ITEM_ALIASES)
     }

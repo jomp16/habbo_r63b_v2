@@ -32,7 +32,7 @@ import ovh.rwx.habbo.game.user.messenger.MessengerRelationship
 class MessengerRelationshipRequestHandler {
     @Handler(Incoming.MESSENGER_SET_RELATIONSHIP)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         val friendId = habboRequest.readInt()
         var relationship = habboRequest.readInt()
 

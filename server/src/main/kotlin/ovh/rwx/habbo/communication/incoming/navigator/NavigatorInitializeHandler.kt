@@ -31,8 +31,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorInitializeHandler {
     @Handler(Incoming.NAVIGATOR_INITIALIZE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_METADATA, HabboServer.habboGame.navigatorManager.navTabs) // NavigatorMetaDataParserComposer
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_LIFTED_ROOMS, arrayOf<Room>()) // NavigatorLiftedRoomsComposer
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_COLLAPSED_CATEGORIES,

@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomPostItHandler {
     @Handler(Incoming.ROOM_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 

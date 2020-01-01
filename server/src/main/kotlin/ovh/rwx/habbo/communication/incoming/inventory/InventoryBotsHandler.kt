@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class InventoryBotsHandler {
     @Handler(Incoming.INVENTORY_BOTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // Todo: when adding support to bots, rewrite this part
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BOTS, emptyList<Nothing>())
     }

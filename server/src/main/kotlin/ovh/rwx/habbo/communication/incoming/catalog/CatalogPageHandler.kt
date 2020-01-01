@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogPageHandler {
     @Handler(Incoming.CATALOG_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val pageId = habboRequest.readInt()
         val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
 

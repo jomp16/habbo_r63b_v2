@@ -31,7 +31,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogOpenRecyclerHandler {
     @Handler(Incoming.CATALOG_OPEN_RECYCLER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // todo: add recycler closed with timeout
         val result = if (HabboServer.habboConfig.recyclerConfig.open) CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_OPEN
         else CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_CLOSED

@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupPurchasePageHandler {
     @Handler(Incoming.GROUP_PURCHASE_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.GROUP_PURCHASE_PAGE, habboSession.rooms.filter { it.group == null })
     }
 }

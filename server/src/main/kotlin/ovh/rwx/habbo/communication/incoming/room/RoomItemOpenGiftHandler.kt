@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit
 class RoomItemOpenGiftHandler {
     @Handler(Incoming.ROOM_ITEM_OPEN_GIFT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val giftItemId = habboRequest.readInt()
         val giftRoomItem = habboSession.currentRoom!!.roomItems[giftItemId]
 

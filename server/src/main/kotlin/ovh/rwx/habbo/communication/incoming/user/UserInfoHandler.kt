@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserInfoHandler {
     @Handler(Incoming.INFO_RETRIEVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.USER_OBJECT,
                 habboSession.userInformation.id,
                 habboSession.userInformation.username,

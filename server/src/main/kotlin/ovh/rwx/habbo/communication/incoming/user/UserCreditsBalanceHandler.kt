@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserCreditsBalanceHandler {
     @Handler(Incoming.CREDITS_BALANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits)
     }
 }

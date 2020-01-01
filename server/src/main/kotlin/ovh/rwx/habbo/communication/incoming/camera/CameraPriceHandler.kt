@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CameraPriceHandler {
     @Handler(Incoming.CAMERA_PRICE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CAMERA_PRICE,
                 HabboServer.habboConfig.cameraConfig.prices.credits,
                 HabboServer.habboConfig.cameraConfig.prices.pixels,

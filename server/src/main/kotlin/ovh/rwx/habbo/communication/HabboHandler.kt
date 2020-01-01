@@ -40,7 +40,7 @@ import kotlin.system.exitProcess
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val messageHandlers: MutableMap<Incoming, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
+    private val messageHandlers: MutableMap<Incoming, MutableMap<String, Pair<Any, HabboMethodInfo>>> = mutableMapOf()
     private val messageResponses: MutableMap<Outgoing, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     private var incomingHeaders: List<ReleaseHeaderInfo> = emptyList()
@@ -104,7 +104,7 @@ class HabboHandler {
                 handler.headers.forEach { incoming ->
                     if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
 
-                    messageHandlers[incoming]!![methodName] = Pair(clazz, methodHandle)
+                    messageHandlers[incoming]!![methodName] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
                 }
             }
             log.info("Loaded {} Habbo request handlers", messageHandlers.size)
@@ -176,18 +176,24 @@ class HabboHandler {
                     return@use
                 }
 
-                val (clazz, methodHandle) = pair
+                val (clazz, habboMethodInfo) = pair
+
+                if (habboMethodInfo.requiredAuth && !habboSession.authenticated) {
+                    log.error("Method requires authenticated user, but user wasn't authenticated!")
+
+                    return
+                }
 
                 try {
                     habboRequest.incoming = incomingEnum
                     habboRequest.methodName = methodName
 
-                    methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
+                    habboMethodInfo.methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                 } catch (e: Exception) {
                     log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
 
                     if (e is ClassCastException || e is WrongMethodTypeException) {
-                        log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
+                        log.error("Excepted parameters: {}", habboMethodInfo.methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
                         log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
                     }
                 }

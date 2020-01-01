@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomFloorPlanUsedSquaresHandler {
     @Handler(Incoming.FLOOR_PLAN_USED_SQUARES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         habboSession.currentRoom?.let { room ->
             habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, room.roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys)

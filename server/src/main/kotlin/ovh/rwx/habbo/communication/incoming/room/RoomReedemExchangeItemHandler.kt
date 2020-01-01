@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomReedemExchangeItemHandler {
     @Handler(Incoming.ROOM_REEDEM_EXCHANGE_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 

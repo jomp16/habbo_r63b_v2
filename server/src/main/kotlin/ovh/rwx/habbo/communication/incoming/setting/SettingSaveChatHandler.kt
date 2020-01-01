@@ -28,8 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SettingSaveChatHandler {
     @Handler(Incoming.SETTINGS_SAVE_CHAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.userPreferences.preferOldChat = habboRequest.readBoolean()
     }
 }

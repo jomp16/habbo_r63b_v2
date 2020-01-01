@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CameraRoomThumbnailHandler {
     @Handler(Incoming.CAMERA_ROOM_THUMBNAIL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.hasPermission("acc_can_use_camera")) return
+        if (habboSession.currentRoom == null || !habboSession.hasPermission("acc_can_use_camera")) return
 
         ByteArray(habboRequest.readInt()).let {
             habboRequest.readBytes(it)

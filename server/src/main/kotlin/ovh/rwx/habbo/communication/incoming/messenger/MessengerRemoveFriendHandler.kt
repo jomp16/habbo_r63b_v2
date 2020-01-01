@@ -33,7 +33,7 @@ import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 class MessengerRemoveFriendHandler {
     @Handler(Incoming.MESSENGER_REMOVE_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         var amount = habboRequest.readInt()
 
         if (amount < 0) return
