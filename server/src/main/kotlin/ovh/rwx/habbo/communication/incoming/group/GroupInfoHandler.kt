@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupInfoHandler {
     @Handler(Incoming.GROUP_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val groupId = habboRequest.readInt()
         val newWindow = habboRequest.readBoolean()
 

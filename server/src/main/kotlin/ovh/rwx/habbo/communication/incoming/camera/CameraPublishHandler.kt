@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CameraPublishHandler {
     @Handler(Incoming.CAMERA_PUBLISH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
+        if (!habboSession.hasPermission("acc_can_use_camera")) return
         // todo
     }
 }

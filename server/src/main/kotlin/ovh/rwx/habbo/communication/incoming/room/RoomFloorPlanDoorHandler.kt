@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomFloorPlanDoorHandler {
     @Handler(Incoming.FLOOR_PLAN_DOOR)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         habboSession.currentRoom?.let {
             habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_DOOR, it.roomModel.doorVector3, it.roomModel.doorDir)

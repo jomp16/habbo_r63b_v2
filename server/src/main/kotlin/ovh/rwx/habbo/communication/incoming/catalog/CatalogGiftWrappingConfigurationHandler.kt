@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogGiftWrappingConfigurationHandler {
     @Handler(Incoming.CATALOG_GIFT_WRAPPING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_GIFT_WRAPPING)
     }
 }

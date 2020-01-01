@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomApplyDecorationHandler {
     @Handler(Incoming.ROOM_APPLY_DECORATION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
         val userItem = habboSession.habboInventory.items[itemId] ?: return
 

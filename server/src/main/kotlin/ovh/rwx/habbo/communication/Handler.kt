@@ -23,4 +23,4 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-internal annotation class Handler(vararg val headers: Incoming)
+internal annotation class Handler(vararg val headers: Incoming, val requiredAuth: Boolean = true)

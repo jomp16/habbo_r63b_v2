@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class LandingLoadWidgetHandler {
     @Handler(Incoming.REFRESH_CAMPAIGN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val campaignString = habboRequest.readUTF()
         var campaignName = ""
 

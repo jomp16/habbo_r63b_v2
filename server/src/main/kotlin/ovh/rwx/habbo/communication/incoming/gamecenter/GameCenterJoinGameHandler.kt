@@ -31,7 +31,6 @@ import java.util.*
 class GameCenterJoinGameHandler {
     @Handler(Incoming.GAME_CENTER_JOIN_GAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val gameId = habboRequest.readInt()
 
         if (gameId != 3) return

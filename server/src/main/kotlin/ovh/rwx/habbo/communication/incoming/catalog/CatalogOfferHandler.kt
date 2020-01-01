@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogOfferHandler {
     @Handler(Incoming.CATALOG_OFFER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val catalogOfferId = habboRequest.readInt()
 
         if (catalogOfferId == -1) return

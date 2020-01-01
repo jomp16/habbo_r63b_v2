@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class InventoryPetsHandler {
     @Handler(Incoming.INVENTORY_PETS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // Todo: when adding support to pets, rewrite this part
         habboSession.sendHabboResponse(Outgoing.INVENTORY_PETS, emptyList<Nothing>())
     }

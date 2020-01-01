@@ -32,8 +32,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupRequestJoinHandler {
     @Handler(Incoming.GROUP_REQUEST_JOIN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         val groupId = habboRequest.readInt()
         val group = HabboServer.habboGame.groupManager.groups[groupId] ?: return
 

@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 class UserWardrobeSaveHandler {
     @Handler(Incoming.USER_WARDROBE_SAVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val slotId = habboRequest.readInt()
 
         if (slotId > 10) return

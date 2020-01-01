@@ -42,7 +42,7 @@ import java.net.InetSocketAddress
 class HandshakeSSOTicketHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    @Handler(Incoming.SSO_TICKET)
+    @Handler(Incoming.SSO_TICKET, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.authenticate(habboRequest.readUTF())) {
             log.info("Unauthenticated user!")

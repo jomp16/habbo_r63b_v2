@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerFollowFriendHandler {
     @Handler(Incoming.MESSENGER_FOLLOW_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         val friendId = habboRequest.readInt()
 
         if (friendId == 0 || friendId == habboSession.userInformation.id) return

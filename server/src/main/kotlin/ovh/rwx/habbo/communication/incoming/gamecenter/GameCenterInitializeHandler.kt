@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GameCenterInitializeHandler {
     @Handler(Incoming.INITIALIZE_GAME_CENTER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // todo: check what I need to send to client too...
         habboSession.sendHabboResponse(Outgoing.GAME_CENTER_ACCOUNT_STATUS)
     }

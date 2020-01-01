@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserSitHandler {
     @Handler(Incoming.ROOM_USER_SIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || habboSession.roomUser == null || habboSession.roomUser!!.walking || habboSession.roomUser!!.statusMap.containsKey("sit") || habboSession.roomUser!!.statusMap.containsKey("lay")) return
+        if (habboSession.currentRoom == null || habboSession.roomUser == null || habboSession.roomUser!!.walking || habboSession.roomUser!!.statusMap.containsKey("sit") || habboSession.roomUser!!.statusMap.containsKey("lay")) return
         val sit = habboRequest.readInt() == 1
 
         if (sit) {

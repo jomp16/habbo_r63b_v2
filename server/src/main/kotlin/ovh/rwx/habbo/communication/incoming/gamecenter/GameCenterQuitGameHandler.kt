@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GameCenterQuitGameHandler {
     @Handler(Incoming.GAME_CENTER_QUIT_GAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val gameId = habboRequest.readInt()
         habboSession.sendHabboResponse(Outgoing.GAME_CENTER_CAN_PLAY_GAME, gameId, GameCenterCanPlayGameResponse.GameCenterCanPlayGameStatus.OK)
     }

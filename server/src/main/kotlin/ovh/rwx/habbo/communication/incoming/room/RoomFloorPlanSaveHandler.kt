@@ -42,7 +42,7 @@ class RoomFloorPlanSaveHandler {
 
     @Handler(Incoming.FLOOR_PLAN_SAVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         habboSession.currentRoom!!.let { room ->
             val heightmap = habboRequest.readUTF()

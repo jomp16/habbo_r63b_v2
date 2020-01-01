@@ -28,8 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class SettingSaveFocusHandler {
     @Handler(Incoming.SETTINGS_SAVE_FOCUS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.userPreferences.disableCameraFollow = habboRequest.readBoolean()
     }
 }

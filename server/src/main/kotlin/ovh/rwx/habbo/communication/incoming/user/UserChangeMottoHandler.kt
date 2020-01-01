@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserChangeMottoHandler {
     @Handler(Incoming.USER_CHANGE_MOTTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         var motto = habboRequest.readUTF()
 
         if (motto.isBlank() || motto == habboSession.userInformation.motto) return

@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorSearchHandler {
     @Handler(Incoming.NAVIGATOR_SEARCH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val category = habboRequest.readUTF()
         val searchTerm = habboRequest.readUTF()
 

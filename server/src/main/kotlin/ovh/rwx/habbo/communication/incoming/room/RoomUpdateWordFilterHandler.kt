@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUpdateWordFilterHandler {
     @Handler(Incoming.ROOM_UPDATE_WORD_FILTER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 

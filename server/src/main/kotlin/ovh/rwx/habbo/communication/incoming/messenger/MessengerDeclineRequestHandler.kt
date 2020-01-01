@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerDeclineRequestHandler {
     @Handler(Incoming.MESSENGER_DECLINE_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         val declineAll = habboRequest.readBoolean()
         var amount = habboRequest.readInt()
 

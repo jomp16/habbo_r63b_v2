@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomRightsHandler {
     @Handler(Incoming.ROOM_RIGHTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 

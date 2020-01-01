@@ -33,7 +33,7 @@ import ovh.rwx.habbo.util.Vector2
 class RoomPlaceItemHandler {
     @Handler(Incoming.ROOM_PLACE_ITEM, Incoming.ROOM_PLACE_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         // floor = [0][7]3 8 4 2
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l

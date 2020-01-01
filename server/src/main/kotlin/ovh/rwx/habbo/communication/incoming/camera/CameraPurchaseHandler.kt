@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CameraPurchaseHandler {
     @Handler(Incoming.CAMERA_PURCHASE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.hasPermission("acc_can_use_camera")) return
+        if (!habboSession.hasPermission("acc_can_use_camera")) return
 
         if (HabboServer.habboGame.cameraManager.purchaseCamera(habboSession)) habboSession.sendHabboResponse(Outgoing.CAMERA_FINISH_PURCHASE)
     }

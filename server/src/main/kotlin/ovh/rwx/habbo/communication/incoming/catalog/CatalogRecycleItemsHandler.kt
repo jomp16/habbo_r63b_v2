@@ -34,7 +34,7 @@ import java.time.format.DateTimeFormatter
 class CatalogRecycleItemsHandler {
     @Handler(Incoming.CATALOG_RECYCLE_ITEMS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val amount = habboRequest.readInt()
         val ecotronBoxFurnishing = HabboServer.habboGame.itemManager.furnishings[HabboServer.habboConfig.recyclerConfig.giftBox]
         val recycledItemReward = HabboServer.habboGame.catalogManager.getRandomRecyclerReward()

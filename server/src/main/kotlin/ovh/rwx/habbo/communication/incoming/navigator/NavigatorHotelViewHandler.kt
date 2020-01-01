@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorHotelViewHandler {
     @Handler(Incoming.GO_TO_HOTEL_VIEW)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
         else habboSession.currentRoom?.removeUser(habboSession.roomUser, notifyClient = true, kickNotification = false)
     }

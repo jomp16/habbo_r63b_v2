@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomEntryDataHandler {
     @Handler(Incoming.ROOM_ENTRY_DATA)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
 
         habboSession.currentRoom?.addUser(habboSession)
     }

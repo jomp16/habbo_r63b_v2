@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomTakeItemHandler {
     @Handler(Incoming.ROOM_TAKE_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
 
         habboRequest.readInt() // useless
         val itemId = habboRequest.readInt()

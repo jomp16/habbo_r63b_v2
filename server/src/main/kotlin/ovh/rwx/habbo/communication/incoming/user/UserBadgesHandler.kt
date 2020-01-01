@@ -32,7 +32,6 @@ import ovh.rwx.habbo.game.user.badge.Badge
 class UserBadgesHandler {
     @Handler(Incoming.USER_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val userId = habboRequest.readInt()
         val badges: Collection<Badge> = HabboServer.habboSessionManager.getHabboSessionById(userId)?.habboBadge?.badges?.values
                 ?: BadgeDao.getBadges(

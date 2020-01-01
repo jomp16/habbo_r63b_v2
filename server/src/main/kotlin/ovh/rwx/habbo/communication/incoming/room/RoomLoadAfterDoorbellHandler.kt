@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomLoadAfterDoorbellHandler {
     @Handler(Incoming.ROOM_LOAD_BY_DOORBELL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId]
 

@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserWardrobesHandler {
     @Handler(Incoming.USER_WARDROBES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.USER_WARDROBES, habboSession.habboSubscription.validUserSubscription, habboSession.userInformation.wardrobes)
     }
 }

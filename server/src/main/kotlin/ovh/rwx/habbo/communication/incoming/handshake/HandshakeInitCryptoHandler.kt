@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeInitCryptoHandler {
-    @Handler(Incoming.INIT_CRYPTO)
+    @Handler(Incoming.INIT_CRYPTO, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.handshaking = true
         val dh = HabboServer.habboEncryptionHandler.generateDiffieHellmanParameterSpec()

@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserWhisperHandler {
     @Handler(Incoming.ROOM_USER_WHISPER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val raw = habboRequest.readUTF()
         val bubble = habboRequest.readInt()
         val targetName = raw.substring(0, raw.indexOf(' '))

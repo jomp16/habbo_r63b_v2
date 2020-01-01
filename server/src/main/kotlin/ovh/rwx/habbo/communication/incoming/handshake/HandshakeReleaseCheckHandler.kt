@@ -31,7 +31,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class HandshakeReleaseCheckHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    @Handler(Incoming.RELEASE_CHECK)
+    @Handler(Incoming.RELEASE_CHECK, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!HabboServer.habboHandler.releases.contains(habboSession.release)) {
             log.warn("Server doesn't have this release. Client: {}, available releases: {}. Disconnecting user...", habboSession.release, HabboServer.habboHandler.releases.sorted().joinToString())

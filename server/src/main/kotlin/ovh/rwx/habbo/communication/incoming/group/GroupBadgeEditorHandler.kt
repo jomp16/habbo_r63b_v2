@@ -30,8 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GroupBadgeEditorHandler {
     @Handler(Incoming.GROUP_BADGE_EDITOR)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.GROUP_BADGE_EDITOR,
                 HabboServer.habboGame.groupManager.groupBadgesBases,
                 HabboServer.habboGame.groupManager.groupBadgesSymbols,

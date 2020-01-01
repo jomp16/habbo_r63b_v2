@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomMoveUserHandler {
     @Handler(Incoming.ROOM_MOVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
 

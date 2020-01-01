@@ -29,8 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class InventoryBadgesHandler {
     @Handler(Incoming.INVENTORY_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, habboSession.habboBadge.badges.values)
         habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
     }

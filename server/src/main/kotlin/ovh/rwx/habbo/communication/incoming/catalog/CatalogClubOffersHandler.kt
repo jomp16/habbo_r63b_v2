@@ -31,8 +31,6 @@ import java.time.LocalDateTime
 class CatalogClubOffersHandler {
     @Handler(Incoming.CATALOG_HABBO_CLUB_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
-
         habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(), HabboServer.habboGame.catalogManager.catalogClubOffers, habboSession.habboSubscription.subscription?.expire
                 ?: LocalDateTime.now())
     }

@@ -32,7 +32,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomItemUseClothingHandler {
     @Handler(Incoming.ROOM_ITEM_USE_CLOTHING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 

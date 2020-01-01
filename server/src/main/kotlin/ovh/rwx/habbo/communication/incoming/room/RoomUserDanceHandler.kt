@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserDanceHandler {
     @Handler(Incoming.ROOM_USER_DANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         var danceId = habboRequest.readInt()
 
         if (danceId < 0) danceId = 1

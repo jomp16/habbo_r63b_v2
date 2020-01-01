@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorAddRemoveFavoriteRoomHandler {
     @Handler(Incoming.NAVIGATOR_ADD_FAVORITE_ROOM, Incoming.NAVIGATOR_REMOVE_FAVORITE_ROOM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val roomId = habboRequest.readInt()
         val addFavorite = habboRequest.incoming == Incoming.NAVIGATOR_ADD_FAVORITE_ROOM
 

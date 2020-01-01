@@ -29,7 +29,7 @@ import ovh.rwx.habbo.util.Rotation
 class RoomUserLookToHandler {
     @Handler(Incoming.ROOM_LOOK_TO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
 

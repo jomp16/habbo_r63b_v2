@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class GameCenterListGamesHandler {
     @Handler(Incoming.GAME_LISTING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // todo: check what's necessary to send to client
         habboSession.sendHabboResponse(Outgoing.GAME_CENTER_LIST) // todo: add dynamic game listing
     }

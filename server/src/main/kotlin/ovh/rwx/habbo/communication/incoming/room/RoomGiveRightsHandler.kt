@@ -41,7 +41,7 @@ class RoomGiveRightsHandler {
     }
 
     private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
 
         val userId = habboRequest.readInt()
 

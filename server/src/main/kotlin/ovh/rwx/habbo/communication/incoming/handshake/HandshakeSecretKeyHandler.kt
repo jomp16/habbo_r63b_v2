@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSecretKeyHandler {
-    @Handler(Incoming.SECRET_KEY)
+    @Handler(Incoming.SECRET_KEY, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (HabboServer.habboConfig.encryptionConfig.rc4) {
             val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(habboSession.diffieHellmanParams, habboRequest.readUTF())

@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomUserChatTalkHandler {
     @Handler(Incoming.ROOM_USER_CHAT, Incoming.ROOM_USER_SHOUT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || habboSession.currentRoom == null) return
+        if (habboSession.currentRoom == null) return
 
         val (message, bubble) = parse(habboRequest) ?: return
         // todo: check if user can use bubble

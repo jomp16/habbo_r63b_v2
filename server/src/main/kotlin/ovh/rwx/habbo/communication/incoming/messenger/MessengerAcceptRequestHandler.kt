@@ -32,7 +32,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerAcceptRequestHandler {
     @Handler(Incoming.MESSENGER_ACCEPT_REQUEST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         var amount = habboRequest.readInt()
 
         if (amount < 0) return

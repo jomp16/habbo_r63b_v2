@@ -33,7 +33,6 @@ class MiscPongHandler {
 
     @Handler(Incoming.MISC_PONG)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val timeElapsed = System.nanoTime() - habboSession.ping
 
         habboSession.ping = 0.toLong()

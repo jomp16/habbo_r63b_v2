@@ -28,7 +28,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MiscEventTrackerHandler {
     @Handler(Incoming.MISC_EVENT_TRACKER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         val type = habboRequest.readUTF()
         val location = habboRequest.readUTF()
         val action = habboRequest.readUTF()

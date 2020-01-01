@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit
 class MessengerChatHandler {
     @Handler(Incoming.MESSENGER_CHAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.habboMessenger.initialized) return
+        if (!habboSession.habboMessenger.initialized) return
         val userId = habboRequest.readInt()
         val message = habboRequest.readUTF().trim()
 

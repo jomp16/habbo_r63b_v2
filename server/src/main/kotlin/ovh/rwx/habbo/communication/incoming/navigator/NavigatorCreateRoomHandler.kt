@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 class NavigatorCreateRoomHandler {
     @Handler(Incoming.NAVIGATOR_CREATE_ROOM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated) return
         // [0][5]asdfg[0][6]asdfgh[0][7]model_a[0][0][0][1][0][0][0]2[0][0][0][2]
         // todo: perform sanity check here, pretty please?
         val name = habboRequest.readUTF()

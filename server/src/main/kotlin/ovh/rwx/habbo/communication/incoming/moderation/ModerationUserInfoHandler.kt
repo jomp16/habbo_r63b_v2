@@ -31,7 +31,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class ModerationUserInfoHandler {
     @Handler(Incoming.MODERATION_USER_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticated || !habboSession.hasPermission("acc_mod_tools")) return
+        if (!habboSession.hasPermission("acc_mod_tools")) return
         val userId = habboRequest.readInt()
         val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
         val userStats = UserStatsDao.getUserStats(userId)
