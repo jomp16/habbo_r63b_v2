@@ -65,6 +65,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import kotlin.system.exitProcess
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -209,7 +210,7 @@ object HabboServer : AutoCloseable {
                 } else {
                     log.error("Error starting ${BuildConfig.NAME} server!", habboChannelFuture.cause())
 
-                    System.exit(1)
+                    exitProcess(1)
                 }
             }
         } catch (e: Exception) {

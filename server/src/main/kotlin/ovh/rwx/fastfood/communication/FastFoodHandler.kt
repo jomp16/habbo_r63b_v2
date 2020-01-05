@@ -63,7 +63,7 @@ class FastFoodHandler {
             }
         }
 
-        largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name }).sortedByDescending { it.length }.first().length
+        largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name }).maxBy { it.length }!!.length
 
         log.info("Loaded {} FastFood request handlers", fastFoodMessageHandlers.size)
         log.info("Loaded {} FastFood response handlers", fastFoodMessageResponses.size)

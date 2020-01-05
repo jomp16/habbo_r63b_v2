@@ -106,8 +106,8 @@ data class RoomItem(
 
     fun update(updateDb: Boolean, updateClient: Boolean) {
         if (updateClient) {
-            when {
-                furnishing.type == ItemType.WALL -> room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
+            when (furnishing.type) {
+                ItemType.WALL -> room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
                 else -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
             }
         }
@@ -116,12 +116,13 @@ data class RoomItem(
     }
 
     fun addToRoom(room: Room, updateDb: Boolean, updateClient: Boolean, userName: String) {
-        when {
-            furnishing.type == ItemType.FLOOR -> {
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (furnishing.type) {
+            ItemType.FLOOR -> {
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
             }
-            furnishing.type == ItemType.WALL -> {
+            ItemType.WALL -> {
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
             }

@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.user.information.UserStats
 import java.time.Instant
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+import kotlin.math.ceil
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationUserInfoResponse {
@@ -38,7 +39,7 @@ class ModerationUserInfoResponse {
             writeUTF(userInformation.username)
             writeUTF(userInformation.figure)
             writeInt(0) // todo: account created
-            writeInt(TimeUnit.SECONDS.toMinutes(Math.ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toLong()).toInt())
+            writeInt(TimeUnit.SECONDS.toMinutes(ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toLong()).toInt())
             writeBoolean(HabboServer.habboSessionManager.getHabboSessionById(userInformation.id) != null)
             writeInt(0) // todo: cfhs created
             writeInt(0) // todo: cfhs abusive

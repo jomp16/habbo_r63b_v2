@@ -30,6 +30,7 @@ import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
+import kotlin.math.abs
 
 class RoomGamemap(private val room: Room) {
     val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
@@ -51,7 +52,7 @@ class RoomGamemap(private val room: Room) {
         return if (!ignoreUsers && !room.roomData.allowWalkThrough) roomUserMap[vector2] != null && roomUserMap[vector2]!!.isNotEmpty() else false
     }
 
-    fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = Math.abs(x1 - x2) + Math.abs(y1 - y2)
+    fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = abs(x1 - x2) + abs(y1 - y2)
 
     fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
         if (!roomUserMap.containsKey(vector2)) {
@@ -136,7 +137,7 @@ class RoomGamemap(private val room: Room) {
     fun getHighestItem(vector2: Vector2): RoomItem? {
         if (!roomItemMap.containsKey(vector2)) return null
 
-        return roomItemMap[vector2]!!.sortedBy { it.position.z }.firstOrNull()
+        return roomItemMap[vector2]!!.minBy { it.position.z }
     }
 
     fun removeRoomItem(roomItem: RoomItem) {

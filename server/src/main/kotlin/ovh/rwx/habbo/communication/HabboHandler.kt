@@ -86,7 +86,7 @@ class HabboHandler {
                 exitProcess(1)
             }
 
-            largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.sortedByDescending { it.length }.first().length
+            largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.maxBy { it.length }!!.length
 
             log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
         }
@@ -179,7 +179,7 @@ class HabboHandler {
                 val (clazz, habboMethodInfo) = pair
 
                 if (habboMethodInfo.requiredAuth && !habboSession.authenticated) {
-                    log.error("Method requires authenticated user, but user wasn't authenticated!")
+                    log.error("${habboRequest.headerId} - $incomingEnum - method requires authenticated user, but user wasn't authenticated!")
 
                     return
                 }

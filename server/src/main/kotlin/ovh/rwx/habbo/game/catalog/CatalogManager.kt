@@ -55,9 +55,9 @@ class CatalogManager {
         catalogDeals.clear()
         // done clear catalog
         // catalog root
-        catalogPages += CatalogPage(-1, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "", "")
+        catalogPages += CatalogPage(-1, 0, "", "root", 0, visible = true, enabled = true, minRank = 1, clubOnly = false, orderNum = 1, pageLayout = "", pageHeadline = "", pageTeaser = "", pageSpecial = "", pageText1 = "", pageText2 = "", pageTextDetails = "", pageTextTeaser = "", pageLinkDescription = "", pageLinkPagename = "")
         // catalog builders
-        catalogPages += CatalogPage(-2, 0, "", "root", 0, true, true, 1, false, 1, "", "", "", "", "", "", "", "", "", "")
+        catalogPages += CatalogPage(-2, 0, "", "root", 0, visible = true, enabled = true, minRank = 1, clubOnly = false, orderNum = 1, pageLayout = "", pageHeadline = "", pageTeaser = "", pageSpecial = "", pageText1 = "", pageText2 = "", pageTextDetails = "", pageTextTeaser = "", pageLinkDescription = "", pageLinkPagename = "")
 
         catalogPages += CatalogDao.getCatalogPages()
         catalogItems += CatalogDao.getCatalogItems()

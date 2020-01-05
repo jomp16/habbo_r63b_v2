@@ -42,11 +42,11 @@ class GroupRequestJoinHandler {
             return
         }
 
-        when {
-            group.groupData.membershipState == GroupMembershipState.OPEN -> {
+        when (group.groupData.membershipState) {
+            GroupMembershipState.OPEN -> {
                 // Add user to members right now
             }
-            group.groupData.membershipState == GroupMembershipState.ADMIN_APPROVAL -> {
+            GroupMembershipState.ADMIN_APPROVAL -> {
                 // Add group request and send it to the admins
             }
             else -> habboSession.sendHabboResponse(Outgoing.GROUP_JOIN_ERROR, GroupJoinErrorResponse.GroupJoinError.NOT_ACCEPTING_REQUEST)

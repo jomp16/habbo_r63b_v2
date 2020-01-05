@@ -187,10 +187,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
             group?.let { value += 2 }
 
-            if (showEvents) {
+            /*if (showEvents) {
                 // todo: events
                 //value += 4;
-            }
+            }*/
 
             if (roomData.roomType == RoomType.PRIVATE) value += 8
 
@@ -297,7 +297,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (newItem) {
             roomItems[roomItem.id] = roomItem
 
-            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
+            roomItem.addToRoom(this, updateDb = true, updateClient = true, userName = roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             if (rollerId == -1 || roomItem.rotation != oldRotation) {
                 roomItem.update(updateDb = true, updateClient = true)
@@ -343,7 +343,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
             roomItems[roomItem.id] = roomItem
 
-            roomItem.addToRoom(this, true, true, roomUser?.habboSession?.userInformation?.username ?: "")
+            roomItem.addToRoom(this, updateDb = true, updateClient = true, userName = roomUser?.habboSession?.userInformation?.username ?: "")
         } else {
             roomItem.update(updateDb = true, updateClient = true)
         }
