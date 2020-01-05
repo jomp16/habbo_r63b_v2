@@ -26,7 +26,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class MiscClientVariablesHandler {
-    @Handler(Incoming.MISC_CLIENT_VARIABLES)
+    @Handler(Incoming.MISC_CLIENT_VARIABLES, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val gordonUrl = habboRequest.readUTF()
         val externalVariablesUrl = habboRequest.readUTF()

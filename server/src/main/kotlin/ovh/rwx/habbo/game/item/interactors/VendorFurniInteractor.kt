@@ -45,7 +45,7 @@ class VendorFurniInteractor : ItemInteractor() {
         roomItem.extraData = "1"
         roomItem.update(updateDb = false, updateClient = true)
 
-        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(0 until roomItem.furnishing.vendingIds.size)])
+        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(roomItem.furnishing.vendingIds.indices)])
 
         roomItem.requestCycles(2)
 

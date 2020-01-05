@@ -30,6 +30,8 @@ import java.security.SecureRandom
 import java.util.*
 import java.util.zip.Deflater
 import java.util.zip.Inflater
+import kotlin.math.ln
+import kotlin.math.pow
 
 @Suppress("unused")
 object Utils {
@@ -44,13 +46,13 @@ object Utils {
         val unit = if (si) 1000 else 1024
 
         if (bytes < unit) return "$bytes B"
-        val exp = (Math.log(bytes.toDouble()) / Math.log(unit.toDouble())).toInt()
+        val exp = (ln(bytes.toDouble()) / ln(unit.toDouble())).toInt()
         val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + (if (si) "" else "i")
 
-        return "%.1f %sB".format(bytes / Math.pow(unit.toDouble(), exp.toDouble()), pre)
+        return "%.1f %sB".format(bytes / unit.toDouble().pow(exp.toDouble()), pre)
     }
 
-    fun randInt(range: IntRange, random1: Random = random): Int = random1.nextInt((range.endInclusive - range.start) + 1) + range.start
+    fun randInt(range: IntRange, random1: Random = random): Int = random1.nextInt((range.last - range.first) + 1) + range.first
 
     fun round(value: Double, places: Int): Double {
         if (places < 0) throw IllegalArgumentException()

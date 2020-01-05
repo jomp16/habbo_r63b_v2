@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.user.information.UserInformation
 import ovh.rwx.habbo.game.user.information.UserStats
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.math.ceil
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserProfileResponse {
@@ -46,7 +47,7 @@ class UserProfileResponse {
             // todo: groups
             writeInt(0)
 
-            writeInt(Math.ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toInt())
+            writeInt(ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toInt())
             writeBoolean(showProfile)
         }
     }

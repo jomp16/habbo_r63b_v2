@@ -60,24 +60,20 @@ class WiredHandler {
     private fun triggerCondition(vector2: Vector2, roomUser: RoomUser?): Boolean {
         var canExecute = true
 
-        wiredStack[vector2]!!.values.filter { it is WiredCondition }.forEach {
-            if (it is WiredCondition) {
-                lightWired(it)
+        wiredStack[vector2]!!.values.filterIsInstance<WiredCondition>().forEach {
+            lightWired(it)
 
-                if (canExecute) canExecute = it.onCondition(roomUser)
-            }
+            if (canExecute) canExecute = it.onCondition(roomUser)
         }
 
         return canExecute
     }
 
     private fun triggerAction(vector2: Vector2, roomUser: RoomUser?) {
-        wiredStack[vector2]!!.values.filter { it is WiredEffect }.forEach { wiredItem ->
-            if (wiredItem is WiredEffect) {
-                lightWired(wiredItem)
+        wiredStack[vector2]!!.values.filterIsInstance<WiredEffect>().forEach { wiredItem ->
+            lightWired(wiredItem)
 
-                wiredItem.handle(roomUser)
-            }
+            wiredItem.handle(roomUser)
         }
     }
 
