@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,7 +28,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MiscClientVariablesHandler {
     @Handler(Incoming.MISC_CLIENT_VARIABLES, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val gordonUrl = habboRequest.readUTF()
-        val externalVariablesUrl = habboRequest.readUTF()
+        // In PRODUCTION-201912102204-233022976, the structure changed to int - string - string
+        // I don't know which client version changed, so I commented it
+
+        // val gordonUrl = habboRequest.readUTF()
+        // val externalVariablesUrl = habboRequest.readUTF()
     }
 }
