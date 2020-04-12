@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,15 +22,18 @@ apply plugin: 'java-library-distribution'
 group "ovh.rwx"
 
 dependencies {
-    compile project(":server")
+    implementation project(":server")
 
     //noinspection GrUnresolvedAccess
-    compile "org.apache.logging.log4j:log4j-core:$log4j2_version"
+    implementation "org.apache.logging.log4j:log4j-core:$log4j2_version"
 
     //noinspection GrUnresolvedAccess
-    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
+    implementation "org.apache.logging.log4j:log4j-slf4j-impl:$log4j2_version"
 
-    compile 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
 }
 
 jar {
@@ -42,7 +45,7 @@ jar {
     manifest {
         //noinspection GrUnresolvedAccess
         attributes 'Main-Class': 'ovh.rwx.MainKt',
-                'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).collect {
+                'Class-Path': (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).collect {
                     "lib/$it.name"
                 }.join(' ')
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,17 +19,16 @@
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
+def mDestinationDirectory = file("$rootDir/plugins")
+
 processResources {
     filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
 }
 
 clean {
     doLast {
-        //noinspection GrUnresolvedAccess
-        jar.archiveFile.get().asFile.delete()
-
-        //noinspection GrUnresolvedAccess
-        file("$jar.destinationDirectory/lib/$project.name").deleteDir()
+        new File(mDestinationDirectory, jar.archiveFile.get().asFile.name).delete()
+        new File(mDestinationDirectory, "lib/$project.name").deleteDir()
     }
 }
 
@@ -38,27 +37,25 @@ dependencies {
 }
 
 task copyLibs(type: Copy) {
-    from {
-        //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
-        (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
-            !it.name.contains("server")
-        }.collect { it }
-    }
-    into {
-        //noinspection GrUnresolvedAccess
-        "${jar.destinationDirectory.asFile.get().absolutePath}/lib/$project.name"
-    }
+    dependsOn clean
+
+    def libs = (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
+        !it.name.contains("server")
+    }.collect { it }
+
+    def path = new File(mDestinationDirectory, "lib/$project.name")
+
+    from libs
+    into path.absolutePath
 }
 
 jar {
-    destinationDirectory.set(file("$rootDir/plugins"))
+    destinationDirectory.set(mDestinationDirectory)
 
-    //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
     dependsOn copyLibs
 
     manifest {
-        //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
-        attributes 'Class-Path': (project.configurations.runtime.files - project(":server").configurations.runtime.files).stream().filter {
+        attributes 'Class-Path': (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
             !it.name.contains("server")
         }.collect { "lib/$project.name/$it.name" }.join(' ')
     }
