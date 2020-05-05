@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,18 +26,21 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInitializeResponse {
     @Response(Outgoing.MESSENGER_INIT)
-    fun response(habboResponse: HabboResponse, maxFriends: Int) {
+    fun response(habboResponse: HabboResponse, maxFriends: Int, maxFriendsHC: Int) {
         habboResponse.apply {
-            writeInt(maxFriends)
+            writeInt(maxFriends) // Max friends normal
             writeInt(300)
-            writeInt(800)
-            writeInt(1) // category count
+            writeInt(maxFriendsHC) // Max friends HC
+            writeInt(0) // category count
             // category structure:
             // int - id
             // string - name
             // groups category
-            writeInt(1)
-            writeUTF("Groups")
+//            writeInt(1)
+//            writeUTF("Groups")
+
+            writeInt(100)
+            writeInt(0)
         }
     }
 }

@@ -17,18 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.outgoing.unknown
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogBuildersBorrowedResponse {
-    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun response(habboResponse: HabboResponse, borrowedItems: Int) {
+class AuthenticationFirstLoginOfDay {
+    @Response(Outgoing.AUTHENTICATION_FIRST_LOGIN_OF_DAY)
+    fun response(habboResponse: HabboResponse, enabled: Boolean) {
         habboResponse.apply {
-            writeInt(borrowedItems)
+            writeBoolean(enabled)
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,19 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.unknown
+package ovh.rwx.habbo.communication.incoming.catalog
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UnknownID3Response {
-    @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID3)
-    fun response(habboResponse: HabboResponse, string1: String, string2: String) {
-        habboResponse.apply {
-            writeUTF(string1)
-            writeUTF(string2)
-        }
+class CatalogSwitchModeHandler {
+    @Handler(Incoming.CATALOG_INDEX)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val mode = habboRequest.readUTF()
+
+        habboSession.sendHabboResponse(Outgoing.CATALOG_INDEX,
+                mode,
+                habboSession.userInformation.rank,
+                habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription)
     }
 }

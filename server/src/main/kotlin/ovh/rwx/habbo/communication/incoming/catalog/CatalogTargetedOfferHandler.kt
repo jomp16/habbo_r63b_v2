@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,18 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.unknown
+package ovh.rwx.habbo.communication.incoming.catalog
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UnknownID2Response {
-    @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID2)
-    fun response(habboResponse: HabboResponse, enabled: Boolean) {
-        habboResponse.apply {
-            writeBoolean(enabled)
-        }
+class CatalogTargetedOfferHandler {
+    @Handler(Incoming.CATALOG_TARGETED_OFFER)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(Outgoing.CATALOG_TARGETED_OFFER)
     }
 }
