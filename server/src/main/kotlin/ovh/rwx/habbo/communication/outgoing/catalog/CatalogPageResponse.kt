@@ -211,6 +211,16 @@ class CatalogPageResponse {
                     writeInt(0)
                     writeInt(0)
                 }
+                "roomads" -> {
+                    writeUTF("NORMAL")
+                    writeUTF(catalogPage.pageLayout)
+                    writeInt(2)
+                    writeUTF(catalogPage.pageHeadline)
+                    writeUTF(catalogPage.pageTeaser)
+                    writeInt(2)
+                    writeUTF(catalogPage.pageText1)
+                    writeUTF(catalogPage.pageTextDetails)
+                }
                 else -> {
                     writeUTF("NORMAL")
                     writeUTF(catalogPage.pageLayout)

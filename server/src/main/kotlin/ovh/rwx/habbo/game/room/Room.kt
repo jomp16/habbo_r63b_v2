@@ -241,7 +241,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
-            if (!onlyRotation && (roomGamemap.isBlocked(it, true) || roomGamemap.cannotStackItem[it.x][it.y])) {
+            if (!onlyRotation && roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
                 // cannot set item, because at least one tile is blocked
                 return false
             }
