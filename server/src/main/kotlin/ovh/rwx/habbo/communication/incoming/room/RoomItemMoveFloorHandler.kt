@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector2
 
@@ -34,9 +35,18 @@ class RoomItemMoveFloorHandler {
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
         val rotation = habboRequest.readInt()
+        val newPosition = Vector2(x, y)
 
         if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setFloorItem(habboSession.currentRoom!!.roomItems[itemId]!!, Vector2(x, y), rotation, habboSession.roomUser)
+        val roomItem = habboSession.currentRoom!!.roomItems[itemId]!!
+
+        if (habboSession.currentRoom?.setFloorItem(roomItem, newPosition, rotation, habboSession.roomUser) == false) {
+            if (roomItem.position.vector2 != newPosition) {
+                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.cant_set_item}")
+            }
+
+            roomItem.update(updateDb = false, updateClient = true)
+        }
     }
 }
