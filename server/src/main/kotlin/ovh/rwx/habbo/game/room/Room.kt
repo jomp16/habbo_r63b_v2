@@ -72,11 +72,15 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     lateinit var roomGamemap: RoomGamemap
     val pathfinder: IFinder by lazy { AStarFinder() }
     val wiredHandler: WiredHandler by lazy { WiredHandler() }
+
+    @Suppress("RemoveExplicitTypeArguments")
     private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
     var roomDimmer: RoomDimmer? = null
     private var initialized: Boolean = false
     val group: Group?
         get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
+
+    @Suppress("RemoveExplicitTypeArguments")
     val loadedGroups: MutableSet<Group> by lazy { HashSet<Group>() }
 
     fun initialize() {
@@ -233,6 +237,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         val newItem = !roomItems.containsKey(roomItem.id)
         val onlyRotation = roomItem.position.vector2 == position && roomItem.rotation != rotation
 
+        if (position == roomModel.doorVector3.vector2) return false
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
@@ -309,7 +314,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
-        sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys)
+
+        roomUsersWithRights.forEach { roomUser1 ->
+            roomUser1.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys)
+        }
 
         return true
     }
@@ -389,7 +397,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     }
 
                     sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)
-                    sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys)
+
+                    roomUsersWithRights.forEach { roomUser ->
+                        roomUser.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys)
+                    }
                 }
             }
             ItemType.WALL -> {
