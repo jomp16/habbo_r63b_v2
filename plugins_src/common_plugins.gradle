@@ -25,11 +25,15 @@ processResources {
     filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
 }
 
-clean {
+task cleanLibsDir {
     doLast {
         new File(mDestinationDirectory, jar.archiveFile.get().asFile.name).delete()
         new File(mDestinationDirectory, "lib/$project.name").deleteDir()
     }
+}
+
+clean {
+    dependsOn cleanLibsDir
 }
 
 dependencies {
@@ -37,7 +41,7 @@ dependencies {
 }
 
 task copyLibs(type: Copy) {
-    dependsOn clean
+    dependsOn cleanLibsDir
 
     def libs = (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
         !it.name.contains("server")

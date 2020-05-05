@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -70,6 +70,7 @@ enum class Outgoing {
     GAME_CENTER_LIST,
     GAME_CENTER_LOAD_GAME,
     GAME_CENTER_UPDATE_LEADERBOARD,
+    GUIDE_TOOLS,
     HABBO_CLUB_INFO,
     HOME_ROOM,
     INIT_CRYPTO,

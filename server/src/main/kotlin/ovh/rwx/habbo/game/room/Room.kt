@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -309,6 +309,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
+        sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys)
 
         return true
     }
@@ -388,6 +389,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     }
 
                     sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)
+                    sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys)
                 }
             }
             ItemType.WALL -> {

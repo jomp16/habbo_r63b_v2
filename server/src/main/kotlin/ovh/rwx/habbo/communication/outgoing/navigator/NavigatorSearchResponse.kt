@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -34,13 +34,40 @@ class NavigatorSearchResponse {
     // todo: rewrite it to be more generic enough
     @Response(Outgoing.NAVIGATOR_SEARCH)
     fun response(habboResponse: HabboResponse, habboSession: HabboSession, category: String, searchTerm: String) {
+        val rooms: MutableList<Room> = mutableListOf()
+
+        if (!searchTerm.isBlank()) {
+            rooms += HabboServer.habboGame.roomManager.rooms.values.filter {
+                when {
+                    it.roomData.roomType == RoomType.PUBLIC -> false
+                    searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
+                    searchTerm.startsWith("tag:") -> it.roomData.tags.any { s ->
+                        s == searchTerm.substring(4)
+                    }
+                    searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
+                    it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
+                    it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
+                    it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
+                    else -> it.roomData.tags.any { s ->
+                        s.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
+                    }
+                }
+            }.sortedByDescending { it.roomUsers.size }
+        }
+
         habboResponse.apply {
             writeUTF(category)
             writeUTF(searchTerm)
-            writeInt(if (!searchTerm.isBlank()) 1 else getNewNavigatorLength(category))
+
+            // Get search result, if searching, then if no results = 0, else = 1
+            if (!searchTerm.isBlank()) {
+                writeInt(if (rooms.isEmpty()) 0 else 1)
+            } else {
+                writeInt(getNewNavigatorLength(category))
+            }
         }
 
-        if (!searchTerm.isBlank()) serializeSearches(searchTerm, habboResponse)
+        if (!searchTerm.isBlank() && rooms.isNotEmpty()) serializeSearches(searchTerm, rooms, habboResponse)
         else serializeSearchResultList(category, true, habboResponse, habboSession)
     }
 
@@ -120,31 +147,19 @@ class NavigatorSearchResponse {
         }
     }
 
-    private fun serializeSearches(searchTerm: String, habboResponse: HabboResponse) {
+    private fun serializeSearches(searchTerm: String, rooms: List<Room>, habboResponse: HabboResponse) {
         habboResponse.apply {
             // actually, official Habbo search isn't like this, but whatever
-            writeUTF("")
-            writeUTF(searchTerm)
-            writeInt(2)
-            writeBoolean(false)
-            writeInt(0)
-            val rooms: List<Room> = HabboServer.habboGame.roomManager.rooms.values.filter {
-                when {
-                    it.roomData.roomType == RoomType.PUBLIC -> false
-                    searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
-                    searchTerm.startsWith("tag:") -> it.roomData.tags.any { s ->
-                        s == searchTerm.substring(4)
-                    }
-                    searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
-                    it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    else -> it.roomData.tags.any { s ->
-                        s.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
-                    }
-                }
-            }.sortedByDescending { it.roomUsers.size }
-
+            if (searchTerm.contains(':')) {
+                writeUTF(searchTerm.substring(0, searchTerm.indexOf(':')))
+                writeUTF(searchTerm.substring(searchTerm.indexOf(':') + 1))
+            } else {
+                writeUTF("")
+                writeUTF(searchTerm)
+            }
+            writeInt(0) // action allowed, 0 - normal action, 1 = show more from this category, 2 = go back
+            writeBoolean(false) // collapsed by default
+            writeInt(0) // view mode, 0 = list, 1 = thumbnail,
             writeInt(rooms.size)
 
             rooms.forEach { serialize(it, false, false) }

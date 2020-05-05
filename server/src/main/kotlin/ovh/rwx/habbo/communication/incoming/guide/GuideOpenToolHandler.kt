@@ -17,9 +17,8 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.catalog
+package ovh.rwx.habbo.communication.incoming.guide
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -27,16 +26,20 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogPageHandler {
-    @Handler(Incoming.CATALOG_PAGE)
+class GuideOpenToolHandler {
+    @Handler(Incoming.GUIDE_TOOL_OPEN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
+        // todo: code Guide Tools this
+        val duty = habboRequest.readBoolean()
+        val tourRequests = habboRequest.readBoolean() // if you want to receive tour requests
+        val helperRequests = habboRequest.readBoolean() // if you want to receive helper requests
+        val bullyReports = habboRequest.readBoolean() // if you want to receive bully requests
 
-        if (!catalogPage.enabled || !catalogPage.visible) return
-        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
-        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
+        // todo: remove hardcoded value
+        val guidesOnDuty = 0
+        val helpersOnDuty = 0
+        val guardiansOnDuty = 0
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage)
+        habboSession.sendHabboResponse(Outgoing.GUIDE_TOOLS, duty, guidesOnDuty, helpersOnDuty, guardiansOnDuty)
     }
 }
