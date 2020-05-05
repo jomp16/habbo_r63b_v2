@@ -53,20 +53,6 @@ class RoomFloorPlanSaveHandler {
             val floorThickness = habboRequest.readInt()
             val wallHeight = habboRequest.readInt()
 
-            if (heightmap.isEmpty() || heightmap.length < 2) return
-            if (wallThickness < -2 || wallThickness > 1) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_wall_thickness%%%")
-                return
-            }
-            if (floorThickness < -2 || floorThickness > 1) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_floor_thickness%%%")
-                return
-            }
-            if (wallHeight < -1 || wallHeight > 15) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%invalid_walls_fixed_height%%%")
-                return
-            }
-
             heightmap.toCharArray().forEach { c ->
                 if (!validLetters.contains(c)) {
                     habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR)
@@ -75,12 +61,47 @@ class RoomFloorPlanSaveHandler {
                 }
             }
 
-            // Todo: make it secure by adding more validations
+            val errors = mutableListOf<String>()
+
+            if (heightmap.isEmpty() || heightmap.length < 2) return
+            if (wallThickness < -2 || wallThickness > 1) {
+                errors += "(%%%general%%%): %%%invalid_wall_thickness%%%"
+            }
+            if (floorThickness < -2 || floorThickness > 1) {
+                errors += "(%%%general%%%): %%%invalid_floor_thickness%%%"
+            }
+            if (wallHeight < -1 || wallHeight > 15) {
+                errors += "(%%%general%%%): %%%invalid_walls_fixed_height%%%"
+            }
+
+            if (heightmap.replace("x", "").replace("[\\r\\n]+".toRegex(), "").isEmpty()) {
+                errors += "(%%%general%%%): %%%effective_height_is_0%%%"
+            }
+
+            if (doorDir < 0 || doorDir > 7) {
+                errors += "(%%%general%%%): %%%invalid_entry_tile_direction%%%"
+            }
 
             val roomModel = RoomModel("0", room.roomData.id, Vector3(doorX, doorY, (-1).toDouble()), doorDir, heightmap.trim().split("[\\r\\n]+".toRegex()), false)
 
+            if ((roomModel.mapSizeX * roomModel.mapSizeY) > 64 * 64) {
+                errors += "(%%%general%%%): %%%too_large_area%%%"
+            }
+
+            if (roomModel.mapSizeX > 64) {
+                errors += "(%%%general%%%): %%%too_large_height%%%"
+            }
+
+            if (roomModel.mapSizeY > 64) {
+                errors += "(%%%general%%%): %%%too_large_width%%%"
+            }
+
             if (roomModel.mapSizeX <= doorX || roomModel.mapSizeY <= doorY) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", "(%%%general%%%): %%%entry_tile_outside_map%%%")
+                errors += "(%%%general%%%): %%%entry_tile_outside_map%%%"
+            }
+
+            if (errors.isNotEmpty()) {
+                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", errors.joinToString("<br />"))
                 return
             }
 

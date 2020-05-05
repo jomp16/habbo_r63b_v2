@@ -26,9 +26,9 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscSuperNotificationResponse {
     @Response(Outgoing.MISC_SUPER_NOTIFICATION)
-    fun response(habboResponse: HabboResponse, type: String, strings: Array<String>) {
+    fun response(habboResponse: HabboResponse, type: MiscSuperNotificationKeys, strings: Array<String>) {
         habboResponse.apply {
-            writeUTF(type)
+            writeUTF(type.key)
             writeInt(strings.size / 2)
 
             strings.forEach { writeUTF(it) }

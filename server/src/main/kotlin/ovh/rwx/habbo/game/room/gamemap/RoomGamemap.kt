@@ -37,14 +37,15 @@ class RoomGamemap(private val room: Room) {
     val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     val roomUserMap: MutableMap<Vector2, MutableSet<RoomUser>> = ConcurrentHashMap()
     val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
-    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY) { _, x, y, overrideBlocking -> overrideBlocking || !isBlocked(Vector2(x, y)) }
+    val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY) { _, x, y, overrideBlocking -> !isBlocked(Vector2(x, y), overrideBlocking = overrideBlocking) }
 
     init {
         room.floorItems.values.forEach { addRoomItem(it) }
     }
 
-    fun isBlocked(vector2: Vector2, ignoreUsers: Boolean = false): Boolean {
+    fun isBlocked(vector2: Vector2, ignoreUsers: Boolean = false, overrideBlocking: Boolean = false): Boolean {
         if (!grid.isInside(vector2.x, vector2.y)) return true
+        if (overrideBlocking) return false
         if (room.roomModel.doorVector3.x == vector2.x && room.roomModel.doorVector3.y == vector2.y) return false
         if (room.roomModel.squareStates[vector2.x][vector2.y] == SquareState.CLOSED) return true
         if (blockedItem[vector2.x][vector2.y]) return true
