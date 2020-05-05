@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -70,8 +70,8 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS)
         habboSession.sendHabboResponse(Outgoing.ENABLE_TRADING, true)
         habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID2, true)
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID3, "", "")
+        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_FIRST_LOGIN_OF_DAY, habboSession.userStats.firstLoginOfDay)
+        habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
         habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
         //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
         habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,

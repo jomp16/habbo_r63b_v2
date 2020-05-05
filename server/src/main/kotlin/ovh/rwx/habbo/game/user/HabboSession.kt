@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -48,6 +48,7 @@ import ovh.rwx.habbo.game.user.inventory.HabboInventory
 import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
@@ -156,6 +157,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         userInformation = userInformation1
         userStats = UserStatsDao.getUserStats(userInformation.id)
         userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
+
+        if (userStats.lastOnline.toLocalDate().isBefore(LocalDate.now())) userStats.firstLoginOfDay = true
 
         userStats.lastOnline = LocalDateTime.now()
         userStats.lastOnlineDatabase = userStats.lastOnline

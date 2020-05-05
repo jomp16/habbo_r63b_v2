@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,7 +30,7 @@ class BuilderClubMembershipResponse {
         habboResponse.apply {
             writeInt(0) // days membership
             writeInt(100) // items to take
-            writeInt(0) // ?
+            writeInt(100000) // ?
             writeInt(0) // ?
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,14 +26,10 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogIndexHandler {
-    @Handler(Incoming.CATALOG_INDEX)
+class CatalogInitializedHandler {
+    @Handler(Incoming.CATALOG_INITIALIZED)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER_CONFIGURATION)
-        habboSession.sendHabboResponse(Outgoing.CATALOG_BUILDERS_BORROWED)
-        habboSession.sendHabboResponse(Outgoing.CATALOG_INDEX,
-                "NORMAL",
-                habboSession.userInformation.rank,
-                habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription)
+        // todo: real builders borrowed items
+        habboSession.sendHabboResponse(Outgoing.CATALOG_BUILDERS_BORROWED, 0)
     }
 }

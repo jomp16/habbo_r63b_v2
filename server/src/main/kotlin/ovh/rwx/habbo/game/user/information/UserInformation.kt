@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -48,7 +48,7 @@ data class UserInformation(
     // todo
     val ambassador: Boolean
         get() = rank >= 7
-    val wardrobes: MutableList<Wardrobe> = ArrayList(WardrobeDao.getWardrobes(id))
-    val clothings: MutableSet<String> = HashSet(ClothingDao.getClothings(id))
-    val achievementUsers: MutableList<AchievementUser> = ArrayList(AchievementDao.loadUserAchievements(id))
+    val wardrobes: MutableList<Wardrobe> by lazy { ArrayList(WardrobeDao.getWardrobes(id)) }
+    val clothings: MutableSet<String> by lazy { HashSet(ClothingDao.getClothings(id)) }
+    val achievementUsers: MutableList<AchievementUser> by lazy { ArrayList(AchievementDao.loadUserAchievements(id)) }
 }

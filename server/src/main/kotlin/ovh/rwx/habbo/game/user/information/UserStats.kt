@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -49,4 +49,5 @@ data class UserStats(
         get() = Duration.between(lastOnline, LocalDateTime.now()).seconds + onlineSeconds
     val favoriteGroup: Group?
         get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
+    var firstLoginOfDay: Boolean = false
 }

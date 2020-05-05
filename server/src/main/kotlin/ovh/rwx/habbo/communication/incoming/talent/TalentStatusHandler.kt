@@ -17,18 +17,25 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.incoming.talent
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.talent.TalentTrackType
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogBuildersBorrowedResponse {
-    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun response(habboResponse: HabboResponse, borrowedItems: Int) {
-        habboResponse.apply {
-            writeInt(borrowedItems)
-        }
+class TalentStatusHandler {
+    @Handler(Incoming.TALENT_STATUS)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val talentTrackType = TalentTrackType.valueOf(habboRequest.readUTF().toUpperCase())
+
+        // todo: rewrite this
+        val initialLevel = 1
+        val maxLevel = 4
+
+        habboSession.sendHabboResponse(Outgoing.TALENT_STATUS, talentTrackType, initialLevel, maxLevel)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,10 +29,24 @@ class UserActivityPointsResponse {
     fun response(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
         habboResponse.apply {
             writeInt(2)
-            writeInt(0) // pixels
+            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
             writeInt(pixels)
-            writeInt(5) // diamonds
+            writeInt(ActivityPointType.DIAMONDS.code) // diamonds
             writeInt(vipPoints)
         }
     }
+}
+
+enum class ActivityPointType(val code: Int) {
+    PIXELS(0),
+    SEASHELLS(1),
+    HEARTS(2),
+    GIFT_POINTS(3),
+    SHELLS(4),
+    DIAMONDS(5),
+    SEASHELLS_2(101),
+    NUTS(102),
+    STARS(103),
+    CLOUDS(104),
+    DIAMONDS_2(105),
 }

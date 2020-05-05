@@ -24,11 +24,8 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogBuildersBorrowedResponse {
-    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun response(habboResponse: HabboResponse, borrowedItems: Int) {
-        habboResponse.apply {
-            writeInt(borrowedItems)
-        }
+class CatalogTargetedOfferResponse {
+    @Response(Outgoing.CATALOG_TARGETED_OFFER)
+    fun response(habboResponse: HabboResponse) {
     }
 }

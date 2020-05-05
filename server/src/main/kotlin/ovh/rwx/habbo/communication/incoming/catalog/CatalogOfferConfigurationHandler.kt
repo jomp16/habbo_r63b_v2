@@ -17,18 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.incoming.catalog
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogBuildersBorrowedResponse {
-    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun response(habboResponse: HabboResponse, borrowedItems: Int) {
-        habboResponse.apply {
-            writeInt(borrowedItems)
-        }
+class CatalogOfferConfigurationHandler {
+    @Handler(Incoming.CATALOG_OFFER_CONFIGURATION)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER_CONFIGURATION)
     }
 }
