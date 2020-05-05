@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,9 +29,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 class HandshakeUniqueIDHandler {
     @Handler(Incoming.UNIQUE_ID, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val uniqueID = habboRequest.readUTF()
-        // ignore this shit
-        habboRequest.readUTF()
+        var uniqueID = habboRequest.readUTF()
+
+        if (uniqueID.isBlank()) uniqueID = habboRequest.readUTF()
+
         val osInformation = habboRequest.readUTF()
 
         habboSession.uniqueID = uniqueID

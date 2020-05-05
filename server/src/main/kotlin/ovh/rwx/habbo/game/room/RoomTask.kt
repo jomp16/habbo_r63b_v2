@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -89,7 +89,6 @@ class RoomTask : Runnable {
                 GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@launch
-
 
                         val wireds = mutableListOf<IRoomTask>()
 

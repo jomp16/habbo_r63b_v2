@@ -17,24 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.incoming.talent
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.util.Vector2
+import ovh.rwx.habbo.game.talent.TalentTrackType
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomFloorPlanUsedSquaresResponse {
-    @Response(Outgoing.FLOOR_PLAN_USED_SQUARES)
-    fun response(habboResponse: HabboResponse, usedVector2: Set<Vector2>) {
-        habboResponse.apply {
-            writeInt(usedVector2.size)
+class TalentTrackOpenHandler {
+    @Handler(Incoming.TALENT_TRACK_OPEN)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val talentTrackType = TalentTrackType.valueOf(habboRequest.readUTF().toUpperCase())
 
-            usedVector2.forEach {
-                writeInt(it.x)
-                writeInt(it.y)
-            }
-        }
+        // todo: get talent track from database
+        habboSession.sendHabboResponse(Outgoing.TALENT_TRACK, talentTrackType)
     }
 }

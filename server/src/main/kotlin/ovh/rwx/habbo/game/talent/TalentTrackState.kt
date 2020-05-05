@@ -17,24 +17,10 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.game.talent
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.util.Vector2
-
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomFloorPlanUsedSquaresResponse {
-    @Response(Outgoing.FLOOR_PLAN_USED_SQUARES)
-    fun response(habboResponse: HabboResponse, usedVector2: Set<Vector2>) {
-        habboResponse.apply {
-            writeInt(usedVector2.size)
-
-            usedVector2.forEach {
-                writeInt(it.x)
-                writeInt(it.y)
-            }
-        }
-    }
+enum class TalentTrackState(val id: Int) {
+    LOCKED(0),
+    IN_PROGRESS(1),
+    COMPLETED(2)
 }
