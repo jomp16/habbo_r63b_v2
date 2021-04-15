@@ -83,7 +83,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
         }
 
         habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
-        habboSession.sendHabboResponse(Outgoing.USER_RIGHTS, if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0, habboSession.userInformation.rank, habboSession.userInformation.ambassador)
+        habboSession.sendHabboResponse(Outgoing.USER_RIGHTS, if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 7 else 0, habboSession.userInformation.rank, habboSession.userInformation.ambassador)
     }
 
     companion object {

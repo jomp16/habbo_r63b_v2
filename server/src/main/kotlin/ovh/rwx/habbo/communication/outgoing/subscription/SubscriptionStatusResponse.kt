@@ -34,10 +34,11 @@ class SubscriptionStatusResponse {
             writeInt(months) // months left
             writeInt(1) // from request
             writeBoolean(active)
-            writeBoolean(active)
+            writeBoolean(!active)
             writeInt(elapsedDays) // hc elapsed
             writeInt(elapsedDays) // vip elapsed
             writeInt(minutes) // minutes left
+            writeInt(-1) // ???????
         }
     }
 }
