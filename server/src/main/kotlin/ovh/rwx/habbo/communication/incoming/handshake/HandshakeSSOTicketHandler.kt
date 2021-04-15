@@ -21,7 +21,6 @@ package ovh.rwx.habbo.communication.incoming.handshake
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ovh.rwx.habbo.BuildConfig
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
@@ -29,7 +28,6 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.user.UserIPDao
 import ovh.rwx.habbo.database.user.UserUniqueIdDao
-import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.ip
 import ovh.rwx.habbo.util.IpInfo
@@ -37,6 +35,7 @@ import ovh.rwx.habbo.util.Utils
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
+import java.time.LocalDate
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSSOTicketHandler {
@@ -73,21 +72,12 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_FIRST_LOGIN_OF_DAY, habboSession.userStats.firstLoginOfDay)
         habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
         habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
-        //        habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "xmas16", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
+                habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, "easter21", "", LocalDate.now().dayOfMonth - 1, LocalDate.now().lengthOfMonth(), intArrayOf(), intArrayOf())
         habboSession.sendHabboResponse(Outgoing.MODERATION_TOPICS_INIT,
                 HabboServer.habboGame.moderationManager.moderationCategories,
                 HabboServer.habboGame.moderationManager.moderationTopics.values)
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)
-
-        if (HabboServer.habboConfig.motdEnabled) {
-            val motd = HabboServer.habboConfig.motdContents
-                    .replace("\$server_name", BuildConfig.NAME)
-                    .replace("\$server_version", BuildConfig.VERSION)
-                    .replace("\$username", habboSession.userInformation.username)
-
-            habboSession.sendNotification(NotificationType.MOTD_ALERT, motd)
-        }
 
         habboSession.handshaking = false
 
