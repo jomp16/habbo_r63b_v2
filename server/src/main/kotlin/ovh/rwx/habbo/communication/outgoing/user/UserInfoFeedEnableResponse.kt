@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserInfoFeedEnableResponse {
     @Response(Outgoing.ENABLE_TRADING)
     fun response(habboResponse: HabboResponse, enabled: Boolean) {
+        habboResponse.apply {
+            writeBoolean(enabled)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ENABLE_TRADING)
+    fun responseR63A(habboResponse: HabboResponse, enabled: Boolean) {
         habboResponse.apply {
             writeBoolean(enabled)
         }

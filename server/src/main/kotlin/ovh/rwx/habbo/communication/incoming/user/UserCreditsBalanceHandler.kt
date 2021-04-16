@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -30,5 +33,10 @@ class UserCreditsBalanceHandler {
     @Handler(Incoming.CREDITS_BALANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits)
+    }
+    
+    @HandlerR63A(IncomingR63A.USER_CREDITS_BALANCE)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(OutgoingR63A.USER_CREDITS_BALANCE, habboSession.userInformation.credits)
     }
 }

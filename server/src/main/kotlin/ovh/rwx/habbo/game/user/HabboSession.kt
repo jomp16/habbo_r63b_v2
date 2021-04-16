@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
@@ -99,6 +100,12 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             sendHabboResponse(it)
         }
     }
+    
+    fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
+        HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
+            sendHabboResponse(it)
+        }
+    }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
         habboResponse?.let { channel.writeAndFlush(it) }
@@ -108,7 +115,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun sendNotification(notificationType: NotificationType, message: String) {
         when (notificationType) {
-            NotificationType.MOTD_ALERT -> sendHabboResponse(Outgoing.MISC_MOTD_NOTIFICATION, message)
+            NotificationType.MOTD_ALERT -> {
+                if (release == "R63A") {
+                    sendHabboResponse(OutgoingR63A.MISC_MOTD_NOTIFICATION, message)
+                } else {
+                    sendHabboResponse(Outgoing.MISC_MOTD_NOTIFICATION, message)
+                }
+            }
             NotificationType.BROADCAST_ALERT -> sendHabboResponse(Outgoing.MISC_BROADCAST_NOTIFICATION, message)
         }
     }
@@ -121,21 +134,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         sendHabboResponse(Outgoing.MISC_SUPER_NOTIFICATION, type, strings)
-    }
-
-    fun sendSettings() {
-        val tmp = userPreferences.volume.split(',').map(String::toInt)
-
-        sendHabboResponse(Outgoing.USER_SETTINGS,
-                tmp[0],
-                tmp[1],
-                tmp[2],
-                userPreferences.preferOldChat,
-                userPreferences.ignoreRoomInvite,
-                userPreferences.disableCameraFollow,
-                userPreferences.friendBarOpen,
-                userPreferences.chatColor
-        )
     }
 
     fun hasPermission(permission: String) =

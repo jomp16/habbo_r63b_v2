@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.setting
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class SettingDataResponse {
@@ -39,6 +41,14 @@ class SettingDataResponse {
             writeInt(if (friendBarOpen) 1 else 0)
             writeInt(chatColor)
             writeInt(0)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_SETTINGS)
+    fun response(habboResponse: HabboResponse, systemVolume: Int, unknown: Boolean) {
+        habboResponse.apply {
+            writeInt(systemVolume)
+            writeBoolean(unknown)
         }
     }
 }

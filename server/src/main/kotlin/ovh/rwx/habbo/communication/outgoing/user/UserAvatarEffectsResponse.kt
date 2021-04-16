@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserAvatarEffectsResponse {
     @Response(Outgoing.AVATAR_EFFECTS)
     fun response(habboResponse: HabboResponse) {
+        habboResponse.apply {
+            writeInt(0) // size
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_AVATAR_EFFECTS)
+    fun responseR63A(habboResponse: HabboResponse) {
         habboResponse.apply {
             writeInt(0) // size
         }
