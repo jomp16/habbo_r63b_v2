@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -34,6 +36,27 @@ class MessengerFriendsResponse {
             writeInt(friends.size)
 
             friends.forEach { serialize(it) }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.MESSENGER_FRIENDS)
+    fun responseR63A(habboResponse: HabboResponse, maxFriends: Int, maxFriendsHC: Int, messengerFriends: Collection<MessengerFriend>) {
+        habboResponse.apply {
+            writeInt(maxFriends) // Max friends normal
+            writeInt(300)
+            writeInt(maxFriendsHC) // Max friends HC
+            writeInt(maxFriendsHC) // Max friends VIP
+            writeInt(0) // category count
+            // category structure:
+            // int - id
+            // string - name
+            // groups category
+//            writeInt(1)
+//            writeUTF("Groups")
+
+            writeInt(messengerFriends.size)
+
+            messengerFriends.forEach { serialize(it) }
         }
     }
 }

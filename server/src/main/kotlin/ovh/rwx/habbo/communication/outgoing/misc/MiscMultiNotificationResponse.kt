@@ -39,7 +39,7 @@ class MiscMultiNotificationResponse {
     fun responseR63A(habboResponse: HabboResponse, message: String) {
         habboResponse.apply {
             writeBoolean(true)
-            writeUTFWithBreak(message)
+            writeUTF(message)
         }
     }
 }

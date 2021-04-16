@@ -21,13 +21,27 @@ package ovh.rwx.habbo.communication.outgoing.group
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.group.Group
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupBadgesResponse {
     @Response(Outgoing.GROUP_BADGES)
     fun response(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
+        habboResponse.apply {
+            writeInt(loadedGroups.size) // size
+
+            loadedGroups.forEach {
+                writeInt(it.groupData.id)
+                writeUTF(it.groupData.badge)
+            }
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_GROUPS_BADGES)
+    fun responseR63A(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
         habboResponse.apply {
             writeInt(loadedGroups.size) // size
 

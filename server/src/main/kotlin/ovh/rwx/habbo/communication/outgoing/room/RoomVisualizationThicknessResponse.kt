@@ -21,12 +21,23 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomVisualizationThicknessResponse {
     @Response(Outgoing.ROOM_VISUALIZATION_THICKNESS)
     fun response(habboResponse: HabboResponse, hideWall: Boolean, wallThickness: Int, floorThickness: Int) {
+        habboResponse.apply {
+            writeBoolean(hideWall)
+            writeInt(wallThickness)
+            writeInt(floorThickness)
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_VISUALIZATION_THICKNESS)
+    fun responseR63A(habboResponse: HabboResponse, hideWall: Boolean, wallThickness: Int, floorThickness: Int) {
         habboResponse.apply {
             writeBoolean(hideWall)
             writeInt(wallThickness)

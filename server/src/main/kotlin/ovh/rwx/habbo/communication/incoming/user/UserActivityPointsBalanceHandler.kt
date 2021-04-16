@@ -38,5 +38,6 @@ class UserActivityPointsBalanceHandler {
     @HandlerR63A(IncomingR63A.USER_ACTIVITY_POINTS_BALANCE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(OutgoingR63A.USER_ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
+        habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
     }
 }

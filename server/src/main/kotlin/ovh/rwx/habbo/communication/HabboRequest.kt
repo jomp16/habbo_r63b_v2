@@ -25,6 +25,7 @@ import io.netty.util.ReferenceCountUtil
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboBase64
+import ovh.rwx.habbo.encryption.decoder.HabboVl64
 
 @Suppress("unused")
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
@@ -55,7 +56,27 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
 
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
-    fun readInt(): Int = if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()
+    fun readInt(): Int {
+        if (this::incomingR63A.isInitialized) {
+            return if (byteBuf.readableBytes() < 1) 0 else {
+                byteBufInputStream.mark(0)
+
+                val bytes = ByteArray(6)
+
+                byteBufInputStream.read(bytes)
+
+                val tmp: IntArray = HabboVl64.decode(bytes)
+
+                byteBufInputStream.reset()
+
+                byteBufInputStream.skipBytes(tmp[1])
+
+                return tmp[0]
+            }
+        } else {
+            return if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()
+        }
+    }
 
     fun readBoolean(): Boolean = byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
 

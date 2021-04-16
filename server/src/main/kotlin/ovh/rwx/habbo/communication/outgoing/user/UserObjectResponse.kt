@@ -76,12 +76,12 @@ class UserObjectResponse {
         dailyPetRespectPoints: Int
     ) {
         habboResponse.apply {
-            writeUTFWithBreak(id.toString())
-            writeUTFWithBreak(username)
-            writeUTFWithBreak(figure)
-            writeUTFWithBreak(gender)
-            writeUTFWithBreak(motto)
-            writeUTFWithBreak(realName)
+            writeUTF(id.toString())
+            writeUTF(username)
+            writeUTF(figure)
+            writeUTF(gender)
+            writeUTF(motto)
+            writeUTF(realName)
             writeBoolean(false)
             writeInt(respect)
             writeInt(dailyRespectPoints)

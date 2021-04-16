@@ -22,13 +22,24 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOpenFlatHandler {
     @Handler(Incoming.ROOM_OPEN_FLAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val roomId = habboRequest.readInt()
+        val password = habboRequest.readUTF()
+        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+
+        habboSession.enterRoom(room, password)
+    }
+
+    @HandlerR63A(IncomingR63A.ROOM_OPEN_FLAT)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val password = habboRequest.readUTF()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
