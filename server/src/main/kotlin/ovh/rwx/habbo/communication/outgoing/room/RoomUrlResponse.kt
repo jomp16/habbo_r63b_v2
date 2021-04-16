@@ -17,32 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.messenger
+package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MessengerChatResponse {
-    @Response(Outgoing.MESSENGER_CHAT)
-    fun response(habboResponse: HabboResponse, id: Int, message: String, diffTimestamp: Int, userId: Int, username: String, figure: String) {
-        habboResponse.apply {
-            writeInt(id)
-            writeUTF(message)
-            writeInt(diffTimestamp)
-
-            if (id < 0) writeUTF("$username/$figure/$id")
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.MESSENGER_CHAT)
-    fun responseR63A(habboResponse: HabboResponse, id: Int, message: String) {
-        habboResponse.apply {
-            writeInt(id)
-            writeUTF(message)
+class RoomUrlResponse {
+    @ResponseR63A(OutgoingR63A.ROOM_URL)
+    fun responseR63A(habboResponse: HabboResponse, url: String) {
+        habboResponse.apply { 
+            writeUTF(url)
         }
     }
 }

@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -47,6 +49,18 @@ class RoomInfoResponse {
             writeInt(room.roomData.chatSpeed)
             writeInt(room.roomData.chatMaxDistance)
             writeInt(room.roomData.chatFloodProtection)
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_INFO)
+    fun responseR63A(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean, checkEntry: Boolean) {
+        habboResponse.apply {
+            writeBoolean(isLoading)
+
+            serialize(room, true, isLoading)
+
+            writeBoolean(checkEntry)
+            writeBoolean(false)
         }
     }
 }

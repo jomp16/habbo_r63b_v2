@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -32,5 +35,12 @@ class RoomItemAliasesHandler {
         if (habboSession.currentRoom == null) return
 
         habboSession.sendHabboResponse(Outgoing.ROOM_ITEM_ALIASES)
+    }
+    
+    @HandlerR63A(IncomingR63A.ROOM_ITEM_ALIASES)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+
+        habboSession.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ALIASES)
     }
 }

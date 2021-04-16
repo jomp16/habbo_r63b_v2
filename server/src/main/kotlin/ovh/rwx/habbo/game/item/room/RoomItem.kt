@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
@@ -33,7 +34,6 @@ import ovh.rwx.habbo.util.Rotation
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.Serializable
-import java.util.*
 
 data class RoomItem(
         val id: Int,
@@ -97,18 +97,32 @@ data class RoomItem(
                 writeUTF(wallPosition)
                 writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
+            
+            if (habboResponse.outgoingR63A == null) {
+                writeInt(-1) // seems this is related to rentals (time in seconds)
+                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+                writeInt(userId) // todo: is builder ? -12345678 : userId
+            } else {
+                if (furnishing.type == ItemType.FLOOR) {
+                    writeInt(-1) // seems this is related to rentals (time in seconds)
+                }
 
-            writeInt(-1) // seems this is related to rentals (time in seconds)
-            writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
-            writeInt(userId) // todo: is builder ? -12345678 : userId
+                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+            }
         }
     }
 
     fun update(updateDb: Boolean, updateClient: Boolean) {
         if (updateClient) {
             when (furnishing.type) {
-                ItemType.WALL -> room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
-                else -> room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
+                ItemType.WALL -> {
+                    room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_UPDATE, this)
+                }
+                else -> {
+                    room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEM_UPDATE, this)
+                }
             }
         }
 
@@ -120,11 +134,17 @@ data class RoomItem(
         when (furnishing.type) {
             ItemType.FLOOR -> {
                 if (updateDb) room.addItemToSave(this)
-                if (updateClient) room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
+                if (updateClient) {
+                    room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this, userName)
+                }
             }
             ItemType.WALL -> {
                 if (updateDb) room.addItemToSave(this)
-                if (updateClient) room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
+                if (updateClient) {
+                    room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this, userName)
+                }
             }
         }
     }

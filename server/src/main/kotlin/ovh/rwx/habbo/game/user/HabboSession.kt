@@ -96,14 +96,22 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var gameSSOToken: String = ""
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
-        HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
-            sendHabboResponse(it)
+        if (release != "R63A") {
+            HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
+                sendHabboResponse(it)
+            }
+        } else {
+            log.error("Tried to send $outgoing to a R63A client!")
         }
     }
     
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
-        HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
-            sendHabboResponse(it)
+        if (release == "R63A") {
+            HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
+                sendHabboResponse(it)
+            }
+        } else {
+            log.error("Tried to send $outgoing to a non R63A client!")
         }
     }
 
@@ -240,8 +248,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
         if (room.roomUsers.size >= room.roomData.usersMax && !room.hasRights(this, true) && !hasPermission("acc_enter_full_room")) {
-            sendHabboResponse(Outgoing.ROOM_ERROR, 1, "")
-            sendHabboResponse(Outgoing.ROOM_EXIT)
+            if (release != "R63A") {
+                sendHabboResponse(Outgoing.ROOM_ERROR, 1, "")
+                sendHabboResponse(Outgoing.ROOM_EXIT)
+            } else {
+                sendHabboResponse(OutgoingR63A.ROOM_ERROR, 1)
+                sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+            }
 
             return
         }
@@ -249,8 +262,19 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (loading) {
             if (room.roomData.state == RoomState.PASSWORD && !HabboServer.habboGame.passwordEncryptor.checkPassword(password, room.roomData.password)) {
-                sendHabboResponse(Outgoing.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.WRONG_PASSWORD)
-                sendHabboResponse(Outgoing.ROOM_EXIT)
+                if (release != "R63A") {
+                    sendHabboResponse(
+                        Outgoing.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.WRONG_PASSWORD
+                    )
+                    sendHabboResponse(Outgoing.ROOM_EXIT)
+                } else {
+                    sendHabboResponse(
+                        OutgoingR63A.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.WRONG_PASSWORD
+                    )
+                    sendHabboResponse(Outgoing.ROOM_EXIT)
+                }
 
                 return
             } else if (room.roomData.state == RoomState.LOCKED) {
@@ -260,15 +284,29 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                     if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
                     else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, room.roomData.id, "")
 
-                    sendHabboResponse(Outgoing.ROOM_EXIT)
+                    if (release != "R63A") {
+                        sendHabboResponse(Outgoing.ROOM_EXIT)
+                    } else {
+                        sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+                    }
                 } else {
                     currentRoom = room
 
                     roomUsersWithRights.forEach {
-                        it.habboSession?.sendHabboResponse(Outgoing.ROOM_DOORBELL, userInformation.username)
+                        it.habboSession?.let { habboSession ->
+                            if (habboSession.release != "R63A") {
+                                habboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL, userInformation.username)
+                            } else {
+                                habboSession.sendHabboResponse(OutgoingR63A.ROOM_DOORBELL, userInformation.username)
+                            }
+                        }
                     }
 
-                    sendHabboResponse(Outgoing.ROOM_DOORBELL, "")
+                    if (release != "R63A") {
+                        sendHabboResponse(Outgoing.ROOM_DOORBELL, "")
+                    } else {
+                        sendHabboResponse(OutgoingR63A.ROOM_DOORBELL, "")
+                    }
                 }
 
                 return
@@ -283,17 +321,36 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             room.loadedGroups.add(it)
 
             room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+            room.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
         }
 
-        if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
-        else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
+        if (release != "R63A") {
+            if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
+            else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
+            sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+            sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 
-        sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
-        sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
+            if (room.roomData.wallpaper != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
+            if (room.roomData.floor != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "floor", room.roomData.floor)
+            if (room.roomData.landscape != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "landscape", room.roomData.landscape)
+        } else {
+            sendHabboResponse(OutgoingR63A.ROOM_OPEN)
+            sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
+            sendHabboResponse(OutgoingR63A.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 
-        if (room.roomData.wallpaper != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
-        if (room.roomData.floor != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "floor", room.roomData.floor)
-        if (room.roomData.landscape != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "landscape", room.roomData.landscape)
+            if (room.roomData.wallpaper != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
+            if (room.roomData.floor != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "floor", room.roomData.floor)
+            if (room.roomData.landscape != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "landscape", room.roomData.landscape)
+
+            if (room.hasRights(this)) {
+                sendHabboResponse(OutgoingR63A.ROOM_RIGHT)
+
+                if (room.hasRights(this, true)) {
+                    sendHabboResponse(OutgoingR63A.ROOM_OWNER)
+                }
+            }
+
+        }
     }
 
     override fun close() {

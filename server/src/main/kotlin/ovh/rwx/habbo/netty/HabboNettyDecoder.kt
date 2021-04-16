@@ -37,7 +37,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, out: MutableList<Any>) {
-        if (msg.readableBytes() < 6) return
+        if (msg.readableBytes() < 1) return
 
         msg.markReaderIndex()
         val delimiter = msg.readByte()
@@ -79,6 +79,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             val size: Int
 
             if (delimiter == 64.toByte()) {
+                if (msg.readableBytes() < 5) return
+
                 // R63A
                 val messageLengthBytes = ByteArray(3)
                 val headerIdBytes = ByteArray(2)
@@ -95,6 +97,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                     habboSession.release = "R63A"
                 }
             } else {
+                if (msg.readableBytes() < 6) return
                 // R63B
                 messageLength = msg.readInt()
                 headerId = msg.readUnsignedShort()

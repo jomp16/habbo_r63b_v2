@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -39,6 +41,19 @@ class NavigatorRoomCategoriesResponse {
                 writeUTF("NONE")
                 writeUTF("")
                 writeBoolean(false)
+            }
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.NAVIGATOR_ROOM_CATEGORIES)
+    fun responseR63A(habboResponse: HabboResponse, roomCategories: Collection<NavigatorRoomCategory>, rank: Int) {
+        habboResponse.apply {
+            writeInt(roomCategories.size)
+
+            roomCategories.forEach {
+                writeInt(it.id)
+                writeUTF(it.caption)
+                writeBoolean(it.minRank <= rank)
             }
         }
     }

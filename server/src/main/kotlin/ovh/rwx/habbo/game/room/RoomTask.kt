@@ -25,6 +25,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
@@ -122,6 +123,7 @@ class RoomTask : Runnable {
                             it.filter { roomUser -> roomUser.updateNeeded }.let { list ->
                                 if (list.isNotEmpty()) {
                                     room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, list)
+                                    room.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, list)
 
                                     list.forEach { roomUser -> roomUser.updateNeeded = false }
                                 }

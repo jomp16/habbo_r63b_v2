@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.misc
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscGenericErrorResponse {
     @Response(Outgoing.MISC_GENERIC_ERROR)
     fun response(habboResponse: HabboResponse, miscGenericError: MiscGenericError) {
+        habboResponse.apply {
+            writeInt(miscGenericError.errorCode)
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.MISC_GENERIC_ERROR)
+    fun responseR63A(habboResponse: HabboResponse, miscGenericError: MiscGenericError) {
         habboResponse.apply {
             writeInt(miscGenericError.errorCode)
         }

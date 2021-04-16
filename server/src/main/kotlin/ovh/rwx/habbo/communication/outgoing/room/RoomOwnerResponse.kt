@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOwnerResponse {
@@ -34,5 +36,9 @@ class RoomOwnerResponse {
         habboResponse.apply {
             writeInt(roomId)
         }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_OWNER)
+    fun responseR63A(habboResponse: HabboResponse) {
     }
 }

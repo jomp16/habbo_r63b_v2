@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.subscription
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class SubscriptionStatusResponse {
@@ -34,11 +36,29 @@ class SubscriptionStatusResponse {
             writeInt(months) // months left
             writeInt(1) // from request
             writeBoolean(active)
-            writeBoolean(!active)
+            writeBoolean(active)
             writeInt(elapsedDays) // hc elapsed
             writeInt(elapsedDays) // vip elapsed
             writeInt(minutes) // minutes left
             writeInt(-1) // ???????
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.SUBSCRIPTION_STATUS)
+    fun responseR63A(habboResponse: HabboResponse, clubType: String, active: Boolean, days: Int, months: Int, elapsedDays: Int, minutes: Int) {
+        habboResponse.apply {
+            writeUTF(clubType)
+            writeInt(days) // days left
+            writeInt(if (active) 1 else 0) // active
+            writeInt(months) // months left
+            writeInt(1) // from request
+            writeBoolean(active)
+            writeBoolean(active)
+            writeInt(elapsedDays) // hc elapsed
+            writeInt(elapsedDays) // vip elapsed
+            writeBoolean(false) // useless
+            writeInt(minutes) // minutes left
+            writeInt(-1) // discount
         }
     }
 }
