@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user.messenger
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
@@ -48,7 +49,19 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
     fun notifyFriends() {
         friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
-            it.habboSession!!.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE)
+            if (it.habboSession!!.release != "R63A") {
+                it.habboSession!!.sendHabboResponse(
+                    Outgoing.MESSENGER_FRIEND_UPDATE,
+                    listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
+                    MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE
+                )
+            } else {
+                it.habboSession!!.sendHabboResponse(
+                    OutgoingR63A.MESSENGER_FRIEND_UPDATE,
+                    listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
+                    MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE
+                )
+            }
         }
     }
 }

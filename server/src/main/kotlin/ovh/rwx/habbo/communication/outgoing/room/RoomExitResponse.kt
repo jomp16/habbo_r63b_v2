@@ -21,11 +21,17 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomExitResponse {
     @Response(Outgoing.ROOM_EXIT)
     fun response(habboResponse: HabboResponse) {
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_EXIT)
+    fun responseR63A(habboResponse: HabboResponse) {
     }
 }

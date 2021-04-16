@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.achievement
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementScoreResponse {
     @Response(Outgoing.ACHIEVEMENT_SCORE)
     fun response(habboResponse: HabboResponse, achievementScore: Int) {
+        habboResponse.apply {
+            writeInt(achievementScore)
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ACHIEVEMENT_SCORE)
+    fun responseR63A(habboResponse: HabboResponse, achievementScore: Int) {
         habboResponse.apply {
             writeInt(achievementScore)
         }

@@ -45,7 +45,7 @@ class SettingDataResponse {
     }
 
     @ResponseR63A(OutgoingR63A.USER_SETTINGS)
-    fun response(habboResponse: HabboResponse, systemVolume: Int, unknown: Boolean) {
+    fun responseR63A(habboResponse: HabboResponse, systemVolume: Int, unknown: Boolean) {
         habboResponse.apply {
             writeInt(systemVolume)
             writeBoolean(unknown)

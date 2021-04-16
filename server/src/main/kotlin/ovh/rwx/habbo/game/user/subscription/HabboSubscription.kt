@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user.subscription
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
@@ -82,8 +83,38 @@ class HabboSubscription(private val habboSession: HabboSession) {
             if (days == 0) days = 1
         }
 
-        habboSession.sendHabboResponse(Outgoing.SUBSCRIPTION_STATUS, CLUB_TYPE, active, days, if (months >= 1) months - 1 else months, elapsedDays, minutes)
-        habboSession.sendHabboResponse(Outgoing.USER_RIGHTS, if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 7 else 0, habboSession.userInformation.rank, habboSession.userInformation.ambassador)
+        if (habboSession.release != "R63A") {
+            habboSession.sendHabboResponse(
+                Outgoing.SUBSCRIPTION_STATUS,
+                CLUB_TYPE,
+                active,
+                days,
+                if (months >= 1) months - 1 else months,
+                elapsedDays,
+                minutes
+            )
+            habboSession.sendHabboResponse(
+                Outgoing.USER_RIGHTS,
+                if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+                habboSession.userInformation.rank,
+                habboSession.userInformation.ambassador
+            )
+        } else {
+            habboSession.sendHabboResponse(
+                OutgoingR63A.SUBSCRIPTION_STATUS,
+                CLUB_TYPE,
+                active,
+                days,
+                if (months >= 1) months - 1 else months,
+                elapsedDays,
+                minutes
+            )
+            habboSession.sendHabboResponse(
+                OutgoingR63A.USER_RIGHTS,
+                if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+                habboSession.userInformation.rank
+            )
+        }
     }
 
     companion object {
