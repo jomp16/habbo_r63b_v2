@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,14 +28,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementScoreResponse {
     @Response(Outgoing.ACHIEVEMENT_SCORE)
-    fun response(habboResponse: HabboResponse, achievementScore: Int) {
-        habboResponse.apply {
-            writeInt(achievementScore)
-        }
-    }
-    
     @ResponseR63A(OutgoingR63A.ACHIEVEMENT_SCORE)
-    fun responseR63A(habboResponse: HabboResponse, achievementScore: Int) {
+    fun response(habboResponse: HabboResponse, achievementScore: Int) {
         habboResponse.apply {
             writeInt(achievementScore)
         }

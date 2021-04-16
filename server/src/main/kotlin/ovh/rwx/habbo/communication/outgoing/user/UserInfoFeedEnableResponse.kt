@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,14 +28,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserInfoFeedEnableResponse {
     @Response(Outgoing.ENABLE_TRADING)
-    fun response(habboResponse: HabboResponse, enabled: Boolean) {
-        habboResponse.apply {
-            writeBoolean(enabled)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ENABLE_TRADING)
-    fun responseR63A(habboResponse: HabboResponse, enabled: Boolean) {
+    fun response(habboResponse: HabboResponse, enabled: Boolean) {
         habboResponse.apply {
             writeBoolean(enabled)
         }

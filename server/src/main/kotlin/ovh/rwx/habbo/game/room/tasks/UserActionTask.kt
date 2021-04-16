@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -37,5 +37,11 @@ class UserActionTask(private val roomUser: RoomUser, private val action: Int) : 
         roomUser.danceId = 0
 
         room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action)
+
+        when (action) {
+            1 -> {
+                // wave?
+            }
+        }
     }
 }

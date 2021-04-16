@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,34 +29,8 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserStatusesResponse {
     @Response(Outgoing.ROOM_USERS_STATUSES)
-    fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
-        habboResponse.apply {
-            writeInt(roomUsers.size)
-
-            roomUsers.forEach {
-                writeInt(it.virtualID)
-                writeInt(it.currentVector3.x)
-                writeInt(it.currentVector3.y)
-                writeUTF(it.currentVector3.z.toString())
-                writeInt(it.headRotation)
-                writeInt(it.bodyRotation)
-                val stringBuilder = StringBuilder("/")
-
-                it.statusMap.entries.filter { mutableEntry -> mutableEntry.key.isNotBlank() }.forEach { mutableEntry ->
-                    stringBuilder.append(mutableEntry.key)
-
-                    if (mutableEntry.value.second.isNotBlank()) stringBuilder.append(' ').append(mutableEntry.value.second)
-
-                    stringBuilder.append('/')
-                }
-
-                writeUTF(stringBuilder.toString())
-            }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_USERS_STATUSES)
-    fun responseR63A(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
+    fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
         habboResponse.apply {
             writeInt(roomUsers.size)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -56,7 +56,7 @@ class SubscriptionStatusResponse {
             writeBoolean(active)
             writeInt(elapsedDays) // hc elapsed
             writeInt(elapsedDays) // vip elapsed
-            writeBoolean(false) // useless
+            writeBoolean(false) // upgrade to VIP?
             writeInt(minutes) // minutes left
             writeInt(-1) // discount
         }

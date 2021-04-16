@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -55,7 +55,6 @@ class MessengerInitializeHandler {
         habboSession.habboMessenger.load()
 
         habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_FRIENDS, 300, 1100, habboSession.habboMessenger.friends.values)
-        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_REQUESTS, habboSession.habboMessenger.requests.values)
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, it.first, it.second)
         }

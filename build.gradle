@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -18,7 +18,7 @@
  */
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.3.72" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.4.32" apply false
     id "com.github.ben-manes.versions" version "0.28.0" apply false
     id "de.fuerstenau.buildconfig" version "1.1.8" apply false
     id "org.ajoberstar.grgit" version "4.0.2" apply false
@@ -31,19 +31,19 @@ subprojects {
     apply plugin: "project-report"
 
     ext {
-        junit_version = "4.13"
-        jackson_version = "2.11.0"
-        netty_version = "4.1.49.Final"
-        log4j2_version = "2.13.2"
+        junit_version = "4.13.2"
+        jackson_version = "2.12.3"
+        netty_version = "4.1.63.Final"
+        log4j2_version = "2.14.1"
         slf4j_version = "1.7.30"
         kwery_version = "0.17"
-        mariadb_version = "2.6.0"
+        mariadb_version = "2.7.2"
         reflections_version = "0.11.7"
         jasypt_version = "1.9.3"
-        commons_lang_version = "3.10"
+        commons_lang_version = "3.12.0"
         mbassador_version = "1.3.2"
-        bouncycastle_version = "1.65"
-        hikari_version = "3.4.3"
+        bouncycastle_version = "1.68"
+        hikari_version = "4.0.3"
     }
 
     //noinspection GrUnresolvedAccess
@@ -71,7 +71,7 @@ subprojects {
 
         implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
         implementation "org.jetbrains.kotlin:kotlin-reflect"
-        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5'
+        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
     }
 
     // add BuildConfig classes to IntelliJ IDEA sourceDirs and generatedSourceDirs
@@ -106,5 +106,11 @@ subprojects {
     jar {
         // Keep jar clean:
         exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF', 'rebel.xml'
+    }
+
+    compileKotlin {
+        kotlinOptions {
+            useIR = true
+        }
     }
 }
