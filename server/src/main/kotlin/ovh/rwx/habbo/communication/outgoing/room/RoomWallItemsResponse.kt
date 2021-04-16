@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 
@@ -34,6 +36,14 @@ class RoomWallItemsResponse {
             writeInt(1)
             writeInt(room.roomData.ownerId)
             writeUTF(room.roomData.ownerName)
+            writeInt(wallItems.size) // size
+            wallItems.forEach { serialize(it) }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_WALL_ITEMS)
+    fun responseR63A(habboResponse: HabboResponse, room: Room, wallItems: Collection<RoomItem>) {
+        habboResponse.apply {
             writeInt(wallItems.size) // size
             wallItems.forEach { serialize(it) }
         }

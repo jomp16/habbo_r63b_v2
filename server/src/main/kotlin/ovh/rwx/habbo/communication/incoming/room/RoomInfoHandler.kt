@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,5 +40,16 @@ class RoomInfoHandler {
         val checkEntry = habboRequest.readInt() == 1
 
         habboSession.sendHabboResponse(Outgoing.ROOM_INFO, habboSession, room, isLoading, checkEntry)
+    }
+    
+    @HandlerR63A(IncomingR63A.ROOM_INFO)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val roomId = habboRequest.readInt()
+        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+        // todo: allows user to reenter room?
+        val isLoading = habboRequest.readInt() == 1 || habboSession.currentRoom == room
+        val checkEntry = habboRequest.readInt() == 1
+
+        habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, isLoading, checkEntry)
     }
 }

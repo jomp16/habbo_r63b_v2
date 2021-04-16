@@ -25,6 +25,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.database.group.GroupDao
 import ovh.rwx.habbo.database.item.ItemDao
@@ -47,6 +48,8 @@ import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
+import ovh.rwx.utils.pathfinding.IFinder
+import ovh.rwx.utils.pathfinding.core.finders.AStarFinder
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -110,7 +113,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
         // todo: find a way to cache habbo response
-        roomUsers.values.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        roomUsers.values.filter { it.habboSession?.release != "R63A" }.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+    }
+    
+    fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
+        // todo: find a way to cache habbo response
+        roomUsers.values.filter { it.habboSession?.release == "R63A" }.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
     }
 
     fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false, ignorePermissionAnyRoomOwner: Boolean = false): Boolean {
@@ -148,8 +156,14 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (roomUser == null) return
 
         if (roomUser.habboSession != null) {
-            if (kickNotification) roomUser.habboSession.sendHabboResponse(Outgoing.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
-            if (notifyClient) roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
+            if (kickNotification) {
+                roomUser.habboSession.sendHabboResponse(Outgoing.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
+                roomUser.habboSession.sendHabboResponse(OutgoingR63A.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
+            }
+            if (notifyClient) {
+                roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
+                roomUser.habboSession.sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+            }
 
             if (roomUser.habboSession.currentRoom == this) {
                 roomUser.habboSession.roomUser = null
@@ -169,41 +183,70 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             val showEvents = params[0] as Boolean
             val enterRoom = params[1] as Boolean
 
-            writeInt(roomData.id)
-            writeUTF(roomData.name)
-            writeInt(roomData.ownerId)
-            writeUTF(roomData.ownerName)
-            writeInt(roomData.state.state)
-            writeInt(roomUsers.size)
-            writeInt(roomData.usersMax)
-            writeUTF(roomData.description)
-            writeInt(roomData.tradeState)
-            writeInt(roomData.score)
-            writeInt(0) // ranking
-            writeInt(roomData.category)
+            if (habboResponse.outgoingR63A == null) {
+                writeInt(roomData.id)
+                writeUTF(roomData.name)
+                writeInt(roomData.ownerId)
+                writeUTF(roomData.ownerName)
+                writeInt(roomData.state.state)
+                writeInt(roomUsers.size)
+                writeInt(roomData.usersMax)
+                writeUTF(roomData.description)
+                writeInt(roomData.tradeState)
+                writeInt(roomData.score)
+                writeInt(0) // ranking
+                writeInt(roomData.category)
 
-            writeInt(roomData.tags.size)
+                writeInt(roomData.tags.size)
 
-            roomData.tags.forEach { writeUTF(it) }
-            var value = if (enterRoom) 32 else 0
+                roomData.tags.forEach { writeUTF(it) }
+                var value = if (enterRoom) 32 else 0
 
-            group?.let { value += 2 }
+                group?.let { value += 2 }
 
-            /*if (showEvents) {
+                /*if (showEvents) {
                 // todo: events
                 //value += 4;
             }*/
 
-            if (roomData.roomType == RoomType.PRIVATE) value += 8
+                if (roomData.roomType == RoomType.PRIVATE) value += 8
 
-            if (roomData.allowPets) value += 16
+                if (roomData.allowPets) value += 16
 
-            writeInt(value)
+                writeInt(value)
 
-            group?.let {
-                writeInt(it.groupData.id)
-                writeUTF(it.groupData.name)
-                writeUTF(it.groupData.badge)
+                group?.let {
+                    writeInt(it.groupData.id)
+                    writeUTF(it.groupData.name)
+                    writeUTF(it.groupData.badge)
+                }
+            } else {
+                writeInt(roomData.id)
+                writeBoolean(false) // is event
+                writeUTF(roomData.name)
+                writeUTF(roomData.ownerName)
+                writeInt(roomData.state.state)
+                writeInt(roomUsers.size)
+                writeInt(roomData.usersMax)
+                writeUTF(roomData.description)
+                writeBoolean(roomData.tradeState == 1)
+                writeBoolean(roomData.tradeState == 1)
+                writeInt(roomData.score)
+                writeInt(roomData.category)
+                writeUTF("")
+
+                writeInt(roomData.tags.size)
+
+                roomData.tags.forEach { writeUTF(it) }
+                
+                // todo: room icon
+                writeInt(1)
+                writeInt(0)
+                writeInt(0)
+                // end room icon
+
+                writeBoolean(roomData.allowPets)
+                writeBoolean(roomData.allowPetsEat)
             }
         }
     }

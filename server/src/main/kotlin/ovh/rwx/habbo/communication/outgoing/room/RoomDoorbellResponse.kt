@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDoorbellResponse {
     @Response(Outgoing.ROOM_DOORBELL)
     fun response(habboResponse: HabboResponse, username: String) {
+        habboResponse.apply {
+            writeUTF(username)
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_DOORBELL)
+    fun responseR63A(habboResponse: HabboResponse, username: String) {
         habboResponse.apply {
             writeUTF(username)
         }

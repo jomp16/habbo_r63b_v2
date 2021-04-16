@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomItemAliasesResponse {
     @Response(Outgoing.ROOM_ITEM_ALIASES)
     fun response(habboResponse: HabboResponse) {
+        habboResponse.apply {
+            writeInt(0) // size
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_ITEM_ALIASES)
+    fun responseR63A(habboResponse: HabboResponse) {
         habboResponse.apply {
             writeInt(0) // size
         }

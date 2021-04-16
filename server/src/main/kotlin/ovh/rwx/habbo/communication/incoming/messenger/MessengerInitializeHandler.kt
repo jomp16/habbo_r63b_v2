@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.messenger
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -38,6 +41,23 @@ class MessengerInitializeHandler {
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, it.first, it.second, it.third)
+        }
+
+        habboSession.habboMessenger.initialized = true
+
+        habboSession.habboMessenger.notifyFriends()
+    }
+    
+    @HandlerR63A(IncomingR63A.MESSENGER_INIT)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.habboMessenger.initialized) return
+
+        habboSession.habboMessenger.load()
+
+        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_FRIENDS, 300, 1100, habboSession.habboMessenger.friends.values)
+        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_REQUESTS, habboSession.habboMessenger.requests.values)
+        MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
+            habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, it.first, it.second)
         }
 
         habboSession.habboMessenger.initialized = true

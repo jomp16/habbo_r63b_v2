@@ -39,18 +39,18 @@ class HabboResponse(
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
-    fun writeUTF(s: String) {
+    fun writeUTF(s: String, breakChar: Int = 2) {
         if (outgoingR63A != null) {
             byteBufOutputStream.writeBytes(s)
+            byteBufOutputStream.writeByte(breakChar)
         } else {
             byteBufOutputStream.writeUTF(s)
         }
     }
     
-    fun writeUTFWithBreak(s: String, breakChar: Int = 2) {
+    fun writeUTFWithoutBreak(s: String) {
         if (outgoingR63A != null) {
-            writeUTF(s)
-            writeByte(breakChar)
+            byteBufOutputStream.writeBytes(s)
         }
     }
 
@@ -85,7 +85,7 @@ class HabboResponse(
     }
 
     override fun toString(): String {
-        var message = _byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
+        var message = _byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+".toRegex(), "(newline)")
 
         for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
 

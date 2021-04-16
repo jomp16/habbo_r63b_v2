@@ -21,13 +21,24 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUsersResponse {
     @Response(Outgoing.ROOM_USERS)
     fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
+        habboResponse.apply {
+            writeInt(roomUsers.size)
+
+            roomUsers.forEach { serialize(it) }
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_USERS)
+    fun responseR63A(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
         habboResponse.apply {
             writeInt(roomUsers.size)
 

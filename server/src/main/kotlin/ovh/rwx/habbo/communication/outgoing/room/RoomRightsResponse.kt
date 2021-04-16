@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RightData
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,5 +39,9 @@ class RoomRightsResponse {
                 writeUTF(it.username)
             }
         }
+    }
+    
+    @ResponseR63A(OutgoingR63A.ROOM_RIGHT)
+    fun responseR63A(habboResponse: HabboResponse) {
     }
 }

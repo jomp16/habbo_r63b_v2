@@ -21,13 +21,25 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.messenger.MessengerRequest
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRequestsResponse {
     @Response(Outgoing.MESSENGER_REQUESTS)
     fun response(habboResponse: HabboResponse, requests: Collection<MessengerRequest>) {
+        habboResponse.apply {
+            writeInt(requests.size)
+            writeInt(requests.size)
+
+            requests.forEach { serialize(it) }
+        }
+    }
+    
+    @ResponseR63A(OutgoingR63A.MESSENGER_REQUESTS)
+    fun responseR63A(habboResponse: HabboResponse, requests: Collection<MessengerRequest>) {
         habboResponse.apply {
             writeInt(requests.size)
             writeInt(requests.size)

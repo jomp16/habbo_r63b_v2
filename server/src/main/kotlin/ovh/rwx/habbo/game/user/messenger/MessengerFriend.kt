@@ -50,10 +50,15 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                     writeUTF(it.motto)
                     writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
                     writeUTF(it.realname)
-                    writeBoolean(true) // allows offline messaging
-                    writeBoolean(false) // useless
-                    writeBoolean(false) // uses phone
-                    writeShort(relationship.type) // relationship type
+                    
+                    if (habboResponse.outgoingR63A == null) {
+                        writeBoolean(true) // allows offline messaging
+                        writeBoolean(false) // useless
+                        writeBoolean(false) // uses phone
+                        writeShort(relationship.type) // relationship type
+                    } else {
+                        writeUTF("") // useless, dead code
+                    }
                 }
             } else {
                 // todo: group, this is a stub

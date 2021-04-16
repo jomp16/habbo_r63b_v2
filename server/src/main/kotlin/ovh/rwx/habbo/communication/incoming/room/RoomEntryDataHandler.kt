@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -31,5 +33,12 @@ class RoomEntryDataHandler {
         if (habboSession.currentRoom == null) return
 
         habboSession.currentRoom?.addUser(habboSession)
+    }
+
+    @HandlerR63A(IncomingR63A.ROOM_MODEL)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+
+         habboSession.currentRoom?.addUser(habboSession)
     }
 }

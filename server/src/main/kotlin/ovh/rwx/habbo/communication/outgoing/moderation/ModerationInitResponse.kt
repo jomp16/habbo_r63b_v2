@@ -59,13 +59,13 @@ class ModerationInitResponse {
             // todo: user actions presets, but it's useless on Habbo.swf
             writeInt(0)
 
-            writeUTFWithBreak("") // Ticket right
-            writeUTFWithBreak("") // Chatlogs
-            writeUTFWithBreak("") // User actions alert etc
-            writeUTFWithBreak("") // Kick users
-            writeUTFWithBreak("") // Ban users
-            writeUTFWithBreak("") // Caution etc
-            writeUTFWithBreak("") // ?
+            writeUTF("") // Ticket right
+            writeUTF("") // Chatlogs
+            writeUTF("") // User actions alert etc
+            writeUTF("") // Kick users
+            writeUTF("") // Ban users
+            writeUTF("") // Caution etc
+            writeUTF("") // ?
             // todo: room presets
             writeInt(0)
         }

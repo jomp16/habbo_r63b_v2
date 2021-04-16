@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDoorbellAcceptResponse {
@@ -36,6 +38,13 @@ class RoomDoorbellAcceptResponse {
     fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, username: String) {
         habboResponse.apply {
             writeInt(roomId)
+            writeUTF(username)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_DOORBELL_ACCEPT)
+    fun responseR63A(habboResponse: HabboResponse, username: String) {
+        habboResponse.apply {
             writeUTF(username)
         }
     }

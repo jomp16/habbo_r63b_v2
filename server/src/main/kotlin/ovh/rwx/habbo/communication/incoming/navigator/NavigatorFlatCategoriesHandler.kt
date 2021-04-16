@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.navigator
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -31,6 +34,14 @@ class NavigatorFlatCategoriesHandler {
     @Handler(Incoming.NAVIGATOR_FLAT_CATEGORIES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_ROOM_CATEGORIES,
+                HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
+                habboSession.userInformation.rank)
+    }
+    
+    @HandlerR63A(IncomingR63A.NAVIGATOR_FLAT_CATEGORIES)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(
+            OutgoingR63A.NAVIGATOR_ROOM_CATEGORIES,
                 HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
                 habboSession.userInformation.rank)
     }

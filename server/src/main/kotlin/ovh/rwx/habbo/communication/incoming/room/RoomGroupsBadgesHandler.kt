@@ -17,28 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.incoming.room
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.group.Group
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomErrorResponse {
-    @Response(Outgoing.ROOM_ERROR)
-    fun response(habboResponse: HabboResponse, errorCode: Int, errorMessage: String) {
-        habboResponse.apply {
-            writeInt(errorCode)
-            writeUTF(errorMessage)
-        }
-    }
-    
-    @ResponseR63A(OutgoingR63A.ROOM_ERROR)
-    fun responseR63A(habboResponse: HabboResponse, errorCode: Int) {
-        habboResponse.apply {
-            writeInt(errorCode)
-        }
+class RoomGroupsBadgesHandler {
+    @HandlerR63A(IncomingR63A.ROOM_GROUPS_BADGES)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+
+        habboSession.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, listOf<Group>())
     }
 }
