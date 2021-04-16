@@ -183,6 +183,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
+        roomUser.stepSeatedVector3?.let {
+            roomGamemap.removeRoomUser(roomUser, it.vector2)
+        }
         roomUsers.remove(roomUser.virtualID)
 
         roomTask?.addTask(this, UserPartRoomTask(roomUser))

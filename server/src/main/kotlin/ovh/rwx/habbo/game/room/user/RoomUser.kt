@@ -51,7 +51,7 @@ class RoomUser(
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
     var objectiveItem: RoomItem? = null
-    private var stepSeatedVector3: Vector3? = null
+    var stepSeatedVector3: Vector3? = null
     val walking: Boolean
         get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
     private val stepSeated: Boolean
