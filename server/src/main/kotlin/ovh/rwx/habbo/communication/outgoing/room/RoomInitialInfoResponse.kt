@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,17 +28,10 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomInitialInfoResponse {
     @Response(Outgoing.ROOM_INITIAL_INFO)
+    @ResponseR63A(OutgoingR63A.ROOM_INITIAL_INFO)
     fun response(habboResponse: HabboResponse, roomModelId: String, roomId: Int) {
         habboResponse.apply {
             writeUTF(roomModelId)
-            writeInt(roomId)
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.ROOM_INITIAL_INFO)
-    fun responseR63A(habboResponse: HabboResponse, roomModelId: String, roomId: Int) {
-        habboResponse.apply {
-            writeUTF("model_$roomModelId")
             writeInt(roomId)
         }
     }

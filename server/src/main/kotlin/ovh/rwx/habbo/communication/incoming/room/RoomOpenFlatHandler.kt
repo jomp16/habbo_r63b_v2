@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,16 +30,8 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOpenFlatHandler {
     @Handler(Incoming.ROOM_OPEN_FLAT)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val password = habboRequest.readUTF()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
-        habboSession.enterRoom(room, password)
-    }
-
     @HandlerR63A(IncomingR63A.ROOM_OPEN_FLAT)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val password = habboRequest.readUTF()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return

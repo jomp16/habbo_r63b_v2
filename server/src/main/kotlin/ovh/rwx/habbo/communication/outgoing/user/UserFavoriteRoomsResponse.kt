@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,19 +28,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserFavoriteRoomsResponse {
     @Response(Outgoing.NAVIGATOR_FAVORITES)
-    fun response(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
-        habboResponse.apply {
-            writeInt(50)
-            writeInt(favoritesRooms.size)
-
-            favoritesRooms.forEach {
-                writeInt(it)
-            }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.NAVIGATOR_FAVORITES)
-    fun responseR63A(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
+    fun response(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
         habboResponse.apply {
             writeInt(50)
             writeInt(favoritesRooms.size)

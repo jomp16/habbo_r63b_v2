@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -155,12 +155,24 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         if (roomUser.habboSession != null) {
             if (kickNotification) {
-                roomUser.habboSession.sendHabboResponse(Outgoing.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
-                roomUser.habboSession.sendHabboResponse(OutgoingR63A.MISC_GENERIC_ERROR, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
+                if (roomUser.habboSession.release != "R63A") {
+                    roomUser.habboSession.sendHabboResponse(
+                        Outgoing.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED
+                    )
+                } else {
+                    roomUser.habboSession.sendHabboResponse(
+                        OutgoingR63A.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED
+                    )
+                }
             }
             if (notifyClient) {
-                roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
-                roomUser.habboSession.sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+                if (roomUser.habboSession.release != "R63A") {
+                    roomUser.habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
+                } else {
+                    roomUser.habboSession.sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+                }
             }
 
             if (roomUser.habboSession.currentRoom == this) {

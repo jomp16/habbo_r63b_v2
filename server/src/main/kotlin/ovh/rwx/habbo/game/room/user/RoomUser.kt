@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
@@ -69,34 +70,49 @@ class RoomUser(
     var idle: Boolean = false
         set(newValue) {
             idleCount =
-                    if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
-                    else 0
+                if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                else 0
 
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
+            if (field != newValue) {
+                room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, virtualID, newValue)
+            }
 
             field = newValue
         }
     var typing: Boolean = false
         set(newValue) {
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
+            if (field != newValue) {
+                room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
+            }
 
             field = newValue
         }
     var danceId: Int = 0
         set(newValue) {
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
+            if (field != newValue) {
+                room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_DANCE, virtualID, newValue)
+            }
 
             field = newValue
         }
     var handItem: Int = 0
         set(newValue) {
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, virtualID, newValue)
+            if (field != newValue) {
+                room.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, virtualID, newValue)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_HANDITEM, virtualID, newValue)
+            }
 
             field = newValue
         }
     var effect: RoomUserEffect? = null
         set(newValue) {
-            if (field != newValue) room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
+            if (field != newValue) {
+                room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
+            }
 
             field = newValue
             lastEffect = newValue
@@ -314,15 +330,16 @@ class RoomUser(
 
                 if (habboResponse.outgoingR63A != null) {
                     writeInt(-1) // xp
-                    if (group == null) {
-                        writeInt(-1)
-                        writeInt(0)
-                        writeUTF("")
-                    } else {
-                        writeInt(group.groupData.id)
-                        writeInt(0)
-                        writeUTF(group.groupData.name)
-                    }
+//                    if (group == null) {
+                    writeInt(-1)
+                    writeInt(-1)
+                    writeUTF("")
+                    // bugged as fuck
+//                    } else {
+//                        writeInt(group.groupData.id)
+//                        writeInt(-1)
+//                        writeUTF(group.groupData.name)
+//                    }
 
                     writeInt(habboSession.userStats.achievementScore)
                 } else {

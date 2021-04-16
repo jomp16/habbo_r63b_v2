@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -45,4 +45,9 @@ enum class IncomingR63A {
     ROOM_INFO,
     MESSENGER_REQUESTS,
     ROOM_MOVE,
+    ROOM_DIMMER_INFO,
+    ROOM_DIMMER_SWITCH,
+    ROOM_DIMMER_UPDATE,
+    ROOM_USER_WAVE,
+    ROOM_USER_DANCE,
 }

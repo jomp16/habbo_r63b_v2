@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,35 +31,11 @@ import ovh.rwx.habbo.game.room.model.SquareState
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloormapResponse {
     @Response(Outgoing.ROOM_FLOORMAP)
+    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
     fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeBoolean(true)
             writeInt(room.roomData.wallHeight)
-            val stringBuilder = StringBuilder()
-
-            for (i in 0 until room.roomModel.mapSizeY) {
-                for (j in 0 until room.roomModel.mapSizeX) {
-                    if (j == room.roomModel.doorVector3.x && i == room.roomModel.doorVector3.y) {
-                        if (room.roomModel.doorVector3.z > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.doorVector3.z.toInt() - 10])
-                        else stringBuilder.append(room.roomModel.doorVector3.z.toInt())
-                    } else if (room.roomModel.squareStates[j][i] == SquareState.CLOSED) {
-                        stringBuilder.append("x")
-                    } else {
-                        if (room.roomModel.floorHeight[j][i] > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.floorHeight[j][i] - 10])
-                        else stringBuilder.append(room.roomModel.floorHeight[j][i].toInt())
-                    }
-                }
-
-                stringBuilder.append(13.toChar())
-            }
-
-            writeUTF(stringBuilder.toString())
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
-    fun responseR63A(habboResponse: HabboResponse, room: Room) {
-        habboResponse.apply {
             val stringBuilder = StringBuilder()
 
             for (i in 0 until room.roomModel.mapSizeY) {

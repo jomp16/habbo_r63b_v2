@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -336,7 +336,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         } else {
             sendHabboResponse(OutgoingR63A.ROOM_OPEN)
             sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
-            sendHabboResponse(OutgoingR63A.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
+            sendHabboResponse(OutgoingR63A.ROOM_INITIAL_INFO, "model_${room.roomModel.id}", room.roomData.id)
 
             if (room.roomData.wallpaper != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
             if (room.roomData.floor != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "floor", room.roomData.floor)

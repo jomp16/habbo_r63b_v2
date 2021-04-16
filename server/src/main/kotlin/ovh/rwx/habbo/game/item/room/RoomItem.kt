@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -136,14 +136,14 @@ data class RoomItem(
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) {
                     room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this, userName)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this)
                 }
             }
             ItemType.WALL -> {
                 if (updateDb) room.addItemToSave(this)
                 if (updateClient) {
                     room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this, userName)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this)
                 }
             }
         }
