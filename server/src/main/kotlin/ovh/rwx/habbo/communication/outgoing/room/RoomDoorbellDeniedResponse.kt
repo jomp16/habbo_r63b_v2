@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDoorbellDeniedResponse {
     @Response(Outgoing.ROOM_DOORBELL_DENIED)
+    @ResponseR63A(OutgoingR63A.ROOM_DOORBELL_DENIED)
     fun response(habboResponse: HabboResponse, username: String) {
         habboResponse.apply {
             writeUTF(username)
@@ -38,13 +39,6 @@ class RoomDoorbellDeniedResponse {
     fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, username: String) {
         habboResponse.apply {
             writeInt(roomId)
-            writeUTF(username)
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.ROOM_DOORBELL_DENIED)
-    fun responseR63A(habboResponse: HabboResponse, username: String) {
-        habboResponse.apply {
             writeUTF(username)
         }
     }

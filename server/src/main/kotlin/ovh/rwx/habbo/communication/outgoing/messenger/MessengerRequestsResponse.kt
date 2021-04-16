@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,17 +29,8 @@ import ovh.rwx.habbo.game.user.messenger.MessengerRequest
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRequestsResponse {
     @Response(Outgoing.MESSENGER_REQUESTS)
-    fun response(habboResponse: HabboResponse, requests: Collection<MessengerRequest>) {
-        habboResponse.apply {
-            writeInt(requests.size)
-            writeInt(requests.size)
-
-            requests.forEach { serialize(it) }
-        }
-    }
-    
     @ResponseR63A(OutgoingR63A.MESSENGER_REQUESTS)
-    fun responseR63A(habboResponse: HabboResponse, requests: Collection<MessengerRequest>) {
+    fun response(habboResponse: HabboResponse, requests: Collection<MessengerRequest>) {
         habboResponse.apply {
             writeInt(requests.size)
             writeInt(requests.size)

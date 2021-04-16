@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,16 +21,21 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSwitchDimmerHandler {
     @Handler(Incoming.ROOM_DIMMER_SWITCH)
+    @HandlerR63A(IncomingR63A.ROOM_DIMMER_SWITCH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
-                        habboSession,
-                        true) || habboSession.currentRoom!!.roomDimmer == null) return
+                habboSession,
+                true
+            ) || habboSession.currentRoom!!.roomDimmer == null
+        ) return
 
         habboSession.currentRoom!!.roomDimmer!!.switchState()
     }
