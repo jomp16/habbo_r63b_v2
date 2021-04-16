@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserWhisperHandler {
     @Handler(Incoming.ROOM_USER_WHISPER)
+//    @HandlerR63A(IncomingR63A.ROOM_USER_WHISPER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val raw = habboRequest.readUTF()
         val bubble = habboRequest.readInt()
