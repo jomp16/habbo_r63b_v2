@@ -21,12 +21,21 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserCreditsBalanceResponse {
     @Response(Outgoing.CREDITS_BALANCE)
     fun response(habboResponse: HabboResponse, credits: Int) {
+        habboResponse.apply {
+            writeUTF("$credits.0")
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_CREDITS_BALANCE)
+    fun responseR63A(habboResponse: HabboResponse, credits: Int) {
         habboResponse.apply {
             writeUTF("$credits.0")
         }

@@ -21,12 +21,26 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserFavoriteRoomsResponse {
     @Response(Outgoing.NAVIGATOR_FAVORITES)
     fun response(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
+        habboResponse.apply {
+            writeInt(50)
+            writeInt(favoritesRooms.size)
+
+            favoritesRooms.forEach {
+                writeInt(it)
+            }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.NAVIGATOR_FAVORITES)
+    fun responseR63A(habboResponse: HabboResponse, favoritesRooms: List<Int>) {
         habboResponse.apply {
             writeInt(50)
             writeInt(favoritesRooms.size)

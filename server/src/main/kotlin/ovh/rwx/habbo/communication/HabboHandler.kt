@@ -27,7 +27,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.release.ReleaseDao
 import ovh.rwx.habbo.database.release.ReleaseHeaderInfo
 import ovh.rwx.habbo.database.release.ReleaseType
@@ -51,6 +53,15 @@ class HabboHandler {
     val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = mutableMapOf()
     var largestNameSize: Int = 0
 
+    // R63A
+    private val messageHandlersR63A: MutableMap<IncomingR63A, MutableMap<String, Pair<Any, HabboMethodInfo>>> = mutableMapOf()
+    private val messageResponsesR63A: MutableMap<OutgoingR63A, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
+    private var incomingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
+    private var outgoingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
+    val incomingNamesR63A: MutableMap<String, List<Pair<Int, IncomingR63A>>> = mutableMapOf()
+    val outgoingNamesR63A: MutableMap<String, List<Pair<Int, OutgoingR63A>>> = mutableMapOf()
+    var largestNameSizeR63A: Int = 0
+
     init {
         load()
     }
@@ -63,11 +74,20 @@ class HabboHandler {
         messageResponses.clear()
         incomingNames.clear()
         outgoingNames.clear()
+        
+        // R63A
+        messageHandlersR63A.clear()
+        messageResponsesR63A.clear()
+        incomingNamesR63A.clear()
+        outgoingNamesR63A.clear()
 
         val headers = ReleaseDao.getHeaders().groupBy { it.type }
 
-        incomingHeaders = headers[ReleaseType.INCOMING] ?: error("Couldn't find the incoming headers!")
-        outgoingHeaders = headers[ReleaseType.OUTGOING] ?: error("Couldn't find the outgoing headers!")
+        incomingHeaders = headers[ReleaseType.INCOMING]?.filter { it.release != "R63A" } ?: error("Couldn't find the incoming headers!")
+        outgoingHeaders = headers[ReleaseType.OUTGOING]?.filter { it.release != "R63A" } ?: error("Couldn't find the outgoing headers!")
+        
+        incomingHeadersR63A = headers[ReleaseType.INCOMING]?.filter { it.release == "R63A" } ?: error("Couldn't find the incoming headers!")
+        outgoingHeadersR63A = headers[ReleaseType.OUTGOING]?.filter { it.release == "R63A" } ?: error("Couldn't find the outgoing headers!")
 
         if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
             releases.forEach { release ->
@@ -91,6 +111,16 @@ class HabboHandler {
             log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
         }
 
+        if (incomingNamesR63A.isEmpty() && outgoingNamesR63A.isEmpty()) {
+            val inHeaders = incomingHeadersR63A.filter { IncomingR63A.values().map { incoming -> incoming.name }.contains(it.name) }
+            val outHeaders = outgoingHeadersR63A.filter { OutgoingR63A.values().map { outgoing -> outgoing.name }.contains(it.name) }
+
+            incomingNamesR63A["R63A"] = inHeaders.map { it.header to IncomingR63A.valueOf(it.name) }
+            outgoingNamesR63A["R63A"] = outHeaders.map { it.header to OutgoingR63A.valueOf(it.name) }
+
+            largestNameSizeR63A = incomingNamesR63A.plus(outgoingNamesR63A).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.maxBy { it.length }!!.length
+        }
+
         val lookup = MethodHandles.lookup()
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
@@ -107,7 +137,20 @@ class HabboHandler {
                     messageHandlers[incoming]!![methodName] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
                 }
             }
+            reflections.getMethodsAnnotatedWith(HandlerR63A::class.java).forEach {
+                val clazz = getInstance(it.declaringClass)
+                val handler = it.getAnnotation(HandlerR63A::class.java)
+                val methodHandle = lookup.unreflect(it)
+                val methodName = it.name
+
+                handler.headers.forEach { incoming ->
+                    if (!messageHandlersR63A.containsKey(incoming)) messageHandlersR63A[incoming] = mutableMapOf()
+
+                    messageHandlersR63A[incoming]!![methodName] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                }
+            }
             log.info("Loaded {} Habbo request handlers", messageHandlers.size)
+            log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
         }
 
         GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
@@ -123,7 +166,20 @@ class HabboHandler {
                     messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
                 }
             }
+            reflections.getMethodsAnnotatedWith(ResponseR63A::class.java).forEach {
+                val clazz = getInstance(it.declaringClass)
+                val response = it.getAnnotation(ResponseR63A::class.java)
+                val methodHandle = lookup.unreflect(it)
+                val methodName = it.name
+
+                response.headers.forEach { outgoing ->
+                    if (!messageResponsesR63A.containsKey(outgoing)) messageResponsesR63A[outgoing] = mutableMapOf()
+
+                    messageResponsesR63A[outgoing]!![methodName] = Pair(clazz, methodHandle)
+                }
+            }
             log.info("Loaded {} Habbo response handlers", messageResponses.size)
+            log.info("Loaded {} Habbo R63A response handlers", messageResponsesR63A.size)
         }
     }
 
@@ -202,6 +258,57 @@ class HabboHandler {
             }
         }
     }
+    
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboRequest.use {
+            val incomingEnum: IncomingR63A? = incomingNamesR63A[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
+
+            if (incomingEnum != null && messageHandlersR63A.containsKey(incomingEnum)) {
+                val methodName =
+                    incomingHeaders.find { releaseHeaderInfo -> releaseHeaderInfo.header == habboRequest.headerId }?.overrideMethod ?: "handleR63A"
+                val pair = messageHandlersR63A[incomingEnum]!![methodName]
+
+                if (pair == null) {
+                    log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
+
+                    return@use
+                }
+
+                val (clazz, habboMethodInfo) = pair
+
+                if (habboMethodInfo.requiredAuth && !habboSession.authenticated) {
+                    log.error("${habboRequest.headerId} - $incomingEnum - method requires authenticated user, but user wasn't authenticated!")
+
+                    return
+                }
+
+                try {
+                    habboRequest.incomingR63A = incomingEnum
+                    habboRequest.methodName = methodName
+
+                    habboMethodInfo.methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
+                } catch (e: Exception) {
+                    log.error(
+                        "Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!",
+                        e
+                    )
+
+                    if (e is ClassCastException || e is WrongMethodTypeException) {
+                        log.error(
+                            "Excepted parameters: {}",
+                            habboMethodInfo.methodHandle.type().parameterList().drop(1)
+                                .map { clazz1 -> clazz1.simpleName })
+                        log.error(
+                            "Received parameters: {}",
+                            listOf(HabboSession::class.java.simpleName, HabboRequest::class.java)
+                        )
+                    }
+                }
+            } else {
+                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, incomingEnum)
+            }
+        }
+    }
 
     fun invokeResponse(habboSession: HabboSession, outgoing: Outgoing, vararg args: Any?): HabboResponse? {
         val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first
@@ -229,6 +336,54 @@ class HabboHandler {
             val (clazz, methodHandle) = pair
 
             val habboResponse = HabboResponse(headerId, outgoing)
+
+            try {
+                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
+
+                return habboResponse
+            } catch (e: Exception) {
+                log.error("Error when invoking HabboResponse for $headerId - $outgoing!", e)
+
+                if (e is ClassCastException || e is WrongMethodTypeException) {
+                    log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                    log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
+                }
+                // Close the Habbo Response
+                habboResponse.close()
+            }
+        } else {
+            log.error("Non existent response header ID: {} - {}", headerId, outgoing)
+        }
+
+        return null
+    }
+
+    fun invokeResponse(habboSession: HabboSession, outgoing: OutgoingR63A, vararg args: Any?): HabboResponse? {
+        val headerId = outgoingNamesR63A[habboSession.release]?.find { it.second == outgoing }?.first
+
+        if (headerId == null) {
+            log.error("Non existent response header {} for release {}", outgoing, habboSession.release)
+
+            return null
+        }
+
+        if (messageResponsesR63A.containsKey(outgoing)) {
+            val methodName = outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
+                ?: "responseR63A"
+
+            val pair = messageResponsesR63A[outgoing]!![methodName]
+
+            if (pair == null) {
+                if (methodName != "DISABLED") {
+                    log.warn("No method with name '{}' found for {}!", methodName, outgoing)
+                }
+
+                return null
+            }
+
+            val (clazz, methodHandle) = pair
+
+            val habboResponse = HabboResponse(headerId, null, outgoingR63A = outgoing)
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

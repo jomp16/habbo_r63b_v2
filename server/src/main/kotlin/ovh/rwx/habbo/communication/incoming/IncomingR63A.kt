@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,21 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.handshake
+package ovh.rwx.habbo.communication.incoming
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-
-@Suppress("unused", "UNUSED_PARAMETER")
-class HandshakeAuthenticationOkResponse {
-    @Response(Outgoing.AUTHENTICATION_OK)
-    fun response(habboResponse: HabboResponse) {
-    }
-    
-    @ResponseR63A(OutgoingR63A.HANDSHAKE_AUTHENTICATION_OK)
-    fun responseR63A(habboResponse: HabboResponse) {
-    }
+enum class IncomingR63A {
+    HANDSHAKE_INIT_CRYPTO,
+    HANDSHAKE_SSO_TICKET,
+    USER_CREDITS_BALANCE,
+    USER_ACTIVITY_POINTS_BALANCE,
+    USER_INFO_RETRIEVE,
+    SUBSCRIPTION_STATUS,
+    USER_SETTINGS,
+    MESSENGER_INIT,
+    ROOM_OPEN_FLAT,
+    NAVIGATOR_FLAT_CATEGORIES,
+    CATALOG_INDEX,
+    CATALOG_RECYCLER_REWARDS,
+    CATALOG_CONFIGURATION,
+    CATALOG_GIFT_WRAPPING,
+    MISC_EVENT_TRACKER,
+    MISC_GET_MOTD,
+    MISC_PING
 }

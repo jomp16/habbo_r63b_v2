@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserLevelRightsResponse {
@@ -31,6 +33,14 @@ class UserLevelRightsResponse {
             writeInt(club)
             writeInt(rank)
             writeBoolean(ambassador)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_RIGHTS)
+    fun responseR63A(habboResponse: HabboResponse, club: Int, rank: Int) {
+        habboResponse.apply {
+            writeInt(club)
+            writeInt(rank)
         }
     }
 }

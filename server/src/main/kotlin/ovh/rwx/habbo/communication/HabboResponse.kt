@@ -24,23 +24,57 @@ import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.encryption.decoder.HabboVl64
 
 @Suppress("unused")
-class HabboResponse(val headerId: Int, val outgoing: Outgoing?, val keepCopy: Boolean = false) : AutoCloseable {
+class HabboResponse(
+    val headerId: Int,
+    val outgoing: Outgoing?,
+    val keepCopy: Boolean = false,
+    val outgoingR63A: OutgoingR63A? = null
+) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
-    fun writeUTF(s: String) = byteBufOutputStream.writeUTF(s)
+    fun writeUTF(s: String) {
+        if (outgoingR63A != null) {
+            byteBufOutputStream.writeBytes(s)
+        } else {
+            byteBufOutputStream.writeUTF(s)
+        }
+    }
+    
+    fun writeUTFWithBreak(s: String, breakChar: Int = 2) {
+        if (outgoingR63A != null) {
+            writeUTF(s)
+            writeByte(breakChar)
+        }
+    }
 
     fun writeShort(i: Int) = byteBufOutputStream.writeShort(i)
 
-    fun writeInt(i: Int) = byteBufOutputStream.writeInt(i)
+    fun writeInt(i: Int) {
+        if (outgoingR63A != null) {
+            HabboVl64.encodeBytes(i)?.let {
+                byteBufOutputStream.write(it)
+            }
+        } else {
+            byteBufOutputStream.writeInt(i)
+        }
+    }
 
     fun writeDouble(d: Double) = byteBufOutputStream.writeDouble(d)
 
-    fun writeBoolean(b: Boolean) = byteBufOutputStream.writeBoolean(b)
+    fun writeBoolean(b: Boolean) {
+        if (outgoingR63A != null) {
+            byteBufOutputStream.writeByte((if (b) 73 else 72))
+        } else {
+            byteBufOutputStream.writeBoolean(b)
+        }
+    }
 
     fun writeByte(b: Int) {
         byteBufOutputStream.writeByte(b)

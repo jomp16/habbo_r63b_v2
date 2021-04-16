@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.handshake
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,5 +40,12 @@ class HandshakeInitCryptoHandler {
 
         habboSession.diffieHellmanParams = dh
         habboSession.sendHabboResponse(Outgoing.INIT_CRYPTO, prime, generator)
+    }
+
+    @HandlerR63A(IncomingR63A.HANDSHAKE_INIT_CRYPTO, requiredAuth = false)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.handshaking = true
+
+        habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
     }
 }

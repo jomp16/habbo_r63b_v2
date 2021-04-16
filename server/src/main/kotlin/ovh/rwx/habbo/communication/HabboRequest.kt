@@ -23,14 +23,35 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
 import io.netty.util.ReferenceCountUtil
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.encryption.decoder.HabboBase64
 
 @Suppress("unused")
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
     lateinit var incoming: Incoming
+    lateinit var incomingR63A: IncomingR63A
     lateinit var methodName: String
 
-    fun readUTF(): String = if (byteBuf.readableBytes() < 2) "" else byteBufInputStream.readUTF()
+    fun readUTF(): String {
+        if (byteBuf.readableBytes() < 2) return ""
+
+        return if (this::incomingR63A.isInitialized) {
+            val bytes = ByteArray(2)
+
+            byteBufInputStream.read(bytes)
+
+            val size = HabboBase64.decode(bytes)
+
+            val stringBytes = ByteArray(size)
+
+            byteBufInputStream.read(stringBytes)
+
+            stringBytes.toString(Charsets.UTF_8).replace(1.toChar(), ' ')
+        } else {
+            byteBufInputStream.readUTF()
+        }
+    }
 
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
@@ -43,7 +64,9 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     override fun toString(): String {
         var message = byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+", "(newline)")
 
-        for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
+        if (!this::incoming.isInitialized) {
+            for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
+        }
 
         return message
     }
