@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -78,7 +78,13 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
         }
     }
 
-    fun readBoolean(): Boolean = byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
+    fun readBoolean(): Boolean {
+        return if (this::incomingR63A.isInitialized) {
+            byteBuf.readableBytes() >= 1 && byteBufInputStream.readByte() == 65.toByte()
+        } else {
+            byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()
+        }
+    }
 
     fun readBytes(bytes: ByteArray) = byteBufInputStream.readFully(bytes)
 

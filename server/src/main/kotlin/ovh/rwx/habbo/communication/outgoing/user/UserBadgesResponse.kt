@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,12 +21,15 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.badge.Badge
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserBadgesResponse {
     @Response(Outgoing.USER_BADGES)
+    @ResponseR63A(OutgoingR63A.USER_BADGES)
     fun response(habboResponse: HabboResponse, id: Int, badges: Collection<Badge>) {
         habboResponse.apply {
             val equippedBadges = badges.filter { it.slot > 0 }
