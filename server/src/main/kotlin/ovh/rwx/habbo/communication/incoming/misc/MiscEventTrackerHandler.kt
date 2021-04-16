@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.incoming.misc
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
@@ -33,5 +35,13 @@ class MiscEventTrackerHandler {
         val action = habboRequest.readUTF()
         val unknownUTF = habboRequest.readUTF()
         val unknownInt = habboRequest.readInt()
+    }
+
+    @HandlerR63A(IncomingR63A.MISC_EVENT_TRACKER)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val type = habboRequest.readUTF()
+        val location = habboRequest.readUTF()
+        val action = habboRequest.readUTF()
+        val unknownUTF = habboRequest.readUTF()
     }
 }

@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -34,6 +37,7 @@ class UserInfoHandler {
                 habboSession.userInformation.username,
                 habboSession.userInformation.figure,
                 habboSession.userInformation.gender,
+                habboSession.userInformation.realname,
                 habboSession.userInformation.motto,
                 habboSession.userStats.respect,
                 habboSession.userStats.dailyRespectPoints,
@@ -57,6 +61,22 @@ class UserInfoHandler {
                         Triple("VOTE_IN_COMPETITIONS", "", true),
                         Triple("CAMERA", "", true)
                 )
+        )
+    }
+
+    @HandlerR63A(IncomingR63A.USER_INFO_RETRIEVE)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(
+            OutgoingR63A.USER_OBJECT,
+            habboSession.userInformation.id,
+            habboSession.userInformation.username,
+            habboSession.userInformation.figure,
+            habboSession.userInformation.gender,
+            habboSession.userInformation.realname,
+            habboSession.userInformation.motto,
+            habboSession.userStats.respect,
+            habboSession.userStats.dailyRespectPoints,
+            habboSession.userStats.dailyPetRespectPoints
         )
     }
 }

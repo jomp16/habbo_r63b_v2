@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.encryption.decoder.HabboBase64
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.kotlin.ip
@@ -43,7 +44,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 
         msg.resetReaderIndex()
 
-        if (delimiter != 0.toByte() && delimiter != 60.toByte()) {
+        if (delimiter != 0.toByte() && delimiter != 60.toByte() && delimiter != 64.toByte()) {
             msg.readerIndex(msg.readableBytes())
             msg.discardSomeReadBytes()
 
@@ -59,24 +60,53 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             msg.readerIndex(msg.readableBytes())
             msg.discardSomeReadBytes()
 
-            ctx.writeAndFlush("""<?xml version="1.0"?>
+            ctx.writeAndFlush(
+                """<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="*" />
-</cross-domain-policy>""")
-                    .addListener(ChannelFutureListener.CLOSE)
+</cross-domain-policy>"""
+            )
+                .addListener(ChannelFutureListener.CLOSE)
 
             return
         } else {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
             msg.markReaderIndex()
-            val messageLength = msg.readInt()
-            val headerId = msg.readUnsignedShort()
-            val size = messageLength - 2
+            val messageLength: Int
+            val headerId: Int
+            val size: Int
+
+            if (delimiter == 64.toByte()) {
+                // R63A
+                val messageLengthBytes = ByteArray(3)
+                val headerIdBytes = ByteArray(2)
+
+                msg.readBytes(messageLengthBytes)
+                msg.readBytes(headerIdBytes)
+
+                messageLength = HabboBase64.decode(messageLengthBytes)
+                headerId = HabboBase64.decode(headerIdBytes)
+                size = messageLength - 2
+
+                if (headerId == 206) {
+                    // Init crypto, mark session as old client
+                    habboSession.release = "R63A"
+                }
+            } else {
+                // R63B
+                messageLength = msg.readInt()
+                headerId = msg.readUnsignedShort()
+                size = messageLength - 2
+            }
 
             if (msg.readableBytes() < size) {
-                log.warn("Received message length less than excepted message length {} < {}! Waiting for new bytes!", msg.readableBytes(), size)
+                log.warn(
+                    "Received message length less than excepted message length {} < {}! Waiting for new bytes!",
+                    msg.readableBytes(),
+                    size
+                )
 
                 msg.resetReaderIndex()
 
@@ -95,13 +125,25 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
             out += habboRequest
 
             if (log.isDebugEnabled) {
-                val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
-                val incoming: String =
-                        if (headerId == 4000) Incoming.RELEASE_CHECK.name
-                        else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name
-                                ?: "null"
+                val username =
+                    if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-                log.trace("({}) - GOT  --> [{}][{}] -- {}", username, headerId.toString().padEnd(4), incoming.padEnd(HabboServer.habboHandler.largestNameSize), habboRequest.toString())
+                val incoming: String = if (habboSession.release != "R63A") {
+                    if (headerId == 4000) Incoming.RELEASE_CHECK.name
+                    else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name
+                        ?: "null"
+                } else {
+                    HabboServer.habboHandler.incomingNamesR63A[habboSession.release]?.find { it.first == headerId }?.second?.name
+                        ?: "null"
+                }
+
+                log.trace(
+                    "({}) - GOT  --> [{}][{}] -- {}",
+                    username,
+                    headerId.toString().padEnd(4),
+                    incoming.padEnd(HabboServer.habboHandler.largestNameSize),
+                    habboRequest.toString()
+                )
             }
         }
     }

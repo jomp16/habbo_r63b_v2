@@ -28,7 +28,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.encryption.decoder.HabboBase64
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.kotlin.ip
@@ -42,16 +42,27 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
         val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
         if (log.isDebugEnabled) {
-            val outgoing: Outgoing? = HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second
-
-            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), (outgoing?.name ?: "null").padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
+            val outgoing: String = if (habboSession.release != "R63A") {
+                HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second?.name ?: "null"
+            } else {
+                HabboServer.habboHandler.outgoingNamesR63A[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
+                    ?: "null"
+            }
+            
+            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), (outgoing).padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
         }
         val byteBuf = msg.byteBuf
 
         out.apply {
-            writeInt(byteBuf.writerIndex() + 2)
-            writeShort(msg.headerId)
-            writeBytes(byteBuf)
+            if (habboSession.release != "R63A") {
+                writeInt(byteBuf.writerIndex() + 2)
+                writeShort(msg.headerId)
+                writeBytes(byteBuf)
+            } else {
+                writeBytes(HabboBase64.encodeBytes(msg.headerId))
+                writeBytes(byteBuf)
+                writeByte(1)
+            }
         }
 
         if (!msg.keepCopy) msg.close()

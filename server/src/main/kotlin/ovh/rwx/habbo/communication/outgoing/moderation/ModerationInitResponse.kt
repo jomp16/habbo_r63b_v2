@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.moderation
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationInitResponse {
@@ -42,6 +44,28 @@ class ModerationInitResponse {
             writeBoolean(true) // Ban users
             writeBoolean(true) // Caution etc
             writeBoolean(true) // ?
+            // todo: room presets
+            writeInt(0)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.MODERATION_INIT)
+    fun responseR63A(habboResponse: HabboResponse) {
+        habboResponse.apply {
+            // todo: tickets
+            writeInt(0)
+            // todo: user presets
+            writeInt(0)
+            // todo: user actions presets, but it's useless on Habbo.swf
+            writeInt(0)
+
+            writeUTFWithBreak("") // Ticket right
+            writeUTFWithBreak("") // Chatlogs
+            writeUTFWithBreak("") // User actions alert etc
+            writeUTFWithBreak("") // Kick users
+            writeUTFWithBreak("") // Ban users
+            writeUTFWithBreak("") // Caution etc
+            writeUTFWithBreak("") // ?
             // todo: room presets
             writeInt(0)
         }

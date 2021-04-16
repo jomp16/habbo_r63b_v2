@@ -21,13 +21,40 @@ package ovh.rwx.habbo.communication.incoming.setting
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class SettingDataHandler {
     @Handler(Incoming.USER_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendSettings()
+        val tmp = habboSession.userPreferences.volume.split(',').map(String::toInt)
+
+        habboSession.sendHabboResponse(
+            Outgoing.USER_SETTINGS,
+            tmp[0],
+            tmp[1],
+            tmp[2],
+            habboSession.userPreferences.preferOldChat,
+            habboSession.userPreferences.ignoreRoomInvite,
+            habboSession.userPreferences.disableCameraFollow,
+            habboSession.userPreferences.friendBarOpen,
+            habboSession.userPreferences.chatColor
+        )
+    }
+
+    @HandlerR63A(IncomingR63A.USER_SETTINGS)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val tmp = habboSession.userPreferences.volume.split(',').map(String::toInt)
+
+        habboSession.sendHabboResponse(
+            OutgoingR63A.USER_SETTINGS,
+            tmp[0],
+            false
+        )
     }
 }

@@ -17,29 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.misc
+package ovh.rwx.habbo.communication.outgoing.handshake
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MiscMultiNotificationResponse {
-    @Response(Outgoing.MISC_MOTD_NOTIFICATION)
-    fun response(habboResponse: HabboResponse, message: String) {
-        habboResponse.apply {
-            writeInt(1)
-            writeUTF(message)
-        }
-    }
-    
-    @ResponseR63A(OutgoingR63A.MISC_MOTD_NOTIFICATION)
-    fun responseR63A(habboResponse: HabboResponse, message: String) {
-        habboResponse.apply {
-            writeBoolean(true)
-            writeUTFWithBreak(message)
+class HandshakeSessionParametersResponse {
+    @ResponseR63A(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
+    fun responseR63A(habboResponse: HabboResponse) {
+        habboResponse.apply { 
+            writeBoolean(false)
         }
     }
 }

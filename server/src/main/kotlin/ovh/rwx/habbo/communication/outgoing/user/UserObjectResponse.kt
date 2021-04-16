@@ -22,20 +22,35 @@ package ovh.rwx.habbo.communication.outgoing.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import java.time.LocalDateTime
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserObjectResponse {
     @Response(Outgoing.USER_OBJECT)
-    fun response(habboResponse: HabboResponse, id: Int, username: String, figure: String, gender: String, motto: String, respect: Int, dailyRespectPoints: Int, dailyPetRespectPoints: Int, lastOnline: LocalDateTime, canChangeName: Boolean) {
+    fun response(
+        habboResponse: HabboResponse,
+        id: Int,
+        username: String,
+        figure: String,
+        gender: String,
+        realName: String,
+        motto: String,
+        respect: Int,
+        dailyRespectPoints: Int,
+        dailyPetRespectPoints: Int,
+        lastOnline: LocalDateTime,
+        canChangeName: Boolean
+    ) {
         habboResponse.apply {
             writeInt(id)
             writeUTF(username)
             writeUTF(figure)
             writeUTF(gender)
             writeUTF(motto)
-            writeUTF("")
+            writeUTF(realName)
             writeBoolean(false)
             writeInt(respect)
             writeInt(dailyRespectPoints)
@@ -44,6 +59,34 @@ class UserObjectResponse {
             writeUTF(lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
             writeBoolean(canChangeName)
             writeBoolean(false)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_OBJECT)
+    fun responseR63A(
+        habboResponse: HabboResponse,
+        id: Int,
+        username: String,
+        figure: String,
+        gender: String,
+        realName: String,
+        motto: String,
+        respect: Int,
+        dailyRespectPoints: Int,
+        dailyPetRespectPoints: Int
+    ) {
+        habboResponse.apply {
+            writeUTFWithBreak(id.toString())
+            writeUTFWithBreak(username)
+            writeUTFWithBreak(figure)
+            writeUTFWithBreak(gender)
+            writeUTFWithBreak(motto)
+            writeUTFWithBreak(realName)
+            writeBoolean(false)
+            writeInt(respect)
+            writeInt(dailyRespectPoints)
+            writeInt(dailyPetRespectPoints)
+            writeBoolean(true) // Friends stream active
         }
     }
 }
