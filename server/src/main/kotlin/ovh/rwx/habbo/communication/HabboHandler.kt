@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -54,8 +54,8 @@ class HabboHandler {
     var largestNameSize: Int = 0
 
     // R63A
-    private val messageHandlersR63A: MutableMap<IncomingR63A, MutableMap<String, Pair<Any, HabboMethodInfo>>> = mutableMapOf()
-    private val messageResponsesR63A: MutableMap<OutgoingR63A, MutableMap<String, Pair<Any, MethodHandle>>> = mutableMapOf()
+    private val messageHandlersR63A: MutableMap<IncomingR63A, Pair<Any, HabboMethodInfo>> = mutableMapOf()
+    private val messageResponsesR63A: MutableMap<OutgoingR63A, Pair<Any, MethodHandle>> = mutableMapOf()
     private var incomingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
     private var outgoingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
     val incomingNamesR63A: MutableMap<String, List<Pair<Int, IncomingR63A>>> = mutableMapOf()
@@ -74,7 +74,7 @@ class HabboHandler {
         messageResponses.clear()
         incomingNames.clear()
         outgoingNames.clear()
-        
+
         // R63A
         messageHandlersR63A.clear()
         messageResponsesR63A.clear()
@@ -83,42 +83,63 @@ class HabboHandler {
 
         val headers = ReleaseDao.getHeaders().groupBy { it.type }
 
-        incomingHeaders = headers[ReleaseType.INCOMING]?.filter { it.release != "R63A" } ?: error("Couldn't find the incoming headers!")
-        outgoingHeaders = headers[ReleaseType.OUTGOING]?.filter { it.release != "R63A" } ?: error("Couldn't find the outgoing headers!")
-        
-        incomingHeadersR63A = headers[ReleaseType.INCOMING]?.filter { it.release == "R63A" } ?: error("Couldn't find the incoming headers!")
-        outgoingHeadersR63A = headers[ReleaseType.OUTGOING]?.filter { it.release == "R63A" } ?: error("Couldn't find the outgoing headers!")
+        incomingHeaders = headers[ReleaseType.INCOMING]?.filter { it.release != "R63A" }
+            ?: error("Couldn't find the incoming headers!")
+        outgoingHeaders = headers[ReleaseType.OUTGOING]?.filter { it.release != "R63A" }
+            ?: error("Couldn't find the outgoing headers!")
+
+        incomingHeadersR63A = headers[ReleaseType.INCOMING]?.filter { it.release == "R63A" }
+            ?: error("Couldn't find the incoming headers!")
+        outgoingHeadersR63A = headers[ReleaseType.OUTGOING]?.filter { it.release == "R63A" }
+            ?: error("Couldn't find the outgoing headers!")
 
         if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
             releases.forEach { release ->
-                val inHeaders = incomingHeaders.filter { it.release == release }.filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
-                val outHeaders = outgoingHeaders.filter { it.release == release }.filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
+                val inHeaders = incomingHeaders.filter { it.release == release }
+                    .filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
+                val outHeaders = outgoingHeaders.filter { it.release == release }
+                    .filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
 
                 incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
                 outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
             }
-            val exceptedIncomingHeaders: List<Incoming> = Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
+            val exceptedIncomingHeaders: List<Incoming> =
+                Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
             val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
 
-            if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(outgoingNames.entries, exceptedOutgoingHeaders)) {
+            if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(
+                    outgoingNames.entries,
+                    exceptedOutgoingHeaders
+                )
+            ) {
                 log.error("Missing headers... Fix it! Exiting!")
 
                 exitProcess(1)
             }
 
-            largestNameSize = incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.maxBy { it.length }!!.length
+            largestNameSize =
+                incomingNames.plus(outgoingNames).values.flatMap { it.map { pair -> pair.second } }.map { it.name }
+                    .maxByOrNull { it.length }!!.length
 
-            log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
+            log.info(
+                "Loaded {} Habbo releases. Available releases: {}",
+                releases.size,
+                releases.sorted().joinToString()
+            )
         }
 
         if (incomingNamesR63A.isEmpty() && outgoingNamesR63A.isEmpty()) {
-            val inHeaders = incomingHeadersR63A.filter { IncomingR63A.values().map { incoming -> incoming.name }.contains(it.name) }
-            val outHeaders = outgoingHeadersR63A.filter { OutgoingR63A.values().map { outgoing -> outgoing.name }.contains(it.name) }
+            val inHeaders =
+                incomingHeadersR63A.filter { IncomingR63A.values().map { incoming -> incoming.name }.contains(it.name) }
+            val outHeaders =
+                outgoingHeadersR63A.filter { OutgoingR63A.values().map { outgoing -> outgoing.name }.contains(it.name) }
 
             incomingNamesR63A["R63A"] = inHeaders.map { it.header to IncomingR63A.valueOf(it.name) }
             outgoingNamesR63A["R63A"] = outHeaders.map { it.header to OutgoingR63A.valueOf(it.name) }
 
-            largestNameSizeR63A = incomingNamesR63A.plus(outgoingNamesR63A).values.flatMap { it.map { pair -> pair.second } }.map { it.name }.maxBy { it.length }!!.length
+            largestNameSizeR63A =
+                incomingNamesR63A.plus(outgoingNamesR63A).values.flatMap { it.map { pair -> pair.second } }
+                    .map { it.name }.maxByOrNull { it.length }!!.length
         }
 
         val lookup = MethodHandles.lookup()
@@ -134,19 +155,17 @@ class HabboHandler {
                 handler.headers.forEach { incoming ->
                     if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
 
-                    messageHandlers[incoming]!![methodName] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                    messageHandlers[incoming]!![methodName] =
+                        Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
                 }
             }
             reflections.getMethodsAnnotatedWith(HandlerR63A::class.java).forEach {
                 val clazz = getInstance(it.declaringClass)
                 val handler = it.getAnnotation(HandlerR63A::class.java)
                 val methodHandle = lookup.unreflect(it)
-                val methodName = it.name
 
                 handler.headers.forEach { incoming ->
-                    if (!messageHandlersR63A.containsKey(incoming)) messageHandlersR63A[incoming] = mutableMapOf()
-
-                    messageHandlersR63A[incoming]!![methodName] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                    messageHandlersR63A[incoming] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
                 }
             }
             log.info("Loaded {} Habbo request handlers", messageHandlers.size)
@@ -170,12 +189,9 @@ class HabboHandler {
                 val clazz = getInstance(it.declaringClass)
                 val response = it.getAnnotation(ResponseR63A::class.java)
                 val methodHandle = lookup.unreflect(it)
-                val methodName = it.name
 
                 response.headers.forEach { outgoing ->
-                    if (!messageResponsesR63A.containsKey(outgoing)) messageResponsesR63A[outgoing] = mutableMapOf()
-
-                    messageResponsesR63A[outgoing]!![methodName] = Pair(clazz, methodHandle)
+                    messageResponsesR63A[outgoing] = Pair(clazz, methodHandle)
                 }
             }
             log.info("Loaded {} Habbo response handlers", messageResponses.size)
@@ -183,7 +199,10 @@ class HabboHandler {
         }
     }
 
-    private fun isMissingIncomingHeaders(availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Incoming>>>>, exceptedHeaders: List<Incoming>): Boolean {
+    private fun isMissingIncomingHeaders(
+        availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Incoming>>>>,
+        exceptedHeaders: List<Incoming>
+    ): Boolean {
         var missing = false
 
         availableHeadersEntries.forEach {
@@ -199,7 +218,10 @@ class HabboHandler {
         return missing
     }
 
-    private fun isMissingOutgoingHeaders(availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Outgoing>>>>, exceptedHeaders: List<Outgoing>): Boolean {
+    private fun isMissingOutgoingHeaders(
+        availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Outgoing>>>>,
+        exceptedHeaders: List<Outgoing>
+    ): Boolean {
         var missing = false
 
         availableHeadersEntries.forEach {
@@ -218,11 +240,12 @@ class HabboHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboRequest.use {
             val incomingEnum: Incoming? =
-                    if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
-                    else incomingNames[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
+                if (habboRequest.headerId == 4000) Incoming.RELEASE_CHECK
+                else incomingNames[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
 
             if (incomingEnum != null && messageHandlers.containsKey(incomingEnum)) {
-                val methodName = incomingHeaders.find { releaseHeaderInfo -> releaseHeaderInfo.header == habboRequest.headerId && (releaseHeaderInfo.release == habboSession.release) }?.overrideMethod
+                val methodName =
+                    incomingHeaders.find { releaseHeaderInfo -> releaseHeaderInfo.header == habboRequest.headerId && (releaseHeaderInfo.release == habboSession.release) }?.overrideMethod
                         ?: "handle"
                 val pair = messageHandlers[incomingEnum]!![methodName]
 
@@ -246,11 +269,20 @@ class HabboHandler {
 
                     habboMethodInfo.methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                 } catch (e: Exception) {
-                    log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!", e)
+                    log.error(
+                        "Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $incomingEnum!",
+                        e
+                    )
 
                     if (e is ClassCastException || e is WrongMethodTypeException) {
-                        log.error("Excepted parameters: {}", habboMethodInfo.methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
-                        log.error("Received parameters: {}", listOf(HabboSession::class.java.simpleName, HabboRequest::class.java))
+                        log.error(
+                            "Excepted parameters: {}",
+                            habboMethodInfo.methodHandle.type().parameterList().drop(1)
+                                .map { clazz1 -> clazz1.simpleName })
+                        log.error(
+                            "Received parameters: {}",
+                            listOf(HabboSession::class.java.simpleName, HabboRequest::class.java)
+                        )
                     }
                 }
             } else {
@@ -258,21 +290,14 @@ class HabboHandler {
             }
         }
     }
-    
+
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboRequest.use {
-            val incomingEnum: IncomingR63A? = incomingNamesR63A[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
+            val incomingEnum: IncomingR63A? =
+                incomingNamesR63A[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
 
             if (incomingEnum != null && messageHandlersR63A.containsKey(incomingEnum)) {
-                val methodName =
-                    incomingHeaders.find { releaseHeaderInfo -> releaseHeaderInfo.header == habboRequest.headerId }?.overrideMethod ?: "handleR63A"
-                val pair = messageHandlersR63A[incomingEnum]!![methodName]
-
-                if (pair == null) {
-                    log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
-
-                    return@use
-                }
+                val pair = messageHandlersR63A[incomingEnum] ?: return@use
 
                 val (clazz, habboMethodInfo) = pair
 
@@ -284,7 +309,6 @@ class HabboHandler {
 
                 try {
                     habboRequest.incomingR63A = incomingEnum
-                    habboRequest.methodName = methodName
 
                     habboMethodInfo.methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                 } catch (e: Exception) {
@@ -314,13 +338,14 @@ class HabboHandler {
         val headerId = outgoingNames[habboSession.release]?.find { it.second == outgoing }?.first
 
         if (headerId == null) {
-            log.error("Non existent response header {} for release {}", outgoing, habboSession.release)
+            log.error("Non existent response header ID {} for release {}", outgoing, habboSession.release)
 
             return null
         }
 
         if (messageResponses.containsKey(outgoing)) {
-            val methodName = outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
+            val methodName =
+                outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
                     ?: "response"
 
             val pair = messageResponses[outgoing]!![methodName]
@@ -345,8 +370,13 @@ class HabboHandler {
                 log.error("Error when invoking HabboResponse for $headerId - $outgoing!", e)
 
                 if (e is ClassCastException || e is WrongMethodTypeException) {
-                    log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
-                    log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
+                    log.error(
+                        "Excepted parameters: {}",
+                        methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                    log.error(
+                        "Received parameters: {}",
+                        listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName })
+                    )
                 }
                 // Close the Habbo Response
                 habboResponse.close()
@@ -362,24 +392,13 @@ class HabboHandler {
         val headerId = outgoingNamesR63A[habboSession.release]?.find { it.second == outgoing }?.first
 
         if (headerId == null) {
-            log.error("Non existent response header {} for release {}", outgoing, habboSession.release)
+            log.error("Non existent response header ID {} for release {}", outgoing, habboSession.release)
 
             return null
         }
 
         if (messageResponsesR63A.containsKey(outgoing)) {
-            val methodName = outgoingHeaders.find { it.header == headerId && (it.release == habboSession.release) }?.overrideMethod
-                ?: "responseR63A"
-
-            val pair = messageResponsesR63A[outgoing]!![methodName]
-
-            if (pair == null) {
-                if (methodName != "DISABLED") {
-                    log.warn("No method with name '{}' found for {}!", methodName, outgoing)
-                }
-
-                return null
-            }
+            val pair = messageResponsesR63A[outgoing] ?: return null
 
             val (clazz, methodHandle) = pair
 
@@ -393,8 +412,13 @@ class HabboHandler {
                 log.error("Error when invoking HabboResponse for $headerId - $outgoing!", e)
 
                 if (e is ClassCastException || e is WrongMethodTypeException) {
-                    log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
-                    log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
+                    log.error(
+                        "Excepted parameters: {}",
+                        methodHandle.type().parameterList().drop(1).map { it.simpleName })
+                    log.error(
+                        "Received parameters: {}",
+                        listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName })
+                    )
                 }
                 // Close the Habbo Response
                 habboResponse.close()
@@ -422,6 +446,6 @@ class HabboHandler {
 
     fun getOverrideMethodForHeader(outgoing: Outgoing, release: String): String {
         return HabboServer.habboHandler.outgoingHeaders.find { it.release == release && it.name == outgoing.name }?.overrideMethod
-                ?: "response"
+            ?: "response"
     }
 }

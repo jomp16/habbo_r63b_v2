@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,10 +28,7 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeAuthenticationOkResponse {
     @Response(Outgoing.AUTHENTICATION_OK)
-    fun response(habboResponse: HabboResponse) {
-    }
-    
     @ResponseR63A(OutgoingR63A.HANDSHAKE_AUTHENTICATION_OK)
-    fun responseR63A(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse) {
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,14 +28,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserCreditsBalanceResponse {
     @Response(Outgoing.CREDITS_BALANCE)
-    fun response(habboResponse: HabboResponse, credits: Int) {
-        habboResponse.apply {
-            writeUTF("$credits.0")
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.USER_CREDITS_BALANCE)
-    fun responseR63A(habboResponse: HabboResponse, credits: Int) {
+    fun response(habboResponse: HabboResponse, credits: Int) {
         habboResponse.apply {
             writeUTF("$credits.0")
         }

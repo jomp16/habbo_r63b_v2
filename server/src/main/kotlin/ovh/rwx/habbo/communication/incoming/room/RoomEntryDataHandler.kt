@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,16 +29,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomEntryDataHandler {
     @Handler(Incoming.ROOM_ENTRY_DATA)
+    @HandlerR63A(IncomingR63A.ROOM_MODEL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
         habboSession.currentRoom?.addUser(habboSession)
-    }
-
-    @HandlerR63A(IncomingR63A.ROOM_MODEL)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null) return
-
-         habboSession.currentRoom?.addUser(habboSession)
     }
 }
