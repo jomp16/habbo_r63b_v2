@@ -66,7 +66,11 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-                HabboServer.habboHandler.handle(habboSession, msg)
+                if (habboSession.release == "R63A") {
+                    HabboServer.habboHandler.handleR63A(habboSession, msg)
+                } else {
+                    HabboServer.habboHandler.handle(habboSession, msg)
+                }
             }
         }
     }
@@ -86,11 +90,11 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                     return@launch
                 }
 
-                if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking) {
+                if (evt.state() == IdleState.READER_IDLE && habboSession.release != "R63A" && !habboSession.handshaking) {
                     log.error("User $username didn't reply ping! Disconnecting it.")
 
                     ctx.close()
-                } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || !habboSession.handshaking)) {
+                } else if (evt.state() == IdleState.WRITER_IDLE && habboSession.release != "R63A" && (habboSession.authenticated || !habboSession.handshaking)) {
                     log.info("Didn't send any message to user $username, pinging it.")
 
                     habboSession.ping = System.nanoTime()

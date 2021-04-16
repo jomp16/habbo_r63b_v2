@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserActivityPointsResponse {
@@ -32,6 +34,17 @@ class UserActivityPointsResponse {
             writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
             writeInt(pixels)
             writeInt(ActivityPointType.DIAMONDS.code) // diamonds
+            writeInt(vipPoints)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.USER_ACTIVITY_POINTS_BALANCE)
+    fun responseR63A(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
+        habboResponse.apply {
+            writeInt(2)
+            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
+            writeInt(pixels)
+            writeInt(ActivityPointType.SHELLS.code) // SHELLS
             writeInt(vipPoints)
         }
     }

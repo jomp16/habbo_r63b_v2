@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserHomeRoomResponse {
@@ -30,6 +32,13 @@ class UserHomeRoomResponse {
         habboResponse.apply {
             writeInt(roomId)
             writeInt(if (autoJoinRoom) roomId else 0) // auto join room
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.HOME_ROOM)
+    fun responseR63A(habboResponse: HabboResponse, roomId: Int) {
+        habboResponse.apply {
+            writeInt(roomId)
         }
     }
 }
