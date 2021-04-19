@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -138,7 +138,7 @@ class RoomGamemap(private val room: Room) {
     fun getHighestItem(vector2: Vector2): RoomItem? {
         if (!roomItemMap.containsKey(vector2)) return null
 
-        return roomItemMap[vector2]!!.minBy { it.position.z }
+        return roomItemMap[vector2]!!.minByOrNull { it.position.z }
     }
 
     fun removeRoomItem(roomItem: RoomItem) {
