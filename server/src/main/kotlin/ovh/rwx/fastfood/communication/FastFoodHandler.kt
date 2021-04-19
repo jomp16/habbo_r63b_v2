@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -59,11 +59,13 @@ class FastFoodHandler {
             val methodHandle = lookup.unreflect(it)
 
             response.headers.forEach { outgoing ->
-                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] = Pair(clazz, methodHandle)
+                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] =
+                    Pair(clazz, methodHandle)
             }
         }
 
-        largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name }).maxBy { it.length }!!.length
+        largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name })
+            .maxByOrNull { it.length }!!.length
 
         log.info("Loaded {} FastFood request handlers", fastFoodMessageHandlers.size)
         log.info("Loaded {} FastFood response handlers", fastFoodMessageResponses.size)
