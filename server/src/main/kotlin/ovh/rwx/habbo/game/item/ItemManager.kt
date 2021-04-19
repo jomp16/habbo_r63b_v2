@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -112,17 +112,17 @@ class ItemManager {
         if (missingItems.isNotEmpty()) {
             FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use {
                 it.apply {
-                    appendln()
-                    appendln("================")
-                    appendln(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                    appendln()
+                    appendLine()
+                    appendLine("================")
+                    appendLine(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    appendLine()
 
                     missingItems.forEach { s ->
-                        appendln(s)
+                        appendLine(s)
                     }
 
-                    appendln()
-                    appendln("================")
+                    appendLine()
+                    appendLine("================")
                 }
 
                 it.flush()
