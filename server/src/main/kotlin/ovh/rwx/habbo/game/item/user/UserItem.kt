@@ -29,11 +29,11 @@ import ovh.rwx.habbo.game.item.LimitedItemData
 import java.io.Serializable
 
 data class UserItem(
-        val id: Int,
-        var userId: Int,
-        val itemName: String,
-        var extraData: String,
-        val limited: Boolean
+    val id: Int,
+    var userId: Int,
+    val itemName: String,
+    var extraData: String,
+    val limited: Boolean
 ) : IHabboResponseSerialize, Serializable {
     val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
     val furnishing: Furnishing
@@ -46,6 +46,16 @@ data class UserItem(
             writeInt(id)
             writeInt(furnishing.spriteId)
 
+            if (habboResponse.outgoingR63A != null) {
+                val typeId =
+                    if (furnishing.itemName.contains("a2")) 3
+                    else if (furnishing.itemName.contains("wallpaper")) 2
+                    else if (furnishing.itemName.contains("landscape")) 4
+                    else 1
+
+                writeInt(typeId)
+            }
+
             HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
 
             writeBoolean(furnishing.allowRecycle)
@@ -53,8 +63,12 @@ data class UserItem(
             writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
             writeBoolean(furnishing.allowMarketplaceSell)
             writeInt(-1) // milliseconds to expire rental
-            writeBoolean(true)
-            writeInt(-1) // room id
+
+            if (habboResponse.outgoingR63A == null) {
+                writeBoolean(true)
+                writeInt(-1) // room id
+            }
+
             if (furnishing.type == ItemType.FLOOR) {
                 writeUTF("")
                 writeInt(0)

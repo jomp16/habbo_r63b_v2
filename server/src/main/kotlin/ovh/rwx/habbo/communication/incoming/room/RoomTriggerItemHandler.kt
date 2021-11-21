@@ -21,13 +21,23 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomTriggerItemHandler {
-    @Handler(Incoming.ROOM_TRIGGER_ITEM, Incoming.ROOM_TRIGGER_WALL_ITEM, Incoming.ROOM_TRIGGER_ONE_WAY_GATE, Incoming.ROOM_TRIGGER_HABBO_WHEEL, Incoming.ROOM_TRIGGER_CLOSE_DICE, Incoming.ROOM_TRIGGER_ROLL_DICE)
+    @Handler(
+        Incoming.ROOM_TRIGGER_ITEM,
+        Incoming.ROOM_TRIGGER_WALL_ITEM,
+        Incoming.ROOM_TRIGGER_ONE_WAY_GATE,
+        Incoming.ROOM_TRIGGER_HABBO_WHEEL,
+        Incoming.ROOM_TRIGGER_CLOSE_DICE,
+        Incoming.ROOM_TRIGGER_ROLL_DICE
+    )
+    @HandlerR63A(IncomingR63A.ROOM_TRIGGER_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 

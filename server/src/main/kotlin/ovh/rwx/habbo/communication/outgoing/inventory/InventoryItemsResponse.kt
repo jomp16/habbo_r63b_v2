@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.user.UserItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -31,6 +33,18 @@ class InventoryItemsResponse {
         habboResponse.apply {
             writeInt(1)
             writeInt(0) // inventory updated?
+            writeInt(items.size)
+
+            items.forEach { habboResponse.serialize(it) }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.INVENTORY_ITEMS)
+    fun responseR63A(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
+        habboResponse.apply {
+            writeUTF(type) // S = floor, I = wall
+            writeBoolean(true)
+            writeBoolean(false) // inventory updated?
             writeInt(items.size)
 
             items.forEach { habboResponse.serialize(it) }

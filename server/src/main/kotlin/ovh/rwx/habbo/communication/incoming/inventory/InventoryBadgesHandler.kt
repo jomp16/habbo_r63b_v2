@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.inventory
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -30,6 +33,20 @@ class InventoryBadgesHandler {
     @Handler(Incoming.INVENTORY_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, habboSession.habboBadge.badges.values)
-        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, habboSession.habboBadge.badges.values)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_BADGES,
+            habboSession.userInformation.id,
+            habboSession.habboBadge.badges.values
+        )
+    }
+
+    @HandlerR63A(IncomingR63A.INVENTORY_BADGES)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_BADGES, habboSession.habboBadge.badges.values)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.USER_BADGES,
+            habboSession.userInformation.id,
+            habboSession.habboBadge.badges.values
+        )
     }
 }
