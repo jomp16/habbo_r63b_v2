@@ -28,8 +28,8 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.ChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
-import ovh.rwx.utils.plugin.api.PluginListener
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomBadgeCommandsListener : PluginListener() {

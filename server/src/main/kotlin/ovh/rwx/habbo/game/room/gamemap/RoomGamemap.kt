@@ -25,9 +25,9 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.model.SquareState
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.pathfinding.core.Grid
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
-import ovh.rwx.utils.pathfinding.core.Grid
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.abs

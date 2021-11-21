@@ -28,10 +28,10 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.*
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.pathfinding.core.Path
 import ovh.rwx.habbo.util.Rotation
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
-import ovh.rwx.utils.pathfinding.core.Path
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit

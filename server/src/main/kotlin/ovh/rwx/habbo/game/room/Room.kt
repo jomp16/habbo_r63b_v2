@@ -42,15 +42,13 @@ import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.wired.WiredHandler
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.pathfinding.IFinder
+import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
-import ovh.rwx.utils.pathfinding.IFinder
-import ovh.rwx.utils.pathfinding.core.finders.AStarFinder
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.collections.HashSet
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
