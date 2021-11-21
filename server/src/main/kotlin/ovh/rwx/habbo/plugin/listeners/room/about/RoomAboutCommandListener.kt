@@ -25,9 +25,9 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
 import ovh.rwx.habbo.util.Utils
-import ovh.rwx.utils.plugin.api.PluginListener
 import java.lang.management.ManagementFactory
 import java.time.ZoneId
 

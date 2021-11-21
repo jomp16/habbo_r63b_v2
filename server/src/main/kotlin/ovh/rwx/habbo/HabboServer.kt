@@ -58,7 +58,7 @@ import ovh.rwx.habbo.netty.HabboNettyDecoder
 import ovh.rwx.habbo.netty.HabboNettyEncoder
 import ovh.rwx.habbo.netty.HabboNettyHandler
 import ovh.rwx.habbo.netty.HabboNettyRC4Decoder
-import ovh.rwx.utils.plugin.core.PluginManager
+import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
 import java.time.ZoneId

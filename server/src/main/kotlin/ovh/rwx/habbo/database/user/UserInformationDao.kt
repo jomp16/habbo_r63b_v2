@@ -51,10 +51,12 @@ object UserInformationDao {
 
         if (!userInformationsList.containsKey(userId)) {
             val userInformation = HabboServer.database {
-                select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_id.sql").readText(),
-                        mapOf(
-                                "user_id" to userId
-                        )
+                select(
+                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_id.sql")!!
+                        .readText(),
+                    mapOf(
+                        "user_id" to userId
+                    )
                 ) { getUserInformation(it) }.firstOrNull()
             } ?: return null
 
@@ -66,10 +68,12 @@ object UserInformationDao {
 
     fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
         return HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_auth_ticket.sql").readText(),
-                    mapOf(
-                            "ticket" to ssoTicket
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/users/information/select_user_information_from_auth_ticket.sql")!!
+                    .readText(),
+                mapOf(
+                    "ticket" to ssoTicket
+                )
             ) { getUserInformationById(it.int("id")) }.firstOrNull()
         }
     }
@@ -80,10 +84,33 @@ object UserInformationDao {
         return if (userInformation != null) userInformation
         else {
             val userInformation1 = HabboServer.database {
-                select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_username.sql").readText(),
-                        mapOf(
-                                "username" to username
-                        )
+                select(
+                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_username.sql")!!
+                        .readText(),
+                    mapOf(
+                        "username" to username
+                    )
+                ) { getUserInformation(it) }.firstOrNull()
+            } ?: return null
+
+            userInformationsList[userInformation1.id] = userInformation1
+
+            userInformation1
+        }
+    }
+
+    fun getUserInformationByEmail(email: String): UserInformation? {
+        val userInformation: UserInformation? = userInformationsList.values.find { it.email == email }
+
+        return if (userInformation != null) userInformation
+        else {
+            val userInformation1 = HabboServer.database {
+                select(
+                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql")!!
+                        .readText(),
+                    mapOf(
+                        "email" to email
+                    )
                 ) { getUserInformation(it) }.firstOrNull()
             } ?: return null
 
@@ -95,10 +122,12 @@ object UserInformationDao {
 
     fun getUserInformationByEmailAndPassword(email: String, password: String): UserInformation? {
         val userInformation = HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql").readText(),
-                    mapOf(
-                            "email" to email
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql")!!
+                    .readText(),
+                mapOf(
+                    "email" to email
+                )
             ) { getUserInformation(it) }.firstOrNull()
         } ?: return null
 
@@ -111,17 +140,18 @@ object UserInformationDao {
 
     fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
         HabboServer.database {
-            update(javaClass.classLoader.getResource("sql/users/information/update_user_information.sql").readText(),
-                    mapOf(
-                            "online" to online,
-                            "ip_last" to ip,
-                            "credits" to userInformation.credits,
-                            "pixels" to userInformation.pixels,
-                            "vip_points" to userInformation.vipPoints,
-                            "figure" to userInformation.figure,
-                            "gender" to userInformation.gender,
-                            "motto" to userInformation.motto,
-                            "home_room" to userInformation.homeRoom,
+            update(
+                javaClass.classLoader.getResource("sql/users/information/update_user_information.sql")!!.readText(),
+                mapOf(
+                    "online" to online,
+                    "ip_last" to ip,
+                    "credits" to userInformation.credits,
+                    "pixels" to userInformation.pixels,
+                    "vip_points" to userInformation.vipPoints,
+                    "figure" to userInformation.figure,
+                    "gender" to userInformation.gender,
+                    "motto" to userInformation.motto,
+                    "home_room" to userInformation.homeRoom,
                             "id" to userInformation.id
                     )
             )
@@ -130,11 +160,13 @@ object UserInformationDao {
 
     fun updateAuthTicket(userInformation: UserInformation, authTicket: String? = null) {
         HabboServer.database {
-            update(javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql").readText(),
-                    mapOf(
-                            "auth_ticket" to authTicket,
-                            "id" to userInformation.id
-                    )
+            update(
+                javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql")!!
+                    .readText(),
+                mapOf(
+                    "auth_ticket" to authTicket,
+                    "id" to userInformation.id
+                )
             )
         }
     }

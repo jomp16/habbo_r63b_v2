@@ -28,6 +28,7 @@ class PermissionManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     private val permissionsUser: MutableMap<Int, MutableList<String>> = mutableMapOf()
     private val permissionsRank: MutableMap<Int, MutableList<String>> = mutableMapOf()
+    private val availablePermissions: MutableSet<String> = mutableSetOf()
 
     fun load() {
         log.info("Loading permissions...")
@@ -55,14 +56,17 @@ class PermissionManager {
 
     private fun readColumnsAndAddToMap(map: MutableMap<Int, MutableList<String>>, resultSet: ResultSet, columnName: String) {
         val metadata = resultSet.metaData
+        val addPermissions = availablePermissions.isEmpty()
 
         while (resultSet.next()) {
             val permissions: MutableList<String> = mutableListOf()
 
             (3..metadata.columnCount).forEach { i ->
-                if (resultSet.getBoolean(i)) {
-                    permissions.add(metadata.getColumnName(i))
-                }
+                val permission = metadata.getColumnName(i)
+
+                if (addPermissions) availablePermissions += permission
+
+                if (resultSet.getBoolean(i)) permissions.add(permission)
 
                 map.putIfAbsent(resultSet.getInt(columnName), permissions)
             }
@@ -71,7 +75,18 @@ class PermissionManager {
 
     fun userHasCustomPermission(userId: Int) = this.permissionsUser.containsKey(userId)
 
-    fun userHasPermission(userId: Int, permission: String) = this.userHasCustomPermission(userId) && permissionsUser[userId]!!.any { it == permission }
+    fun userHasPermission(userId: Int, permission: String) =
+        this.userHasCustomPermission(userId) && permissionsUser[userId]!!.any { it == permission }
 
-    fun rankHasPermission(rankId: Int, permission: String) = this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.any { it == permission }
+    fun rankHasPermission(rankId: Int, permission: String) =
+        this.permissionsRank.containsKey(rankId) && permissionsRank[rankId]!!.any { it == permission }
+
+    fun getUserPermissions(userId: Int, rankId: Int): List<String> {
+        return availablePermissions.filter {
+            if (userHasCustomPermission(userId)) userHasPermission(
+                userId,
+                it
+            ) else rankHasPermission(rankId, it)
+        }.toList()
+    }
 }
