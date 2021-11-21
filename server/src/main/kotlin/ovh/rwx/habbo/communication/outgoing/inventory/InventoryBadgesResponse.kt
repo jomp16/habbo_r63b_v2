@@ -21,12 +21,15 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.badge.Badge
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryBadgesResponse {
     @Response(Outgoing.INVENTORY_BADGES)
+    @ResponseR63A(OutgoingR63A.INVENTORY_BADGES)
     fun response(habboResponse: HabboResponse, badges: Collection<Badge>) {
         habboResponse.apply {
             val equippedBadges = badges.filter { it.slot > 0 }

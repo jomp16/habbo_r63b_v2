@@ -107,7 +107,7 @@ data class RoomItem(
                     writeInt(-1) // seems this is related to rentals (time in seconds)
                 }
 
-                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+                writeBoolean(furnishing.interactionModesCount > 1)
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,34 +17,36 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.inventory
+package ovh.rwx.habbo.communication.incoming.navigator
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class InventoryItemsHandler {
-    @Handler(Incoming.INVENTORY_ITEMS)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, habboSession.habboInventory.items.values)
-    }
-
-    @HandlerR63A(IncomingR63A.INVENTORY_ITEMS)
+class NavigatorPopularRoomsHandler {
+    @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val categoryId = habboRequest.readUTF().toIntOrNull() ?: -1
+
+        println(categoryId)
+
+        val rooms =
+            if (categoryId == -1) HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
+                .sortedBy { it.roomUsers.size }.take(8)
+            else HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() && it.roomData.category == categoryId }
+                .sortedBy { it.roomUsers.size }.take(8)
+
         habboSession.sendHabboResponse(
-            OutgoingR63A.INVENTORY_ITEMS,
-            "S",
-            habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.FLOOR })
-        habboSession.sendHabboResponse(
-            OutgoingR63A.INVENTORY_ITEMS,
-            "I",
-            habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.WALL })
+            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
+            categoryId,
+            1,
+            "",
+            rooms,
+            false
+        )
     }
 }
