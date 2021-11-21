@@ -48,6 +48,8 @@ import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
+import ovh.rwx.utils.pathfinding.IFinder
+import ovh.rwx.utils.pathfinding.core.finders.AStarFinder
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
