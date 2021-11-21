@@ -37,7 +37,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
-    implementation 'commons-codec:commons-codec:1.14'
+    implementation 'commons-codec:commons-codec:1.15'
 }
 
 buildConfig {
