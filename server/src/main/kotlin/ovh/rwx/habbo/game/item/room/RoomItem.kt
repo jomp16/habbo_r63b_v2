@@ -79,6 +79,7 @@ data class RoomItem(
     private var currentCycles: Int = 0
     val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
+    @Suppress("DuplicatedCode")
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             if (furnishing.type == ItemType.FLOOR) {
@@ -90,25 +91,57 @@ data class RoomItem(
                 writeUTF(position.z.toString())
                 writeUTF(height.toString())
 
-                HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData, magicRemove)
+                HabboServer.habboGame.itemManager.writeExtradata(
+                    habboResponse,
+                    extraData,
+                    furnishing,
+                    limitedItemData,
+                    magicRemove
+                )
             } else {
                 writeUTF(id.toString())
                 writeInt(furnishing.spriteId)
                 writeUTF(wallPosition)
                 writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
-            
-            if (habboResponse.outgoingR63A == null) {
-                writeInt(-1) // seems this is related to rentals (time in seconds)
-                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
-                writeInt(userId) // todo: is builder ? -12345678 : userId
-            } else {
-                if (furnishing.type == ItemType.FLOOR) {
-                    writeInt(-1) // seems this is related to rentals (time in seconds)
-                }
 
-                writeBoolean(furnishing.interactionModesCount > 1)
+            writeInt(-1) // seems this is related to rentals (time in seconds)
+            writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+            writeInt(userId) // todo: is builder ? -12345678 : userId
+        }
+    }
+
+    @Suppress("DuplicatedCode")
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        habboResponse.apply {
+            if (furnishing.type == ItemType.FLOOR) {
+                writeInt(id)
+                writeInt(furnishing.spriteId)
+                writeInt(position.x)
+                writeInt(position.y)
+                writeInt(rotation)
+                writeUTF(position.z.toString())
+                writeUTF(height.toString())
+
+                HabboServer.habboGame.itemManager.writeExtradata(
+                    habboResponse,
+                    extraData,
+                    furnishing,
+                    limitedItemData,
+                    magicRemove
+                )
+            } else {
+                writeUTF(id.toString())
+                writeInt(furnishing.spriteId)
+                writeUTF(wallPosition)
+                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
+
+            if (furnishing.type == ItemType.FLOOR) {
+                writeInt(-1) // seems this is related to rentals (time in seconds)
+            }
+
+            writeBoolean(furnishing.interactionModesCount > 1)
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,6 +35,7 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
     val userInformation: UserInformation?
         get() = UserInformationDao.getUserInformationById(userId)
 
+    @Suppress("DuplicatedCode")
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(userId)
@@ -50,7 +51,7 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                     writeUTF(it.motto)
                     writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
                     writeUTF(it.realname)
-                    
+
                     if (habboResponse.outgoingR63A == null) {
                         writeBoolean(true) // allows offline messaging
                         writeBoolean(false) // useless
@@ -75,6 +76,28 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                 writeBoolean(false) // useless
                 writeBoolean(false) // uses phone
                 writeShort(0)
+            }
+        }
+    }
+
+    @Suppress("DuplicatedCode")
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        habboResponse.apply {
+            writeInt(userId)
+
+            if (userId > 0) {
+                userInformation?.let {
+                    writeUTF(it.username)
+                    writeInt(1)
+                    writeBoolean(online)
+                    writeBoolean(online && habboSession?.currentRoom != null)
+                    writeUTF(it.figure)
+                    writeInt(0) // todo: add ability to add friend on custom category
+                    writeUTF(it.motto)
+                    writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
+                    writeUTF(it.realname)
+                    writeUTF("") // useless, dead code
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.util.Vector3
+import java.util.*
 
 object RoomDao {
     fun getRoomsData(): List<RoomData> = HabboServer.database {
@@ -48,23 +49,23 @@ object RoomDao {
     }
 
     private fun getRoomData(row: Row): RoomData = RoomData(
-            row.int("id"),
-            RoomType.valueOf(row.string("room_type").toUpperCase()),
-            row.string("name"),
-            row.int("owner_id"),
-            row.string("description"),
-            row.int("category"),
-            RoomState.valueOf(row.string("state").toUpperCase()),
-            row.int("trade_state"),
-            row.int("users_max"),
-            row.string("model_name"),
-            row.int("score"),
-            row.string("tags").split(','),
-            row.string("password"),
-            row.string("wallpaper"),
-            row.string("floor"),
-            row.string("landscape"),
-            row.boolean("hide_wall"),
+        row.int("id"),
+        RoomType.valueOf(row.string("room_type").uppercase(Locale.getDefault())),
+        row.string("name"),
+        row.int("owner_id"),
+        row.string("description"),
+        row.int("category"),
+        RoomState.valueOf(row.string("state").uppercase(Locale.getDefault())),
+        row.int("trade_state"),
+        row.int("users_max"),
+        row.string("model_name"),
+        row.int("score"),
+        row.string("tags").split(','),
+        row.string("password"),
+        row.string("wallpaper"),
+        row.string("floor"),
+        row.string("landscape"),
+        row.boolean("hide_wall"),
             row.int("wall_thick"),
             row.int("wall_height"),
             row.int("floor_thick"),
@@ -176,19 +177,19 @@ object RoomDao {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/rooms/data/update_room_data.sql")!!.readText(),
                     mapOf(
-                            "name" to roomData.name,
-                            "description" to roomData.description,
-                            "state" to roomData.state.name.toLowerCase(),
-                            "password" to roomData.password,
-                            "users_max" to roomData.usersMax,
-                            "category" to roomData.category,
-                            "tags" to roomData.tags.joinToString(","),
-                            "trade_state" to roomData.tradeState.toString(),
-                            "allow_pets" to roomData.allowPets,
-                            "allow_pets_eat" to roomData.allowPetsEat,
-                            "allow_walk_through" to roomData.allowWalkThrough,
-                            "hide_wall" to roomData.hideWall,
-                            "wall_thick" to roomData.wallThick,
+                        "name" to roomData.name,
+                        "description" to roomData.description,
+                        "state" to roomData.state.name.lowercase(Locale.getDefault()),
+                        "password" to roomData.password,
+                        "users_max" to roomData.usersMax,
+                        "category" to roomData.category,
+                        "tags" to roomData.tags.joinToString(","),
+                        "trade_state" to roomData.tradeState.toString(),
+                        "allow_pets" to roomData.allowPets,
+                        "allow_pets_eat" to roomData.allowPetsEat,
+                        "allow_walk_through" to roomData.allowWalkThrough,
+                        "hide_wall" to roomData.hideWall,
+                        "wall_thick" to roomData.wallThick,
                             "floor_thick" to roomData.floorThick,
                             "wall_height" to roomData.wallHeight,
                             "mute_settings" to roomData.muteSettings,

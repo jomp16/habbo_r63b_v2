@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSavePostItHandler {
@@ -34,7 +35,7 @@ class RoomSavePostItHandler {
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
-        val color = habboRequest.readUTF().trim().toUpperCase()
+        val color = habboRequest.readUTF().trim().uppercase(Locale.getDefault())
         val text = habboRequest.readUTF().trim()
 
         if (color != "FFFF33" && color != "FF9CFF" && color != "9CCEFF" && color != "9CFF9C" || text.length > Byte.MAX_VALUE) return

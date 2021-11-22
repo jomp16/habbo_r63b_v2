@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,5 +32,9 @@ data class MessengerRequest(val id: Int, val fromId: Int) : IHabboResponseSerial
             writeUTF(userInformation.username)
             writeUTF(userInformation.figure)
         }
+    }
+
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        this.serializeHabboResponse(habboResponse, params)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -81,7 +81,11 @@ class HabboResponse(
     }
 
     fun serialize(habboResponseSerialize: IHabboResponseSerialize, vararg params: Any = arrayOf()) {
-        habboResponseSerialize.serializeHabboResponse(this, *params)
+        if (outgoingR63A != null) {
+            habboResponseSerialize.serializeHabboResponseR63A(this, *params)
+        } else {
+            habboResponseSerialize.serializeHabboResponse(this, *params)
+        }
     }
 
     override fun toString(): String {

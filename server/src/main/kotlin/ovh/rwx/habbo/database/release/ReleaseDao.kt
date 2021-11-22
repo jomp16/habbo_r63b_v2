@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.database.release
 
 import ovh.rwx.habbo.HabboServer
+import java.util.*
 
 object ReleaseDao {
     fun getReleases(): List<String> = HabboServer.database {
@@ -31,11 +32,11 @@ object ReleaseDao {
     fun getHeaders(): List<ReleaseHeaderInfo> = HabboServer.database {
         select(javaClass.classLoader.getResource("sql/release/select_headers.sql").readText()) {
             ReleaseHeaderInfo(
-                    ReleaseType.valueOf(it.string("type").toUpperCase()),
-                    it.string("release_name"),
-                    it.string("name"),
-                    it.intOrNull("header") ?: -1,
-                    it.stringOrNull("override_method")
+                ReleaseType.valueOf(it.string("type").uppercase(Locale.getDefault())),
+                it.string("release_name"),
+                it.string("name"),
+                it.intOrNull("header") ?: -1,
+                it.stringOrNull("override_method")
             )
         }
     }

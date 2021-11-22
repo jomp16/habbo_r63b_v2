@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -79,5 +79,9 @@ data class CatalogPage(
                 writeUTF(if (id == -1) "NORMAL" else "BUILDERS_CLUB")
             }
         }
+    }
+
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        TODO("Not yet implemented")
     }
 }
