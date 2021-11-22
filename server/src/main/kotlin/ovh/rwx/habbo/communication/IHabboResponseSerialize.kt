@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,4 +21,5 @@ package ovh.rwx.habbo.communication
 
 interface IHabboResponseSerialize {
     fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any)
+    fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any)
 }

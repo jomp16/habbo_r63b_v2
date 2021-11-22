@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.event.events.room.RoomUserChatEvent
+import java.util.*
 
 class UserChatTask(
     private val roomUser: RoomUser,
@@ -38,7 +39,7 @@ class UserChatTask(
 ) : IRoomTask {
     override fun executeTask(room: Room) {
         roomUser.idle = false
-        val speechEmotion = getSpeechEmotion(message.toUpperCase())
+        val speechEmotion = getSpeechEmotion(message.uppercase(Locale.getDefault()))
 
         if (!skipCommands) {
             HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))

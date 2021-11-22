@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,12 +25,13 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.talent.TalentTrackType
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class TalentTrackOpenHandler {
     @Handler(Incoming.TALENT_TRACK_OPEN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val talentTrackType = TalentTrackType.valueOf(habboRequest.readUTF().toUpperCase())
+        val talentTrackType = TalentTrackType.valueOf(habboRequest.readUTF().uppercase(Locale.getDefault()))
 
         // todo: get talent track from database
         habboSession.sendHabboResponse(Outgoing.TALENT_TRACK, talentTrackType)

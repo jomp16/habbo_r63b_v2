@@ -34,16 +34,17 @@ import ovh.rwx.habbo.util.Rotation
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.time.LocalDateTime
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class RoomUser(
-        val habboSession: HabboSession?, // nullable, for in the future support bots
-        val room: Room,
-        val virtualID: Int,
-        var currentVector3: Vector3,
-        var headRotation: Int,
-        var bodyRotation: Int
+    val habboSession: HabboSession?, // nullable, for in the future support bots
+    val room: Room,
+    val virtualID: Int,
+    var currentVector3: Vector3,
+    var headRotation: Int,
+    var bodyRotation: Int
 ) : IHabboResponseSerialize {
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
@@ -121,8 +122,9 @@ class RoomUser(
 
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         statusMap[key] = Pair(
-                if (milliseconds == -1) null
-                else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value)
+            if (milliseconds == -1) null
+            else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value
+        )
 
         updateNeeded = true
     }
@@ -188,14 +190,22 @@ class RoomUser(
                 } else {
                     var step = path.removeAt(0)
 
-                    if (room.roomGamemap.roomUserMap[Vector2(step.x, step.y)]?.isNotEmpty() == true && !ignoreBlocking && !overrideBlocking) {
+                    if (room.roomGamemap.roomUserMap[Vector2(
+                            step.x,
+                            step.y
+                        )]?.isNotEmpty() == true && !ignoreBlocking && !overrideBlocking
+                    ) {
                         calculatePath()
 
                         if (path.isEmpty()) stopWalking()
                         else step = path.removeAt(0)
                     }
 
-                    if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(step.x, step.y) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3) {
+                    if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(
+                            step.x,
+                            step.y
+                        ) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3
+                    ) {
                         stopWalking()
 
                         return
@@ -234,14 +244,28 @@ class RoomUser(
             if (!idle) {
                 idleCount++
                 // check and commit idle state to room
-                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle = true
+                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle =
+                    true
             }
         }
     }
 
-    fun moveTo(vector2: Vector2, rotation: Int = -1, rollerId: Int = -1, ignoreBlocking: Boolean = false, actingItem: RoomItem? = null) = moveTo(vector2.x, vector2.y, rotation, rollerId, ignoreBlocking, actingItem)
+    fun moveTo(
+        vector2: Vector2,
+        rotation: Int = -1,
+        rollerId: Int = -1,
+        ignoreBlocking: Boolean = false,
+        actingItem: RoomItem? = null
+    ) = moveTo(vector2.x, vector2.y, rotation, rollerId, ignoreBlocking, actingItem)
 
-    fun moveTo(x: Int, y: Int, rotation: Int = -1, rollerId: Int = -1, ignoreBlocking: Boolean = false, actingItem: RoomItem? = null): Boolean {
+    fun moveTo(
+        x: Int,
+        y: Int,
+        rotation: Int = -1,
+        rollerId: Int = -1,
+        ignoreBlocking: Boolean = false,
+        actingItem: RoomItem? = null
+    ): Boolean {
         if (!ignoreBlocking && !overrideBlocking && walkingBlocked) return false
 
         room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y), rotation, actingItem, ignoreBlocking, rollerId))
@@ -297,7 +321,13 @@ class RoomUser(
         }
 
         if (objectiveItem != null) {
-            objectiveItem!!.furnishing.interactor?.onTrigger(room, this, objectiveItem!!, room.hasRights(habboSession, false), 0)
+            objectiveItem!!.furnishing.interactor?.onTrigger(
+                room,
+                this,
+                objectiveItem!!,
+                room.hasRights(habboSession, false),
+                0
+            )
             objectiveItem = null
         }
 
@@ -307,7 +337,14 @@ class RoomUser(
     private fun calculatePath() {
         if (objectiveVector2 == null) return
 
-        path = room.pathfinder.findPath(room.roomGamemap.grid, currentVector3.x, currentVector3.y, objectiveVector2!!.x, objectiveVector2!!.y, ignoreBlocking || overrideBlocking).toMutableList()
+        path = room.pathfinder.findPath(
+            room.roomGamemap.grid,
+            currentVector3.x,
+            currentVector3.y,
+            objectiveVector2!!.x,
+            objectiveVector2!!.y,
+            ignoreBlocking || overrideBlocking
+        ).toMutableList()
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -324,40 +361,57 @@ class RoomUser(
                 writeUTF(currentVector3.z.toString())
                 writeInt(0) // 4 or 2 ?
                 writeInt(1) // 1 for user, 2 for pet, 3 for bot.
-                writeUTF(it.userInformation.gender.toLowerCase())
-                
+                writeUTF(it.userInformation.gender.lowercase(Locale.getDefault()))
+
                 val group = habboSession.userStats.favoriteGroup
 
-                if (habboResponse.outgoingR63A != null) {
-                    writeInt(-1) // xp
-//                    if (group == null) {
+                if (group == null) {
                     writeInt(-1)
-                    writeInt(-1)
+                    writeInt(0)
                     writeUTF("")
-                    // bugged as fuck
+                } else {
+                    writeInt(group.groupData.id)
+                    writeInt(0)
+                    writeUTF(group.groupData.name)
+                }
+
+                writeUTF("")
+                writeInt(habboSession.userStats.achievementScore)
+                writeBoolean(false) // is member of builder club
+            }
+        }
+    }
+
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        habboResponse.apply {
+            habboSession?.let {
+                writeInt(it.userInformation.id)
+                writeUTF(it.userInformation.username)
+                writeUTF(it.userInformation.motto)
+                writeUTF(it.userInformation.figure)
+                writeInt(virtualID)
+                writeInt(currentVector3.x)
+                writeInt(currentVector3.y)
+                writeUTF(currentVector3.z.toString())
+                writeInt(0) // 4 or 2 ?
+                writeInt(1) // 1 for user, 2 for pet, 3 for bot.
+                writeUTF(it.userInformation.gender.lowercase(Locale.getDefault()))
+
+                val group = habboSession.userStats.favoriteGroup
+
+                writeInt(-1) // xp
+//                    if (group == null) {
+                writeInt(-1)
+                writeInt(-1)
+                writeUTF("")
+                // bugged as fuck
 //                    } else {
 //                        writeInt(group.groupData.id)
 //                        writeInt(-1)
 //                        writeUTF(group.groupData.name)
 //                    }
 
-                    writeInt(habboSession.userStats.achievementScore)
-                } else {
-
-                    if (group == null) {
-                        writeInt(-1)
-                        writeInt(0)
-                        writeUTF("")
-                    } else {
-                        writeInt(group.groupData.id)
-                        writeInt(0)
-                        writeUTF(group.groupData.name)
-                    }
-
-                    writeUTF("")
-                    writeInt(habboSession.userStats.achievementScore)
-                    writeBoolean(false) // is member of builder club
-                }
+                writeInt(habboSession.userStats.achievementScore)
             }
         }
     }

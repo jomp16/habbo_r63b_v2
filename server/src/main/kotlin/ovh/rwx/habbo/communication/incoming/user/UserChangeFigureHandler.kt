@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,12 +24,13 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserChangeFigureHandler {
     @Handler(Incoming.USER_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val gender = habboRequest.readUTF().toUpperCase()
+        val gender = habboRequest.readUTF().uppercase(Locale.getDefault())
         val figure = habboRequest.readUTF()
 
         if (figure == habboSession.userInformation.figure) return
@@ -45,6 +46,13 @@ class UserChangeFigureHandler {
 
         habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, figure, gender)
 
-        habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, figure, gender, habboSession.userInformation.motto, habboSession.userStats.achievementScore)
+        habboSession.currentRoom?.sendHabboResponse(
+            Outgoing.USER_UPDATE,
+            habboSession.roomUser!!.virtualID,
+            figure,
+            gender,
+            habboSession.userInformation.motto,
+            habboSession.userStats.achievementScore
+        )
     }
 }

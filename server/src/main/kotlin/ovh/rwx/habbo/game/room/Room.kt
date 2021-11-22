@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     // for room task
     var roomTask: RoomTask? = null
     val rollerCounter = AtomicInteger()
@@ -111,22 +112,33 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
         // todo: find a way to cache habbo response
-        roomUsers.values.filter { it.habboSession?.release != "R63A" }.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
-    }
-    
-    fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
-        // todo: find a way to cache habbo response
-        roomUsers.values.filter { it.habboSession?.release == "R63A" }.forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        roomUsers.values.filter { it.habboSession?.release != "R63A" }
+            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
     }
 
-    fun hasRights(habboSession: HabboSession?, ownerRight: Boolean = false, ignorePermissionAnyRoomOwner: Boolean = false): Boolean {
+    fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
+        // todo: find a way to cache habbo response
+        roomUsers.values.filter { it.habboSession?.release == "R63A" }
+            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+    }
+
+    fun hasRights(
+        habboSession: HabboSession?,
+        ownerRight: Boolean = false,
+        ignorePermissionAnyRoomOwner: Boolean = false
+    ): Boolean {
         if (habboSession == null) return false
-        val isOwner = roomData.ownerId == habboSession.userInformation.id || (!ignorePermissionAnyRoomOwner && habboSession.hasPermission("acc_any_room_owner"))
+        val isOwner =
+            roomData.ownerId == habboSession.userInformation.id || (!ignorePermissionAnyRoomOwner && habboSession.hasPermission(
+                "acc_any_room_owner"
+            ))
 
         if (group != null) {
             group?.let { group ->
                 return if (ownerRight) isOwner else isOwner || rights.any { it.userId == habboSession.userInformation.id } ||
-                        if (group.groupData.onlyAdminCanDecorateRoom) group.admins.singleOrNull { it.userId == habboSession.userInformation.id } != null || !habboSession.hasPermission("acc_any_group_admin")
+                        if (group.groupData.onlyAdminCanDecorateRoom) group.admins.singleOrNull { it.userId == habboSession.userInformation.id } != null || !habboSession.hasPermission(
+                            "acc_any_group_admin"
+                        )
                         else group.members.singleOrNull { it.userId == habboSession.userInformation.id } != null
             }
         }
@@ -146,7 +158,19 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
 
-            it.addTask(this, UserJoinRoomTask(RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir, roomModel.doorDir)))
+            it.addTask(
+                this,
+                UserJoinRoomTask(
+                    RoomUser(
+                        habboSession,
+                        this,
+                        virtualId,
+                        roomModel.doorVector3,
+                        roomModel.doorDir,
+                        roomModel.doorDir
+                    )
+                )
+            )
         }
     }
 
@@ -196,71 +220,73 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             val showEvents = params[0] as Boolean
             val enterRoom = params[1] as Boolean
 
-            if (habboResponse.outgoingR63A == null) {
-                writeInt(roomData.id)
-                writeUTF(roomData.name)
-                writeInt(roomData.ownerId)
-                writeUTF(roomData.ownerName)
-                writeInt(roomData.state.state)
-                writeInt(roomUsers.size)
-                writeInt(roomData.usersMax)
-                writeUTF(roomData.description)
-                writeInt(roomData.tradeState)
-                writeInt(roomData.score)
-                writeInt(0) // ranking
-                writeInt(roomData.category)
+            writeInt(roomData.id)
+            writeUTF(roomData.name)
+            writeInt(roomData.ownerId)
+            writeUTF(roomData.ownerName)
+            writeInt(roomData.state.state)
+            writeInt(roomUsers.size)
+            writeInt(roomData.usersMax)
+            writeUTF(roomData.description)
+            writeInt(roomData.tradeState)
+            writeInt(roomData.score)
+            writeInt(0) // ranking
+            writeInt(roomData.category)
 
-                writeInt(roomData.tags.size)
+            writeInt(roomData.tags.size)
 
-                roomData.tags.forEach { writeUTF(it) }
-                var value = if (enterRoom) 32 else 0
+            roomData.tags.forEach { writeUTF(it) }
+            var value = if (enterRoom) 32 else 0
 
-                group?.let { value += 2 }
+            group?.let { value += 2 }
 
-                /*if (showEvents) {
-                // todo: events
-                //value += 4;
-            }*/
+            /*if (showEvents) {
+            // todo: events
+            //value += 4;
+        }*/
 
-                if (roomData.roomType == RoomType.PRIVATE) value += 8
+            if (roomData.roomType == RoomType.PRIVATE) value += 8
 
-                if (roomData.allowPets) value += 16
+            if (roomData.allowPets) value += 16
 
-                writeInt(value)
+            writeInt(value)
 
-                group?.let {
-                    writeInt(it.groupData.id)
-                    writeUTF(it.groupData.name)
-                    writeUTF(it.groupData.badge)
-                }
-            } else {
-                writeInt(roomData.id)
-                writeBoolean(false) // is event
-                writeUTF(roomData.name)
-                writeUTF(roomData.ownerName)
-                writeInt(roomData.state.state)
-                writeInt(roomUsers.size)
-                writeInt(roomData.usersMax)
-                writeUTF(roomData.description)
-                writeBoolean(roomData.tradeState == 1)
-                writeBoolean(roomData.tradeState == 1)
-                writeInt(roomData.score)
-                writeInt(roomData.category)
-                writeUTF("")
-
-                writeInt(roomData.tags.size)
-
-                roomData.tags.forEach { writeUTF(it) }
-                
-                // todo: room icon
-                writeInt(1)
-                writeInt(0)
-                writeInt(0)
-                // end room icon
-
-                writeBoolean(roomData.allowPets)
-                writeBoolean(roomData.allowPetsEat)
+            group?.let {
+                writeInt(it.groupData.id)
+                writeUTF(it.groupData.name)
+                writeUTF(it.groupData.badge)
             }
+        }
+    }
+
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        habboResponse.apply {
+            writeInt(roomData.id)
+            writeBoolean(false) // is event
+            writeUTF(roomData.name)
+            writeUTF(roomData.ownerName)
+            writeInt(roomData.state.state)
+            writeInt(roomUsers.size)
+            writeInt(roomData.usersMax)
+            writeUTF(roomData.description)
+            writeBoolean(roomData.tradeState == 1)
+            writeBoolean(roomData.tradeState == 1)
+            writeInt(roomData.score)
+            writeInt(roomData.category)
+            writeUTF("")
+
+            writeInt(roomData.tags.size)
+
+            roomData.tags.forEach { writeUTF(it) }
+
+            // todo: room icon
+            writeInt(1)
+            writeInt(0)
+            writeInt(0)
+            // end room icon
+
+            writeBoolean(roomData.allowPets)
+            writeBoolean(roomData.allowPetsEat)
         }
     }
 
@@ -278,23 +304,37 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         RoomDao.saveItems(roomData.id, roomItemsToSave)
 
-        roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }.filter { it.wiredData != null }.let {
-            if (it.isNotEmpty()) ItemDao.saveWireds(it)
-        }
+        roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") }
+            .filter { it.wiredData != null }.let {
+                if (it.isNotEmpty()) ItemDao.saveWireds(it)
+            }
 
         if (roomDimmer != null && roomItemsToSave.any { it == roomDimmer!!.roomItem }) ItemDao.saveDimmer(roomDimmer!!)
 
         roomItemsToSave.clear()
     }
 
-    fun setFloorItem(roomItem: RoomItem, position: Vector2, rotation: Int, roomUser: RoomUser?, overrideZ: Double = (-1).toDouble(), rollerId: Int = -1): Boolean {
+    fun setFloorItem(
+        roomItem: RoomItem,
+        position: Vector2,
+        rotation: Int,
+        roomUser: RoomUser?,
+        overrideZ: Double = (-1).toDouble(),
+        rollerId: Int = -1
+    ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
         val onlyRotation = roomItem.position.vector2 == position && roomItem.rotation != rotation
 
         if (position == roomModel.doorVector3.vector2) return false
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
 
-        HabboServer.habboGame.itemManager.getAffectedTiles(position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.height).forEach {
+        HabboServer.habboGame.itemManager.getAffectedTiles(
+            position.x,
+            position.y,
+            rotation,
+            roomItem.furnishing.width,
+            roomItem.furnishing.height
+        ).forEach {
             if (!onlyRotation && roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
                 // cannot set item, because at least one tile is blocked
                 return false
@@ -309,7 +349,13 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (!newItem) {
             roomGamemap.removeRoomItem(roomItem)
 
-            HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
+            HabboServer.habboGame.itemManager.getAffectedTiles(
+                roomItem.position.x,
+                roomItem.position.y,
+                roomItem.rotation,
+                roomItem.furnishing.width,
+                roomItem.furnishing.height
+            ).let {
                 it.forEach { vector2 ->
                     roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
                         roomItem.onUserWalksOff(roomUser1, true)
@@ -329,7 +375,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         val oldPosition = roomItem.position
         val oldRotation = roomItem.rotation
 
-        roomItem.position = Vector3(position.x, position.y, if (overrideZ != (-1).toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y))
+        roomItem.position = Vector3(
+            position.x,
+            position.y,
+            if (overrideZ != (-1).toDouble()) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y)
+        )
         roomItem.rotation = rotation
 
         roomGamemap.addRoomItem(roomItem)
@@ -356,7 +406,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (newItem) {
             roomItems[roomItem.id] = roomItem
 
-            roomItem.addToRoom(this, updateDb = true, updateClient = true, userName = roomUser?.habboSession?.userInformation?.username ?: "")
+            roomItem.addToRoom(
+                this,
+                updateDb = true,
+                updateClient = true,
+                userName = roomUser?.habboSession?.userInformation?.username ?: ""
+            )
         } else {
             if (rollerId == -1 || roomItem.rotation != oldRotation) {
                 roomItem.update(updateDb = true, updateClient = true)
@@ -370,7 +425,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
 
         roomUsersWithRights.forEach { roomUser1 ->
-            roomUser1.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys)
+            roomUser1.habboSession?.sendHabboResponse(
+                Outgoing.FLOOR_PLAN_USED_SQUARES,
+                roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
+            )
         }
 
         return true
@@ -406,7 +464,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
             roomItems[roomItem.id] = roomItem
 
-            roomItem.addToRoom(this, updateDb = true, updateClient = true, userName = roomUser?.habboSession?.userInformation?.username ?: "")
+            roomItem.addToRoom(
+                this,
+                updateDb = true,
+                updateClient = true,
+                userName = roomUser?.habboSession?.userInformation?.username ?: ""
+            )
         } else {
             roomItem.update(updateDb = true, updateClient = true)
         }
@@ -438,7 +501,13 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             ItemType.FLOOR -> {
                 sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false, 0)
 
-                HabboServer.habboGame.itemManager.getAffectedTiles(roomItem.position.x, roomItem.position.y, roomItem.rotation, roomItem.furnishing.width, roomItem.furnishing.height).let {
+                HabboServer.habboGame.itemManager.getAffectedTiles(
+                    roomItem.position.x,
+                    roomItem.position.y,
+                    roomItem.rotation,
+                    roomItem.furnishing.width,
+                    roomItem.furnishing.height
+                ).let {
                     it.forEach { vector2 ->
                         roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
                             roomItem.onUserWalksOff(roomUser1, true)
@@ -453,7 +522,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)
 
                     roomUsersWithRights.forEach { roomUser ->
-                        roomUser.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys)
+                        roomUser.habboSession?.sendHabboResponse(
+                            Outgoing.FLOOR_PLAN_USED_SQUARES,
+                            roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
+                        )
                     }
                 }
             }
@@ -471,7 +543,13 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         group?.let { group ->
             roomUsers.values.filter { it.habboSession != null }.forEach {
                 it.habboSession?.let { habboSession ->
-                    habboSession.sendHabboResponse(Outgoing.GROUP_INFO, habboSession.userInformation.id, habboSession.userStats.favoriteGroupId == group.groupData.id, group, false)
+                    habboSession.sendHabboResponse(
+                        Outgoing.GROUP_INFO,
+                        habboSession.userInformation.id,
+                        habboSession.userStats.favoriteGroupId == group.groupData.id,
+                        group,
+                        false
+                    )
                 }
             }
         }
@@ -479,33 +557,46 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     fun updateGroupRights() {
         group?.let { group ->
-            roomUsers.values.filter { it.habboSession != null }.filter { it.habboSession?.userInformation?.id != group.groupData.ownerId }.forEach { roomUser ->
-                roomUser.habboSession?.let { habboSession ->
-                    val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
+            roomUsers.values.filter { it.habboSession != null }
+                .filter { it.habboSession?.userInformation?.id != group.groupData.ownerId }.forEach { roomUser ->
+                    roomUser.habboSession?.let { habboSession ->
+                        val methodName =
+                            HabboServer.habboHandler.getOverrideMethodForHeader(
+                                Outgoing.ROOM_OWNER,
+                                habboSession.release
+                            )
 
-                    when {
-                        hasRights(habboSession, false) -> {
-                            roomUser.addStatus("flatctrl", "1")
+                        when {
+                            hasRights(habboSession, false) -> {
+                                roomUser.addStatus("flatctrl", "1")
 
-                            when (methodName) {
-                                "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
-                                "responseWithRoomId" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 1)
-                                else -> log.error("Couldn't send response!")
+                                when (methodName) {
+                                    "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
+                                    "responseWithRoomId" -> habboSession.sendHabboResponse(
+                                        Outgoing.ROOM_RIGHT_LEVEL,
+                                        roomData.id,
+                                        1
+                                    )
+                                    else -> log.error("Couldn't send response!")
+                                }
                             }
-                        }
-                        roomUser.statusMap.containsKey("flatctrl") -> {
-                            roomUser.removeStatus("flatctrl")
+                            roomUser.statusMap.containsKey("flatctrl") -> {
+                                roomUser.removeStatus("flatctrl")
 
-                            when (methodName) {
-                                "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
-                                "responseWithRoomId" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, 0)
-                                else -> log.error("Couldn't send response!")
+                                when (methodName) {
+                                    "response" -> habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
+                                    "responseWithRoomId" -> habboSession.sendHabboResponse(
+                                        Outgoing.ROOM_RIGHT_LEVEL,
+                                        roomData.id,
+                                        0
+                                    )
+                                    else -> log.error("Couldn't send response!")
+                                }
                             }
+                            else -> log.error("Couldn't send response!")
                         }
-                        else -> log.error("Couldn't send response!")
                     }
                 }
-            }
         }
     }
 }

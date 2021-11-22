@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.LimitedItemData
 import java.io.Serializable
+import java.util.*
 
 data class UserItem(
     val id: Int,
@@ -42,20 +43,9 @@ data class UserItem(
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id)
-            writeUTF(furnishing.type.type.toUpperCase())
+            writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
             writeInt(id)
             writeInt(furnishing.spriteId)
-
-            if (habboResponse.outgoingR63A != null) {
-                val typeId =
-                    if (furnishing.itemName.contains("a2")) 3
-                    else if (furnishing.itemName.contains("wallpaper")) 2
-                    else if (furnishing.itemName.contains("landscape")) 4
-                    else 1
-
-                writeInt(typeId)
-            }
-
             HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
 
             writeBoolean(furnishing.allowRecycle)
@@ -64,10 +54,38 @@ data class UserItem(
             writeBoolean(furnishing.allowMarketplaceSell)
             writeInt(-1) // milliseconds to expire rental
 
-            if (habboResponse.outgoingR63A == null) {
-                writeBoolean(true)
-                writeInt(-1) // room id
+            writeBoolean(true)
+            writeInt(-1) // room id
+
+            if (furnishing.type == ItemType.FLOOR) {
+                writeUTF("")
+                writeInt(0)
             }
+        }
+    }
+
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        habboResponse.apply {
+            writeInt(id)
+            writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
+            writeInt(id)
+            writeInt(furnishing.spriteId)
+
+            val typeId =
+                if (furnishing.itemName.contains("a2")) 3
+                else if (furnishing.itemName.contains("wallpaper")) 2
+                else if (furnishing.itemName.contains("landscape")) 4
+                else 1
+
+            writeInt(typeId)
+
+            HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
+
+            writeBoolean(furnishing.allowRecycle)
+            writeBoolean(furnishing.allowTrade)
+            writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
+            writeBoolean(furnishing.allowMarketplaceSell)
+            writeInt(-1) // milliseconds to expire rental
 
             if (furnishing.type == ItemType.FLOOR) {
                 writeUTF("")

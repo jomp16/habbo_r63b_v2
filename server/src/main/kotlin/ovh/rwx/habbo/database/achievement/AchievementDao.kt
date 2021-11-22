@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementCategory
 import ovh.rwx.habbo.game.achievement.AchievementGroup
 import ovh.rwx.habbo.game.achievement.AchievementUser
+import java.util.*
 
 object AchievementDao {
     fun loadAchievementGroups(): List<Pair<String, AchievementGroup>> {
@@ -32,7 +33,7 @@ object AchievementDao {
                 it.string("name") to AchievementGroup(
                         it.int("id"),
                         it.string("name"),
-                        AchievementCategory.valueOf(it.string("category").toUpperCase())
+                    AchievementCategory.valueOf(it.string("category").uppercase(Locale.getDefault()))
                 )
             }
         }

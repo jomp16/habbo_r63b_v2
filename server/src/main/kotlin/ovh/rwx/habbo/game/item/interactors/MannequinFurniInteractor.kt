@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -55,12 +55,24 @@ class MannequinFurniInteractor : ItemInteractor() {
 
         figures.values.forEach { s -> builder.append(s).append('.') }
 
-        roomUser.habboSession.userInformation.figure = builder.toString().substring(0, builder.toString().lastIndexOf('.'))
-        roomUser.habboSession.userInformation.gender = mannequinDataArray[0].toUpperCase()
+        roomUser.habboSession.userInformation.figure =
+            builder.toString().substring(0, builder.toString().lastIndexOf('.'))
+        roomUser.habboSession.userInformation.gender = mannequinDataArray[0].uppercase(Locale.getDefault())
 
-        roomUser.habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, roomUser.habboSession.userInformation.figure, roomUser.habboSession.userInformation.gender)
+        roomUser.habboSession.sendHabboResponse(
+            Outgoing.USER_UPDATE_FIGURE,
+            roomUser.habboSession.userInformation.figure,
+            roomUser.habboSession.userInformation.gender
+        )
 
-        room.sendHabboResponse(Outgoing.USER_UPDATE, roomUser.virtualID, roomUser.habboSession.userInformation.figure, roomUser.habboSession.userInformation.gender, roomUser.habboSession.userInformation.motto, roomUser.habboSession.userStats.achievementScore)
+        room.sendHabboResponse(
+            Outgoing.USER_UPDATE,
+            roomUser.virtualID,
+            roomUser.habboSession.userInformation.figure,
+            roomUser.habboSession.userInformation.gender,
+            roomUser.habboSession.userInformation.motto,
+            roomUser.habboSession.userStats.achievementScore
+        )
 
         roomUser.habboSession.habboMessenger.notifyFriends()
     }

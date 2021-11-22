@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -60,7 +60,7 @@ enum class Incoming {
     GAME_CENTER_QUIT_GAME,
     GAME_LISTING,
     GO_TO_HOTEL_VIEW,
-    GROUP_FORUMS,
+    GROUP_UNREAD_FORUMS_COUNT,
     GROUP_INFO,
     GUIDE_TOOL_OPEN,
     HABBO_CLUB_GIFTS,
@@ -130,7 +130,7 @@ enum class Incoming {
     RELEASE_CHECK,
     ROOM_APPLY_DECORATION,
     ROOM_BANNED_USERS,
-    ROOM_COMPETITION_STATUS,
+    ROOM_COMPETITION_INIT,
     ROOM_DELETE,
     ROOM_DIMMER_INFO,
     ROOM_DIMMER_SWITCH,

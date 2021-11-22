@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,19 +30,26 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomBadgeCommandsListener : PluginListener() {
     @Command(["givebadge"], permissionName = "cmd_givebadge")
     fun giveBadge(room: Room, roomUser: RoomUser, args: List<String>) {
         if (args.size <= 1) {
-            roomUser.chat(roomUser.virtualID, "Excepted params: badge_name or badge_name username", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "Excepted params: badge_name or badge_name username",
+                0,
+                ChatType.WHISPER,
+                true
+            )
 
             return
         }
 
         if (roomUser.habboSession == null) return
-        val badgeCode = args[1].toUpperCase()
+        val badgeCode = args[1].uppercase(Locale.getDefault())
         val username = if (args.size >= 3) args[2] else null
 
         if (username == null) {
@@ -73,13 +80,19 @@ class RoomBadgeCommandsListener : PluginListener() {
     @Command(["removebadge"], permissionName = "cmd_removebadge")
     fun removeBadge(room: Room, roomUser: RoomUser, args: List<String>) {
         if (args.isEmpty()) {
-            roomUser.chat(roomUser.virtualID, "Excepted params: badge_name or badge_name username", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "Excepted params: badge_name or badge_name username",
+                0,
+                ChatType.WHISPER,
+                true
+            )
 
             return
         }
 
         if (roomUser.habboSession == null) return
-        val badgeCode = args[1].toUpperCase()
+        val badgeCode = args[1].uppercase(Locale.getDefault())
         val username = if (args.size >= 3) args[2] else null
 
         if (username == null) {
