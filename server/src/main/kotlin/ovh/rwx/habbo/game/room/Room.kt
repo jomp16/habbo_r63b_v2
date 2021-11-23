@@ -44,7 +44,9 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.wired.WiredHandler
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.pathfinding.IFinder
+import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
+import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
@@ -66,11 +68,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
     val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
-    val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
+    val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap() }
     val roomUsersWithRights: Set<RoomUser>
         get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
     lateinit var roomGamemap: RoomGamemap
-    val pathfinder: IFinder by lazy { AStarFinder() }
+    val pathfinder: IFinder by lazy { AStarFinder(DiagonalMovement.ALWAYS, EuclideanHeuristic()) }
     val wiredHandler: WiredHandler by lazy { WiredHandler() }
 
     @Suppress("RemoveExplicitTypeArguments")

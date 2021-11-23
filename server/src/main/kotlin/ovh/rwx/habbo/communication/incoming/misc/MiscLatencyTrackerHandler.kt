@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,12 +21,15 @@ package ovh.rwx.habbo.communication.incoming.misc
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class MiscLatencyTrackerHandler {
     @Handler(Incoming.MISC_LATENCY_TRACKER)
+    @HandlerR63A(IncomingR63A.MISC_LATENCY_TRACKER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val int1 = habboRequest.readInt() // what the
         val int2 = habboRequest.readInt() // fuck the

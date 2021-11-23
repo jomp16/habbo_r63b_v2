@@ -20,7 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -74,7 +74,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var habboInventory: HabboInventory
         private set
     val rooms: List<Room>
-        get() = HabboServer.habboGame.roomManager.rooms.values.filter { it.hasRights(this, ownerRight = true, ignorePermissionAnyRoomOwner = true) }
+        get() = HabboServer.habboGame.roomManager.rooms.values.filter {
+            it.hasRights(
+                this,
+                ownerRight = true,
+                ignorePermissionAnyRoomOwner = true
+            )
+        }
     val groups: List<Group>
         get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == userInformation.id } }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
@@ -104,7 +110,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             log.error("Tried to send $outgoing to a R63A client!")
         }
     }
-    
+
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
         if (release == "R63A") {
             HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
@@ -130,7 +136,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                     sendHabboResponse(Outgoing.MISC_MOTD_NOTIFICATION, message)
                 }
             }
-            NotificationType.BROADCAST_ALERT -> sendHabboResponse(Outgoing.MISC_BROADCAST_NOTIFICATION, message)
+            NotificationType.BROADCAST_ALERT -> {
+                if (release == "R63A") {
+                    sendHabboResponse(OutgoingR63A.MISC_BROADCAST_NOTIFICATION, message)
+                } else {
+                    sendHabboResponse(Outgoing.MISC_BROADCAST_NOTIFICATION, message)
+                }
+            }
         }
     }
 
@@ -145,8 +157,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun hasPermission(permission: String) =
-            if (HabboServer.habboGame.permissionManager.userHasCustomPermission(userInformation.id)) HabboServer.habboGame.permissionManager.userHasPermission(userInformation.id, permission)
-            else HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
+        if (HabboServer.habboGame.permissionManager.userHasCustomPermission(userInformation.id)) HabboServer.habboGame.permissionManager.userHasPermission(
+            userInformation.id,
+            permission
+        )
+        else HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
 
     internal fun authenticate(ssoTicket: String): Boolean {
         val ip = channel.ip()
@@ -171,20 +186,22 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
 
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
-            habboMessenger = HabboMessenger(this@HabboSession)
-            habboSubscription = HabboSubscription(this@HabboSession)
-            habboBadge = HabboBadge(this@HabboSession)
-            habboInventory = HabboInventory(this@HabboSession)
+        habboMessenger = HabboMessenger(this@HabboSession)
+        habboSubscription = HabboSubscription(this@HabboSession)
+        habboBadge = HabboBadge(this@HabboSession)
+        habboInventory = HabboInventory(this@HabboSession)
 
-            habboSubscription.load()
-            habboBadge.load()
-            habboInventory.load()
+        CoroutineScope(HabboServer.cachedExecutorDispatcher).launch {
+            launch { habboSubscription.load() }
+            launch { habboBadge.load() }
+            launch {
+                habboInventory.load()
 
-            if (release == "R63A") {
-                sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE) // notify the user that the inventory was loaded
-            } else {
-                sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+                if (release == "R63A") {
+                    sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+                } else {
+                    sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+                }
             }
         }
 
@@ -196,27 +213,31 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     internal fun rewardUser() {
-        val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
+        val localDateTime =
+            userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
         var update = false
 
         if (LocalDateTime.now().isAfter(localDateTime)) {
             if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && HabboServer.habboConfig.rewardConfig.credits > 0
-                    && userInformation.credits < Int.MAX_VALUE) {
+                && userInformation.credits < Int.MAX_VALUE
+            ) {
                 userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
 
                 update = true
             }
 
             if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && HabboServer.habboConfig.rewardConfig.pixels > 0
-                    && userInformation.pixels < Int.MAX_VALUE) {
+                && userInformation.pixels < Int.MAX_VALUE
+            ) {
                 userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
 
                 update = true
             }
 
             if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax < 0
-                    && HabboServer.habboConfig.rewardConfig.vipPoints > 0
-                    && userInformation.vipPoints < Int.MAX_VALUE) {
+                && HabboServer.habboConfig.rewardConfig.vipPoints > 0
+                && userInformation.vipPoints < Int.MAX_VALUE
+            ) {
                 userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
 
                 update = true
@@ -235,9 +256,12 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
         if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
 
-        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
-        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels = HabboServer.habboConfig.rewardConfig.pixelsMax
-        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
+        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits =
+            HabboServer.habboConfig.rewardConfig.creditsMax
+        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels =
+            HabboServer.habboConfig.rewardConfig.pixelsMax
+        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints =
+            HabboServer.habboConfig.rewardConfig.vipPointsMax
 
         sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
         sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
@@ -251,7 +275,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
-        if (room.roomUsers.size >= room.roomData.usersMax && !room.hasRights(this, true) && !hasPermission("acc_enter_full_room")) {
+        if (room.roomUsers.size >= room.roomData.usersMax && !room.hasRights(
+                this,
+                true
+            ) && !hasPermission("acc_enter_full_room")
+        ) {
             if (release != "R63A") {
                 sendHabboResponse(Outgoing.ROOM_ERROR, 1, "")
                 sendHabboResponse(Outgoing.ROOM_EXIT)
@@ -265,7 +293,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         val loading = !bypassAuth && !room.hasRights(this, true)
 
         if (loading) {
-            if (room.roomData.state == RoomState.PASSWORD && !HabboServer.habboGame.passwordEncryptor.checkPassword(password, room.roomData.password)) {
+            if (room.roomData.state == RoomState.PASSWORD && !HabboServer.habboGame.passwordEncryptor.checkPassword(
+                    password,
+                    room.roomData.password
+                )
+            ) {
                 if (release != "R63A") {
                     sendHabboResponse(
                         Outgoing.MISC_GENERIC_ERROR,
@@ -286,7 +318,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
                 if (roomUsersWithRights.isEmpty()) {
                     if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
-                    else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, room.roomData.id, "")
+                    else if (methodName == "responseWithRoomId") sendHabboResponse(
+                        Outgoing.ROOM_DOORBELL_DENIED,
+                        room.roomData.id,
+                        ""
+                    )
 
                     if (release != "R63A") {
                         sendHabboResponse(Outgoing.ROOM_EXIT)
@@ -334,17 +370,37 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
             sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
 
-            if (room.roomData.wallpaper != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
+            if (room.roomData.wallpaper != "0.0") sendHabboResponse(
+                Outgoing.ROOM_DECORATION,
+                "wallpaper",
+                room.roomData.wallpaper
+            )
             if (room.roomData.floor != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "floor", room.roomData.floor)
-            if (room.roomData.landscape != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "landscape", room.roomData.landscape)
+            if (room.roomData.landscape != "0.0") sendHabboResponse(
+                Outgoing.ROOM_DECORATION,
+                "landscape",
+                room.roomData.landscape
+            )
         } else {
             sendHabboResponse(OutgoingR63A.ROOM_OPEN)
             sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
             sendHabboResponse(OutgoingR63A.ROOM_INITIAL_INFO, "model_${room.roomModel.id}", room.roomData.id)
 
-            if (room.roomData.wallpaper != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "wallpaper", room.roomData.wallpaper)
-            if (room.roomData.floor != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "floor", room.roomData.floor)
-            if (room.roomData.landscape != "0.0") sendHabboResponse(OutgoingR63A.ROOM_DECORATION, "landscape", room.roomData.landscape)
+            if (room.roomData.wallpaper != "0.0") sendHabboResponse(
+                OutgoingR63A.ROOM_DECORATION,
+                "wallpaper",
+                room.roomData.wallpaper
+            )
+            if (room.roomData.floor != "0.0") sendHabboResponse(
+                OutgoingR63A.ROOM_DECORATION,
+                "floor",
+                room.roomData.floor
+            )
+            if (room.roomData.landscape != "0.0") sendHabboResponse(
+                OutgoingR63A.ROOM_DECORATION,
+                "landscape",
+                room.roomData.landscape
+            )
 
             if (room.hasRights(this)) {
                 sendHabboResponse(OutgoingR63A.ROOM_RIGHT)

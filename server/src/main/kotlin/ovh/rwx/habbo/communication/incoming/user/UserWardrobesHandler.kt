@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,14 +21,30 @@ package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserWardrobesHandler {
     @Handler(Incoming.USER_WARDROBES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.USER_WARDROBES, habboSession.habboSubscription.validUserSubscription, habboSession.userInformation.wardrobes)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_WARDROBES,
+            habboSession.habboSubscription.validUserSubscription,
+            habboSession.userInformation.wardrobes
+        )
+    }
+
+    @HandlerR63A(IncomingR63A.USER_WARDROBES)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(
+            OutgoingR63A.USER_WARDROBES,
+            habboSession.habboSubscription.validUserSubscription,
+            habboSession.userInformation.wardrobes
+        )
     }
 }
