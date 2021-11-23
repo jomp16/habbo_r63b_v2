@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,24 +21,29 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Rotation
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserLookToHandler {
     @Handler(Incoming.ROOM_LOOK_TO)
+    @HandlerR63A(IncomingR63A.ROOM_LOOK_TO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
 
         if (habboSession.roomUser!!.currentVector3.x == x && habboSession.roomUser!!.currentVector3.y == y
-                || habboSession.roomUser!!.statusMap.containsKey("sit")
-                || habboSession.roomUser!!.statusMap.containsKey("lay")) {
+            || habboSession.roomUser!!.statusMap.containsKey("sit")
+            || habboSession.roomUser!!.statusMap.containsKey("lay")
+        ) {
             return
         }
-        val rotation = Rotation.calculate(habboSession.roomUser!!.currentVector3.x, habboSession.roomUser!!.currentVector3.y, x, y)
+        val rotation =
+            Rotation.calculate(habboSession.roomUser!!.currentVector3.x, habboSession.roomUser!!.currentVector3.y, x, y)
         var update = false
 
         if (habboSession.roomUser?.bodyRotation != rotation) {
