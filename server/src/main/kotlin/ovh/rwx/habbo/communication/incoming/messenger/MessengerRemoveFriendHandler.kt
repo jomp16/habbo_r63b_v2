@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -47,7 +47,11 @@ class MessengerRemoveFriendHandler {
             messengerFriends += messengerFriend
         }
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, messengerFriends, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE)
+        habboSession.sendHabboResponse(
+            Outgoing.MESSENGER_FRIENDS_UPDATE,
+            messengerFriends,
+            MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
+        )
 
         messengerFriends.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
@@ -56,7 +60,11 @@ class MessengerRemoveFriendHandler {
             val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id)
                     ?: return@forEach
 
-            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE)
+            friendHabboSession.sendHabboResponse(
+                Outgoing.MESSENGER_FRIENDS_UPDATE,
+                listOf(messengerFriend),
+                MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
+            )
         }
 
         MessengerDao.removeFriendships(habboSession.userInformation.id, messengerFriends.map { it.userId })

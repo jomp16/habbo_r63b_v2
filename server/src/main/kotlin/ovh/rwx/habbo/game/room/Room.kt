@@ -425,10 +425,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
 
         roomUsersWithRights.forEach { roomUser1 ->
-            roomUser1.habboSession?.sendHabboResponse(
-                Outgoing.FLOOR_PLAN_USED_SQUARES,
-                roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
-            )
+            if (roomUser1.habboSession?.release != "R63A") {
+                roomUser1.habboSession?.sendHabboResponse(
+                    Outgoing.FLOOR_PLAN_USED_SQUARES,
+                    roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
+                )
+            }
         }
 
         return true
@@ -500,6 +502,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         @Suppress("NON_EXHAUSTIVE_WHEN") when (roomItem.furnishing.type) {
             ItemType.FLOOR -> {
                 sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false, 0)
+                sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEM_REMOVE, roomItem)
 
                 HabboServer.habboGame.itemManager.getAffectedTiles(
                     roomItem.position.x,
@@ -522,15 +525,18 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, it)
 
                     roomUsersWithRights.forEach { roomUser ->
-                        roomUser.habboSession?.sendHabboResponse(
-                            Outgoing.FLOOR_PLAN_USED_SQUARES,
-                            roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
-                        )
+                        if (roomUser.habboSession?.release != "R63A") {
+                            roomUser.habboSession?.sendHabboResponse(
+                                Outgoing.FLOOR_PLAN_USED_SQUARES,
+                                roomGamemap.roomItemMap.filterValues { roomItems1 -> roomItems1.isNotEmpty() }.keys
+                            )
+                        }
                     }
                 }
             }
             ItemType.WALL -> {
                 sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem)
+                sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_REMOVE, roomItem)
             }
         }
 

@@ -181,7 +181,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             habboBadge.load()
             habboInventory.load()
 
-            sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+            if (release == "R63A") {
+                sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+            } else {
+                sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
+            }
         }
 
         UserInformationDao.updateAuthTicket(userInformation, null)

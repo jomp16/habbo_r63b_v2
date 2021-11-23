@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,11 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.ItemType
+import ovh.rwx.habbo.game.item.user.UserItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryNewObjectsResponse {
@@ -39,6 +43,27 @@ class InventoryNewObjectsResponse {
             writeInt(ids.size)
 
             ids.forEach { writeInt(it) }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.INVENTORY_NEW_OBJECTS)
+    fun responseR63A(habboResponse: HabboResponse, userItems: Collection<UserItem>) {
+        habboResponse.apply {
+            writeInt(2)
+
+            writeInt(1) // floor items
+            userItems.filter { it.furnishing.type == ItemType.FLOOR }.let { floorItems ->
+                writeInt(floorItems.size)
+
+                floorItems.map { it.id }.forEach { writeInt(it) }
+            }
+
+            writeInt(2) // wall items
+            userItems.filter { it.furnishing.type == ItemType.WALL }.let { wallItems ->
+                writeInt(wallItems.size)
+
+                wallItems.map { it.id }.forEach { writeInt(it) }
+            }
         }
     }
 }

@@ -28,9 +28,13 @@ import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerFriendUpdateResponse {
-    @Response(Outgoing.MESSENGER_FRIEND_UPDATE)
-    @ResponseR63A(OutgoingR63A.MESSENGER_FRIEND_UPDATE)
-    fun response(habboResponse: HabboResponse, messengerFriends: Collection<MessengerFriend>, mode: MessengerFriendUpdateMode) {
+    @Response(Outgoing.MESSENGER_FRIENDS_UPDATE)
+    @ResponseR63A(OutgoingR63A.MESSENGER_FRIENDS_UPDATE)
+    fun response(
+        habboResponse: HabboResponse,
+        messengerFriends: Collection<MessengerFriend>,
+        mode: MessengerFriendUpdateMode
+    ) {
         habboResponse.apply {
             // todo: update categories
             writeInt(0) // size to update messenger category
