@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector2
@@ -43,7 +45,33 @@ class RoomItemMoveFloorHandler {
 
         if (habboSession.currentRoom?.setFloorItem(roomItem, newPosition, rotation, habboSession.roomUser) == false) {
             if (roomItem.position.vector2 != newPosition) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.cant_set_item}")
+                habboSession.sendSuperNotification(
+                    MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
+                    "message",
+                    "\${room.error.cant_set_item}"
+                )
+            }
+
+            roomItem.update(updateDb = false, updateClient = true)
+        }
+    }
+
+    @HandlerR63A(IncomingR63A.ROOM_MOVE_FLOOR_ITEM)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+        val itemId = habboRequest.readInt()
+        val x = habboRequest.readInt()
+        val y = habboRequest.readInt()
+        val rotation = habboRequest.readInt()
+        val newPosition = Vector2(x, y)
+
+        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
+
+        val roomItem = habboSession.currentRoom!!.roomItems[itemId]!!
+
+        if (habboSession.currentRoom?.setFloorItem(roomItem, newPosition, rotation, habboSession.roomUser) == false) {
+            if (roomItem.position.vector2 != newPosition) {
+                habboSession.sendNotification("\${room.error.cant_set_item}")
             }
 
             roomItem.update(updateDb = false, updateClient = true)

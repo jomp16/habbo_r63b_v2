@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -54,7 +54,11 @@ class MessengerAcceptRequestHandler {
         val friends = MessengerDao.addFriends(habboSession.userInformation.id, friendIds).associateBy { it.userId }
 
         habboSession.habboMessenger.friends += friends.filterKeys { it == habboSession.userInformation.id }
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, friends, MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
+        habboSession.sendHabboResponse(
+            Outgoing.MESSENGER_FRIENDS_UPDATE,
+            friends,
+            MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT
+        )
 
         friends.filterKeys { it != habboSession.userInformation.id }.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.value.userId)
@@ -65,7 +69,11 @@ class MessengerAcceptRequestHandler {
 
             friendHabboSession.habboMessenger.friends[messengerFriend.userId] = messengerFriend
 
-            friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_FRIEND_UPDATE, listOf(messengerFriend), MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT)
+            friendHabboSession.sendHabboResponse(
+                Outgoing.MESSENGER_FRIENDS_UPDATE,
+                listOf(messengerFriend),
+                MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT
+            )
         }
     }
 }

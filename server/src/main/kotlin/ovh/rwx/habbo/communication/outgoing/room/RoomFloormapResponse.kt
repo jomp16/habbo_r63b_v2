@@ -31,11 +31,21 @@ import ovh.rwx.habbo.game.room.model.SquareState
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloormapResponse {
     @Response(Outgoing.ROOM_FLOORMAP)
-    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
     fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeBoolean(true)
             writeInt(room.roomData.wallHeight)
+            writeFloorPlan(this, room)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
+    fun responseR63A(habboResponse: HabboResponse, room: Room) {
+        writeFloorPlan(habboResponse, room)
+    }
+
+    private fun writeFloorPlan(habboResponse: HabboResponse, room: Room) {
+        habboResponse.apply {
             val stringBuilder = StringBuilder()
 
             for (i in 0 until room.roomModel.mapSizeY) {

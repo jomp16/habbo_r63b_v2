@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -87,7 +87,7 @@ enum class Outgoing {
     MESSENGER_CHAT_ERROR,
     MESSENGER_FOLLOW_FRIEND_ERROR,
     MESSENGER_FRIENDS,
-    MESSENGER_FRIEND_UPDATE,
+    MESSENGER_FRIENDS_UPDATE,
     MESSENGER_INIT,
     MESSENGER_INVITE,
     MESSENGER_REQUESTS,

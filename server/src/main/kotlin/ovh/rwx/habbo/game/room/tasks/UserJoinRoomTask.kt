@@ -72,8 +72,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 )
                 // todo: events
             } else {
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_FLOORMAP, room)
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_HEIGHTMAP, room)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_FLOORMAP, room)
                 habboSession.sendHabboResponse(
                     OutgoingR63A.ROOM_OWNERSHIP,
                     room.roomData.roomType == RoomType.PRIVATE,

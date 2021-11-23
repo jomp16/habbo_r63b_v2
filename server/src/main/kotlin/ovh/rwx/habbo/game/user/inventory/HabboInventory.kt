@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user.inventory
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.user.HabboSession
@@ -40,8 +41,13 @@ class HabboInventory(private val habboSession: HabboSession) {
     fun addItems(userItems: List<UserItem>) {
         items += userItems.associateBy { it.id }
 
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_NEW_OBJECTS, userItems)
+            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE)
+        } else {
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
+        }
     }
 
     fun removeItems(itemIds: List<Int>, delete: Boolean = false) {
@@ -50,7 +56,11 @@ class HabboInventory(private val habboSession: HabboSession) {
         itemIds.forEach {
             items.remove(it)
 
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, it)
+            if (habboSession.release == "R63A") {
+                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, it)
+            } else {
+                habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, it)
+            }
         }
 
         if (delete) ItemDao.deleteItems(itemIds)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -51,13 +51,13 @@ class HabboMessenger(private val habboSession: HabboSession) {
         friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
             if (it.habboSession!!.release != "R63A") {
                 it.habboSession!!.sendHabboResponse(
-                    Outgoing.MESSENGER_FRIEND_UPDATE,
+                    Outgoing.MESSENGER_FRIENDS_UPDATE,
                     listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
                     MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE
                 )
             } else {
                 it.habboSession!!.sendHabboResponse(
-                    OutgoingR63A.MESSENGER_FRIEND_UPDATE,
+                    OutgoingR63A.MESSENGER_FRIENDS_UPDATE,
                     listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),
                     MessengerFriendUpdateResponse.MessengerFriendUpdateMode.UPDATE
                 )
