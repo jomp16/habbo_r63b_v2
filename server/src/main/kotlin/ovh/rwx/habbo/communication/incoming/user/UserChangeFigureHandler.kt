@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
@@ -29,6 +31,7 @@ import java.util.*
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserChangeFigureHandler {
     @Handler(Incoming.USER_CHANGE_FIGURE)
+    @HandlerR63A(IncomingR63A.USER_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val gender = habboRequest.readUTF().uppercase(Locale.getDefault())
         val figure = habboRequest.readUTF()
