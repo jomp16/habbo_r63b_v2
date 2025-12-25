@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -52,8 +52,8 @@ class WiredFurniInteractor : ItemInteractor() {
         roomItem.requestCycles(1)
         val outgoing = when {
             roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_ACTION") -> Outgoing.WIRED_EFFECT_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_EFFECT_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
             else -> return
         }
 
