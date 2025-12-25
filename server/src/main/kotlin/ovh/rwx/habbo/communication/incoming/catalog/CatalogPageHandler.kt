@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -38,5 +41,17 @@ class CatalogPageHandler {
         if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
 
         habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage)
+    }
+
+    @HandlerR63A(IncomingR63A.CATALOG_PAGE)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val pageId = habboRequest.readInt()
+        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
+
+        if (!catalogPage.enabled || !catalogPage.visible) return
+        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
+        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
+
+        habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, catalogPage)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -82,4 +82,12 @@ enum class IncomingR63A {
     USER_WARDROBES,
     ROOM_LOOK_TO,
     USER_WARDROBE_SAVE,
+    CATALOG_PAGE,
+    ACHIEVEMENT_SCORE,
+    NAGIVATOR_OFFICIAL_ROOMS,
+    NAVIGATOR_LATEST_EVENTS,
+    USER_GET_NOTIFICATION,
+    ROOM_USER_IDLE,
+    MISC_GENERIC_ERROR,
+    ROOM_EXIT,
 }

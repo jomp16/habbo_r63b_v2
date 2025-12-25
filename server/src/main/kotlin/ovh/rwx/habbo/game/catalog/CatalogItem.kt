@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -93,7 +93,28 @@ data class CatalogItem(
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
+        habboResponse.apply {
+            writeInt(id)
+            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName)
+            writeInt(costCredits)
+            writeInt(costPixels)
+            writeInt(costVip)
+            writeInt(1)
+
+            writeUTF(furnishing.type.type)
+            writeInt(furnishing.spriteId)
+
+            if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape") writeUTF(
+                catalogName.split(
+                    '_'
+                )[2]
+            )
+            else writeUTF("")
+
+            writeInt(amount)
+            writeInt(-1) // ????
+            writeBoolean(clubOnly)
+        }
     }
 
     private fun serializeItem(habboResponse: HabboResponse, furnishing: Furnishing, amount: Int) {

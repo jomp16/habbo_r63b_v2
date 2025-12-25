@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -79,7 +79,7 @@ data class UserItem(
 
             writeInt(typeId)
 
-            HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
+            writeUTF(extraData)
 
             writeBoolean(furnishing.allowRecycle)
             writeBoolean(furnishing.allowTrade)

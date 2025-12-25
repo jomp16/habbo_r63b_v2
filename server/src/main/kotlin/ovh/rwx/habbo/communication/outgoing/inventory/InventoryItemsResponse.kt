@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -41,6 +41,7 @@ class InventoryItemsResponse {
 
     @ResponseR63A(OutgoingR63A.INVENTORY_ITEMS)
     fun responseR63A(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
+        // ["logError(Error in update receiver \"com.sulake.bootstrap::CoreCommunicationManager\": Unknown inventory item category: \"IIM\")"]
         habboResponse.apply {
             writeUTF(type) // S = floor, I = wall
             writeBoolean(true)

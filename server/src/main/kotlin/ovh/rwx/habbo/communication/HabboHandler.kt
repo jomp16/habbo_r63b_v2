@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -139,7 +139,7 @@ class HabboHandler {
 
             largestNameSizeR63A =
                 incomingNamesR63A.plus(outgoingNamesR63A).values.flatMap { it.map { pair -> pair.second } }
-                    .map { it.name }.maxByOrNull { it.length }!!.length
+                    .map { it.name }.maxByOrNull { it.length }?.length ?: 0
         }
 
         val lookup = MethodHandles.lookup()
