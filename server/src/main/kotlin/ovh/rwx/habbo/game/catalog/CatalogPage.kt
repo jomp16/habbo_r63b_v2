@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -82,6 +82,28 @@ data class CatalogPage(
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
+        habboResponse.apply {
+            val rank = params[0] as Int
+            val club = params[1] as Boolean
+
+            writeBoolean(visible)
+            writeInt(0) // todo: icon color
+            writeInt(iconImage) // icon
+            writeInt(id)
+
+            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && parentId != -1) writeUTF(
+                "$name (${catalogItems.size})"
+            )
+            else writeUTF(name)
+
+            val childCatalogPages =
+                HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true }
+                    .sortedBy { it.orderNum }
+            writeInt(childCatalogPages.size)
+
+            childCatalogPages.forEach {
+                habboResponse.serialize(it, rank, club)
+            }
+        }
     }
 }

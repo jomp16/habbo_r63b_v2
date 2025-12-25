@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -92,4 +92,6 @@ enum class OutgoingR63A {
     MISC_BROADCAST_NOTIFICATION,
     USER_TAGS,
     USER_WARDROBES,
+    CATALOG_INDEX,
+    CATALOG_PAGE,
 }

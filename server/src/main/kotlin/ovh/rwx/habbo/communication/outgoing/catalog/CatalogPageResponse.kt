@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.catalog.CatalogPage
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -241,6 +243,50 @@ class CatalogPageResponse {
 
             writeInt(-1)
             writeBoolean(false)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.CATALOG_PAGE)
+    fun responseR63A(habboResponse: HabboResponse, catalogPage: CatalogPage) {
+        habboResponse.apply {
+            writeInt(catalogPage.id)
+
+            when (catalogPage.pageLayout) {
+                "frontpage",
+                "frontpage4" -> {
+                    writeUTF("frontpage3")
+                    writeInt(3)
+                    writeUTF(catalogPage.pageHeadline)
+                    writeUTF(catalogPage.pageTeaser)
+                    writeUTF("")
+                    writeInt(11)
+                    writeUTF(catalogPage.pageText1)
+                    writeUTF("")
+                    writeUTF(catalogPage.pageText2)
+                    writeUTF(catalogPage.pageTextDetails)
+                    writeUTF("")
+                    writeUTF("#FAF8CC")
+                    writeUTF("#FAF8CC")
+                    writeUTF("Leia mais")
+                    writeUTF("magic.credits")
+                }
+
+                else -> {
+                    writeUTF(catalogPage.pageLayout)
+                    writeInt(3)
+                    writeUTF(catalogPage.pageHeadline)
+                    writeUTF(catalogPage.pageTeaser)
+                    writeUTF(catalogPage.pageSpecial)
+                    writeInt(3)
+                    writeUTF(catalogPage.pageText1)
+                    writeUTF(catalogPage.pageTextDetails)
+                    writeUTF(catalogPage.pageTextTeaser)
+                }
+            }
+
+            writeInt(catalogPage.catalogItems.size)
+
+            catalogPage.catalogItems.forEach { serialize(it) }
         }
     }
 }

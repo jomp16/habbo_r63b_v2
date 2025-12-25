@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,14 +22,26 @@ package ovh.rwx.habbo.communication.outgoing.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogIndexResponse {
     @Response(Outgoing.CATALOG_INDEX)
     fun response(habboResponse: HabboResponse, type: String, rank: Int, club: Boolean) {
-        val rootCatalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == if (type == "NORMAL") -1 else -2 }
+        val rootCatalogPage =
+            HabboServer.habboGame.catalogManager.catalogPages.find { it.id == if (type == "NORMAL") -1 else -2 }
                 ?: return
+
+        habboResponse.apply {
+            serialize(rootCatalogPage, rank, club)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.CATALOG_INDEX)
+    fun responseR63A(habboResponse: HabboResponse, rank: Int, club: Boolean) {
+        val rootCatalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == -1 } ?: return
 
         habboResponse.apply {
             serialize(rootCatalogPage, rank, club)

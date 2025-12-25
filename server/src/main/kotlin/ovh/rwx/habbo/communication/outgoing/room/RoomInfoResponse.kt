@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -60,7 +60,7 @@ class RoomInfoResponse {
             serialize(room, true, isLoading)
 
             writeBoolean(checkEntry)
-            writeBoolean(false)
+            writeBoolean(false) // staff picked
         }
     }
 }
