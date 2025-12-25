@@ -90,4 +90,6 @@ enum class IncomingR63A {
     ROOM_USER_IDLE,
     MISC_GENERIC_ERROR,
     ROOM_EXIT,
+    ROOM_USER_ROTATION,
+    USER_CHANGE_FIGURE,
 }
