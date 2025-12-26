@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
 
@@ -47,10 +48,29 @@ class UserChangeFigureHandler {
         habboSession.userInformation.figure = figure
         habboSession.userInformation.gender = gender
 
-        habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, figure, gender)
+        if (habboSession.release == "R63A") {
+            habboSession.currentRoom?.sendHabboResponse(
+                OutgoingR63A.USER_UPDATE,
+                -1,
+                figure,
+                gender,
+                habboSession.userInformation.motto,
+                habboSession.userStats.achievementScore
+            )
+        } else {
+            habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, figure, gender)
+        }
 
         habboSession.currentRoom?.sendHabboResponse(
             Outgoing.USER_UPDATE,
+            habboSession.roomUser!!.virtualID,
+            figure,
+            gender,
+            habboSession.userInformation.motto,
+            habboSession.userStats.achievementScore
+        )
+        habboSession.currentRoom?.sendHabboResponse(
+            OutgoingR63A.USER_UPDATE,
             habboSession.roomUser!!.virtualID,
             figure,
             gender,

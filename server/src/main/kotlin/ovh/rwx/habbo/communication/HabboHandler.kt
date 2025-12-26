@@ -137,6 +137,22 @@ class HabboHandler {
             incomingNamesR63A["R63A"] = inHeaders.map { it.header to IncomingR63A.valueOf(it.name) }
             outgoingNamesR63A["R63A"] = outHeaders.map { it.header to OutgoingR63A.valueOf(it.name) }
 
+            val exceptedIncomingHeaders: List<IncomingR63A> = IncomingR63A.values().toMutableList()
+            val exceptedOutgoingHeaders: List<OutgoingR63A> = OutgoingR63A.values().toMutableList()
+
+            if (isMissingIncomingR63AHeaders(
+                    incomingNamesR63A.entries,
+                    exceptedIncomingHeaders
+                ) || isMissingOutgoingR63AHeaders(
+                    outgoingNamesR63A.entries,
+                    exceptedOutgoingHeaders
+                )
+            ) {
+                log.error("Missing headers... Fix it! Exiting!")
+
+                exitProcess(1)
+            }
+
             largestNameSizeR63A =
                 incomingNamesR63A.plus(outgoingNamesR63A).values.flatMap { it.map { pair -> pair.second } }
                     .map { it.name }.maxByOrNull { it.length }?.length ?: 0
@@ -221,6 +237,44 @@ class HabboHandler {
     private fun isMissingOutgoingHeaders(
         availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, Outgoing>>>>,
         exceptedHeaders: List<Outgoing>
+    ): Boolean {
+        var missing = false
+
+        availableHeadersEntries.forEach {
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+
+            if (missingHeaders.isNotEmpty()) {
+                log.error("Missing outgoing headers for release={}, headers={}", it.key, missingHeaders.joinToString())
+
+                if (!missing) missing = true
+            }
+        }
+
+        return missing
+    }
+
+    private fun isMissingIncomingR63AHeaders(
+        availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, IncomingR63A>>>>,
+        exceptedHeaders: List<IncomingR63A>
+    ): Boolean {
+        var missing = false
+
+        availableHeadersEntries.forEach {
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+
+            if (missingHeaders.isNotEmpty()) {
+                log.error("Missing incoming headers for release={}, headers={}", it.key, missingHeaders.joinToString())
+
+                if (!missing) missing = true
+            }
+        }
+
+        return missing
+    }
+
+    private fun isMissingOutgoingR63AHeaders(
+        availableHeadersEntries: MutableSet<MutableEntry<String, List<Pair<Int, OutgoingR63A>>>>,
+        exceptedHeaders: List<OutgoingR63A>
     ): Boolean {
         var missing = false
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,13 +21,16 @@ package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorHotelViewHandler {
     @Handler(Incoming.GO_TO_HOTEL_VIEW)
+    @HandlerR63A(IncomingR63A.GO_TO_HOTEL_VIEW)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
         else habboSession.currentRoom?.removeUser(habboSession.roomUser, notifyClient = true, kickNotification = false)

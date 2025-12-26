@@ -17,22 +17,26 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomPostItResponse {
-    @Response(Outgoing.ROOM_POST_IT)
-    @ResponseR63A(OutgoingR63A.ROOM_POST_IT)
-    fun response(habboResponse: HabboResponse, itemId: Int, extraData: String) {
+class NavigatorPopularTagsResponse {
+    @ResponseR63A(OutgoingR63A.NAVIGATOR_POPULAR_TAGS)
+    fun responseR63A(
+        habboResponse: HabboResponse,
+        popularTags: Map<String, Int>
+    ) {
         habboResponse.apply {
-            writeUTF(itemId.toString())
-            writeUTF(extraData)
+            writeInt(popularTags.size)
+
+            popularTags.entries.sortedByDescending { it.value }.forEach { tag ->
+                writeUTF(tag.key)
+                writeInt(tag.value)
+            }
         }
     }
 }

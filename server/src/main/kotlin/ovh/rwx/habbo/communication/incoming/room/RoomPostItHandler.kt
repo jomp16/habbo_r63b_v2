@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,14 +21,18 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomPostItHandler {
     @Handler(Incoming.ROOM_POST_IT)
+    @HandlerR63A(IncomingR63A.ROOM_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
@@ -36,6 +40,10 @@ class RoomPostItHandler {
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_POST_IT, itemId, roomItem.extraData)
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.ROOM_POST_IT, itemId, roomItem.extraData)
+        } else {
+            habboSession.sendHabboResponse(Outgoing.ROOM_POST_IT, itemId, roomItem.extraData)
+        }
     }
 }
