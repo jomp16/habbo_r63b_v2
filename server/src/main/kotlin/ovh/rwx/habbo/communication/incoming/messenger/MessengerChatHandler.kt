@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,8 +24,11 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatErrorResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
@@ -164,6 +167,195 @@ class MessengerChatHandler {
             val friendHabboSession = messengerBuddy.habboSession ?: return
 
             friendHabboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, habboSession.userInformation.id, message, 0, 0, "", "")
+        }
+    }
+
+    @HandlerR63A(IncomingR63A.MESSENGER_CHAT)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.habboMessenger.initialized) return
+        val userId = habboRequest.readInt()
+        val message = habboRequest.readUTF().trim()
+
+        if (message.isBlank()) return
+
+        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == UserInformationDao.serverConsoleUserInformation.id && !habboSession.hasPermission(
+                "acc_server_console"
+            )
+        ) {
+            habboSession.sendHabboResponse(
+                OutgoingR63A.MESSENGER_CHAT_ERROR,
+                MessengerChatErrorResponse.MessengerChatError.NOT_FRIENDS,
+                userId,
+                message
+            )
+
+            return
+        }
+
+        if (userId == UserInformationDao.serverConsoleUserInformation.id && habboSession.hasPermission("acc_server_console")) {
+            // server console!
+            val args = message.split(' ')
+
+            if (args.isNotEmpty()) {
+                habboSession.scriptEngine.put("habboSession", habboSession)
+                habboSession.scriptEngine.put("habboServer", HabboServer)
+                habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)
+                habboSession.scriptEngine.put("room", habboSession.currentRoom)
+                habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
+
+                if (args[0] == "load" && args.size >= 2) {
+                    val jsOutput =
+                        habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString()
+                            ?: "null"
+
+                    habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, jsOutput, 0, 0, "", "")
+                } else if (args[0] == "ram") {
+                    habboSession.sendHabboResponse(
+                        OutgoingR63A.MESSENGER_CHAT,
+                        userId,
+                        Utils.ramUsageString,
+                        0,
+                        0,
+                        "",
+                        ""
+                    )
+                } else if (args[0] == "uptime") {
+                    habboSession.sendHabboResponse(
+                        OutgoingR63A.MESSENGER_CHAT,
+                        userId,
+                        DurationFormatUtils.formatDurationWords(
+                            ManagementFactory.getRuntimeMXBean().uptime,
+                            true,
+                            false
+                        ) + " up!",
+                        0,
+                        0,
+                        "",
+                        ""
+                    )
+                } else if (args[0] == "plugin") {
+                    if (args.size < 3) return
+                    val pluginName = args[2].trim()
+
+                    when (args[1]) {
+                        "load" -> {
+                            File("plugins").walk().filter { it.nameWithoutExtension.contains(pluginName) }.firstOrNull()
+                                ?.let {
+                                    val message1 = if (HabboServer.pluginManager.addPluginJar(it)) "Done!" else "Failed"
+
+                                    habboSession.sendHabboResponse(
+                                        OutgoingR63A.MESSENGER_CHAT,
+                                        userId,
+                                        message1,
+                                        0,
+                                        0,
+                                        "",
+                                        ""
+                                    )
+                                }
+                        }
+
+                        "unload" -> {
+                            val message1 =
+                                if (HabboServer.pluginManager.removePluginJarByName(pluginName)) "Done!" else "Failed"
+
+                            habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, message1, 0, 0, "", "")
+                        }
+                    }
+                } else if (message == "reload_handlers") {
+                    HabboServer.habboHandler.load()
+
+                    HabboServer.serverScheduledExecutor.schedule({
+                        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, "Done!", 0, 0, "", "")
+
+                    }, 1, TimeUnit.SECONDS)
+                } else if (message.startsWith("h:")) {
+                    // one line response messages
+                    val args1 = message.split("(?<!\\\\),".toRegex())
+                    val header = args1[0].substring(2).toInt()
+                    val habboResponse = HabboResponse(header, null)
+
+                    habboResponse.apply {
+                        args1.drop(1).forEach {
+                            val type = it.substring(0, 1)
+                            val param = it.substring(2)
+
+                            when (type) {
+                                "u" -> {
+                                    // string
+                                    writeUTF(param.replace("\\,", ","))
+                                }
+
+                                "i" -> {
+                                    // int
+                                    writeInt(param.toInt())
+                                }
+
+                                "s" -> {
+                                    // short
+                                    writeShort(param.toInt())
+                                }
+
+                                "b" -> {
+                                    // boolean
+                                    writeBoolean(param.toBoolean())
+                                }
+
+                                "d" -> {
+                                    // double
+                                    writeDouble(param.toDouble())
+                                }
+
+                                "v" -> {
+                                    // bytes
+                                    writeByte(param.toInt())
+                                }
+                            }
+                        }
+                    }
+
+                    habboSession.sendHabboResponse(habboResponse)
+
+                    habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, "Done!", 0, 0, "", "")
+                } else {
+                    val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
+
+                    habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, jsOutput, 0, 0, "", "")
+                }
+            }
+
+            return
+        }
+
+        if (userId < 0) {
+            if (userId == -1) habboSession.sendHabboResponse(
+                OutgoingR63A.MESSENGER_CHAT,
+                userId,
+                message,
+                0,
+                habboSession.userInformation.id,
+                habboSession.userInformation.username,
+                habboSession.userInformation.figure
+            )
+        } else {
+            val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
+
+            if (!messengerBuddy.online) {
+                MessengerDao.addOfflineMessage(habboSession.userInformation.id, userId, message)
+
+                return
+            }
+            val friendHabboSession = messengerBuddy.habboSession ?: return
+
+            friendHabboSession.sendHabboResponse(
+                OutgoingR63A.MESSENGER_CHAT,
+                habboSession.userInformation.id,
+                message,
+                0,
+                0,
+                "",
+                ""
+            )
         }
     }
 }

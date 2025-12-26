@@ -17,27 +17,38 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.user
+package ovh.rwx.habbo.communication.incoming.navigator
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserActivityPointsBalanceHandler {
-    @Handler(Incoming.ACTIVITY_POINTS_BALANCE)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
-    }
-
-    @HandlerR63A(IncomingR63A.ACHIEVEMENT_SCORE)
+class NavigatorPopularTagsHandler {
+    @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_TAGS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.USER_ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
-        habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
+        val popularTags = mutableMapOf<String, Int>()
+
+        HabboServer.habboGame.roomManager.rooms.values
+            .filter { room ->
+                !room.roomUsers.isEmpty() && room.roomData.roomType === RoomType.PRIVATE
+            }
+            .sortedBy { room -> room.roomUsers.size }
+            .take(50)
+            .forEach { room ->
+                for (tag in room.roomData.tags) {
+                    if (popularTags.containsKey(tag)) {
+                        popularTags[tag] = popularTags[tag]!! + room.roomUsers.size
+                    } else {
+                        popularTags[tag] = room.roomUsers.size
+                    }
+                }
+            }
+
+        habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_POPULAR_TAGS, popularTags)
     }
 }

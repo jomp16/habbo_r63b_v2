@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,15 +21,22 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserTypingHandler {
     @Handler(Incoming.ROOM_USER_START_TYPING, Incoming.ROOM_USER_STOP_TYPING)
+    @HandlerR63A(IncomingR63A.ROOM_USER_START_TYPING, IncomingR63A.ROOM_USER_STOP_TYPING)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.roomUser?.typing = habboRequest.incoming == Incoming.ROOM_USER_START_TYPING
+        if (habboSession.release == "R63A") {
+            habboSession.roomUser?.typing = habboRequest.incomingR63A == IncomingR63A.ROOM_USER_START_TYPING
+        } else {
+            habboSession.roomUser?.typing = habboRequest.incoming == Incoming.ROOM_USER_START_TYPING
+        }
     }
 }
