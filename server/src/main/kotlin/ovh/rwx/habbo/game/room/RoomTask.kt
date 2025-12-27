@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
@@ -52,6 +53,7 @@ class RoomTask : Runnable {
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
         room.rollerCounter.set(0)
+        room.roomTimer.set(0)
 
         room.roomTask = this
 
@@ -74,6 +76,7 @@ class RoomTask : Runnable {
         room.emptyCounter.set(0)
         room.errorsCounter.set(0)
         room.rollerCounter.set(0)
+        room.roomTimer.set(0)
         room.roomGamemap.clearUsers()
 
         // This method already saves room data and group data
@@ -102,9 +105,13 @@ class RoomTask : Runnable {
 
                         wireds.forEach { it.executeTask(room) }
 
+                        // Increment room timer
+                        room.roomTimer.incrementAndGet()
+
                         // Trigger wired periodically
                         room.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, null)
                         room.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, null)
+                        room.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, null)
 
                         room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
 

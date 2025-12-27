@@ -17,22 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger.triggers
+package ovh.rwx.habbo.game.item.wired.condition.conditions
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
+import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
+import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIODICALLY)
-class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var delay = 1
-    private var delayState = 0
+@WiredItemInteractor(InteractionType.WIRED_CONDITION_WEARING_BADGE, InteractionType.WIRED_CONDITION_NOT_WEARING_BADGE)
+class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
+    private var badgeCode: String = ""
+    private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_NOT_WEARING_BADGE
 
     init {
         setData()
@@ -40,38 +40,31 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
 
     override fun setData() {
         roomItem.wiredData?.let {
-            delay = it.options.getOrElse(0) { delay }
+            badgeCode = it.message
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        if (++delayState >= delay) {
-            delayState = 0
+    override fun onCondition(roomUser: RoomUser?): Boolean {
+        if (roomUser == null || badgeCode.isBlank()) return false
 
-            return true
-        }
+        val equippedBadges = roomUser.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
+        val hasBadge = equippedBadges.any { it.code == badgeCode }
 
-        return false
-    }
-
-
-    fun resetTimer() {
-        delayState = 0
+        return if (isNegative) !hasBadge else hasBadge
     }
 
     override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
         habboResponse.apply {
             writeEmptyItems()
             writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 1)
-            writeInt(WiredTriggerType.PERIODICALLY.code)
-            writeBlockedActions(wiredData)
+            writeSettings(wiredData.message, emptyList(), 0)
+            writeInt(if (isNegative) WiredConditionType.NOT_ACTOR_WEARS_BADGE.code else WiredConditionType.ACTOR_WEARS_BADGE.code)
         }
     }
 
     companion object {
         fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(1), "")
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
 }

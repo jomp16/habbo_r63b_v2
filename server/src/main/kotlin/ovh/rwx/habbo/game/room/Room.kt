@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -61,6 +61,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val rollerCounter = AtomicInteger()
     val emptyCounter = AtomicInteger()
     val errorsCounter = AtomicInteger()
+    val roomTimer = AtomicInteger()
     val roomItems: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(roomData.id)) }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
@@ -219,7 +220,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            val showEvents = params[0] as Boolean
+            params[0] as Boolean
             val enterRoom = params[1] as Boolean
 
             writeInt(roomData.id)

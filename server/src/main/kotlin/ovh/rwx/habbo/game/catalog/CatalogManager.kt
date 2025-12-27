@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,6 +30,7 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
@@ -188,14 +189,17 @@ class CatalogManager {
                         HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
                     }
                     userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
+                        val defaultWiredData =
+                            HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
+                                ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
                         insertAndGetGeneratedKey("INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
                                 mapOf(
                                         "item_id" to userItem.id,
-                                        "delay" to 0,
-                                        "items" to "",
-                                        "message" to "",
-                                        "options" to "",
-                                        "extradata" to ""
+                                    "delay" to defaultWiredData.delay,
+                                    "items" to defaultWiredData.items.joinToString(","),
+                                    "message" to defaultWiredData.message,
+                                    "options" to defaultWiredData.options.joinToString(","),
+                                    "extradata" to defaultWiredData.extradata
                                 )
                         )
                     }

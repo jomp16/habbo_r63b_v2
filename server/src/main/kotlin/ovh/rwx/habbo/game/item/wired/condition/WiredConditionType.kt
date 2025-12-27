@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,28 +20,29 @@
 package ovh.rwx.habbo.game.item.wired.condition
 
 enum class WiredConditionType(val code: Int) {
-    MATCH_SSHOT(0),
+    MATCH_SSHOT(0), // has custom UI
     FURNI_HAVE_HABBO(1),
     TRIGGER_ON_FURNI(2),
-    TIME_MORE_THAN(3),
-    TIME_LESS_THAN(4),
-    USER_COUNT(5),
-    ACTOR_IN_TEAM(6),
-    FURNI_HAS_FURNI(7),
-    STUFF_IS(8),
+    TIME_MORE_THAN(3), // has custom UI
+    TIME_LESS_THAN(4), // has custom UI
+    USER_COUNT(5), // has custom UI
+    ACTOR_IN_TEAM(6), // has custom UI
+    FURNI_HAS_FURNI(7), // has custom UI
+    STUFF_MATCHES(8),
+    STUFF_IS_FORMATION(9), // has custom UI
     ACTOR_IN_GROUP(10),
-    ACTOR_WEARS_BADGE(11),
-    ACTOR_WEARS_EFFECT(12),
+    ACTOR_WEARS_BADGE(11), // has custom UI
+    ACTOR_WEARS_EFFECT(12), // has custom UI
     NOT_MATCH_SSHOT(13),
     NOT_FURNI_HAVE_HABBO(14),
     NOT_ACTOR_ON_FURNI(15),
     NOT_USER_COUNT(16),
     NOT_ACTOR_IN_TEAM(17),
-    NOT_FURNI_HAVE_FURNI(18),
+    NOT_FURNI_HAVE_FURNI(18), // has custom UI
     NOT_STUFF_IS(19),
     NOT_ACTOR_IN_GROUP(21),
     NOT_ACTOR_WEARS_BADGE(22),
     NOT_ACTOR_WEARS_EFFECT(23),
-    DATE_RANGE(24),
-    ACTOR_HAS_HANDITEM(25)
+    DATE_RANGE(24), // has custom UI
+    ACTOR_HAS_HANDITEM(25) // has custom UI
 }

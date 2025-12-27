@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -42,6 +42,7 @@ import java.lang.reflect.Constructor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
+import kotlin.reflect.full.companionObject
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -183,6 +184,18 @@ class ItemManager {
     fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "", userItem.limited)
 
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
+
+    fun getWiredDefaultData(interactionType: InteractionType): WiredData? {
+        return try {
+            val wiredClass = wiredItems[interactionType]?.declaringClass
+            val companionObject = wiredClass?.kotlin?.companionObject
+            val companionInstance = companionObject?.objectInstance
+            val getDefaultWiredDataMethod = companionObject?.members?.find { it.name == "getDefaultWiredData" }
+            getDefaultWiredDataMethod?.call(companionInstance) as? WiredData
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     // todo: see if I can improve it
     fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?, magicRemove: Boolean = false) {

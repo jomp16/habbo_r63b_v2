@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,7 +26,50 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 
 abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
-    abstract fun setData(habboRequest: HabboRequest): Boolean
+    open fun saveWired(habboRequest: HabboRequest): Boolean {
+        roomItem.wiredData?.let {
+            val settingsIntCount = habboRequest.readInt()
+            val options = mutableListOf<Int>()
+
+            repeat(settingsIntCount) { _ ->
+                options += habboRequest.readInt()
+            }
+
+            it.options = options
+            it.message = habboRequest.readUTF()
+
+            val itemsCount = habboRequest.readInt()
+            val roomItemsIds = mutableListOf<Int>()
+
+            repeat(itemsCount) { _ ->
+                val itemId = habboRequest.readInt()
+
+                if (room.roomItems.containsKey(itemId)) {
+                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
+
+                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
+                }
+            }
+
+            it.items = roomItemsIds
+
+            if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
+                it.delay = habboRequest.readInt()
+            }
+
+            setData()
+            return true
+        }
+        return false
+    }
+
+    open fun setData() {
+        // Override in subclasses to reload internal variables
+    }
+
+    open fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        // Default implementation - override in subclasses
+    }
 
     companion object {
         fun HabboResponse.writeEmptyItems() {
@@ -35,7 +78,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
         }
 
         fun HabboResponse.writeItems(wiredData: WiredData) {
-            writeInt(5) // selectable items
+            writeInt(20) // selectable items
             if (wiredData.items.isEmpty()) writeInt(0)
             else wiredData.items.let { roomItems ->
                 writeInt(roomItems.size) // how many selected items

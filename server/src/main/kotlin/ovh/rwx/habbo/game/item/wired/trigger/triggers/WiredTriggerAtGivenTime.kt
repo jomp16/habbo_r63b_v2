@@ -29,30 +29,54 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
-class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_TRIGGER_AT_GIVEN_TIME)
+class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+    private var targetTime = 5
+    private var hasTriggered = false
 
     init {
         setData()
     }
 
     override fun setData() {
-        // No additional data to load
+        roomItem.wiredData?.let {
+            targetTime = it.options.getOrElse(0) { targetTime }
+        }
     }
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        val items = roomItem.wiredData?.items ?: return false
-        return data != null && data is RoomItem && items.any { it == data.id }
+        val currentTime = room.roomTimer.get()
+
+        if (currentTime >= targetTime && !hasTriggered) {
+            hasTriggered = true
+            return true
+        }
+
+        if (currentTime < targetTime) {
+            hasTriggered = false
+        }
+
+        return false
     }
 
 
+    fun resetTimer() {
+        hasTriggered = false
+    }
+
     override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
         habboResponse.apply {
-            writeItems(wiredData)
+            writeEmptyItems()
             writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(WiredTriggerType.STATE_CHANGED.code)
+            writeSettings(wiredData.message, wiredData.options, 1)
+            writeInt(WiredTriggerType.AT_GIVEN_TIME.code)
             writeBlockedActions(wiredData)
+        }
+    }
+
+    companion object {
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", listOf(5), "")
         }
     }
 }

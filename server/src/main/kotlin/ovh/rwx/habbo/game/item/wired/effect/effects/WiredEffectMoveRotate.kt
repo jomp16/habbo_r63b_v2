@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,12 +19,14 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.item.wired.effect.effects.WiredEffectMoveRotate.RotationState.*
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
@@ -34,42 +36,40 @@ import ovh.rwx.habbo.util.Vector2
 
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_MOVE_ROTATE)
 class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
-    private val roomItemsIds: MutableList<Int> = mutableListOf()
     private var direction: DirectionState = DirectionState.NONE
     private var rotation: RotationState = NONE
-    private var delay: Int = 0
 
     init {
+        setData()
+    }
+
+    override fun setData() {
         roomItem.wiredData?.let {
-            roomItemsIds.addAll(it.items)
             direction = DirectionState.getDirectionState(it.options.getOrElse(0) { 0 })
             rotation = RotationState.getRotationState(it.options.getOrElse(1) { 0 })
-            delay = it.delay
         }
     }
 
     override fun handle(roomUser: RoomUser?) {
+        val delay = roomItem.wiredData?.delay ?: 0
         if (delay > 0) {
             room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-
             return
         }
-
         handleThing()
     }
 
     override fun handle(event: WiredDelayEvent) {
         super.handle(event)
-
+        val delay = roomItem.wiredData?.delay ?: 0
         if (event.counter.incrementAndGet() >= delay) {
             event.finished = true
-
             handleThing()
         }
     }
 
     private fun handleThing() {
-        roomItemsIds.forEach { itemId ->
+        roomItem.wiredData?.items?.forEach { itemId ->
             val roomItem = room.roomItems[itemId] ?: return@forEach
 
             val newVector2 = getVector2(roomItem.position.vector2)
@@ -79,55 +79,26 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         }
     }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            roomItemsIds.clear()
-
-            habboRequest.readInt() // useless?
-            direction = DirectionState.getDirectionState(habboRequest.readInt())
-            rotation = RotationState.getRotationState(habboRequest.readInt())
-
-            habboRequest.readUTF()
-
-            val amount = habboRequest.readInt()
-
-            repeat(amount) {
-                val itemId = habboRequest.readInt()
-
-                if (room.roomItems.containsKey(itemId)) {
-                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
-
-                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
-                }
-            }
-
-
-            if (delay < 0) delay = 0
-            if (delay > 20) delay = 20
-
-            it.delay = delay
-            it.items = roomItemsIds.toList()
-            it.options = listOf(direction.i, rotation.i)
-
-            return true
-        }
-
-        return false
-    }
 
     private fun getVector2(currentVector2: Vector2): Vector2 {
         return when (direction) {
-            DirectionState.UP, DirectionState.DOWN, DirectionState.LEFT, DirectionState.RIGHT -> getVector2(currentVector2, direction)
+            DirectionState.UP, DirectionState.DOWN, DirectionState.LEFT, DirectionState.RIGHT -> getVector2(
+                currentVector2,
+                direction
+            )
+
             DirectionState.LEFT_RIGHT -> if (Utils.randInt(0..1) == 1) {
                 getVector2(currentVector2, DirectionState.LEFT)
             } else {
                 getVector2(currentVector2, DirectionState.RIGHT)
             }
+
             DirectionState.UP_DOWN -> if (Utils.randInt(0..1) == 1) {
                 getVector2(currentVector2, DirectionState.UP)
             } else {
                 getVector2(currentVector2, DirectionState.DOWN)
             }
+
             DirectionState.RANDOM -> when (Utils.randInt(1..4)) {
                 1 -> getVector2(currentVector2, DirectionState.UP)
                 2 -> getVector2(currentVector2, DirectionState.DOWN)
@@ -135,6 +106,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
                 4 -> getVector2(currentVector2, DirectionState.RIGHT)
                 else -> currentVector2
             }
+
             else -> currentVector2
         }
     }
@@ -152,7 +124,11 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     private fun getRotation(rotation1: Int): Int {
         return when (rotation) {
             CLOCKWISE, COUNTER_CLOCKWISE -> getRotation(rotation1, rotation)
-            RANDOM -> if (Utils.randInt(0..1) == 1) getRotation(rotation1, CLOCKWISE) else getRotation(rotation1, COUNTER_CLOCKWISE)
+            RANDOM -> if (Utils.randInt(0..1) == 1) getRotation(rotation1, CLOCKWISE) else getRotation(
+                rotation1,
+                COUNTER_CLOCKWISE
+            )
+
             else -> rotation1
         }
     }
@@ -194,6 +170,23 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
 
         companion object {
             fun getRotationState(i: Int) = values().firstOrNull { it.i == i } ?: NONE
+        }
+    }
+
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeItems(wiredData)
+            writeItemInfo(roomItem)
+            writeSettings("", wiredData.options, 2)
+            writeInt(WiredEffectType.MOVE_ROTATE.code)
+            writeDelay(wiredData)
+            writeBlockedTriggers(wiredData)
+        }
+    }
+
+    companion object {
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", listOf(0, 0), "")
         }
     }
 }

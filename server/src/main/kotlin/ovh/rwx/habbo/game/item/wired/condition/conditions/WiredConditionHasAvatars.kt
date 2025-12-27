@@ -17,20 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger.triggers
+package ovh.rwx.habbo.game.item.wired.condition.conditions
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
+import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
+import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
-class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_CONDITION_HAS_AVATARS, InteractionType.WIRED_CONDITION_HAS_NO_AVATARS)
+class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
+    private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_HAS_NO_AVATARS
 
     init {
         setData()
@@ -40,9 +41,18 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
         // No additional data to load
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+    override fun onCondition(roomUser: RoomUser?): Boolean {
         val items = roomItem.wiredData?.items ?: return false
-        return data != null && data is RoomItem && items.any { it == data.id }
+        if (items.isEmpty()) return false
+
+        val hasAvatars = items.all { itemId ->
+            val roomItem = room.roomItems[itemId] ?: return false
+            roomItem.affectedTiles.any { tile ->
+                room.roomUsers.values.any { user -> user.currentVector3.vector2 == tile }
+            }
+        }
+
+        return if (isNegative) !hasAvatars else hasAvatars
     }
 
 
@@ -51,8 +61,7 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
             writeItems(wiredData)
             writeItemInfo(roomItem)
             writeEmptySettings()
-            writeInt(WiredTriggerType.STATE_CHANGED.code)
-            writeBlockedActions(wiredData)
+            writeInt(if (isNegative) WiredConditionType.NOT_FURNI_HAVE_HABBO.code else WiredConditionType.FURNI_HAVE_HABBO.code)
         }
     }
 }
