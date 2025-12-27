@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,11 +19,13 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
@@ -32,6 +34,10 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     private var username = ""
 
     init {
+        setData()
+    }
+
+    override fun setData() {
         roomItem.wiredData?.let {
             username = it.message
         }
@@ -43,15 +49,14 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
         return username.isBlank() || roomUser != null && username == roomUser.habboSession!!.userInformation.username
     }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            habboRequest.readInt() // useless?
-            username = habboRequest.readUTF()
-            it.message = username
 
-            return true
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeEmptyItems()
+            writeItemInfo(roomItem)
+            writeSettings(wiredData.message, emptyList(), 0)
+            writeInt(WiredTriggerType.ENTER_ROOM.code)
+            writeBlockedActions(wiredData)
         }
-
-        return false
     }
 }

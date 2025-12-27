@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,6 +25,9 @@ import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
@@ -44,10 +47,16 @@ class WiredHandler {
     fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): Boolean {
         for ((vector2, wiredStackMap) in wiredStack) {
             wiredStackMap.values.forEach { wiredItem ->
-                if (wiredItem is WiredTrigger && triggerClass.java.isInstance(wiredItem) && wiredItem.onTrigger(roomUser, data)) {
+                if (wiredItem is WiredTrigger && triggerClass.java.isInstance(wiredItem) && wiredItem.onTrigger(
+                        roomUser,
+                        data
+                    )
+                ) {
                     lightWired(wiredItem)
 
-                    if (triggerCondition(vector2, roomUser)) triggerAction(vector2, roomUser)
+                    if (triggerCondition(vector2, roomUser)) {
+                        triggerAction(vector2, roomUser)
+                    }
 
                     return true
                 }
@@ -85,13 +94,25 @@ class WiredHandler {
         wiredItem.roomItem.requestCycles(1)
     }
 
+    fun resetTimers() {
+        wiredStack.values.forEach { wiredStackMap ->
+            wiredStackMap.values.forEach { wiredItem ->
+                when (wiredItem) {
+                    is WiredTriggerPeriodically -> wiredItem.resetTimer()
+                    is WiredTriggerPeriodicallyLong -> wiredItem.resetTimer()
+                    is WiredTriggerAtGivenTime -> wiredItem.resetTimer()
+                }
+            }
+        }
+    }
+
     fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest): Boolean {
         val vector2 = roomItem.position.vector2
 
         if (!wiredStack.containsKey(vector2) || !wiredStack[vector2]!!.containsKey(roomItem.id)) return false
         val wiredItem = wiredStack[vector2]!![roomItem.id]!!
 
-        if (wiredItem.setData(habboRequest)) {
+        if (wiredItem.saveWired(habboRequest)) {
             roomItem.update(updateDb = true, updateClient = false)
 
             return true

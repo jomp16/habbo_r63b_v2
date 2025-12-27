@@ -29,29 +29,33 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
-class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_TRIGGER_LEAVE_ROOM)
+class WiredTriggerLeaveRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+    private var username = ""
 
     init {
         setData()
     }
 
     override fun setData() {
-        // No additional data to load
+        roomItem.wiredData?.let {
+            username = it.message
+        }
     }
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        val items = roomItem.wiredData?.items ?: return false
-        return data != null && data is RoomItem && items.any { it == data.id }
+        if (roomItem.wiredData == null) return false
+
+        return username.isBlank() || roomUser != null && username == roomUser.habboSession!!.userInformation.username
     }
 
 
     override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
         habboResponse.apply {
-            writeItems(wiredData)
+            writeEmptyItems()
             writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(WiredTriggerType.STATE_CHANGED.code)
+            writeSettings(wiredData.message, emptyList(), 0)
+            writeInt(WiredTriggerType.ENTER_ROOM.code)
             writeBlockedActions(wiredData)
         }
     }

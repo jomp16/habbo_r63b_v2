@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,11 +19,13 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
@@ -33,9 +35,13 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
     private var onlyOwner = false
 
     init {
+        setData()
+    }
+
+    override fun setData() {
         roomItem.wiredData?.let {
             message = it.message
-            onlyOwner = if (it.options.size == 1) it.options[0] == 1 else false
+            onlyOwner = it.options.getOrElse(0) { 0 } == 1
         }
     }
 
@@ -45,20 +51,20 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
         return data.toLowerCase().contains(message) && (onlyOwner || room.hasRights(roomUser.habboSession, true))
     }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            habboRequest.readInt() // useless?
-            onlyOwner = habboRequest.readInt() == 1
-            message = habboRequest.readUTF().trim().toLowerCase()
 
-            if (message.length > 100) message = message.substring(0, 100)
-
-            it.message = message
-            it.options = listOf(if (onlyOwner) 1 else 0)
-
-            return true
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeEmptyItems()
+            writeItemInfo(roomItem)
+            writeSettings(wiredData.message, wiredData.options, 1)
+            writeInt(WiredTriggerType.SAY_SOMETHING.code)
+            writeBlockedActions(wiredData)
         }
+    }
 
-        return false
+    companion object {
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", listOf(0), "")
+        }
     }
 }

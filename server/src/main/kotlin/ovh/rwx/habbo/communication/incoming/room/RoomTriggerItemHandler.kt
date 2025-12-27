@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -55,7 +55,15 @@ class RoomTriggerItemHandler {
             val interactor = item.furnishing.interactor
 
             when {
-                interactor != null -> interactor.onTrigger(it, habboSession.roomUser, item, it.hasRights(habboSession), habboRequest.readInt())
+                interactor != null -> {
+                    interactor.onTrigger(
+                        it,
+                        habboSession.roomUser,
+                        item,
+                        it.hasRights(habboSession),
+                        habboRequest.readInt()
+                    )
+                }
                 else -> {
                     if (item.furnishing.interactionType != InteractionType.NOT_FOUND) habboSession.sendNotification("No interactor for this furnishing!\n\nInteractor type:\n\n${item.furnishing.interactionType.name}")
                     else habboSession.sendNotification("I don't know which interactor this furni uses!\n\nItem name: ${item.itemName}")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,12 +19,14 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -33,32 +35,28 @@ import ovh.rwx.habbo.util.Vector3
 
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_TELEPORT_TO)
 class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
-    private val roomItemsIds: MutableList<Int> = mutableListOf()
-    private var delay: Int = 0
-
     init {
-        roomItem.wiredData?.let {
-            roomItemsIds.addAll(it.items)
-            delay = it.delay
-        }
+        setData()
+    }
+
+    override fun setData() {
+        // No additional data to load
     }
 
     override fun handle(roomUser: RoomUser?) {
+        val delay = roomItem.wiredData?.delay ?: 0
         if (delay > 0) {
             room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-
             return
         }
-
         handleThing(roomUser)
     }
 
     override fun handle(event: WiredDelayEvent) {
         super.handle(event)
-
+        val delay = roomItem.wiredData?.delay ?: 0
         if (event.counter.incrementAndGet() >= delay) {
             event.finished = true
-
             handleThing(event.roomUser)
         }
     }
@@ -67,10 +65,10 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
         if (roomUser == null) return
 
         val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
+        val items = this.roomItem.wiredData?.items ?: return
 
-        val roomItemId = if (roomItem != null) roomItemsIds.minus(roomItem.id).random() else roomItemsIds.random()
-
-        if (!room.roomItems.containsKey(roomItemId)) return
+        val roomItemId = if (roomItem != null) items.minus(roomItem.id).randomOrNull() else items.randomOrNull()
+        if (roomItemId == null || !room.roomItems.containsKey(roomItemId)) return
 
         roomItem?.onUserWalksOff(roomUser, true)
 
@@ -101,36 +99,15 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
         }
     }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            roomItemsIds.clear()
 
-            habboRequest.readInt() // useless?
-            habboRequest.readUTF() // useless
-
-            val amount = habboRequest.readInt()
-
-            repeat(amount) {
-                val itemId = habboRequest.readInt()
-
-                if (room.roomItems.containsKey(itemId)) {
-                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
-
-                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
-                }
-            }
-
-            delay = habboRequest.readInt()
-
-            if (delay < 0) delay = 0
-            if (delay > 20) delay = 20
-
-            it.delay = delay
-            it.items = roomItemsIds.toList()
-
-            return true
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeItems(wiredData)
+            writeItemInfo(roomItem)
+            writeEmptySettings()
+            writeInt(WiredEffectType.TELEPORT.code)
+            writeDelay(wiredData)
+            writeBlockedTriggers(wiredData)
         }
-
-        return false
     }
 }

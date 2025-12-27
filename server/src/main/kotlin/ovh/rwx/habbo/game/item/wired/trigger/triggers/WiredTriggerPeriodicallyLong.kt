@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,11 +19,13 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
@@ -33,8 +35,12 @@ class WiredTriggerPeriodicallyLong(room: Room, roomItem: RoomItem) : WiredTrigge
     private var delayState = 0
 
     init {
+        setData()
+    }
+
+    override fun setData() {
         roomItem.wiredData?.let {
-            delay = if (it.options.size == 1) it.options[0] * 10 else 10
+            delay = it.options.getOrElse(0) { delay } * 10
         }
     }
 
@@ -48,22 +54,24 @@ class WiredTriggerPeriodicallyLong(room: Room, roomItem: RoomItem) : WiredTrigge
         return false
     }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            habboRequest.readInt() // useless?
-            delay = habboRequest.readInt()
 
-            if (delay < 0) delay = 1
-            else if (delay > 120) delay = 120
+    fun resetTimer() {
+        delayState = 0
+    }
 
-            it.options = listOf(delay)
-
-            delayState = 0
-            delay *= 10
-
-            return true
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeEmptyItems()
+            writeItemInfo(roomItem)
+            writeSettings(wiredData.message, wiredData.options, 1)
+            writeInt(WiredTriggerType.PERIODICALLY_LONG.code)
+            writeBlockedActions(wiredData)
         }
+    }
 
-        return false
+    companion object {
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", listOf(1), "")
+        }
     }
 }

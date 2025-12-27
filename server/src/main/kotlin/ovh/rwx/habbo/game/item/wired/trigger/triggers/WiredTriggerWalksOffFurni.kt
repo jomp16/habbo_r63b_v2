@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,49 +19,40 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI)
 class WiredTriggerWalksOffFurni(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private val roomItemsIds: MutableList<Int> = mutableListOf()
 
     init {
-        roomItem.wiredData?.let {
-            roomItemsIds.addAll(it.items)
-        }
+        setData()
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean = data != null && data is RoomItem && roomItemsIds.any { it == data.id }
+    override fun setData() {
+        // No additional data to load
+    }
 
-    override fun setData(habboRequest: HabboRequest): Boolean {
-        roomItem.wiredData?.let {
-            roomItemsIds.clear()
+    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+        val items = roomItem.wiredData?.items ?: return false
+        return data != null && data is RoomItem && items.any { it == data.id }
+    }
 
-            habboRequest.readInt() // useless?
-            habboRequest.readUTF() // useless?
-            val amount = habboRequest.readInt()
 
-            repeat(amount) {
-                val itemId = habboRequest.readInt()
-
-                if (room.roomItems.containsKey(itemId)) {
-                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
-
-                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) roomItemsIds += itemId
-                }
-            }
-
-            it.items = roomItemsIds.toList()
-
-            return true
+    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
+        habboResponse.apply {
+            writeItems(wiredData)
+            writeItemInfo(roomItem)
+            writeEmptySettings()
+            writeInt(WiredTriggerType.WALKS_OFF_FURNI.code)
+            writeBlockedActions(wiredData)
         }
-
-        return false
     }
 }

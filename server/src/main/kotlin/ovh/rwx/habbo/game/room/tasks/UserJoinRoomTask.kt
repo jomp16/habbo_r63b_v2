@@ -177,7 +177,10 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             room.sendHabboResponse(OutgoingR63A.ROOM_USERS, listOf(roomUser))
             room.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomUser))
         }
-        // Reset empty counter
-        if (room.emptyCounter.get() > 0) room.emptyCounter.set(0)
+        // Reset empty counter and room timer if room was empty
+        if (room.emptyCounter.get() > 0) {
+            room.emptyCounter.set(0)
+            room.roomTimer.set(0)
+        }
     }
 }

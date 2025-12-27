@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,28 +22,28 @@ package ovh.rwx.habbo.game.item.wired.effect
 enum class WiredEffectType(val code: Int) {
     TOGGLE_STATE(0),
     RESET_TIMERS(1),
-    MATCH_SSHOT(3),
-    MOVE_ROTATE(4),
-    GIVE_SCORE(6),
-    SHOW_MESSAGE(7),
+    MATCH_SSHOT(3), // has custom UI
+    MOVE_ROTATE(4), // has custom UI
+    GIVE_SCORE(6), // has custom UI
+    SHOW_MESSAGE(7), // has custom UI
     TELEPORT(8),
-    JOIN_TEAM(9),
+    JOIN_TEAM(9), // has custom UI
     LEAVE_TEAM(10),
     CHASE(11),
     FLEE(12),
-    MOVE_DIRECTION(13),
-    GIVE_SCORE_TEAM(14),
+    MOVE_DIRECTION(13), // has custom UI
+    GIVE_SCORE_TEAM(14), // has custom UI
     TOGGLE_RANDOM(15),
-    MOVE_FURNI_TO(16),
-    GIVE_REWARD(17),
+    MOVE_FURNI_TO(16), // has custom UI
+    GIVE_REWARD(17), // has custom UI
     CALL_STACKS(18),
-    KICK_USER(19),
-    MUTE_TRIGGER(20),
-    BOT_TELEPORT(21),
-    BOT_MOVE(22),
-    BOT_TALK(23),
-    BOT_GIVE_HANDITEM(24),
-    BOT_FOLLOW_AVATAR(25),
-    BOT_CLOTHES(26),
-    BOT_TALK_TO_AVATAR(27)
+    KICK_USER(19), // has custom UI
+    MUTE_TRIGGER(20), // has custom UI
+    BOT_TELEPORT(21), // has custom UI
+    BOT_MOVE(22), // has custom UI
+    BOT_TALK(23), // has custom UI
+    BOT_GIVE_HANDITEM(24), // has custom UI
+    BOT_FOLLOW_AVATAR(25), // has custom UI
+    BOT_CLOTHES(26), // has custom UI
+    BOT_TALK_TO_AVATAR(27) // has custom UI
 }

@@ -28,22 +28,18 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_EFFECT_SHOW_MESSAGE)
-class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
-    private var message: String = ""
+@WiredItemInteractor(InteractionType.WIRED_EFFECT_RESET_TIMERS)
+class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
 
     init {
         setData()
     }
 
     override fun setData() {
-        roomItem.wiredData?.let {
-            message = it.message
-        }
+        // No additional data to load
     }
 
     override fun handle(roomUser: RoomUser?) {
@@ -65,10 +61,11 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
     }
 
     private fun handleThing(roomUser: RoomUser?) {
-        if (!message.isBlank()) {
-            if (roomUser != null) roomUser.chat(roomUser.virtualID, message, 1, ChatType.WHISPER, true)
-            else room.roomUsers.values.forEach { it.chat(it.virtualID, message, 1, ChatType.WHISPER, true) }
-        }
+        // Reset room timer
+        room.roomTimer.set(0)
+
+        // Reset all wired triggers with internal timers
+        room.wiredHandler.resetTimers()
     }
 
 
@@ -76,8 +73,8 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
         habboResponse.apply {
             writeEmptyItems()
             writeItemInfo(roomItem)
-            writeSettings(wiredData.message, emptyList(), 0)
-            writeInt(WiredEffectType.SHOW_MESSAGE.code)
+            writeEmptySettings()
+            writeInt(WiredEffectType.RESET_TIMERS.code)
             writeDelay(wiredData)
             writeBlockedTriggers(wiredData)
         }

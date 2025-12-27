@@ -17,21 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger
+package ovh.rwx.habbo.communication.incoming.room
 
-enum class WiredTriggerType(val code: Int) {
-    SAY_SOMETHING(0), // has custom UI
-    WALKS_ON_FURNI(1),
-    WALKS_OFF_FURNI(2),
-    AT_GIVEN_TIME(3), // has custom UI
-    STATE_CHANGED(4),
-    PERIODICALLY(6), // has custom UI
-    ENTER_ROOM(7), // has custom UI
-    GAME_STARTS(8),
-    GAME_ENDS(9),
-    SCORE_ACHIEVED(10), // has custom UI
-    COLLISION(11),
-    PERIODICALLY_LONG(12), // has custom UI
-    BOT_REACHED_STF(13), // has custom UI
-    BOT_REACHED_AVTR(14), // has custom UI
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.user.HabboSession
+
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomUserDropHanditemHandler {
+    @Handler(Incoming.ROOM_USER_DROP_HANDITEM)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+
+        habboSession.roomUser?.carryHandItem(-1)
+    }
 }

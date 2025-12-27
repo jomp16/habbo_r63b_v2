@@ -17,22 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger.triggers
+package ovh.rwx.habbo.game.item.wired.condition.conditions
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
-import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
+import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
+import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIODICALLY)
-class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var delay = 1
-    private var delayState = 0
+@WiredItemInteractor(InteractionType.WIRED_CONDITION_USER_COUNT_IN, InteractionType.WIRED_CONDITION_NOT_USER_COUNT)
+class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
+    private var minUsers: Int = 1
+    private var maxUsers: Int = 50
+    private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_NOT_USER_COUNT
 
     init {
         setData()
@@ -40,38 +41,32 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
 
     override fun setData() {
         roomItem.wiredData?.let {
-            delay = it.options.getOrElse(0) { delay }
+            minUsers = it.options.getOrElse(0) { minUsers }
+            maxUsers = it.options.getOrElse(1) { maxUsers }
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        if (++delayState >= delay) {
-            delayState = 0
-
-            return true
-        }
-
-        return false
+    override fun onCondition(roomUser: RoomUser?): Boolean {
+        val userCount = room.roomUsers.size
+        val inRange = userCount in minUsers..maxUsers
+        return if (isNegative) !inRange else inRange
     }
 
-
-    fun resetTimer() {
-        delayState = 0
-    }
 
     override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
         habboResponse.apply {
             writeEmptyItems()
             writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 1)
-            writeInt(WiredTriggerType.PERIODICALLY.code)
-            writeBlockedActions(wiredData)
+            writeSettings(wiredData.message, wiredData.options, 2)
+            writeInt(if (isNegative) WiredConditionType.NOT_USER_COUNT.code else WiredConditionType.USER_COUNT.code)
+            writeDelay(wiredData)
+            writeBlockedTriggers(wiredData)
         }
     }
 
     companion object {
         fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(1), "")
+            return WiredData(0, 0, emptyList(), "", listOf(1, 50), "")
         }
     }
 }

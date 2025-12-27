@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerLeaveRoom
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -33,5 +34,7 @@ class UserPartRoomTask(
         // todo: trade
         room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomUser.virtualID)
         room.sendHabboResponse(OutgoingR63A.ROOM_USER_REMOVE, roomUser.virtualID)
+
+        room.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomUser, null)
     }
 }
