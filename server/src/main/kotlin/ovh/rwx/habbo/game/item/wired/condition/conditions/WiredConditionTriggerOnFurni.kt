@@ -19,9 +19,7 @@
 
 package ovh.rwx.habbo.game.item.wired.condition.conditions
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
@@ -29,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(
     InteractionType.WIRED_CONDITION_TRIGGER_ON_FURNI,
     InteractionType.WIRED_CONDITION_NOT_TRIGGER_ON_FURNI
@@ -40,9 +39,8 @@ class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondit
         setData()
     }
 
-    override fun setData() {
-        // No additional data to load
-    }
+    override fun code() =
+        if (isNegative) WiredConditionType.NOT_TRIGGERER_IS_ON_FURNI.code else WiredConditionType.TRIGGERER_IS_ON_FURNI.code
 
     override fun onCondition(roomUser: RoomUser?): Boolean {
         if (roomUser == null) return false
@@ -57,15 +55,5 @@ class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondit
         }
 
         return if (isNegative) !isOnFurni else isOnFurni
-    }
-
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeItems(wiredData)
-            writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(if (isNegative) WiredConditionType.NOT_ACTOR_ON_FURNI.code else WiredConditionType.TRIGGER_ON_FURNI.code)
-        }
     }
 }

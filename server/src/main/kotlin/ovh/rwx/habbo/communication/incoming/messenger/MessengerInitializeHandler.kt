@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,9 +33,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.habboMessenger.initialized) return
-
-        habboSession.habboMessenger.load()
+        if (!habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 300, 1100)
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
@@ -43,23 +41,17 @@ class MessengerInitializeHandler {
             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, it.first, it.second, it.third)
         }
 
-        habboSession.habboMessenger.initialized = true
-
         habboSession.habboMessenger.notifyFriends()
     }
     
     @HandlerR63A(IncomingR63A.MESSENGER_INIT)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.habboMessenger.initialized) return
-
-        habboSession.habboMessenger.load()
+        if (!habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_FRIENDS, 300, 1100, habboSession.habboMessenger.friends.values)
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, it.first, it.second)
         }
-
-        habboSession.habboMessenger.initialized = true
 
         habboSession.habboMessenger.notifyFriends()
     }

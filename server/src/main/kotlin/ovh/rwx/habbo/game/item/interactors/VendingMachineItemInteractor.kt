@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,24 +25,37 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused")
-class GateFurniInteractor : ItemInteractor() {
-    override val interactionType = listOf(InteractionType.GATE)
+class VendingMachineItemInteractor : ItemInteractor() {
+    override val interactionType = listOf(InteractionType.VENDING_MACHINE)
 
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
         super.onTrigger(room, roomUser, roomItem, hasRights, request)
 
-        if (!hasRights) return
+        if (roomUser == null) return
 
-        if (roomItem.canClose()) {
-            roomItem.affectedTiles.forEach { room.roomGamemap.blockedItem[it.x][it.y] = roomItem.extraData != "0" }
+        if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation)) {
+            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
 
-            roomItem.extraData = if (roomItem.extraData == "0") "1" else "0"
-
-            roomItem.update(updateDb = true, updateClient = true)
+            return
         }
 
-        if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        roomItem.extraData = "1"
+        roomItem.update(updateDb = false, updateClient = true)
+
+        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(roomItem.furnishing.vendingIds.indices)])
+
+        roomItem.requestCycles(2)
+
+        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+    }
+
+    override fun onCycle(room: Room, roomItem: RoomItem) {
+        super.onCycle(room, roomItem)
+
+        roomItem.extraData = "0"
+        roomItem.update(updateDb = false, updateClient = true)
     }
 }

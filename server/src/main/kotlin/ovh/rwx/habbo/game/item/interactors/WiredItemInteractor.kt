@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,49 +19,57 @@
 
 package ovh.rwx.habbo.game.item.interactors
 
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused")
-class HabboWheelFurniInteractor : ItemInteractor() {
-    override val interactionType = listOf(InteractionType.HABBO_WHEEL)
+class WiredItemInteractor : ItemInteractor() {
+    override val interactionType = InteractionType.values().filter { it.name.startsWith("WIRED") }
 
     override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onPlace(room, roomUser, roomItem)
 
-        roomItem.extraData = "1"
+        roomItem.extraData = "0"
     }
 
     override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onRemove(room, roomUser, roomItem)
 
-        roomItem.extraData = "-1"
+        roomItem.extraData = "0"
     }
 
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
         super.onTrigger(room, roomUser, roomItem, hasRights, request)
 
-        if (!hasRights) return
+        if (!hasRights || roomItem.wiredData == null) return
 
-        if (roomItem.extraData != "-1") {
-            roomItem.extraData = "-1"
-            roomItem.update(updateDb = false, updateClient = true)
-            roomItem.requestCycles(10)
+        roomItem.extraData = "1"
+        roomItem.update(updateDb = false, updateClient = true)
+        roomItem.requestCycles(1)
+        val outgoing = when {
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_EXTRA") -> Outgoing.WIRED_ADDON_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> Outgoing.WIRED_SELECTOR_DIALOG
+            roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE") -> Outgoing.WIRED_VARIABLE_DIALOG
+            else -> return
         }
 
-        if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        roomUser?.habboSession?.sendHabboResponse(outgoing, roomItem, roomItem.wiredData)
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
 
-        roomItem.extraData = Utils.randInt(1 until 10).toString()
+        if (roomItem.extraData == "1") {
+            roomItem.extraData = "0"
 
-        roomItem.update(updateDb = true, updateClient = true)
+            roomItem.update(updateDb = false, updateClient = true)
+        }
     }
 }

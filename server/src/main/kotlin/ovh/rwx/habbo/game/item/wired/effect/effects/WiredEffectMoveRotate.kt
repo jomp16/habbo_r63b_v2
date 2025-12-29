@@ -19,29 +19,28 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
-import ovh.rwx.habbo.game.item.wired.effect.effects.WiredEffectMoveRotate.RotationState.*
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_MOVE_ROTATE)
 class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     private var direction: DirectionState = DirectionState.NONE
-    private var rotation: RotationState = NONE
+    private var rotation: RotationState = RotationState.NONE
 
     init {
         setData()
     }
+
+    override fun code() = WiredEffectType.MOVE_FURNI.code
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -50,25 +49,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         }
     }
 
-    override fun handle(roomUser: RoomUser?) {
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-            return
-        }
-        handleThing()
-    }
-
-    override fun handle(event: WiredDelayEvent) {
-        super.handle(event)
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (event.counter.incrementAndGet() >= delay) {
-            event.finished = true
-            handleThing()
-        }
-    }
-
-    private fun handleThing() {
+    override fun onEffect(roomUser: RoomUser?) {
         roomItem.wiredData?.items?.forEach { itemId ->
             val roomItem = room.roomItems[itemId] ?: return@forEach
 
@@ -123,10 +104,13 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
 
     private fun getRotation(rotation1: Int): Int {
         return when (rotation) {
-            CLOCKWISE, COUNTER_CLOCKWISE -> getRotation(rotation1, rotation)
-            RANDOM -> if (Utils.randInt(0..1) == 1) getRotation(rotation1, CLOCKWISE) else getRotation(
+            RotationState.CLOCKWISE, RotationState.COUNTER_CLOCKWISE -> getRotation(rotation1, rotation)
+            RotationState.RANDOM -> if (Utils.randInt(0..1) == 1) getRotation(
                 rotation1,
-                COUNTER_CLOCKWISE
+                RotationState.CLOCKWISE
+            ) else getRotation(
+                rotation1,
+                RotationState.COUNTER_CLOCKWISE
             )
 
             else -> rotation1
@@ -136,10 +120,10 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     private fun getRotation(rotation1: Int, rotationState: RotationState): Int {
         var rotation = rotation1
 
-        if (rotationState == CLOCKWISE) {
+        if (rotationState == RotationState.CLOCKWISE) {
             rotation += 2
             if (rotation > 6) rotation = 0
-        } else if (rotationState == COUNTER_CLOCKWISE) {
+        } else if (rotationState == RotationState.COUNTER_CLOCKWISE) {
             rotation -= 2
             if (rotation < 0) rotation = 6
         }
@@ -173,18 +157,8 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         }
     }
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeItems(wiredData)
-            writeItemInfo(roomItem)
-            writeSettings("", wiredData.options, 2)
-            writeInt(WiredEffectType.MOVE_ROTATE.code)
-            writeDelay(wiredData)
-            writeBlockedTriggers(wiredData)
-        }
-    }
-
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0, 0), "")
         }

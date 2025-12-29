@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -67,7 +67,16 @@ class RoomGamemap(private val room: Room) {
     }
 
     fun removeRoomUser(roomUser: RoomUser, vector2: Vector2) {
+        // Remove from specific position
         if (roomUserMap.containsKey(vector2)) roomUserMap[vector2]?.remove(roomUser)
+
+        // Clean up any remaining references to this user in all positions
+        roomUserMap.values.forEach { userSet ->
+            userSet.remove(roomUser)
+        }
+
+        // Remove empty sets
+        roomUserMap.entries.removeAll { it.value.isEmpty() }
     }
 
     fun updateRoomUserMovement(roomUser: RoomUser, oldVector2: Vector2, newVector2: Vector2) {

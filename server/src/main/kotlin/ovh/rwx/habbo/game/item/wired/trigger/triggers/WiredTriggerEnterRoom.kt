@@ -19,9 +19,7 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
@@ -37,6 +35,8 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
         setData()
     }
 
+    override fun code() = WiredTriggerType.AVATAR_ENTERS_ROOM.code
+
     override fun setData() {
         roomItem.wiredData?.let {
             username = it.message
@@ -47,16 +47,5 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
         if (roomItem.wiredData == null) return false
 
         return username.isBlank() || roomUser != null && username == roomUser.habboSession!!.userInformation.username
-    }
-
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, emptyList(), 0)
-            writeInt(WiredTriggerType.ENTER_ROOM.code)
-            writeBlockedActions(wiredData)
-        }
     }
 }

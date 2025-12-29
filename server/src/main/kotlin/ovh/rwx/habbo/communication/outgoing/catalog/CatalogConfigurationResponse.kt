@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,14 +28,17 @@ class CatalogConfigurationResponse {
     @Response(Outgoing.CATALOG_CONFIGURATION)
     fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
-            writeBoolean(true)
+            writeBoolean(true) // isEnabled
             writeInt(1) // commission
-            writeInt(0)
-            writeInt(0)
-            writeInt(1)
-            writeInt(25000)
-            writeInt(48)
-            writeInt(7) // days
+            writeInt(0) // tokenBatchPrice
+            writeInt(0) // tokenBatchSize
+            writeInt(1) // offerMinPrice
+            writeInt(25000) // offerMaxPrice
+            writeInt(48) // expirationHours
+            writeInt(7) // averagePricePeriod
+            writeInt(0) // sellingFeePercentage
+            writeInt(0) // revenueLimit
+            writeInt(0) // halfTaxLimit
         }
     }
 }

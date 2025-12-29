@@ -20,18 +20,28 @@
 package ovh.rwx.habbo.game.item.wired.trigger
 
 enum class WiredTriggerType(val code: Int) {
-    SAY_SOMETHING(0), // has custom UI
+    AVATAR_SAYS_SOMETHING(0), // has custom UI
     WALKS_ON_FURNI(1),
     WALKS_OFF_FURNI(2),
-    AT_GIVEN_TIME(3), // has custom UI
-    STATE_CHANGED(4),
-    PERIODICALLY(6), // has custom UI
-    ENTER_ROOM(7), // has custom UI
+    TRIGGER_ONCE(3), // has custom UI
+    USE_STUFF(4),
+    TRIGGER_PERIODICALLY(6), // has custom UI
+    AVATAR_ENTERS_ROOM(7),
     GAME_STARTS(8),
     GAME_ENDS(9),
     SCORE_ACHIEVED(10), // has custom UI
-    COLLISION(11),
-    PERIODICALLY_LONG(12), // has custom UI
-    BOT_REACHED_STF(13), // has custom UI
-    BOT_REACHED_AVTR(14), // has custom UI
+    AVATAR_CAUGHT(11),
+    PERIODIC_LONG(12), // has custom UI
+    BOT_DESTINATION_REACHED(13), // has custom UI
+    BOT_AVATAR_REACHED(14), // has custom UI
+    CLOCK_REACH_TIME(15), // has custom UI
+    UNKNOWN_16(16), // has custom UI
+    RECEIVE_SIGNAL(17),
+    AVATAR_CLICKS_FURNI(18),
+    PERIODIC_SHORT(19), // has custom UI
+    STATE_CHANGE(20), // has custom UI
+    UNKNOWN_21(21),
+    VARIABLE_UPDATE(22), // has custom UI
+    AVATAR_LEAVES_ROOM(23),
+    USER_CLICKS_USER(24)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,7 +24,8 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.game.room.tasks.ChatType
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -43,17 +44,18 @@ class RoomUserChatTalkHandler {
             habboSession.roomUser!!.virtualID,
             message,
             bubble,
-            if (!isR63A && habboRequest.incoming == Incoming.ROOM_USER_SHOUT || isR63A && habboRequest.incomingR63A == IncomingR63A.ROOM_USER_SHOUT) ChatType.SHOUT else ChatType.CHAT,
+            if (!isR63A && habboRequest.incoming == Incoming.ROOM_USER_SHOUT || isR63A && habboRequest.incomingR63A == IncomingR63A.ROOM_USER_SHOUT) RoomChatType.SHOUT else RoomChatType.CHAT,
             false
         )
     }
 
-    private fun parse(habboRequest: HabboRequest, isR63A: Boolean): Pair<String, Int>? {
+    private fun parse(habboRequest: HabboRequest, isR63A: Boolean): Pair<String, RoomChatMessageBubbles>? {
         var message = habboRequest.readUTF().trim()
 
         if (message.isBlank()) return null
         if (message.length > Byte.MAX_VALUE) message = message.substring(0, Byte.MAX_VALUE.toInt())
-        val bubble = if (isR63A) -1 else habboRequest.readInt()
+        val bubble =
+            if (isR63A) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
 
         return Pair(message, bubble)
     }

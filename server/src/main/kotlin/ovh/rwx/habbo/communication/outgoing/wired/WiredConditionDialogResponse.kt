@@ -37,8 +37,15 @@ class WiredConditionDialogResponse {
         }
     }
 
-    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData) {
+    @Response(Outgoing.WIRED_CONDITION_DIALOG)
+    fun responseHabboAir(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
+        habboResponse.apply {
+            parseWired(roomItem, wiredData, true)
+        }
+    }
+
+    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData, habboAir: Boolean = false) {
         val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
-        wiredInstance?.writeDialog(this, wiredData)
+        wiredInstance?.writeDialog(this, wiredData, habboAir)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,6 +33,25 @@ class WiredSaveHandler {
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
 
-        if (habboSession.currentRoom!!.wiredHandler.saveWired(roomItem, habboRequest)) habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
+        if (habboSession.currentRoom!!.wiredHandler.saveWired(roomItem, habboRequest)) habboSession.sendHabboResponse(
+            Outgoing.WIRED_SAVED
+        )
+    }
+
+    @Handler(
+        Incoming.WIRED_SAVE_TRIGGER, Incoming.WIRED_SAVE_EFFECT, Incoming.WIRED_SAVE_CONDITION,
+        Incoming.WIRED_SAVE_ADDON, Incoming.WIRED_SAVE_SELECTOR, Incoming.WIRED_SAVE_VARIABLES
+    )
+    fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.currentRoom == null) return
+        val itemId = habboRequest.readInt()
+        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+
+        if (habboSession.currentRoom!!.wiredHandler.saveWired(
+                roomItem,
+                habboRequest,
+                true
+            )
+        ) habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
     }
 }

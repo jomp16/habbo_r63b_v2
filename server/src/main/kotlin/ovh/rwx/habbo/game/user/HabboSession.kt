@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -194,6 +194,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         CoroutineScope(HabboServer.cachedExecutorDispatcher).launch {
             launch { habboSubscription.load() }
             launch { habboBadge.load() }
+            launch { habboMessenger.load() }
             launch {
                 habboInventory.load()
 
@@ -360,15 +361,17 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         userStats.favoriteGroup?.let {
             room.loadedGroups.add(it)
 
-            room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+            room.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
             room.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
         }
 
         if (release != "R63A") {
             if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
             else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
-            sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+            sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
             sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
+//            sendHabboResponse(Outgoing.USER_NFT_CHAT_STYLES, room.roomModel.id, room.roomData.id)
+            sendHabboResponse(Outgoing.FLOOR_PLAN_DOOR, room.roomModel.doorVector3, room.roomModel.doorDir)
 
             if (room.roomData.wallpaper != "0.0") sendHabboResponse(
                 Outgoing.ROOM_DECORATION,
@@ -381,6 +384,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 "landscape",
                 room.roomData.landscape
             )
+
+            room.addUser(this)
         } else {
             sendHabboResponse(OutgoingR63A.ROOM_OPEN)
             sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")

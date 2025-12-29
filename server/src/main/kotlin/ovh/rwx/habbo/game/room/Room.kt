@@ -239,6 +239,27 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(roomData.tags.size)
 
             roomData.tags.forEach { writeUTF(it) }
+
+            // value is defined by
+            //  if((_loc2_ & 1) > 0)
+            //         {
+            //            _SafeStr_9144 = param1.readString(); - officialRoomPicRef
+            //         }
+            //         if((_loc2_ & 2) > 0)
+            //         {
+            //            _SafeStr_8973 = param1.readInteger(); - habboGroupId
+            //            _groupName = param1.readString();
+            //            _SafeStr_8879 = param1.readString(); - groupBadgeCode
+            //         }
+            //         if((_loc2_ & 4) > 0)
+            //         {
+            //            _SafeStr_9315 = param1.readString(); - roomAdName
+            //            _SafeStr_9318 = param1.readString(); - roomAdDescription
+            //            _SafeStr_8487 = param1.readInteger(); - roomAdExpiresInMin
+            //         }
+            //         _SafeStr_9049 = (_loc2_ & 8) > 0; - showOwner
+            //         _SafeStr_8255 = (_loc2_ & 0x10) > 0; - allowPets
+            //         _SafeStr_9542 = (_loc2_ & 0x20) > 0; - displayRoomEntryAd
             var value = if (enterRoom) 32 else 0
 
             group?.let { value += 2 }
@@ -330,6 +351,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         if (position == roomModel.doorVector3.vector2) return false
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
+        if (roomGamemap.isBlocked(position, true)) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(
             position.x,
@@ -339,8 +361,14 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             roomItem.furnishing.height
         ).forEach {
             if (!onlyRotation && roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
-                // cannot set item, because at least one tile is blocked
-                return false
+                // Check if the blocked tile is from the same item being moved
+                val itemsOnTile = roomGamemap.roomItemMap[it] ?: emptyList()
+                val isOwnTile = itemsOnTile.any { item -> item.id == roomItem.id }
+
+                if (!isOwnTile) {
+                    // cannot set item, because at least one tile is blocked by another item
+                    return false
+                }
             }
         }
         val affectedTiles = HashSet<Vector2>()

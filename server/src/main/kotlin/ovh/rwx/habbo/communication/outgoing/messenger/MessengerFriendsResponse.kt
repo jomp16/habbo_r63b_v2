@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,9 +31,9 @@ class MessengerFriendsResponse {
     @Response(Outgoing.MESSENGER_FRIENDS)
     fun response(habboResponse: HabboResponse, friends: Collection<MessengerFriend>) {
         habboResponse.apply {
-            writeInt(1)
-            writeInt(0)
-            writeInt(friends.size)
+            writeInt(1) // total fragments
+            writeInt(0) // fragmentNo
+            writeInt(friends.size) // count friendFragment
 
             friends.forEach { serialize(it) }
         }

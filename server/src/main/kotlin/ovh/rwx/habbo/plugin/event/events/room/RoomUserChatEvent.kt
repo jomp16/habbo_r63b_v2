@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,13 +20,14 @@
 package ovh.rwx.habbo.plugin.event.events.room
 
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 class RoomUserChatEvent(
         room: Room,
         val roomUser: RoomUser,
         val message: String,
-        val bubble: Int,
-        val type: ChatType
+        val bubble: RoomChatMessageBubbles,
+        val type: RoomChatType
 ) : IRoomEvent(room)

@@ -52,43 +52,44 @@ data class CatalogItem(
     val limited = limitedTotal > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
+        val isHabboAir = params.isNotEmpty() && params[0] as? Boolean == true
+        
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName)
-            writeBoolean(false) // todo: is rentable
-            writeInt(costCredits)
+            writeInt(id) // offerId
+            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
+            writeBoolean(false) // isRent
+            writeInt(costCredits) // priceInCredits
+            writeInt(costPixels) // priceInActivityPoints
+            writeInt(if (costVip > 0) 5 else 0) // activityPointType
+            writeInt(costVip) // priceInSilver
+            writeBoolean(dealId > 0 || furnishing.canGift) // giftable
 
-            if (costVip > 0) {
-                writeInt(costVip)
-                writeInt(5)
-            } else {
-                writeInt(costPixels)
-                writeInt(0)
-            }
-
-            writeBoolean(dealId > 0 || furnishing.canGift)
-            // item count, count n item if there is no badge, otherwise count as n + 1.
+            // products count and array
             writeInt(if (dealId > 0) deal!!.furnishings.size else 1 + if (badge.isNotBlank()) 1 else 0)
 
             if (badge.isNotBlank()) {
                 writeUTF("b")
                 writeUTF(badge)
+                if (isHabboAir) writeInt(1)
             }
 
             if (dealId > 0) {
                 deal!!.let { deal ->
                     deal.furnishings.forEachIndexed { i, furnishing ->
-                        serializeItem(habboResponse, furnishing, deal.amounts[i])
+                        serializeItem(habboResponse, furnishing, deal.amounts[i], isHabboAir)
                     }
                 }
             } else {
-                serializeItem(habboResponse, furnishing, amount)
+                serializeItem(habboResponse, furnishing, amount, isHabboAir)
             }
 
-            writeInt(if (clubOnly) 1 else 0)
-            writeBoolean(offerActive && !limited)
-            writeBoolean(true) // ?
-            writeUTF("") // ?
+            // Campos que vêm APÓS o array de produtos
+            writeInt(if (clubOnly) 1 else 0) // clubLevel
+            writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
+            if (isHabboAir) {
+                writeBoolean(true) // campo booleano extra
+                writeUTF("") // previewImage
+            }
         }
     }
 
@@ -117,24 +118,31 @@ data class CatalogItem(
         }
     }
 
-    private fun serializeItem(habboResponse: HabboResponse, furnishing: Furnishing, amount: Int) {
+    private fun serializeItem(
+        habboResponse: HabboResponse,
+        furnishing: Furnishing,
+        amount: Int,
+        isHabboAir: Boolean = false
+    ) {
         habboResponse.apply {
-            writeUTF(furnishing.type.type)
+            writeUTF(furnishing.type.type) // productType
 
             if (furnishing.type == ItemType.BADGE) {
-                writeUTF(furnishing.itemName)
+                writeUTF(furnishing.itemName) // extraParam for badge
+                writeInt(1) // count for badge
             } else {
-                writeInt(furnishing.spriteId)
-
-                if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape") writeUTF(catalogName.split('_')[2])
-                else writeUTF("")
-
-                writeInt(amount)
-                writeBoolean(limited)
+                writeInt(furnishing.spriteId) // furniClassId
+                writeUTF(
+                    if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape") catalogName.split(
+                        '_'
+                    )[2] else ""
+                ) // extraParam
+                writeInt(amount) // productCount
+                writeBoolean(limited) // isUnique (limited)
 
                 if (limited) {
-                    writeInt(limitedTotal)
-                    writeInt(limitedTotal - limitedSells.get())
+                    writeInt(limitedTotal) // uniqueLimitedItemSeriesSize
+                    writeInt(limitedTotal - limitedSells.get()) // uniqueLimitedItemsLeft
                 }
             }
         }

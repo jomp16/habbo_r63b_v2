@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,7 +22,8 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.game.room.tasks.ChatType
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -31,18 +32,18 @@ class RoomUserWhisperHandler {
 //    @HandlerR63A(IncomingR63A.ROOM_USER_WHISPER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val raw = habboRequest.readUTF()
-        val bubble = habboRequest.readInt()
-        val targetName = raw.substring(0, raw.indexOf(' '))
+        val bubble = RoomChatMessageBubbles.fromType(habboRequest.readInt())
+        val targetName = raw.substringBefore(' ')
         var message = raw.substring(targetName.length + 1)
 
         if (message.isEmpty()) return
-        if (message.length > 100) message = message.substring(0, 100)
+        if (message.length > 100) message = message.take(100)
 
         if (habboSession.userInformation.username == targetName) return
         val targetRoomUser = habboSession.currentRoom!!.roomUsers.values.filter { it.habboSession != null }.find { it.habboSession!!.userInformation.username == targetName }
                 ?: return
 
-        habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER, true)
-        targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, ChatType.WHISPER, true)
+        habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
+        targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
     }
 }

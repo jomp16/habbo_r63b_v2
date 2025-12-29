@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.condition.conditions
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -29,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_TIME_MORE_THAN, InteractionType.WIRED_CONDITION_TIME_LESS_THAN)
 class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private var targetCycles: Int = 21
@@ -37,6 +37,9 @@ class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, 
     init {
         setData()
     }
+
+    override fun code() =
+        if (isLessThan) WiredConditionType.TIME_ELAPSED_LESS.code else WiredConditionType.TIME_ELAPSED_MORE.code
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -54,16 +57,8 @@ class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, 
         }
     }
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 1)
-            writeInt(if (isLessThan) WiredConditionType.TIME_LESS_THAN.code else WiredConditionType.TIME_MORE_THAN.code)
-        }
-    }
-
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(21), "")
         }

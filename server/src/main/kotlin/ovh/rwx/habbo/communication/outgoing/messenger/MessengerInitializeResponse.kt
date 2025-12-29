@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,7 @@ class MessengerInitializeResponse {
     fun response(habboResponse: HabboResponse, maxFriends: Int, maxFriendsHC: Int) {
         habboResponse.apply {
             writeInt(maxFriends) // Max friends normal
-            writeInt(300)
+            writeInt(500)
             writeInt(maxFriendsHC) // Max friends HC
             writeInt(0) // category count
             // category structure:

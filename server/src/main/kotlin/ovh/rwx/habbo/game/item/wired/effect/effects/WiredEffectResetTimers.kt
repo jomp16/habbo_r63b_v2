@@ -19,18 +19,16 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_RESET_TIMERS)
 class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
 
@@ -38,29 +36,9 @@ class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room,
         setData()
     }
 
-    override fun setData() {
-        // No additional data to load
-    }
+    override fun code() = WiredEffectType.RESET_TIMERS.code
 
-    override fun handle(roomUser: RoomUser?) {
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-            return
-        }
-        handleThing(roomUser)
-    }
-
-    override fun handle(event: WiredDelayEvent) {
-        super.handle(event)
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (event.counter.incrementAndGet() >= delay) {
-            event.finished = true
-            handleThing(event.roomUser)
-        }
-    }
-
-    private fun handleThing(roomUser: RoomUser?) {
+    override fun onEffect(roomUser: RoomUser?) {
         // Reset room timer
         room.roomTimer.set(0)
 
@@ -68,15 +46,10 @@ class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room,
         room.wiredHandler.resetTimers()
     }
 
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(WiredEffectType.RESET_TIMERS.code)
-            writeDelay(wiredData)
-            writeBlockedTriggers(wiredData)
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
 }

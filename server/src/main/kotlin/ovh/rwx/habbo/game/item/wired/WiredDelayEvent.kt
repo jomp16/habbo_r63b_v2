@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,6 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger
 data class WiredDelayEvent(
         val wiredEffect: WiredEffect,
         val roomUser: RoomUser?,
+        val delay: Int,
         val counter: AtomicInteger = AtomicInteger(0),
-        var finished: Boolean = false
 )

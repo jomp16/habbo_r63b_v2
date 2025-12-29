@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -34,29 +34,57 @@ class AchievementListResponse {
             writeInt(achievementGroups.size)
 
             achievementGroups.values.forEach { achievementGroup ->
-                val userAchievement = achievementUsers.find { it.group == achievementGroup }
-
-                var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-                val totalLevels = achievementGroup.totalLevels
-                targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-                val targetAchievement = groupedAchievements[achievementGroup]?.find { it.level == targetLevel }!!
-
-                writeInt(achievementGroup.id)
-                writeInt(targetLevel)
-                writeUTF(achievementGroup.name + targetLevel)
-                writeInt(1)
-                writeInt(targetAchievement.progressRequirement)
-                writeInt(targetAchievement.rewardActivityPoints)
-                writeInt(0) // type of reward
-                writeInt(userAchievement?.progress ?: 0)
-                writeBoolean((userAchievement?.level ?: 0) >= totalLevels) // is 100% complete
-                writeUTF(achievementGroup.category.category)
-                writeUTF("")
-                writeInt(totalLevels)
-                writeInt(0)
+                commonStuff(habboResponse, achievementUsers, groupedAchievements, achievementGroup)
             }
 
-            writeUTF("") // ??
+            writeUTF("") // defaultCategory
         }
+    }
+
+    @Response(Outgoing.USER_ACHIEVEMENT)
+    fun responseHabboAir(
+        habboResponse: HabboResponse,
+        achievementUsers: List<AchievementUser>,
+        achievementGroups: Map<String, AchievementGroup>,
+        groupedAchievements: Map<AchievementGroup, List<Achievement>>
+    ) {
+        habboResponse.apply {
+            writeInt(achievementGroups.size)
+
+            achievementGroups.values.forEach { achievementGroup ->
+                commonStuff(habboResponse, achievementUsers, groupedAchievements, achievementGroup)
+                writeShort(0) // state
+            }
+
+            writeUTF("") // defaultCategory
+        }
+    }
+
+    private fun HabboResponse.commonStuff(
+        habboResponse: HabboResponse,
+        achievementUsers: List<AchievementUser>,
+        groupedAchievements: Map<AchievementGroup, List<Achievement>>,
+        achievementGroup: AchievementGroup
+    ) {
+        val userAchievement = achievementUsers.find { it.group == achievementGroup }
+
+        var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
+        val totalLevels = achievementGroup.totalLevels
+        targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
+        val targetAchievement = groupedAchievements[achievementGroup]?.find { it.level == targetLevel }!!
+
+        writeInt(achievementGroup.id)
+        writeInt(targetLevel)
+        writeUTF(achievementGroup.name + targetLevel)
+        writeInt(1) // scoreAtStartOfLevel
+        writeInt(targetAchievement.progressRequirement)
+        writeInt(targetAchievement.rewardActivityPoints)
+        writeInt(0) // type of reward
+        writeInt(userAchievement?.progress ?: 0)
+        writeBoolean((userAchievement?.level ?: 0) >= totalLevels) // is 100% complete
+        writeUTF(achievementGroup.category.category)
+        writeUTF("") // subCategory
+        writeInt(totalLevels)
+        writeInt(0) // displayMethod
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,11 +24,35 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeAuthenticationOkResponse {
     @Response(Outgoing.AUTHENTICATION_OK)
     @ResponseR63A(OutgoingR63A.HANDSHAKE_AUTHENTICATION_OK)
     fun response(habboResponse: HabboResponse) {
+    }
+
+    @Response(Outgoing.AUTHENTICATION_OK)
+    fun responseHabboAir(habboResponse: HabboResponse, habboSession: HabboSession) {
+        habboResponse.apply {
+            writeInt(habboSession.userInformation.id) // accountId
+            writeInt(0) // size of suggestedLoginActions
+//            writeShort(0) // suggestedLoginActions param 0
+//            writeShort(0) // suggestedLoginActions param 1
+//            if(isOnboardingRequired(_communicationManager.suggestedLoginActions))
+            // isOnboardingRequired => return param1.indexOf(0) >= 0 || param1.indexOf(1) >= 0;
+            // OnBoardingHcFlow
+            // if(_SafeStr_5729.indexOf(0) >= 0)
+            //         {
+            //            startNameChange();
+            //         }
+            //         else
+            //         {
+            //            startRoomPicking();
+            //         }
+            // isRoomPickingNeeded - return _SafeStr_5729.indexOf(1) >= 0;
+            writeInt(habboSession.userInformation.id) // identityId
+        }
     }
 }

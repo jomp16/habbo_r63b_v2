@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -37,6 +36,8 @@ class WiredTriggerPeriodicallyLong(room: Room, roomItem: RoomItem) : WiredTrigge
     init {
         setData()
     }
+
+    override fun code() = WiredTriggerType.PERIODIC_LONG.code
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -59,17 +60,8 @@ class WiredTriggerPeriodicallyLong(room: Room, roomItem: RoomItem) : WiredTrigge
         delayState = 0
     }
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 1)
-            writeInt(WiredTriggerType.PERIODICALLY_LONG.code)
-            writeBlockedActions(wiredData)
-        }
-    }
-
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(1), "")
         }

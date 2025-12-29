@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.catalog.CatalogPage
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageResponse {
     @Response(Outgoing.CATALOG_PAGE)
-    fun response(habboResponse: HabboResponse, catalogPage: CatalogPage) {
+    fun response(habboResponse: HabboResponse, catalogPage: CatalogPage, habboAir: Boolean) {
         habboResponse.apply {
             writeInt(catalogPage.id)
 
@@ -239,10 +239,17 @@ class CatalogPageResponse {
 
             writeInt(catalogPage.catalogItems.size)
 
-            catalogPage.catalogItems.forEach { serialize(it) }
+            catalogPage.catalogItems.forEach { serialize(it, habboAir) }
 
             writeInt(-1)
             writeBoolean(false)
+
+            if (habboAir) {
+                // frontPageItems (optional for HabboAir)
+                if (catalogPage.pageLayout == "frontpage" || catalogPage.pageLayout == "frontpage4") {
+                    writeInt(0) // frontPageItems count
+                }
+            }
         }
     }
 
@@ -289,4 +296,6 @@ class CatalogPageResponse {
             catalogPage.catalogItems.forEach { serialize(it) }
         }
     }
+
+
 }

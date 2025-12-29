@@ -19,67 +19,85 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
-import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_SHOW_MESSAGE)
 class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     private var message: String = ""
+    private var visibility: MessageVisibility = MessageVisibility.USER_ONLY
+    private var style: Int = RoomChatMessageBubbles.WIRED.type // notification style
 
     init {
         setData()
     }
 
+    override fun code() = WiredEffectType.SHOW_MESSAGE.code
+
     override fun setData() {
         roomItem.wiredData?.let {
             message = it.message
+            if (it.options.isNotEmpty()) {
+                visibility = MessageVisibility.fromCode(it.options.getOrElse(0) { 0 })
+                style = it.options.getOrElse(1) { 0 }
+            }
         }
     }
 
-    override fun handle(roomUser: RoomUser?) {
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-            return
-        }
-        handleThing(roomUser)
-    }
-
-    override fun handle(event: WiredDelayEvent) {
-        super.handle(event)
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (event.counter.incrementAndGet() >= delay) {
-            event.finished = true
-            handleThing(event.roomUser)
-        }
-    }
-
-    private fun handleThing(roomUser: RoomUser?) {
+    override fun onEffect(roomUser: RoomUser?) {
         if (!message.isBlank()) {
-            if (roomUser != null) roomUser.chat(roomUser.virtualID, message, 1, ChatType.WHISPER, true)
-            else room.roomUsers.values.forEach { it.chat(it.virtualID, message, 1, ChatType.WHISPER, true) }
+            val bubble = RoomChatMessageBubbles.fromType(style)
+            when (visibility) {
+                MessageVisibility.USER_ONLY -> roomUser?.chat(
+                    roomUser.virtualID,
+                    message,
+                    bubble,
+                    RoomChatType.WHISPER,
+                    true
+                )
+
+                MessageVisibility.ALL_USERS -> room.roomUsers.values.forEach {
+                    it.chat(
+                        it.virtualID,
+                        message,
+                        bubble,
+                        RoomChatType.CHAT,
+                        true
+                    )
+                }
+            }
         }
     }
 
+    enum class MessageVisibility(val code: Int) {
+        USER_ONLY(0),
+        ALL_USERS(1);
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, emptyList(), 0)
-            writeInt(WiredEffectType.SHOW_MESSAGE.code)
-            writeDelay(wiredData)
-            writeBlockedTriggers(wiredData)
+        companion object {
+            fun fromCode(code: Int) = values().find { it.code == code } ?: USER_ONLY
+        }
+    }
+
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(
+                0,
+                0,
+                emptyList(),
+                "",
+                listOf(MessageVisibility.USER_ONLY.code, RoomChatMessageBubbles.WIRED.type),
+                ""
+            )
         }
     }
 }

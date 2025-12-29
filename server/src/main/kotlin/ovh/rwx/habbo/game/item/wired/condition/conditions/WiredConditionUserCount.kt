@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.condition.conditions
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -29,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_USER_COUNT_IN, InteractionType.WIRED_CONDITION_NOT_USER_COUNT)
 class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private var minUsers: Int = 1
@@ -38,6 +38,9 @@ class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(r
     init {
         setData()
     }
+
+    override fun code() =
+        if (isNegative) WiredConditionType.NOT_USER_COUNT_IN.code else WiredConditionType.USER_COUNT_IN.code
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -52,19 +55,8 @@ class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(r
         return if (isNegative) !inRange else inRange
     }
 
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 2)
-            writeInt(if (isNegative) WiredConditionType.NOT_USER_COUNT.code else WiredConditionType.USER_COUNT.code)
-            writeDelay(wiredData)
-            writeBlockedTriggers(wiredData)
-        }
-    }
-
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(1, 50), "")
         }

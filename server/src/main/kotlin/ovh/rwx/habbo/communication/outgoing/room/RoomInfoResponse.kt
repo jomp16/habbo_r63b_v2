@@ -32,28 +32,18 @@ class RoomInfoResponse {
     @Response(Outgoing.ROOM_INFO)
     fun response(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean, checkEntry: Boolean) {
         habboResponse.apply {
-            writeBoolean(isLoading)
-
-            serialize(room, true, isLoading)
-
-            writeBoolean(checkEntry)
-            writeBoolean(false)
-            writeBoolean(false) // bypass bell, etc
-            writeBoolean(false) // todo: room muted
-            writeInt(room.roomData.muteSettings)
-            writeInt(room.roomData.kickSettings)
-            writeInt(room.roomData.banSettings)
-            writeBoolean(room.hasRights(habboSession, true))
-            writeInt(room.roomData.chatType)
-            writeInt(room.roomData.chatBalloon)
-            writeInt(room.roomData.chatSpeed)
-            writeInt(room.roomData.chatMaxDistance)
-            writeInt(room.roomData.chatFloodProtection)
+            commonStuff(habboSession, isLoading, room, checkEntry)
         }
     }
-    
+
     @ResponseR63A(OutgoingR63A.ROOM_INFO)
-    fun responseR63A(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean, checkEntry: Boolean) {
+    fun responseR63A(
+        habboResponse: HabboResponse,
+        habboSession: HabboSession,
+        room: Room,
+        isLoading: Boolean,
+        checkEntry: Boolean
+    ) {
         habboResponse.apply {
             writeBoolean(isLoading)
 
@@ -62,5 +52,44 @@ class RoomInfoResponse {
             writeBoolean(checkEntry)
             writeBoolean(false) // staff picked
         }
+    }
+
+    @Response(Outgoing.ROOM_INFO)
+    fun responseHabboAir(
+        habboResponse: HabboResponse,
+        habboSession: HabboSession,
+        room: Room,
+        isLoading: Boolean,
+        checkEntry: Boolean
+    ) {
+        habboResponse.apply {
+            commonStuff(habboSession, isLoading, room, checkEntry)
+            writeBoolean(isLoading) // openingConnection
+        }
+    }
+
+    private fun HabboResponse.commonStuff(
+        habboSession: HabboSession,
+        isLoading: Boolean,
+        room: Room,
+        checkEntry: Boolean
+    ) {
+        writeBoolean(isLoading)
+
+        serialize(room, true, isLoading)
+
+        writeBoolean(checkEntry)
+        writeBoolean(false)
+        writeBoolean(false) // bypass bell, etc
+        writeBoolean(false) // todo: room muted
+        writeInt(room.roomData.muteSettings)
+        writeInt(room.roomData.kickSettings)
+        writeInt(room.roomData.banSettings)
+        writeBoolean(room.hasRights(habboSession, true))
+        writeInt(room.roomData.chatType)
+        writeInt(room.roomData.chatBalloon)
+        writeInt(room.roomData.chatSpeed)
+        writeInt(room.roomData.chatMaxDistance)
+        writeInt(room.roomData.chatFloodProtection)
     }
 }

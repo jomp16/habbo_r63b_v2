@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,16 +24,23 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserChatResponse {
     @Response(Outgoing.ROOM_USER_CHAT, Outgoing.ROOM_USER_SHOUT, Outgoing.ROOM_USER_WHISPER)
-    fun response(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int, bubble: Int) {
+    fun response(
+        habboResponse: HabboResponse,
+        virtualId: Int,
+        message: String,
+        emoticon: Int,
+        bubble: RoomChatMessageBubbles
+    ) {
         habboResponse.apply {
             writeInt(virtualId)
             writeUTF(message)
             writeInt(emoticon)
-            writeInt(bubble)
+            writeInt(bubble.type)
             writeInt(0)
             writeInt(-1)
         }

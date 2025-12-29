@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.tasks.*
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.pathfinding.core.Path
@@ -63,6 +65,7 @@ class RoomUser(
     private var handItemCycle: Int = 0
     private var handItemCurrentCycles: Int = 0
     var walkingBlocked: Boolean = false
+    var frozen: Boolean = false
     var ignoreBlocking: Boolean = false
     private var overrideBlocking: Boolean = false
     var rollerId: Int = -1
@@ -179,7 +182,12 @@ class RoomUser(
             }
         }
 
-        if (walking) {
+        if (walking && frozen) {
+            stopWalking()
+            updateNeeded = true
+        }
+
+        if (walking && !frozen) {
             if (objectiveVector2 == currentVector3.vector2) {
                 stopWalking()
             } else {
@@ -266,14 +274,20 @@ class RoomUser(
         ignoreBlocking: Boolean = false,
         actingItem: RoomItem? = null
     ): Boolean {
-        if (!ignoreBlocking && !overrideBlocking && walkingBlocked) return false
+        if (frozen || (!ignoreBlocking && !overrideBlocking && walkingBlocked)) return false
 
         room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y), rotation, actingItem, ignoreBlocking, rollerId))
 
         return true
     }
 
-    fun chat(virtualID: Int, message: String, bubble: Int, type: ChatType, skipCommands: Boolean) {
+    fun chat(
+        virtualID: Int,
+        message: String,
+        bubble: RoomChatMessageBubbles,
+        type: RoomChatType,
+        skipCommands: Boolean
+    ) {
         room.roomTask?.addTask(room, UserChatTask(this, virtualID, message, bubble, type, skipCommands))
     }
 
@@ -397,7 +411,7 @@ class RoomUser(
                 writeInt(1) // 1 for user, 2 for pet, 3 for bot.
                 writeUTF(it.userInformation.gender.lowercase(Locale.getDefault()))
 
-                val group = habboSession.userStats.favoriteGroup
+//                val group = habboSession.userStats.favoriteGroup
 
                 writeInt(-1) // xp
 //                    if (group == null) {
