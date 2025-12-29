@@ -74,13 +74,13 @@ class RoomFloormapResponse {
         response.apply {
             writeInt(0) // length of AreaHideMessageData
             // start loop - AreaHideMessageData
-            writeInt(0) // furni ID
-            writeBoolean(false) // isEnabled
-            writeInt(0) // roomX
-            writeInt(0) // roomY
-            writeInt(0) // roomWidth
-            writeInt(0) // roomHeight
-            writeBoolean(false) // invert
+//            writeInt(0) // furni ID
+//            writeBoolean(false) // isEnabled
+//            writeInt(0) // roomX
+//            writeInt(0) // roomY
+//            writeInt(0) // roomWidth
+//            writeInt(0) // roomHeight
+//            writeBoolean(false) // invert
             // end loop - AreaHideMessageData
         }
     }

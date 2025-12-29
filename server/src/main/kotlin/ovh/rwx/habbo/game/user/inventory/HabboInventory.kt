@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -47,6 +47,7 @@ class HabboInventory(private val habboSession: HabboSession) {
         } else {
             habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
             habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, items.values)
         }
     }
 
@@ -57,9 +58,9 @@ class HabboInventory(private val habboSession: HabboSession) {
             items.remove(it)
 
             if (habboSession.release == "R63A") {
-                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, it)
+                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, -it)
             } else {
-                habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, it)
+                habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, -it)
             }
         }
 

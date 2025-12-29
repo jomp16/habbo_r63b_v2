@@ -32,11 +32,11 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         if (room.roomUsers.containsValue(roomUser)) return
 
-        room.roomUsers[roomUser.virtualID] = roomUser
-        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
-
         roomUser.habboSession?.let { habboSession ->
             habboSession.roomUser = roomUser
+
+            val methodName =
+                HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
 
             if (habboSession.teleporting) {
                 room.roomItems[habboSession.targetTeleportId]?.let { teleportItem ->
@@ -57,6 +57,38 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             }
 
             if (habboSession.release != "R63A") {
+                if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_OPEN)
+                else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(
+                    Outgoing.ROOM_OPEN,
+                    room.roomData.id
+                )
+//            habboSession.sendHabboResponse(Outgoing.USER_NFT_CHAT_STYLES, room.roomModel.id, room.roomData.id)
+                /*habboSession.sendHabboResponse(HabboResponse(1219, null).apply {
+                    writeInt(0)
+                })*/
+                habboSession.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
+                habboSession.sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
+                habboSession.sendHabboResponse(
+                    Outgoing.FLOOR_PLAN_DOOR,
+                    room.roomModel.doorVector3,
+                    room.roomModel.doorDir
+                )
+
+                if (room.roomData.wallpaper != "0.0") habboSession.sendHabboResponse(
+                    Outgoing.ROOM_DECORATION,
+                    "wallpaper",
+                    room.roomData.wallpaper
+                )
+                if (room.roomData.floor != "0.0") habboSession.sendHabboResponse(
+                    Outgoing.ROOM_DECORATION,
+                    "floor",
+                    room.roomData.floor
+                )
+                if (room.roomData.landscape != "0.0") habboSession.sendHabboResponse(
+                    Outgoing.ROOM_DECORATION,
+                    "landscape",
+                    room.roomData.landscape
+                )
                 habboSession.sendHabboResponse(Outgoing.ROOM_HEIGHTMAP, room)
                 habboSession.sendHabboResponse(Outgoing.ROOM_FLOORMAP, room)
                 habboSession.sendHabboResponse(
@@ -71,7 +103,64 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                     room.roomData.floorThick
                 )
                 // todo: events
+
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.roomUsers.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.roomUsers.values)
+
+                habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
+
+                room.roomUsers.values.forEach {
+                    if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
+                    if (it.danceId > 0) habboSession.sendHabboResponse(
+                        Outgoing.ROOM_USER_DANCE,
+                        it.virtualID,
+                        it.danceId
+                    )
+                    if (it.handItem > 0) habboSession.sendHabboResponse(
+                        Outgoing.ROOM_USER_HANDITEM,
+                        it.virtualID,
+                        it.handItem
+                    )
+                    it.effect?.let { effect ->
+                        habboSession.sendHabboResponse(
+                            Outgoing.ROOM_USER_EFFECT,
+                            it.virtualID,
+                            effect.effectId
+                        )
+                    }
+                }
+
+                habboSession.sendHabboResponse(Outgoing.WIRED_ENVIRONMENT, false) // hasClickUserWired
+                habboSession.sendHabboResponse(
+                    Outgoing.WIRED_PERMISSIONS,
+                    room.hasRights(habboSession),
+                    room.hasRights(habboSession)
+                ) // todo: adicionar permissão wired: canModify / canRead
             } else {
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_OPEN)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_INITIAL_INFO,
+                    "model_${room.roomModel.id}",
+                    room.roomData.id
+                )
+
+                if (room.roomData.wallpaper != "0.0") habboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_DECORATION,
+                    "wallpaper",
+                    room.roomData.wallpaper
+                )
+                if (room.roomData.floor != "0.0") habboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_DECORATION,
+                    "floor",
+                    room.roomData.floor
+                )
+                if (room.roomData.landscape != "0.0") habboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_DECORATION,
+                    "landscape",
+                    room.roomData.landscape
+                )
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_HEIGHTMAP, room)
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_FLOORMAP, room)
                 habboSession.sendHabboResponse(
@@ -87,13 +176,36 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                     room.roomData.floorThick
                 )
                 // todo: events
-            }
 
-            val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.roomUsers.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.roomUsers.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, true, false)
+
+                room.roomUsers.values.forEach {
+                    if (it.idle) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, it.virtualID, true)
+                    if (it.danceId > 0) habboSession.sendHabboResponse(
+                        OutgoingR63A.ROOM_USER_DANCE,
+                        it.virtualID,
+                        it.danceId
+                    )
+                    if (it.handItem > 0) habboSession.sendHabboResponse(
+                        OutgoingR63A.ROOM_USER_HANDITEM,
+                        it.virtualID,
+                        it.handItem
+                    )
+                    it.effect?.let { effect ->
+                        habboSession.sendHabboResponse(
+                            OutgoingR63A.ROOM_USER_EFFECT,
+                            it.virtualID,
+                            effect.effectId
+                        )
+                    }
+                }
+            }
 
             if (room.hasRights(habboSession)) {
                 if (room.hasRights(habboSession, true)) {
-                    roomUser.addStatus("flatctrl", "useradmin")
+                    roomUser.addStatus("flatctrl", "4")
 
                     if (habboSession.release != "R63A") {
                         if (methodName == "response") {
@@ -134,40 +246,13 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
             habboSession.habboMessenger.notifyFriends()
             // items at end because optimization
-            if (habboSession.release != "R63A") {
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.roomUsers.values)
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.roomUsers.values)
-
-                habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
-                habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
-                habboSession.sendHabboResponse(Outgoing.WIRED_ENVIRONMENT, true) // hasClickUserWired
-                habboSession.sendHabboResponse(
-                    Outgoing.WIRED_PERMISSIONS,
-                    room.hasRights(habboSession),
-                    room.hasRights(habboSession)
-                ) // todo: adicionar permissão wired: canModify / canRead
-
-                room.roomUsers.values.forEach {
-                    if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
-                    if (it.danceId > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_DANCE, it.virtualID, it.danceId)
-                    if (it.handItem > 0) habboSession.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, it.virtualID, it.handItem)
-                    it.effect?.let { effect -> habboSession.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, it.virtualID, effect.effectId) }
-                }
-            } else {
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.roomUsers.values)
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.roomUsers.values)
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, true, false)
-
-                room.roomUsers.values.forEach {
-                    if (it.idle) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, it.virtualID, true)
-                    if (it.danceId > 0) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_DANCE, it.virtualID, it.danceId)
-                    if (it.handItem > 0) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_HANDITEM, it.virtualID, it.handItem)
-                    it.effect?.let { effect -> habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_EFFECT, it.virtualID, effect.effectId) }
-                }
-            }
 
             room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
         }
+
+        room.roomUsers[roomUser.virtualID] = roomUser
+        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
+
         // todo: add support to bots
         roomUser.habboSession?.let {
             room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))

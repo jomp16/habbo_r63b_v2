@@ -35,7 +35,7 @@ class MessengerInitializeHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.habboMessenger.initialized) return
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 300, 1100)
+        habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 500, 3000)
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, it.first, it.second, it.third)
@@ -48,7 +48,12 @@ class MessengerInitializeHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.habboMessenger.initialized) return
 
-        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_FRIENDS, 300, 1100, habboSession.habboMessenger.friends.values)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.MESSENGER_FRIENDS,
+            500,
+            3000,
+            habboSession.habboMessenger.friends.values
+        )
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
             habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, it.first, it.second)
         }
