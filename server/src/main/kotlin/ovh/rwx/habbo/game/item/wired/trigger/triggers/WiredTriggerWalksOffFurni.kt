@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -31,28 +30,21 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_WALKS_OFF_FURNI)
 class WiredTriggerWalksOffFurni(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-
     init {
         setData()
     }
 
-    override fun setData() {
-        // No additional data to load
-    }
+    override fun code() = WiredTriggerType.WALKS_OFF_FURNI.code
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
         val items = roomItem.wiredData?.items ?: return false
         return data != null && data is RoomItem && items.any { it == data.id }
     }
 
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeItems(wiredData)
-            writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(WiredTriggerType.WALKS_OFF_FURNI.code)
-            writeBlockedActions(wiredData)
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
 }

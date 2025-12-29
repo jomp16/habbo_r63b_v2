@@ -19,54 +19,69 @@
 
 package ovh.rwx.habbo.game.item.interactors
 
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
-class WiredFurniInteractor : ItemInteractor() {
-    override val interactionType = InteractionType.values().filter { it.name.startsWith("WIRED") }
+class OneWayGateItemInteractor : ItemInteractor() {
+    override val interactionType = listOf(InteractionType.ONE_WAY_GATE)
 
     override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onPlace(room, roomUser, roomItem)
 
         roomItem.extraData = "0"
+        roomItem.interactingUsers.clear()
     }
 
     override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onRemove(room, roomUser, roomItem)
 
         roomItem.extraData = "0"
-    }
-
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
-
-        if (!hasRights || roomItem.wiredData == null) return
-
-        roomItem.extraData = "1"
-        roomItem.update(updateDb = false, updateClient = true)
-        roomItem.requestCycles(1)
-        val outgoing = when {
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
-            else -> return
-        }
-
-        roomUser?.habboSession?.sendHabboResponse(outgoing, roomItem, roomItem.wiredData)
+        roomItem.interactingUsers.clear()
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
 
-        if (roomItem.extraData == "1") {
-            roomItem.extraData = "0"
+        if (roomItem.interactingUsers.containsKey(1)) {
+            roomItem.interactingUsers.remove(1)?.let {
+                it.walkingBlocked = false
 
-            roomItem.update(updateDb = false, updateClient = true)
+                roomItem.extraData = "0"
+                roomItem.update(updateDb = false, updateClient = true)
+            }
         }
+    }
+
+    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+
+        if (roomUser == null) return
+
+        if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation, roomItem.position.z)) {
+            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
+
+            return
+        }
+        val behindVector2 = roomItem.getBehindPosition()
+
+        if (room.roomGamemap.isBlocked(behindVector2)) return
+
+        if (roomItem.interactingUsers.isEmpty()) {
+            roomItem.interactingUsers[1] = roomUser
+            roomItem.extraData = "1"
+            roomItem.update(updateDb = false, updateClient = true)
+
+            roomUser.walkingBlocked = true
+            roomUser.moveTo(roomItem.getBehindPosition(), ignoreBlocking = true)
+
+            roomItem.requestCycles(3)
+        }
+
+        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 }

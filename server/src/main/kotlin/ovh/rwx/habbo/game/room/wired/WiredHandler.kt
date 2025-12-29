@@ -44,7 +44,9 @@ class WiredHandler {
 
     fun removeWiredItem(vector2: Vector2, roomItem: RoomItem): WiredItem? = wiredStack[vector2]?.remove(roomItem.id)
 
-    fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): Boolean {
+    fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): List<WiredTrigger> {
+        val triggeredWireds = mutableListOf<WiredTrigger>()
+        
         for ((vector2, wiredStackMap) in wiredStack) {
             wiredStackMap.values.forEach { wiredItem ->
                 if (wiredItem is WiredTrigger && triggerClass.java.isInstance(wiredItem) && wiredItem.onTrigger(
@@ -52,18 +54,17 @@ class WiredHandler {
                         data
                     )
                 ) {
+                    triggeredWireds.add(wiredItem)
                     lightWired(wiredItem)
 
                     if (triggerCondition(vector2, roomUser)) {
                         triggerAction(vector2, roomUser)
                     }
-
-                    return true
                 }
             }
         }
 
-        return false
+        return triggeredWireds
     }
 
     private fun triggerCondition(vector2: Vector2, roomUser: RoomUser?): Boolean {
@@ -86,7 +87,7 @@ class WiredHandler {
         }
     }
 
-    private fun lightWired(wiredItem: WiredItem) {
+    fun lightWired(wiredItem: WiredItem) {
         if (wiredItem.roomItem.extraData == "1") return
 
         wiredItem.roomItem.extraData = "1"
@@ -106,13 +107,13 @@ class WiredHandler {
         }
     }
 
-    fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest): Boolean {
+    fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest, habboAir: Boolean = false): Boolean {
         val vector2 = roomItem.position.vector2
 
         if (!wiredStack.containsKey(vector2) || !wiredStack[vector2]!!.containsKey(roomItem.id)) return false
         val wiredItem = wiredStack[vector2]!![roomItem.id]!!
 
-        if (wiredItem.saveWired(habboRequest)) {
+        if (wiredItem.saveWired(habboRequest, habboAir)) {
             roomItem.update(updateDb = true, updateClient = false)
 
             return true

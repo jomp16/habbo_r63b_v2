@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import java.util.*
 
 @Suppress("unused")
-class MannequinFurniInteractor : ItemInteractor() {
+class MannequinItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.MANNEQUIN)
 
     override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,8 @@ import ovh.rwx.habbo.communication.outgoing.wired.WiredRewardNotificationRespons
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.plugin.api.PluginListener
@@ -40,8 +41,8 @@ class RoomBadgeCommandsListener : PluginListener() {
             roomUser.chat(
                 roomUser.virtualID,
                 "Excepted params: badge_name or badge_name username",
-                0,
-                ChatType.WHISPER,
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
                 true
             )
 
@@ -73,7 +74,13 @@ class RoomBadgeCommandsListener : PluginListener() {
                 return
             }
 
-            roomUser.chat(roomUser.virtualID, "We couldn't find the user $username!", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "We couldn't find the user $username!",
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
+                true
+            )
         }
     }
 
@@ -83,8 +90,8 @@ class RoomBadgeCommandsListener : PluginListener() {
             roomUser.chat(
                 roomUser.virtualID,
                 "Excepted params: badge_name or badge_name username",
-                0,
-                ChatType.WHISPER,
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
                 true
             )
 
@@ -116,7 +123,13 @@ class RoomBadgeCommandsListener : PluginListener() {
                 return
             }
 
-            roomUser.chat(roomUser.virtualID, "We couldn't find the user $username!", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "We couldn't find the user $username!",
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
+                true
+            )
         }
     }
 

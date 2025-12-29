@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,39 +22,24 @@ package ovh.rwx.habbo.game.item.interactors
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused")
-class VendorFurniInteractor : ItemInteractor() {
-    override val interactionType = listOf(InteractionType.VENDING_MACHINE)
+class PressurePadItemInteractor : ItemInteractor() {
+    override val interactionType = listOf(InteractionType.PRESSURE_PAD)
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
-
-        if (roomUser == null) return
-
-        if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation)) {
-            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
-
-            return
-        }
-
-        roomItem.extraData = "1"
-        roomItem.update(updateDb = false, updateClient = true)
-
-        roomUser.vendingMachine(roomItem.furnishing.vendingIds[Utils.randInt(roomItem.furnishing.vendingIds.indices)])
-
-        roomItem.requestCycles(2)
-
-        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
+        super.onPlace(room, roomUser, roomItem)
+        roomItem.extraData = "0"
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+        roomItem.extraData = "1"
+        roomItem.update(updateDb = false, updateClient = true)
+    }
 
+    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
         roomItem.extraData = "0"
         roomItem.update(updateDb = false, updateClient = true)
     }

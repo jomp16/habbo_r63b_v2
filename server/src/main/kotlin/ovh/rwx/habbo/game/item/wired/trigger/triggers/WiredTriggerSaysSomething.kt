@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -28,43 +27,59 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import java.util.Locale.getDefault
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
 class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
     var message = ""
     private var onlyOwner = false
+    private var triggerType = ChatTriggerType.CONTAINS
+    private var hideMessage = false
 
     init {
         setData()
     }
 
+    override fun code() = WiredTriggerType.AVATAR_SAYS_SOMETHING.code
+
     override fun setData() {
         roomItem.wiredData?.let {
             message = it.message
             onlyOwner = it.options.getOrElse(0) { 0 } == 1
+            triggerType = ChatTriggerType.fromValue(it.options.getOrElse(1) { 0 })
+            hideMessage = it.options.getOrElse(2) { 0 } == 1
         }
     }
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        if (data == null || data !is String || message.isEmpty() || roomUser == null) return false
+        if (data == null || data !is String || roomUser == null) return false
+        if (onlyOwner && !room.hasRights(roomUser.habboSession, true)) return false
 
-        return data.toLowerCase().contains(message) && (onlyOwner || room.hasRights(roomUser.habboSession, true))
+        return when (triggerType) {
+            ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.lowercase(getDefault())
+                .contains(message.lowercase(getDefault()))
+
+            ChatTriggerType.EXACT_MATCH -> data.equals(message, ignoreCase = true)
+            ChatTriggerType.ALL_MESSAGES -> true
+        }
     }
 
+    fun shouldHideMessage(): Boolean = hideMessage
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, wiredData.options, 1)
-            writeInt(WiredTriggerType.SAY_SOMETHING.code)
-            writeBlockedActions(wiredData)
+    enum class ChatTriggerType(val value: Int) {
+        CONTAINS(0),
+        EXACT_MATCH(1),
+        ALL_MESSAGES(2);
+
+        companion object {
+            fun fromValue(value: Int) = values().find { it.value == value } ?: CONTAINS
         }
     }
 
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(0), "")
+            return WiredData(0, 0, emptyList(), "", listOf(0, ChatTriggerType.CONTAINS.value, 0), "")
         }
     }
 }

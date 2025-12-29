@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,7 +24,8 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.ChatType
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
@@ -34,7 +35,13 @@ class RoomItemCommandsListener : PluginListener() {
     @Command(["giveitem"], permissionName = "cmd_giveitem")
     fun giveItem(room: Room, roomUser: RoomUser, args: List<String>) {
         if (args.size <= 1) {
-            roomUser.chat(roomUser.virtualID, "Excepted params: item_name or item_name username", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "Excepted params: item_name or item_name username",
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
+                true
+            )
 
             return
         }
@@ -46,7 +53,13 @@ class RoomItemCommandsListener : PluginListener() {
         val furnishing = HabboServer.habboGame.itemManager.furnishings[itemName]
 
         if (furnishing == null) {
-            roomUser.chat(roomUser.virtualID, "$itemName not found, try another item", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "$itemName not found, try another item",
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
+                true
+            )
 
             return
         }
@@ -71,7 +84,13 @@ class RoomItemCommandsListener : PluginListener() {
                 return
             }
 
-            roomUser.chat(roomUser.virtualID, "We couldn't find the user $username!", 0, ChatType.WHISPER, true)
+            roomUser.chat(
+                roomUser.virtualID,
+                "We couldn't find the user $username!",
+                RoomChatMessageBubbles.ALERT,
+                RoomChatType.WHISPER,
+                true
+            )
         }
     }
 }

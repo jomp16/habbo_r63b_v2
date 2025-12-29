@@ -40,7 +40,19 @@ class CatalogPageHandler {
         if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
         if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage, false)
+    }
+
+    @Handler(Incoming.CATALOG_PAGE)
+    fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val pageId = habboRequest.readInt()
+        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
+
+        if (!catalogPage.enabled || !catalogPage.visible) return
+        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
+        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
+
+        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage, true)
     }
 
     @HandlerR63A(IncomingR63A.CATALOG_PAGE)

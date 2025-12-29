@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -66,7 +66,7 @@ class GroupPurchaseHandler {
         room.loadedGroups.add(group)
 
         room.sendHabboResponse(Outgoing.ROOM_INFO, habboSession, room, true, true)
-        room.sendHabboResponse(Outgoing.GROUP_BADGES, room.loadedGroups)
+        room.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
 
         if (room != habboSession.currentRoom) {
             // Forward user to room

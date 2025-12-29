@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,7 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector3
 
 @Suppress("unused")
-class TeleportFurniInteractor : ItemInteractor() {
+class TeleportItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.TELEPORT)
 
     override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {

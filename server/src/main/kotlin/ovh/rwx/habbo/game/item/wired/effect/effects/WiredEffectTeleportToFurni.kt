@@ -19,49 +19,27 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Vector3
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_TELEPORT_TO)
 class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
     init {
         setData()
     }
 
-    override fun setData() {
-        // No additional data to load
-    }
+    override fun code() = WiredEffectType.TELEPORT.code
 
-    override fun handle(roomUser: RoomUser?) {
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser)))
-            return
-        }
-        handleThing(roomUser)
-    }
-
-    override fun handle(event: WiredDelayEvent) {
-        super.handle(event)
-        val delay = roomItem.wiredData?.delay ?: 0
-        if (event.counter.incrementAndGet() >= delay) {
-            event.finished = true
-            handleThing(event.roomUser)
-        }
-    }
-
-    private fun handleThing(roomUser: RoomUser?) {
+    override fun onEffect(roomUser: RoomUser?) {
         if (roomUser == null) return
 
         val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
@@ -99,15 +77,10 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
         }
     }
 
-
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeItems(wiredData)
-            writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(WiredEffectType.TELEPORT.code)
-            writeDelay(wiredData)
-            writeBlockedTriggers(wiredData)
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
 }

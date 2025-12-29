@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.condition.conditions
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -29,16 +28,13 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_HAS_AVATARS, InteractionType.WIRED_CONDITION_HAS_NO_AVATARS)
 class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_HAS_NO_AVATARS
 
     init {
         setData()
-    }
-
-    override fun setData() {
-        // No additional data to load
     }
 
     override fun onCondition(roomUser: RoomUser?): Boolean {
@@ -55,13 +51,13 @@ class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(
         return if (isNegative) !hasAvatars else hasAvatars
     }
 
+    override fun code() =
+        if (isNegative) WiredConditionType.NOT_FURNIS_HAVE_AVATARS.code else WiredConditionType.FURNIS_HAVE_AVATARS.code
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeItems(wiredData)
-            writeItemInfo(roomItem)
-            writeEmptySettings()
-            writeInt(if (isNegative) WiredConditionType.NOT_FURNI_HAVE_HABBO.code else WiredConditionType.FURNI_HAVE_HABBO.code)
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
 }

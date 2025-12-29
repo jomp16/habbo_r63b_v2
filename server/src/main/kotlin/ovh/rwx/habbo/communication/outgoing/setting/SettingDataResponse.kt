@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -49,6 +49,32 @@ class SettingDataResponse {
         habboResponse.apply {
             writeInt(systemVolume)
             writeBoolean(unknown)
+        }
+    }
+
+    @Response(Outgoing.USER_SETTINGS)
+    fun responseHabboAir(
+        habboResponse: HabboResponse, systemVolume: Int, furniVolume: Int, musicVolume: Int,
+        preferOldChat: Boolean, ignoreRoomInvite: Boolean, disableCameraFollow: Boolean,
+        friendBarOpen: Boolean, chatColor: Int
+    ) {
+        habboResponse.apply {
+            writeInt(systemVolume)
+            writeInt(furniVolume)
+            writeInt(musicVolume)
+            writeBoolean(preferOldChat)
+            writeBoolean(ignoreRoomInvite)
+            writeBoolean(disableCameraFollow)
+            writeInt(if (friendBarOpen) 1 else 0)
+            writeInt(chatColor)
+            writeBoolean(false) // wired menu button
+            writeBoolean(false) // wired inspect button
+            writeBoolean(false) // play test mode
+            writeInt(0) // useless
+            writeBoolean(false) // wired whisper disabled
+            writeBoolean(false) // show all notifications
+
+            // the rest is booleans
         }
     }
 }

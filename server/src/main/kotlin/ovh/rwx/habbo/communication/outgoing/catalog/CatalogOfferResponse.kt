@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,6 +30,13 @@ class CatalogOfferResponse {
     fun response(habboResponse: HabboResponse, catalogItem: CatalogItem) {
         habboResponse.apply {
             serialize(catalogItem)
+        }
+    }
+
+    @Response(Outgoing.CATALOG_OFFER)
+    fun responseHabboAir(habboResponse: HabboResponse, catalogItem: CatalogItem) {
+        habboResponse.apply {
+            serialize(catalogItem, true)
         }
     }
 }

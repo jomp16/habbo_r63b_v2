@@ -140,6 +140,12 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
                 habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
                 habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
+                habboSession.sendHabboResponse(Outgoing.WIRED_ENVIRONMENT, true) // hasClickUserWired
+                habboSession.sendHabboResponse(
+                    Outgoing.WIRED_PERMISSIONS,
+                    room.hasRights(habboSession),
+                    room.hasRights(habboSession)
+                ) // todo: adicionar permissão wired: canModify / canRead
 
                 room.roomUsers.values.forEach {
                     if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)

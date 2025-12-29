@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item.wired.condition.conditions
 
-import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -29,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
+@Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_WEARING_BADGE, InteractionType.WIRED_CONDITION_NOT_WEARING_BADGE)
 class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private var badgeCode: String = ""
@@ -37,6 +37,9 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
     init {
         setData()
     }
+
+    override fun code() =
+        if (isNegative) WiredConditionType.NOT_ACTOR_IS_WEARING_BADGE.code else WiredConditionType.ACTOR_IS_WEARING_BADGE.code
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -53,16 +56,8 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
         return if (isNegative) !hasBadge else hasBadge
     }
 
-    override fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData) {
-        habboResponse.apply {
-            writeEmptyItems()
-            writeItemInfo(roomItem)
-            writeSettings(wiredData.message, emptyList(), 0)
-            writeInt(if (isNegative) WiredConditionType.NOT_ACTOR_WEARS_BADGE.code else WiredConditionType.ACTOR_WEARS_BADGE.code)
-        }
-    }
-
     companion object {
+        @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }

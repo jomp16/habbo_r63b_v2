@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,7 +28,7 @@ import ovh.rwx.habbo.game.group.Group
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GroupBadgesResponse {
-    @Response(Outgoing.GROUP_BADGES)
+    @Response(Outgoing.ROOM_GROUP_BADGES)
     @ResponseR63A(OutgoingR63A.ROOM_GROUPS_BADGES)
     fun response(habboResponse: HabboResponse, loadedGroups: Collection<Group>) {
         habboResponse.apply {

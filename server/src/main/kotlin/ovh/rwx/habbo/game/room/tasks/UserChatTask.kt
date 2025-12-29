@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,6 +25,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
+import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.event.events.room.RoomUserChatEvent
 import java.util.*
@@ -33,8 +35,8 @@ class UserChatTask(
     private val roomUser: RoomUser,
     private val virtualID: Int,
     private val message: String,
-    private val bubble: Int,
-    private val type: ChatType,
+    private val bubble: RoomChatMessageBubbles,
+    private val type: RoomChatType,
     private val skipCommands: Boolean
 ) : IRoomTask {
     override fun executeTask(room: Room) {
@@ -50,19 +52,31 @@ class UserChatTask(
 
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
 
-        if (room.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)) {
-            roomUser.habboSession?.sendHabboResponse(
-                Outgoing.ROOM_USER_WHISPER,
-                roomUser.virtualID,
-                filterMessage,
-                speechEmotion,
-                bubble
-            )
+        val triggeredWireds = room.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)
 
-            return
+        if (triggeredWireds.isNotEmpty()) {
+            // Verifica se deve esconder a mensagem usando os wireds acionados
+            val shouldHide = triggeredWireds
+                .filterIsInstance<WiredTriggerSaysSomething>()
+                .any { it.shouldHideMessage() }
+
+            if (shouldHide) {
+                // Não exibe a mensagem - apenas processa o trigger
+                return
+            } else {
+                // Exibe como whisper quando wired é ativado mas não deve esconder
+                roomUser.habboSession?.sendHabboResponse(
+                    Outgoing.ROOM_USER_WHISPER,
+                    roomUser.virtualID,
+                    filterMessage,
+                    speechEmotion,
+                    bubble
+                )
+                return
+            }
         }
 
-        if (type == ChatType.WHISPER) {
+        if (type == RoomChatType.WHISPER) {
             roomUser.habboSession?.sendHabboResponse(
                 Outgoing.ROOM_USER_WHISPER,
                 virtualID,
@@ -72,7 +86,7 @@ class UserChatTask(
             )
         } else {
             room.roomUsers.values.forEach {
-                if (type == ChatType.CHAT && room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(
+                if (type == RoomChatType.CHAT && room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(
                         roomUser.currentVector3.x,
                         roomUser.currentVector3.y,
                         it.currentVector3.x,
@@ -97,7 +111,7 @@ class UserChatTask(
                             )
                         }
                     }
-                } else if (type == ChatType.SHOUT) {
+                } else if (type == RoomChatType.SHOUT) {
                     it.habboSession?.let { habboSession ->
                         if (habboSession.release != "R63A") {
                             habboSession.sendHabboResponse(
@@ -188,8 +202,3 @@ private fun getSpeechEmotion(message: String): Int {
     return 0
 }
 
-enum class ChatType {
-    CHAT,
-    SHOUT,
-    WHISPER
-}
