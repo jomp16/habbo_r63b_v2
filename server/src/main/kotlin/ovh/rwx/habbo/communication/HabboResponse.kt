@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -67,6 +67,8 @@ class HabboResponse(
     }
 
     fun writeDouble(d: Double) = byteBufOutputStream.writeDouble(d)
+
+    fun writeFloat(d: Float) = byteBufOutputStream.writeFloat(d)
 
     fun writeBoolean(b: Boolean) {
         if (outgoingR63A != null) {

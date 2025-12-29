@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,6 +36,8 @@ class RoomFloormapResponse {
             writeBoolean(true)
             writeInt(room.roomData.wallHeight)
             writeFloorPlan(this, room)
+            writeAreaHideMessageData(this)
+            writeCameraInit(this)
         }
     }
 
@@ -65,6 +67,30 @@ class RoomFloormapResponse {
             }
 
             writeUTF(stringBuilder.toString())
+        }
+    }
+
+    private fun writeAreaHideMessageData(response: HabboResponse) {
+        response.apply {
+            writeInt(0) // length of AreaHideMessageData
+            // start loop - AreaHideMessageData
+            writeInt(0) // furni ID
+            writeBoolean(false) // isEnabled
+            writeInt(0) // roomX
+            writeInt(0) // roomY
+            writeInt(0) // roomWidth
+            writeInt(0) // roomHeight
+            writeBoolean(false) // invert
+            // end loop - AreaHideMessageData
+        }
+    }
+
+    private fun writeCameraInit(response: HabboResponse) {
+        response.apply {
+            writeInt(0) // cameraInitX
+            writeInt(0) // cameraInitY
+            writeInt(0) // cameraInitZ
+            writeFloat(0.toFloat())
         }
     }
 }
