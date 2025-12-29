@@ -30,6 +30,6 @@ class RoomModelHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.currentRoom?.addUser(habboSession)
+//        habboSession.currentRoom?.addUser(habboSession)
     }
 }

@@ -30,6 +30,7 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.database.group.GroupDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
@@ -441,7 +442,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 this,
                 updateDb = true,
                 updateClient = true,
-                userName = roomUser?.habboSession?.userInformation?.username ?: ""
+                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
             )
         } else {
             if (rollerId == -1 || roomItem.rotation != oldRotation) {
@@ -501,7 +502,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 this,
                 updateDb = true,
                 updateClient = true,
-                userName = roomUser?.habboSession?.userInformation?.username ?: ""
+                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
             )
         } else {
             roomItem.update(updateDb = true, updateClient = true)

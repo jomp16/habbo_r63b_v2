@@ -272,7 +272,7 @@ class ItemManager {
                     writeUTF(if (magicRemove) "1" else "0")
                 }
                 else -> {
-                    writeInt(1)
+                    writeInt(0)
                     writeInt(0)
                     writeUTF(extraData)
                 }

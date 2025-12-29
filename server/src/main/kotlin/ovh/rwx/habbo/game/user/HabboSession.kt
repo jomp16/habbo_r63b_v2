@@ -365,57 +365,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             room.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
         }
 
-        if (release != "R63A") {
-            if (methodName == "response") sendHabboResponse(Outgoing.ROOM_OPEN)
-            else if (methodName == "responseWithRoomId") sendHabboResponse(Outgoing.ROOM_OPEN, room.roomData.id)
-            sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
-            sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
-//            sendHabboResponse(Outgoing.USER_NFT_CHAT_STYLES, room.roomModel.id, room.roomData.id)
-            sendHabboResponse(Outgoing.FLOOR_PLAN_DOOR, room.roomModel.doorVector3, room.roomModel.doorDir)
-
-            if (room.roomData.wallpaper != "0.0") sendHabboResponse(
-                Outgoing.ROOM_DECORATION,
-                "wallpaper",
-                room.roomData.wallpaper
-            )
-            if (room.roomData.floor != "0.0") sendHabboResponse(Outgoing.ROOM_DECORATION, "floor", room.roomData.floor)
-            if (room.roomData.landscape != "0.0") sendHabboResponse(
-                Outgoing.ROOM_DECORATION,
-                "landscape",
-                room.roomData.landscape
-            )
-
-            room.addUser(this)
-        } else {
-            sendHabboResponse(OutgoingR63A.ROOM_OPEN)
-            sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
-            sendHabboResponse(OutgoingR63A.ROOM_INITIAL_INFO, "model_${room.roomModel.id}", room.roomData.id)
-
-            if (room.roomData.wallpaper != "0.0") sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "wallpaper",
-                room.roomData.wallpaper
-            )
-            if (room.roomData.floor != "0.0") sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "floor",
-                room.roomData.floor
-            )
-            if (room.roomData.landscape != "0.0") sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "landscape",
-                room.roomData.landscape
-            )
-
-            if (room.hasRights(this)) {
-                sendHabboResponse(OutgoingR63A.ROOM_RIGHT)
-
-                if (room.hasRights(this, true)) {
-                    sendHabboResponse(OutgoingR63A.ROOM_OWNER)
-                }
-            }
-
-        }
+        room.addUser(this)
     }
 
     override fun close() {

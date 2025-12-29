@@ -66,7 +66,7 @@ class HandshakeSSOTicketHandler {
         )
         habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID1, 0)
+        habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
         habboSession.sendHabboResponse(
             Outgoing.USER_RIGHTS,
             if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
@@ -153,7 +153,7 @@ class HandshakeSSOTicketHandler {
         )
         habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_UNKNOWN_ID1, 0)
+        habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
         habboSession.sendHabboResponse(
             Outgoing.USER_RIGHTS,
             if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,

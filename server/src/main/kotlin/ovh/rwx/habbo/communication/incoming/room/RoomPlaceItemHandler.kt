@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,6 +30,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector2
+import kotlin.math.abs
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomPlaceItemHandler {
@@ -46,58 +47,21 @@ class RoomPlaceItemHandler {
         }
         val rawDataSplit: List<String>
         val itemId: Int
+        var postIt = false
 
         if (habboRequest.incoming == Incoming.ROOM_PLACE_POST_IT) {
-            itemId = habboRequest.readInt()
+            itemId = abs(habboRequest.readInt())
             val extraData = habboRequest.readUTF().split(' ')
 
             rawDataSplit = listOf("", extraData[0], extraData[1], extraData[2])
 
-            // Check if room has more or equals than 50 post it
-            if (habboSession.currentRoom!!.wallItems.values.count { it.furnishing.interactionType == InteractionType.POST_IT } >= 50) {
-                habboSession.sendSuperNotification(
-                    MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
-                    "message",
-                    "\${room.error.max_stickies}"
-                )
-
-                return
-            }
+            postIt = true
         } else {
             rawDataSplit = habboRequest.readUTF().split(' ')
-            itemId = rawDataSplit[0].toInt()
-        }
-        val userItem = habboSession.habboInventory.items[itemId] ?: return
-        val success: Boolean
-
-        if (userItem.furnishing.type == ItemType.WALL) {
-            // parse wall data
-            val correctedWallData = rawDataSplit.drop(1)
-
-            if (correctedWallData.size < 3) return
-            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(habboSession.currentRoom!!.roomData.id, userItem)
-
-            success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
-        } else {
-            // parse floor data
-            if (rawDataSplit.size < 4) return
-            val x = rawDataSplit[1].toInt()
-            val y = rawDataSplit[2].toInt()
-            val rot = rawDataSplit[3].toInt()
-            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(
-                habboSession.currentRoom!!.roomData.id,
-                userItem
-            )
-
-            success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
+            itemId = abs(rawDataSplit[0].toInt())
         }
 
-        if (success) habboSession.habboInventory.removeItems(listOf(itemId))
-        else habboSession.sendSuperNotification(
-            MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
-            "message",
-            "\${room.error.cant_set_item}"
-        )
+        finishStuff(itemId, postIt, rawDataSplit, habboSession)
     }
 
     @HandlerR63A(IncomingR63A.ROOM_PLACE_ITEM, IncomingR63A.ROOM_PLACE_POST_IT)
@@ -113,24 +77,40 @@ class RoomPlaceItemHandler {
         }
         val rawDataSplit: List<String>
         val itemId: Int
+        var postIt = false
 
         if (habboRequest.incomingR63A == IncomingR63A.ROOM_PLACE_POST_IT) {
-            itemId = habboRequest.readInt()
+            itemId = abs(habboRequest.readInt())
             val extraData = habboRequest.readUTF().split(' ')
 
             rawDataSplit = listOf("", extraData[0], extraData[1], extraData[2])
 
+            postIt = true
+        } else {
+            rawDataSplit = habboRequest.readUTF().split(' ')
+            itemId = abs(rawDataSplit[0].toInt())
+        }
+
+        finishStuff(itemId, postIt, rawDataSplit, habboSession)
+    }
+
+    private fun finishStuff(itemId: Int, postIt: Boolean, rawDataSplit: List<String>, habboSession: HabboSession) {
+        if (postIt) {
             // Check if room has more or equals than 50 post it
             if (habboSession.currentRoom!!.wallItems.values.count { it.furnishing.interactionType == InteractionType.POST_IT } >= 50) {
                 habboSession.sendNotification("\${room.error.max_stickies}")
 
                 return
             }
-        } else {
-            rawDataSplit = habboRequest.readUTF().split(' ')
-            itemId = rawDataSplit[0].toInt()
         }
-        val userItem = habboSession.habboInventory.items[itemId] ?: return
+
+        val userItem = habboSession.habboInventory.items[itemId]
+
+        if (userItem == null) {
+            habboSession.sendNotification("\${room.error.cant_set_item}")
+            return
+        }
+
         val success: Boolean
 
         if (userItem.furnishing.type == ItemType.WALL) {

@@ -29,7 +29,7 @@ class MessengerInitializeResponse {
     fun response(habboResponse: HabboResponse, maxFriends: Int, maxFriendsHC: Int) {
         habboResponse.apply {
             writeInt(maxFriends) // Max friends normal
-            writeInt(500)
+            writeInt(maxFriends)
             writeInt(maxFriendsHC) // Max friends HC
             writeInt(0) // category count
             // category structure:

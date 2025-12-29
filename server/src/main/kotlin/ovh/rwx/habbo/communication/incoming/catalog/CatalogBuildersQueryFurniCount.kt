@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,19 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.unknown
+package ovh.rwx.habbo.communication.incoming.catalog
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UnknownID1Response {
-    @Response(Outgoing.AUTHENTICATION_UNKNOWN_ID1)
-    fun response(habboResponse: HabboResponse, noobStatus: Int) {
-        // I guess this is the noob status (0, 1, 2)
-        habboResponse.apply {
-            writeInt(noobStatus)
-        }
+class CatalogBuildersQueryFurniCount {
+    @Handler(Incoming.BUILDERS_QUERY_FURNI_COUNT)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        // todo: real builders borrowed items
+        habboSession.sendHabboResponse(Outgoing.CATALOG_BUILDERS_BORROWED, 0)
     }
 }

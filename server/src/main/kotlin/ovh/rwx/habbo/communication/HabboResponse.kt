@@ -36,10 +36,13 @@ class HabboResponse(
 ) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
+    private val debugString = StringBuilder()
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
     fun writeUTF(s: String, breakChar: Int = 2) {
+        val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
+        debugString.append("{s:\"$debugStr\"}")
         if (outgoingR63A != null) {
             byteBufOutputStream.writeBytes(s)
             byteBufOutputStream.writeByte(breakChar)
@@ -49,14 +52,20 @@ class HabboResponse(
     }
     
     fun writeUTFWithoutBreak(s: String) {
+        val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
+        debugString.append("{s:\"$debugStr\"}")
         if (outgoingR63A != null) {
             byteBufOutputStream.writeBytes(s)
         }
     }
 
-    fun writeShort(i: Int) = byteBufOutputStream.writeShort(i)
+    fun writeShort(i: Int) {
+        debugString.append("{sh:\"$i\"}")
+        byteBufOutputStream.writeShort(i)
+    }
 
     fun writeInt(i: Int) {
+        debugString.append("{i:$i}")
         if (outgoingR63A != null) {
             HabboVl64.encodeBytes(i)?.let {
                 byteBufOutputStream.write(it)
@@ -66,11 +75,18 @@ class HabboResponse(
         }
     }
 
-    fun writeDouble(d: Double) = byteBufOutputStream.writeDouble(d)
+    fun writeDouble(d: Double) = {
+        debugString.append("{dl:$d}")
+        byteBufOutputStream.writeDouble(d)
+    }
 
-    fun writeFloat(d: Float) = byteBufOutputStream.writeFloat(d)
+    fun writeFloat(d: Float) {
+        debugString.append("{f:$d}")
+        byteBufOutputStream.writeFloat(d)
+    }
 
     fun writeBoolean(b: Boolean) {
+        debugString.append("{b:$b}")
         if (outgoingR63A != null) {
             byteBufOutputStream.writeByte((if (b) 73 else 72))
         } else {
@@ -79,6 +95,7 @@ class HabboResponse(
     }
 
     fun writeByte(b: Int) {
+        debugString.append("{by:$b}")
         byteBufOutputStream.writeByte(b)
     }
 
@@ -91,11 +108,7 @@ class HabboResponse(
     }
 
     override fun toString(): String {
-        var message = _byteBuf.toString(Charsets.UTF_8).replace("[\\r\\n]+".toRegex(), "(newline)")
-
-        for (i in 0..31) message = message.replace(i.toChar().toString(), "[$i]")
-
-        return message
+        return debugString.toString()
     }
 
     override fun close() {

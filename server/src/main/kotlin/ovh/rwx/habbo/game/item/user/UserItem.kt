@@ -42,7 +42,7 @@ data class UserItem(
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            writeInt(id)
+            writeInt(-id) // todo: if gift do not send negative
             writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
             writeInt(id)
             writeInt(furnishing.spriteId)
