@@ -31,6 +31,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     abstract fun code(): Int
+    open fun requiresItems(): Boolean = false
 
     fun saveWired(habboRequest: HabboRequest, habboAir: Boolean): Boolean {
         roomItem.wiredData?.let {
@@ -144,9 +145,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
     fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData, habboAir: Boolean) {
         habboResponse.apply {
             // Determine if this wired uses items
-            val hasItems = wiredData.items.isNotEmpty()
-
-            if (hasItems) {
+            if (requiresItems()) {
                 writeItems(wiredData, habboAir)
             } else {
                 writeEmptyItems(habboAir)
@@ -166,7 +165,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
             if (habboAir) {
                 writeListOfIds(emptyList()) // variable ids
-                writeListOfIds(if (hasItems) wiredData.items else emptyList()) // furni ids
+                writeListOfIds(if (requiresItems()) wiredData.items else emptyList()) // furni ids
                 writeListOfIds(emptyList()) // user ids
             }
 

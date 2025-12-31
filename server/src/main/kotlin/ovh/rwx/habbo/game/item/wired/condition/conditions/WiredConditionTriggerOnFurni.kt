@@ -41,6 +41,7 @@ class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondit
 
     override fun code() =
         if (isNegative) WiredConditionType.NOT_TRIGGERER_IS_ON_FURNI.code else WiredConditionType.TRIGGERER_IS_ON_FURNI.code
+    override fun requiresItems() = true
 
     override fun onCondition(roomUser: RoomUser?): Boolean {
         if (roomUser == null) return false

@@ -38,6 +38,7 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     override fun code() = WiredEffectType.TELEPORT.code
+    override fun requiresItems() = true
 
     override fun onEffect(roomUser: RoomUser?) {
         if (roomUser == null) return
