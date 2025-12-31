@@ -147,7 +147,7 @@ class RoomGamemap(private val room: Room) {
     fun getHighestItem(vector2: Vector2): RoomItem? {
         if (!roomItemMap.containsKey(vector2)) return null
 
-        return roomItemMap[vector2]!!.minByOrNull { it.position.z }
+        return roomItemMap[vector2]!!.maxByOrNull { it.position.z }
     }
 
     fun removeRoomItem(roomItem: RoomItem) {

@@ -348,11 +348,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         rollerId: Int = -1
     ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
-        val onlyRotation = roomItem.position.vector2 == position && roomItem.rotation != rotation
+        roomItem.position.vector2 == position && roomItem.rotation != rotation
 
         if (position == roomModel.doorVector3.vector2) return false
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
-        if (roomGamemap.isBlocked(position, true)) return false
+//        if (roomGamemap.isBlocked(position, true)) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(
             position.x,
@@ -361,7 +361,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             roomItem.furnishing.width,
             roomItem.furnishing.height
         ).forEach {
-            if (!onlyRotation && roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
+            if (roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
                 // Check if the blocked tile is from the same item being moved
                 val itemsOnTile = roomGamemap.roomItemMap[it] ?: emptyList()
                 val isOwnTile = itemsOnTile.any { item -> item.id == roomItem.id }

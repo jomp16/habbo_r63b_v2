@@ -35,6 +35,7 @@ class WiredTriggerWalksOffFurni(room: Room, roomItem: RoomItem) : WiredTrigger(r
     }
 
     override fun code() = WiredTriggerType.WALKS_OFF_FURNI.code
+    override fun requiresItems() = true
 
     override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
         val items = roomItem.wiredData?.items ?: return false

@@ -33,6 +33,11 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_HAS_NO_AVATARS
 
+    override fun code() =
+        if (isNegative) WiredConditionType.NOT_FURNIS_HAVE_AVATARS.code else WiredConditionType.FURNIS_HAVE_AVATARS.code
+
+    override fun requiresItems() = true
+
     init {
         setData()
     }
@@ -50,9 +55,6 @@ class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(
 
         return if (isNegative) !hasAvatars else hasAvatars
     }
-
-    override fun code() =
-        if (isNegative) WiredConditionType.NOT_FURNIS_HAVE_AVATARS.code else WiredConditionType.FURNIS_HAVE_AVATARS.code
 
     companion object {
         @Suppress("unused")

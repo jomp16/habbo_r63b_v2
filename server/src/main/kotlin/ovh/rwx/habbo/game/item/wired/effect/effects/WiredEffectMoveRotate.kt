@@ -41,6 +41,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     }
 
     override fun code() = WiredEffectType.MOVE_FURNI.code
+    override fun requiresItems() = true
 
     override fun setData() {
         roomItem.wiredData?.let {
