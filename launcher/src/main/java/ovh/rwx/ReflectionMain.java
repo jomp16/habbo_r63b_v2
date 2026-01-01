@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,7 +30,7 @@ import java.io.File;
 @SuppressWarnings("unchecked")
 class ReflectionMain {
     public static void main(String[] args) throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory()).registerModule(new KotlinModule());
+        final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory()).registerModule(new KotlinModule.Builder().build());
         //noinspection unused
         final HabboConfig habboConfig = objectMapper.readValue(new File("config.yaml"), HabboConfig.class);
 

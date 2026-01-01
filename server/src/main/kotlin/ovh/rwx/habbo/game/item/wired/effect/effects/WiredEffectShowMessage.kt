@@ -22,13 +22,13 @@ package ovh.rwx.habbo.game.item.wired.effect.effects
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_SHOW_MESSAGE)
@@ -53,12 +53,12 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
         }
     }
 
-    override fun onEffect(roomUser: RoomUser?) {
+    override fun onEffect(wiredContext: WiredContext) {
         if (!message.isBlank()) {
             val bubble = RoomChatMessageBubbles.fromType(style)
             when (visibility) {
-                MessageVisibility.USER_ONLY -> roomUser?.chat(
-                    roomUser.virtualID,
+                MessageVisibility.USER_ONLY -> wiredContext.triggererUser?.chat(
+                    wiredContext.triggererUser.virtualID,
                     message,
                     bubble,
                     RoomChatType.WHISPER,

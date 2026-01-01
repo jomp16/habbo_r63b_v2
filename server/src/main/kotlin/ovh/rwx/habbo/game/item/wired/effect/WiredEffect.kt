@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.item.wired.effect
 
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
@@ -27,16 +28,16 @@ import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 abstract class WiredEffect(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    fun handle(roomUser: RoomUser?) {
+    fun handle(wiredContext: WiredContext, roomUser: RoomUser?) {
         val delay = roomItem.wiredData?.delay ?: 0
 
         if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser, delay)))
+            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser, delay, wiredContext)))
             return
         }
 
-        onEffect(roomUser)
+        onEffect(wiredContext)
     }
 
-    abstract fun onEffect(roomUser: RoomUser?)
+    abstract fun onEffect(wiredContext: WiredContext)
 }

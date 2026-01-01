@@ -75,12 +75,8 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
                     roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> {
                         // Selector: param7 = resolveFilterField(), param8 = resolveInverseField()
-                        @Suppress("UNUSED_VARIABLE")
-                        val filterField = habboRequest.readBoolean() // TODO: implement filterField
-
-                        @Suppress("UNUSED_VARIABLE")
-                        val inverseField = habboRequest.readBoolean() // TODO: implement inverseField
-                        log.info("[WIRED] TODO: selector filterField: {}, inverseField: {}", filterField, inverseField)
+                        it.filter = habboRequest.readBoolean()
+                        it.inverse = habboRequest.readBoolean()
                     }
                 }
 
@@ -175,7 +171,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
                 writeDelay(wiredData.delay)
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR")) {
-                writeSelectorDefinitionSpecifics(isFilter = false, isInvert = false)
+                writeSelectorDefinitionSpecifics(wiredData.filter, wiredData.inverse)
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
                 writeConditionDefinitionSpecifics(quantifierCode = 0)
             }

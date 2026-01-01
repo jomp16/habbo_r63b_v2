@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_TIME_MORE_THAN, InteractionType.WIRED_CONDITION_TIME_LESS_THAN)
@@ -47,7 +47,7 @@ class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, 
         }
     }
 
-    override fun onCondition(roomUser: RoomUser?): Boolean {
+    override fun onCondition(wiredContext: WiredContext): Boolean {
         val currentCycles = room.roomTimer.get()
 
         return if (isLessThan) {

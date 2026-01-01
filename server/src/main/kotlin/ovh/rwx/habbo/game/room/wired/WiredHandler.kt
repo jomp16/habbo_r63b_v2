@@ -21,9 +21,11 @@ package ovh.rwx.habbo.game.room.wired
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
+import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
@@ -44,47 +46,70 @@ class WiredHandler {
 
     fun removeWiredItem(vector2: Vector2, roomItem: RoomItem): WiredItem? = wiredStack[vector2]?.remove(roomItem.id)
 
+    /**
+     * O fluxo Wired 2.0 deve ser:
+     * 1. Trigger (Ativação)
+     * 2. Ordenação por Z (Base para o topo)
+     * 3. Seletores (Definição de alvos no Contexto)
+     * 4. Condições (Filtros e Validações)
+     * 5. Efeitos (Ações nos alvos)
+     */
     fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): List<WiredTrigger> {
         val triggeredWireds = mutableListOf<WiredTrigger>()
-        
-        for ((vector2, wiredStackMap) in wiredStack) {
-            wiredStackMap.values.forEach { wiredItem ->
-                if (wiredItem is WiredTrigger && triggerClass.java.isInstance(wiredItem) && wiredItem.onTrigger(
-                        roomUser,
-                        data
-                    )
-                ) {
-                    triggeredWireds.add(wiredItem)
-                    lightWired(wiredItem)
 
-                    if (triggerCondition(vector2, roomUser)) {
-                        triggerAction(vector2, roomUser)
+        wiredStack.values.forEach { wiredStackMap ->
+            // Filtramos todos os triggers do tipo solicitado nesta pilha
+            val triggersInStack = wiredStackMap.values
+                .filterIsInstance<WiredTrigger>()
+                .filter { triggerClass.java.isInstance(it) }
+
+            triggersInStack.forEach { trigger ->
+                val wiredContext = WiredContext(
+                    triggererUser = roomUser,
+                    trigger = trigger
+                )
+
+                // Se o trigger disparar com sucesso (ex: senha correta ou timer bateu)
+                if (trigger.onTrigger(wiredContext, data)) {
+                    triggeredWireds.add(trigger)
+                    lightWired(trigger)
+
+                    // 1. Pegamos a pilha inteira ORDENADA pelo Z para respeitar a lógica visual
+                    val sortedStack = wiredStackMap.values.sortedBy { it.roomItem.position.z }
+
+                    // 2. Processamos os Seletores (Eles preenchem o context.targetFurnis)
+                    sortedStack.filterIsInstance<WiredSelector>().forEach { selector ->
+                        lightWired(selector)
+
+                        selector.onSelect(wiredContext)
+                    }
+
+                    // 3. Processamos as Condições (Validam se a pilha prossegue)
+                    // No 2.0, usamos 'all' porque todas precisam ser verdadeiras
+                    val conditionsPassed = sortedStack.filterIsInstance<WiredCondition>().all { condition ->
+                        val result = condition.onCondition(wiredContext)
+
+                        if (result) lightWired(condition)
+
+                        return@all result
+                    }
+
+                    // Se as condições passarem, executamos os efeitos
+                    if (conditionsPassed) {
+                        // 4. Processamos os Efeitos (Ações finais)
+                        sortedStack.filterIsInstance<WiredEffect>().forEach { effect ->
+                            if (!wiredContext.cancelled) {
+                                lightWired(effect)
+
+                                effect.handle(wiredContext, roomUser)
+                            }
+                        }
                     }
                 }
             }
         }
 
         return triggeredWireds
-    }
-
-    private fun triggerCondition(vector2: Vector2, roomUser: RoomUser?): Boolean {
-        var canExecute = true
-
-        wiredStack[vector2]!!.values.filterIsInstance<WiredCondition>().forEach {
-            lightWired(it)
-
-            if (canExecute) canExecute = it.onCondition(roomUser)
-        }
-
-        return canExecute
-    }
-
-    private fun triggerAction(vector2: Vector2, roomUser: RoomUser?) {
-        wiredStack[vector2]!!.values.filterIsInstance<WiredEffect>().forEach { wiredItem ->
-            lightWired(wiredItem)
-
-            wiredItem.handle(roomUser)
-        }
     }
 
     fun lightWired(wiredItem: WiredItem) {
@@ -109,9 +134,7 @@ class WiredHandler {
 
     fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest, habboAir: Boolean = false): Boolean {
         val vector2 = roomItem.position.vector2
-
-        if (!wiredStack.containsKey(vector2) || !wiredStack[vector2]!!.containsKey(roomItem.id)) return false
-        val wiredItem = wiredStack[vector2]!![roomItem.id]!!
+        val wiredItem = wiredStack[vector2]?.get(roomItem.id) ?: return false
 
         if (wiredItem.saveWired(habboRequest, habboAir)) {
             roomItem.update(updateDb = true, updateClient = false)

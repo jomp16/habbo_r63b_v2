@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.effect.effects
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
@@ -50,7 +50,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         }
     }
 
-    override fun onEffect(roomUser: RoomUser?) {
+    override fun onEffect(wiredContext: WiredContext) {
         roomItem.wiredData?.items?.forEach { itemId ->
             val roomItem = room.roomItems[itemId] ?: return@forEach
 

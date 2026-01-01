@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.trigger.triggers
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 import java.util.Locale.getDefault
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
@@ -51,9 +51,9 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
-        if (data == null || data !is String || roomUser == null) return false
-        if (onlyOwner && !room.hasRights(roomUser.habboSession, true)) return false
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+        if (data == null || data !is String || wiredContext.triggererUser == null) return false
+        if (onlyOwner && !room.hasRights(wiredContext.triggererUser.habboSession, true)) return false
 
         return when (triggerType) {
             ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.lowercase(getDefault())

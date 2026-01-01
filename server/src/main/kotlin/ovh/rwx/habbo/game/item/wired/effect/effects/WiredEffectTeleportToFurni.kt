@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.effect.effects
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Vector3
 
@@ -40,16 +40,16 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
     override fun code() = WiredEffectType.TELEPORT.code
     override fun requiresItems() = true
 
-    override fun onEffect(roomUser: RoomUser?) {
-        if (roomUser == null) return
+    override fun onEffect(wiredContext: WiredContext) {
+        if (wiredContext.triggererUser == null) return
 
-        val roomItem = room.roomGamemap.getHighestItem(roomUser.currentVector3.vector2)
+        val roomItem = room.roomGamemap.getHighestItem(wiredContext.triggererUser.currentVector3.vector2)
         val items = this.roomItem.wiredData?.items ?: return
 
         val roomItemId = if (roomItem != null) items.minus(roomItem.id).randomOrNull() else items.randomOrNull()
         if (roomItemId == null || !room.roomItems.containsKey(roomItemId)) return
 
-        roomItem?.onUserWalksOff(roomUser, true)
+        roomItem?.onUserWalksOff(wiredContext.triggererUser, true)
 
         val roomItem1 = room.roomItems[roomItemId] ?: return
 
@@ -61,17 +61,21 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
             if (!room.roomGamemap.isBlocked(tile)) {
                 val newPosition = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
 
-                roomUser.stopWalking()
+                wiredContext.triggererUser.stopWalking()
 
-                room.roomGamemap.updateRoomUserMovement(roomUser, roomUser.currentVector3.vector2, newPosition.vector2)
+                room.roomGamemap.updateRoomUserMovement(
+                    wiredContext.triggererUser,
+                    wiredContext.triggererUser.currentVector3.vector2,
+                    newPosition.vector2
+                )
 
-                roomUser.effect = RoomUserEffect(4, 5)
-                roomUser.headRotation = roomItem1.rotation
-                roomUser.bodyRotation = roomItem1.rotation
-                roomUser.currentVector3 = newPosition
-                roomUser.addUserStatuses(roomItem1)
+                wiredContext.triggererUser.effect = RoomUserEffect(4, 5)
+                wiredContext.triggererUser.headRotation = roomItem1.rotation
+                wiredContext.triggererUser.bodyRotation = roomItem1.rotation
+                wiredContext.triggererUser.currentVector3 = newPosition
+                wiredContext.triggererUser.addUserStatuses(roomItem1)
 
-                roomItem1.onUserWalksOn(roomUser, true)
+                roomItem1.onUserWalksOn(wiredContext.triggererUser, true)
 
                 return@forEach
             }

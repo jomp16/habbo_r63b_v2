@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,13 +23,14 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.talent.TalentTrackType
+import java.util.Locale.getDefault
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class TalentTrackResponse {
     @Response(Outgoing.TALENT_TRACK)
     fun response(habboResponse: HabboResponse, talentTrackType: TalentTrackType) {
         habboResponse.apply {
-            writeUTF(talentTrackType.name.toLowerCase())
+            writeUTF(talentTrackType.name.lowercase(getDefault()))
 
             // todo: get talent track from database
             writeInt(0)

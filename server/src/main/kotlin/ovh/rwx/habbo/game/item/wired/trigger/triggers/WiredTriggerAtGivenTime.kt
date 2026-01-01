@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.trigger.triggers
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_AT_GIVEN_TIME)
 class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
@@ -45,7 +45,7 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         val currentTime = room.roomTimer.get()
 
         if (currentTime >= targetTime && !hasTriggered) {

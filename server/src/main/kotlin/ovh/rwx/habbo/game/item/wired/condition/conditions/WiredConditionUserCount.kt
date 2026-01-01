@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_USER_COUNT_IN, InteractionType.WIRED_CONDITION_NOT_USER_COUNT)
@@ -49,7 +49,7 @@ class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(r
         }
     }
 
-    override fun onCondition(roomUser: RoomUser?): Boolean {
+    override fun onCondition(wiredContext: WiredContext): Boolean {
         val userCount = room.roomUsers.size
         val inRange = userCount in minUsers..maxUsers
         return if (isNegative) !inRange else inRange

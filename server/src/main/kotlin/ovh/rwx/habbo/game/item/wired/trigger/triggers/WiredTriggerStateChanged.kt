@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.trigger.triggers
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
 class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
@@ -37,7 +37,7 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
     override fun code() = WiredTriggerType.STATE_CHANGE.code
     override fun requiresItems() = true
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         val items = roomItem.wiredData?.items ?: return false
         return data != null && data is RoomItem && items.any { it == data.id }
     }

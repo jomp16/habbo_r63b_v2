@@ -27,7 +27,7 @@ class WiredDelayTask(private val wiredDelayEvent: WiredDelayEvent) : IRoomTask {
     override fun executeTask(room: Room) {
         if (wiredDelayEvent.counter.incrementAndGet() >= wiredDelayEvent.delay) {
             room.wiredHandler.lightWired(wiredDelayEvent.wiredEffect)
-            wiredDelayEvent.wiredEffect.onEffect(wiredDelayEvent.roomUser)
+            wiredDelayEvent.wiredEffect.onEffect(wiredDelayEvent.wiredContext)
 
             return
         }

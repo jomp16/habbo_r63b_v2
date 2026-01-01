@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_HAS_AVATARS, InteractionType.WIRED_CONDITION_HAS_NO_AVATARS)
@@ -42,7 +42,7 @@ class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(
         setData()
     }
 
-    override fun onCondition(roomUser: RoomUser?): Boolean {
+    override fun onCondition(wiredContext: WiredContext): Boolean {
         val items = roomItem.wiredData?.items ?: return false
         if (items.isEmpty()) return false
 

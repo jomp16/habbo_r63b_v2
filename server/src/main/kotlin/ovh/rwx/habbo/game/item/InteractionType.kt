@@ -143,7 +143,7 @@ enum class InteractionType(val type: String) {
     WIRED_EFFECT_RELATIVE_MOVE("wf_act_rel_mov"),
     WIRED_EFFECT_REMOVE_VARIABLE("wf_act_remove_var"),
     WIRED_EFFECT_RESET_TIMERS("wf_act_reset_timers"),
-    WIRED_EFFECT_ROTATE_ITEM("wf_act_move_to_dir"),
+    WIRED_EFFECT_MOVE_TO_DIRECTION("wf_act_move_to_dir"),
     WIRED_EFFECT_SEND_SIGNAL("wf_act_send_signal"),
     WIRED_EFFECT_SET_ALTITUDE("wf_act_set_altitude"),
     WIRED_EFFECT_SHOW_MESSAGE("wf_act_show_message"),

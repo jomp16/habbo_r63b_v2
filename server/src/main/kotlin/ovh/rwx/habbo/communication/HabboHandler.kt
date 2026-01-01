@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.communication
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.reflections8.Reflections
 import org.reflections8.scanners.MethodAnnotationsScanner
@@ -161,7 +160,7 @@ class HabboHandler {
         val lookup = MethodHandles.lookup()
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
+        HabboServer.applicationScope.launch {
             reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
                 val clazz = getInstance(it.declaringClass)
                 val handler = it.getAnnotation(Handler::class.java)
@@ -188,7 +187,7 @@ class HabboHandler {
             log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
         }
 
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
+        HabboServer.applicationScope.launch {
             reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
                 val clazz = getInstance(it.declaringClass)
                 val response = it.getAnnotation(Response::class.java)

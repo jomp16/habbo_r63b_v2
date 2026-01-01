@@ -21,11 +21,11 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(
@@ -43,15 +43,15 @@ class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondit
         if (isNegative) WiredConditionType.NOT_TRIGGERER_IS_ON_FURNI.code else WiredConditionType.TRIGGERER_IS_ON_FURNI.code
     override fun requiresItems() = true
 
-    override fun onCondition(roomUser: RoomUser?): Boolean {
-        if (roomUser == null) return false
+    override fun onCondition(wiredContext: WiredContext): Boolean {
+        if (wiredContext.triggererUser == null) return false
         val items = roomItem.wiredData?.items ?: return false
         if (items.isEmpty()) return false
 
         val isOnFurni = items.any { itemId ->
             val roomItem = room.roomItems[itemId] ?: return@any false
             roomItem.affectedTiles.any { tile ->
-                roomUser.currentVector3.vector2 == tile
+                wiredContext.triggererUser.currentVector3.vector2 == tile
             }
         }
 

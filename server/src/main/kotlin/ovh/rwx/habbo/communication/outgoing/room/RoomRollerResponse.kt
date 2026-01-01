@@ -33,20 +33,22 @@ class RoomRollerResponse {
             writeInt(source.y)
             writeInt(target.x)
             writeInt(target.y)
-            writeInt(if (itemId != -1) 1 else 0)
 
             if (itemId != -1) {
+                writeInt(1) // items count
                 writeInt(itemId)
+                writeUTF(source.z.toString())
+                writeUTF(target.z.toString())
+                writeInt(0) // roller ID
             } else {
+                writeInt(0) // items count
                 writeInt(rollerId)
                 writeInt(2) // 1 - move / 2 - slide
                 writeInt(virtualId)
+                writeUTF(source.z.toString())
+                writeUTF(target.z.toString())
+                writeInt(rollerId)
             }
-
-            writeUTF(source.z.toString())
-            writeUTF(target.z.toString())
-
-            if (itemId != -1) writeInt(rollerId)
         }
     }
 }

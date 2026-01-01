@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,5 +25,7 @@ data class WiredData(
         var items: List<Int>, // items
         var message: String, // text box
         var options: List<Int>, // options
-        var extradata: String  // extra data
+        var extradata: String,  // extra data
+        var filter: Boolean = false, // selector filter field
+        var inverse: Boolean = false // selector inverse field
 )

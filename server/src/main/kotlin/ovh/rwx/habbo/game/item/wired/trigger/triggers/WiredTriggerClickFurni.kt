@@ -22,17 +22,17 @@ package ovh.rwx.habbo.game.item.wired.trigger.triggers
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_FURNI)
 class WiredTriggerClickFurni(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
     override fun code() = WiredTriggerType.AVATAR_CLICKS_FURNI.code
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         return data != null && data is RoomItem
     }
 
