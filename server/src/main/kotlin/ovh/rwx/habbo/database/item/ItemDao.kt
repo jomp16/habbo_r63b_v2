@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -143,7 +143,9 @@ object ItemDao {
                             it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
                             it.string("message"),
                             it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
-                            it.string("extradata")
+                        it.string("extradata"),
+                        it.boolean("is_filter"),
+                        it.boolean("is_inverse"),
                     )
                 }.firstOrNull()
             }
@@ -247,17 +249,20 @@ object ItemDao {
         if (wiredData.isEmpty()) return
 
         HabboServer.database {
-            batchUpdate(javaClass.classLoader.getResource("sql/items/wired/update_wired_data.sql").readText(),
-                    wiredData.map {
-                        mapOf(
-                                "delay" to it.delay,
-                                "items" to it.items.joinToString(","),
-                                "message" to it.message,
-                                "options" to it.options.joinToString(","),
-                                "extradata" to it.extradata,
-                                "id" to it.id
-                        )
-                    }
+            batchUpdate(
+                javaClass.classLoader.getResource("sql/items/wired/update_wired_data.sql").readText(),
+                wiredData.map {
+                    mapOf(
+                        "delay" to it.delay,
+                        "items" to it.items.joinToString(","),
+                        "message" to it.message,
+                        "options" to it.options.joinToString(","),
+                        "extradata" to it.extradata,
+                        "is_filter" to it.filter,
+                        "is_inverse" to it.inverse,
+                        "id" to it.id
+                    )
+                }
             )
         }
     }

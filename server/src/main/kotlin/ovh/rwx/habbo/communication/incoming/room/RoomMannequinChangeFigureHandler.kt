@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.Locale.getDefault
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomMannequinChangeFigureHandler {
@@ -36,7 +37,7 @@ class RoomMannequinChangeFigureHandler {
         if (roomItem.furnishing.interactionType != InteractionType.MANNEQUIN) return
         val split = roomItem.extraData.split(7.toChar()).toTypedArray()
 
-        split[0] = habboSession.userInformation.gender.toLowerCase()
+        split[0] = habboSession.userInformation.gender.lowercase(getDefault())
         split[1] = ""
 
         habboSession.userInformation.figure.split('.')

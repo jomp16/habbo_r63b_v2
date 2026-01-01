@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
@@ -130,7 +129,14 @@ class RoomFloorPlanSaveHandler {
 
             room.roomGamemap = RoomGamemap(room)
 
-            roomUsers.map { GlobalScope.async { it.habboSession?.sendHabboResponse(Outgoing.ROOM_FORWARD, room.roomData.id) } }
+            roomUsers.map {
+                HabboServer.applicationScope.async {
+                    it.habboSession?.sendHabboResponse(
+                        Outgoing.ROOM_FORWARD,
+                        room.roomData.id
+                    )
+                }
+            }
         }
     }
 }

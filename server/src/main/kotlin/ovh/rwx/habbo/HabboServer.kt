@@ -40,6 +40,8 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.reflections8.Reflections
@@ -88,6 +90,7 @@ object HabboServer : AutoCloseable {
     // Thread Executors
     val serverScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
+    val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val reflections: Reflections

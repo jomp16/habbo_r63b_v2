@@ -21,13 +21,13 @@ package ovh.rwx.habbo.game.item.wired.selector
 
 enum class WiredSelectorType(val code: Int) {
     FURNI_BY_TYPE(0), // has custom UI
-    UNKNOWN_1(1),
+    FURNI_BY_FURNI(1),
     USERS_BY_TYPE(2), // has custom UI
     USERS_IN_TEAM(3), // has custom UI
     FURNI_ON_FURNI(4), // has custom UI
     FURNI_FROM_SIGNAL(5),
     UNKNOWN_6(6), // has custom UI
-    UNKNOWN_7(7), // has custom UI
+    FURNI_IN_AREA(7), // has custom UI
     USERS_ON_FURNI(8),
     USERS_PERFORMING_ACTION(9), // has custom UI
     USERS_FROM_SIGNAL(10),

@@ -17,33 +17,37 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.effect.effects
+package ovh.rwx.habbo.game.item.wired.selector.selectors
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
-import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
-import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
+import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
+import ovh.rwx.habbo.game.item.wired.selector.WiredSelectorType
 import ovh.rwx.habbo.game.room.Room
 
 @Suppress("unused")
-@WiredItemInteractor(InteractionType.WIRED_EFFECT_RESET_TIMERS)
-class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
+@WiredItemInteractor(InteractionType.WIRED_SELECTOR_FURNI_PICKS)
+class WiredSelectorFurniPicks(room: Room, roomItem: RoomItem) : WiredSelector(room, roomItem) {
+    override fun code() = WiredSelectorType.FURNI_BY_FURNI.code
+    override fun requiresItems() = true
 
-    init {
-        setData()
+    override fun onSelect(context: WiredContext) {
+        val mySelectedItems = getItemsFromConfig()
+
+        refineTargets(
+            contextTargets = context.targetFurnis,
+            currentSelection = mySelectedItems,
+            isFilter = roomItem.wiredData?.filter ?: false,
+            isInverse = roomItem.wiredData?.inverse ?: false,
+            allPossibleTargets = { room.roomItems.values } // Busca todos os mobis do quarto se inverter
+        )
     }
 
-    override fun code() = WiredEffectType.RESET_TIMERS.code
-
-    override fun onEffect(wiredContext: WiredContext) {
-        // Reset room timer
-        room.roomTimer.set(0)
-
-        // Reset all wired triggers with internal timers
-        room.wiredHandler.resetTimers()
+    private fun getItemsFromConfig(): List<RoomItem> {
+        return roomItem.wiredData?.items?.mapNotNull { room.roomItems[it] } ?: emptyList()
     }
 
     companion object {

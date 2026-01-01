@@ -47,7 +47,7 @@ class HabboInventory(private val habboSession: HabboSession) {
         } else {
             habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
             habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, items.values)
+//            habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, items.values)
         }
     }
 

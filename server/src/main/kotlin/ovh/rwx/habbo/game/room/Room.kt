@@ -52,6 +52,7 @@ import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
@@ -405,7 +406,6 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
         }
         val oldPosition = roomItem.position
-        val oldRotation = roomItem.rotation
 
         roomItem.position = Vector3(
             position.x,
@@ -445,12 +445,35 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
             )
         } else {
-            if (rollerId == -1 || roomItem.rotation != oldRotation) {
+            // Verifica se houve movimento real de posição
+            val hasMoved = oldPosition.vector2 != roomItem.position.vector2
+
+            // Se rollerId for -1, é teleporte/giro instantâneo.
+            // Se for >= 0 e houve movimento, é animação (Slide).
+            val isAnimation = (rollerId != -1) && hasMoved
+
+            if (!isAnimation) {
+                // CASO 1: Teleporte, Giro no lugar ou Colocação manual
+                // Envia o pacote Update imediatamente
                 roomItem.update(updateDb = true, updateClient = true)
             } else {
+                // CASO 2: Animação (Wired ou Roller)
+
+                // 1. Envia o Slide Visual (Tempo 0ms)
+                // O cliente começa a mover o item visualmente de Old -> New
                 sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
 
+                // 2. Salva no Banco (Assíncrono para não travar)
                 addItemToSave(roomItem)
+
+                // 3. AGENDAMENTO DO UPDATE (A CORREÇÃO DO GLITCH)
+                // Espera 500ms (tempo da animação) para enviar a confirmação da nova rotação/posição
+                HabboServer.serverScheduledExecutor.schedule({
+                    // Envia o pacote Update agora que o item "chegou"
+                    // Isso corrige a rotação sem causar o "pulo" visual
+                    roomItem.update(updateDb = false, updateClient = true)
+
+                }, 500, TimeUnit.MILLISECONDS)
             }
         }
 

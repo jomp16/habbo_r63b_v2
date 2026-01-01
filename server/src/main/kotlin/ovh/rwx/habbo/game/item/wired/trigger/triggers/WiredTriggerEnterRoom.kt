@@ -21,11 +21,11 @@ package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_ENTER_ROOM)
 class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
@@ -43,9 +43,9 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
         }
     }
 
-    override fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         if (roomItem.wiredData == null) return false
 
-        return username.isBlank() || roomUser != null && username == roomUser.habboSession!!.userInformation.username
+        return username.isBlank() || wiredContext.triggererUser != null && username == wiredContext.triggererUser.habboSession!!.userInformation.username
     }
 }

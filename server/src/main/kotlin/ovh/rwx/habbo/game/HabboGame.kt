@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
@@ -57,32 +56,35 @@ class HabboGame {
     val antiMutantManager: AntiMutantManager = AntiMutantManager()
 
     init {
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { landingManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { roomManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { itemManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { catalogManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { navigatorManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { permissionManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { moderationManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { groupManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { cameraManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { achievementManager.load() }
-        GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { antiMutantManager.load() }
+        HabboServer.applicationScope.launch { landingManager.load() }
+        HabboServer.applicationScope.launch { roomManager.load() }
+        HabboServer.applicationScope.launch { itemManager.load() }
+        HabboServer.applicationScope.launch { catalogManager.load() }
+        HabboServer.applicationScope.launch { navigatorManager.load() }
+        HabboServer.applicationScope.launch { permissionManager.load() }
+        HabboServer.applicationScope.launch { moderationManager.load() }
+        HabboServer.applicationScope.launch { groupManager.load() }
+        HabboServer.applicationScope.launch { cameraManager.load() }
+        HabboServer.applicationScope.launch { achievementManager.load() }
+        HabboServer.applicationScope.launch { antiMutantManager.load() }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.habboSubscription.clearSubscription() } }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }
+                .forEach { HabboServer.applicationScope.launch { it.habboSubscription.clearSubscription() } }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
             HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.rewardUser() } }
+                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
+                    .forEach { HabboServer.applicationScope.launch { it.rewardUser() } }
             }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }.forEach { GlobalScope.launch(HabboServer.cachedExecutorDispatcher) { it.saveAllQueuedStuffs() } }
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
+                .forEach { HabboServer.applicationScope.launch { it.saveAllQueuedStuffs() } }
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

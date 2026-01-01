@@ -22,11 +22,11 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_WEARING_BADGE, InteractionType.WIRED_CONDITION_NOT_WEARING_BADGE)
@@ -47,10 +47,11 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
         }
     }
 
-    override fun onCondition(roomUser: RoomUser?): Boolean {
-        if (roomUser == null || badgeCode.isBlank()) return false
+    override fun onCondition(wiredContext: WiredContext): Boolean {
+        if (wiredContext.triggererUser == null || badgeCode.isBlank()) return false
 
-        val equippedBadges = roomUser.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
+        val equippedBadges =
+            wiredContext.triggererUser.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
         val hasBadge = equippedBadges.any { it.code == badgeCode }
 
         return if (isNegative) !hasBadge else hasBadge

@@ -76,11 +76,11 @@ data class CatalogItem(
             if (dealId > 0) {
                 deal!!.let { deal ->
                     deal.furnishings.forEachIndexed { i, furnishing ->
-                        serializeItem(habboResponse, furnishing, deal.amounts[i], isHabboAir)
+                        serializeItem(habboResponse, furnishing, deal.amounts[i])
                     }
                 }
             } else {
-                serializeItem(habboResponse, furnishing, amount, isHabboAir)
+                serializeItem(habboResponse, furnishing, amount)
             }
 
             // Campos que vêm APÓS o array de produtos
@@ -121,8 +121,7 @@ data class CatalogItem(
     private fun serializeItem(
         habboResponse: HabboResponse,
         furnishing: Furnishing,
-        amount: Int,
-        isHabboAir: Boolean = false
+        amount: Int
     ) {
         habboResponse.apply {
             writeUTF(furnishing.type.type) // productType

@@ -70,7 +70,10 @@ class CatalogManager {
         log.info("Loaded {} catalog items!", catalogItems.size)
         log.info("Loaded {} club offers!", catalogClubOffers.size)
         log.info("Loaded {} catalog deals!", catalogDeals.size)
-        log.info("Loaded {} recycler levels and {} recycler rewards!", recyclerRewards.size, recyclerRewards.values.sumBy { it.size })
+        log.info(
+            "Loaded {} recycler levels and {} recycler rewards!",
+            recyclerRewards.size,
+            recyclerRewards.values.sumOf { it.size })
     }
 
     fun purchaseHC(habboSession: HabboSession, itemId: Int) {

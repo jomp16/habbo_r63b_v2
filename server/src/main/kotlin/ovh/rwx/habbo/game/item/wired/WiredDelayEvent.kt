@@ -27,5 +27,6 @@ data class WiredDelayEvent(
         val wiredEffect: WiredEffect,
         val roomUser: RoomUser?,
         val delay: Int,
+        val wiredContext: WiredContext,
         val counter: AtomicInteger = AtomicInteger(0),
 )

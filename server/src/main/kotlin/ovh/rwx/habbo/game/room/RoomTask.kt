@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.room
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -90,7 +89,7 @@ class RoomTask : Runnable {
     override fun run() {
         try {
             rooms.forEach { room ->
-                GlobalScope.launch(HabboServer.cachedExecutorDispatcher) {
+                HabboServer.applicationScope.launch {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@launch
 

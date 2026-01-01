@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.Locale.getDefault
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchResponse {
@@ -49,7 +50,7 @@ class NavigatorSearchResponse {
                     it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
                     else -> it.roomData.tags.any { s ->
-                        s.toLowerCase().matches("(?i:.*$searchTerm.*)".toRegex())
+                        s.lowercase(getDefault()).matches("(?i:.*$searchTerm.*)".toRegex())
                     }
                 }
             }.sortedByDescending { it.roomUsers.size }

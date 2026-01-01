@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,10 +20,10 @@
 package ovh.rwx.habbo.game.item.wired.trigger
 
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 abstract class WiredTrigger(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    abstract fun onTrigger(roomUser: RoomUser?, data: Any?): Boolean
+    abstract fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean
 }
