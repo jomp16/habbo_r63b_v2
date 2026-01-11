@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -110,7 +110,12 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
                 // Caminho livre! Mover.
                 // rollerId = -2 parece ser um código interno seu para wired,
                 // ou use 0 se seguir a lógica que discutimos antes (animação)
-                room.setFloorItem(item, nextPosition, item.rotation, null, rollerId = 0)
+                val visualRotation = if (item.furnishing.interactionModesCount == 4) {
+                    (currentDirection.code / 2) * 2
+                } else {
+                    currentDirection.code
+                }
+                room.setFloorItem(item, nextPosition, visualRotation, null, rollerId = 0)
             }
         }
     }
