@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+  ~ Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
   ~
   ~ This file is part of habbo_r63b_v2.
   ~
@@ -21,7 +21,8 @@
 <Configuration shutdownHook="disable" status="WARN">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
+            <PatternLayout
+                    pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss:SSS} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
         </Console>
     </Appenders>
     <loggers>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,7 +32,7 @@ import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.tasks.*
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.pathfinding.core.Path
-import ovh.rwx.habbo.util.Rotation
+import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.time.LocalDateTime
@@ -222,6 +222,11 @@ class RoomUser(
                     val roomItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
                     val roomItem1 = room.roomGamemap.getHighestItem(vector2)
 
+                    if (rollerId == -1) {
+                        bodyRotation = Direction.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
+                        headRotation = bodyRotation
+                    }
+
                     if (roomItem != roomItem1) {
                         roomItem?.onUserWalksOff(this, true)
                         roomItem1?.onUserWalksOn(this, true)
@@ -240,9 +245,6 @@ class RoomUser(
 
                     if (rollerId == -1) {
                         removeUserStatuses()
-
-                        bodyRotation = Rotation.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
-                        headRotation = bodyRotation
 
                         addStatus("mv", "${step.x},${step.y},$z")
                     }

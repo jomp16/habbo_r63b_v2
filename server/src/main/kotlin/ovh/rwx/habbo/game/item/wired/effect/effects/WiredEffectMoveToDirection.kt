@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.model.SquareState
+import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
@@ -157,16 +158,8 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     private fun getNextPosition(currentPos: Vector2, direction: Direction): Vector2 {
-        return when (direction) {
-            Direction.NORTH -> Vector2(currentPos.x, currentPos.y - 1)
-            Direction.NORTH_EAST -> Vector2(currentPos.x + 1, currentPos.y - 1)
-            Direction.EAST -> Vector2(currentPos.x + 1, currentPos.y)
-            Direction.SOUTH_EAST -> Vector2(currentPos.x + 1, currentPos.y + 1)
-            Direction.SOUTH -> Vector2(currentPos.x, currentPos.y + 1)
-            Direction.SOUTH_WEST -> Vector2(currentPos.x - 1, currentPos.y + 1)
-            Direction.WEST -> Vector2(currentPos.x - 1, currentPos.y)
-            Direction.NORTH_WEST -> Vector2(currentPos.x - 1, currentPos.y - 1)
-        }
+        val (dx, dy) = direction.getOffset()
+        return Vector2(currentPos.x + dx, currentPos.y + dy)
     }
 
     private fun handleBlockedMovement(currentDirection: Direction): Direction {
@@ -178,27 +171,6 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
             TurnBehavior.TURN_LEFT_90 -> currentDirection.turnLeft90()
             TurnBehavior.TURN_AROUND -> currentDirection.turnAround()
             TurnBehavior.RANDOM_DIRECTION -> Direction.fromCode(Utils.randInt(0..7))
-        }
-    }
-
-    private enum class Direction(val code: Int) {
-        NORTH(0),
-        NORTH_EAST(1),
-        EAST(2),
-        SOUTH_EAST(3),
-        SOUTH(4),
-        SOUTH_WEST(5),
-        WEST(6),
-        NORTH_WEST(7);
-
-        fun turnRight45() = fromCode((code + 1) % 8)
-        fun turnRight90() = fromCode((code + 2) % 8)
-        fun turnLeft45() = fromCode(if (code - 1 < 0) 7 else code - 1)
-        fun turnLeft90() = fromCode(if (code - 2 < 0) code + 6 else code - 2)
-        fun turnAround() = fromCode((code + 4) % 8)
-
-        companion object {
-            fun fromCode(code: Int) = values().find { it.code == code } ?: NORTH
         }
     }
 

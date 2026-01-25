@@ -28,10 +28,16 @@ abstract class RoomGame(val room: Room) {
         protected set
 
     abstract fun start()
+
     abstract fun stop()
-    abstract fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem)
-    abstract fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem)
-    abstract fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int = 0)
+
+    open fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {}
+
+    open fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem) {}
+
+    open fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int = 0) {}
 
     open fun tick() {}
+
+    open fun onUserLeaveRoom(roomUser: RoomUser) {}
 }

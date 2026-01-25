@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -54,7 +56,6 @@ import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
@@ -224,6 +225,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
         roomUsers.remove(roomUser.virtualID)
 
+        // Notifica o game manager que o usuário saiu
+        gameManager.onUserLeaveRoom(roomUser)
+
         roomTask?.addTask(this, UserPartRoomTask(roomUser))
     }
 
@@ -353,7 +357,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         rotation: Int,
         roomUser: RoomUser?,
         overrideZ: Double = (-1).toDouble(),
-        rollerId: Int = -1
+        rollerId: Int = -1,
+        rollerDelay: Long = 500
     ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
         roomItem.position.vector2 == position && roomItem.rotation != rotation
@@ -474,13 +479,15 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 addItemToSave(roomItem)
 
                 // 3. AGENDAMENTO DO UPDATE (A CORREÇÃO DO GLITCH)
-                // Espera 500ms (tempo da animação) para enviar a confirmação da nova rotação/posição
-                HabboServer.serverScheduledExecutor.schedule({
-                    // Envia o pacote Update agora que o item "chegou"
-                    // Isso corrige a rotação sem causar o "pulo" visual
-                    roomItem.update(updateDb = false, updateClient = true)
-
-                }, 500, TimeUnit.MILLISECONDS)
+                // Espera o tempo da animação para enviar a confirmação da nova rotação/posição
+                if (rollerDelay > 0) {
+                    HabboServer.applicationScope.launch {
+                        delay(rollerDelay)
+                        // Envia o pacote Update agora que o item "chegou"
+                        // Isso corrige a rotação sem causar o "pulo" visual
+                        roomItem.update(updateDb = false, updateClient = true)
+                    }
+                }
             }
         }
 

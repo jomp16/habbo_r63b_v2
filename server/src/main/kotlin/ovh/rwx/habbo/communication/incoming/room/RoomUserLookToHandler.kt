@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.util.Rotation
+import ovh.rwx.habbo.util.Direction
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserLookToHandler {
@@ -43,7 +43,12 @@ class RoomUserLookToHandler {
             return
         }
         val rotation =
-            Rotation.calculate(habboSession.roomUser!!.currentVector3.x, habboSession.roomUser!!.currentVector3.y, x, y)
+            Direction.calculate(
+                habboSession.roomUser!!.currentVector3.x,
+                habboSession.roomUser!!.currentVector3.y,
+                x,
+                y
+            )
         var update = false
 
         if (habboSession.roomUser?.bodyRotation != rotation) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.util.Rotation
+import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.Serializable
@@ -226,7 +226,7 @@ data class RoomItem(
         return closeable
     }
 
-    private fun getFrontRotation(front: Vector2) = Rotation.calculate(front.x, front.y, position.x, position.y)
+    private fun getFrontRotation(front: Vector2) = Direction.calculate(front.x, front.y, position.x, position.y)
 
     fun getFrontRotation(): Int = when (rotation) {
         2 -> 6
