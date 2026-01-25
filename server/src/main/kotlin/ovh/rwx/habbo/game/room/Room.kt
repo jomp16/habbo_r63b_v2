@@ -52,7 +52,6 @@ import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
-import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.util.concurrent.ConcurrentHashMap
@@ -166,7 +165,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             var virtualId: Int
 
             do {
-                virtualId = Utils.randInt(1..Int.MAX_VALUE)
+                virtualId = (1..Int.MAX_VALUE).random()
             } while (roomUsers.containsKey(virtualId))
 
             log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)

@@ -30,7 +30,6 @@ import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.model.SquareState
 import ovh.rwx.habbo.util.Direction
-import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
 @Suppress("unused")
@@ -170,7 +169,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
             TurnBehavior.TURN_LEFT_45 -> currentDirection.turnLeft45()
             TurnBehavior.TURN_LEFT_90 -> currentDirection.turnLeft90()
             TurnBehavior.TURN_AROUND -> currentDirection.turnAround()
-            TurnBehavior.RANDOM_DIRECTION -> Direction.fromCode(Utils.randInt(0..7))
+            TurnBehavior.RANDOM_DIRECTION -> Direction.fromCode((0..7).random())
         }
     }
 
