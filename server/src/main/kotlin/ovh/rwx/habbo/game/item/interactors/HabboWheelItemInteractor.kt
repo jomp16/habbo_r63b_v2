@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,6 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused")
 class HabboWheelItemInteractor : ItemInteractor() {
@@ -51,7 +50,7 @@ class HabboWheelItemInteractor : ItemInteractor() {
         if (roomItem.extraData != "-1") {
             roomItem.extraData = "-1"
             roomItem.update(updateDb = false, updateClient = true)
-            roomItem.requestCycles(10)
+            roomItem.requestCycles(6)
         }
 
         if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
@@ -60,7 +59,7 @@ class HabboWheelItemInteractor : ItemInteractor() {
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
 
-        roomItem.extraData = Utils.randInt(1 until 10).toString()
+        roomItem.extraData = (1..10).random().toString()
 
         roomItem.update(updateDb = true, updateClient = true)
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,7 +25,6 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.BanzaiTeleportTask
 import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.util.Utils
 
 @Suppress("unused")
 class BanzaiTeleportItemInteractor : ItemInteractor() {
@@ -56,7 +55,7 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         if (teleports.isEmpty()) return
 
         // Select random target teleport
-        val targetTeleport = teleports[Utils.randInt(0 until teleports.size)]
+        val targetTeleport = teleports[(0 until teleports.size).random()]
 
         // Activate source teleport effect for 2 cycles
         roomItem.extraData = "1"

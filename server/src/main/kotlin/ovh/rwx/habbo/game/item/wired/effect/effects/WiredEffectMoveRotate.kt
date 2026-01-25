@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,7 +27,6 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
 @Suppress("unused")
@@ -69,19 +68,19 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
                 direction
             )
 
-            DirectionState.LEFT_RIGHT -> if (Utils.randInt(0..1) == 1) {
+            DirectionState.LEFT_RIGHT -> if ((0..1).random() == 1) {
                 getVector2(currentVector2, DirectionState.LEFT)
             } else {
                 getVector2(currentVector2, DirectionState.RIGHT)
             }
 
-            DirectionState.UP_DOWN -> if (Utils.randInt(0..1) == 1) {
+            DirectionState.UP_DOWN -> if ((0..1).random() == 1) {
                 getVector2(currentVector2, DirectionState.UP)
             } else {
                 getVector2(currentVector2, DirectionState.DOWN)
             }
 
-            DirectionState.RANDOM -> when (Utils.randInt(1..4)) {
+            DirectionState.RANDOM -> when ((1..4).random()) {
                 1 -> getVector2(currentVector2, DirectionState.UP)
                 2 -> getVector2(currentVector2, DirectionState.DOWN)
                 3 -> getVector2(currentVector2, DirectionState.LEFT)
@@ -106,7 +105,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     private fun getRotation(rotation1: Int): Int {
         return when (rotation) {
             RotationState.CLOCKWISE, RotationState.COUNTER_CLOCKWISE -> getRotation(rotation1, rotation)
-            RotationState.RANDOM -> if (Utils.randInt(0..1) == 1) getRotation(
+            RotationState.RANDOM -> if ((0..1).random() == 1) getRotation(
                 rotation1,
                 RotationState.CLOCKWISE
             ) else getRotation(

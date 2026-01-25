@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,8 +26,6 @@ import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.net.URL
-import java.security.SecureRandom
-import java.util.*
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import kotlin.math.ln
@@ -35,7 +33,6 @@ import kotlin.math.pow
 
 @Suppress("unused")
 object Utils {
-    val random: SecureRandom = SecureRandom()
     private val ramUsage: Long
         get() = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
     val ramUsageString: String
@@ -51,8 +48,6 @@ object Utils {
 
         return "%.1f %sB".format(bytes / unit.toDouble().pow(exp.toDouble()), pre)
     }
-
-    fun randInt(range: IntRange, random1: Random = random): Int = random1.nextInt((range.last - range.first) + 1) + range.first
 
     fun round(value: Double, places: Int): Double {
         if (places < 0) throw IllegalArgumentException()

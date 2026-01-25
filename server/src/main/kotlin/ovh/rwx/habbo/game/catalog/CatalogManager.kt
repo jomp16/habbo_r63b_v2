@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,6 @@ import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.random
-import ovh.rwx.habbo.util.Utils
 import java.security.SecureRandom
 import java.util.*
 
@@ -291,7 +290,7 @@ class CatalogManager {
         HabboServer.habboConfig.recyclerConfig.odds.entries.filter { it.key != 1 }.filter {
             recyclerRewards.containsKey(it.key)
         }.sortedByDescending { it.key }.forEach {
-            if (Utils.randInt(1..it.value, random) == it.value) return it.key
+            if ((1..it.value).random() == it.value) return it.key
         }
 
         return 1
