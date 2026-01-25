@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,6 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
-import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -93,16 +92,16 @@ class RoomTask : Runnable {
                     try {
                         val queuedTasks = queuedTasks[room] ?: return@launch
 
-                        val wireds = mutableListOf<IRoomTask>()
-
+                        // Copia as tasks do ciclo atual para evitar loop infinito
+                        val tasksToProcess = mutableListOf<IRoomTask>()
                         while (queuedTasks.isNotEmpty()) {
-                            val task = queuedTasks.poll()
-
-                            if (task is WiredDelayTask) wireds += task
-                            else task.executeTask(room)
+                            tasksToProcess.add(queuedTasks.poll())
                         }
 
-                        wireds.forEach { it.executeTask(room) }
+                        // Processa todas as tasks que estavam na queue no início do ciclo
+                        tasksToProcess.forEach { task ->
+                            task.executeTask(room)
+                        }
 
                         // Increment room timer
                         room.roomTimer.incrementAndGet()
@@ -111,6 +110,9 @@ class RoomTask : Runnable {
                         room.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, null)
                         room.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, null)
                         room.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, null)
+
+                        // Tick room games
+                        room.gameManager.tick()
 
                         room.roomItems.values.filter { it.furnishing.interactionType != InteractionType.ROLLER }.forEach { it.onCycle() }
 

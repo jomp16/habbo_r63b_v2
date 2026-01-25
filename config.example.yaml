@@ -65,3 +65,6 @@ analytics:
   ip:
     enabled: true
     api_key: "<your_api_key>"
+game:
+  banzai:
+    strict: true
