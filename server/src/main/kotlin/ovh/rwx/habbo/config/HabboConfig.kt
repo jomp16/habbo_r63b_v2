@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -58,7 +58,9 @@ data class HabboConfig(
         @JsonProperty("server_console_figure", required = true)
         val serverConsoleFigure: String,
         @JsonProperty("analytics", required = true)
-        val analyticsConfig: AnalyticsConfig
+        val analyticsConfig: AnalyticsConfig,
+        @JsonProperty("game", required = true)
+        val gameConfig: GameConfig
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)

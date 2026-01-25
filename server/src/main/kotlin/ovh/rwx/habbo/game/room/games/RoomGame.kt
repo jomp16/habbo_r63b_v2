@@ -17,25 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.interactors.banzai
+package ovh.rwx.habbo.game.room.games
 
-import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-@Suppress("unused")
-class BanzaiGateItemInteractor() : ItemInteractor() {
-    override val interactionType = InteractionType.values().filter { it.name.startsWith("BATTLE_BANZAI_GATE") }
+abstract class RoomGame(val room: Room) {
+    var isRunning: Boolean = false
+        protected set
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOn(room, roomUser, roomItem)
-        room.gameManager.onUserWalksOn(roomUser, roomItem)
-    }
+    abstract fun start()
+    abstract fun stop()
+    abstract fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem)
+    abstract fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem)
+    abstract fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int = 0)
 
-    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOff(room, roomUser, roomItem)
-        room.gameManager.onUserWalkOff(roomUser, roomItem)
-    }
+    open fun tick() {}
 }

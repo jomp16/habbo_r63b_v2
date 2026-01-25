@@ -26,16 +26,12 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
-class BanzaiGateItemInteractor() : ItemInteractor() {
-    override val interactionType = InteractionType.values().filter { it.name.startsWith("BATTLE_BANZAI_GATE") }
+class BanzaiCounterItemInteractor() : ItemInteractor() {
+    override val interactionType = listOf(InteractionType.BATTLE_BANZAI_COUNTER)
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOn(room, roomUser, roomItem)
-        room.gameManager.onUserWalksOn(roomUser, roomItem)
-    }
-
-    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOff(room, roomUser, roomItem)
-        room.gameManager.onUserWalkOff(roomUser, roomItem)
+    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        if (roomUser != null) {
+            room.gameManager.handleInteraction(roomUser, roomItem, request)
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,6 +38,8 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
+import ovh.rwx.habbo.game.room.games.BattleBanzaiGame
+import ovh.rwx.habbo.game.room.games.RoomGameManager
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.tasks.UserJoinRoomTask
 import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
@@ -77,6 +79,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     lateinit var roomGamemap: RoomGamemap
     val pathfinder: IFinder by lazy { AStarFinder(DiagonalMovement.ALWAYS, EuclideanHeuristic()) }
     val wiredHandler: WiredHandler by lazy { WiredHandler() }
+    val gameManager: RoomGameManager by lazy { RoomGameManager(this) }
 
     @Suppress("RemoveExplicitTypeArguments")
     private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet<RoomItem>() }
@@ -102,6 +105,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             }
             roomItems.values.firstOrNull { it.furnishing.interactionType == InteractionType.DIMMER }?.let {
                 roomDimmer = ItemDao.getRoomDimmer(it)
+            }
+
+            if (roomItems.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
+                gameManager.registerGame("banzai", BattleBanzaiGame(this))
             }
 
             group?.let {
