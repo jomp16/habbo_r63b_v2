@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.game.room.games
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -26,6 +28,9 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.BattleBanzaiTilesFlickerTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
+import ovh.rwx.habbo.util.Direction
+import ovh.rwx.habbo.util.Vector2
+import java.util.concurrent.ConcurrentHashMap
 
 class BattleBanzaiGame(room: Room) : RoomGame(room) {
     private val userTeams = mutableMapOf<Int, BanzaiTeam>()
@@ -35,6 +40,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
     private var configuredTime = 30
     private var tickCounter = 0
     private val pendingTileUpdates = mutableListOf<Pair<RoomUser, RoomItem>>()
+    private val movingPucks = mutableSetOf<Int>() // IDs dos pucks em movimento
+    private val puckLastMoveTime = ConcurrentHashMap<Int, Long>()
+    private val puckJobs = ConcurrentHashMap<Int, kotlinx.coroutines.Job>()
 
     companion object {
         private val TEAM_EFFECTS = mapOf(
@@ -141,16 +149,33 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
                 pendingTileUpdates.add(Pair(roomUser, roomItem))
             }
 
-            else -> {}
-        }
-    }
+            InteractionType.BATTLE_BANZAI_PUCK -> {
+                // Lógica Inteligente de Chute vs Drag
+                val now = System.currentTimeMillis()
+                val lastMove = puckLastMoveTime[roomItem.id] ?: 0L
 
-    override fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem) {
-        when (roomItem.furnishing.interactionType) {
-            InteractionType.BATTLE_BANZAI_GATE_RED, InteractionType.BATTLE_BANZAI_GATE_GREEN,
-            InteractionType.BATTLE_BANZAI_GATE_BLUE, InteractionType.BATTLE_BANZAI_GATE_YELLOW -> handleGateExit(
-                roomUser
-            )
+                // Se o puck se moveu nos últimos 1000ms, ele está "Quente".
+                // Significa que o usuário está arrastando/driblando ele.
+                // Nesse caso, forçamos Drag (1) para evitar que o último passo vire um chute.
+                val isPuckHot = (now - lastMove) < 1000
+
+                var velocity = 1 // Padrão: Drag/Drible
+
+                if (!isPuckHot) {
+                    // Só consideramos Chute Forte se o puck estava PARADO (Frio).
+                    // Verifica se o destino final é exatamente onde o puck está.
+                    val isClickedTarget = roomUser.objectiveVector2?.let { dest ->
+                        dest.x == roomItem.position.x && dest.y == roomItem.position.y
+                    } ?: false
+
+                    if (isClickedTarget) {
+                        velocity = 6 // Chute Forte com Física
+                    }
+                }
+
+                // Se for Drag (1), usa lógica de "continuidade" para não travar
+                handlePuckKick(roomUser, roomItem, velocity)
+            }
 
             else -> {}
         }
@@ -203,8 +228,6 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
     }
 
     private fun handleGateEntry(roomUser: RoomUser, gate: RoomItem) {
-        if (isRunning) return
-
         val teamColor = getTeamColor(gate.furnishing.interactionType) ?: return
         val userId = roomUser.habboSession?.userInformation?.id ?: return
 
@@ -215,6 +238,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             userTeams.remove(userId)
             gateAssignments.remove(userId)
             roomUser.effect = null
+            updateGateCounter(teamColor)
         } else if (currentTeam == null) {
             // Entrando no gate - verifica se ESTE gate específico tem espaço
             val playersInThisGate = gateAssignments.count { it.value == gate.id }
@@ -237,9 +261,8 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             userTeams[userId] = BanzaiTeam(teamColor)
             gateAssignments[userId] = gate.id
             TEAM_EFFECTS[teamColor]?.let { roomUser.effect = RoomUserEffect(it, Integer.MAX_VALUE) }
+            updateGateCounter(teamColor)
         }
-
-        updateGateCounter(teamColor)
     }
 
     private fun updateGateCounter(teamColor: Int) {
@@ -260,8 +283,14 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             }
     }
 
-    private fun handleGateExit(roomUser: RoomUser) {
-        // Não faz nada - a lógica está toda no handleGateEntry
+    override fun onUserLeaveRoom(roomUser: RoomUser) {
+        val userId = roomUser.habboSession?.userInformation?.id ?: return
+
+        // Remove do time
+        userTeams.remove(userId)
+
+        // Libera o gate
+        gateAssignments.remove(userId)
     }
 
     private fun getTeamColor(interactionType: InteractionType): Int? {
@@ -498,6 +527,117 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
                 it.update(updateDb = false, updateClient = true)
             }
     }
+
+    fun handlePuckKick(kicker: RoomUser, puck: RoomItem, velocity: Int) {
+        // Se o puck já está agendado para parar ou mover, CANCELA AGORA.
+        // Isso impede que o "Update" do final do movimento anterior seja enviado
+        // e atropele o novo movimento que vamos iniciar.
+        puckJobs[puck.id]?.cancel()
+        puckJobs.remove(puck.id)
+
+        val userId = kicker.habboSession?.userInformation?.id ?: return
+        val team = userTeams[userId]
+
+        // Direção do chute é a direção que o usuário está olhando
+        val direction = kicker.bodyRotation
+
+        println("kicker.bodyRotation=${kicker.bodyRotation}")
+        println("kicker.objectiveRotation=${kicker.objectiveRotation}")
+
+        // Pinta o tile de onde o puck está saindo (se tiver jogo rodando e time)
+        if (team != null && isRunning) {
+            val newExtraData = team.color.toString()
+
+            // Se a cor mudou, somos obrigados a atualizar.
+            // Se a cor é igual, SÓ atualizamos se o puck estava parado (para garantir sincronia inicial).
+            // Se estava andando (movingPucks continha o ID antes), NÃO mandamos update.
+            if (puck.extraData != newExtraData) {
+                puck.extraData = newExtraData
+                puck.update(updateDb = false, updateClient = true)
+            }
+
+            // Pinta o tile de onde o puck saiu
+            val startTile = room.roomItems.values.find {
+                it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
+                        it.position.x == puck.position.x && it.position.y == puck.position.y
+            }
+            startTile?.let { handleTileWalk(kicker, it) }
+        }
+
+        // Marca puck como em movimento
+        movingPucks.add(puck.id)
+
+        // Atualiza timestamp de movimento (Deixa o puck "Quente")
+        puckLastMoveTime[puck.id] = System.currentTimeMillis()
+
+        // Inicia o movimento do puck com a velocidade especificada
+        // Se não tiver time (jogo não rodando), passa null para teamColor
+        kickPuck(puck, kicker, direction, team?.color, velocity, 0)
+    }
+
+    private fun kickPuck(
+        puck: RoomItem,
+        kicker: RoomUser,
+        direction: Int,
+        teamColor: Int?,
+        totalSteps: Int,
+        currentStep: Int
+    ) {
+        // Atualiza o timestamp a cada passo para manter o puck "Quente" durante o trajeto
+        puckLastMoveTime[puck.id] = System.currentTimeMillis()
+
+        if (currentStep >= totalSteps) {
+            // Movimento final - reseta a cor para 0 (neutro) e salva no banco
+            puck.extraData = "0"
+            puck.update(updateDb = true, updateClient = true)
+            movingPucks.remove(puck.id)
+            return
+        }
+
+        // Calcula próximo tile baseado na direção
+        val (dx, dy) = Direction.fromCode(direction).getOffset()
+
+        val nextX = puck.position.x + dx
+        val nextY = puck.position.y + dy
+
+        // Verifica se pode mover
+        val nextVector = Vector2(nextX, nextY)
+        if (room.roomGamemap.isBlocked(nextVector, ignoreUsers = true)) {
+            // Não pode mover - tenta direção inversa
+            val inverseDirection = Direction.fromCode(direction).turnAround().code
+            kickPuck(puck, kicker, inverseDirection, teamColor, totalSteps, currentStep)
+            return
+        }
+
+        // Incrementa step ANTES de calcular delay
+        val nextStep = currentStep + 1
+
+        // Calcula delay baseado no próximo step
+        val delay = if (totalSteps == 1) 500L else 100L + (nextStep * 100L)
+
+        room.setFloorItem(puck, nextVector, puck.rotation, null, rollerId = 0, rollerDelay = 0)
+
+        // Pinta o tile apenas se o jogo estiver rodando e tiver time
+        if (isRunning && teamColor != null) {
+            val tile = room.roomItems.values.find {
+                it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
+                        it.position.x == nextX && it.position.y == nextY
+            }
+            tile?.let {
+                handleTileWalk(kicker, tile)
+            }
+        }
+
+        val job = HabboServer.applicationScope.launch {
+            delay(delay)
+            // Se chegamos aqui, o job não foi cancelado, então podemos prosseguir
+            kickPuck(puck, kicker, direction, teamColor, totalSteps, nextStep)
+        }
+
+        // Registra o job para que handlePuckKick possa cancelá-lo se o usuário chutar de novo antes do delay acabar
+        puckJobs[puck.id] = job
+    }
+
 
     private fun resetTiles() {
         // Reseta todos os tiles para "1" (estado inicial do jogo)

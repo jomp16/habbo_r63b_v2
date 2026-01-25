@@ -42,6 +42,10 @@ class RoomGameManager(private val room: Room) {
         getGameForItem(roomItem)?.handleInteraction(roomUser, roomItem, state)
     }
 
+    fun onUserLeaveRoom(roomUser: RoomUser) {
+        games.values.forEach { it.onUserLeaveRoom(roomUser) }
+    }
+
     private fun getGameForItem(roomItem: RoomItem): RoomGame? {
         return when {
             roomItem.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") -> games["banzai"]

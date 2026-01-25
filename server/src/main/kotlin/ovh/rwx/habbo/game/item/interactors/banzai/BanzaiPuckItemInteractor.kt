@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,28 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.util
+package ovh.rwx.habbo.game.item.interactors.banzai
 
-object Rotation {
-    fun calculate(x1: Int, y1: Int, x2: Int, y2: Int) = when {
-        x1 > x2 && y1 > y2 -> 7
-        x1 < x2 && y1 < y2 -> 3
-        x1 > x2 && y1 < y2 -> 5
-        x1 < x2 && y1 > y2 -> 1
-        x1 > x2 -> 6
-        x1 < x2 -> 2
-        y1 < y2 -> 4
-        y1 > y2 -> 0
-        else -> 0
-    }
+import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.ItemInteractor
+import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
-    @Suppress("unused")
-    fun calculateInverse(x1: Int, y1: Int, x2: Int, y2: Int): Int {
-        val rot = calculate(x1, y1, x2, y2)
+@Suppress("unused")
+class BanzaiPuckItemInteractor : ItemInteractor() {
+    override val interactionType = listOf(InteractionType.BATTLE_BANZAI_PUCK)
 
-        return when {
-            rot > 3 -> rot - 4
-            else -> rot + 4
-        }
+    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+        room.gameManager.onUserWalksOn(roomUser, roomItem)
     }
 }
