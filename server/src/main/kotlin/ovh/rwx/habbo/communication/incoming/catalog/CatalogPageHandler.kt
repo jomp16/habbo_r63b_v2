@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,39 +31,45 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageHandler {
+    private fun validateAndGetCatalogPage(habboSession: HabboSession, pageId: Int) =
+        HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }?.takeIf {
+            it.enabled && it.visible &&
+                    habboSession.userInformation.rank >= it.minRank &&
+                    it.pageLayout != "category" &&
+                    (!it.clubOnly || (habboSession.userInformation.vip && habboSession.habboSubscription.validUserSubscription))
+        }
+
     @Handler(Incoming.CATALOG_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
+        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+            val habboAir = false
+            val clientDoesNotSupportSilverCoins = false
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
+        }
+    }
 
-        if (!catalogPage.enabled || !catalogPage.visible) return
-        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
-        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
-
-        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage, false)
+    @Handler(Incoming.CATALOG_PAGE)
+    fun handleNonSilverCoin(habboSession: HabboSession, habboRequest: HabboRequest) {
+        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+            val habboAir = false
+            val clientDoesNotSupportSilverCoins = true
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
+        }
     }
 
     @Handler(Incoming.CATALOG_PAGE)
     fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
-
-        if (!catalogPage.enabled || !catalogPage.visible) return
-        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
-        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
-
-        habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, catalogPage, true)
+        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+            val habboAir = true
+            val clientDoesNotSupportSilverCoins = false
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
+        }
     }
 
     @HandlerR63A(IncomingR63A.CATALOG_PAGE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId } ?: return
-
-        if (!catalogPage.enabled || !catalogPage.visible) return
-        if (habboSession.userInformation.rank < catalogPage.minRank || catalogPage.pageLayout == "category") return
-        if (catalogPage.clubOnly && (!habboSession.userInformation.vip || !habboSession.habboSubscription.validUserSubscription)) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, catalogPage)
+        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it)
+        }
     }
 }

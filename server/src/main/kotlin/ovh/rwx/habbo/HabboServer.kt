@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,6 +38,9 @@ import io.netty.channel.epoll.EpollServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.handler.codec.http.HttpObjectAggregator
+import io.netty.handler.codec.http.HttpServerCodec
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
 import kotlinx.coroutines.CoroutineScope
@@ -55,11 +58,7 @@ import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
-import ovh.rwx.habbo.kotlin.cleanUpUsers
-import ovh.rwx.habbo.netty.HabboNettyDecoder
-import ovh.rwx.habbo.netty.HabboNettyEncoder
-import ovh.rwx.habbo.netty.HabboNettyHandler
-import ovh.rwx.habbo.netty.HabboNettyRC4Decoder
+import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
 import java.security.Security
@@ -78,6 +77,7 @@ object HabboServer : AutoCloseable {
     val databaseFactory: SessionFactory
     // Netty
     private val habboServerBootstrap: ServerBootstrap
+    private val habboWebSocketServerBootstrap: ServerBootstrap
     //private val fastFoodServerBootstrap: ServerBootstrap
     private val workerGroup: EventLoopGroup
     private val bossGroup: EventLoopGroup
@@ -143,6 +143,7 @@ object HabboServer : AutoCloseable {
         log.info("Loading Netty...")
         habboSessionManager = HabboSessionManager()
         habboServerBootstrap = ServerBootstrap()
+        habboWebSocketServerBootstrap = ServerBootstrap()
         //fastFoodServerBootstrap = ServerBootstrap()
         workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
         bossGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
@@ -163,6 +164,7 @@ object HabboServer : AutoCloseable {
             val stringEncoder = StringEncoder(Charsets.UTF_8)
             val habboNettyEncoder = HabboNettyEncoder()
             val habboNettyHandler = HabboNettyHandler()
+            val habboNettyWebSocketHandler = HabboNettyWebSocketHandler()
             //val fastFoodNettyEncoder = FastFoodNettyEncoder()
             //val fastFoodNettyHandler = FastFoodNettyHandler()
             habboServerBootstrap.group(bossGroup, workerGroup)
@@ -178,6 +180,30 @@ object HabboServer : AutoCloseable {
                                 if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
 
                                 addLast(HabboNettyDecoder())
+                                addLast(habboNettyHandler)
+                            }
+                        }
+                    })
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+
+            habboWebSocketServerBootstrap.group(bossGroup, workerGroup)
+                .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
+                .childHandler(object : ChannelInitializer<SocketChannel>() {
+                    override fun initChannel(socketChannel: SocketChannel) {
+                        socketChannel.pipeline().apply {
+                            addLast(IdleStateHandler(30, 10, 0))
+                            addLast(HttpServerCodec())
+                            addLast(HttpObjectAggregator(65536))
+                            addLast(WebSocketServerProtocolHandler("/"))
+                            addLast(habboNettyWebSocketHandler)
+
+                            addLast(stringEncoder)
+                            addLast(habboNettyEncoder)
+
+                            if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
+
+                            addLast(HabboNettyDecoder())
                                 addLast(habboNettyHandler)
                             }
                         }
@@ -201,20 +227,25 @@ object HabboServer : AutoCloseable {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)*/
             val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
+            val habboWebSocketChannelFuture = habboWebSocketServerBootstrap.bind(habboConfig.wsPort)
             //val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 1)
             habboChannelFuture.sync()
+            habboWebSocketChannelFuture.sync()
             //fastFoodChannelFuture.sync()
-            if (habboChannelFuture.isDone/* && fastFoodChannelFuture.isDone*/) {
-                if (habboChannelFuture.isSuccess/* && fastFoodChannelFuture.isSuccess*/) {
-                    log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
-                    //log.info("FastFood server started on port {}!", habboConfig.port + 1)
-                    habboChannelFuture.channel().closeFuture().sync()
-                    //fastFoodChannelFuture.channel().closeFuture().sync()
-                } else {
-                    log.error("Error starting ${BuildConfig.NAME} server!", habboChannelFuture.cause())
+            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess/* && fastFoodChannelFuture.isSuccess*/) {
+                log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
+                log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
+                //log.info("FastFood server started on port {}!", habboConfig.port + 1)
+                habboChannelFuture.channel().closeFuture().await()
+                habboWebSocketChannelFuture.channel().closeFuture().await()
+                //fastFoodChannelFuture.channel().closeFuture().sync()
+            } else {
+                log.error(
+                    "Error starting ${BuildConfig.NAME} server!",
+                    habboChannelFuture.cause() ?: habboWebSocketChannelFuture.cause()
+                )
 
-                    exitProcess(1)
-                }
+                exitProcess(1)
             }
         } catch (e: Exception) {
             log.error("An exception happened!", e)

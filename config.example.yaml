@@ -1,6 +1,7 @@
 # Server configuration
 ---
 port: 30000
+ws_port: 30001
 web_port: 30002
 database:
   host: localhost

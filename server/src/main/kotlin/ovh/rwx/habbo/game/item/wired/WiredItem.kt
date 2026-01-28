@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -189,9 +189,9 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
                 writeDefaultIntParams()
             } else {
                 // Legacy format
-                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
+                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER")) {
                     writeBlockedTriggers(wiredData)
-                } else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
+                } else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
                     writeBlockedActions(wiredData)
                 }
             }

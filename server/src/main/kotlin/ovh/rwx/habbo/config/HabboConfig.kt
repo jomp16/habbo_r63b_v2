@@ -27,6 +27,8 @@ import java.io.File
 data class HabboConfig(
         @JsonProperty("port", required = true)
         val port: Int,
+        @JsonProperty("ws_port", required = true)
+        val wsPort: Int,
         @JsonProperty("web_port", required = true)
         val webPort: Int,
         @JsonProperty("database", required = true)
