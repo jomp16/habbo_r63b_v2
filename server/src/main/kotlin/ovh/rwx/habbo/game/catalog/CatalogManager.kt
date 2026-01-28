@@ -34,9 +34,6 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.random
-import java.security.SecureRandom
-import java.util.*
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -286,7 +283,7 @@ class CatalogManager {
         return int1
     }
 
-    private fun getRandomRecyclerLevel(random: Random): Int {
+    private fun getRandomRecyclerLevel(): Int {
         HabboServer.habboConfig.recyclerConfig.odds.entries.filter { it.key != 1 }.filter {
             recyclerRewards.containsKey(it.key)
         }.sortedByDescending { it.key }.forEach {
@@ -297,10 +294,9 @@ class CatalogManager {
     }
 
     fun getRandomRecyclerReward(): Furnishing? {
-        val random = SecureRandom()
-        val level = getRandomRecyclerLevel(random)
+        val level = getRandomRecyclerLevel()
 
-        return HabboServer.habboGame.itemManager.furnishings[recyclerRewards[level]!!.random(random)]
+        return HabboServer.habboGame.itemManager.furnishings[recyclerRewards[level]!!.random()]
     }
 
     companion object {

@@ -1,26 +1,23 @@
-/*M!999999\- enable the sandbox mode */ 
--- MariaDB dump 10.19-12.1.2-MariaDB, for Linux (x86_64)
---
--- Host: 127.0.0.1    Database: habbixed_r63b_v2
--- ------------------------------------------------------
--- Server version	11.6.2-MariaDB
+/*
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
+ *
+ * This file is part of habbo_r63b_v2.
+ *
+ * habbo_r63b_v2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b_v2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT = @@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS = @@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION = @@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE = @@TIME_ZONE */;
-/*!40103 SET TIME_ZONE = '+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS = @@UNIQUE_CHECKS, UNIQUE_CHECKS = 0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS = 0 */;
-/*!40101 SET @OLD_SQL_MODE = @@SQL_MODE, SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO' */;
-/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
-
---
--- Table structure for table `achievements`
---
-
-DROP TABLE IF EXISTS `achievements`;
+/*M!999999\- enable the sandbox mode */
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `achievements`
@@ -41,14 +38,6 @@ CREATE TABLE `achievements`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `achievements`
---
-
-LOCK TABLES `achievements` WRITE;
-/*!40000 ALTER TABLE `achievements`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `achievements`
 VALUES (226, 1, 1, 5, 5, 5, 1),
@@ -273,16 +262,7 @@ VALUES (226, 1, 1, 5, 5, 5, 1),
        (446, 220, 2, 100, 10, 5, 1),
        (447, 220, 3, 100, 10, 10, 1),
        (448, 220, 4, 100, 10, 25, 1);
-/*!40000 ALTER TABLE `achievements`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `achievements_group`
---
-
-DROP TABLE IF EXISTS `achievements_group`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `achievements_group`
@@ -297,14 +277,6 @@ CREATE TABLE `achievements_group`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `achievements_group`
---
-
-LOCK TABLES `achievements_group` WRITE;
-/*!40000 ALTER TABLE `achievements_group`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `achievements_group`
 VALUES (1, 'ACH_AvatarTags', 'identity'),
@@ -330,16 +302,7 @@ VALUES (1, 'ACH_AvatarTags', 'identity'),
        (196, 'ACH_FriendListSize', 'social'),
        (209, 'ACH_CameraPhotoCount', 'explore'),
        (220, 'ACH_FootballGoalScoredInRoom', 'games');
-/*!40000 ALTER TABLE `achievements_group`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `camera_pictures`
---
-
-DROP TABLE IF EXISTS `camera_pictures`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `camera_pictures`
@@ -360,14 +323,6 @@ CREATE TABLE `camera_pictures`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Camera Pictures';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `camera_pictures`
---
-
-LOCK TABLES `camera_pictures` WRITE;
-/*!40000 ALTER TABLE `camera_pictures`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `camera_pictures`
 VALUES (1, 1, '2017-05-15T17:48:01.361.png', 0, '2017-05-15 20:48:01', '2018-01-02 14:23:04'),
@@ -375,16 +330,7 @@ VALUES (1, 1, '2017-05-15T17:48:01.361.png', 0, '2017-05-15 20:48:01', '2018-01-
        (3, 1, '2017-05-15T18:46:04.826.png', 0, '2017-05-15 21:46:04', '2018-01-02 14:23:04'),
        (4, 1, '2018-01-14T14:15:20.775.png', 0, '2018-01-14 17:15:20', '2018-01-14 11:15:25'),
        (5, 1, 'b49a04a2-0897-4f51-94a2-f844acd2fc49', 0, '2018-01-26 18:55:13', '2018-01-26 12:55:45');
-/*!40000 ALTER TABLE `camera_pictures`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_club_offers`
---
-
-DROP TABLE IF EXISTS `catalog_club_offers`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_club_offers`
@@ -406,14 +352,6 @@ CREATE TABLE `catalog_club_offers`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_club_offers`
---
-
-LOCK TABLES `catalog_club_offers` WRITE;
-/*!40000 ALTER TABLE `catalog_club_offers`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `catalog_club_offers`
 VALUES (1, -1, 'HABBO_CLUB_VIP_1_MONTH', 1, 20, 20, 5, 0),
@@ -421,16 +359,7 @@ VALUES (1, -1, 'HABBO_CLUB_VIP_1_MONTH', 1, 20, 20, 5, 0),
        (3, -3, 'HABBO_CLUB_VIP_6_MONTHS', 6, 120, 120, 5, 0),
        (4, -4, 'HABBO_CLUB_VIP_1_YEAR', 12, 240, 240, 5, 0),
        (5, -5, 'HABBO_CLUB_VIP_5_YEAR', 60, 1200, 1200, 5, 0);
-/*!40000 ALTER TABLE `catalog_club_offers`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_deals`
---
-
-DROP TABLE IF EXISTS `catalog_deals`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_deals`
@@ -446,25 +375,8 @@ CREATE TABLE `catalog_deals`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_deals`
---
-
-LOCK TABLES `catalog_deals` WRITE;
-/*!40000 ALTER TABLE `catalog_deals`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `catalog_deals`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_items`
---
-
-DROP TABLE IF EXISTS `catalog_items`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_items`
@@ -498,14 +410,6 @@ CREATE TABLE `catalog_items`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_items`
---
-
-LOCK TABLES `catalog_items` WRITE;
-/*!40000 ALTER TABLE `catalog_items`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `catalog_items`
 VALUES (1, 7, 'CF_1_coin_bronze', 1, NULL, 'a0 CF_1_coin_bronze', '', 1, 0, 1, 1, 0, 0, 0, 1),
@@ -1642,16 +1546,7 @@ VALUES (1, 7, 'CF_1_coin_bronze', 1, NULL, 'a0 CF_1_coin_bronze', '', 1, 0, 1, 1
        (1178, 65, 'tile_yell', 38, NULL, '', '', 3, 0, 0, 1, 0, 0, 0, 1),
        (1179, 65, 'tile_red', 39, NULL, '', '', 3, 0, 0, 1, 0, 0, 0, 1),
        (1181, 65, 'tile', 40, NULL, '', '', 3, 0, 0, 1, 0, 0, 0, 1);
-/*!40000 ALTER TABLE `catalog_items`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_marketplace_developments`
---
-
-DROP TABLE IF EXISTS `catalog_marketplace_developments`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_marketplace_developments`
@@ -1668,25 +1563,8 @@ CREATE TABLE `catalog_marketplace_developments`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_marketplace_developments`
---
-
-LOCK TABLES `catalog_marketplace_developments` WRITE;
-/*!40000 ALTER TABLE `catalog_marketplace_developments`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `catalog_marketplace_developments`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_marketplace_offers`
---
-
-DROP TABLE IF EXISTS `catalog_marketplace_offers`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_marketplace_offers`
@@ -1708,25 +1586,8 @@ CREATE TABLE `catalog_marketplace_offers`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_marketplace_offers`
---
-
-LOCK TABLES `catalog_marketplace_offers` WRITE;
-/*!40000 ALTER TABLE `catalog_marketplace_offers`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `catalog_marketplace_offers`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_pages`
---
-
-DROP TABLE IF EXISTS `catalog_pages`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_pages`
@@ -1761,14 +1622,6 @@ CREATE TABLE `catalog_pages`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_pages`
---
-
-LOCK TABLES `catalog_pages` WRITE;
-/*!40000 ALTER TABLE `catalog_pages`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `catalog_pages`
 VALUES (-1, -1, 'root', 'root', 0, 0, 0, 0, 0, 0, '', '', '', '', '', '', '', '', '', ''),
@@ -1968,16 +1821,7 @@ VALUES (-1, -1, 'root', 'root', 0, 0, 0, 0, 0, 0, '', '', '', '', '', '', '', ''
         'catalog_snowboarding_teaser1', '', '', '', '', '', '', ''),
        (78, 2, 'Por tipo', '', 72, 1, 1, 1, 0, 4, 'category', '', '', '', '', '', '', '', '', ''),
        (79, 2, 'Por design', '', 273, 1, 1, 1, 0, 2, 'category', '', '', '', '', '', '', '', '', '');
-/*!40000 ALTER TABLE `catalog_pages`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_recycler`
---
-
-DROP TABLE IF EXISTS `catalog_recycler`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_recycler`
@@ -1994,14 +1838,6 @@ CREATE TABLE `catalog_recycler`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_recycler`
---
-
-LOCK TABLES `catalog_recycler` WRITE;
-/*!40000 ALTER TABLE `catalog_recycler`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `catalog_recycler`
 VALUES (1, 'matic_water_dispenser', 3),
@@ -2014,16 +1850,7 @@ VALUES (1, 'matic_water_dispenser', 3),
        (8, 'matic_light_cam_orange', 1),
        (9, 'matic_light_cam_green', 1),
        (10, 'matic_light_cam_red', 1);
-/*!40000 ALTER TABLE `catalog_recycler`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_targeted_offer`
---
-
-DROP TABLE IF EXISTS `catalog_targeted_offer`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_targeted_offer`
@@ -2047,25 +1874,8 @@ CREATE TABLE `catalog_targeted_offer`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_targeted_offer`
---
-
-LOCK TABLES `catalog_targeted_offer` WRITE;
-/*!40000 ALTER TABLE `catalog_targeted_offer`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `catalog_targeted_offer`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `catalog_vouchers`
---
-
-DROP TABLE IF EXISTS `catalog_vouchers`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `catalog_vouchers`
@@ -2084,25 +1894,8 @@ CREATE TABLE `catalog_vouchers`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `catalog_vouchers`
---
-
-LOCK TABLES `catalog_vouchers` WRITE;
-/*!40000 ALTER TABLE `catalog_vouchers`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `catalog_vouchers`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `furnishings`
---
-
-DROP TABLE IF EXISTS `furnishings`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `furnishings`
@@ -2124,19 +1917,11 @@ CREATE TABLE `furnishings`
     UNIQUE KEY `item_name` (`item_name`),
     KEY `interaction_type` (`interaction_type`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 17211
+  AUTO_INCREMENT = 17222
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Furnishings informations';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `furnishings`
---
-
-LOCK TABLES `furnishings` WRITE;
-/*!40000 ALTER TABLE `furnishings`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `furnishings`
 VALUES (1, 'bc_cone*19', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
@@ -19344,17 +19129,19 @@ VALUES (16230, 'mode_ceilinglight', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0
        (17207, 'pj_c26_sleepytimeduck', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
        (17208, 'pj_c26_toothbrushes', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
        (17209, 'pj_r26_engagementring', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
-       (17210, 'pj_r26_rosesamovar', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0');
-/*!40000 ALTER TABLE `furnishings`
-    ENABLE KEYS */;
-UNLOCK TABLES;
+       (17210, 'pj_r26_rosesamovar', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17211, 'clothing_nftbluerose', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17212, 'clothing_nftflyingheart', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17213, 'clothing_nftheartearrings', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17214, 'clothing_nfthorsecrown', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17215, 'clothing_nfthorseyearmark1', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17216, 'clothing_nfthorseyearmark2', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17217, 'clothing_nfthorseyearmark3', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17218, 'clothing_nfthorseyearmark4', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17219, 'clothing_nftkissmark', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17220, 'clothing_nftpandamask', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0'),
+       (17221, 'clothing_nftteddymask', 's', '1', 1, 1, 1, 1, 1, 1, 'default', 1, '0');
 commit;
-
---
--- Table structure for table `groups`
---
-
-DROP TABLE IF EXISTS `groups`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups`
@@ -19388,28 +19175,11 @@ CREATE TABLE `groups`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups`
---
-
-LOCK TABLES `groups` WRITE;
-/*!40000 ALTER TABLE `groups`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups`
 VALUES (1, 'Hello World!', 'Hello World!', 'b0601s26014', 1, 1, '1', 118, 1, 0, '2017-12-25 12:29:17',
         '2018-03-19 13:17:28');
-/*!40000 ALTER TABLE `groups`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_badges_background_color`
---
-
-DROP TABLE IF EXISTS `groups_badges_background_color`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_badges_background_color`
@@ -19423,14 +19193,6 @@ CREATE TABLE `groups_badges_background_color`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_badges_background_color`
---
-
-LOCK TABLES `groups_badges_background_color` WRITE;
-/*!40000 ALTER TABLE `groups_badges_background_color`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_badges_background_color`
 VALUES (36, '00213e'),
@@ -19540,16 +19302,7 @@ VALUES (36, '00213e'),
        (67, 'ffb579'),
        (79, 'ffd601'),
        (1, 'ffffff');
-/*!40000 ALTER TABLE `groups_badges_background_color`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_badges_base`
---
-
-DROP TABLE IF EXISTS `groups_badges_base`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_badges_base`
@@ -19564,14 +19317,6 @@ CREATE TABLE `groups_badges_base`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_badges_base`
---
-
-LOCK TABLES `groups_badges_base` WRITE;
-/*!40000 ALTER TABLE `groups_badges_base`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_badges_base`
 VALUES (1, 'base_basic_1.gif', ''),
@@ -19602,16 +19347,7 @@ VALUES (1, 'base_basic_1.gif', ''),
        (119, 'base_egg.gif', ''),
        (120, 'base_ornament.gif', ''),
        (121, 'base_shield_part2.gif', 'base_shield_part1.gif');
-/*!40000 ALTER TABLE `groups_badges_base`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_badges_base_color`
---
-
-DROP TABLE IF EXISTS `groups_badges_base_color`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_badges_base_color`
@@ -19625,14 +19361,6 @@ CREATE TABLE `groups_badges_base_color`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_badges_base_color`
---
-
-LOCK TABLES `groups_badges_base_color` WRITE;
-/*!40000 ALTER TABLE `groups_badges_base_color`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_badges_base_color`
 VALUES (6, '006fcf'),
@@ -19659,16 +19387,7 @@ VALUES (6, '006fcf'),
        (1, 'ffd601'),
        (17, 'fff165'),
        (11, 'ffffff');
-/*!40000 ALTER TABLE `groups_badges_base_color`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_badges_symbol`
---
-
-DROP TABLE IF EXISTS `groups_badges_symbol`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_badges_symbol`
@@ -19683,14 +19402,6 @@ CREATE TABLE `groups_badges_symbol`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_badges_symbol`
---
-
-LOCK TABLES `groups_badges_symbol` WRITE;
-/*!40000 ALTER TABLE `groups_badges_symbol`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_badges_symbol`
 VALUES (21, 'symbol_background_1.gif', ''),
@@ -19851,16 +19562,7 @@ VALUES (21, 'symbol_background_1.gif', ''),
        (210, 'symbol_credit_part2.gif', 'symbol_credit_part1.gif'),
        (211, 'symbol_hc_part2.gif', 'symbol_hc_part1.gif'),
        (212, 'symbol_vip_part2.gif', 'symbol_vip_part1.gif');
-/*!40000 ALTER TABLE `groups_badges_symbol`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_badges_symbol_color`
---
-
-DROP TABLE IF EXISTS `groups_badges_symbol_color`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_badges_symbol_color`
@@ -19874,14 +19576,6 @@ CREATE TABLE `groups_badges_symbol_color`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_badges_symbol_color`
---
-
-LOCK TABLES `groups_badges_symbol_color` WRITE;
-/*!40000 ALTER TABLE `groups_badges_symbol_color`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_badges_symbol_color`
 VALUES (54, '00213e'),
@@ -20044,16 +19738,7 @@ VALUES (54, '00213e'),
        (100, 'ffb579'),
        (118, 'ffd601'),
        (1, 'ffffff');
-/*!40000 ALTER TABLE `groups_badges_symbol_color`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_members`
---
-
-DROP TABLE IF EXISTS `groups_members`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_members`
@@ -20075,27 +19760,10 @@ CREATE TABLE `groups_members`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_members`
---
-
-LOCK TABLES `groups_members` WRITE;
-/*!40000 ALTER TABLE `groups_members`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `groups_members`
 VALUES (1, 1, 1, '2', '2017-12-25 12:29:18', '2017-12-25 12:29:18');
-/*!40000 ALTER TABLE `groups_members`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `groups_requests`
---
-
-DROP TABLE IF EXISTS `groups_requests`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `groups_requests`
@@ -20115,25 +19783,8 @@ CREATE TABLE `groups_requests`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groups_requests`
---
-
-LOCK TABLES `groups_requests` WRITE;
-/*!40000 ALTER TABLE `groups_requests`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `groups_requests`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items`
---
-
-DROP TABLE IF EXISTS `items`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items`
@@ -20161,14 +19812,6 @@ CREATE TABLE `items`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items`
---
-
-LOCK TABLES `items` WRITE;
-/*!40000 ALTER TABLE `items`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `items`
 VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
@@ -20888,7 +20531,7 @@ VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
        (714, 1, 9, 'bb_patch1', '', 14, 11, 0, 0, ''),
        (715, 1, 9, 'bb_patch1', '', 15, 11, 0, 0, ''),
        (716, 1, 9, 'bb_patch1', '', 16, 11, 0, 0, ''),
-       (717, 1, 9, 'bb_patch1', '', 17, 11, 0, 0, ''),
+       (717, 1, 9, 'bb_patch1', '12', 17, 11, 0, 0, ''),
        (718, 1, 9, 'bb_patch1', '', 17, 10, 0, 0, ''),
        (719, 1, 9, 'bb_patch1', '', 16, 10, 0, 0, ''),
        (720, 1, 9, 'bb_patch1', '', 15, 10, 0, 0, ''),
@@ -21121,10 +20764,10 @@ VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
        (947, 1, 9, 'bb_patch1', '', 26, 16, 0, 0, ''),
        (948, 1, 9, 'bb_patch1', '', 26, 17, 0, 0, ''),
        (949, 1, 9, 'bb_patch1', '', 26, 18, 0, 0, ''),
-       (950, 1, NULL, 'bb_patch1', '', 0, 0, 0, 0, ''),
-       (951, 1, NULL, 'bb_patch1', '', 0, 0, 0, 0, ''),
-       (952, 1, NULL, 'bb_patch1', '', 0, 0, 0, 0, ''),
-       (953, 1, NULL, 'bb_patch1', '', 0, 0, 0, 0, ''),
+       (950, 1, 9, 'bb_patch1', '', 16, 12, 0, 0, ''),
+       (951, 1, 9, 'bb_patch1', '', 26, 22, 0, 0, ''),
+       (952, 1, 9, 'bb_patch1', '', 26, 21, 0, 0, ''),
+       (953, 1, 9, 'bb_patch1', '', 26, 20, 0, 0, ''),
        (954, 1, 9, 'bb_patch1', '', 26, 24, 0, 0, ''),
        (955, 1, 9, 'bb_patch1', '', 26, 23, 0, 0, ''),
        (956, 1, 9, 'bb_patch1', '', 26, 25, 0, 0, ''),
@@ -21272,7 +20915,7 @@ VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
        (1098, 1, 9, 'bb_patch1', '', 20, 26, 0, 0, ''),
        (1099, 1, 9, 'bb_patch1', '', 20, 27, 0, 0, ''),
        (1100, 1, 9, 'bb_patch1', '', 20, 28, 0, 0, ''),
-       (1101, 1, NULL, 'bb_patch1', '', 31, 29, 0.1, 0, ''),
+       (1101, 1, 9, 'bb_patch1', '', 26, 19, 0, 0, ''),
        (1102, 1, 9, 'bb_patch1', '', 31, 28, 0, 0, ''),
        (1103, 1, 9, 'bb_patch1', '', 30, 29, 0, 0, ''),
        (1104, 1, 9, 'bb_patch1', '', 28, 29, 0, 0, ''),
@@ -21409,7 +21052,7 @@ VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
        (1235, 1, 9, 'wf_act_user_to_furni', '0', 1, 27, 0, 0, ''),
        (1236, 1, 10, 'wf_trg_periodically', '1', 7, 6, 0, 0, ''),
        (1237, 1, 10, 'wf_act_move_to_dir', '1', 7, 6, 1.6, 2, ''),
-       (1238, 1, 10, 'duck', '', 8, 1, 0, 2, ''),
+       (1238, 1, 10, 'duck', '', 4, 6, 0, 0, ''),
        (1239, 1, 10, 'wf_slc_furni_picks', '1', 7, 6, 0.6, 0, ''),
        (1240, 1, NULL, 'CF_1_coin_bronze', '', 6, 12, 0, 0, ''),
        (1241, 1, 10, 'wf_glassdoor', '1', 11, 4, 0, 0, ''),
@@ -21424,16 +21067,7 @@ VALUES (1, 1, 8, 'cubie_decklight_b', '1', 0, 0, 0, 0, ':w=9,0 l=0,14 r'),
        (1250, 1, NULL, 'CF_1_coin_bronze', '', 8, 12, 0, 0, ''),
        (1251, 1, NULL, 'CF_1_coin_bronze', '', 7, 12, 0, 0, ''),
        (1252, 1, 9, 'bb_puck', '0', 22, 20, 0.1, 0, '');
-/*!40000 ALTER TABLE `items`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items_dimmer`
---
-
-DROP TABLE IF EXISTS `items_dimmer`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items_dimmer`
@@ -21456,28 +21090,11 @@ CREATE TABLE `items_dimmer`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Dimmer/Moodlight information';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items_dimmer`
---
-
-LOCK TABLES `items_dimmer` WRITE;
-/*!40000 ALTER TABLE `items_dimmer`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `items_dimmer`
 VALUES (1, 44, 1, 3, '#EA4532,76,1', '#000000,76,1', '#0053F7,76,1', '2018-01-02 14:24:53', '2018-01-02 14:24:53'),
        (2, 91, 0, 1, '#000000,76,0', '#000000,255,0', '#000000,255,0', '2018-01-02 14:24:53', '2018-01-02 14:24:53');
-/*!40000 ALTER TABLE `items_dimmer`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items_gift`
---
-
-DROP TABLE IF EXISTS `items_gift`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items_gift`
@@ -21500,27 +21117,10 @@ CREATE TABLE `items_gift`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Gift information';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items_gift`
---
-
-LOCK TABLES `items_gift` WRITE;
-/*!40000 ALTER TABLE `items_gift`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `items_gift`
 VALUES (1, 347, 'matic_water_dispenser', 1, '', '2018-01-02 14:25:13', '2018-01-02 14:25:13');
-/*!40000 ALTER TABLE `items_gift`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items_limited`
---
-
-DROP TABLE IF EXISTS `items_limited`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items_limited`
@@ -21539,25 +21139,8 @@ CREATE TABLE `items_limited`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Limited informations';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items_limited`
---
-
-LOCK TABLES `items_limited` WRITE;
-/*!40000 ALTER TABLE `items_limited`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `items_limited`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items_teleport`
---
-
-DROP TABLE IF EXISTS `items_teleport`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items_teleport`
@@ -21578,14 +21161,6 @@ CREATE TABLE `items_teleport`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Teleport informations';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items_teleport`
---
-
-LOCK TABLES `items_teleport` WRITE;
-/*!40000 ALTER TABLE `items_teleport`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `items_teleport`
 VALUES (1, 64, 65, '2018-01-02 14:25:47', '2018-01-02 14:25:47'),
@@ -21602,16 +21177,7 @@ VALUES (1, 64, 65, '2018-01-02 14:25:47', '2018-01-02 14:25:47'),
        (12, 223, 222, '2018-01-02 14:25:47', '2018-01-02 14:25:47'),
        (13, 237, 238, '2018-01-02 14:25:47', '2018-01-02 14:25:47'),
        (14, 238, 237, '2018-01-02 14:25:47', '2018-01-02 14:25:47');
-/*!40000 ALTER TABLE `items_teleport`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `items_wired`
---
-
-DROP TABLE IF EXISTS `items_wired`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `items_wired`
@@ -21636,14 +21202,6 @@ CREATE TABLE `items_wired`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Wireds informations';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `items_wired`
---
-
-LOCK TABLES `items_wired` WRITE;
-/*!40000 ALTER TABLE `items_wired`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `items_wired`
 VALUES (1, 94, 0, '', '', '', '', '2018-01-02 14:26:11', '2018-01-02 14:26:11', 0, 0),
@@ -21704,16 +21262,7 @@ VALUES (1, 94, 0, '', '', '', '', '2018-01-02 14:26:11', '2018-01-02 14:26:11', 
        (54, 1236, 0, '', '', '2', '', '2025-12-31 18:58:11', '2025-12-31 22:53:48', 0, 0),
        (55, 1237, 0, '', '', '0,2,0', '', '2025-12-31 18:58:54', '2025-12-31 23:20:20', 0, 0),
        (56, 1239, 0, '1238', '', '', '', '2025-12-31 19:21:15', '2025-12-31 20:53:12', 0, 0);
-/*!40000 ALTER TABLE `items_wired`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `landing_promos`
---
-
-DROP TABLE IF EXISTS `landing_promos`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `landing_promos`
@@ -21732,14 +21281,6 @@ CREATE TABLE `landing_promos`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `landing_promos`
---
-
-LOCK TABLES `landing_promos` WRITE;
-/*!40000 ALTER TABLE `landing_promos`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `landing_promos`
 VALUES (1, 'Habbo R63B v2!', 'Bem vindo ao BETA do Habbo R63B v2!<br><br>Nós esperamos que você aproveite a estadia!',
@@ -21748,16 +21289,7 @@ VALUES (1, 'Habbo R63B v2!', 'Bem vindo ao BETA do Habbo R63B v2!<br><br>Nós es
         'Veja agora!', 1, 'catalog/open/category_wired', 'web_promo_small/highscore_small_promo.png'),
        (3, 'Raros LTD!', 'Ei você, isso mesmo, você!<br><br>Você sabia que agora o Habbo R63B suporta raros LTD?',
         'Aproveite agora!', 1, 'catalog/open/ler', 'web_promo_small/read_all_about_it_small_promo.png');
-/*!40000 ALTER TABLE `landing_promos`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `landing_reward`
---
-
-DROP TABLE IF EXISTS `landing_reward`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `landing_reward`
@@ -21775,28 +21307,11 @@ CREATE TABLE `landing_reward`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `landing_reward`
---
-
-LOCK TABLES `landing_reward` WRITE;
-/*!40000 ALTER TABLE `landing_reward`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `landing_reward`
 VALUES (1, 'bonusbag17_1', 120,
         'bonusrare17_1*0,bonusrare17_1*1,bonusrare17_1*1,bonusrare17_1*3,bonusrare17_1*4,bonusrare17_1*5');
-/*!40000 ALTER TABLE `landing_reward`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `messenger_friendships`
---
-
-DROP TABLE IF EXISTS `messenger_friendships`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `messenger_friendships`
@@ -21819,30 +21334,13 @@ CREATE TABLE `messenger_friendships`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Friendships';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `messenger_friendships`
---
-
-LOCK TABLES `messenger_friendships` WRITE;
-/*!40000 ALTER TABLE `messenger_friendships`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `messenger_friendships`
 VALUES (1, 1, 2, 2, NULL),
        (2, 2, 1, 0, NULL),
        (3, 1, 3, 0, NULL),
        (4, 3, 1, 0, NULL);
-/*!40000 ALTER TABLE `messenger_friendships`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `messenger_groups`
---
-
-DROP TABLE IF EXISTS `messenger_groups`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `messenger_groups`
@@ -21859,25 +21357,8 @@ CREATE TABLE `messenger_groups`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Messenger Groups';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `messenger_groups`
---
-
-LOCK TABLES `messenger_groups` WRITE;
-/*!40000 ALTER TABLE `messenger_groups`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `messenger_groups`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `messenger_offline_messages`
---
-
-DROP TABLE IF EXISTS `messenger_offline_messages`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `messenger_offline_messages`
@@ -21897,25 +21378,8 @@ CREATE TABLE `messenger_offline_messages`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `messenger_offline_messages`
---
-
-LOCK TABLES `messenger_offline_messages` WRITE;
-/*!40000 ALTER TABLE `messenger_offline_messages`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `messenger_offline_messages`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `messenger_requests`
---
-
-DROP TABLE IF EXISTS `messenger_requests`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `messenger_requests`
@@ -21933,25 +21397,8 @@ CREATE TABLE `messenger_requests`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `messenger_requests`
---
-
-LOCK TABLES `messenger_requests` WRITE;
-/*!40000 ALTER TABLE `messenger_requests`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `messenger_requests`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `moderation_categories`
---
-
-DROP TABLE IF EXISTS `moderation_categories`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `moderation_categories`
@@ -21966,14 +21413,6 @@ CREATE TABLE `moderation_categories`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `moderation_categories`
---
-
-LOCK TABLES `moderation_categories` WRITE;
-/*!40000 ALTER TABLE `moderation_categories`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `moderation_categories`
 VALUES (6, 'game_interruption'),
@@ -21982,16 +21421,7 @@ VALUES (6, 'game_interruption'),
        (1, 'sexual_content'),
        (4, 'trolling_bad_behavior'),
        (5, 'violent_behavior');
-/*!40000 ALTER TABLE `moderation_categories`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `moderation_chatlogs`
---
-
-DROP TABLE IF EXISTS `moderation_chatlogs`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `moderation_chatlogs`
@@ -22012,25 +21442,8 @@ CREATE TABLE `moderation_chatlogs`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `moderation_chatlogs`
---
-
-LOCK TABLES `moderation_chatlogs` WRITE;
-/*!40000 ALTER TABLE `moderation_chatlogs`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `moderation_chatlogs`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `moderation_topics`
---
-
-DROP TABLE IF EXISTS `moderation_topics`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `moderation_topics`
@@ -22052,14 +21465,6 @@ CREATE TABLE `moderation_topics`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `moderation_topics`
---
-
-LOCK TABLES `moderation_topics` WRITE;
-/*!40000 ALTER TABLE `moderation_topics`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `moderation_topics`
 VALUES (1, 1, 'explicit_sexual_talk', 1, 'mods'),
@@ -22088,16 +21493,7 @@ VALUES (1, 1, 'explicit_sexual_talk', 1, 'mods'),
        (24, 6, 'door_blocking', 23, 'auto_reply'),
        (25, 6, 'raids', 29, 'mods'),
        (26, 6, 'scripting', 35, 'mods');
-/*!40000 ALTER TABLE `moderation_topics`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `navigator_event_categories`
---
-
-DROP TABLE IF EXISTS `navigator_event_categories`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `navigator_event_categories`
@@ -22116,29 +21512,12 @@ CREATE TABLE `navigator_event_categories`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `navigator_event_categories`
---
-
-LOCK TABLES `navigator_event_categories` WRITE;
-/*!40000 ALTER TABLE `navigator_event_categories`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `navigator_event_categories`
 VALUES (1, 'Festas & Música', 1, 1),
        (2, 'Trocas', 1, 1),
        (3, 'Jogos', 1, 1);
-/*!40000 ALTER TABLE `navigator_event_categories`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `navigator_room_categories`
---
-
-DROP TABLE IF EXISTS `navigator_room_categories`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `navigator_room_categories`
@@ -22157,14 +21536,6 @@ CREATE TABLE `navigator_room_categories`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `navigator_room_categories`
---
-
-LOCK TABLES `navigator_room_categories` WRITE;
-/*!40000 ALTER TABLE `navigator_room_categories`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `navigator_room_categories`
 VALUES (1, 'Habbo Vida', 1, 1),
@@ -22176,16 +21547,7 @@ VALUES (1, 'Habbo Vida', 1, 1),
        (7, 'Hall dos Fã Sites', 1, 1),
        (8, 'Central de ajuda', 1, 1),
        (9, 'Staffs', 1, 6);
-/*!40000 ALTER TABLE `navigator_room_categories`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `permissions_ranks`
---
-
-DROP TABLE IF EXISTS `permissions_ranks`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `permissions_ranks`
@@ -22216,14 +21578,6 @@ CREATE TABLE `permissions_ranks`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `permissions_ranks`
---
-
-LOCK TABLES `permissions_ranks` WRITE;
-/*!40000 ALTER TABLE `permissions_ranks`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `permissions_ranks`
 VALUES (1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -22233,16 +21587,7 @@ VALUES (1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
        (5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
        (6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
        (7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-/*!40000 ALTER TABLE `permissions_ranks`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `permissions_users`
---
-
-DROP TABLE IF EXISTS `permissions_users`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `permissions_users`
@@ -22272,25 +21617,8 @@ CREATE TABLE `permissions_users`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `permissions_users`
---
-
-LOCK TABLES `permissions_users` WRITE;
-/*!40000 ALTER TABLE `permissions_users`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `permissions_users`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `plugins_settings`
---
-
-DROP TABLE IF EXISTS `plugins_settings`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `plugins_settings`
@@ -22309,27 +21637,10 @@ CREATE TABLE `plugins_settings`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `plugins_settings`
---
-
-LOCK TABLES `plugins_settings` WRITE;
-/*!40000 ALTER TABLE `plugins_settings`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `plugins_settings`
 VALUES (1, 'plugin_webapp', 'web_port', '30001');
-/*!40000 ALTER TABLE `plugins_settings`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `ranks`
---
-
-DROP TABLE IF EXISTS `ranks`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ranks`
@@ -22343,14 +21654,6 @@ CREATE TABLE `ranks`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ranks`
---
-
-LOCK TABLES `ranks` WRITE;
-/*!40000 ALTER TABLE `ranks`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `ranks`
 VALUES (1, ''),
@@ -22360,16 +21663,7 @@ VALUES (1, ''),
        (5, 'HBA'),
        (6, 'ADM'),
        (7, 'ADM');
-/*!40000 ALTER TABLE `ranks`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `releases`
---
-
-DROP TABLE IF EXISTS `releases`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `releases`
@@ -22379,37 +21673,21 @@ CREATE TABLE `releases`
     PRIMARY KEY (`id`),
     UNIQUE KEY `release` (`release_name`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 58
+  AUTO_INCREMENT = 59
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `releases`
---
-
-LOCK TABLES `releases` WRITE;
-/*!40000 ALTER TABLE `releases`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `releases`
-VALUES (49, 'PRODUCTION-202104091531-593308026'),
+VALUES (58, 'PRODUCTION-201611291003-338511768'),
+       (49, 'PRODUCTION-202104091531-593308026'),
        (52, 'PRODUCTION-202111191349-636893688'),
        (54, 'PRODUCTION-202311200305-397722618'),
        (55, 'WIN63-202512101753-364126151'),
        (56, 'WIN63-202601062255-671620806'),
        (57, 'WIN63-202601221005-86019430');
-/*!40000 ALTER TABLE `releases`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `releases_incoming_headers`
---
-
-DROP TABLE IF EXISTS `releases_incoming_headers`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `releases_incoming_headers`
@@ -22424,19 +21702,11 @@ CREATE TABLE `releases_incoming_headers`
     UNIQUE KEY `release_name_header` (`release_name`, `header`),
     CONSTRAINT `releases_incoming_headers_ibfk_1` FOREIGN KEY (`release_name`) REFERENCES `releases` (`release_name`) ON DELETE CASCADE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 63947
+  AUTO_INCREMENT = 64174
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `releases_incoming_headers`
---
-
-LOCK TABLES `releases_incoming_headers` WRITE;
-/*!40000 ALTER TABLE `releases_incoming_headers`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `releases_incoming_headers`
 VALUES (10093, 'PRODUCTION-202104091531-593308026', 'ACTIVITY_POINTS_BALANCE', 2512, NULL),
@@ -23800,17 +23070,235 @@ VALUES (10093, 'PRODUCTION-202104091531-593308026', 'ACTIVITY_POINTS_BALANCE', 2
        (63943, 'WIN63-202601221005-86019430', 'WIRED_SAVE_VARIABLES', 1209, 'handleHabboAir'),
        (63944, 'WIN63-202601221005-86019430', 'MESSENGER_CHAT_HISTORY', 985, NULL),
        (63945, 'WIN63-202601221005-86019430', 'BUILDERS_QUERY_FURNI_COUNT', 360, NULL),
-       (63946, 'WIN63-202601221005-86019430', 'BUILDERS_PLACE_ITEM', 688, NULL);
-/*!40000 ALTER TABLE `releases_incoming_headers`
-    ENABLE KEYS */;
-UNLOCK TABLES;
+       (63946, 'WIN63-202601221005-86019430', 'BUILDERS_PLACE_ITEM', 688, NULL),
+       (63947, 'PRODUCTION-201611291003-338511768', 'ACTIVITY_POINTS_BALANCE', 1371, NULL),
+       (63948, 'PRODUCTION-201611291003-338511768', 'AVATAR_EFFECT', 1752, NULL),
+       (63949, 'PRODUCTION-201611291003-338511768', 'BUILDERS_PLACE_ITEM', 1051, NULL),
+       (63950, 'PRODUCTION-201611291003-338511768', 'BUILDERS_QUERY_FURNI_COUNT', 2529, NULL),
+       (63951, 'PRODUCTION-201611291003-338511768', 'CAMERA_DATA', 3226, NULL),
+       (63952, 'PRODUCTION-201611291003-338511768', 'CAMERA_ENTER_COMPETITION', 3959, NULL),
+       (63953, 'PRODUCTION-201611291003-338511768', 'CAMERA_PRICE', 796, NULL),
+       (63954, 'PRODUCTION-201611291003-338511768', 'CAMERA_PUBLISH', 2068, NULL),
+       (63955, 'PRODUCTION-201611291003-338511768', 'CAMERA_PURCHASE', 2408, NULL),
+       (63956, 'PRODUCTION-201611291003-338511768', 'CAMERA_ROOM_THUMBNAIL', 1982, NULL),
+       (63957, 'PRODUCTION-201611291003-338511768', 'CAMPAIGN_OPEN1', 2257, NULL),
+       (63958, 'PRODUCTION-201611291003-338511768', 'CAMPAIGN_OPEN2', 3889, NULL),
+       (63959, 'PRODUCTION-201611291003-338511768', 'CATALOG_CONFIGURATION', 2597, NULL),
+       (63960, 'PRODUCTION-201611291003-338511768', 'CATALOG_GIFT_WRAPPING', 418, NULL),
+       (63961, 'PRODUCTION-201611291003-338511768', 'CATALOG_HABBO_CLUB_PAGE', 3285, NULL),
+       (63962, 'PRODUCTION-201611291003-338511768', 'CATALOG_INDEX', 1195, NULL),
+       (63963, 'PRODUCTION-201611291003-338511768', 'CATALOG_OFFER', 2594, NULL),
+       (63964, 'PRODUCTION-201611291003-338511768', 'CATALOG_OFFER_CONFIGURATION', 223, NULL),
+       (63965, 'PRODUCTION-201611291003-338511768', 'CATALOG_OPEN_RECYCLER', NULL, 'DISABLED'),
+       (63966, 'PRODUCTION-201611291003-338511768', 'CATALOG_PAGE', 412, NULL),
+       (63967, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE', 3492, NULL),
+       (63968, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_GIFT', 1411, NULL),
+       (63969, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_RENTAL_DIALOG', 2518, NULL),
+       (63970, 'PRODUCTION-201611291003-338511768', 'CATALOG_RECYCLE_ITEMS', NULL, 'DISABLED'),
+       (63971, 'PRODUCTION-201611291003-338511768', 'CATALOG_RECYCLER_REWARDS', NULL, 'DISABLED'),
+       (63972, 'PRODUCTION-201611291003-338511768', 'CATALOG_REDEEM_VOUCHER', 339, NULL),
+       (63973, 'PRODUCTION-201611291003-338511768', 'CATALOG_TARGETED_OFFER', 2487, NULL),
+       (63974, 'PRODUCTION-201611291003-338511768', 'CLIENT_DEBUG', 3230, NULL),
+       (63975, 'PRODUCTION-201611291003-338511768', 'CREDITS_BALANCE', 273, NULL),
+       (63976, 'PRODUCTION-201611291003-338511768', 'FLOOR_PLAN_DOOR', 1687, NULL),
+       (63977, 'PRODUCTION-201611291003-338511768', 'FLOOR_PLAN_SAVE', 875, NULL),
+       (63978, 'PRODUCTION-201611291003-338511768', 'FLOOR_PLAN_USED_SQUARES', 3559, NULL),
+       (63979, 'PRODUCTION-201611291003-338511768', 'FORUM_LIST', 873, NULL),
+       (63980, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_EVENT', NULL, 'DISABLED'),
+       (63981, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_JOIN_GAME', NULL, 'DISABLED'),
+       (63982, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_LEADERBOARD', NULL, 'DISABLED'),
+       (63983, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_LOAD_GAME', NULL, 'DISABLED'),
+       (63984, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_QUIT_GAME', NULL, 'DISABLED'),
+       (63985, 'PRODUCTION-201611291003-338511768', 'GAME_GET_ACCOUNT_STATUS', NULL, NULL),
+       (63986, 'PRODUCTION-201611291003-338511768', 'GAME_LISTING', NULL, 'DISABLED'),
+       (63987, 'PRODUCTION-201611291003-338511768', 'GO_TO_HOTEL_VIEW', 105, NULL),
+       (63988, 'PRODUCTION-201611291003-338511768', 'GROUP_ACCEPT_MEMBERSHIP', 3386, NULL),
+       (63989, 'PRODUCTION-201611291003-338511768', 'GROUP_ADD_ADMIN', 2894, NULL),
+       (63990, 'PRODUCTION-201611291003-338511768', 'GROUP_BADGE_EDITOR', 813, NULL),
+       (63991, 'PRODUCTION-201611291003-338511768', 'GROUP_DECLINE_MEMBERSHIP', 1894, NULL),
+       (63992, 'PRODUCTION-201611291003-338511768', 'GROUP_FAVORITE', 3549, NULL),
+       (63993, 'PRODUCTION-201611291003-338511768', 'GROUP_FURNISHING_SETTINGS', 2651, NULL),
+       (63994, 'PRODUCTION-201611291003-338511768', 'GROUP_FURNISHINGS', 367, NULL),
+       (63995, 'PRODUCTION-201611291003-338511768', 'GROUP_INFO', 2991, NULL),
+       (63996, 'PRODUCTION-201611291003-338511768', 'GROUP_MANAGE', 1004, NULL),
+       (63997, 'PRODUCTION-201611291003-338511768', 'GROUP_MEMBERS', 312, NULL),
+       (63998, 'PRODUCTION-201611291003-338511768', 'GROUP_PURCHASE', 230, NULL),
+       (63999, 'PRODUCTION-201611291003-338511768', 'GROUP_PURCHASE_PAGE', 798, NULL),
+       (64000, 'PRODUCTION-201611291003-338511768', 'GROUP_REMOVE_ADMIN', 722, NULL),
+       (64001, 'PRODUCTION-201611291003-338511768', 'GROUP_REMOVE_FAVORITE', 1820, NULL),
+       (64002, 'PRODUCTION-201611291003-338511768', 'GROUP_REQUEST_JOIN', 998, NULL),
+       (64003, 'PRODUCTION-201611291003-338511768', 'GROUP_UNREAD_FORUMS_COUNT', 2908, NULL),
+       (64004, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_BADGES', 1991, NULL),
+       (64005, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_COLORS', 1764, NULL),
+       (64006, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_NAME', 3137, NULL),
+       (64007, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_SETTINGS', 3435, NULL),
+       (64008, 'PRODUCTION-201611291003-338511768', 'GUIDE_TOOL_OPEN', 1922, NULL),
+       (64009, 'PRODUCTION-201611291003-338511768', 'HABBO_CLUB_GIFTS', 487, NULL),
+       (64010, 'PRODUCTION-201611291003-338511768', 'HABBO_CLUB_INFO', 869, NULL),
+       (64011, 'PRODUCTION-201611291003-338511768', 'INFO_RETRIEVE', 357, NULL),
+       (64012, 'PRODUCTION-201611291003-338511768', 'INIT_CRYPTO', 3110, NULL),
+       (64013, 'PRODUCTION-201611291003-338511768', 'INITIALIZE_GAME_CENTER', NULL, 'DISABLED'),
+       (64014, 'PRODUCTION-201611291003-338511768', 'INVENTORY_BADGES', 2769, NULL),
+       (64015, 'PRODUCTION-201611291003-338511768', 'INVENTORY_BOTS', 3848, NULL),
+       (64016, 'PRODUCTION-201611291003-338511768', 'INVENTORY_ITEMS', 3150, NULL),
+       (64017, 'PRODUCTION-201611291003-338511768', 'INVENTORY_PETS', 3095, NULL),
+       (64018, 'PRODUCTION-201611291003-338511768', 'INVENTORY_UNSEEN_ITEMS_TRACKER', 3493, NULL),
+       (64019, 'PRODUCTION-201611291003-338511768', 'INVENTORY_UPDATE_BADGES', 644, NULL),
+       (64020, 'PRODUCTION-201611291003-338511768', 'LANDING_PROMO_ARTICLES', 1827, NULL),
+       (64021, 'PRODUCTION-201611291003-338511768', 'LANDING_REWARD', 957, NULL),
+       (64022, 'PRODUCTION-201611291003-338511768', 'LOAD_INTERSTITIALS', 2519, NULL),
+       (64023, 'PRODUCTION-201611291003-338511768', 'MESSENGER_ACCEPT_REQUEST', 137, NULL),
+       (64024, 'PRODUCTION-201611291003-338511768', 'MESSENGER_BLOCKED_USERS', NULL, NULL),
+       (64025, 'PRODUCTION-201611291003-338511768', 'MESSENGER_CHAT', 3567, NULL),
+       (64026, 'PRODUCTION-201611291003-338511768', 'MESSENGER_CHAT_HISTORY', NULL, NULL),
+       (64027, 'PRODUCTION-201611291003-338511768', 'MESSENGER_DECLINE_REQUEST', 2890, NULL),
+       (64028, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FIND_NEW_FRIENDS', 516, NULL),
+       (64029, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FOLLOW_FRIEND', 3997, NULL),
+       (64030, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FRIEND_BAR_STATE', 2313, NULL),
+       (64031, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FRIENDS_UPDATE', 1419, NULL),
+       (64032, 'PRODUCTION-201611291003-338511768', 'MESSENGER_IGNORED_USERS', 3878, NULL),
+       (64033, 'PRODUCTION-201611291003-338511768', 'MESSENGER_INIT', 2781, NULL),
+       (64034, 'PRODUCTION-201611291003-338511768', 'MESSENGER_INVITE', 1276, NULL),
+       (64035, 'PRODUCTION-201611291003-338511768', 'MESSENGER_REMOVE_FRIEND', 1689, NULL),
+       (64036, 'PRODUCTION-201611291003-338511768', 'MESSENGER_REQUEST_FRIEND', 3157, NULL),
+       (64037, 'PRODUCTION-201611291003-338511768', 'MESSENGER_REQUESTS', 2448, NULL),
+       (64038, 'PRODUCTION-201611291003-338511768', 'MESSENGER_SEARCH_FRIENDS', 1210, NULL),
+       (64039, 'PRODUCTION-201611291003-338511768', 'MESSENGER_SET_RELATIONSHIP', 3768, NULL),
+       (64040, 'PRODUCTION-201611291003-338511768', 'MISC_CLIENT_VARIABLES', 1053, NULL),
+       (64041, 'PRODUCTION-201611291003-338511768', 'MISC_EVENT_TRACKER', 3457, NULL),
+       (64042, 'PRODUCTION-201611291003-338511768', 'MISC_GET_MOTD', 1523, NULL),
+       (64043, 'PRODUCTION-201611291003-338511768', 'MISC_LATENCY_TRACKER', 96, NULL),
+       (64044, 'PRODUCTION-201611291003-338511768', 'MISC_PING', 295, NULL),
+       (64045, 'PRODUCTION-201611291003-338511768', 'MISC_PONG', 2596, NULL),
+       (64046, 'PRODUCTION-201611291003-338511768', 'MISC_UNSEEN_ITEMS_TRACKER', 2343, NULL),
+       (64047, 'PRODUCTION-201611291003-338511768', 'MODERATION_BAN_USER', 2766, NULL),
+       (64048, 'PRODUCTION-201611291003-338511768', 'MODERATION_CALL_FOR_HELP', 1691, NULL),
+       (64049, 'PRODUCTION-201611291003-338511768', 'MODERATION_CLOSE_TICKET', 2067, NULL),
+       (64050, 'PRODUCTION-201611291003-338511768', 'MODERATION_CLOSE_TRADE_USER', 3742, NULL),
+       (64051, 'PRODUCTION-201611291003-338511768', 'MODERATION_KICK_USER', 2582, NULL),
+       (64052, 'PRODUCTION-201611291003-338511768', 'MODERATION_MESSAGE_USER', 1840, NULL),
+       (64053, 'PRODUCTION-201611291003-338511768', 'MODERATION_MODERATE_ROOM', 3260, NULL),
+       (64054, 'PRODUCTION-201611291003-338511768', 'MODERATION_MODERATE_USER', 3842, NULL),
+       (64055, 'PRODUCTION-201611291003-338511768', 'MODERATION_MUTE_USER', 1945, NULL),
+       (64056, 'PRODUCTION-201611291003-338511768', 'MODERATION_PICK_TICKET', 15, NULL),
+       (64057, 'PRODUCTION-201611291003-338511768', 'MODERATION_RELEASE_TICKET', 1572, NULL),
+       (64058, 'PRODUCTION-201611291003-338511768', 'MODERATION_ROOM_CHATLOG', 2587, NULL),
+       (64059, 'PRODUCTION-201611291003-338511768', 'MODERATION_ROOM_INFO', 707, NULL),
+       (64060, 'PRODUCTION-201611291003-338511768', 'MODERATION_TICKET_CHATLOG', 211, NULL),
+       (64061, 'PRODUCTION-201611291003-338511768', 'MODERATION_TOUR_REQUEST', 3338, NULL),
+       (64062, 'PRODUCTION-201611291003-338511768', 'MODERATION_USER_CHATLOG', 1391, NULL),
+       (64063, 'PRODUCTION-201611291003-338511768', 'MODERATION_USER_INFO', 3295, NULL),
+       (64064, 'PRODUCTION-201611291003-338511768', 'MODERATION_USER_ROOM_VISITS', 3526, NULL),
+       (64065, 'PRODUCTION-201611291003-338511768', 'MODERATION_WARN_USER', 229, NULL),
+       (64066, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_ADD_FAVORITE_ROOM', 3817, NULL),
+       (64067, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_CREATE_ROOM', 2752, NULL),
+       (64068, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_FLAT_CATEGORIES', 3027, NULL),
+       (64069, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_GO_TO_BY_NAME', 1703, NULL),
+       (64070, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_HOME_ROOM', 1740, NULL),
+       (64071, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_INITIALIZE', 2110, NULL),
+       (64072, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_PROMO_CATEGORIES', 1782, NULL),
+       (64073, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_REMOVE_FAVORITE_ROOM', 309, NULL),
+       (64074, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_SAVE_SETTINGS', 3159, NULL),
+       (64075, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_SEARCH', 249, NULL),
+       (64076, 'PRODUCTION-201611291003-338511768', 'REFRESH_CAMPAIGN', 2912, NULL),
+       (64077, 'PRODUCTION-201611291003-338511768', 'ROOM_APPLY_DECORATION', 711, NULL),
+       (64078, 'PRODUCTION-201611291003-338511768', 'ROOM_BANNED_USERS', 2267, NULL),
+       (64079, 'PRODUCTION-201611291003-338511768', 'ROOM_COMPETITION_INIT', 1334, NULL),
+       (64080, 'PRODUCTION-201611291003-338511768', 'ROOM_DELETE', 532, NULL),
+       (64081, 'PRODUCTION-201611291003-338511768', 'ROOM_DIMMER_INFO', 2813, NULL),
+       (64082, 'PRODUCTION-201611291003-338511768', 'ROOM_DIMMER_SWITCH', 2296, NULL),
+       (64083, 'PRODUCTION-201611291003-338511768', 'ROOM_DIMMER_UPDATE', 1648, NULL),
+       (64084, 'PRODUCTION-201611291003-338511768', 'ROOM_DOORBELL', 1644, 'handleWithRoomId'),
+       (64085, 'PRODUCTION-201611291003-338511768', 'ROOM_ENTRY_DATA', 2300, NULL),
+       (64086, 'PRODUCTION-201611291003-338511768', 'ROOM_GIVE_RIGHTS', 808, 'handleWithRoomId'),
+       (64087, 'PRODUCTION-201611291003-338511768', 'ROOM_GROUP_BADGES', 21, NULL),
+       (64088, 'PRODUCTION-201611291003-338511768', 'ROOM_IGNORE_USER', 1117, NULL),
+       (64089, 'PRODUCTION-201611291003-338511768', 'ROOM_INFO', 2230, NULL),
+       (64090, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_ALIASES', 3898, NULL),
+       (64091, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_OPEN_GIFT', 3558, NULL),
+       (64092, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_USE_CLOTHING', 3374, NULL),
+       (64093, 'PRODUCTION-201611291003-338511768', 'ROOM_KICK_USER', 1320, NULL),
+       (64094, 'PRODUCTION-201611291003-338511768', 'ROOM_LOAD_BY_DOORBELL', NULL, 'DISABLED'),
+       (64095, 'PRODUCTION-201611291003-338511768', 'ROOM_LOOK_TO', 3301, NULL),
+       (64096, 'PRODUCTION-201611291003-338511768', 'ROOM_MANNEQUIN_CHANGE_FIGURE', 2209, NULL),
+       (64097, 'PRODUCTION-201611291003-338511768', 'ROOM_MANNEQUIN_CHANGE_NAME', 2850, NULL),
+       (64098, 'PRODUCTION-201611291003-338511768', 'ROOM_MOVE', 3320, NULL),
+       (64099, 'PRODUCTION-201611291003-338511768', 'ROOM_MOVE_FLOOR_ITEM', 248, NULL),
+       (64100, 'PRODUCTION-201611291003-338511768', 'ROOM_MOVE_WALL_ITEM', 168, NULL),
+       (64101, 'PRODUCTION-201611291003-338511768', 'ROOM_MUTE_ALL', 3637, NULL),
+       (64102, 'PRODUCTION-201611291003-338511768', 'ROOM_MUTE_USER', 3485, NULL),
+       (64103, 'PRODUCTION-201611291003-338511768', 'ROOM_OPEN_FLAT', 2312, NULL),
+       (64104, 'PRODUCTION-201611291003-338511768', 'ROOM_PLACE_BOT', 1592, NULL),
+       (64105, 'PRODUCTION-201611291003-338511768', 'ROOM_PLACE_ITEM', 1258, NULL),
+       (64106, 'PRODUCTION-201611291003-338511768', 'ROOM_PLACE_PET', 2647, NULL),
+       (64107, 'PRODUCTION-201611291003-338511768', 'ROOM_PLACE_POST_IT', 2248, NULL),
+       (64108, 'PRODUCTION-201611291003-338511768', 'ROOM_POST_IT', 3964, NULL),
+       (64109, 'PRODUCTION-201611291003-338511768', 'ROOM_REEDEM_EXCHANGE_ITEM', 3115, NULL),
+       (64110, 'PRODUCTION-201611291003-338511768', 'ROOM_REMOVE_POST_IT', 3336, NULL),
+       (64111, 'PRODUCTION-201611291003-338511768', 'ROOM_REMOVE_RIGHTS', 2064, 'handleWithRoomId'),
+       (64112, 'PRODUCTION-201611291003-338511768', 'ROOM_RIGHTS', 3385, NULL),
+       (64113, 'PRODUCTION-201611291003-338511768', 'ROOM_SAVE_POST_IT', 3666, NULL),
+       (64114, 'PRODUCTION-201611291003-338511768', 'ROOM_SAVE_SETTINGS', 1969, NULL),
+       (64115, 'PRODUCTION-201611291003-338511768', 'ROOM_SETTINGS', 3129, NULL),
+       (64116, 'PRODUCTION-201611291003-338511768', 'ROOM_TAKE_BOT', 3323, NULL),
+       (64117, 'PRODUCTION-201611291003-338511768', 'ROOM_TAKE_ITEM', 3456, NULL),
+       (64118, 'PRODUCTION-201611291003-338511768', 'ROOM_TAKE_OWN_RIGHTS', 3182, NULL),
+       (64119, 'PRODUCTION-201611291003-338511768', 'ROOM_TAKE_PET', 1581, NULL),
+       (64120, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_CLOSE_DICE', 1533, NULL),
+       (64121, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_HABBO_WHEEL', 2144, NULL),
+       (64122, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_ITEM', 99, NULL),
+       (64123, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_ONE_WAY_GATE', 2765, NULL),
+       (64124, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_ROLL_DICE', 1990, NULL),
+       (64125, 'PRODUCTION-201611291003-338511768', 'ROOM_TRIGGER_WALL_ITEM', 210, NULL),
+       (64126, 'PRODUCTION-201611291003-338511768', 'ROOM_UPDATE_WORD_FILTER', 3001, NULL),
+       (64127, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_ACTION', 2456, NULL),
+       (64128, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_CHAT', 1314, NULL),
+       (64129, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_CLICKED_ITEM', NULL, NULL),
+       (64130, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_DANCE', 2080, NULL),
+       (64131, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_DROP_HANDITEM', 2814, NULL),
+       (64132, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_GIVE_HANDITEM', 2941, NULL),
+       (64133, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_INIT_TRADE', 1481, NULL),
+       (64134, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_RESPECT', 3202, NULL),
+       (64135, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_SHOUT', 2085, NULL),
+       (64136, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_SIGN', 1975, NULL),
+       (64137, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_SIT', 2235, NULL),
+       (64138, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_START_TYPING', 1597, NULL),
+       (64139, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_STOP_TYPING', 1474, NULL),
+       (64140, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_WHISPER', 1543, NULL),
+       (64141, 'PRODUCTION-201611291003-338511768', 'ROOM_WORD_FILTER', 1911, NULL),
+       (64142, 'PRODUCTION-201611291003-338511768', 'SANCTION_STATUS', 2746, NULL),
+       (64143, 'PRODUCTION-201611291003-338511768', 'SECRET_KEY', 773, NULL),
+       (64144, 'PRODUCTION-201611291003-338511768', 'SETTINGS_SAVE_CHAT', 1262, NULL),
+       (64145, 'PRODUCTION-201611291003-338511768', 'SETTINGS_SAVE_FOCUS', 1461, NULL),
+       (64146, 'PRODUCTION-201611291003-338511768', 'SETTINGS_SAVE_INVITES', 1086, NULL),
+       (64147, 'PRODUCTION-201611291003-338511768', 'SETTINGS_SAVE_VOLUME', 1367, NULL),
+       (64148, 'PRODUCTION-201611291003-338511768', 'SSO_TICKET', 2419, NULL),
+       (64149, 'PRODUCTION-201611291003-338511768', 'SUBSCRIPTION_STATUS', 3166, NULL),
+       (64150, 'PRODUCTION-201611291003-338511768', 'TALENT_STATUS', 2127, NULL),
+       (64151, 'PRODUCTION-201611291003-338511768', 'TALENT_TRACK_OPEN', 196, NULL),
+       (64152, 'PRODUCTION-201611291003-338511768', 'UNIQUE_ID', 2490, NULL),
+       (64153, 'PRODUCTION-201611291003-338511768', 'USER_ACHIEVEMENT', 219, NULL),
+       (64154, 'PRODUCTION-201611291003-338511768', 'USER_BADGES', 2091, NULL),
+       (64155, 'PRODUCTION-201611291003-338511768', 'USER_CHANGE_FIGURE', 2730, NULL),
+       (64156, 'PRODUCTION-201611291003-338511768', 'USER_CHANGE_MOTTO', 2228, NULL),
+       (64157, 'PRODUCTION-201611291003-338511768', 'USER_GET_DAILY_TASKS', NULL, NULL),
+       (64158, 'PRODUCTION-201611291003-338511768', 'USER_GET_NFT_CHAT_STYLES', NULL, NULL),
+       (64159, 'PRODUCTION-201611291003-338511768', 'USER_GET_NFT_CREDITS', NULL, NULL),
+       (64160, 'PRODUCTION-201611291003-338511768', 'USER_GET_SILVER', NULL, NULL),
+       (64161, 'PRODUCTION-201611291003-338511768', 'USER_PROFILE', 3265, NULL),
+       (64162, 'PRODUCTION-201611291003-338511768', 'USER_RELATIONSHIPS', 2138, NULL),
+       (64163, 'PRODUCTION-201611291003-338511768', 'USER_REWARD_STATUS', NULL, NULL),
+       (64164, 'PRODUCTION-201611291003-338511768', 'USER_SETTINGS', 2388, NULL),
+       (64165, 'PRODUCTION-201611291003-338511768', 'USER_TAGS', NULL, 'DISABLED'),
+       (64166, 'PRODUCTION-201611291003-338511768', 'USER_WARDROBE_SAVE', 800, NULL),
+       (64167, 'PRODUCTION-201611291003-338511768', 'USER_WARDROBES', 2742, NULL),
+       (64168, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_ADDON', NULL, NULL),
+       (64169, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_CONDITION', 3203, NULL),
+       (64170, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_EFFECT', 2281, NULL),
+       (64171, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_SELECTOR', NULL, NULL),
+       (64172, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_TRIGGER', 1520, NULL),
+       (64173, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVE_VARIABLES', NULL, NULL);
 commit;
-
---
--- Table structure for table `releases_incoming_headers_r63a`
---
-
-DROP TABLE IF EXISTS `releases_incoming_headers_r63a`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `releases_incoming_headers_r63a`
@@ -23827,14 +23315,6 @@ CREATE TABLE `releases_incoming_headers_r63a`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `releases_incoming_headers_r63a`
---
-
-LOCK TABLES `releases_incoming_headers_r63a` WRITE;
-/*!40000 ALTER TABLE `releases_incoming_headers_r63a`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `releases_incoming_headers_r63a`
 VALUES (1, 'HANDSHAKE_INIT_CRYPTO', 206, NULL),
@@ -23915,16 +23395,7 @@ VALUES (1, 'HANDSHAKE_INIT_CRYPTO', 206, NULL),
        (81, 'NAVIGATOR_SEARCH', 437, NULL),
        (82, 'ROOM_POST_IT', 83, NULL),
        (83, 'INVENTORY_UPDATE_BADGES', 158, NULL);
-/*!40000 ALTER TABLE `releases_incoming_headers_r63a`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `releases_outgoing_headers`
---
-
-DROP TABLE IF EXISTS `releases_outgoing_headers`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `releases_outgoing_headers`
@@ -23939,19 +23410,11 @@ CREATE TABLE `releases_outgoing_headers`
     UNIQUE KEY `release_header` (`release_name`, `header`),
     CONSTRAINT `releases_outgoing_headers_ibfk_1` FOREIGN KEY (`release_name`) REFERENCES `releases` (`release_name`) ON DELETE CASCADE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 10463
+  AUTO_INCREMENT = 10658
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `releases_outgoing_headers`
---
-
-LOCK TABLES `releases_outgoing_headers` WRITE;
-/*!40000 ALTER TABLE `releases_outgoing_headers`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `releases_outgoing_headers`
 VALUES (8689, 'PRODUCTION-202104091531-593308026', 'ACHIEVEMENT_SCORE', 516, NULL),
@@ -25123,17 +24586,203 @@ VALUES (8689, 'PRODUCTION-202104091531-593308026', 'ACHIEVEMENT_SCORE', 516, NUL
        (10459, 'WIN63-202601221005-86019430', 'WIRED_SELECTOR_DIALOG', 3606, 'responseHabboAir'),
        (10460, 'WIN63-202601221005-86019430', 'WIRED_VARIABLE_DIALOG', 1544, 'responseHabboAir'),
        (10461, 'WIN63-202601221005-86019430', 'MESSENGER_FRIEND_NOTIFICATION', 1434, NULL),
-       (10462, 'WIN63-202601221005-86019430', 'BUILDERS_PLACE_ITEM_WARNING', 1183, NULL);
-/*!40000 ALTER TABLE `releases_outgoing_headers`
-    ENABLE KEYS */;
-UNLOCK TABLES;
+       (10462, 'WIN63-202601221005-86019430', 'BUILDERS_PLACE_ITEM_WARNING', 1183, NULL),
+       (10463, 'PRODUCTION-201611291003-338511768', 'ACHIEVEMENT_SCORE', 1968, NULL),
+       (10464, 'PRODUCTION-201611291003-338511768', 'ACTIVITY_POINTS_BALANCE', 2018, NULL),
+       (10465, 'PRODUCTION-201611291003-338511768', 'AUTHENTICATION_FIRST_LOGIN_OF_DAY', 793, NULL),
+       (10466, 'PRODUCTION-201611291003-338511768', 'AUTHENTICATION_OK', 2491, NULL),
+       (10467, 'PRODUCTION-201611291003-338511768', 'AVAILABILITY_STATUS', 2033, NULL),
+       (10468, 'PRODUCTION-201611291003-338511768', 'AVATAR_EFFECTS', 340, NULL),
+       (10469, 'PRODUCTION-201611291003-338511768', 'BUILDERS_CLUB_MEMBERSHIP', 1452, NULL),
+       (10470, 'PRODUCTION-201611291003-338511768', 'BUILDERS_PLACE_ITEM_WARNING', NULL, NULL),
+       (10471, 'PRODUCTION-201611291003-338511768', 'CAMERA_FINISH_COMPETITION', 133, NULL),
+       (10472, 'PRODUCTION-201611291003-338511768', 'CAMERA_FINISH_PUBLISH', 2057, NULL),
+       (10473, 'PRODUCTION-201611291003-338511768', 'CAMERA_FINISH_PURCHASE', 2783, NULL),
+       (10474, 'PRODUCTION-201611291003-338511768', 'CAMERA_PREVIEW_URL', 3696, NULL),
+       (10475, 'PRODUCTION-201611291003-338511768', 'CAMERA_PRICE', 3878, NULL),
+       (10476, 'PRODUCTION-201611291003-338511768', 'CAMERA_THUMBNAIL_ALERT', 3595, NULL),
+       (10477, 'PRODUCTION-201611291003-338511768', 'CAMPAIGN', 1745, NULL),
+       (10478, 'PRODUCTION-201611291003-338511768', 'CAMPAIGN_CALENDAR', 2531, NULL),
+       (10479, 'PRODUCTION-201611291003-338511768', 'CATALOG_BUILDERS_BORROWED', 3828, NULL),
+       (10480, 'PRODUCTION-201611291003-338511768', 'CATALOG_CONFIGURATION', 1823, NULL),
+       (10481, 'PRODUCTION-201611291003-338511768', 'CATALOG_GIFT_WRAPPING', 2234, NULL),
+       (10482, 'PRODUCTION-201611291003-338511768', 'CATALOG_HABBO_CLUB_PAGE', 2405, NULL),
+       (10483, 'PRODUCTION-201611291003-338511768', 'CATALOG_INDEX', 1032, NULL),
+       (10484, 'PRODUCTION-201611291003-338511768', 'CATALOG_LIMITED_SOLD_OUT', 377, NULL),
+       (10485, 'PRODUCTION-201611291003-338511768', 'CATALOG_OFFER', 3388, NULL),
+       (10486, 'PRODUCTION-201611291003-338511768', 'CATALOG_OFFER_CONFIGURATION', 2347, NULL),
+       (10487, 'PRODUCTION-201611291003-338511768', 'CATALOG_OPEN_RECYCLER_RESULT', NULL, 'DISABLED'),
+       (10488, 'PRODUCTION-201611291003-338511768', 'CATALOG_PAGE', 804, NULL),
+       (10489, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_ERROR', 1404, NULL),
+       (10490, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_NOT_ALLOWED_ERROR', 3770, NULL),
+       (10491, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_OK', 869, NULL),
+       (10492, 'PRODUCTION-201611291003-338511768', 'CATALOG_PURCHASE_RENTAL_DIALOG', 35, NULL),
+       (10493, 'PRODUCTION-201611291003-338511768', 'CATALOG_RECEIVER_NOT_FOUND', 1517, NULL),
+       (10494, 'PRODUCTION-201611291003-338511768', 'CATALOG_RECYCLE_ITEMS_RESULT', NULL, 'DISABLED'),
+       (10495, 'PRODUCTION-201611291003-338511768', 'CATALOG_RECYCLER_REWARDS', NULL, 'DISABLED'),
+       (10496, 'PRODUCTION-201611291003-338511768', 'CATALOG_TARGETED_OFFER', 1237, NULL),
+       (10497, 'PRODUCTION-201611291003-338511768', 'CATALOG_UPDATE', 1866, NULL),
+       (10498, 'PRODUCTION-201611291003-338511768', 'CATALOG_VOUCHER_REDEEM_ERROR', 714, NULL),
+       (10499, 'PRODUCTION-201611291003-338511768', 'CATALOG_VOUCHER_REDEEMED', 3336, NULL),
+       (10500, 'PRODUCTION-201611291003-338511768', 'CREDITS_BALANCE', 3475, NULL),
+       (10501, 'PRODUCTION-201611291003-338511768', 'ENABLE_TRADING', 3284, NULL),
+       (10502, 'PRODUCTION-201611291003-338511768', 'FLOOR_PLAN_DOOR', 1664, NULL),
+       (10503, 'PRODUCTION-201611291003-338511768', 'FLOOR_PLAN_USED_SQUARES', 3990, NULL),
+       (10504, 'PRODUCTION-201611291003-338511768', 'FORUM_LIST', 3001, NULL),
+       (10505, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_ACCOUNT_STATUS', NULL, 'DISABLED'),
+       (10506, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_ACHIEVEMENTS', NULL, 'DISABLED'),
+       (10507, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_CAN_PLAY_GAME', NULL, 'DISABLED'),
+       (10508, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_FEATURED_LUCKY_LOSER_OF_THE_WEEK', NULL, 'DISABLED'),
+       (10509, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_LEADERBOARD', NULL, 'DISABLED'),
+       (10510, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_LIST', NULL, 'DISABLED'),
+       (10511, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_LOAD_GAME', NULL, 'DISABLED'),
+       (10512, 'PRODUCTION-201611291003-338511768', 'GAME_CENTER_UPDATE_LEADERBOARD', NULL, 'DISABLED'),
+       (10513, 'PRODUCTION-201611291003-338511768', 'GROUP_BADGE_EDITOR', 2238, NULL),
+       (10514, 'PRODUCTION-201611291003-338511768', 'GROUP_FURNISHING_SETTINGS', 3293, NULL),
+       (10515, 'PRODUCTION-201611291003-338511768', 'GROUP_ID', 1459, NULL),
+       (10516, 'PRODUCTION-201611291003-338511768', 'GROUP_INFO', 1702, NULL),
+       (10517, 'PRODUCTION-201611291003-338511768', 'GROUP_JOIN_ERROR', 762, NULL),
+       (10518, 'PRODUCTION-201611291003-338511768', 'GROUP_MANAGE', 3965, NULL),
+       (10519, 'PRODUCTION-201611291003-338511768', 'GROUP_MEMBER_MANAGEMENT_ERROR', 818, NULL),
+       (10520, 'PRODUCTION-201611291003-338511768', 'GROUP_MEMBERS', 1200, NULL),
+       (10521, 'PRODUCTION-201611291003-338511768', 'GROUP_NEW_REQUEST', 1180, NULL),
+       (10522, 'PRODUCTION-201611291003-338511768', 'GROUP_PURCHASE_PAGE', 2159, NULL),
+       (10523, 'PRODUCTION-201611291003-338511768', 'GROUP_PURCHASED', 2808, NULL),
+       (10524, 'PRODUCTION-201611291003-338511768', 'GROUP_REFRESH_FAVORITE', 876, NULL),
+       (10525, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_FAVORITE', 3403, NULL),
+       (10526, 'PRODUCTION-201611291003-338511768', 'GROUP_UPDATE_MEMBER_STATUS', 265, NULL),
+       (10527, 'PRODUCTION-201611291003-338511768', 'GUIDE_TOOLS', 1548, NULL),
+       (10528, 'PRODUCTION-201611291003-338511768', 'HABBO_CLUB_INFO', 3277, NULL),
+       (10529, 'PRODUCTION-201611291003-338511768', 'HOME_ROOM', 2875, NULL),
+       (10530, 'PRODUCTION-201611291003-338511768', 'INIT_CRYPTO', 1347, NULL),
+       (10531, 'PRODUCTION-201611291003-338511768', 'INVENTORY_BADGES', 717, 'simplifiedInventoryBadgeResponse'),
+       (10532, 'PRODUCTION-201611291003-338511768', 'INVENTORY_BOTS', 3086, NULL),
+       (10533, 'PRODUCTION-201611291003-338511768', 'INVENTORY_ITEMS', 994, NULL),
+       (10534, 'PRODUCTION-201611291003-338511768', 'INVENTORY_NEW_OBJECTS', 2103, NULL),
+       (10535, 'PRODUCTION-201611291003-338511768', 'INVENTORY_PETS', 3522, NULL),
+       (10536, 'PRODUCTION-201611291003-338511768', 'INVENTORY_REMOVE_OBJECT', 159, NULL),
+       (10537, 'PRODUCTION-201611291003-338511768', 'INVENTORY_UPDATE', 3151, NULL),
+       (10538, 'PRODUCTION-201611291003-338511768', 'LANDING_PROMO_ARTICLES', 286, NULL),
+       (10539, 'PRODUCTION-201611291003-338511768', 'LANDING_REWARD', 1533, NULL),
+       (10540, 'PRODUCTION-201611291003-338511768', 'MESSENGER_CHAT', 1587, NULL),
+       (10541, 'PRODUCTION-201611291003-338511768', 'MESSENGER_CHAT_ERROR', 3359, NULL),
+       (10542, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FOLLOW_FRIEND_ERROR', 3048, NULL),
+       (10543, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FRIEND_NOTIFICATION', 3082, NULL),
+       (10544, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FRIENDS', 3130, NULL),
+       (10545, 'PRODUCTION-201611291003-338511768', 'MESSENGER_FRIENDS_UPDATE', 2800, NULL),
+       (10546, 'PRODUCTION-201611291003-338511768', 'MESSENGER_INIT', 1605, NULL),
+       (10547, 'PRODUCTION-201611291003-338511768', 'MESSENGER_INVITE', 3870, NULL),
+       (10548, 'PRODUCTION-201611291003-338511768', 'MESSENGER_REQUEST_FRIEND', 2219, NULL),
+       (10549, 'PRODUCTION-201611291003-338511768', 'MESSENGER_REQUESTS', 280, NULL),
+       (10550, 'PRODUCTION-201611291003-338511768', 'MESSENGER_SEARCH_FRIENDS', 973, NULL),
+       (10551, 'PRODUCTION-201611291003-338511768', 'MISC_BROADCAST_NOTIFICATION', 3801, NULL),
+       (10552, 'PRODUCTION-201611291003-338511768', 'MISC_GENERIC_ERROR', 1600, NULL),
+       (10553, 'PRODUCTION-201611291003-338511768', 'MISC_MOTD_NOTIFICATION', 2035, NULL),
+       (10554, 'PRODUCTION-201611291003-338511768', 'MISC_PING', 3928, NULL),
+       (10555, 'PRODUCTION-201611291003-338511768', 'MISC_PONG', 10, NULL),
+       (10556, 'PRODUCTION-201611291003-338511768', 'MISC_SUPER_NOTIFICATION', 1992, NULL),
+       (10557, 'PRODUCTION-201611291003-338511768', 'MODERATION_INIT', 2696, NULL),
+       (10558, 'PRODUCTION-201611291003-338511768', 'MODERATION_ROOM_INFO', 1333, NULL),
+       (10559, 'PRODUCTION-201611291003-338511768', 'MODERATION_TOPICS_INIT', 325, NULL),
+       (10560, 'PRODUCTION-201611291003-338511768', 'MODERATION_USER_INFO', 2866, NULL),
+       (10561, 'PRODUCTION-201611291003-338511768', 'MYSTERY_BOX_CHALLENGE', 2833, NULL),
+       (10562, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_COLLAPSED_CATEGORIES', 1543, NULL),
+       (10563, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_CREATE_ROOM', 1304, NULL),
+       (10564, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_EVENT_CATEGORIES', 3244, NULL),
+       (10565, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_FAVORITES', 151, NULL),
+       (10566, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_LIFTED_ROOMS', 3104, NULL),
+       (10567, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_METADATA', 3052, NULL),
+       (10568, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_PREFERENCES', 518, NULL),
+       (10569, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_ROOM_CATEGORIES', 1562, NULL),
+       (10570, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_SEARCH', 2690, NULL),
+       (10571, 'PRODUCTION-201611291003-338511768', 'NAVIGATOR_UPDATE_FAVORITE_ROOM_STATUS', 2524, NULL),
+       (10572, 'PRODUCTION-201611291003-338511768', 'ROOM_BOT_ERROR_NOTIFICATION', 639, NULL),
+       (10573, 'PRODUCTION-201611291003-338511768', 'ROOM_COMPETITION', 3506, NULL),
+       (10574, 'PRODUCTION-201611291003-338511768', 'ROOM_COMPETITION_DATA', 1177, NULL),
+       (10575, 'PRODUCTION-201611291003-338511768', 'ROOM_DECORATION', 2454, NULL),
+       (10576, 'PRODUCTION-201611291003-338511768', 'ROOM_DIMMER_INFO', 2710, NULL),
+       (10577, 'PRODUCTION-201611291003-338511768', 'ROOM_DOORBELL', 2309, NULL),
+       (10578, 'PRODUCTION-201611291003-338511768', 'ROOM_DOORBELL_ACCEPT', 3783, 'responseWithRoomId'),
+       (10579, 'PRODUCTION-201611291003-338511768', 'ROOM_DOORBELL_DENIED', 878, 'responseWithRoomId'),
+       (10580, 'PRODUCTION-201611291003-338511768', 'ROOM_ERROR', 899, NULL),
+       (10581, 'PRODUCTION-201611291003-338511768', 'ROOM_EXIT', 122, NULL),
+       (10582, 'PRODUCTION-201611291003-338511768', 'ROOM_FLOOR_ITEM_REMOVE', 2703, NULL),
+       (10583, 'PRODUCTION-201611291003-338511768', 'ROOM_FLOOR_ITEM_UPDATE', 3776, NULL),
+       (10584, 'PRODUCTION-201611291003-338511768', 'ROOM_FLOOR_ITEMS', 1778, NULL),
+       (10585, 'PRODUCTION-201611291003-338511768', 'ROOM_FLOORMAP', 1301, NULL),
+       (10586, 'PRODUCTION-201611291003-338511768', 'ROOM_FORWARD', 160, NULL),
+       (10587, 'PRODUCTION-201611291003-338511768', 'ROOM_GROUP_BADGES', 2402, NULL),
+       (10588, 'PRODUCTION-201611291003-338511768', 'ROOM_HEIGHTMAP', 2753, NULL),
+       (10589, 'PRODUCTION-201611291003-338511768', 'ROOM_INFO', 687, NULL),
+       (10590, 'PRODUCTION-201611291003-338511768', 'ROOM_INFO_UPDATED', 3297, NULL),
+       (10591, 'PRODUCTION-201611291003-338511768', 'ROOM_INITIAL_INFO', 2031, NULL),
+       (10592, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_ADDED', 1534, NULL),
+       (10593, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_ALIASES', 1723, NULL),
+       (10594, 'PRODUCTION-201611291003-338511768', 'ROOM_ITEM_OPEN_GIFT_RESULT', 56, NULL),
+       (10595, 'PRODUCTION-201611291003-338511768', 'ROOM_NO_RIGHTS', 2392, 'responseWithRoomId'),
+       (10596, 'PRODUCTION-201611291003-338511768', 'ROOM_OPEN', 758, 'responseWithRoomId'),
+       (10597, 'PRODUCTION-201611291003-338511768', 'ROOM_OWNER', 339, 'responseWithRoomId'),
+       (10598, 'PRODUCTION-201611291003-338511768', 'ROOM_OWNERSHIP', 749, NULL),
+       (10599, 'PRODUCTION-201611291003-338511768', 'ROOM_PET_ERROR_NOTIFICATION', 2913, NULL),
+       (10600, 'PRODUCTION-201611291003-338511768', 'ROOM_POST_IT', 2202, NULL),
+       (10601, 'PRODUCTION-201611291003-338511768', 'ROOM_RIGHT_LEVEL', 780, 'responseWithRoomId'),
+       (10602, 'PRODUCTION-201611291003-338511768', 'ROOM_RIGHTS', 1284, NULL),
+       (10603, 'PRODUCTION-201611291003-338511768', 'ROOM_RIGHTS_GIVEN', 2088, NULL),
+       (10604, 'PRODUCTION-201611291003-338511768', 'ROOM_RIGHTS_REMOVED', 1327, NULL),
+       (10605, 'PRODUCTION-201611291003-338511768', 'ROOM_ROLLER', 3207, NULL),
+       (10606, 'PRODUCTION-201611291003-338511768', 'ROOM_SETTINGS', 1498, NULL),
+       (10607, 'PRODUCTION-201611291003-338511768', 'ROOM_SETTINGS_SAVED', 948, NULL),
+       (10608, 'PRODUCTION-201611291003-338511768', 'ROOM_UPDATE_FURNI_STACK', 558, NULL),
+       (10609, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_ACTION', 1631, NULL),
+       (10610, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_CHAT', 1446, NULL),
+       (10611, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_DANCE', 2233, NULL),
+       (10612, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_EFFECT', 1167, NULL),
+       (10613, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_HANDITEM', 1474, NULL),
+       (10614, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_IDLE', 1797, NULL),
+       (10615, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_REMOVE', 2661, NULL),
+       (10616, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_SHOUT', 1036, NULL),
+       (10617, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_TYPING', 1717, NULL),
+       (10618, 'PRODUCTION-201611291003-338511768', 'ROOM_USER_WHISPER', 2704, NULL),
+       (10619, 'PRODUCTION-201611291003-338511768', 'ROOM_USERS', 374, NULL),
+       (10620, 'PRODUCTION-201611291003-338511768', 'ROOM_USERS_STATUSES', 1640, NULL),
+       (10621, 'PRODUCTION-201611291003-338511768', 'ROOM_VISUALIZATION_THICKNESS', 3547, NULL),
+       (10622, 'PRODUCTION-201611291003-338511768', 'ROOM_WALL_ITEM_ADDED', 2187, NULL),
+       (10623, 'PRODUCTION-201611291003-338511768', 'ROOM_WALL_ITEM_REMOVE', 3208, NULL),
+       (10624, 'PRODUCTION-201611291003-338511768', 'ROOM_WALL_ITEM_UPDATE', 2009, NULL),
+       (10625, 'PRODUCTION-201611291003-338511768', 'ROOM_WALL_ITEMS', 1369, NULL),
+       (10626, 'PRODUCTION-201611291003-338511768', 'ROOM_WORD_FILTER', 2937, NULL),
+       (10627, 'PRODUCTION-201611291003-338511768', 'SECRET_KEY', 3885, NULL),
+       (10628, 'PRODUCTION-201611291003-338511768', 'SHOW_INTERSTITIALS', 1808, NULL),
+       (10629, 'PRODUCTION-201611291003-338511768', 'SUBSCRIPTION_STATUS', 954, NULL),
+       (10630, 'PRODUCTION-201611291003-338511768', 'TALENT_STATUS', 1203, NULL),
+       (10631, 'PRODUCTION-201611291003-338511768', 'TALENT_TRACK', 3406, NULL),
+       (10632, 'PRODUCTION-201611291003-338511768', 'UNIQUE_ID', 1488, NULL),
+       (10633, 'PRODUCTION-201611291003-338511768', 'USER_ACHIEVEMENT', 305, NULL),
+       (10634, 'PRODUCTION-201611291003-338511768', 'USER_BADGES', 1087, NULL),
+       (10635, 'PRODUCTION-201611291003-338511768', 'USER_CLOTHINGS', 1450, NULL),
+       (10636, 'PRODUCTION-201611291003-338511768', 'USER_NOOBNESS_LEVEL', 3738, NULL),
+       (10637, 'PRODUCTION-201611291003-338511768', 'USER_OBJECT', 2725, NULL),
+       (10638, 'PRODUCTION-201611291003-338511768', 'USER_PERKS', 2586, NULL),
+       (10639, 'PRODUCTION-201611291003-338511768', 'USER_PROFILE', 3898, NULL),
+       (10640, 'PRODUCTION-201611291003-338511768', 'USER_RELATIONSHIPS', 2016, NULL),
+       (10641, 'PRODUCTION-201611291003-338511768', 'USER_RESPECT_NOTIFICATION', 2815, NULL),
+       (10642, 'PRODUCTION-201611291003-338511768', 'USER_RIGHTS', 411, NULL),
+       (10643, 'PRODUCTION-201611291003-338511768', 'USER_SETTINGS', 513, NULL),
+       (10644, 'PRODUCTION-201611291003-338511768', 'USER_TAGS', NULL, 'DISABLED'),
+       (10645, 'PRODUCTION-201611291003-338511768', 'USER_UPDATE', 3920, NULL),
+       (10646, 'PRODUCTION-201611291003-338511768', 'USER_UPDATE_FIGURE', 2429, NULL),
+       (10647, 'PRODUCTION-201611291003-338511768', 'USER_WARDROBES', 3315, NULL),
+       (10648, 'PRODUCTION-201611291003-338511768', 'WIRED_ADDON_DIALOG', NULL, NULL),
+       (10649, 'PRODUCTION-201611291003-338511768', 'WIRED_CONDITION_DIALOG', 1108, NULL),
+       (10650, 'PRODUCTION-201611291003-338511768', 'WIRED_EFFECT_DIALOG', 1434, NULL),
+       (10651, 'PRODUCTION-201611291003-338511768', 'WIRED_ENVIRONMENT', NULL, NULL),
+       (10652, 'PRODUCTION-201611291003-338511768', 'WIRED_PERMISSIONS', NULL, NULL),
+       (10653, 'PRODUCTION-201611291003-338511768', 'WIRED_REWARD_NOTIFICATION', 178, NULL),
+       (10654, 'PRODUCTION-201611291003-338511768', 'WIRED_SAVED', 1155, NULL),
+       (10655, 'PRODUCTION-201611291003-338511768', 'WIRED_SELECTOR_DIALOG', NULL, NULL),
+       (10656, 'PRODUCTION-201611291003-338511768', 'WIRED_TRIGGER_DIALOG', 383, NULL),
+       (10657, 'PRODUCTION-201611291003-338511768', 'WIRED_VARIABLE_DIALOG', NULL, NULL);
 commit;
-
---
--- Table structure for table `releases_outgoing_headers_r63a`
---
-
-DROP TABLE IF EXISTS `releases_outgoing_headers_r63a`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `releases_outgoing_headers_r63a`
@@ -25150,14 +24799,6 @@ CREATE TABLE `releases_outgoing_headers_r63a`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `releases_outgoing_headers_r63a`
---
-
-LOCK TABLES `releases_outgoing_headers_r63a` WRITE;
-/*!40000 ALTER TABLE `releases_outgoing_headers_r63a`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `releases_outgoing_headers_r63a`
 VALUES (1, 'HANDSHAKE_SESSION_PARAMS', 257, NULL),
@@ -25239,16 +24880,7 @@ VALUES (1, 'HANDSHAKE_SESSION_PARAMS', 257, NULL),
        (81, 'NAVIGATOR_POPULAR_TAGS', 452, NULL),
        (82, 'ROOM_POST_IT', 48, NULL),
        (83, 'INVENTORY_PETS', 600, NULL);
-/*!40000 ALTER TABLE `releases_outgoing_headers_r63a`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `rooms`
---
-
-DROP TABLE IF EXISTS `rooms`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rooms`
@@ -25298,14 +24930,6 @@ CREATE TABLE `rooms`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `rooms`
---
-
-LOCK TABLES `rooms` WRITE;
-/*!40000 ALTER TABLE `rooms`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `rooms`
 VALUES (1, 'private', 'Cafofo', 1, 'Olá Mundo!', 3, 'open', '1', 10, 'model_c', 0, '',
@@ -25331,16 +24955,7 @@ VALUES (1, 'private', 'Cafofo', 1, 'Olá Mundo!', 3, 'open', '1', 10, 'model_c',
         0, 0, 0, 0, 0, 0, 0, 14, 0, 1, 0, 0, NULL, '2025-12-27 19:05:56', '2025-12-27 19:05:56'),
        (10, 'private', 'Wired Labirinto', 1, '', 1, 'open', '0', 10, 'model_a', 0, '', '', '0.0', '0.0', '0.0', 0, 0,
         -1, 0, 0, 0, 0, 0, 0, 0, 14, 0, 1, 0, 0, NULL, '2025-12-31 18:57:57', '2025-12-31 18:57:57');
-/*!40000 ALTER TABLE `rooms`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `rooms_models`
---
-
-DROP TABLE IF EXISTS `rooms_models`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rooms_models`
@@ -25358,14 +24973,6 @@ CREATE TABLE `rooms_models`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `rooms_models`
---
-
-LOCK TABLES `rooms_models` WRITE;
-/*!40000 ALTER TABLE `rooms_models`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `rooms_models`
 VALUES ('model_0', 0, 4, 0, 2,
@@ -25483,16 +25090,7 @@ VALUES ('model_0', 0, 4, 0, 2,
        ('model_z', 0, 9, 0, 2,
         'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\r\nxxxxxxxxxxx00000000000000000000\r\nxxxxxxxxxxx00000000000000000000\r\nxxxxxxxxxxx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\n000000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nx00000000xx00000000000000000000\r\nxxxxxxxxxxx00000000000000000000\r\nxxxxxxxxxxx00000000000000000000\r\nxxxxxxxxxxx00000000000000000000\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         1);
-/*!40000 ALTER TABLE `rooms_models`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `rooms_models_customs`
---
-
-DROP TABLE IF EXISTS `rooms_models_customs`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rooms_models_customs`
@@ -25512,25 +25110,8 @@ CREATE TABLE `rooms_models_customs`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `rooms_models_customs`
---
-
-LOCK TABLES `rooms_models_customs` WRITE;
-/*!40000 ALTER TABLE `rooms_models_customs`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `rooms_models_customs`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `rooms_rights`
---
-
-DROP TABLE IF EXISTS `rooms_rights`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rooms_rights`
@@ -25549,27 +25130,10 @@ CREATE TABLE `rooms_rights`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `rooms_rights`
---
-
-LOCK TABLES `rooms_rights` WRITE;
-/*!40000 ALTER TABLE `rooms_rights`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `rooms_rights`
 VALUES (2, 6, 3);
-/*!40000 ALTER TABLE `rooms_rights`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `rooms_word_filter`
---
-
-DROP TABLE IF EXISTS `rooms_word_filter`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rooms_word_filter`
@@ -25587,14 +25151,6 @@ CREATE TABLE `rooms_word_filter`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `rooms_word_filter`
---
-
-LOCK TABLES `rooms_word_filter` WRITE;
-/*!40000 ALTER TABLE `rooms_word_filter`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `rooms_word_filter`
 VALUES (2, 1, 'foda'),
@@ -25602,16 +25158,7 @@ VALUES (2, 1, 'foda'),
        (5, 1, 'fodaci'),
        (3, 1, 'fodase'),
        (4, 1, 'fodasi');
-/*!40000 ALTER TABLE `rooms_word_filter`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users`
@@ -25650,39 +25197,22 @@ CREATE TABLE `users`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users`
---
-
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users`
 VALUES (1, 'jomp16', 'root@rwx.ovh', '$2y$10$WX3BHXdcqgP1wuRGqNXF5.HSNUtQ.WqW9qVGBfinyfrbg/GMEA6Nq',
         '2015-01-01 00:00:00', 'José Olívio', '1313e83fa64e736bd9209a9168e9a3a30d191610263c0c9b5ee8332d8ab8c07a', 7,
         2147483647, 2147483647, 2147483647, 0,
         'lg-3058-110.hd-3095-1383.sh-3016-110.hr-802-61.cc-3420-110.ch-3032-110-64', 'M',
-        'SENHOR SUPREMO desse UNIVERSO', 0, '127.0.0.1', '127.0.0.1', 10, 1, 'normal', 3700, 100, 0),
+        'SENHOR SUPREMO desse UNIVERSO', 0, '127.0.0.1', '127.0.0.1', 9, 1, 'normal', 3700, 100, 0),
        (2, 'Lucas', 'lucas@asdf.com', '$2y$10$WX3BHXdcqgP1wuRGqNXF5.HSNUtQ.WqW9qVGBfinyfrbg/GMEA6Nq',
         '2015-01-01 00:00:00', 'Lucas', NULL, 7, 2147483647, 2147483647, 2147458647, 0,
         'sh-295-1408.lg-281-63.hd-180-1.hr-125-61.fa-3344-110.ch-3342-110-110', 'M', '', 0, '127.0.0.1', '127.0.0.1', 0,
         1, 'normal', 3700, 100, 0),
        (3, 'hfinch', 'jomp16@habbixed.tk', '$2y$10$WX3BHXdcqgP1wuRGqNXF5.HSNUtQ.WqW9qVGBfinyfrbg/GMEA6Nq',
-        '2017-03-05 01:55:48', 'Harold Finch', '51a6092e55933108d3e9c5a6cd8157ae89f42a5c317e1a029504595be84c4cbc', 1,
-        1000, 1000, 0, 0, 'sh-906-85.lg-280-88.ch-255-85.ha-1003-82.fa-1205-64.hr-155-40.hd-209-1', 'M', '', 0,
-        '127.0.0.1', '127.0.0.1', 0, 0, 'normal', 3700, 100, 0);
-/*!40000 ALTER TABLE `users`
-    ENABLE KEYS */;
-UNLOCK TABLES;
+        '2017-03-05 01:55:48', 'Harold Finch', NULL, 1, 1000, 1000, 0, 0,
+        'sh-906-85.lg-280-88.ch-255-85.ha-1003-82.fa-1205-64.hr-155-40.hd-209-1', 'M', '', 0, '127.0.0.1', '127.0.0.1',
+        0, 0, 'normal', 3700, 100, 0);
 commit;
-
---
--- Table structure for table `users_achievements`
---
-
-DROP TABLE IF EXISTS `users_achievements`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_achievements`
@@ -25702,25 +25232,8 @@ CREATE TABLE `users_achievements`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_achievements`
---
-
-LOCK TABLES `users_achievements` WRITE;
-/*!40000 ALTER TABLE `users_achievements`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `users_achievements`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_badges`
---
-
-DROP TABLE IF EXISTS `users_badges`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_badges`
@@ -25738,14 +25251,6 @@ CREATE TABLE `users_badges`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the User Badges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_badges`
---
-
-LOCK TABLES `users_badges` WRITE;
-/*!40000 ALTER TABLE `users_badges`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_badges`
 VALUES (1, 1, 'ACH_VipHC1', 0),
@@ -25805,16 +25310,7 @@ VALUES (1, 1, 'ACH_VipHC1', 0),
        (57, 1, 'UK073', 0),
        (58, 1, 'UK069', 0),
        (59, 1, 'BR657', 0);
-/*!40000 ALTER TABLE `users_badges`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_clothing`
---
-
-DROP TABLE IF EXISTS `users_clothing`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_clothing`
@@ -25833,14 +25329,6 @@ CREATE TABLE `users_clothing`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_clothing`
---
-
-LOCK TABLES `users_clothing` WRITE;
-/*!40000 ALTER TABLE `users_clothing`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_clothing`
 VALUES (7, 1, 'clothing_bear'),
@@ -25878,16 +25366,7 @@ VALUES (7, 1, 'clothing_bear'),
        (34, 1, 'clothing_wavy2'),
        (4, 2, 'clothing_meowtfit'),
        (5, 2, 'clothing_mockymouse');
-/*!40000 ALTER TABLE `users_clothing`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_favorites`
---
-
-DROP TABLE IF EXISTS `users_favorites`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_favorites`
@@ -25906,28 +25385,11 @@ CREATE TABLE `users_favorites`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_favorites`
---
-
-LOCK TABLES `users_favorites` WRITE;
-/*!40000 ALTER TABLE `users_favorites`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_favorites`
 VALUES (2, 1, 1),
        (1, 1, 4);
-/*!40000 ALTER TABLE `users_favorites`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_ips`
---
-
-DROP TABLE IF EXISTS `users_ips`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_ips`
@@ -25957,14 +25419,6 @@ CREATE TABLE `users_ips`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the IPs of the User';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_ips`
---
-
-LOCK TABLES `users_ips` WRITE;
-/*!40000 ALTER TABLE `users_ips`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_ips`
 VALUES (1, 1, '177.135.62.11', 0, 'BR', 'Brazil', 'PE', 'Pernambuco', 'America/Recife', -8.05, -34.9,
@@ -26002,16 +25456,7 @@ VALUES (1, 1, '177.135.62.11', 0, 'BR', 'Brazil', 'PE', 'Pernambuco', 'America/R
         '2018-04-03 12:08:43', '2018-04-03 12:08:43'),
        (19, 1, '179.181.49.150', 0, 'BR', 'Brazil', 'PE', 'Pernambuco', 'America/Recife', -8.05, -34.9,
         '2018-04-04 13:33:18', '2018-04-04 13:33:18');
-/*!40000 ALTER TABLE `users_ips`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_logins`
---
-
-DROP TABLE IF EXISTS `users_logins`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_logins`
@@ -26030,25 +25475,8 @@ CREATE TABLE `users_logins`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_logins`
---
-
-LOCK TABLES `users_logins` WRITE;
-/*!40000 ALTER TABLE `users_logins`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `users_logins`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_preferences`
---
-
-DROP TABLE IF EXISTS `users_preferences`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_preferences`
@@ -26077,29 +25505,12 @@ CREATE TABLE `users_preferences`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_preferences`
---
-
-LOCK TABLES `users_preferences` WRITE;
-/*!40000 ALTER TABLE `users_preferences`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_preferences`
 VALUES (1, 1, '0,0,0', 0, 0, 0, 121, 13, 425, 578, 0, 0, 0, 0, 1),
        (2, 2, '0,0,0', 0, 0, 0, 0, 0, 580, 600, 0, 0, 0, 0, 1),
        (3, 3, '0,0,0', 0, 0, 0, 44, 60, 425, 600, 0, 0, 0, 0, 0);
-/*!40000 ALTER TABLE `users_preferences`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_stats`
---
-
-DROP TABLE IF EXISTS `users_stats`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_stats`
@@ -26136,32 +25547,15 @@ CREATE TABLE `users_stats`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_stats`
---
-
-LOCK TABLES `users_stats` WRITE;
-/*!40000 ALTER TABLE `users_stats`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_stats`
-VALUES (1, 1, '2026-01-25 17:03:52', 1184621, 402, 9, 0, 0, 3, 3, 3, 0, 0, 0, 1, 0, 0, '2026-01-25 14:14:37',
-        '2017-05-02 19:48:19', '2017-12-25 12:03:54', '2026-01-25 17:03:53'),
+VALUES (1, 1, '2026-01-28 11:16:10', 1187720, 413, 9, 0, 0, 3, 3, 3, 0, 0, 0, 1, 0, 0, '2026-01-25 14:14:37',
+        '2017-05-02 19:48:19', '2017-12-25 12:03:54', '2026-01-28 11:16:11'),
        (2, 2, '2017-08-20 03:49:50', 8359, 0, 6, 0, 0, 3, 3, 3, 0, 0, 0, NULL, 0, 0, '2017-04-28 17:20:44',
         '2017-05-02 19:48:37', '2017-12-25 12:03:54', '2017-12-25 12:03:54'),
        (3, 3, '2025-12-26 18:37:08', 14867, 4, 0, 0, 0, 3, 3, 3, 0, 0, 0, NULL, 0, 0, '2025-12-26 18:37:03',
         '2017-05-02 19:48:25', '2017-12-25 12:03:54', '2025-12-26 18:37:08');
-/*!40000 ALTER TABLE `users_stats`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_subscriptions`
---
-
-DROP TABLE IF EXISTS `users_subscriptions`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_subscriptions`
@@ -26179,28 +25573,11 @@ CREATE TABLE `users_subscriptions`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_subscriptions`
---
-
-LOCK TABLES `users_subscriptions` WRITE;
-/*!40000 ALTER TABLE `users_subscriptions`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_subscriptions`
 VALUES (1, 1, '2015-07-02 20:25:55', '2028-07-02 20:25:55'),
        (2, 2, '2015-07-02 20:25:55', '2028-07-02 20:25:55');
-/*!40000 ALTER TABLE `users_subscriptions`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_tags`
---
-
-DROP TABLE IF EXISTS `users_tags`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_tags`
@@ -26216,25 +25593,8 @@ CREATE TABLE `users_tags`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_tags`
---
-
-LOCK TABLES `users_tags` WRITE;
-/*!40000 ALTER TABLE `users_tags`
-    DISABLE KEYS */;
 set autocommit = 0;
-/*!40000 ALTER TABLE `users_tags`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_unique_ids`
---
-
-DROP TABLE IF EXISTS `users_unique_ids`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_unique_ids`
@@ -26254,14 +25614,6 @@ CREATE TABLE `users_unique_ids`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Unique IDs of the User';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_unique_ids`
---
-
-LOCK TABLES `users_unique_ids` WRITE;
-/*!40000 ALTER TABLE `users_unique_ids`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_unique_ids`
 VALUES (1, 1, '~19d721415c85227669af44fa7c376acf', 'LNX/28,0,0,137', '2017-12-25 11:06:14', '2017-12-25 11:06:14'),
@@ -26291,16 +25643,7 @@ VALUES (1, 1, '~19d721415c85227669af44fa7c376acf', 'LNX/28,0,0,137', '2017-12-25
        (25, 1, '~eca3af2b2ee28d64deda2ff611f0e02a', 'WIN/32,0,0,270', '2025-01-04 15:29:33', '2025-01-04 15:29:33'),
        (26, 1, '~fb770d63fb768df34ca13acfe81e77e5', 'WIN/32,0,0,270', '2025-01-04 18:20:41', '2025-01-04 18:20:41'),
        (27, 1, '', '', '2025-01-04 19:35:25', '2025-01-04 19:35:25');
-/*!40000 ALTER TABLE `users_unique_ids`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-
---
--- Table structure for table `users_wardrobe`
---
-
-DROP TABLE IF EXISTS `users_wardrobe`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users_wardrobe`
@@ -26319,14 +25662,6 @@ CREATE TABLE `users_wardrobe`
   COLLATE = utf8mb4_unicode_520_ci
   ROW_FORMAT = COMPRESSED COMMENT ='Table to hold the Clothes in the Wardrobe of the User';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_wardrobe`
---
-
-LOCK TABLES `users_wardrobe` WRITE;
-/*!40000 ALTER TABLE `users_wardrobe`
-    DISABLE KEYS */;
 set autocommit = 0;
 INSERT INTO `users_wardrobe`
 VALUES (1, 1, 1, 'hd-3095-1.sh-3016-1336.ch-3032-1336-1337.lg-3058-1336.hr-802-61.cc-3075-1337', 'M'),
@@ -26338,37 +25673,4 @@ VALUES (1, 1, 1, 'hd-3095-1.sh-3016-1336.ch-3032-1336-1337.lg-3058-1336.hr-802-6
         'M'),
        (7, 1, 6, 'sh-3016-64.hd-3095-1383.hr-802-61.ch-255-109.lg-3058-110', 'M'),
        (8, 1, 7, 'sh-3016-110.lg-3058-110.hr-802-61.cc-3420-110.ch-3032-110-64.hd-3095-1383', 'M');
-/*!40000 ALTER TABLE `users_wardrobe`
-    ENABLE KEYS */;
-UNLOCK TABLES;
 commit;
-/*!40103 SET TIME_ZONE = @OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE = @OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS = @OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT = @OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS = @OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION = @OLD_COLLATION_CONNECTION */;
-/*
- * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
- *
- * This file is part of habbo_r63b_v2.
- *
- * habbo_r63b_v2 is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * habbo_r63b_v2 is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
-
--- Dump completed on 2026-01-25 17:07:41

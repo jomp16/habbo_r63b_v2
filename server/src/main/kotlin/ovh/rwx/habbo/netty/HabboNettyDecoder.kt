@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -123,6 +123,12 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 habboSession.release = habboRequest.readUTF()
 
                 habboRequest.byteBuf.resetReaderIndex()
+
+                // If Nitro client, then hardcode release to "PRODUCTION-201611291003-338511768"
+                if (habboSession.release.startsWith("NITRO")) {
+                    log.info("Changing ${habboSession.release} to PRODUCTION-201611291003-338511768")
+                    habboSession.release = "PRODUCTION-201611291003-338511768"
+                }
             }
 
             out += habboRequest
