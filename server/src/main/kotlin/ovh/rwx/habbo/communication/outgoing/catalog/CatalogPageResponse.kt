@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,12 @@ import ovh.rwx.habbo.game.catalog.CatalogPage
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageResponse {
     @Response(Outgoing.CATALOG_PAGE)
-    fun response(habboResponse: HabboResponse, catalogPage: CatalogPage, habboAir: Boolean) {
+    fun response(
+        habboResponse: HabboResponse,
+        catalogPage: CatalogPage,
+        habboAir: Boolean,
+        clientDoesNotSupportSilverCoins: Boolean
+    ) {
         habboResponse.apply {
             writeInt(catalogPage.id)
 
@@ -239,7 +244,7 @@ class CatalogPageResponse {
 
             writeInt(catalogPage.catalogItems.size)
 
-            catalogPage.catalogItems.forEach { serialize(it, habboAir) }
+            catalogPage.catalogItems.forEach { serialize(it, habboAir, clientDoesNotSupportSilverCoins) }
 
             writeInt(-1)
             writeBoolean(false)

@@ -357,7 +357,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         roomUser: RoomUser?,
         overrideZ: Double = (-1).toDouble(),
         rollerId: Int = -1,
-        rollerDelay: Long = 500
+        rollerDelay: Long = 750
     ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
         roomItem.position.vector2 == position && roomItem.rotation != rotation

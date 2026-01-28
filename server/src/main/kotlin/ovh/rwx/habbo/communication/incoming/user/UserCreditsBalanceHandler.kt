@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,10 +33,23 @@ class UserCreditsBalanceHandler {
     @Handler(Incoming.CREDITS_BALANCE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits)
+
+        // Somehow, Nitro requires this, because they don't send the Incoming.ACTIVITY_POINTS_BALANCE packet
+        // even if this packet exists on the official Habbo client.
+        habboSession.sendHabboResponse(
+            Outgoing.ACTIVITY_POINTS_BALANCE,
+            habboSession.userInformation.pixels,
+            habboSession.userInformation.vipPoints
+        )
     }
     
     @HandlerR63A(IncomingR63A.USER_CREDITS_BALANCE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(OutgoingR63A.USER_CREDITS_BALANCE, habboSession.userInformation.credits)
+        habboSession.sendHabboResponse(
+            Outgoing.ACTIVITY_POINTS_BALANCE,
+            habboSession.userInformation.pixels,
+            habboSession.userInformation.vipPoints
+        )
     }
 }

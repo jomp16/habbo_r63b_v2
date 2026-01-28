@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,7 +36,7 @@ class SubscriptionInfoResponse {
                 // todo: stub
                 writeInt(Duration.between(subscription.activated, LocalDateTime.now()).toDays().toInt()) // streakduration - in days
                 writeUTF(subscription.activated.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)) // Time joined HC
-                writeDouble((50.toDouble() / 100)) // credits multiplier / 10 -- %streakduration%
+                writeDouble(50.toDouble() / 100) // credits multiplier / 10 -- %streakduration%
                 writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
                 writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
                 writeInt(100) // credits spent on catalog

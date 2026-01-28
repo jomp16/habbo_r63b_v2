@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,21 +27,21 @@ import ovh.rwx.habbo.game.item.ItemType
 import java.util.concurrent.atomic.AtomicInteger
 
 data class CatalogItem(
-        val id: Int,
-        val pageId: Int,
-        val itemName: String,
-        val orderNum: Int,
-        val dealId: Int,
-        val catalogName: String,
-        val badge: String,
-        val costCredits: Int,
-        val costPixels: Int,
-        val costVip: Int,
-        val amount: Int,
-        val clubOnly: Boolean,
-        val limitedSells: AtomicInteger,
-        val limitedTotal: Int,
-        val offerActive: Boolean
+    val id: Int,
+    val pageId: Int,
+    val itemName: String,
+    val orderNum: Int,
+    val dealId: Int,
+    val catalogName: String,
+    val badge: String,
+    val costCredits: Int,
+    val costPixels: Int,
+    val costVip: Int,
+    val amount: Int,
+    val clubOnly: Boolean,
+    val limitedSells: AtomicInteger,
+    val limitedTotal: Int,
+    val offerActive: Boolean
 ) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
@@ -53,7 +53,8 @@ data class CatalogItem(
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         val isHabboAir = params.isNotEmpty() && params[0] as? Boolean == true
-        
+        val clientDoesNotSupportSilverCoins = params.isNotEmpty() && params[1] as? Boolean == true
+
         habboResponse.apply {
             writeInt(id) // offerId
             writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
@@ -61,7 +62,11 @@ data class CatalogItem(
             writeInt(costCredits) // priceInCredits
             writeInt(costPixels) // priceInActivityPoints
             writeInt(if (costVip > 0) 5 else 0) // activityPointType
-            writeInt(costVip) // priceInSilver
+
+            if (!clientDoesNotSupportSilverCoins) {
+                writeInt(costVip) // priceInSilver
+            }
+
             writeBoolean(dealId > 0 || furnishing.canGift) // giftable
 
             // products count and array
@@ -86,10 +91,8 @@ data class CatalogItem(
             // Campos que vêm APÓS o array de produtos
             writeInt(if (clubOnly) 1 else 0) // clubLevel
             writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
-            if (isHabboAir) {
-                writeBoolean(true) // campo booleano extra
-                writeUTF("") // previewImage
-            }
+            writeBoolean(false) // isPet ?
+            writeUTF("") // previewImage
         }
     }
 
