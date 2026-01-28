@@ -58,7 +58,7 @@ mariadb-dump \
   --port="$DB_PORT" \
   --user="$DB_USER" \
   --single-transaction \
-  --quick \
+  --compact \
   --result-file="$OUTPUT_FILE" \
   "$DB_NAME"
 

@@ -233,13 +233,13 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         val currentTeam = userTeams[userId]
 
-        if (currentTeam?.color == teamColor && gateAssignments[userId] == gate.id) {
-            // Saindo do gate do mesmo time - remove
+        if (currentTeam != null) {
+            // Usuário já tem time - remove do time atual ao passar por qualquer portão
             userTeams.remove(userId)
             gateAssignments.remove(userId)
             roomUser.effect = null
-            updateGateCounter(teamColor)
-        } else if (currentTeam == null) {
+            updateGateCounter(currentTeam.color)
+        } else {
             // Entrando no gate - verifica se ESTE gate específico tem espaço
             val playersInThisGate = gateAssignments.count { it.value == gate.id }
 
