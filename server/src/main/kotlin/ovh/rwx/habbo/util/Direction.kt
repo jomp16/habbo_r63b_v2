@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.util
 
+import kotlin.math.abs
+
 enum class Direction(val code: Int) {
     NORTH(0),
     NORTH_EAST(1),
@@ -69,6 +71,11 @@ enum class Direction(val code: Int) {
                 rot > 3 -> rot - 4
                 else -> rot + 4
             }
+        }
+
+        fun rotationDistance(rot1: Int, rot2: Int): Int {
+            val diff = abs(rot1 - rot2)
+            return minOf(diff, 8 - diff)
         }
     }
 }

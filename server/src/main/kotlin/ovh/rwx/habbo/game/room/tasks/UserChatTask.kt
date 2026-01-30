@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.event.events.room.RoomUserChatEvent
+import ovh.rwx.habbo.util.Direction
 import java.util.*
 
 class UserChatTask(
@@ -111,6 +112,7 @@ class UserChatTask(
                             )
                         }
                     }
+                    turnHeadTowardsSpeaker(it, roomUser)
                 } else if (type == RoomChatType.SHOUT) {
                     it.habboSession?.let { habboSession ->
                         if (habboSession.release != "R63A") {
@@ -130,8 +132,28 @@ class UserChatTask(
                             )
                         }
                     }
+                    turnHeadTowardsSpeaker(it, roomUser)
                 }
             }
+        }
+    }
+
+    private fun turnHeadTowardsSpeaker(listener: RoomUser, speaker: RoomUser) {
+        if (listener == speaker) return
+        if (listener.walking || listener.idle) return
+        if (listener.statusMap.containsKey("sit") || listener.statusMap.containsKey("lay")) return
+
+        val targetRotation = Direction.calculate(
+            listener.currentVector3.x,
+            listener.currentVector3.y,
+            speaker.currentVector3.x,
+            speaker.currentVector3.y
+        )
+
+        if (Direction.rotationDistance(listener.bodyRotation, targetRotation) <= 1) {
+            listener.headRotation = targetRotation
+            listener.headResetCycle = 4 // 2 segundos (4 ciclos de 500ms)
+            listener.updateNeeded = true
         }
     }
 }
