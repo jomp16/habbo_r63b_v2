@@ -22,10 +22,10 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class TimerConfig(
-        @JsonProperty("credits_seconds", required = true)
+        @param:JsonProperty("credits_seconds", required = true)
         val creditsSeconds: Int,
-        @JsonProperty("room_idle_seconds", required = true)
+        @param:JsonProperty("room_idle_seconds", required = true)
         val roomIdleSeconds: Int,
-        @JsonProperty("roller", required = true)
+        @param:JsonProperty("roller", required = true)
         val roller: Int
 )

@@ -22,8 +22,8 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CameraConfig(
-        @JsonProperty("prices", required = true)
+        @param:JsonProperty("prices", required = true)
         val prices: CameraPrices,
-        @JsonProperty("preview_timeout_minutes", required = true)
+        @param:JsonProperty("preview_timeout_minutes", required = true)
         val previewTimeoutMinutes: Long
 )

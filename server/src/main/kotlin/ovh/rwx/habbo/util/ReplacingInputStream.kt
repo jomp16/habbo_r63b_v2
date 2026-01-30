@@ -64,7 +64,7 @@ class ReplacingInputStream(inputStream: InputStream, private val pattern: ByteAr
                 b[off + i] = c.toByte()
                 i++
             }
-        } catch (ee: IOException) {
+        } catch (_: IOException) {
         }
 
         return i
@@ -138,7 +138,6 @@ class ReplacingInputStream(inputStream: InputStream, private val pattern: ByteAr
 
                 return next
             }
-            else -> throw IllegalStateException("no such state $state")
         }
     }
 

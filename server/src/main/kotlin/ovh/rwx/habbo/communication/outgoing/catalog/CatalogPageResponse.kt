@@ -244,7 +244,7 @@ class CatalogPageResponse {
 
             writeInt(catalogPage.catalogItems.size)
 
-            catalogPage.catalogItems.forEach { serialize(it, habboAir, clientDoesNotSupportSilverCoins) }
+            catalogPage.catalogItems.forEach { serialize(it, clientDoesNotSupportSilverCoins) }
 
             writeInt(-1)
             writeBoolean(false)

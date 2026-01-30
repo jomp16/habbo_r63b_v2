@@ -32,10 +32,11 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
+import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.epoll.Epoll
-import io.netty.channel.epoll.EpollEventLoopGroup
+import io.netty.channel.epoll.EpollIoHandler
 import io.netty.channel.epoll.EpollServerSocketChannel
-import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.HttpObjectAggregator
@@ -58,6 +59,7 @@ import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
+import ovh.rwx.habbo.kotlin.cleanUpUsers
 import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
@@ -106,7 +108,7 @@ object HabboServer : AutoCloseable {
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
         log.info("Built in: ${DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}")
-        log.info("Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}. Dirty: ${BuildConfig.GIT_IS_DIRTY}")
+        log.info("Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}.")
         log.info("By jomp16 and Lucas.")
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See https://www.gnu.org/licenses/gpl-3.0.en.html")
@@ -145,8 +147,9 @@ object HabboServer : AutoCloseable {
         habboServerBootstrap = ServerBootstrap()
         habboWebSocketServerBootstrap = ServerBootstrap()
         //fastFoodServerBootstrap = ServerBootstrap()
-        workerGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
-        bossGroup = if (Epoll.isAvailable()) EpollEventLoopGroup() else NioEventLoopGroup()
+        val ioHandlerFactory = if (Epoll.isAvailable()) EpollIoHandler.newFactory() else NioIoHandler.newFactory()
+        workerGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
+        bossGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
         log.info("Done!")
 
         log.info("Loading plugins...")

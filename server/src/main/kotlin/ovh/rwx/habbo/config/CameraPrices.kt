@@ -22,10 +22,10 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CameraPrices(
-        @JsonProperty("credits", required = true)
+        @param:JsonProperty("credits", required = true)
         val credits: Int,
-        @JsonProperty("pixels", required = true)
+        @param:JsonProperty("pixels", required = true)
         val pixels: Int,
-        @JsonProperty("pixels_publish_web", required = true)
+        @param:JsonProperty("pixels_publish_web", required = true)
         val pixelsPublishWeb: Int
 )

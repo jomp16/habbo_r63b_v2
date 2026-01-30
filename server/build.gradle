@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: "de.fuerstenau.buildconfig"
+apply plugin: "com.github.gmazzo.buildconfig"
 apply plugin: "org.ajoberstar.grgit"
 
 group "ovh.rwx.habbo"
@@ -37,18 +37,21 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
-    implementation 'commons-codec:commons-codec:1.15'
+    implementation 'commons-codec:commons-codec:1.21.0'
 }
 
 buildConfig {
+    packageName("ovh.rwx.habbo")
+
     def repo = grgit.open(currentDir: project.rootDir)
 
-    appName = "Habbo R63B v2"
+    buildConfigField(String, 'NAME', 'Habbo R63B v2')
+    buildConfigField(String, "VERSION", provider { project.version })
+    buildConfigField(String, 'GIT_COMMIT_SHORT', "${repo.head().abbreviatedId}")
+    buildConfigField(String, 'GIT_COMMIT_FULL', "${repo.head().id}")
+    buildConfigField("java.time.Instant", 'BUILD_INSTANT', 'Instant.ofEpochMilli(' + System.currentTimeMillis() + 'L)')
 
-    buildConfigField 'String', 'GIT_COMMIT_SHORT', "${repo.head().abbreviatedId}"
-    buildConfigField 'String', 'GIT_COMMIT_FULL', "${repo.head().id}"
-    buildConfigField 'boolean', 'GIT_IS_DIRTY', "${!repo.status().clean}"
-    buildConfigField 'java.time.Instant', 'BUILD_INSTANT', 'java.time.Instant.ofEpochMilli(' + System.currentTimeMillis() + 'L)'
+    useKotlinOutput { internalVisibility = false }
 }
 
 jar {

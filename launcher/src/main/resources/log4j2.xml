@@ -40,5 +40,6 @@
         <Logger name="org.xnio" level="error"/>
         <Logger name="org.jboss" level="error"/>
         <Logger name="org.springframework" level="error"/>
+        <Logger name="org.mariadb" level="error"/>
     </loggers>
 </Configuration>

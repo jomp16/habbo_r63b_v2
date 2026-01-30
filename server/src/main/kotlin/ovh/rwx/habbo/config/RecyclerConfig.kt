@@ -22,12 +22,12 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RecyclerConfig(
-        @JsonProperty("open", required = true)
+        @param:JsonProperty("open", required = true)
         val open: Boolean,
-        @JsonProperty("slots", required = true)
+        @param:JsonProperty("slots", required = true)
         val slots: Int,
-        @JsonProperty("odds", required = true)
+        @param:JsonProperty("odds", required = true)
         val odds: Map<Int, Int>,
-        @JsonProperty("gift_box", required = true)
+        @param:JsonProperty("gift_box", required = true)
         val giftBox: String
 )

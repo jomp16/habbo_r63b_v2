@@ -42,7 +42,7 @@ class RoomAboutCommandListener : PluginListener() {
                         "\n\n" +
                         "Built at: ${HabboServer.DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}" +
                         "\n\n" +
-                        "Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}. Dirty: ${BuildConfig.GIT_IS_DIRTY}" +
+                        "Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}." +
                         "\n\n" +
                         "Written in Java and Kotlin by jomp16 and Lucas." +
                         "\n\n" +

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,8 +53,7 @@ data class CatalogItem(
     val limited = limitedTotal > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
-        val isHabboAir = params.isNotEmpty() && params[0] as? Boolean == true
-        val clientDoesNotSupportSilverCoins = params.isNotEmpty() && params[1] as? Boolean == true
+        val clientDoesNotSupportSilverCoins = params.isNotEmpty() && params[0] as? Boolean == true
 
         habboResponse.apply {
             writeInt(id) // offerId
@@ -61,7 +61,7 @@ data class CatalogItem(
             writeBoolean(false) // isRent
             writeInt(costCredits) // priceInCredits
             writeInt(costPixels) // priceInActivityPoints
-            writeInt(if (costVip > 0) 5 else 0) // activityPointType
+            writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else 0) // activityPointType
 
             if (!clientDoesNotSupportSilverCoins) {
                 writeInt(costVip) // priceInSilver
@@ -75,7 +75,6 @@ data class CatalogItem(
             if (badge.isNotBlank()) {
                 writeUTF("b")
                 writeUTF(badge)
-                if (isHabboAir) writeInt(1)
             }
 
             if (dealId > 0) {

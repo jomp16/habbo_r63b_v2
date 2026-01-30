@@ -22,10 +22,10 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RSAConfig(
-        @JsonProperty("N", required = true)
+        @param:JsonProperty("N", required = true)
         val n: String,
-        @JsonProperty("D", required = true)
+        @param:JsonProperty("D", required = true)
         val d: String,
-        @JsonProperty("E", required = true)
+        @param:JsonProperty("E", required = true)
         val e: String
 )

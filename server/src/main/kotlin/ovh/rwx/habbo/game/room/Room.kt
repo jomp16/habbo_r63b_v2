@@ -606,6 +606,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem)
                 sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_REMOVE, roomItem)
             }
+            else -> {}
         }
 
         if (roomItemsToSave.contains(roomItem)) roomItemsToSave.remove(roomItem)

@@ -22,8 +22,8 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class DiffieHellmanConfig(
-        @JsonProperty("key_size", required = true)
+        @param:JsonProperty("key_size", required = true)
         val keySize: Int,
-        @JsonProperty("always_generate_new_keys", required = true)
+        @param:JsonProperty("always_generate_new_keys", required = true)
         val alwaysGenerateNewKeys: Boolean
 )
