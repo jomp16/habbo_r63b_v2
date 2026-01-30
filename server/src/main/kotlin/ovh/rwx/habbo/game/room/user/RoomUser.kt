@@ -64,6 +64,7 @@ class RoomUser(
     private var currentCycles: Int = 0
     private var handItemCycle: Int = 0
     private var handItemCurrentCycles: Int = 0
+    internal var headResetCycle: Int = 0
     var walkingBlocked: Boolean = false
     var frozen: Boolean = false
     var ignoreBlocking: Boolean = false
@@ -158,6 +159,13 @@ class RoomUser(
 
                     carryHandItem(0)
                 }
+            }
+        }
+
+        if (headResetCycle > 0 && --headResetCycle == 0) {
+            if (!walking && !idle) {
+                headRotation = bodyRotation
+                updateNeeded = true
             }
         }
 
