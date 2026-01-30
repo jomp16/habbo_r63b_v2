@@ -24,28 +24,28 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IpInfo(
-        @JsonProperty("ip")
+        @param:JsonProperty("ip")
         val ip: String? = "",
-        @JsonProperty("hostname")
+        @param:JsonProperty("hostname")
         val hostname: String? = "",
-        @JsonProperty("type")
+        @param:JsonProperty("type")
         val type: String? = "",
-        @JsonProperty("continent_code")
+        @param:JsonProperty("continent_code")
         val continentCode: String? = "",
-        @JsonProperty("continent_name")
+        @param:JsonProperty("continent_name")
         val continentName: String? = "",
-        @JsonProperty("country_code")
+        @param:JsonProperty("country_code")
         val countryCode: String? = "",
-        @JsonProperty("country_name")
+        @param:JsonProperty("country_name")
         val countryName: String? = "",
-        @JsonProperty("region_code")
+        @param:JsonProperty("region_code")
         val regionCode: String? = "",
-        @JsonProperty("region_name")
+        @param:JsonProperty("region_name")
         val regionName: String? = "",
-        @JsonProperty("city")
+        @param:JsonProperty("city")
         val city: String? = "",
-        @JsonProperty("latitude")
+        @param:JsonProperty("latitude")
         val latitude: Double? = 0.toDouble(),
-        @JsonProperty("longitude")
+        @param:JsonProperty("longitude")
         val longitude: Double? = 0.toDouble()
 )

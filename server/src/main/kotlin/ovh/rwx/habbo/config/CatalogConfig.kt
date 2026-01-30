@@ -22,6 +22,6 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CatalogConfig(
-        @JsonProperty("show_how_many_items_title", required = true)
+        @param:JsonProperty("show_how_many_items_title", required = true)
         val showHowManyItemsInTitle: Boolean
 )

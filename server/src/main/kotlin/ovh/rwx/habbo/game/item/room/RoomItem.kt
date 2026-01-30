@@ -179,6 +179,7 @@ data class RoomItem(
                     room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this)
                 }
             }
+            else -> {}
         }
     }
 

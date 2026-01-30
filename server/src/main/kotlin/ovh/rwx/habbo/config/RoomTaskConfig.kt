@@ -22,15 +22,15 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RoomTaskConfig(
-        @JsonProperty("threads", required = true)
+        @param:JsonProperty("threads", required = true)
         val threads: Int,
-        @JsonProperty("max_room_per_thread", required = true)
+        @param:JsonProperty("max_room_per_thread", required = true)
         val maxRoomPerThread: Int,
-        @JsonProperty("delay_milliseconds", required = true)
+        @param:JsonProperty("delay_milliseconds", required = true)
         val delayMilliseconds: Int,
-        @JsonProperty("error_threshold", required = true)
+        @param:JsonProperty("error_threshold", required = true)
         val errorThreshold: Int,
-        @JsonProperty("save_item_seconds", required = true)
+        @param:JsonProperty("save_item_seconds", required = true)
         val saveItemSeconds: Int,
-        @JsonProperty("empty_room_seconds", required = true)
+        @param:JsonProperty("empty_room_seconds", required = true)
         val emptyRoomSeconds: Int)

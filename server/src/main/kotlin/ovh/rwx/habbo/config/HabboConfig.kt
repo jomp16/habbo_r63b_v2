@@ -25,43 +25,43 @@ import java.io.File
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class HabboConfig(
-        @JsonProperty("port", required = true)
+        @param:JsonProperty("port", required = true)
         val port: Int,
-        @JsonProperty("ws_port", required = true)
+        @param:JsonProperty("ws_port", required = true)
         val wsPort: Int,
-        @JsonProperty("web_port", required = true)
+        @param:JsonProperty("web_port", required = true)
         val webPort: Int,
-        @JsonProperty("database", required = true)
+        @param:JsonProperty("database", required = true)
         val databaseConfig: DatabaseConfig,
-        @JsonProperty("encryption", required = true)
+        @param:JsonProperty("encryption", required = true)
         val encryptionConfig: EncryptionConfig,
-        @JsonProperty("furnidata_xml", required = true)
+        @param:JsonProperty("furnidata_xml", required = true)
         val furnidataXml: String,
-        @JsonProperty("figuredata_xml", required = true)
+        @param:JsonProperty("figuredata_xml", required = true)
         val figuredataXml: String,
-        @JsonProperty("reward", required = true)
+        @param:JsonProperty("reward", required = true)
         val rewardConfig: RewardConfig,
-        @JsonProperty("auto_join_room", required = true)
+        @param:JsonProperty("auto_join_room", required = true)
         val autoJoinRoom: Boolean,
-        @JsonProperty("timer", required = true)
+        @param:JsonProperty("timer", required = true)
         val timerConfig: TimerConfig,
-        @JsonProperty("room_task", required = true)
+        @param:JsonProperty("room_task", required = true)
         val roomTaskConfig: RoomTaskConfig,
-        @JsonProperty("camera", required = true)
+        @param:JsonProperty("camera", required = true)
         val cameraConfig: CameraConfig,
-        @JsonProperty("catalog", required = true)
+        @param:JsonProperty("catalog", required = true)
         val catalogConfig: CatalogConfig,
-        @JsonProperty("recycler", required = true)
+        @param:JsonProperty("recycler", required = true)
         val recyclerConfig: RecyclerConfig,
-        @JsonProperty("motd_enabled", required = true)
+        @param:JsonProperty("motd_enabled", required = true)
         val motdEnabled: Boolean,
-        @JsonProperty("motd_file_path", required = true)
+        @param:JsonProperty("motd_file_path", required = true)
         private val motdFilePath: String,
-        @JsonProperty("server_console_figure", required = true)
+        @param:JsonProperty("server_console_figure", required = true)
         val serverConsoleFigure: String,
-        @JsonProperty("analytics", required = true)
+        @param:JsonProperty("analytics", required = true)
         val analyticsConfig: AnalyticsConfig,
-        @JsonProperty("game", required = true)
+        @param:JsonProperty("game", required = true)
         val gameConfig: GameConfig
 ) {
     val motdContents: String by lazy {

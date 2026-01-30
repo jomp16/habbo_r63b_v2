@@ -40,8 +40,9 @@ dependencies {
     compileOnly project(":server")
 }
 
-task copyLibs(type: Copy) {
+tasks.register('copyLibs', Copy) {
     dependsOn cleanLibsDir
+    dependsOn project.configurations.runtimeClasspath
 
     def libs = (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
         !it.name.contains("server")

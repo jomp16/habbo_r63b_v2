@@ -22,16 +22,16 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class RewardConfig(
-        @JsonProperty("credits", required = true)
+        @param:JsonProperty("credits", required = true)
         val credits: Int,
-        @JsonProperty("credits_max", required = true)
+        @param:JsonProperty("credits_max", required = true)
         val creditsMax: Int,
-        @JsonProperty("pixels", required = true)
+        @param:JsonProperty("pixels", required = true)
         val pixels: Int,
-        @JsonProperty("pixels_max", required = true)
+        @param:JsonProperty("pixels_max", required = true)
         val pixelsMax: Int,
-        @JsonProperty("vip_points", required = true)
+        @param:JsonProperty("vip_points", required = true)
         val vipPoints: Int,
-        @JsonProperty("vip_points_max", required = true)
+        @param:JsonProperty("vip_points_max", required = true)
         val vipPointsMax: Int
 )

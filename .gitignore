@@ -30,3 +30,4 @@ log4j2.private.xml
 .directory
 
 .kiro/
+.kotlin/

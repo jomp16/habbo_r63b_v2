@@ -29,6 +29,9 @@ class HabboSessionManager {
     @Suppress("MemberVisibilityCanBePrivate")
     val fastFoodSessions: MutableMap<ChannelId, FastFoodSession> = mutableMapOf()
 
+    val sessionsCount: Int
+        get() = habboSessions.size
+
     fun makeHabboSession(channel: Channel): Boolean {
         val habboSession = HabboSession(channel)
         channel.attr(habboSessionAttributeKey).set(habboSession)

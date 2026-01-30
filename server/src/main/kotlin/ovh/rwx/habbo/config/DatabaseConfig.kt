@@ -23,24 +23,24 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.zaxxer.hikari.HikariConfig
 
 data class DatabaseConfig(
-        @JsonProperty("host", required = true)
+        @param:JsonProperty("host", required = true)
         private val host: String,
-        @JsonProperty("port", required = true)
+        @param:JsonProperty("port", required = true)
         private val port: Int,
-        @JsonProperty("user", required = true)
+        @param:JsonProperty("user", required = true)
         private val user: String,
-        @JsonProperty("password", required = true)
+        @param:JsonProperty("password", required = true)
         private val password: String,
-        @JsonProperty("name", required = true)
+        @param:JsonProperty("name", required = true)
         private val name: String,
-        @JsonProperty("timeout", required = true)
+        @param:JsonProperty("timeout", required = true)
         private val timeout: Long
 ) {
     val hikariConfig: HikariConfig
         get() {
             val config = HikariConfig()
 
-            config.jdbcUrl = "jdbc:mysql://$host:$port/$name"
+            config.jdbcUrl = "jdbc:mariadb://$host:$port/$name"
             config.username = user
             config.password = password
             config.connectionTimeout = timeout

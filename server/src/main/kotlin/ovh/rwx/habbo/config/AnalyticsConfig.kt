@@ -22,8 +22,8 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class AnalyticsConfig(
-        @JsonProperty("unique_id", required = true)
+        @param:JsonProperty("unique_id", required = true)
         val uniqueId: Boolean,
-        @JsonProperty("ip", required = true)
+        @param:JsonProperty("ip", required = true)
         val ipConfig: AnalyticsIPConfig
 )

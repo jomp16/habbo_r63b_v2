@@ -22,10 +22,10 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class EncryptionConfig(
-        @JsonProperty("diffie_hellman", required = true)
+        @param:JsonProperty("diffie_hellman", required = true)
         val diffieHellmanConfig: DiffieHellmanConfig,
-        @JsonProperty("rsa", required = true)
+        @param:JsonProperty("rsa", required = true)
         val rsaConfig: RSAConfig,
-        @JsonProperty("rc4", required = true)
+        @param:JsonProperty("rc4", required = true)
         val rc4: Boolean
 )
