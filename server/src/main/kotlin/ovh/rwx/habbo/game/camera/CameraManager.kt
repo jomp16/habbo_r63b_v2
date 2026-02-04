@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,9 +20,12 @@
 package ovh.rwx.habbo.game.camera
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.camera.HabboCameraRenderer
+import ovh.rwx.habbo.camera.json.HabboCamera
 import ovh.rwx.habbo.database.camera.CameraDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
@@ -38,7 +41,9 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.zip.InflaterInputStream
 import javax.imageio.ImageIO
+import kotlin.io.path.writeText
 
 class CameraManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -48,6 +53,7 @@ class CameraManager {
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
     private val currentPictureForUsers: MutableMap<String, Pair<LocalDateTime, String>> = mutableMapOf()
     private val jacksonJson = jacksonObjectMapper()
+    private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath)
 
     fun load() {
         log.info("Loading camera...")
@@ -92,9 +98,20 @@ class CameraManager {
         val cameraPreviewUserPath = cameraPreviewDirectory.resolve(habboSession.userInformation.username)
 
         if (Files.notExists(cameraPreviewUserPath)) Files.createDirectory(cameraPreviewUserPath)
-        val cameraPreviewPath = cameraPreviewUserPath.resolve("${UUID.randomUUID()}.png")
+        val uuid = UUID.randomUUID()
+        val cameraPreviewPath = cameraPreviewUserPath.resolve("${uuid}.png")
+        val cameraPreviewJsonPath = cameraPreviewUserPath.resolve("${uuid}.json")
 
-        cameraPreviewPath.toFile().writeBytes(cameraBytes)
+        val jsonData = if (isZlibCompressed(cameraBytes)) {
+            InflaterInputStream(cameraBytes.inputStream()).readBytes().decodeToString()
+        } else {
+            cameraBytes.decodeToString()
+        }
+
+        cameraPreviewJsonPath.writeText(jsonData)
+
+        val renderedBytes = renderCameraData(jsonData)
+        cameraPreviewPath.toFile().writeBytes(renderedBytes)
 
         currentPictureForUsers[habboSession.userInformation.username] = LocalDateTime.now() to cameraPreviewPath.fileName.toString()
 
@@ -105,9 +122,27 @@ class CameraManager {
         if (!habboSession.hasPermission("acc_can_use_camera")) return false
         val roomThumbnailPath = cameraNavigatorThumbnailDirectory.resolve("$roomId.png")
 
-        roomThumbnailPath.toFile().writeBytes(roomThumbnailBytes)
+        val jsonData = if (isZlibCompressed(roomThumbnailBytes)) {
+            InflaterInputStream(roomThumbnailBytes.inputStream()).readBytes().decodeToString()
+        } else {
+            roomThumbnailBytes.decodeToString()
+        }
+
+        val renderedBytes = renderCameraData(jsonData)
+        roomThumbnailPath.toFile().writeBytes(renderedBytes)
 
         return true
+    }
+
+    private fun renderCameraData(data: String): ByteArray {
+        val habboCamera: HabboCamera = jacksonJson.readValue(data)
+        return habboCameraRenderer.renderToBytes(habboCamera)
+    }
+
+    private fun isZlibCompressed(data: ByteArray): Boolean {
+        if (data.size < 2) return false
+        val header = ((data[0].toInt() and 0xFF) shl 8) or (data[1].toInt() and 0xFF)
+        return header == 0x789C || header == 0x7801 || header == 0x78DA
     }
 
     fun purchaseCamera(habboSession: HabboSession): Boolean {

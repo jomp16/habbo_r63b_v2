@@ -46,6 +46,7 @@ camera:
     pixels: 100
     pixels_publish_web: 10
   preview_timeout_minutes: 5
+  assets_path: assets_renderizador
 catalog:
   show_how_many_items_title: false
 recycler:

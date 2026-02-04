@@ -10,3 +10,6 @@
 [submodule "plugin_manager"]
 	path = plugin_manager
 	url = ../plugin_manager.git
+[submodule "camera_renderer"]
+	path = camera_renderer
+	url = ../camera_renderer.git
