@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,8 +22,10 @@ package ovh.rwx.habbo.config
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CameraConfig(
-        @param:JsonProperty("prices", required = true)
-        val prices: CameraPrices,
-        @param:JsonProperty("preview_timeout_minutes", required = true)
-        val previewTimeoutMinutes: Long
+    @param:JsonProperty("prices", required = true)
+    val prices: CameraPrices,
+    @param:JsonProperty("preview_timeout_minutes", required = true)
+    val previewTimeoutMinutes: Long,
+    @param:JsonProperty("assets_path", required = true)
+    val assetsPath: String
 )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,14 +28,24 @@ import java.time.LocalDateTime
 /**
  * Inserts and fetch the rows affected and the generated key
  */
-fun Session.insertWithIntGeneratedKey(@Language("SQL") sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): Pair<Int, Int> = insert(sql, parameters, options) { it.int(columnName) }
+fun Session.insertWithIntGeneratedKey(
+    @Language("SQL") sql: String,
+    parameters: Map<String, Any?> = mapOf(),
+    options: StatementOptions = defaultOptions,
+    columnName: String = "insert_id"
+): Pair<Int, Int> = insert(sql, parameters, options) { it.int(columnName) }
 
 /**
  * Inserts and fetch the rows affected and the generated key
  */
 fun Session.insertAndGetGeneratedKey(@Language("SQL") sql: String, parameters: Map<String, Any?> = mapOf(), options: StatementOptions = defaultOptions): Int = insertWithIntGeneratedKey(sql, parameters, options).second
 
-fun Session.batchInsertWithIntGeneratedKey(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions, columnName: String = "GENERATED_KEY"): List<Pair<Int, Int>> = batchInsert(sql, parametersList, options) { it.int(columnName) }
+fun Session.batchInsertWithIntGeneratedKey(
+    @Language("SQL") sql: String,
+    parametersList: List<Map<String, Any?>>,
+    options: StatementOptions = defaultOptions,
+    columnName: String = "insert_id"
+): List<Pair<Int, Int>> = batchInsert(sql, parametersList, options) { it.int(columnName) }
 
 fun Session.batchInsertAndGetGeneratedKeys(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
