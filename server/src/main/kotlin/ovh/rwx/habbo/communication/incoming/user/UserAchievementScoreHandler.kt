@@ -20,28 +20,15 @@
 package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserActivityPointsBalanceHandler {
-    @Handler(Incoming.ACTIVITY_POINTS_BALANCE)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
-    }
-
+class UserAchievementScoreHandler {
     @HandlerR63A(IncomingR63A.ACHIEVEMENT_SCORE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
-            OutgoingR63A.ACTIVITY_POINTS_BALANCE,
-            habboSession.userInformation.pixels,
-            habboSession.userInformation.vipPoints
-        )
         habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
     }
 }

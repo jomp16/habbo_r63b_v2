@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,8 +20,8 @@
 package ovh.rwx.habbo.communication.incoming
 
 enum class Incoming {
-    ACTIVITY_POINTS_BALANCE,
     AVATAR_EFFECT,
+    BADGE_POINTS_LIMIT,
     BUILDERS_PLACE_ITEM,
     BUILDERS_QUERY_FURNI_COUNT,
     CAMERA_DATA,

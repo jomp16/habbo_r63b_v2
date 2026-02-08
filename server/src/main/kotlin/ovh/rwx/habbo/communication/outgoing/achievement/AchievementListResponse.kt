@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -71,12 +71,25 @@ class AchievementListResponse {
         var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
         val totalLevels = achievementGroup.totalLevels
         targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-        val targetAchievement = groupedAchievements[achievementGroup]?.find { it.level == targetLevel }!!
+        val groupList = groupedAchievements[achievementGroup]
+        val targetAchievement = groupList?.find { it.level == targetLevel }
+            ?: groupList?.lastOrNull() // Fallback para o último nível existente
+            ?: return // Se não tiver NENHUMA conquista no grupo, aborta esse loop (não envia nada desse grupo)
+        val badgeCode = if (achievementGroup.badgeAppendLevel) {
+            achievementGroup.name + targetLevel // Padrão (ACH_Login1)
+        } else {
+            achievementGroup.name // Estático (ACH_VipParties2_Entry)
+        }
+        // Se for nível 1, começa do 0. Se for nível 2, começa onde o nível 1 terminou.
+        val scoreAtStart = if (targetLevel == 1) 0 else {
+            // Pega o achievement do nível anterior para saber onde ele terminava
+            groupedAchievements[achievementGroup]?.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
+        }
 
         writeInt(achievementGroup.id)
         writeInt(targetLevel)
-        writeUTF(achievementGroup.name + targetLevel)
-        writeInt(1) // scoreAtStartOfLevel
+        writeUTF(badgeCode) // Envia o código corrigido
+        writeInt(scoreAtStart) // <--- Corrigido (Envia 0 para lvl 1, 20 para lvl 2, etc)
         writeInt(targetAchievement.progressRequirement)
         writeInt(targetAchievement.rewardActivityPoints)
         writeInt(0) // type of reward

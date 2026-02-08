@@ -36,7 +36,6 @@ import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.encryption.RC4Encryption
-import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomState
@@ -81,8 +80,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 ignorePermissionAnyRoomOwner = true
             )
         }
-    val groups: List<Group>
-        get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == userInformation.id } }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
         private set
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }

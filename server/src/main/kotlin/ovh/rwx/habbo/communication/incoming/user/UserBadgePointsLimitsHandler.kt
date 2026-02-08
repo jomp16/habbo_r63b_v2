@@ -17,16 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.achievement
+package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.user.HabboSession
 
-data class AchievementGroup(
-    val id: Int,
-    val name: String,
-    val category: AchievementCategory,
-    val badgeAppendLevel: Boolean,
-) {
-    val totalLevels: Int
-        get() = HabboServer.habboGame.achievementManager.groupedAchievements[this]?.size ?: 0
+@Suppress("unused", "UNUSED_PARAMETER")
+class UserBadgePointsLimitsHandler {
+    @Handler(Incoming.BADGE_POINTS_LIMIT)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val groupedAchievements = HabboServer.habboGame.achievementManager.groupedAchievements
+
+        habboSession.sendHabboResponse(Outgoing.BADGE_POINTS_LIMIT, groupedAchievements)
+    }
 }

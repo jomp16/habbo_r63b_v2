@@ -32,6 +32,7 @@ class CatalogPageResponse {
     fun response(
         habboResponse: HabboResponse,
         catalogPage: CatalogPage,
+        chosenOfferId: Int,
         habboAir: Boolean,
     ) {
         habboResponse.apply {
@@ -245,7 +246,7 @@ class CatalogPageResponse {
 
             catalogPage.catalogItems.forEach { serialize(it, habboAir) }
 
-            writeInt(-1)
+            writeInt(chosenOfferId)
             writeBoolean(false)
 
             if (habboAir) {
@@ -258,7 +259,7 @@ class CatalogPageResponse {
     }
 
     @ResponseR63A(OutgoingR63A.CATALOG_PAGE)
-    fun responseR63A(habboResponse: HabboResponse, catalogPage: CatalogPage) {
+    fun responseR63A(habboResponse: HabboResponse, catalogPage: CatalogPage, chosenOfferId: Int = -1) {
         habboResponse.apply {
             writeInt(catalogPage.id) // pageId
 
@@ -310,7 +311,7 @@ class CatalogPageResponse {
 
             catalogPage.catalogItems.forEach { serialize(it) }
 
-            writeInt(0) // offerId, what it is used on?
+            writeInt(chosenOfferId) // offerId, what it is used on?
         }
     }
 
