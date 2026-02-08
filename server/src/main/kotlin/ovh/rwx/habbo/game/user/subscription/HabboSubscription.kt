@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.user.subscription
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
@@ -46,10 +47,19 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun addOrExtend(months: Int) {
+        val isFirstTime = subscription == null
+        
         if (subscription == null) subscription = SubscriptionDao.createSubscription(habboSession.userInformation.id, months.toLong())
         else SubscriptionDao.extendSubscription(subscription, months.toLong())
 
         if (validUserSubscription && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) habboSession.habboBadge.addBadge("ACH_VipHC1")
+
+        // ACH_BasicClub: entrar no club pela primeira vez
+        if (isFirstTime) {
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_BasicClub", 1, accumulate = true)
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_HC", 1, accumulate = true)
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_VipHC", 1, accumulate = true)
+        }
 
         updateStatus()
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -58,6 +58,15 @@ class MessengerAcceptRequestHandler {
             Outgoing.MESSENGER_FRIENDS_UPDATE,
             friends,
             MessengerFriendUpdateResponse.MessengerFriendUpdateMode.INSERT
+        )
+
+        // ACH_FriendListSize: quantidade de amigos (não perde se remover)
+        val totalFriends = habboSession.habboMessenger.friends.size
+        HabboServer.habboGame.achievementManager.progress(
+            habboSession,
+            "ACH_FriendListSize",
+            totalFriends,
+            accumulate = false
         )
 
         friends.filterKeys { it != habboSession.userInformation.id }.forEach {

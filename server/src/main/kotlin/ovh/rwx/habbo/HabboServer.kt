@@ -59,7 +59,6 @@ import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
-import ovh.rwx.habbo.kotlin.cleanUpUsers
 import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
@@ -272,6 +271,11 @@ object HabboServer : AutoCloseable {
             }
             log.debug("Done!")
             // End room
+            // Start achievements
+            log.debug("Saving queued achievements...")
+            habboGame.achievementManager.saveQueuedAchievements()
+            log.debug("Done!")
+            // End achievements
             // Start Netty
             log.debug("Shutting down Netty server...")
             bossGroup.shutdownGracefully().awaitUninterruptibly()

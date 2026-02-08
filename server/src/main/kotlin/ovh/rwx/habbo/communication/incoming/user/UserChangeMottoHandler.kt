@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.user
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -37,6 +38,9 @@ class UserChangeMottoHandler {
         if (motto.length > 38) motto = motto.substring(0, 38)
 
         habboSession.userInformation.motto = motto
+
+        // ACH_Motto: mudar estado
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Motto", 1, accumulate = true)
 
         habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, habboSession.userInformation.figure, habboSession.userInformation.gender, habboSession.userInformation.motto, habboSession.userStats.achievementScore)
     }

@@ -33,6 +33,13 @@ class CatalogOfferHandler {
         val catalogOfferId = habboRequest.readInt()
 
         if (catalogOfferId == -1) return
+
+        // Flood control: 500ms entre requests do mesmo item (por sessão)
+        val now = System.currentTimeMillis()
+        val lastTime = habboSession.lastCatalogOfferRequest[catalogOfferId] ?: 0
+        if (now - lastTime < 500) return
+        habboSession.lastCatalogOfferRequest[catalogOfferId] = now
+        
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogOfferId }
                 ?: return
 

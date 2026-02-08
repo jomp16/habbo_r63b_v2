@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -81,10 +81,17 @@ class HabboGame {
         }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
+            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
+                .forEach { HabboServer.applicationScope.launch { it.processPeriodicAchievements() } }
+        }, 0, 1, TimeUnit.MINUTES)
+
+        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
 
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
                 .forEach { HabboServer.applicationScope.launch { it.saveAllQueuedStuffs() } }
+
+            achievementManager.saveQueuedAchievements()
         }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
     }
 }

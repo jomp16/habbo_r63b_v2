@@ -20,7 +20,9 @@
 package ovh.rwx.habbo.communication.outgoing
 
 enum class Outgoing {
+    ACHIEVEMENT_PROGRESS,
     ACHIEVEMENT_SCORE,
+    ACHIEVEMENT_UNLOCKED,
     ACTIVITY_POINTS_BALANCE,
     AUTHENTICATION_FIRST_LOGIN_OF_DAY,
     AUTHENTICATION_OK,

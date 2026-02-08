@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -103,6 +103,49 @@ object ItemDao {
                         it.boolean("is_limited")
                 )
             }.associateBy { it.id }
+        }
+    }
+
+    fun getAllUserItems(userId: Int): List<UserItem> {
+        return HabboServer.database {
+            select(
+                javaClass.classLoader.getResource("sql/items/user/select_all_user_items.sql").readText(),
+                mapOf(
+                    "user_id" to userId
+                )
+            ) {
+                UserItem(
+                    it.int("id"),
+                    it.int("user_id"),
+                    it.string("item_name"),
+                    it.string("extra_data"),
+                    it.boolean("is_limited")
+                )
+            }
+        }
+    }
+
+    data class UserItemWithRoom(val userItem: UserItem, val roomId: Int?)
+
+    fun getAllUserItemsWithRoom(userId: Int): List<UserItemWithRoom> {
+        return HabboServer.database {
+            select(
+                javaClass.classLoader.getResource("sql/items/user/select_all_user_items.sql").readText(),
+                mapOf(
+                    "user_id" to userId
+                )
+            ) {
+                UserItemWithRoom(
+                    UserItem(
+                        it.int("id"),
+                        it.int("user_id"),
+                        it.string("item_name"),
+                        it.string("extra_data"),
+                        it.boolean("is_limited")
+                    ),
+                    it.intOrNull("room_id")
+                )
+            }
         }
     }
 

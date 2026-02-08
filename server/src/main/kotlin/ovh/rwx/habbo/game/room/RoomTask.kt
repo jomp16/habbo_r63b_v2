@@ -106,6 +106,27 @@ class RoomTask : Runnable {
                         // Increment room timer
                         room.roomTimer.incrementAndGet()
 
+                        // ACH_RoomDecoHosting: A cada 1 minuto (120 cycles de 500ms)
+                        if (room.hostingCounter.incrementAndGet() >= 120) {
+                            room.hostingCounter.set(0)
+
+                            val guestCount = room.roomUsers.values.count {
+                                it.habboSession != null && it.habboSession.userInformation.id != room.roomData.ownerId
+                            }
+
+                            if (guestCount > 0) {
+                                val ownerSession =
+                                    HabboServer.habboSessionManager.getHabboSessionById(room.roomData.ownerId)
+                                HabboServer.habboGame.achievementManager.progress(
+                                    ownerSession,
+                                    room.roomData.ownerId,
+                                    "ACH_RoomDecoHosting",
+                                    guestCount,
+                                    accumulate = true
+                                )
+                            }
+                        }
+
                         // Trigger wired periodically
                         room.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, null)
                         room.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, null)
