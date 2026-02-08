@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,13 +20,37 @@
 package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-class UserActionTask(private val roomUser: RoomUser, private val action: Int) : IRoomTask {
+enum class UserAction(val action: Int) {
+    NONE(0),
+    WAVE(1),
+    BLOW_KISS(2),
+    LAUGH(3),
+    UNKNOWN(4),
+    IDLE(5),
+    JUMP(6),
+    THUMB_UP(7);
+
+    companion object {
+        fun fromValue(value: Int): UserAction {
+            for (action in UserAction.entries) {
+                if (action.action == value) {
+                    return action
+                }
+            }
+
+            return NONE
+        }
+    }
+}
+
+class UserActionTask(private val roomUser: RoomUser, private val action: UserAction) : IRoomTask {
     override fun executeTask(room: Room) {
-        if (action == 5) {
+        if (action == UserAction.IDLE) {
             roomUser.idle = true
 
             return
@@ -36,12 +60,15 @@ class UserActionTask(private val roomUser: RoomUser, private val action: Int) : 
         roomUser.handItem = 0
         roomUser.danceId = 0
 
-        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action)
+        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action.action)
 
+        // Now for R63A
         when (action) {
-            1 -> {
-                // wave?
+            UserAction.WAVE -> {
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_WAVE, roomUser.virtualID, action.action)
             }
+
+            else -> {}
         }
     }
 }

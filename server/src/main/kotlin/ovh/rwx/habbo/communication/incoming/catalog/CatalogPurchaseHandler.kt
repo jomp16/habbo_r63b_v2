@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,15 +22,21 @@ package ovh.rwx.habbo.communication.incoming.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.game.catalog.CatalogItem
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseHandler {
     @Handler(Incoming.CATALOG_PURCHASE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (habboSession.release == "R63A") {
+            return
+        }
+
         val pageId = habboRequest.readInt()
         val itemId = habboRequest.readInt()
         val extraData = habboRequest.readUTF()
@@ -49,7 +55,7 @@ class CatalogPurchaseHandler {
 
             return
         }
-        val catalogItem: CatalogItem? = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == itemId }
+        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == itemId }
 
         if (catalogItem == null) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
@@ -61,5 +67,37 @@ class CatalogPurchaseHandler {
         else if (amount > 100) amount = 100
 
         HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount)
+    }
+
+    @HandlerR63A(IncomingR63A.CATALOG_PURCHASE)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val pageId = habboRequest.readInt()
+        val catalogItemId = habboRequest.readInt()
+        val extraData = habboRequest.readUTF()
+
+        val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }
+
+        if (catalogPage != null && (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription)) {
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PURCHASE_ERROR, 0)
+
+            return
+        }
+
+        if (catalogPage?.pageLayout == "vip_buy") {
+            // purchase HC
+            HabboServer.habboGame.catalogManager.purchaseHC(habboSession, catalogItemId)
+
+            return
+        }
+
+        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogItemId }
+
+        if (catalogItem == null || catalogItem.limited) {
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PURCHASE_ERROR, 0)
+
+            return
+        }
+
+        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount = 1)
     }
 }

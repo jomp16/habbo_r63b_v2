@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,12 +22,15 @@ package ovh.rwx.habbo.communication.incoming.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogRedeemVoucherHandler {
     @Handler(Incoming.CATALOG_REDEEM_VOUCHER)
+    @HandlerR63A(IncomingR63A.CATALOG_REDEEM_VOUCHER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         HabboServer.habboGame.catalogManager.redeemVoucher(habboSession, habboRequest.readUTF())
     }

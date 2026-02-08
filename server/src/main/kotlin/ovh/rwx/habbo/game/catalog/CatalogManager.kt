@@ -23,8 +23,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
+import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
@@ -52,15 +54,60 @@ class CatalogManager {
         catalogDeals.clear()
         // done clear catalog
         // catalog root
-        catalogPages += CatalogPage(-1, 0, "", "root", 0, visible = true, enabled = true, minRank = 1, clubOnly = false, orderNum = 1, pageLayout = "", pageHeadline = "", pageTeaser = "", pageSpecial = "", pageText1 = "", pageText2 = "", pageTextDetails = "", pageTextTeaser = "", pageLinkDescription = "", pageLinkPagename = "")
+        catalogPages += CatalogPage(
+            -1,
+            0,
+            "",
+            "root",
+            0,
+            visible = true,
+            enabled = true,
+            minRank = 1,
+            clubOnly = false,
+            orderNum = 1,
+            pageLayout = "",
+            pageHeadline = "",
+            pageTeaser = "",
+            pageSpecial = "",
+            pageText1 = "",
+            pageText2 = "",
+            pageTextDetails = "",
+            pageTextTeaser = "",
+            pageLinkDescription = "",
+            pageLinkPagename = "",
+            customData = emptyMap()
+        )
         // catalog builders
-        catalogPages += CatalogPage(-2, 0, "", "root", 0, visible = true, enabled = true, minRank = 1, clubOnly = false, orderNum = 1, pageLayout = "", pageHeadline = "", pageTeaser = "", pageSpecial = "", pageText1 = "", pageText2 = "", pageTextDetails = "", pageTextTeaser = "", pageLinkDescription = "", pageLinkPagename = "")
+        catalogPages += CatalogPage(
+            -2,
+            0,
+            "",
+            "root",
+            0,
+            visible = true,
+            enabled = true,
+            minRank = 1,
+            clubOnly = false,
+            orderNum = 1,
+            pageLayout = "",
+            pageHeadline = "",
+            pageTeaser = "",
+            pageSpecial = "",
+            pageText1 = "",
+            pageText2 = "",
+            pageTextDetails = "",
+            pageTextTeaser = "",
+            pageLinkDescription = "",
+            pageLinkPagename = "",
+            customData = emptyMap()
+        )
 
         catalogPages += CatalogDao.getCatalogPages()
         catalogItems += CatalogDao.getCatalogItems()
         catalogClubOffers += CatalogDao.getCatalogClubOffers()
         catalogDeals += CatalogDao.getCatalogDeals()
-        recyclerRewards += CatalogDao.getRecyclerRewards().groupBy { it.first }.mapValues { it.value.map { pair -> pair.second } }
+        recyclerRewards += CatalogDao.getRecyclerRewards().groupBy { it.first }
+            .mapValues { it.value.map { pair -> pair.second } }
 
         log.info("Loaded {} catalog pages!", catalogPages.size - 2)
         log.info("Loaded {} catalog items!", catalogItems.size)
@@ -87,8 +134,9 @@ class CatalogManager {
         }
 
         if (habboSession.userInformation.credits < clubOffer.credits ||
-                (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
-                else habboSession.userInformation.vipPoints < clubOffer.points)) return
+            (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
+            else habboSession.userInformation.vipPoints < clubOffer.points)
+        ) return
 
         habboSession.userInformation.credits -= clubOffer.credits
 
@@ -107,16 +155,45 @@ class CatalogManager {
     // todo: add gift support
     fun purchase(habboSession: HabboSession, catalogItem: CatalogItem, extraData: String, amount: Int) {
         if (!catalogItem.offerActive || catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR, CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC)
+            if (habboSession.release != "R63A")
+                habboSession.sendHabboResponse(
+                    Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR,
+                    CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC
+                )
+            else
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.CATALOG_PURCHASE_NOT_ALLOWED_ERROR,
+                    CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC
+                )
 
             return
         }
         val totalAmountToPurchase = amount - totalFreeAmount(amount)
 
-        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
-                || catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalAmountToPurchase
-                || catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalAmountToPurchase) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+        val notEnoughCredits =
+            catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
+        val notEnoughPixels =
+            catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalAmountToPurchase
+        val notEnoughVipPoints =
+            catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalAmountToPurchase
+        if (notEnoughCredits
+            || notEnoughPixels
+            || notEnoughVipPoints
+        ) {
+            if (habboSession.release != "R63A")
+                habboSession.sendHabboResponse(
+                    Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
+                    notEnoughCredits,
+                    notEnoughPixels || notEnoughVipPoints,
+                    ActivityPointType.PIXELS
+                )
+            else
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
+                    notEnoughCredits,
+                    notEnoughPixels || notEnoughVipPoints,
+                    ActivityPointType.PIXELS
+                )
 
             return
         }
@@ -131,29 +208,45 @@ class CatalogManager {
 
         if (catalogItem.dealId > 0) {
             catalogItem.deal!!.furnishings.forEachIndexed { i, furnishing ->
-                HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, furnishing)?.let { extraData1 ->
-                    @Suppress("ForEachParameterNotUsed")
-                    (0 until catalogItem.deal!!.amounts[i]).forEach {
-                        furnishingToPurchase += CatalogPurchaseData(furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
+                HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, furnishing)
+                    ?.let { extraData1 ->
+                        @Suppress("ForEachParameterNotUsed")
+                        (0 until catalogItem.deal!!.amounts[i]).forEach {
+                            furnishingToPurchase += CatalogPurchaseData(
+                                furnishing,
+                                extraData1,
+                                if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
+                            )
 
-                        if (furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
+                            if (furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
+                        }
                     }
-                }
             }
         } else {
-            HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)?.let { extraData1 ->
-                @Suppress("ForEachParameterNotUsed")
-                (0 until catalogItem.amount * amount).forEach {
-                    furnishingToPurchase += CatalogPurchaseData(catalogItem.furnishing, extraData1, if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0)
+            HabboServer.habboGame.itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)
+                ?.let { extraData1 ->
+                    @Suppress("ForEachParameterNotUsed")
+                    (0 until catalogItem.amount * amount).forEach {
+                        furnishingToPurchase += CatalogPurchaseData(
+                            catalogItem.furnishing,
+                            extraData1,
+                            if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
+                        )
 
-                    if (catalogItem.furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
+                        if (catalogItem.furnishing.interactionType == InteractionType.TELEPORT) furnishingToPurchase += furnishingToPurchase.last()
+                    }
                 }
-            }
         }
-        val userItems = ItemDao.addItems(habboSession.userInformation.id, furnishingToPurchase.map { ItemPurchaseData(it.furnishing, it.extraData, it.limitedNumber > 0) })
+        val userItems = ItemDao.addItems(
+            habboSession.userInformation.id,
+            furnishingToPurchase.map { ItemPurchaseData(it.furnishing, it.extraData, it.limitedNumber > 0) })
 
         furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
-            ItemDao.addLimitedItem(userItems[furnishingToPurchase.indexOf(it)].id, it.limitedNumber, catalogItem.limitedTotal)
+            ItemDao.addLimitedItem(
+                userItems[furnishingToPurchase.indexOf(it)].id,
+                it.limitedNumber,
+                catalogItem.limitedTotal
+            )
         }
         // todo: move queries to ItemDao
         HabboServer.database {
@@ -164,22 +257,24 @@ class CatalogManager {
 
                 when {
                     userItem.furnishing.interactionType == InteractionType.TELEPORT -> {
-                        val teleporterItem = copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem }
+                        val teleporterItem =
+                            copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem }
                                 ?: return@forEach
 
                         copyUserItems.remove(teleporterItem)
 
-                        batchInsertAndGetGeneratedKeys("INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
-                                listOf(
-                                        mapOf(
-                                                "teleport_one_id" to userItem.id,
-                                                "teleport_two_id" to teleporterItem.id
-                                        ),
-                                        mapOf(
-                                                "teleport_two_id" to userItem.id,
-                                                "teleport_one_id" to teleporterItem.id
-                                        )
+                        batchInsertAndGetGeneratedKeys(
+                            "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
+                            listOf(
+                                mapOf(
+                                    "teleport_one_id" to userItem.id,
+                                    "teleport_two_id" to teleporterItem.id
+                                ),
+                                mapOf(
+                                    "teleport_two_id" to userItem.id,
+                                    "teleport_one_id" to teleporterItem.id
                                 )
+                            )
                         )
 
                         HabboServer.habboGame.itemManager.teleportLinks[userItem.id] = teleporterItem.id
@@ -187,31 +282,35 @@ class CatalogManager {
                         HabboServer.habboGame.itemManager.teleportLinks[teleporterItem.id] = userItem.id
                         HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
                     }
+
                     userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
                         val defaultWiredData =
                             HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
                                 ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
-                        insertAndGetGeneratedKey("INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
-                                mapOf(
-                                        "item_id" to userItem.id,
-                                    "delay" to defaultWiredData.delay,
-                                    "items" to defaultWiredData.items.joinToString(","),
-                                    "message" to defaultWiredData.message,
-                                    "options" to defaultWiredData.options.joinToString(","),
-                                    "extradata" to defaultWiredData.extradata
-                                )
+                        insertAndGetGeneratedKey(
+                            "INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
+                            mapOf(
+                                "item_id" to userItem.id,
+                                "delay" to defaultWiredData.delay,
+                                "items" to defaultWiredData.items.joinToString(","),
+                                "message" to defaultWiredData.message,
+                                "options" to defaultWiredData.options.joinToString(","),
+                                "extradata" to defaultWiredData.extradata
+                            )
                         )
                     }
+
                     userItem.furnishing.interactionType == InteractionType.DIMMER -> {
-                        insertAndGetGeneratedKey("INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
-                                mapOf(
-                                        "item_id" to userItem.id,
-                                        "enabled" to false,
-                                        "current_preset" to 1,
-                                        "preset_one" to "#000000,255,0",
-                                        "preset_two" to "#000000,255,0",
-                                        "preset_three" to "#000000,255,0"
-                                )
+                        insertAndGetGeneratedKey(
+                            "INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
+                            mapOf(
+                                "item_id" to userItem.id,
+                                "enabled" to false,
+                                "current_preset" to 1,
+                                "preset_one" to "#000000,255,0",
+                                "preset_two" to "#000000,255,0",
+                                "preset_three" to "#000000,255,0"
+                            )
                         )
                     }
                 }
@@ -219,7 +318,11 @@ class CatalogManager {
         }
 
         habboSession.habboInventory.addItems(userItems)
-        habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems)
+
+        if (habboSession.release != "R63A")
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, userItems)
+        else
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PURCHASE_OK, catalogItem, userItems)
 
         if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
         if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase
@@ -232,7 +335,7 @@ class CatalogManager {
         if (catalogItem.limited) {
             // send new data to everyone logged in
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-                it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
+                if (it.release != "R63A") it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
             }
             // and save new limited sell to database
             CatalogDao.updateLimitedSells(catalogItem)
@@ -248,15 +351,28 @@ class CatalogManager {
 
             habboSession.updateAllCurrencies()
 
-            habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEMED, "", "")
+            if (habboSession.release != "R63A")
+                habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEMED, "", "")
+            else
+                habboSession.sendHabboResponse(OutgoingR63A.CATALOG_VOUCHER_REDEEMED, "", "")
 
             return
         }
         // todo: add a voucher table and redeem
-        habboSession.sendHabboResponse(Outgoing.CATALOG_VOUCHER_REDEEM_ERROR, CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID)
+        if (habboSession.release != "R63A")
+            habboSession.sendHabboResponse(
+                Outgoing.CATALOG_VOUCHER_REDEEM_ERROR,
+                CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID
+            )
+        else
+            habboSession.sendHabboResponse(
+                OutgoingR63A.CATALOG_VOUCHER_REDEEM_ERROR,
+                CatalogVoucherRedeemErrorResponse.CatalogVoucherRedeemError.NOT_VALID
+            )
     }
 
-    private fun totalFreeAmount(amount: Int): Int = blackBoxMath1(amount) + blackBoxMath2(amount) + blackBoxMath3(amount)
+    private fun totalFreeAmount(amount: Int): Int =
+        blackBoxMath1(amount) + blackBoxMath2(amount) + blackBoxMath3(amount)
 
     private fun blackBoxMath1(amount: Int): Int = (amount / FREE_AMOUNT) * 1
 

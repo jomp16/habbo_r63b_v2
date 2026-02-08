@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.database.catalog
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import ovh.rwx.habbo.game.catalog.CatalogDeal
@@ -28,28 +30,31 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object CatalogDao {
     fun getCatalogPages(): List<CatalogPage> = HabboServer.database {
+        val jacksonObjectMapper = jacksonObjectMapper()
+
         select("SELECT * FROM `catalog_pages` WHERE `id` != -1 AND `id` != -2") {
             CatalogPage(
-                    it.int("id"),
-                    it.int("parent_id"),
-                    it.string("name").trim(),
-                    it.string("code_name").trim(),
-                    it.int("icon_image"),
-                    it.boolean("visible"),
-                    it.boolean("enabled"),
-                    it.int("min_rank"),
-                    it.boolean("club_only"),
-                    it.int("order_num"),
-                    it.string("page_layout").trim(),
-                    it.string("page_headline").trim(),
-                    it.string("page_teaser").trim(),
-                    it.string("page_special").trim(),
-                    it.string("page_text1").trim(),
-                    it.string("page_text2").trim(),
-                    it.string("page_text_details").trim(),
-                    it.string("page_text_teaser").trim(),
-                    it.string("page_link_description").trim(),
-                    it.string("page_link_pagename").trim()
+                it.int("id"),
+                it.int("parent_id"),
+                it.string("name").trim(),
+                it.string("code_name").trim(),
+                it.int("icon_image"),
+                it.boolean("visible"),
+                it.boolean("enabled"),
+                it.int("min_rank"),
+                it.boolean("club_only"),
+                it.int("order_num"),
+                it.string("page_layout").trim(),
+                it.string("page_headline").trim(),
+                it.string("page_teaser").trim(),
+                it.string("page_special").trim(),
+                it.string("page_text1").trim(),
+                it.string("page_text2").trim(),
+                it.string("page_text_details").trim(),
+                it.string("page_text_teaser").trim(),
+                it.string("page_link_description").trim(),
+                it.string("page_link_pagename").trim(),
+                jacksonObjectMapper.readValue(it.string("custom_data"))
             )
         }
     }
@@ -57,21 +62,21 @@ object CatalogDao {
     fun getCatalogItems(): List<CatalogItem> = HabboServer.database {
         select("SELECT * FROM `catalog_items`") {
             CatalogItem(
-                    it.int("id"),
-                    it.int("page_id"),
-                    it.string("item_name").trim(),
-                    it.int("order_num"),
-                    it.intOrNull("deal_id") ?: 0,
-                    it.string("catalog_name").trim(),
-                    it.string("badge").trim(),
-                    it.int("cost_credits"),
-                    it.int("cost_pixels"),
-                    it.int("cost_vip"),
-                    it.int("amount"),
-                    it.boolean("club_only"),
-                    AtomicInteger(it.int("limited_sells")),
-                    it.int("limited_stack"),
-                    it.boolean("offer_active")
+                it.int("id"),
+                it.int("page_id"),
+                it.string("item_name").trim(),
+                it.int("order_num"),
+                it.intOrNull("deal_id") ?: 0,
+                it.string("catalog_name").trim(),
+                it.string("badge").trim(),
+                it.int("cost_credits"),
+                it.int("cost_pixels"),
+                it.int("cost_vip"),
+                it.int("amount"),
+                it.boolean("club_only"),
+                AtomicInteger(it.int("limited_sells")),
+                it.int("limited_stack"),
+                it.boolean("offer_active")
             )
         }
     }
@@ -79,14 +84,14 @@ object CatalogDao {
     fun getCatalogClubOffers(): List<CatalogClubOffer> = HabboServer.database {
         select("SELECT * FROM `catalog_club_offers`") {
             CatalogClubOffer(
-                    it.int("id"),
-                    it.int("item_id"),
-                    it.string("name").trim(),
-                    it.int("months"),
-                    it.int("credits"),
-                    it.int("points"),
-                    it.int("points_type"),
-                    it.boolean("giftable")
+                it.int("id"),
+                it.int("item_id"),
+                it.string("name").trim(),
+                it.int("months"),
+                it.int("credits"),
+                it.int("points"),
+                it.int("points_type"),
+                it.boolean("giftable")
             )
         }
     }
@@ -94,9 +99,9 @@ object CatalogDao {
     fun getCatalogDeals(): List<CatalogDeal> = HabboServer.database {
         select("SELECT * FROM `catalog_deals`") {
             CatalogDeal(
-                    it.int("id"),
-                    it.string("item_names").split(',').map(String::trim),
-                    it.string("amounts").split(',').map(String::toInt)
+                it.int("id"),
+                it.string("item_names").split(',').map(String::trim),
+                it.string("amounts").split(',').map(String::toInt)
             )
         }
     }
@@ -109,11 +114,12 @@ object CatalogDao {
 
     fun updateLimitedSells(catalogItem: CatalogItem) {
         HabboServer.database {
-            update("UPDATE `catalog_items` SET `limited_sells` = :limited_sells WHERE `id` = :id",
-                    mapOf(
-                            "limited_sells" to catalogItem.limitedSells.get(),
-                            "id" to catalogItem.id
-                    )
+            update(
+                "UPDATE `catalog_items` SET `limited_sells` = :limited_sells WHERE `id` = :id",
+                mapOf(
+                    "limited_sells" to catalogItem.limitedSells.get(),
+                    "id" to catalogItem.id
+                )
             )
         }
     }

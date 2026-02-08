@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,6 +33,11 @@ import ovh.rwx.habbo.game.user.HabboSession
 class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        var attempts = 0
+        while (!habboSession.habboMessenger.initialized && attempts < 10) {
+            Thread.sleep(500)
+            attempts++
+        }
         if (!habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 500, 3000)
@@ -46,6 +51,11 @@ class MessengerInitializeHandler {
     
     @HandlerR63A(IncomingR63A.MESSENGER_INIT)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        var attempts = 0
+        while (!habboSession.habboMessenger.initialized && attempts < 10) {
+            Thread.sleep(500)
+            attempts++
+        }
         if (!habboSession.habboMessenger.initialized) return
 
         habboSession.sendHabboResponse(

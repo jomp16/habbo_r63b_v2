@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,6 +21,7 @@ package ovh.rwx.habbo.plugin.listeners.catalog
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.api.PluginListener
@@ -33,7 +34,10 @@ class CatalogCommandsListener : PluginListener() {
         HabboServer.habboGame.catalogManager.load()
 
         HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-            it.sendHabboResponse(Outgoing.CATALOG_UPDATE)
+            if (it.release != "R63A")
+                it.sendHabboResponse(Outgoing.CATALOG_UPDATE)
+            else
+                it.sendHabboResponse(OutgoingR63A.CATALOG_UPDATE)
         }
 
         roomUser.habboSession!!.sendNotification("Catalog reloaded!")

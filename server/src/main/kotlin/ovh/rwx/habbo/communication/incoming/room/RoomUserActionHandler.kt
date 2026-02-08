@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,28 +19,36 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.game.room.tasks.UserAction
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserActionHandler {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     @Handler(Incoming.ROOM_USER_ACTION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val action = habboRequest.readInt()
 
-        habboSession.roomUser?.action(action)
+        if (action > 7) {
+            log.error("Unmmaped action: $action")
+        }
+
+        habboSession.roomUser?.action(UserAction.fromValue(action))
     }
 
     @HandlerR63A(IncomingR63A.ROOM_USER_WAVE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        // todo: check which action is it.
-        // habboSession.roomUser?.action(action)
+        habboSession.roomUser?.action(UserAction.WAVE)
     }
 }

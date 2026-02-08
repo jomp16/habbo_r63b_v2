@@ -35,10 +35,11 @@ dependencies {
     implementation "net.oneandone.reflections8:reflections8:$reflections_version"
     implementation "org.jasypt:jasypt:$jasypt_version"
     implementation "org.apache.commons:commons-lang3:$commons_lang_version"
-    implementation "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
+    implementation "org.bouncycastle:bcprov-jdk18on:$bouncycastle_version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
     implementation 'commons-codec:commons-codec:1.21.0'
+    runtimeOnly 'org.openjdk.nashorn:nashorn-core:15.7'
 }
 
 buildConfig {

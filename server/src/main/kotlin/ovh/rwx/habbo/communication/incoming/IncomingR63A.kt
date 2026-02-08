@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,8 +26,10 @@ enum class IncomingR63A {
     CATALOG_GIFT_WRAPPING,
     CATALOG_INDEX,
     CATALOG_PAGE,
+    CATALOG_PURCHASE,
     CATALOG_RECYCLER_CONFIGURATION,
     CATALOG_RECYCLER_REWARDS,
+    CATALOG_REDEEM_VOUCHER,
     GO_TO_HOTEL_VIEW,
     HANDSHAKE_INIT_CRYPTO,
     HANDSHAKE_SSO_TICKET,
@@ -83,6 +85,7 @@ enum class IncomingR63A {
     ROOM_USER_CHAT,
     ROOM_USER_DANCE,
     ROOM_USER_IDLE,
+    ROOM_USER_RESPECT,
     ROOM_USER_SHOUT,
     ROOM_USER_START_TYPING,
     ROOM_USER_STOP_TYPING,

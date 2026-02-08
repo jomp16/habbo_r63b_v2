@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,7 +38,8 @@ class RoomUserActionsResponse {
         OutgoingR63A.ROOM_USER_DANCE,
         OutgoingR63A.ROOM_USER_HANDITEM,
         OutgoingR63A.ROOM_USER_TYPING,
-        OutgoingR63A.ROOM_USER_EFFECT
+        OutgoingR63A.ROOM_USER_EFFECT,
+        OutgoingR63A.ROOM_USER_WAVE,
     )
     fun response(habboResponse: HabboResponse, virtualId: Int, id: Int) {
         habboResponse.apply {

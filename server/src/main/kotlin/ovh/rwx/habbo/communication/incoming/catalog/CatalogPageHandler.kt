@@ -43,17 +43,7 @@ class CatalogPageHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
             val habboAir = false
-            val clientDoesNotSupportSilverCoins = false
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
-        }
-    }
-
-    @Handler(Incoming.CATALOG_PAGE)
-    fun handleNonSilverCoin(habboSession: HabboSession, habboRequest: HabboRequest) {
-        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
-            val habboAir = false
-            val clientDoesNotSupportSilverCoins = true
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir)
         }
     }
 
@@ -61,8 +51,7 @@ class CatalogPageHandler {
     fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
         validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
             val habboAir = true
-            val clientDoesNotSupportSilverCoins = false
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir, clientDoesNotSupportSilverCoins)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir)
         }
     }
 
