@@ -33,7 +33,6 @@ class CatalogPageResponse {
         habboResponse: HabboResponse,
         catalogPage: CatalogPage,
         habboAir: Boolean,
-        clientDoesNotSupportSilverCoins: Boolean
     ) {
         habboResponse.apply {
             writeInt(catalogPage.id)
@@ -244,7 +243,7 @@ class CatalogPageResponse {
 
             writeInt(catalogPage.catalogItems.size)
 
-            catalogPage.catalogItems.forEach { serialize(it, clientDoesNotSupportSilverCoins) }
+            catalogPage.catalogItems.forEach { serialize(it, habboAir) }
 
             writeInt(-1)
             writeBoolean(false)
@@ -261,26 +260,37 @@ class CatalogPageResponse {
     @ResponseR63A(OutgoingR63A.CATALOG_PAGE)
     fun responseR63A(habboResponse: HabboResponse, catalogPage: CatalogPage) {
         habboResponse.apply {
-            writeInt(catalogPage.id)
+            writeInt(catalogPage.id) // pageId
 
             when (catalogPage.pageLayout) {
                 "frontpage",
                 "frontpage4" -> {
-                    writeUTF("frontpage3")
-                    writeInt(3)
+                    writeUTF("frontpage3") // layoutCode
+                    writeInt(2) // images count
                     writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeUTF("")
-                    writeInt(11)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF("")
-                    writeUTF(catalogPage.pageText2)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF("")
-                    writeUTF("#FAF8CC")
-                    writeUTF("#FAF8CC")
-                    writeUTF("Leia mais")
-                    writeUTF("magic.credits")
+                    writeUTF(catalogPage.pageSpecial)
+                    writeInt(11) // texts count
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt1", "").toString()) // ctlg_txt1
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt2", "").toString()) // ctlg_txt2
+                    writeUTF(
+                        catalogPage.customData.getOrDefault("ctlg_txt3", "").toString()
+                    ) // ctlg_txt3 (text - linkable)
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt4", "").toString()) // ctlg_txt4
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt5", "").toString()) // ctlg_txt5
+                    writeUTF(
+                        catalogPage.customData.getOrDefault("ctlg_txt6", "").toString()
+                    ) // ctlg_txt6 (redeem voucher)
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt3_link", "").toString()) // link for ctlg_txt3
+                    writeUTF(
+                        catalogPage.customData.getOrDefault("color_ctlg_txt1_ctlg_txt2", "#FAF8CC").toString()
+                    ) // color for ctlg_txt1 and ctlg_txt2
+                    writeUTF(
+                        catalogPage.customData.getOrDefault("color_ctlg_txt3", "#FAF8CC").toString()
+                    ) // color for ctlg_txt3
+                    writeUTF(
+                        catalogPage.customData.getOrDefault("ctlg_txt7", "").toString()
+                    ) // ctlg_txt7 (text - linkable)
+                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt7_link", "").toString()) // link for ctlg_txt7
                 }
 
                 else -> {
@@ -299,6 +309,8 @@ class CatalogPageResponse {
             writeInt(catalogPage.catalogItems.size)
 
             catalogPage.catalogItems.forEach { serialize(it) }
+
+            writeInt(0) // offerId, what it is used on?
         }
     }
 

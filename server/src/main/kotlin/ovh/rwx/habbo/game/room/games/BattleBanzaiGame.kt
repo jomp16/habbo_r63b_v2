@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.BattleBanzaiTilesFlickerTask
+import ovh.rwx.habbo.game.room.tasks.UserAction
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Direction
@@ -109,7 +110,8 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             // Jogadores acenam
             userTeams.forEach { (userId, team) ->
                 if (team.color == winningTeam) {
-                    room.roomUsers.values.find { it.habboSession?.userInformation?.id == userId }?.action(1)
+                    room.roomUsers.values.find { it.habboSession?.userInformation?.id == userId }
+                        ?.action(UserAction.WAVE)
                 }
             }
 

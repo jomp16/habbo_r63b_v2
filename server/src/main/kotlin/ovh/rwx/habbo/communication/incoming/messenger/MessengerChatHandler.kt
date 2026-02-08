@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -42,119 +42,65 @@ import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatHandler {
-    @Handler(Incoming.MESSENGER_CHAT)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.habboMessenger.initialized) return
-        val userId = habboRequest.readInt()
-        val message = habboRequest.readUTF().trim()
+    private fun isServerConsole(userId: Int, habboSession: HabboSession) =
+        userId == UserInformationDao.serverConsoleUserInformation.id && habboSession.hasPermission("acc_server_console")
 
-        if (message.isBlank()) return
+    private fun handleServerConsole(
+        habboSession: HabboSession,
+        userId: Int,
+        message: String,
+        sendResponse: (String) -> Unit
+    ) {
+        val args = message.split(' ')
 
-        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == UserInformationDao.serverConsoleUserInformation.id && !habboSession.hasPermission("acc_server_console")) {
-            habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT_ERROR, MessengerChatErrorResponse.MessengerChatError.NOT_FRIENDS, userId, message)
+        if (args.isNotEmpty()) {
+            habboSession.scriptEngine.put("habboSession", habboSession)
+            habboSession.scriptEngine.put("habboServer", HabboServer)
+            habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)
+            habboSession.scriptEngine.put("room", habboSession.currentRoom)
+            habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
 
-            return
-        }
-
-        if (userId == UserInformationDao.serverConsoleUserInformation.id && habboSession.hasPermission("acc_server_console")) {
-            // server console!
-            val args = message.split(' ')
-
-            if (args.isNotEmpty()) {
-                habboSession.scriptEngine.put("habboSession", habboSession)
-                habboSession.scriptEngine.put("habboServer", HabboServer)
-                habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)
-                habboSession.scriptEngine.put("room", habboSession.currentRoom)
-                habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
-
-                if (args[0] == "load" && args.size >= 2) {
-                    val jsOutput = habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString()
+            when {
+                args[0] == "load" && args.size >= 2 -> {
+                    val jsOutput =
+                        habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString()
                             ?: "null"
+                    sendResponse(jsOutput)
+                }
 
-                    habboSession.sendHabboResponse(
-                        Outgoing.MESSENGER_CHAT,
-                        userId,
-                        jsOutput,
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else if (args[0] == "ram") {
-                    habboSession.sendHabboResponse(
-                        Outgoing.MESSENGER_CHAT,
-                        userId,
-                        Utils.ramUsageString,
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else if (args[0] == "uptime") {
-                    habboSession.sendHabboResponse(
-                        Outgoing.MESSENGER_CHAT,
-                        userId,
-                        DurationFormatUtils.formatDurationWords(
-                            ManagementFactory.getRuntimeMXBean().uptime,
-                            true,
-                            false
-                        ) + " up!",
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else if (args[0] == "plugin") {
-                    if (args.size < 3) return
+                args[0] == "ram" -> sendResponse(Utils.ramUsageString)
+                args[0] == "uptime" -> {
+                    val uptime = DurationFormatUtils.formatDurationWords(
+                        ManagementFactory.getRuntimeMXBean().uptime,
+                        true,
+                        false
+                    ) + " up!"
+                    sendResponse(uptime)
+                }
+
+                args[0] == "plugin" && args.size >= 3 -> {
                     val pluginName = args[2].trim()
-
                     when (args[1]) {
                         "load" -> {
-                            File("plugins").walk().filter { it.nameWithoutExtension.contains(pluginName) }.firstOrNull()?.let {
-                                val message1 = if (HabboServer.pluginManager.addPluginJar(it)) "Done!" else "Failed"
-
-                                habboSession.sendHabboResponse(
-                                    Outgoing.MESSENGER_CHAT,
-                                    userId,
-                                    message1,
-                                    0,
-                                    UserInformationDao.serverConsoleUserInformation.id,
-                                    UserInformationDao.serverConsoleUserInformation.username,
-                                    UserInformationDao.serverConsoleUserInformation.figure
-                                )
+                            File("plugins").walk().firstOrNull { it.nameWithoutExtension.contains(pluginName) }?.let {
+                                val result = if (HabboServer.pluginManager.addPluginJar(it)) "Done!" else "Failed"
+                                sendResponse(result)
                             }
                         }
                         "unload" -> {
-                            val message1 = if (HabboServer.pluginManager.removePluginJarByName(pluginName)) "Done!" else "Failed"
-
-                            habboSession.sendHabboResponse(
-                                Outgoing.MESSENGER_CHAT,
-                                userId,
-                                message1,
-                                0,
-                                UserInformationDao.serverConsoleUserInformation.id,
-                                UserInformationDao.serverConsoleUserInformation.username,
-                                UserInformationDao.serverConsoleUserInformation.figure
-                            )
+                            val result =
+                                if (HabboServer.pluginManager.removePluginJarByName(pluginName)) "Done!" else "Failed"
+                            sendResponse(result)
                         }
                     }
-                } else if (message == "reload_handlers") {
+                }
+
+                message == "reload_handlers" -> {
                     HabboServer.habboHandler.load()
+                    HabboServer.serverScheduledExecutor.schedule({ sendResponse("Done!") }, 1, TimeUnit.SECONDS)
+                }
 
-                    HabboServer.serverScheduledExecutor.schedule({
-                        habboSession.sendHabboResponse(
-                            Outgoing.MESSENGER_CHAT,
-                            userId,
-                            "Done!",
-                            0,
-                            UserInformationDao.serverConsoleUserInformation.id,
-                            UserInformationDao.serverConsoleUserInformation.username,
-                            UserInformationDao.serverConsoleUserInformation.figure
-                        )
-
-                    }, 1, TimeUnit.SECONDS)
-                } else if (message.startsWith("h:")) {
-                    // one line response messages
+                message.startsWith("h:") -> {
                     val args1 = message.split("(?<!\\\\),".toRegex())
                     val header = args1[0].substring(2).toInt()
                     val habboResponse = HabboResponse(header, null)
@@ -165,60 +111,62 @@ class MessengerChatHandler {
                             val param = it.substring(2)
 
                             when (type) {
-                                "u" -> {
-                                    // string
-                                    writeUTF(param.replace("\\,", ","))
-                                }
-                                "i" -> {
-                                    // int
-                                    writeInt(param.toInt())
-                                }
-                                "s" -> {
-                                    // short
-                                    writeShort(param.toInt())
-                                }
-                                "b" -> {
-                                    // boolean
-                                    writeBoolean(param.toBoolean())
-                                }
-                                "d" -> {
-                                    // double
-                                    writeDouble(param.toDouble())
-                                }
-                                "v" -> {
-                                    // bytes
-                                    writeByte(param.toInt())
-                                }
+                                "u" -> writeUTF(param.replace("\\,", ","))
+                                "i" -> writeInt(param.toInt())
+                                "s" -> writeShort(param.toInt())
+                                "b" -> writeBoolean(param.toBoolean())
+                                "d" -> writeDouble(param.toDouble())
+                                "v" -> writeByte(param.toInt())
                             }
                         }
                     }
 
                     habboSession.sendHabboResponse(habboResponse)
+                    sendResponse("Done!")
+                }
 
-                    habboSession.sendHabboResponse(
-                        Outgoing.MESSENGER_CHAT,
-                        userId,
-                        "Done!",
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else {
+                else -> {
                     val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
-
-                    habboSession.sendHabboResponse(
-                        Outgoing.MESSENGER_CHAT,
-                        userId,
-                        jsOutput,
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
+                    sendResponse(jsOutput)
                 }
             }
+        }
+    }
 
+    @Handler(Incoming.MESSENGER_CHAT)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        if (!habboSession.habboMessenger.initialized) return
+        val userId = habboRequest.readInt()
+        val message = habboRequest.readUTF().trim()
+
+        if (message.isBlank()) return
+
+        if (!habboSession.habboMessenger.friends.containsKey(userId) || userId == UserInformationDao.serverConsoleUserInformation.id && !habboSession.hasPermission(
+                "acc_server_console"
+            )
+        ) {
+            habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_CHAT_ERROR,
+                MessengerChatErrorResponse.MessengerChatError.NOT_FRIENDS,
+                userId,
+                message
+            )
+
+            return
+        }
+
+        if (isServerConsole(userId, habboSession)) {
+            handleServerConsole(habboSession, userId, message) { responseMessage ->
+                habboSession.sendHabboResponse(
+                    Outgoing.MESSENGER_CHAT,
+                    userId,
+                    responseMessage,
+                    0,
+                    UserInformationDao.serverConsoleUserInformation.id,
+                    UserInformationDao.serverConsoleUserInformation.username,
+                    UserInformationDao.serverConsoleUserInformation.figure
+                )
+            }
             return
         }
 
@@ -268,178 +216,10 @@ class MessengerChatHandler {
             return
         }
 
-        if (userId == UserInformationDao.serverConsoleUserInformation.id && habboSession.hasPermission("acc_server_console")) {
-            // server console!
-            val args = message.split(' ')
-
-            if (args.isNotEmpty()) {
-                habboSession.scriptEngine.put("habboSession", habboSession)
-                habboSession.scriptEngine.put("habboServer", HabboServer)
-                habboSession.scriptEngine.put("habboGame", HabboServer.habboGame)
-                habboSession.scriptEngine.put("room", habboSession.currentRoom)
-                habboSession.scriptEngine.put("roomUser", habboSession.roomUser)
-
-                if (args[0] == "load" && args.size >= 2) {
-                    val jsOutput =
-                        habboSession.scriptEngine.eval(InputStreamReader(urlUserAgent(args[1]).inputStream))?.toString()
-                            ?: "null"
-
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.MESSENGER_CHAT,
-                        userId,
-                        jsOutput,
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else if (args[0] == "ram") {
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.MESSENGER_CHAT,
-                        userId,
-                        Utils.ramUsageString,
-                        0,
-                        0,
-                        "",
-                        ""
-                    )
-                } else if (args[0] == "uptime") {
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.MESSENGER_CHAT,
-                        userId,
-                        DurationFormatUtils.formatDurationWords(
-                            ManagementFactory.getRuntimeMXBean().uptime,
-                            true,
-                            false
-                        ) + " up!",
-                        0,
-                        0,
-                        "",
-                        ""
-                    )
-                } else if (args[0] == "plugin") {
-                    if (args.size < 3) return
-                    val pluginName = args[2].trim()
-
-                    when (args[1]) {
-                        "load" -> {
-                            File("plugins").walk().filter { it.nameWithoutExtension.contains(pluginName) }.firstOrNull()
-                                ?.let {
-                                    val message1 = if (HabboServer.pluginManager.addPluginJar(it)) "Done!" else "Failed"
-
-                                    habboSession.sendHabboResponse(
-                                        OutgoingR63A.MESSENGER_CHAT,
-                                        userId,
-                                        message1,
-                                        0,
-                                        0,
-                                        "",
-                                        ""
-                                    )
-                                }
-                        }
-
-                        "unload" -> {
-                            val message1 =
-                                if (HabboServer.pluginManager.removePluginJarByName(pluginName)) "Done!" else "Failed"
-
-                            habboSession.sendHabboResponse(
-                                OutgoingR63A.MESSENGER_CHAT,
-                                userId,
-                                message1,
-                                0,
-                                UserInformationDao.serverConsoleUserInformation.id,
-                                UserInformationDao.serverConsoleUserInformation.username,
-                                UserInformationDao.serverConsoleUserInformation.figure
-                            )
-                        }
-                    }
-                } else if (message == "reload_handlers") {
-                    HabboServer.habboHandler.load()
-
-                    HabboServer.serverScheduledExecutor.schedule({
-                        habboSession.sendHabboResponse(
-                            OutgoingR63A.MESSENGER_CHAT,
-                            userId,
-                            "Done!",
-                            0,
-                            UserInformationDao.serverConsoleUserInformation.id,
-                            UserInformationDao.serverConsoleUserInformation.username,
-                            UserInformationDao.serverConsoleUserInformation.figure
-                        )
-
-                    }, 1, TimeUnit.SECONDS)
-                } else if (message.startsWith("h:")) {
-                    // one line response messages
-                    val args1 = message.split("(?<!\\\\),".toRegex())
-                    val header = args1[0].substring(2).toInt()
-                    val habboResponse = HabboResponse(header, null)
-
-                    habboResponse.apply {
-                        args1.drop(1).forEach {
-                            val type = it.substring(0, 1)
-                            val param = it.substring(2)
-
-                            when (type) {
-                                "u" -> {
-                                    // string
-                                    writeUTF(param.replace("\\,", ","))
-                                }
-
-                                "i" -> {
-                                    // int
-                                    writeInt(param.toInt())
-                                }
-
-                                "s" -> {
-                                    // short
-                                    writeShort(param.toInt())
-                                }
-
-                                "b" -> {
-                                    // boolean
-                                    writeBoolean(param.toBoolean())
-                                }
-
-                                "d" -> {
-                                    // double
-                                    writeDouble(param.toDouble())
-                                }
-
-                                "v" -> {
-                                    // bytes
-                                    writeByte(param.toInt())
-                                }
-                            }
-                        }
-                    }
-
-                    habboSession.sendHabboResponse(habboResponse)
-
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.MESSENGER_CHAT,
-                        userId,
-                        "Done!",
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                } else {
-                    val jsOutput = habboSession.scriptEngine.eval(message)?.toString() ?: "null"
-
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.MESSENGER_CHAT,
-                        userId,
-                        jsOutput,
-                        0,
-                        UserInformationDao.serverConsoleUserInformation.id,
-                        UserInformationDao.serverConsoleUserInformation.username,
-                        UserInformationDao.serverConsoleUserInformation.figure
-                    )
-                }
+        if (isServerConsole(userId, habboSession)) {
+            handleServerConsole(habboSession, userId, message) { responseMessage ->
+                habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, responseMessage)
             }
-
             return
         }
 
@@ -448,10 +228,6 @@ class MessengerChatHandler {
                 OutgoingR63A.MESSENGER_CHAT,
                 userId,
                 message,
-                0,
-                habboSession.userInformation.id,
-                habboSession.userInformation.username,
-                habboSession.userInformation.figure
             )
         } else {
             val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
@@ -467,10 +243,6 @@ class MessengerChatHandler {
                 OutgoingR63A.MESSENGER_CHAT,
                 habboSession.userInformation.id,
                 message,
-                0,
-                0,
-                "",
-                ""
             )
         }
     }

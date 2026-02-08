@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -58,7 +58,8 @@ class HabboInventory(private val habboSession: HabboSession) {
             items.remove(it)
 
             if (habboSession.release == "R63A") {
-                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, -it)
+                // don't try to put negative here, R63A requires it to be non negative.
+                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, it)
             } else {
                 habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, -it)
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.catalog.CatalogItem
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.user.UserItem
@@ -61,8 +63,30 @@ class CatalogPurchaseOkResponse {
                 }
             }
 
-            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level, probably
+            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level
             writeBoolean(true)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.CATALOG_PURCHASE_OK)
+    fun responseR63A(habboResponse: HabboResponse, catalogItem: CatalogItem, userItems: Collection<UserItem>) {
+        habboResponse.apply {
+            writeInt(catalogItem.id)
+            writeUTF(if (catalogItem.catalogName.isEmpty()) catalogItem.furnishing.itemName else catalogItem.catalogName)
+            writeInt(catalogItem.costCredits)
+            writeInt(catalogItem.costPixels)
+            writeInt(if (catalogItem.costPixels > 0) 0 else 5) // activityPointType
+            writeInt(userItems.size)
+
+            userItems.forEachIndexed { i, userItem ->
+                writeUTF(userItem.furnishing.type.type) // productType
+                writeInt(userItem.furnishing.spriteId) // furniClassId
+                writeUTF(userItem.furnishing.itemName) // extraParam
+                writeInt(i + 1) // productCount
+                writeInt(0) // todo: expiration
+            }
+
+            writeInt(if (catalogItem.clubOnly) 1 else 0) // club level
         }
     }
 }

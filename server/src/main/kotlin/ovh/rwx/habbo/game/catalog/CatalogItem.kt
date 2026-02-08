@@ -53,7 +53,7 @@ data class CatalogItem(
     val limited = limitedTotal > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
-        val clientDoesNotSupportSilverCoins = params.isNotEmpty() && params[0] as? Boolean == true
+        val habboAir = params.isNotEmpty() && params[0] as? Boolean == true
 
         habboResponse.apply {
             writeInt(id) // offerId
@@ -61,9 +61,9 @@ data class CatalogItem(
             writeBoolean(false) // isRent
             writeInt(costCredits) // priceInCredits
             writeInt(costPixels) // priceInActivityPoints
-            writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else 0) // activityPointType
+            writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else ActivityPointType.PIXELS.code) // activityPointType
 
-            if (!clientDoesNotSupportSilverCoins) {
+            if (habboAir) {
                 writeInt(costVip) // priceInSilver
             }
 
@@ -97,26 +97,25 @@ data class CatalogItem(
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName)
-            writeInt(costCredits)
-            writeInt(costPixels)
-            writeInt(costVip)
-            writeInt(1)
+            writeInt(id) // offerId
+            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
+            writeInt(costCredits) // priceInCredits
+            writeInt(if (costVip > 0) costVip else costPixels) // priceInActivityPoints
+            writeInt(if (costVip > 0) ActivityPointType.SHELLS.code else ActivityPointType.PIXELS.code) // activityPointType
 
-            writeUTF(furnishing.type.type)
-            writeInt(furnishing.spriteId)
+            // serializeItem R63A
+            writeInt(1) // items count
+            writeUTF(furnishing.type.type) // productType
+            writeInt(furnishing.spriteId) // furniClassId
 
-            if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape") writeUTF(
-                catalogName.split(
-                    '_'
-                )[2]
-            )
-            else writeUTF("")
+            if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape")
+                writeUTF(catalogName.split('_')[2]) // extraParam
+            else
+                writeUTF("") // extraParam
 
-            writeInt(amount)
-            writeInt(-1) // ????
-            writeBoolean(clubOnly)
+            writeInt(amount) // productCount
+            writeInt(-1) // expiration
+            writeInt(if (clubOnly) 1 else 0) // clubLevel
         }
     }
 

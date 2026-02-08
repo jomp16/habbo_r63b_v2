@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -45,7 +45,7 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                     writeUTF(it.username)
                     writeInt(if (it.gender == "M") 0 else 1)
                     writeBoolean(online)
-                    writeBoolean(online && habboSession?.currentRoom != null)
+                    writeBoolean(online && habboSession?.currentRoom != null) // followingAllowed
                     writeUTF(it.figure)
                     writeInt(0) // todo: add ability to add friend on custom category
                     writeUTF(it.motto)
@@ -58,7 +58,7 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                         writeBoolean(false) // uses phone
                         writeShort(relationship.type) // relationship type
                     } else {
-                        writeUTF("") // useless, dead code
+                        writeUTF("") // facebookId
                     }
                 }
             } else {
@@ -72,34 +72,22 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                 writeUTF("")
                 writeUTF("")
                 writeUTF("")
-                writeBoolean(true) // do not allow offline messaging
-                writeBoolean(false) // useless
-                writeBoolean(false) // uses phone
-                writeShort(0)
+
+                if (habboResponse.outgoingR63A == null) {
+                    writeBoolean(true) // allows offline messaging
+                    writeBoolean(false) // useless
+                    writeBoolean(false) // uses phone
+                    writeShort(0) // relationship type
+                } else {
+                    writeUTF("") // facebookId
+                }
             }
         }
     }
 
     @Suppress("DuplicatedCode")
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            writeInt(userId)
-
-            if (userId > 0) {
-                userInformation?.let {
-                    writeUTF(it.username)
-                    writeInt(1)
-                    writeBoolean(online)
-                    writeBoolean(online && habboSession?.currentRoom != null)
-                    writeUTF(it.figure)
-                    writeInt(0) // todo: add ability to add friend on custom category
-                    writeUTF(it.motto)
-                    writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
-                    writeUTF(it.realname)
-                    writeUTF("") // useless, dead code
-                }
-            }
-        }
+        serializeHabboResponse(habboResponse, params)
     }
 
     fun serializeHabboResponseSearch(habboResponse: HabboResponse) {

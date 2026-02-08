@@ -301,7 +301,7 @@ class RoomUser(
         room.roomTask?.addTask(room, UserChatTask(this, virtualID, message, bubble, type, skipCommands))
     }
 
-    fun action(action: Int) {
+    fun action(action: UserAction) {
         room.roomTask?.addTask(room, UserActionTask(this, action))
     }
 

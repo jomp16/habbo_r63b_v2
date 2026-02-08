@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -264,8 +264,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints =
             HabboServer.habboConfig.rewardConfig.vipPointsMax
 
-        sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
-        sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
+        if (release != "R63A") {
+            sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
+            sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
+        } else {
+            sendHabboResponse(OutgoingR63A.CREDITS_BALANCE, userInformation.credits)
+            sendHabboResponse(OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
+        }
     }
 
     fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,13 +22,18 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.tasks.UserAction
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserRespectHandler {
     @Handler(Incoming.ROOM_USER_RESPECT)
+    @HandlerR63A(IncomingR63A.ROOM_USER_RESPECT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null || habboSession.userStats.dailyRespectPoints <= 0) return
         val targetUser = HabboServer.habboSessionManager.getHabboSessionById(habboRequest.readInt()) ?: return
@@ -39,6 +44,11 @@ class RoomUserRespectHandler {
         targetUser.userStats.respect++
 
         habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_RESPECT_NOTIFICATION, targetUser.userInformation.id, targetUser.userStats.respect)
-        habboSession.roomUser?.action(7)
+        habboSession.currentRoom?.sendHabboResponse(
+            OutgoingR63A.USER_RESPECT_NOTIFICATION,
+            targetUser.userInformation.id,
+            targetUser.userStats.respect
+        )
+        habboSession.roomUser?.action(UserAction.THUMB_UP)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -42,7 +42,7 @@ subprojects {
         jasypt_version = "1.9.3"
         commons_lang_version = "3.20.0"
         mbassador_version = "1.3.2"
-        bouncycastle_version = "1.70"
+        bouncycastle_version = "1.83"
         hikari_version = "7.0.2"
     }
 

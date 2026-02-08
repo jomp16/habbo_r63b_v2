@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -37,7 +37,11 @@ class UserActivityPointsBalanceHandler {
 
     @HandlerR63A(IncomingR63A.ACHIEVEMENT_SCORE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.USER_ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, habboSession.userInformation.vipPoints)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.ACTIVITY_POINTS_BALANCE,
+            habboSession.userInformation.pixels,
+            habboSession.userInformation.vipPoints
+        )
         habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
     }
 }

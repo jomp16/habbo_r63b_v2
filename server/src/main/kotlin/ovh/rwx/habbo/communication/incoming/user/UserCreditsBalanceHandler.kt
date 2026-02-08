@@ -45,9 +45,9 @@ class UserCreditsBalanceHandler {
     
     @HandlerR63A(IncomingR63A.USER_CREDITS_BALANCE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.USER_CREDITS_BALANCE, habboSession.userInformation.credits)
+        habboSession.sendHabboResponse(OutgoingR63A.CREDITS_BALANCE, habboSession.userInformation.credits)
         habboSession.sendHabboResponse(
-            Outgoing.ACTIVITY_POINTS_BALANCE,
+            OutgoingR63A.ACTIVITY_POINTS_BALANCE,
             habboSession.userInformation.pixels,
             habboSession.userInformation.vipPoints
         )

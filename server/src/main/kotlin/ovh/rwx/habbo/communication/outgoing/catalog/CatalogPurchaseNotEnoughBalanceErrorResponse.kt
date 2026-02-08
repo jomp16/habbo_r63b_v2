@@ -17,49 +17,29 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.user
+package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserActivityPointsResponse {
-    @Response(Outgoing.ACTIVITY_POINTS_BALANCE)
-    fun response(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
+class CatalogPurchaseNotEnoughBalanceErrorResponse {
+    @Response(Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE)
+    @ResponseR63A(OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE)
+    fun response(
+        habboResponse: HabboResponse,
+        notEnoughCredits: Boolean,
+        notEnoughPixels: Boolean,
+        activityPointType: ActivityPointType
+    ) {
         habboResponse.apply {
-            writeInt(2)
-            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
-            writeInt(pixels)
-            writeInt(ActivityPointType.DIAMONDS.code) // diamonds
-            writeInt(vipPoints)
+            writeInt(if (notEnoughCredits) 1 else 0)
+            writeInt(if (notEnoughPixels) 1 else 0)
+            writeInt(activityPointType.code)
         }
     }
-
-    @ResponseR63A(OutgoingR63A.ACTIVITY_POINTS_BALANCE)
-    fun responseR63A(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
-        habboResponse.apply {
-            writeInt(2)
-            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
-            writeInt(pixels)
-            writeInt(ActivityPointType.SHELLS.code) // SHELLS
-            writeInt(vipPoints)
-        }
-    }
-}
-
-enum class ActivityPointType(val code: Int) {
-    PIXELS(0),
-    SEASHELLS(1),
-    HEARTS(2),
-    GIFT_POINTS(3),
-    SHELLS(4),
-    DIAMONDS(5),
-    SEASHELLS_2(101),
-    NUTS(102),
-    STARS(103),
-    CLOUDS(104),
-    DIAMONDS_2(105),
 }
