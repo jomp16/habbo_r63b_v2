@@ -138,7 +138,50 @@ class RoomPlaceItemHandler {
             success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
         }
 
-        if (success) habboSession.habboInventory.removeItems(listOf(itemId))
-        else habboSession.sendNotification("\${room.error.cant_set_item}")
+        if (success) {
+            habboSession.habboInventory.removeItems(listOf(itemId))
+
+            // ACH_PlaceCreditValue: colocar moedas de câmbio no quarto
+            if (userItem.itemName.startsWith("CF_") || userItem.itemName.startsWith("CFC_")) {
+                val split = userItem.itemName.split('_')
+                val creditValue = if (split.size > 2 && split[1] == "diamond") {
+                    split[2].toIntOrNull() ?: 0
+                } else if (split.size > 1) {
+                    split[1].toIntOrNull() ?: 0
+                } else {
+                    0
+                }
+                if (creditValue > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        habboSession,
+                        "ACH_PlaceCreditValue",
+                        creditValue,
+                        accumulate = true
+                    )
+                }
+            }
+
+            // ACH_RoomDecoFurniCount: quantidade total de mobis no quarto
+            habboSession.currentRoom?.let { room ->
+                val totalFurni = room.roomItems.size
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_RoomDecoFurniCount",
+                    totalFurni,
+                    accumulate = false
+                )
+
+                // ACH_RoomDecoFurniTypeCount: quantidade de tipos diferentes de mobis
+                val uniqueFurniTypes = room.roomItems.values.map { it.furnishing.itemName }.toSet().size
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_RoomDecoFurniTypeCount",
+                    uniqueFurniTypes,
+                    accumulate = false
+                )
+            }
+        } else {
+            habboSession.sendNotification("\${room.error.cant_set_item}")
+        }
     }
 }

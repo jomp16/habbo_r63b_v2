@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.user
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -47,6 +48,9 @@ class UserChangeFigureHandler {
 
         habboSession.userInformation.figure = figure
         habboSession.userInformation.gender = gender
+
+        // ACH_AvatarLooks: mudar visual
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)
 
         if (habboSession.release == "R63A") {
             habboSession.currentRoom?.sendHabboResponse(

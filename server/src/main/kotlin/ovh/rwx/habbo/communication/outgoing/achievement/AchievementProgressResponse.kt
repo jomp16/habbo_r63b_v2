@@ -17,30 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.user
+package ovh.rwx.habbo.communication.outgoing.achievement
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.user.badge.Badge
+import ovh.rwx.habbo.game.achievement.AchievementUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserBadgesResponse {
-    @Response(Outgoing.USER_BADGES)
-    @ResponseR63A(OutgoingR63A.USER_BADGES)
-    fun response(habboResponse: HabboResponse, id: Int, badges: Collection<Badge>) {
+class AchievementProgressResponse {
+    @Response(Outgoing.ACHIEVEMENT_PROGRESS)
+    fun response(habboResponse: HabboResponse, achievementUser: AchievementUser) {
         habboResponse.apply {
-            val equippedBadges = badges.filter { it.slot > 0 }.sortedBy { it.slot }
-            // todo: make sure if it's always user id or use virtualID when if in room
-            writeInt(id)
-            writeInt(equippedBadges.size)
-
-            equippedBadges.forEach {
-                writeInt(it.slot)
-                writeUTF(it.code)
-            }
+            serialize(achievementUser)
         }
     }
 }

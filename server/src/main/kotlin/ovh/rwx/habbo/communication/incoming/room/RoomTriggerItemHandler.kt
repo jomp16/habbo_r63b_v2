@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -62,6 +63,14 @@ class RoomTriggerItemHandler {
                         item,
                         it.hasRights(habboSession),
                         habboRequest.readInt()
+                    )
+
+                    // ACH_HabboExplorer: usar um mobi (duplo clique)
+                    HabboServer.habboGame.achievementManager.progress(
+                        habboSession,
+                        "ACH_HabboExplorer",
+                        1,
+                        accumulate = true
                     )
                 }
                 else -> {

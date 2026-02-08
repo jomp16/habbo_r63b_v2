@@ -21,13 +21,18 @@ package ovh.rwx.habbo.game.achievement
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.concurrent.ConcurrentHashMap
 
 class AchievementManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val achievementGroups: MutableMap<String, AchievementGroup> = mutableMapOf()
     private val achievements: MutableList<Achievement> = mutableListOf()
+    private val saveQueue: MutableSet<AchievementUser> = ConcurrentHashMap.newKeySet()
+    val achievementLevels: Map<Int, List<Achievement>>
+        get() = achievements.filter { it.enabled }.groupBy { it.groupId }
     val groupedAchievements: Map<AchievementGroup, List<Achievement>>
         get() = achievements.filter { it.enabled }.groupBy { it.group }
 
@@ -44,8 +49,132 @@ class AchievementManager {
         log.info("Loaded {} achievements!", achievements.size)
     }
 
-    @Suppress("unused")
-    fun progressAchievement(@Suppress("UNUSED_PARAMETER") habboSession: HabboSession, @Suppress("UNUSED_PARAMETER") achievementGroup: AchievementGroup) {
+    fun progress(
+        habboSession: HabboSession?,
+        userId: Int,
+        achievementName: String,
+        amount: Int,
+        accumulate: Boolean = true
+    ) {
+        val group = achievementGroups[achievementName] ?: return
 
+        // Busca achievement do usuário (do banco se sessão offline)
+        val achievementUsers = habboSession?.userInformation?.achievementUsers
+            ?: AchievementDao.loadUserAchievements(userId).toMutableList()
+
+        var userData = achievementUsers.find { it.groupId == group.id }
+
+        if (userData == null) {
+            userData = AchievementDao.insertUserAchievement(userId, group.id, 0, 0)
+            achievementUsers.add(userData)
+        }
+
+        val levels = achievementLevels[group.id] ?: return
+        if (userData.level >= levels.size) return
+
+        if (accumulate) {
+            userData.progress += amount
+        } else {
+            if (amount > userData.progress) {
+                userData.progress = amount
+            }
+        }
+
+        // Se sessão online, faz level up e envia pacotes
+        if (habboSession != null) {
+            checkLevelUp(habboSession, group, userData, levels)
+        }
+
+        // Adiciona na queue ao invés de salvar imediatamente
+        saveQueue.add(userData)
+    }
+
+    // Sobrecarga para manter compatibilidade
+    fun progress(habboSession: HabboSession, achievementName: String, amount: Int, accumulate: Boolean = true) {
+        progress(habboSession, habboSession.userInformation.id, achievementName, amount, accumulate)
+    }
+
+    fun saveQueuedAchievements() {
+        if (saveQueue.isEmpty()) return
+
+        val toSave = saveQueue.toList()
+        saveQueue.clear()
+
+        AchievementDao.saveUserAchievements(toSave)
+
+        log.debug("Saved {} queued achievements", toSave.size)
+    }
+
+    private fun checkLevelUp(
+        habboSession: HabboSession,
+        group: AchievementGroup,
+        userData: AchievementUser,
+        levels: List<Achievement>
+    ) {
+        var leveledUp = false
+        var lastUnlockedLevel: Achievement? = null
+        val startLevel = userData.level
+
+        while (true) {
+            val nextLevel = userData.level + 1
+            val nextLevelData = levels.find { it.level == nextLevel } ?: break
+
+            if (userData.progress >= nextLevelData.progressRequirement) {
+                userData.level = nextLevel
+                leveledUp = true
+                lastUnlockedLevel = nextLevelData
+
+                habboSession.userStats.achievementScore += nextLevelData.rewardAchievementPoints
+
+                if (nextLevelData.rewardActivityPoints > 0) {
+                    habboSession.userInformation.pixels += nextLevelData.rewardActivityPoints
+                }
+            } else {
+                break
+            }
+        }
+
+        if (leveledUp) {
+            // Remove badge anterior (se houver) e adiciona apenas o badge final
+            if (startLevel > 0 && group.badgeAppendLevel) {
+                val oldBadgeCode = "${group.name}$startLevel"
+                habboSession.habboBadge.badges[oldBadgeCode]?.let {
+                    habboSession.habboBadge.removeBadge(oldBadgeCode)
+                }
+            }
+
+            val newBadgeCode = if (group.badgeAppendLevel) "${group.name}${userData.level}" else group.name
+            if (!habboSession.habboBadge.badges.containsKey(newBadgeCode)) {
+                habboSession.habboBadge.addBadge(newBadgeCode)
+            }
+
+            habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, 0)
+            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
+            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
+            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+            habboSession.sendHabboResponse(
+                Outgoing.USER_ACHIEVEMENT,
+                habboSession.userInformation.achievementUsers,
+                achievementGroups,
+                groupedAchievements
+            )
+        } else {
+            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+        }
+    }
+
+    private fun handleBadges(habboSession: HabboSession, group: AchievementGroup, newLevel: Int) {
+        if (newLevel > 1) {
+            val prevLevel = newLevel - 1
+            val oldBadgeCode = if (group.badgeAppendLevel) "${group.name}$prevLevel" else group.name
+            habboSession.habboBadge.badges[oldBadgeCode]?.let {
+                habboSession.habboBadge.removeBadge(oldBadgeCode)
+            }
+        }
+
+        val newBadgeCode = if (group.badgeAppendLevel) "${group.name}$newLevel" else group.name
+        if (!habboSession.habboBadge.badges.containsKey(newBadgeCode)) {
+            habboSession.habboBadge.addBadge(newBadgeCode)
+        }
     }
 }

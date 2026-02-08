@@ -107,11 +107,33 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         if (!isDraw && winningTeams.isNotEmpty()) {
             val winningTeam = winningTeams.first()
 
-            // Jogadores acenam
+            // Jogadores acenam e ganham achievements
             userTeams.forEach { (userId, team) ->
-                if (team.color == winningTeam) {
-                    room.roomUsers.values.find { it.habboSession?.userInformation?.id == userId }
-                        ?.action(UserAction.WAVE)
+                room.roomUsers.values.find { it.habboSession?.userInformation?.id == userId }?.let { roomUser ->
+                    // ACH_BattleBallPlayer: jogar Battle Banzai
+                    roomUser.habboSession?.let {
+                        HabboServer.habboGame.achievementManager.progress(
+                            it,
+                            "ACH_BattleBallPlayer",
+                            1,
+                            accumulate = true
+                        )
+                    }
+
+                    if (team.color == winningTeam) {
+                        roomUser.action(UserAction.WAVE)
+
+                        // ACH_BattleBallWinner: ganhar pontos vencedores
+                        roomUser.habboSession?.let {
+                            val teamScore = teamScores[winningTeam] ?: 0
+                            HabboServer.habboGame.achievementManager.progress(
+                                it,
+                                "ACH_BattleBallWinner",
+                                teamScore,
+                                accumulate = true
+                            )
+                        }
+                    }
                 }
             }
 
@@ -389,6 +411,19 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
             if (lockedCount > 0) {
                 addScore(teamColor, lockedCount)
+
+                // ACH_BattleBallTilesLocked: trancar pixels
+                // Encontra o usuário do time que trancou
+                userTeams.entries.find { it.value.color == teamColor }?.let { entry ->
+                    room.roomUsers.values.find { it.habboSession?.userInformation?.id == entry.key }?.habboSession?.let { session ->
+                        HabboServer.habboGame.achievementManager.progress(
+                            session,
+                            "ACH_BattleBallTilesLocked",
+                            lockedCount,
+                            accumulate = true
+                        )
+                    }
+                }
             }
         }
     }

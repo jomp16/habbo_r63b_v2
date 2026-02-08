@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -47,6 +47,7 @@ class HabboBadge(private val habboSession: HabboSession) {
         badges[badge.code] = badge
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
+        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
         habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 4, listOf(badge.id))
     }
 
@@ -54,6 +55,7 @@ class HabboBadge(private val habboSession: HabboSession) {
         val badge = badges.remove(badgeCode) ?: return
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
+        habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
 
         BadgeDao.removeBadge(badge.id)
     }

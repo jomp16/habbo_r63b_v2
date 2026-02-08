@@ -328,6 +328,23 @@ class CatalogManager {
         if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase
         if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints -= catalogItem.costVip * totalAmountToPurchase
 
+        // Achievements de LTD
+        if (catalogItem.limited) {
+            // ACH_LTDPurchaser: comprar LTDs
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_LTDPurchaser", 1, accumulate = true)
+
+            // ACH_LTDEarlyBird: comprar LTD nos primeiros momentos (primeiros 10%)
+            val earlyBirdThreshold = (catalogItem.limitedTotal * 0.1).toInt()
+            if (catalogItem.limitedSells.get() <= earlyBirdThreshold) {
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_LTDEarlyBird",
+                    1,
+                    accumulate = true
+                )
+            }
+        }
+
         habboSession.updateAllCurrencies()
 
         if (catalogItem.badge.isNotEmpty()) habboSession.habboBadge.addBadge(catalogItem.badge)

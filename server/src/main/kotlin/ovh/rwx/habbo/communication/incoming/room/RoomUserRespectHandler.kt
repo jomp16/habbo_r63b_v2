@@ -43,6 +43,12 @@ class RoomUserRespectHandler {
         habboSession.userStats.dailyRespectPoints--
         targetUser.userStats.respect++
 
+        // ACH_RespectEarned: receber respeito
+        HabboServer.habboGame.achievementManager.progress(targetUser, "ACH_RespectEarned", 1, accumulate = true)
+
+        // ACH_RespectGiven: dar respeito
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_RespectGiven", 1, accumulate = true)
+
         habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_RESPECT_NOTIFICATION, targetUser.userInformation.id, targetUser.userStats.respect)
         habboSession.currentRoom?.sendHabboResponse(
             OutgoingR63A.USER_RESPECT_NOTIFICATION,

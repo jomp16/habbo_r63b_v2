@@ -198,6 +198,9 @@ class CameraManager {
 
         habboSession.habboInventory.addItems(listOf(userItem))
 
+        // ACH_CameraPhotoCount: revelar fotos
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_CameraPhotoCount", 1, accumulate = true)
+
         return true
     }
 }

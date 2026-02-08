@@ -31,6 +31,7 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
+import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
@@ -50,6 +51,8 @@ import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -96,6 +99,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var uniqueID: String = ""
     var osInformation: String = ""
     var ping: Long = 0
+    val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
@@ -200,6 +204,150 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 } else {
                     sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
                 }
+
+                // LTD Purchaser Achievement (para usuários herdados)
+                // Busca TODOS os itens do usuário (inventário + quartos)
+                val allUserItemsWithRoom = ItemDao.getAllUserItemsWithRoom(userInformation.id)
+                val totalLTDs = allUserItemsWithRoom.count { it.userItem.limited }
+                if (totalLTDs > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_LTDPurchaser",
+                        totalLTDs,
+                        accumulate = false
+                    )
+                }
+
+                // LTD Early Bird Achievement (para usuários herdados)
+                val totalEarlyBirdLTDs = allUserItemsWithRoom.count { itemWithRoom ->
+                    val userItem = itemWithRoom.userItem
+                    if (!userItem.limited) return@count false
+                    val limitedData = userItem.limitedItemData ?: return@count false
+                    val earlyBirdThreshold = (limitedData.limitedTotal * 0.1).toInt()
+                    limitedData.limitedNumber <= earlyBirdThreshold
+                }
+                if (totalEarlyBirdLTDs > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_LTDEarlyBird",
+                        totalEarlyBirdLTDs,
+                        accumulate = false
+                    )
+                }
+
+                // ACH_PlaceCreditValue: moedas de câmbio colocadas nos quartos (herdado)
+                val totalCreditValue = allUserItemsWithRoom
+                    .filter { it.roomId != null } // Apenas itens colocados em quartos
+                    .filter { it.userItem.itemName.startsWith("CF_") || it.userItem.itemName.startsWith("CFC_") }
+                    .sumOf { itemWithRoom ->
+                        val split = itemWithRoom.userItem.itemName.split('_')
+                        if (split.size > 2 && split[1] == "diamond") {
+                            split[2].toIntOrNull() ?: 0
+                        } else if (split.size > 1) {
+                            split[1].toIntOrNull() ?: 0
+                        } else {
+                            0
+                        }
+                    }
+                if (totalCreditValue > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_PlaceCreditValue",
+                        totalCreditValue,
+                        accumulate = false
+                    )
+                }
+
+                // ACH_CameraPhotoCount: fotos de câmera compradas (herdado)
+                val totalPhotos = allUserItemsWithRoom.count {
+                    it.userItem.itemName == "external_image_wallitem_poster_small"
+                }
+                if (totalPhotos > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_CameraPhotoCount",
+                        totalPhotos,
+                        accumulate = false
+                    )
+                }
+            }
+            launch {
+                // Busca todos os quartos do usuário para achievements de decoração
+                val userRooms =
+                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomData.ownerId == userInformation.id }
+
+                // ACH_RoomDecoFloor: contar quantas vezes mudou o piso (herdado)
+                val totalFloorChanges = userRooms.count { it.roomData.floor.isNotEmpty() && it.roomData.floor != "0" }
+                if (totalFloorChanges > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_RoomDecoFloor",
+                        totalFloorChanges,
+                        accumulate = false
+                    )
+                }
+
+                // ACH_RoomDecoWallpaper: contar quantas vezes mudou o papel de parede (herdado)
+                val totalWallpaperChanges =
+                    userRooms.count { it.roomData.wallpaper.isNotEmpty() && it.roomData.wallpaper != "0" }
+                if (totalWallpaperChanges > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_RoomDecoWallpaper",
+                        totalWallpaperChanges,
+                        accumulate = false
+                    )
+                }
+
+                // ACH_RoomDecoLandscape: contar quantas vezes mudou o fundo (herdado)
+                val totalLandscapeChanges =
+                    userRooms.count { it.roomData.landscape.isNotEmpty() && it.roomData.landscape != "0" }
+                if (totalLandscapeChanges > 0) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_RoomDecoLandscape",
+                        totalLandscapeChanges,
+                        accumulate = false
+                    )
+                }
+            }
+            launch {
+                // Registration Duration Achievement
+                val daysRegistered =
+                    java.time.Duration.between(userInformation.accountCreated, LocalDateTime.now()).toDays().toInt()
+                HabboServer.habboGame.achievementManager.progress(
+                    this@HabboSession,
+                    "ACH_RegistrationDuration",
+                    daysRegistered,
+                    accumulate = false
+                )
+
+                // Daily Login Achievement
+                if (userStats.firstLoginOfDay) {
+                    HabboServer.habboGame.achievementManager.progress(
+                        this@HabboSession,
+                        "ACH_Login",
+                        1,
+                        accumulate = true
+                    )
+                }
+
+                // Friend List Size Achievement (para usuários herdados)
+                val totalFriends = habboMessenger.friends.size
+                HabboServer.habboGame.achievementManager.progress(
+                    this@HabboSession,
+                    "ACH_FriendListSize",
+                    totalFriends,
+                    accumulate = false
+                )
+
+                // Respect Earned Achievement (para usuários herdados)
+                HabboServer.habboGame.achievementManager.progress(
+                    this@HabboSession,
+                    "ACH_RespectEarned",
+                    userStats.respect,
+                    accumulate = false
+                )
             }
         }
 
@@ -246,6 +394,40 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             userStats.creditsLastUpdate = LocalDateTime.now()
 
             updateAllCurrencies()
+        }
+    }
+
+    internal fun processPeriodicAchievements() {
+        // ACH_AllTimeHotelPresence: tempo total online em minutos
+        val totalMinutes = (userStats.totalOnlineSeconds / 60).toInt()
+
+        log.debug(
+            "Processing periodic achievements for user {} - totalOnlineSeconds: {}, totalMinutes: {}",
+            userInformation.username, userStats.totalOnlineSeconds, totalMinutes
+        )
+
+        HabboServer.habboGame.achievementManager.progress(
+            this,
+            "ACH_AllTimeHotelPresence",
+            totalMinutes,
+            accumulate = false
+        )
+
+        // ACH_BasicClub: meses de club ativo (para usuários que já têm club)
+        if (habboSubscription.validUserSubscription) {
+            val totalMonths = ChronoUnit.MONTHS.between(
+                habboSubscription.subscription?.activated,
+                LocalDateTime.now()
+            ).toInt()
+            HabboServer.habboGame.achievementManager.progress(this, "ACH_BasicClub", totalMonths, accumulate = false)
+            HabboServer.habboGame.achievementManager.progress(this, "ACH_VipHC", totalMonths, accumulate = false)
+
+            // ACH_HC: dias de club ativo
+            val totalDays = ChronoUnit.DAYS.between(
+                habboSubscription.subscription?.activated,
+                LocalDateTime.now()
+            ).toInt()
+            HabboServer.habboGame.achievementManager.progress(this, "ACH_HC", totalDays, accumulate = false)
         }
     }
 

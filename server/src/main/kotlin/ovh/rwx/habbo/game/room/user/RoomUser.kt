@@ -255,6 +255,11 @@ class RoomUser(
                         removeUserStatuses()
 
                         addStatus("mv", "${step.x},${step.y},$z")
+
+                        // ACH_LegDay: caminhar quadrados
+                        habboSession?.let {
+                            HabboServer.habboGame.achievementManager.progress(it, "ACH_LegDay", 1, accumulate = true)
+                        }
                     }
                 }
             }

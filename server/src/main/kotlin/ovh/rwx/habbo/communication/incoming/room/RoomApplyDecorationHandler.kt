@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -39,9 +40,38 @@ class RoomApplyDecorationHandler {
         val value = userItem.extraData
 
         when (key) {
-            "floor" -> habboSession.currentRoom?.roomData?.floor = value
-            "wallpaper" -> habboSession.currentRoom?.roomData?.wallpaper = value
-            "landscape" -> habboSession.currentRoom?.roomData?.landscape = value
+            "floor" -> {
+                habboSession.currentRoom?.roomData?.floor = value
+                // ACH_RoomDecoFloor: mudar piso
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_RoomDecoFloor",
+                    1,
+                    accumulate = true
+                )
+            }
+
+            "wallpaper" -> {
+                habboSession.currentRoom?.roomData?.wallpaper = value
+                // ACH_RoomDecoWallpaper: mudar papel de parede
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_RoomDecoWallpaper",
+                    1,
+                    accumulate = true
+                )
+            }
+
+            "landscape" -> {
+                habboSession.currentRoom?.roomData?.landscape = value
+                // ACH_RoomDecoLandscape: mudar fundo
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_RoomDecoLandscape",
+                    1,
+                    accumulate = true
+                )
+            }
         }
 
         habboSession.currentRoom?.sendHabboResponse(Outgoing.ROOM_DECORATION, key, value)

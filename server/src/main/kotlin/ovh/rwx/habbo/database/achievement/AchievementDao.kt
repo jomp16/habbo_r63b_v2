@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementCategory
 import ovh.rwx.habbo.game.achievement.AchievementGroup
 import ovh.rwx.habbo.game.achievement.AchievementUser
+import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import java.util.*
 
 object AchievementDao {
@@ -73,5 +74,37 @@ object AchievementDao {
                 )
             }
         }
+    }
+
+    fun saveUserAchievements(achievementUsers: Collection<AchievementUser>) {
+        if (achievementUsers.isEmpty()) return
+
+        HabboServer.database {
+            batchUpdate(
+                javaClass.getResource("/sql/achievement/update_user_achievement.sql").readText(),
+                achievementUsers.map {
+                    mapOf(
+                        "level" to it.level,
+                        "progress" to it.progress,
+                        "id" to it.id
+                    )
+                }
+            )
+        }
+    }
+
+    fun insertUserAchievement(userId: Int, groupId: Int, level: Int, progress: Int): AchievementUser {
+        val id = HabboServer.database {
+            insertAndGetGeneratedKey(
+                javaClass.getResource("/sql/achievement/insert_user_achievement.sql").readText(),
+                mapOf(
+                    "user_id" to userId,
+                    "achievement_group_id" to groupId,
+                    "level" to level,
+                    "progress" to progress
+                )
+            )
+        }
+        return AchievementUser(id, userId, groupId, level, progress)
     }
 }

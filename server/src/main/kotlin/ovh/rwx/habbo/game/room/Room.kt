@@ -66,6 +66,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val emptyCounter = AtomicInteger()
     val errorsCounter = AtomicInteger()
     val roomTimer = AtomicInteger()
+    val hostingCounter = AtomicInteger()
     val roomItems: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(roomData.id)) }
     val wallItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
