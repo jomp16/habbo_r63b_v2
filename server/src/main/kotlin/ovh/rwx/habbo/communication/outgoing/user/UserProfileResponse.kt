@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,8 +32,19 @@ import kotlin.math.ceil
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserProfileResponse {
     @Response(Outgoing.USER_PROFILE)
-    fun response(habboResponse: HabboResponse, userInformation: UserInformation, userStats: UserStats, showProfile: Boolean, friends: Int, isFriend: Boolean, isRequest: Boolean, isOnline: Boolean) {
+    fun response(
+        habboResponse: HabboResponse,
+        userInformation: UserInformation,
+        userStats: UserStats,
+        showProfile: Boolean,
+        friends: Int,
+        isFriend: Boolean,
+        isRequest: Boolean,
+        isOnline: Boolean
+    ) {
         habboResponse.apply {
+            val groups = userInformation.groups
+
             writeInt(userInformation.id)
             writeUTF(userInformation.username)
             writeUTF(userInformation.figure)
@@ -44,11 +55,33 @@ class UserProfileResponse {
             writeBoolean(isFriend)
             writeBoolean(isRequest)
             writeBoolean(isOnline)
-            // todo: groups
-            writeInt(0)
+            writeInt(groups.size)
 
-            writeInt(ceil(Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault()).toEpochSecond().toDouble()).toInt())
+            groups.forEach { group ->
+                writeInt(group.groupData.id)              // _groupId
+                writeUTF(group.groupData.name)            // _groupName
+                writeUTF(group.groupData.badge)           // _SafeStr_7119 (badgeCode)
+                writeUTF(group.groupData.symbolColor.toString())    // _primaryColor (String Hex)
+                writeUTF(group.groupData.backgroundColor.toString())  // _secondaryColor (String Hex)
+                writeBoolean(userStats.favoriteGroupId == group.groupData.id) // _SafeStr_9334 (favourite)
+                writeInt(group.groupData.ownerId)         // _SafeStr_6449 (ownerId)
+                writeBoolean(true)    // todo: _SafeStr_8641 (hasForum)
+            }
+
+            writeInt(
+                ceil(
+                    Instant.now().epochSecond.toDouble() - userStats.lastOnline.atZone(ZoneId.systemDefault())
+                        .toEpochSecond().toDouble()
+                ).toInt()
+            )
             writeBoolean(showProfile)
+
+            writeBoolean(false) // isHidden
+            writeInt(0) // accountLevel
+            writeInt(0) // Sem getter, integer desconhecido
+            writeInt(0) // starGemCount
+            writeBoolean(false) // Sem getter, boolean desconhecido
+            writeBoolean(false) // Sem getter, boolean desconhecido
         }
     }
 }

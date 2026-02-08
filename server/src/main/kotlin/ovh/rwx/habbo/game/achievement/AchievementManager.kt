@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,7 @@ class AchievementManager {
     val achievementGroups: MutableMap<String, AchievementGroup> = mutableMapOf()
     private val achievements: MutableList<Achievement> = mutableListOf()
     val groupedAchievements: Map<AchievementGroup, List<Achievement>>
-        get() = achievements.groupBy { it.group }
+        get() = achievements.filter { it.enabled }.groupBy { it.group }
 
     fun load() {
         log.info("Loading achievements...")

@@ -34,8 +34,6 @@ class UserCreditsBalanceHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(Outgoing.CREDITS_BALANCE, habboSession.userInformation.credits)
 
-        // Somehow, Nitro requires this, because they don't send the Incoming.ACTIVITY_POINTS_BALANCE packet
-        // even if this packet exists on the official Habbo client.
         habboSession.sendHabboResponse(
             Outgoing.ACTIVITY_POINTS_BALANCE,
             habboSession.userInformation.pixels,

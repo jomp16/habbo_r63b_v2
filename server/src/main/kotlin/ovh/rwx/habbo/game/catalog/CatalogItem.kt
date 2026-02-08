@@ -48,8 +48,6 @@ data class CatalogItem(
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
     val deal: CatalogDeal?
         get() = HabboServer.habboGame.catalogManager.catalogDeals.find { it.id == dealId }
-    val offerId: Int
-        get() = furnishing.offerId
     val limited = limitedTotal > 0
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {

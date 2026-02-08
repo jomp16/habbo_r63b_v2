@@ -50,8 +50,6 @@ data class CatalogPage(
     val catalogItems: List<CatalogItem>
         get() = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }.sortedBy { it.id }
             .sortedBy { it.orderNum }
-    private val offerItems: List<CatalogItem>
-        get() = catalogItems.filter { it.offerId != -1 }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -68,9 +66,9 @@ data class CatalogPage(
             )
             else writeUTF(name)
 
-            writeInt(offerItems.size)
-            offerItems.forEach {
-                writeInt(it.offerId)
+            writeInt(catalogItems.size)
+            catalogItems.forEach {
+                writeInt(it.id)
             }
             val childCatalogPages =
                 HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true }

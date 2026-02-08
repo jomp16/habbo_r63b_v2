@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,14 +19,14 @@
 
 package ovh.rwx.habbo.game.user.information
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.database.clothing.ClothingDao
 import ovh.rwx.habbo.database.wardrobe.WardrobeDao
 import ovh.rwx.habbo.game.achievement.AchievementUser
+import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 import java.time.LocalDateTime
-import java.util.*
-import kotlin.collections.ArrayList
 
 data class UserInformation(
         val id: Int,
@@ -51,4 +51,6 @@ data class UserInformation(
     val wardrobes: MutableList<Wardrobe> by lazy { ArrayList(WardrobeDao.getWardrobes(id)) }
     val clothings: MutableSet<String> by lazy { HashSet(ClothingDao.getClothings(id)) }
     val achievementUsers: MutableList<AchievementUser> by lazy { ArrayList(AchievementDao.loadUserAchievements(id)) }
+    val groups: List<Group>
+        get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == id } }
 }

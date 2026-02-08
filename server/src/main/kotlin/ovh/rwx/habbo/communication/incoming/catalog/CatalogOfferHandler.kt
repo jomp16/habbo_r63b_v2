@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,7 +33,7 @@ class CatalogOfferHandler {
         val catalogOfferId = habboRequest.readInt()
 
         if (catalogOfferId == -1) return
-        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.offerId == catalogOfferId }
+        val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogOfferId }
                 ?: return
 
         habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)

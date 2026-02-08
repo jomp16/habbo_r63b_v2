@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,9 +31,10 @@ object AchievementDao {
         return HabboServer.database {
             select(javaClass.getResource("/sql/achievement/select_achievement_groups.sql").readText()) {
                 it.string("name") to AchievementGroup(
-                        it.int("id"),
-                        it.string("name"),
-                    AchievementCategory.valueOf(it.string("category").uppercase(Locale.getDefault()))
+                    it.int("id"),
+                    it.string("name"),
+                    AchievementCategory.valueOf(it.string("category").uppercase(Locale.getDefault())),
+                    it.boolean("badge_append_level")
                 )
             }
         }
@@ -43,13 +44,13 @@ object AchievementDao {
         return HabboServer.database {
             select(javaClass.getResource("/sql/achievement/select_achievements.sql").readText()) {
                 Achievement(
-                        it.int("id"),
-                        it.int("achievement_group_id"),
-                        it.int("level"),
-                        it.int("reward_activity_points"),
-                        it.int("reward_achievement_points"),
-                        it.int("progress_requirement"),
-                        it.boolean("enabled")
+                    it.int("id"),
+                    it.int("achievement_group_id"),
+                    it.int("level"),
+                    it.int("reward_activity_points"),
+                    it.int("reward_achievement_points"),
+                    it.int("progress_requirement"),
+                    it.boolean("enabled")
                 )
             }
         }
@@ -57,17 +58,18 @@ object AchievementDao {
 
     fun loadUserAchievements(userId: Int): List<AchievementUser> {
         return HabboServer.database {
-            select(javaClass.getResource("/sql/achievement/select_user_achievements.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
+            select(
+                javaClass.getResource("/sql/achievement/select_user_achievements.sql").readText(),
+                mapOf(
+                    "user_id" to userId
+                )
             ) {
                 AchievementUser(
-                        it.int("id"),
-                        it.int("user_id"),
-                        it.int("achievement_group_id"),
-                        it.int("level"),
-                        it.int("progress")
+                    it.int("id"),
+                    it.int("user_id"),
+                    it.int("achievement_group_id"),
+                    it.int("level"),
+                    it.int("progress")
                 )
             }
         }

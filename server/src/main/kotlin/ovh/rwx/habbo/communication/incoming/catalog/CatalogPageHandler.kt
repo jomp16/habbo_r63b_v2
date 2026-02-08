@@ -31,7 +31,12 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageHandler {
-    private fun validateAndGetCatalogPage(habboSession: HabboSession, pageId: Int) =
+    private fun validateAndGetCatalogPage(
+        habboSession: HabboSession,
+        pageId: Int,
+        chosenOfferId: Int,
+        category: String
+    ) =
         HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }?.takeIf {
             it.enabled && it.visible &&
                     habboSession.userInformation.rank >= it.minRank &&
@@ -41,24 +46,36 @@ class CatalogPageHandler {
 
     @Handler(Incoming.CATALOG_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+        val pageId = habboRequest.readInt()
+        val chosenOfferId = habboRequest.readInt()
+        val category = habboRequest.readUTF()
+
+        validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
             val habboAir = false
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, chosenOfferId, habboAir)
         }
     }
 
     @Handler(Incoming.CATALOG_PAGE)
     fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
-        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
+        val pageId = habboRequest.readInt()
+        val chosenOfferId = habboRequest.readInt()
+        val category = habboRequest.readUTF()
+
+        validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
             val habboAir = true
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, habboAir)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, chosenOfferId, habboAir)
         }
     }
 
     @HandlerR63A(IncomingR63A.CATALOG_PAGE)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        validateAndGetCatalogPage(habboSession, habboRequest.readInt())?.let {
-            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it)
+        val pageId = habboRequest.readInt()
+        val chosenOfferId = habboRequest.readInt()
+        val category = "NORMAL"
+
+        validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, chosenOfferId)
         }
     }
 }
