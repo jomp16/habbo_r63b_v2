@@ -347,15 +347,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         val newState = if (check == 0 || check == 1) {
             // Mesmo time - incrementa
-            val nextState = state + 1
-
-            if (nextState % 3 == 2) {
-                // LOCK! Adiciona pontuação de lock
-                addScore(teamColor, 1)
-                tileLocked(teamColor, tile)
-            }
-
-            nextState
+            state + 1
         } else {
             // Time inimigo - ROUBA (reseta para nível 0 do novo time)
             teamColor * 3
@@ -364,12 +356,18 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         tile.extraData = newState.toString()
         tile.update(updateDb = false, updateClient = true)
 
+        if (newState % 3 == 2) {
+            // LOCK! Adiciona pontuação de lock
+            addScore(teamColor, 1)
+            tileLocked(teamColor, tile, roomUser)
+        }
+
         // IMPORTANTE: Não validamos a posição do usuário aqui
         // O onUserWalksOn é chamado quando o usuário está "no ar" indo para o tile
         // A coordenada currentVector3 ainda não foi atualizada, mas isso é esperado
     }
 
-    private fun tileLocked(teamColor: Int, tile: RoomItem) {
+    private fun tileLocked(teamColor: Int, tile: RoomItem, roomUser: RoomUser) {
         val x = tile.position.x
         val y = tile.position.y
 
@@ -393,8 +391,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         val largestArea = filledAreas.maxByOrNull { it.size }
 
-        if (largestArea != null && largestArea.isNotEmpty()) {
-            var lockedCount = 0
+        var totalLockedCount = 1 // Conta o tile que foi pisado
+
+        if (!largestArea.isNullOrEmpty()) {
             largestArea.forEach { (tileX, tileY) ->
                 room.roomItems.values
                     .filter {
@@ -405,26 +404,20 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
                     .forEach { tileItem ->
                         tileItem.extraData = ((teamColor * 3) + 2).toString()
                         tileItem.update(updateDb = false, updateClient = true)
-                        lockedCount++
+                        totalLockedCount++
                     }
             }
+        }
 
-            if (lockedCount > 0) {
-                addScore(teamColor, lockedCount)
+        addScore(teamColor, totalLockedCount - 1) // Score do flood fill apenas
 
-                // ACH_BattleBallTilesLocked: trancar pixels
-                // Encontra o usuário do time que trancou
-                userTeams.entries.find { it.value.color == teamColor }?.let { entry ->
-                    room.roomUsers.values.find { it.habboSession?.userInformation?.id == entry.key }?.habboSession?.let { session ->
-                        HabboServer.habboGame.achievementManager.progress(
-                            session,
-                            "ACH_BattleBallTilesLocked",
-                            lockedCount,
-                            accumulate = true
-                        )
-                    }
-                }
-            }
+        roomUser.habboSession?.let { session ->
+            HabboServer.habboGame.achievementManager.progress(
+                session,
+                "ACH_BattleBallTilesLocked",
+                totalLockedCount,
+                accumulate = true
+            )
         }
     }
 
