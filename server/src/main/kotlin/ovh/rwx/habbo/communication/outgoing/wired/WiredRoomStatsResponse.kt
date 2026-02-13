@@ -17,32 +17,30 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.wired
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomDimmerInfoResponse {
-    @Response(Outgoing.ROOM_DIMMER_INFO)
-    @ResponseR63A(OutgoingR63A.ROOM_DIMMER_INFO)
-    fun response(habboResponse: HabboResponse, roomDimmer: RoomDimmer) {
+class WiredRoomStatsResponse {
+    @Response(Outgoing.WIRED_ROOM_STATS)
+    fun response(habboResponse: HabboResponse, room: ovh.rwx.habbo.game.room.Room) {
         habboResponse.apply {
-            writeInt(roomDimmer.presets.size)
-            writeInt(roomDimmer.currentPreset)
-
-            roomDimmer.presets.forEachIndexed { i, (colorCode, colorIntensity, backgroundOnly) ->
-                writeInt(i + 1)
-                writeInt(if (backgroundOnly) 2 else 1)
-                writeUTF(colorCode)
-                writeInt(colorIntensity)
-            }
-            writeBoolean(roomDimmer.enabled)
-            writeInt(roomDimmer.roomItem.id)
+            writeDouble(0.0) // executionCost
+            writeDouble(0.0) // executionCostCap
+            writeBoolean(false) // isHeavy
+            writeInt(room.floorItems.size) // floorItemCount
+            writeInt(0) // floorItemCap
+            writeInt(room.wallItems.size) // wallItemCount
+            writeInt(0) // wallItemCap
+            writeInt(0) // permanentFurniVariables
+            writeInt(0) // maxPermanentFurniVariables
+            writeInt(0) // permanentUserVariables
+            writeInt(0) // maxPermanentUserVariables
+            writeInt(0) // permanentGlobalVariables
+            writeInt(0) // maxPermanentGlobalVariables
         }
     }
 }

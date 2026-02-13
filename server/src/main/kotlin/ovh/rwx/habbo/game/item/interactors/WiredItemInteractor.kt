@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,9 @@
 
 package ovh.rwx.habbo.game.item.interactors
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
@@ -28,7 +31,9 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 class WiredItemInteractor : ItemInteractor() {
-    override val interactionType = InteractionType.values().filter { it.name.startsWith("WIRED") }
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    override val interactionType = InteractionType.entries.filter { it.name.startsWith("WIRED") }
 
     override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
         super.onPlace(room, roomUser, roomItem)
@@ -50,17 +55,29 @@ class WiredItemInteractor : ItemInteractor() {
         roomItem.extraData = "1"
         roomItem.update(updateDb = false, updateClient = true)
         roomItem.requestCycles(1)
-        val outgoing = when {
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_EXTRA") -> Outgoing.WIRED_ADDON_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> Outgoing.WIRED_SELECTOR_DIALOG
-            roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE") -> Outgoing.WIRED_VARIABLE_DIALOG
-            else -> return
-        }
 
-        roomUser?.habboSession?.sendHabboResponse(outgoing, roomItem, roomItem.wiredData)
+        val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
+
+        if (wiredInstance != null) {
+            val outgoing = when {
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_EXTRA") -> Outgoing.WIRED_ADDON_DIALOG
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> Outgoing.WIRED_SELECTOR_DIALOG
+                roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE") -> Outgoing.WIRED_VARIABLE_DIALOG
+                else -> return
+            }
+
+            roomUser?.habboSession?.sendHabboResponse(outgoing, roomItem, roomItem.wiredData)
+        } else {
+            val message = "Wired ${roomItem.furnishing.interactionType.name} not found"
+            log.error(message)
+
+            if (roomUser?.habboSession?.userInformation?.ambassador == true) {
+                roomUser?.habboSession?.sendNotification(message)
+            }
+        }
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {

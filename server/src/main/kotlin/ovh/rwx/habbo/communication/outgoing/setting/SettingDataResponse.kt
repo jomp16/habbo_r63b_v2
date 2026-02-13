@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -73,6 +73,7 @@ class SettingDataResponse {
             writeInt(0) // useless
             writeBoolean(false) // wired whisper disabled
             writeBoolean(false) // show all notifications
+            writeUTF("illumina") // wiredUiStyle - todo: save this on database
 
             // the rest is booleans
         }
