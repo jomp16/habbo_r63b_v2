@@ -17,32 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.wired
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomDimmerInfoResponse {
-    @Response(Outgoing.ROOM_DIMMER_INFO)
-    @ResponseR63A(OutgoingR63A.ROOM_DIMMER_INFO)
-    fun response(habboResponse: HabboResponse, roomDimmer: RoomDimmer) {
-        habboResponse.apply {
-            writeInt(roomDimmer.presets.size)
-            writeInt(roomDimmer.currentPreset)
-
-            roomDimmer.presets.forEachIndexed { i, (colorCode, colorIntensity, backgroundOnly) ->
-                writeInt(i + 1)
-                writeInt(if (backgroundOnly) 2 else 1)
-                writeUTF(colorCode)
-                writeInt(colorIntensity)
-            }
-            writeBoolean(roomDimmer.enabled)
-            writeInt(roomDimmer.roomItem.id)
-        }
+class WiredAllVariablesHashResponse {
+    @Response(Outgoing.WIRED_ALL_VARIABLES_HASH)
+    fun response(habboResponse: HabboResponse) {
+        // TODO: Implementar quando refazer wired 2.0
+        // Retorna hash de todas as variáveis do quarto
+        habboResponse.writeInt(0) // allVariablesHash
     }
 }
