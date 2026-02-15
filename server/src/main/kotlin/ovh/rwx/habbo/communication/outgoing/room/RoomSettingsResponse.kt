@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -57,6 +59,33 @@ class RoomSettingsResponse {
             writeInt(room.roomData.muteSettings)
             writeInt(room.roomData.kickSettings)
             writeInt(room.roomData.banSettings)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_SETTINGS)
+    fun responseR63A(habboResponse: HabboResponse, room: Room) {
+        habboResponse.apply {
+            writeInt(room.roomData.id)
+            writeUTF(room.roomData.name)
+            writeUTF(room.roomData.description)
+            writeInt(room.roomData.state.state)
+            writeInt(room.roomData.category)
+            writeInt(room.roomData.usersMax)
+            writeInt(if (room.roomModel.mapSizeX * room.roomModel.mapSizeY > 100) 50 else 25)
+
+            writeInt(room.roomData.tags.size)
+            room.roomData.tags.forEach { writeUTF(it) }
+
+            // Controllers (flatmates)
+            writeInt(0) // controller count (empty for now)
+            writeInt(0) // total controller count
+
+            writeInt(if (room.roomData.allowPets) 1 else 0)
+            writeInt(if (room.roomData.allowPetsEat) 1 else 0)
+            writeInt(if (room.roomData.allowWalkThrough) 1 else 0)
+            writeInt(if (room.roomData.hideWall) 1 else 0)
+            writeInt(room.roomData.wallThick)
+            writeInt(room.roomData.floorThick)
         }
     }
 }

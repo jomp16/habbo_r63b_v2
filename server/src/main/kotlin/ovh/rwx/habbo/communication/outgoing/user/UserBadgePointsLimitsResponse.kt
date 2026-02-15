@@ -21,13 +21,16 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementGroup
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserBadgePointsLimitsResponse {
     @Response(Outgoing.BADGE_POINTS_LIMIT)
+    @ResponseR63A(OutgoingR63A.BADGE_POINTS_LIMIT)
     fun response(habboResponse: HabboResponse, groupedAchievements: Map<AchievementGroup, List<Achievement>>) {
         habboResponse.apply {
             // 1. Quantidade de Grupos (Chaves do Map)

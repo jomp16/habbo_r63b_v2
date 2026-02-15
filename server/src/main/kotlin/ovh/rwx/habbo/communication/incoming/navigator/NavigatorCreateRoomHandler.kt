@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.navigator
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -42,5 +45,28 @@ class NavigatorCreateRoomHandler {
                 ?: return
         // FlatCreatedComposer id, name
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
+    }
+
+    @HandlerR63A(IncomingR63A.NAVIGATOR_CREATE_ROOM)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val name = habboRequest.readUTF()
+        val model = habboRequest.readUTF()
+        val room = HabboServer.habboGame.roomManager.createRoom(
+            habboSession.userInformation.id,
+            habboSession.habboSubscription.validUserSubscription,
+            name,
+            "", // description vazia
+            model,
+            0, // categoria padrão
+            25, // maxUsers padrão
+            2 // tradeSettings padrão (all can trade)
+        )
+
+        if (room == null) {
+            habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM, true, 50)
+            return
+        }
+
+        habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
     }
 }

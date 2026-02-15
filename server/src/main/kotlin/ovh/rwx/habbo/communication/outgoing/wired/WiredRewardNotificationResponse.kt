@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,23 +27,35 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 class WiredRewardNotificationResponse {
     @Response(Outgoing.WIRED_REWARD_NOTIFICATION)
     fun response(habboResponse: HabboResponse, wiredRewardNotification: WiredRewardNotification) {
-        habboResponse.apply {
-            writeInt(wiredRewardNotification.code)
-        }
+        habboResponse.writeInt(wiredRewardNotification.code)
     }
 
     enum class WiredRewardNotification(val code: Int) {
-        // success
+        // wiredfurni.rewardfailed.reason.0=Desculpe! Existe um limite de prêmios. Todos os prêmios já foram entregues.
+        ERROR_NO_MORE_REWARDS(0),
+
+        // wiredfurni.rewardfailed.reason.1=Você já ganhou esse prêmio. Cada Habbo só ganha uma vez.
+        ERROR_ITEM_ALREADY_REWARDED_IN_ACCOUNT(1),
+
+        // wiredfurni.rewardfailed.reason.2=Você já ganhou prêmio hoje. Tente de novo amanhã!
+        ERROR_ITEM_ALREADY_REWARDED_TODAY(2),
+
+        // wiredfurni.rewardfailed.reason.3=Você já ganhou prêmio essa hora. Tente de novo daqui uma hora!
+        ERROR_ITEM_ALREADY_REWARDED_HOUR(3),
+
+        // wiredfurni.rewardfailed.reason.4=Que pena! Você não teve sorte dessa vez. Tente novamente!
+        ERROR_YOU_DIDN_T_WON(4),
+
+        // wiredfurni.rewardfailed.reason.5=Você já ganhou os prêmios possíveis de hoje.
+        ERROR_YOU_WON_ALL_REWARDS(5),
+
+        // wiredfurni.rewardsuccess.title / wiredfurni.rewardsuccess.body
         ITEM_REWARDED(6),
+
+        // wiredfurni.badgereceived.title / wiredfurni.badgereceived.body
         BADGE_REWARDED(7),
 
-        // errors
-        ERROR_NO_MORE_REWARDS(0),
-        ERROR_ITEM_ALREADY_REWARDED_IN_ACCOUNT(1),
-        ERROR_ITEM_ALREADY_REWARDED_TODAY(2),
-        ERROR_ITEM_ALREADY_REWARDED_HOUR(3),
-        ERROR_YOU_DIDN_T_WON(4),
-        ERROR_YOU_WON_ALL_REWARDS(5),
+        // wiredfurni.rewardfailed.reason.8=Você já recebeu um prêmio neste minuto. Tente de novo um pouquinho mais tarde.
         ERROR_ITEM_ALREADY_REWARDED_MINUTE(8)
     }
 }

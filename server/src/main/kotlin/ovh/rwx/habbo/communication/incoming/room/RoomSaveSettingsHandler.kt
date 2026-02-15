@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,8 +22,11 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RoomState
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -111,5 +114,62 @@ class RoomSaveSettingsHandler {
         room.sendHabboResponse(Outgoing.ROOM_SETTINGS_SAVED, roomId)
         room.sendHabboResponse(Outgoing.ROOM_INFO_UPDATED, roomId)
         room.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
+    }
+
+    @HandlerR63A(IncomingR63A.ROOM_SAVE_SETTINGS)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val roomId = habboRequest.readInt()
+        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+        if (!room.hasRights(habboSession, true)) return
+
+        var roomName = habboRequest.readUTF().trim()
+        if (roomName.isBlank()) return
+        var roomDescription = habboRequest.readUTF().trim()
+        var roomState = RoomState.fromIntValue(habboRequest.readInt())
+        val roomPassword = habboRequest.readUTF().trim()
+        if (roomState == RoomState.PASSWORD && roomPassword.isBlank()) roomState = RoomState.OPEN
+        var roomMaxUsers = habboRequest.readInt()
+        if (roomMaxUsers < 10) roomMaxUsers = 10
+        val roomCategoryId = habboRequest.readInt()
+
+        val tags: MutableList<String> = mutableListOf()
+        val roomTagCount = habboRequest.readInt()
+        repeat(roomTagCount) {
+            val tag = habboRequest.readUTF().replace(",", "").trim()
+            if (!tag.isBlank() && tag.length <= 30) tags += tag
+        }
+
+        val roomAllowPets = habboRequest.readInt() == 1
+        val roomAllowPetsEat = habboRequest.readInt() == 1
+        val roomAllowWalkThrough = habboRequest.readInt() == 1
+        var roomHideWalls = habboRequest.readInt() == 1
+        var roomWallThickness = habboRequest.readInt()
+        var roomFloorThickness = habboRequest.readInt()
+
+        if (roomHideWalls && !habboSession.habboSubscription.validUserSubscription) roomHideWalls = false
+        if (roomWallThickness < -2 || roomWallThickness > 1) roomWallThickness = 0
+        if (roomFloorThickness < -2 || roomFloorThickness > 1) roomFloorThickness = 0
+        if (roomName.length > 60) roomName = roomName.substring(0, 60).trim()
+        if (roomDescription.length > 128) roomDescription = roomDescription.substring(0, 128).trim()
+
+        room.roomData.name = roomName
+        room.roomData.description = roomDescription
+        room.roomData.state = roomState
+        room.roomData.password = HabboServer.habboGame.passwordEncryptor.encryptPassword(roomPassword)
+        room.roomData.usersMax = roomMaxUsers
+        room.roomData.category = roomCategoryId
+        room.roomData.tags = tags
+        room.roomData.allowPets = roomAllowPets
+        room.roomData.allowPetsEat = roomAllowPetsEat
+        room.roomData.allowWalkThrough = roomAllowWalkThrough
+        room.roomData.hideWall = roomHideWalls
+        room.roomData.wallThick = roomWallThickness
+        room.roomData.floorThick = roomFloorThickness
+
+        if (habboSession.currentRoom == null) {
+            habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS_SAVED, roomId)
+        }
+
+        room.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS_SAVED, roomId)
     }
 }

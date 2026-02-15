@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,18 +24,41 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class LandingLoadWidgetHandler {
     @Handler(Incoming.REFRESH_CAMPAIGN)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val campaignString = habboRequest.readUTF()
-        var campaignName = ""
+        val campaignString = habboRequest.readUTF() // A string .conf completa
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
-        campaignString.split(';').last().let {
-            if (it.isNotEmpty() && it.contains(',')) campaignName = it.substring(it.lastIndexOf(',') + 1)
+        var currentActiveCampaign = ""
+
+        // 1. Separar os blocos (Ex: "2026-02-12 12:00,feb26globe")
+        val schedules = campaignString.split(';')
+
+        for (entry in schedules) {
+            if (!entry.contains(',')) continue
+
+            val parts = entry.split(',')
+            val scheduledTime = LocalDateTime.parse(parts[0], formatter)
+            val campaignName = parts[1]
+
+            // 2. Se o horário atual é DEPOIS ou IGUAL ao agendado,
+            // ele se torna o candidato a "ativo".
+            if (now.isAfter(scheduledTime) || now.isEqual(scheduledTime)) {
+                currentActiveCampaign = campaignName
+            } else {
+                // Como a lista costuma ser cronológica, se chegamos em uma data
+                // no futuro, paramos o loop e ficamos com a última válida encontrada.
+                break
+            }
         }
 
-        habboSession.sendHabboResponse(Outgoing.CAMPAIGN, campaignString, campaignName)
+        // 3. Envia a string original E o nome da campanha que passou no teste de tempo
+        habboSession.sendHabboResponse(Outgoing.CAMPAIGN, campaignString, currentActiveCampaign)
     }
 }

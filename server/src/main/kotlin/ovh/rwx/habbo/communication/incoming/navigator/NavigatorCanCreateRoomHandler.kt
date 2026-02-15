@@ -17,21 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.incoming.navigator
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsUpdatedResponse {
-    @Response(Outgoing.ROOM_SETTINGS_SAVED, Outgoing.ROOM_INFO_UPDATED)
-    @ResponseR63A(OutgoingR63A.ROOM_SETTINGS_SAVED)
-    fun response(habboResponse: HabboResponse, roomId: Int) {
-        habboResponse.apply {
-            writeInt(roomId)
-        }
+class NavigatorCanCreateRoomHandler {
+    @HandlerR63A(IncomingR63A.NAVIGATOR_CAN_CREATE_ROOM)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        // TODO: Implementar verificação de limites de quartos
+        val cannotCreate = false // false = pode criar
+        val maxRooms = 50 // Limite padrão
+
+        habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM, cannotCreate, maxRooms)
     }
 }

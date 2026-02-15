@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,14 +22,32 @@ package ovh.rwx.habbo.communication.incoming.achievement
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementListHandler {
-    @Handler(Incoming.USER_ACHIEVEMENT)
+    @Handler(Incoming.ACHIEVEMENT_LIST)
+    @HandlerR63A(IncomingR63A.ACHIEVEMENT_LIST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.USER_ACHIEVEMENT, habboSession.userInformation.achievementUsers, HabboServer.habboGame.achievementManager.achievementGroups, HabboServer.habboGame.achievementManager.groupedAchievements)
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(
+                OutgoingR63A.ACHIEVEMENT_LIST,
+                habboSession.userInformation.achievementUsers,
+                HabboServer.habboGame.achievementManager.achievementGroups,
+                HabboServer.habboGame.achievementManager.groupedAchievements
+            )
+        } else {
+            habboSession.sendHabboResponse(
+                Outgoing.ACHIEVEMENT_LIST,
+                habboSession.userInformation.achievementUsers,
+                HabboServer.habboGame.achievementManager.achievementGroups,
+                HabboServer.habboGame.achievementManager.groupedAchievements
+            )
+        }
     }
 }

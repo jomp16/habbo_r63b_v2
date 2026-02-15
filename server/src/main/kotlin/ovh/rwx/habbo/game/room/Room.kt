@@ -474,6 +474,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 // 1. Envia o Slide Visual (Tempo 0ms)
                 // O cliente começa a mover o item visualmente de Old -> New
                 sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
+                sendHabboResponse(OutgoingR63A.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
 
                 // 2. Salva no Banco (Assíncrono para não travar)
                 addItemToSave(roomItem)

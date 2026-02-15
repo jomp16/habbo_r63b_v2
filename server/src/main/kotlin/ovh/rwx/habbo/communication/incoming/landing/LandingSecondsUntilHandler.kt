@@ -17,37 +17,31 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.room
+package ovh.rwx.habbo.communication.incoming.landing
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsHandler {
-    @Handler(Incoming.ROOM_SETTINGS)
+class LandingSecondsUntilHandler {
+    @Handler(Incoming.LANDING_SECONDS_UNTIL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+        val timeStr = habboRequest.readUTF() // Ex: "2025-11-02 23:59"
 
-        if (!room.hasRights(habboSession, true)) return
+        // Calcular segundos até a data especificada
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val targetTime = LocalDateTime.parse(timeStr, formatter)
+        val now = LocalDateTime.now()
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS, room)
-    }
+        val secondsUntil = (targetTime.atZone(ZoneId.systemDefault()).toEpochSecond() -
+                now.atZone(ZoneId.systemDefault()).toEpochSecond()).toInt()
 
-    @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
-        if (!room.hasRights(habboSession, true)) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS, room)
+        habboSession.sendHabboResponse(Outgoing.LANDING_SECONDS_UNTIL, timeStr, secondsUntil)
     }
 }

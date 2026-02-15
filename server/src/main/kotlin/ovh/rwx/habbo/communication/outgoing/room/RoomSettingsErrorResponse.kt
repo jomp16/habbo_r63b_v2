@@ -20,18 +20,16 @@
 package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsUpdatedResponse {
-    @Response(Outgoing.ROOM_SETTINGS_SAVED, Outgoing.ROOM_INFO_UPDATED)
-    @ResponseR63A(OutgoingR63A.ROOM_SETTINGS_SAVED)
-    fun response(habboResponse: HabboResponse, roomId: Int) {
+class RoomSettingsErrorResponse {
+    @ResponseR63A(OutgoingR63A.ROOM_SETTINGS_ERROR)
+    fun response(habboResponse: HabboResponse, roomId: Int, errorCode: Int) {
         habboResponse.apply {
             writeInt(roomId)
+            writeInt(errorCode)
         }
     }
 }

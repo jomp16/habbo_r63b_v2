@@ -17,37 +17,44 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.room
+package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsHandler {
-    @Handler(Incoming.ROOM_SETTINGS)
+class NavigatorUpdateRoomThumbnailHandler {
+    @HandlerR63A(IncomingR63A.NAVIGATOR_UPDATE_ROOM_THUMBNAIL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
         if (!room.hasRights(habboSession, true)) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS, room)
-    }
+        val backgroundImage = habboRequest.readInt()
+        val foregroundImage = habboRequest.readInt()
+        val itemCount = habboRequest.readInt()
 
-    @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+        val items = mutableMapOf<Int, Int>()
+        repeat(itemCount) {
+            val slot = habboRequest.readInt()
+            val itemId = habboRequest.readInt()
+            if (slot in 0..10 && itemId in 1..27 && !items.containsKey(slot)) {
+                items[slot] = itemId
+            }
+        }
 
-        if (!room.hasRights(habboSession, true)) return
+        if (backgroundImage in 1..24 && foregroundImage in 0..11) {
+            items.entries.joinToString("|") { "${it.key},${it.value}" }
+//            room.roomData.iconBackground = backgroundImage
+//            room.roomData.iconForeground = foregroundImage
+//            room.roomData.iconItems = itemsStr
+            // TODO: Save to database
 
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS, room)
+            habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_ROOM_THUMBNAIL_UPDATE_RESULT, roomId, 1)
+        }
     }
 }

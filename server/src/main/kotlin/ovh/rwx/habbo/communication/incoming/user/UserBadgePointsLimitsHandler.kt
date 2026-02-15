@@ -22,16 +22,24 @@ package ovh.rwx.habbo.communication.incoming.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserBadgePointsLimitsHandler {
     @Handler(Incoming.BADGE_POINTS_LIMIT)
+    @HandlerR63A(IncomingR63A.BADGE_POINTS_LIMIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val groupedAchievements = HabboServer.habboGame.achievementManager.groupedAchievements
 
-        habboSession.sendHabboResponse(Outgoing.BADGE_POINTS_LIMIT, groupedAchievements)
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.BADGE_POINTS_LIMIT, groupedAchievements)
+        } else {
+            habboSession.sendHabboResponse(Outgoing.BADGE_POINTS_LIMIT, groupedAchievements)
+        }
     }
 }
