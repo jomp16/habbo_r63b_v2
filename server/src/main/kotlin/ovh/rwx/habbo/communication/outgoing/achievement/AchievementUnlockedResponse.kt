@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.achievement
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementUser
@@ -29,6 +31,7 @@ import ovh.rwx.habbo.game.achievement.AchievementUser
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementUnlockedResponse {
     @Response(Outgoing.ACHIEVEMENT_UNLOCKED)
+    @ResponseR63A(OutgoingR63A.ACHIEVEMENT_UNLOCKED)
     fun response(habboResponse: HabboResponse, achievementUser: AchievementUser, achievement: Achievement) {
         habboResponse.apply {
             writeInt(achievementUser.group.id) // type - Grupo ID

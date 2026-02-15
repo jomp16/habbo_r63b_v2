@@ -17,18 +17,23 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.user
+package ovh.rwx.habbo.communication.incoming.landing
 
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class UserAchievementScoreHandler {
-    @HandlerR63A(IncomingR63A.ACHIEVEMENT_SCORE)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
+class LandingIsBadgeRequestFulfilledHandler {
+    @Handler(Incoming.LANDING_IS_BADGE_REQUEST_FULFILLED)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val requestCode = habboRequest.readUTF()
+
+        // Verificar se usuário já possui o badge
+        val fulfilled = habboSession.habboBadge.badges.containsKey(requestCode)
+
+        habboSession.sendHabboResponse(Outgoing.LANDING_IS_BADGE_REQUEST_FULFILLED, requestCode, fulfilled)
     }
 }

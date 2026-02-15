@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -138,6 +138,11 @@ class RoomBadgeCommandsListener : PluginListener() {
             habboSession.habboBadge.addBadge(badgeCode)
 
             habboSession.sendHabboResponse(Outgoing.WIRED_REWARD_NOTIFICATION, WiredRewardNotificationResponse.WiredRewardNotification.BADGE_REWARDED)
+        } else {
+            habboSession.sendHabboResponse(
+                Outgoing.WIRED_REWARD_NOTIFICATION,
+                WiredRewardNotificationResponse.WiredRewardNotification.ERROR_ITEM_ALREADY_REWARDED_IN_ACCOUNT
+            )
         }
     }
 

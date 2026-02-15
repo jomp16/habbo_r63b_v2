@@ -17,37 +17,34 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.room
+package ovh.rwx.habbo.communication.incoming.landing
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.wired.WiredRewardNotificationResponse.WiredRewardNotification
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsHandler {
-    @Handler(Incoming.ROOM_SETTINGS)
+class LandingRequestBadgeHandler {
+    @Handler(Incoming.LANDING_REQUEST_BADGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
+        val requestCode = habboRequest.readUTF()
 
-        if (!room.hasRights(habboSession, true)) return
+        // Verificar se usuário já possui o badge
+        if (habboSession.habboBadge.badges.containsKey(requestCode)) {
+            habboSession.sendHabboResponse(
+                Outgoing.WIRED_REWARD_NOTIFICATION,
+                WiredRewardNotification.ERROR_ITEM_ALREADY_REWARDED_IN_ACCOUNT
+            )
+            return
+        }
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS, room)
-    }
+        // Adicionar badge ao inventário
+        habboSession.habboBadge.addBadge(requestCode)
 
-    @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
-        if (!room.hasRights(habboSession, true)) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS, room)
+        // Enviar resultado de sucesso
+        habboSession.sendHabboResponse(Outgoing.WIRED_REWARD_NOTIFICATION, WiredRewardNotification.BADGE_REWARDED)
     }
 }

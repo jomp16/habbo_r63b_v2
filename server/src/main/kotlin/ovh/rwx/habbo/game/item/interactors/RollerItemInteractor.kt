@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -44,6 +45,7 @@ class RollerItemInteractor : ItemInteractor() {
 
                 if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
                     room.sendHabboResponse(Outgoing.ROOM_ROLLER, copy, frontVector3, it.virtualID, roomItem.id, -1)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_ROLLER, copy, frontVector3, it.virtualID, roomItem.id, -1)
 
                     reCycle = false
                 }

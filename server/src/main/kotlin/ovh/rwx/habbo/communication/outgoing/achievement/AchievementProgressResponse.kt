@@ -21,12 +21,15 @@ package ovh.rwx.habbo.communication.outgoing.achievement
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.achievement.AchievementUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class AchievementProgressResponse {
     @Response(Outgoing.ACHIEVEMENT_PROGRESS)
+    @ResponseR63A(OutgoingR63A.ACHIEVEMENT_PROGRESS)
     fun response(habboResponse: HabboResponse, achievementUser: AchievementUser) {
         habboResponse.apply {
             serialize(achievementUser)

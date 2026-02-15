@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.achievement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
@@ -150,16 +151,27 @@ class AchievementManager {
 
             habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, 0)
             habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
-            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+
+            if (habboSession.release == "R63A") {
+                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
+                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
+            } else {
+                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
+                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+            }
+            
             habboSession.sendHabboResponse(
-                Outgoing.USER_ACHIEVEMENT,
+                Outgoing.ACHIEVEMENT_LIST,
                 habboSession.userInformation.achievementUsers,
                 achievementGroups,
                 groupedAchievements
             )
         } else {
-            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+            if (habboSession.release == "R63A") {
+                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
+            } else {
+                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+            }
         }
     }
 

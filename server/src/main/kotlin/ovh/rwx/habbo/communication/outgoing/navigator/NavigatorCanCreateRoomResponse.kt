@@ -17,21 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSettingsUpdatedResponse {
-    @Response(Outgoing.ROOM_SETTINGS_SAVED, Outgoing.ROOM_INFO_UPDATED)
-    @ResponseR63A(OutgoingR63A.ROOM_SETTINGS_SAVED)
-    fun response(habboResponse: HabboResponse, roomId: Int) {
+class NavigatorCanCreateRoomResponse {
+    @ResponseR63A(OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM)
+    fun response(habboResponse: HabboResponse, cannotCreate: Boolean, maxRooms: Int) {
         habboResponse.apply {
-            writeInt(roomId)
+            writeBoolean(cannotCreate) // false = pode criar, true = não pode
+            writeInt(maxRooms)
         }
     }
 }
