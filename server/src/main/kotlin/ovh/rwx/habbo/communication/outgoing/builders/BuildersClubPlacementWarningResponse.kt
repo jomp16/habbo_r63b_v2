@@ -17,31 +17,41 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.misc
+package ovh.rwx.habbo.communication.outgoing.builders
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class MiscGenericErrorResponse {
-    @Response(Outgoing.MISC_GENERIC_ERROR)
-    @ResponseR63A(OutgoingR63A.MISC_GENERIC_ERROR)
-    fun response(habboResponse: HabboResponse, miscGenericError: MiscGenericError) {
+class BuildersClubPlacementWarningResponse {
+    @Response(Outgoing.BUILDERS_PLACE_ITEM_WARNING)
+    fun response(habboResponse: HabboResponse, data: BuildersClubPlacementData) {
         habboResponse.apply {
-            writeInt(miscGenericError.errorCode)
+            writeInt(data.warningType)
+            writeInt(data.pageId)
+            writeInt(data.offerId)
+            writeUTF(data.extraParam)
+
+            if (data.isWall) {
+                writeUTF(data.wallLocation)
+            } else {
+                writeInt(data.x)
+                writeInt(data.y)
+                writeInt(data.direction)
+            }
         }
     }
 
-    enum class MiscGenericError(val errorCode: Int) {
-        WRONG_PASSWORD(-100002), // did_not_receive_code_link = true and retry_wait_label = false
-        ROOM_KICKED(4008), // room.error.kicked
-        NEED_TO_BE_VIP(4009), // navigator.alert.need.to.be.vip
-        INVALID_ROOM_NAME(4010), // navigator.alert.invalid_room_name
-        CANNOT_PERM_BAN(4011), // navigator.alert.cannot_perm_ban
-        ROOM_IN_MAINTENANCE(4013), // navigator.alert.room_in_maintenance
-        BUILDERS_CLUB_ROOM_LOCKED(-400) // builders_club.visit_denied_for_visitor
-    }
+    data class BuildersClubPlacementData(
+        val warningType: Int,
+        val pageId: Int = 0,
+        val offerId: Int = 0,
+        val extraParam: String = "",
+        val x: Int = 0,
+        val y: Int = 0,
+        val direction: Int = 0,
+        val wallLocation: String = "",
+        val isWall: Boolean = false
+    )
 }

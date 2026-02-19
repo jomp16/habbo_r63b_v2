@@ -34,6 +34,7 @@ import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.subscription.ClubType
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 
@@ -120,16 +121,10 @@ class CatalogManager {
     }
 
     fun purchaseHC(habboSession: HabboSession, itemId: Int) {
-        if (!catalogClubOffers.any { it.itemId == itemId }) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
-
-            return
-        }
-        val clubOffer = catalogClubOffers.find { it.itemId == itemId }
+        val clubOffer = catalogClubOffers.find { it.itemId == itemId && it.clubType == ClubType.HABBO_CLUB }
 
         if (clubOffer == null) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
-
             return
         }
 
@@ -145,11 +140,45 @@ class CatalogManager {
             else -> habboSession.userInformation.vipPoints -= clubOffer.points
         }
 
-        habboSession.habboSubscription.addOrExtend(clubOffer.months)
+        habboSession.habboSubscription.addOrExtendHabboClub(clubOffer.months)
 
         habboSession.updateAllCurrencies()
+    }
 
-        return
+    fun purchaseBuildersClub(habboSession: HabboSession, itemId: Int) {
+        val clubOffer = catalogClubOffers.find { it.itemId == itemId && it.clubType == ClubType.BUILDERS_CLUB }
+
+        if (clubOffer == null) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+            return
+        }
+
+        // Trial so pode ser usado uma vez (usuarios que nao tem BC)
+        if (clubOffer.credits == 0 && clubOffer.points == 0 && habboSession.habboSubscription.hasBuildersClub) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+            return
+        }
+
+        if (habboSession.userInformation.credits < clubOffer.credits ||
+            (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
+            else habboSession.userInformation.vipPoints < clubOffer.points)
+        ) return
+
+        habboSession.userInformation.credits -= clubOffer.credits
+
+        when (clubOffer.pointsType) {
+            0 -> habboSession.userInformation.pixels -= clubOffer.points
+            else -> habboSession.userInformation.vipPoints -= clubOffer.points
+        }
+
+        // Ao extender, usar o maior itemsLimit entre atual e novo
+        val newItemsLimit = maxOf(
+            habboSession.habboSubscription.buildersItemsLimit,
+            clubOffer.itemsLimit
+        )
+        habboSession.habboSubscription.addOrExtendBuildersClub(clubOffer.months, newItemsLimit)
+
+        habboSession.updateAllCurrencies()
     }
 
     // todo: add gift support
@@ -239,7 +268,14 @@ class CatalogManager {
         }
         val userItems = ItemDao.addItems(
             habboSession.userInformation.id,
-            furnishingToPurchase.map { ItemPurchaseData(it.furnishing, it.extraData, it.limitedNumber > 0) })
+            furnishingToPurchase.map {
+                ItemPurchaseData(
+                    it.furnishing,
+                    it.extraData,
+                    it.limitedNumber > 0,
+                    buildersClub = false
+                )
+            })
 
         furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
             ItemDao.addLimitedItem(

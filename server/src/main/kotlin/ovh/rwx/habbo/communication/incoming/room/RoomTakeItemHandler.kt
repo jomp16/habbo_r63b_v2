@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -41,8 +42,20 @@ class RoomTakeItemHandler {
 
         if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
-        if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
-            ItemDao.addRoomItemInventory(mutableListOf(roomItem))
+        // Itens BC: apenas o dono do quarto pode remover
+        if (roomItem.buildersClub) {
+            if (habboSession.currentRoom!!.roomData.ownerId != habboSession.userInformation.id) {
+                return
+            }
+            if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
+                ItemDao.deleteItems(listOf(roomItem.id))
+                habboSession.habboSubscription.decrementBuildersItemsUsed()
+                habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
+            }
+        } else {
+            if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
+                ItemDao.addRoomItemInventory(mutableListOf(roomItem))
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,6 +31,6 @@ class SubscriptionInfoHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.habboSubscription.load()
 
-        habboSession.sendHabboResponse(Outgoing.HABBO_CLUB_INFO, habboSession.habboSubscription.subscription)
+        habboSession.sendHabboResponse(Outgoing.HABBO_CLUB_INFO, habboSession.habboSubscription.habboClubSubscription)
     }
 }

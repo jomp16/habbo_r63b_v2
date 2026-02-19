@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -62,7 +62,18 @@ class RoomItemOpenGiftHandler {
         val shouldAddToRoom = giftData.furnishing.type == ItemType.FLOOR && giftData.amount == 1
 
         if (shouldAddToRoom) {
-            val roomItem = RoomItem(giftRoomItem.id, giftRoomItem.userId, giftRoomItem.roomId, giftData.itemName, giftData.extradata, Vector3(0, 0, 0.toDouble()), 0, "", giftData.limited)
+            val roomItem = RoomItem(
+                giftRoomItem.id,
+                giftRoomItem.userId,
+                giftRoomItem.roomId,
+                giftData.itemName,
+                giftData.extradata,
+                Vector3(0, 0, 0.toDouble()),
+                0,
+                "",
+                giftData.limited,
+                buildersClub = false
+            )
 
             habboSession.currentRoom!!.setFloorItem(roomItem, giftRoomItem.position.vector2, giftRoomItem.rotation, habboSession.roomUser)
         } else if (giftData.furnishing.interactionType == InteractionType.TELEPORT) {
@@ -71,7 +82,12 @@ class RoomItemOpenGiftHandler {
             val itemPurchaseDatas = mutableListOf<ItemPurchaseData>()
 
             repeat(giftData.amount) {
-                itemPurchaseDatas += ItemPurchaseData(giftData.furnishing, giftData.extradata, giftData.limited)
+                itemPurchaseDatas += ItemPurchaseData(
+                    giftData.furnishing,
+                    giftData.extradata,
+                    giftData.limited,
+                    buildersClub = false
+                )
             }
 
             habboSession.habboInventory.addItems(ItemDao.addItems(habboSession.userInformation.id, itemPurchaseDatas))

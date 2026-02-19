@@ -22,6 +22,7 @@ SELECT `i`.`id`,
        `i`.`room_id`,
        `i`.`item_name`,
        `i`.`extra_data`,
+       `i`.`is_builders_club`,
        (`il`.`id` is not null) as `is_limited`
 FROM `items` `i`
          left join `items_limited` `il` on `i`.`id` = `il`.`item_id`

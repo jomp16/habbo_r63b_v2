@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -181,7 +181,18 @@ class ItemManager {
         return list
     }
 
-    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(userItem.id, userItem.userId, roomId, userItem.itemName, userItem.extraData, Vector3(0, 0, 0.toDouble()), 0, "", userItem.limited)
+    fun getRoomItemFromUserItem(roomId: Int, userItem: UserItem): RoomItem = RoomItem(
+        userItem.id,
+        userItem.userId,
+        roomId,
+        userItem.itemName,
+        userItem.extraData,
+        Vector3(0, 0, 0.toDouble()),
+        0,
+        "",
+        userItem.limited,
+        userItem.buildersClub
+    )
 
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
 

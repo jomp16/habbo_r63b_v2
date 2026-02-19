@@ -52,7 +52,7 @@ class CatalogPageHandler {
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
             val habboAir = false
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, chosenOfferId, habboAir)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, category, chosenOfferId, habboAir)
         }
     }
 
@@ -64,7 +64,7 @@ class CatalogPageHandler {
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
             val habboAir = true
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, chosenOfferId, habboAir)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, category, chosenOfferId, habboAir)
         }
     }
 
@@ -75,7 +75,7 @@ class CatalogPageHandler {
         val category = "NORMAL"
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, chosenOfferId)
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, category, chosenOfferId)
         }
     }
 }

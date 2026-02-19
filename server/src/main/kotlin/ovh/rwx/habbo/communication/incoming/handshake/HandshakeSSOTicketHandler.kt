@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -81,7 +81,7 @@ class HandshakeSSOTicketHandler {
             habboSession.userStats.firstLoginOfDay
         )
         habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
+        habboSession.sendHabboResponse(Outgoing.BUILDERS_SUBSCRIPTION_STATUS, habboSession.habboSubscription)
         habboSession.sendHabboResponse(
             Outgoing.CAMPAIGN_CALENDAR,
             "easter21",
@@ -168,7 +168,7 @@ class HandshakeSSOTicketHandler {
             habboSession.userStats.firstLoginOfDay
         )
         habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
+        habboSession.sendHabboResponse(Outgoing.BUILDERS_SUBSCRIPTION_STATUS, habboSession.habboSubscription)
         habboSession.sendHabboResponse(
             Outgoing.CAMPAIGN_CALENDAR,
             "easter21",

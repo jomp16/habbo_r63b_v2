@@ -70,7 +70,7 @@ class HabboGame {
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }
-                .forEach { HabboServer.applicationScope.launch { it.habboSubscription.clearSubscription() } }
+                .forEach { HabboServer.applicationScope.launch { it.habboSubscription.clearHabboClub() } }
         }, 0, 1, TimeUnit.MINUTES)
 
         if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
