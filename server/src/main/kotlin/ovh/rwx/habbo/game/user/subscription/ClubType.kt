@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,18 +17,9 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.game.user.subscription
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-
-@Suppress("unused", "UNUSED_PARAMETER")
-class CatalogBuildersBorrowedResponse {
-    @Response(Outgoing.CATALOG_BUILDERS_BORROWED)
-    fun response(habboResponse: HabboResponse, borrowedItems: Int) {
-        habboResponse.apply {
-            writeInt(borrowedItems)
-        }
-    }
+enum class ClubType {
+    HABBO_CLUB,
+    BUILDERS_CLUB
 }

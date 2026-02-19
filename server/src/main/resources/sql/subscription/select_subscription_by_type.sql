@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,21 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.builder
-
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-
-@Suppress("unused", "UNUSED_PARAMETER")
-class BuilderClubMembershipResponse {
-    @Response(Outgoing.BUILDERS_CLUB_MEMBERSHIP)
-    fun response(habboResponse: HabboResponse) {
-        habboResponse.apply {
-            writeInt(0) // days membership
-            writeInt(100) // items to take
-            writeInt(2000000) // ?
-            writeInt(0) // ?
-        }
-    }
-}
+SELECT *
+FROM `users_subscriptions`
+WHERE `user_id` = :user_id
+  AND `club_type` = :club_type

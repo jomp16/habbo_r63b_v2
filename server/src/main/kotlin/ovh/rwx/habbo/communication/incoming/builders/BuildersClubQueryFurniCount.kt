@@ -17,20 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.subscription
+package ovh.rwx.habbo.communication.incoming.builders
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class SubscriptionStatusHandler {
-    @Handler(Incoming.SUBSCRIPTION_STATUS)
-    @HandlerR63A(IncomingR63A.SUBSCRIPTION_STATUS)
+class BuildersClubQueryFurniCount {
+    @Handler(Incoming.BUILDERS_QUERY_FURNI_COUNT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.habboSubscription.updateHabboClubStatus()
+        habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
     }
 }

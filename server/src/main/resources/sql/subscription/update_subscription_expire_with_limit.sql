@@ -17,20 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.subscription
-
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.game.user.HabboSession
-
-@Suppress("unused", "UNUSED_PARAMETER")
-class SubscriptionStatusHandler {
-    @Handler(Incoming.SUBSCRIPTION_STATUS)
-    @HandlerR63A(IncomingR63A.SUBSCRIPTION_STATUS)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.habboSubscription.updateHabboClubStatus()
-    }
-}
+UPDATE `users_subscriptions`
+SET `expire`      = :expire,
+    `items_limit` = :items_limit
+WHERE `id` = :id

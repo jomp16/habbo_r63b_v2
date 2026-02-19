@@ -55,6 +55,13 @@ class CatalogPurchaseHandler {
 
             return
         }
+
+        if (catalogPage?.pageLayout == "builders_club_frontpage" || catalogPage?.pageLayout == "builders_club_frontpage_normal") {
+            // purchase Builders Club
+            HabboServer.habboGame.catalogManager.purchaseBuildersClub(habboSession, itemId)
+
+            return
+        }
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == itemId }
 
         if (catalogItem == null) {
@@ -86,6 +93,13 @@ class CatalogPurchaseHandler {
         if (catalogPage?.pageLayout == "vip_buy") {
             // purchase HC
             HabboServer.habboGame.catalogManager.purchaseHC(habboSession, catalogItemId)
+
+            return
+        }
+
+        if (catalogPage?.pageLayout == "builders_club_frontpage" || catalogPage?.pageLayout == "builders_club_frontpage_normal") {
+            // purchase Builders Club
+            HabboServer.habboGame.catalogManager.purchaseBuildersClub(habboSession, catalogItemId)
 
             return
         }

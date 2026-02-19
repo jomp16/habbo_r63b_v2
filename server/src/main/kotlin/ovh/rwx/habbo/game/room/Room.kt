@@ -72,6 +72,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem>
         get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
+    val hasBuildersClubItems: Boolean
+        get() = roomItems.values.any { it.buildersClub && it.userId == roomData.ownerId }
     val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
     val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap() }

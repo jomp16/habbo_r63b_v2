@@ -61,7 +61,7 @@ data class CatalogPage(
             writeInt(if (pageLayout == "category") -1 else id)
             writeUTF(codename)
 
-            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && parentId != -1) writeUTF(
+            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && (parentId != -1 && parentId != -2)) writeUTF(
                 "$name (${catalogItems.size})"
             )
             else writeUTF(name)

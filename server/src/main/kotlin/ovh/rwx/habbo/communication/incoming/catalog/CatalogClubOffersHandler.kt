@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,7 +31,11 @@ import java.time.LocalDateTime
 class CatalogClubOffersHandler {
     @Handler(Incoming.CATALOG_HABBO_CLUB_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.CATALOG_HABBO_CLUB_PAGE, habboRequest.readInt(), HabboServer.habboGame.catalogManager.catalogClubOffers, habboSession.habboSubscription.subscription?.expire
+        habboSession.sendHabboResponse(
+            Outgoing.CATALOG_HABBO_CLUB_PAGE,
+            habboRequest.readInt(),
+            HabboServer.habboGame.catalogManager.catalogClubOffers,
+            habboSession.habboSubscription.habboClubSubscription?.expire
                 ?: LocalDateTime.now())
     }
 }

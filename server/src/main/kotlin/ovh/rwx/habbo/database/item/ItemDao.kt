@@ -82,7 +82,8 @@ object ItemDao {
                         Vector3(it.int("x"), it.int("y"), it.double("z")),
                         it.int("rot"),
                         it.string("wall_pos"),
-                        it.boolean("is_limited")
+                    it.boolean("is_limited"),
+                    it.boolean("is_builders_club")
                 )
             }.associateBy { it.id }
         }
@@ -100,7 +101,8 @@ object ItemDao {
                         it.int("user_id"),
                         it.string("item_name"),
                         it.string("extra_data"),
-                        it.boolean("is_limited")
+                    it.boolean("is_limited"),
+                    it.boolean("is_builders_club")
                 )
             }.associateBy { it.id }
         }
@@ -119,7 +121,8 @@ object ItemDao {
                     it.int("user_id"),
                     it.string("item_name"),
                     it.string("extra_data"),
-                    it.boolean("is_limited")
+                    it.boolean("is_limited"),
+                    it.boolean("is_builders_club")
                 )
             }
         }
@@ -141,7 +144,8 @@ object ItemDao {
                         it.int("user_id"),
                         it.string("item_name"),
                         it.string("extra_data"),
-                        it.boolean("is_limited")
+                        it.boolean("is_limited"),
+                        it.boolean("is_builders_club")
                     ),
                     it.intOrNull("room_id")
                 )
@@ -318,19 +322,30 @@ object ItemDao {
                                 "user_id" to userId,
                                 "item_name" to itemPurchaseData.furnishing.itemName,
                                 "extra_data" to itemPurchaseData.extraData,
-                                "wall_pos" to ""
+                            "wall_pos" to "",
+                            "is_builders_club" to itemPurchaseData.buildersClub
                         )
                     }
             )
         }
 
         return itemIds.mapIndexed { i, id ->
-            UserItem(id, userId, itemPurchaseDatas[i].furnishing.itemName, itemPurchaseDatas[i].extraData, itemPurchaseDatas[i].limited)
+            UserItem(
+                id,
+                userId,
+                itemPurchaseDatas[i].furnishing.itemName,
+                itemPurchaseDatas[i].extraData,
+                itemPurchaseDatas[i].limited,
+                itemPurchaseDatas[i].buildersClub
+            )
         }
     }
 
     fun addGiftItem(userId: Int, giftFurnishing: Furnishing, amount: Int, giftExtradata: String, furnishing: Furnishing, extraData: String, limitedNumber: Int = 0, limitedTotal: Int = 0): UserItem {
-        val giftUserItem = addItems(userId, listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0))).first()
+        val giftUserItem = addItems(
+            userId,
+            listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0, buildersClub = false))
+        ).first()
 
         if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
 
@@ -401,7 +416,8 @@ object ItemDao {
                         it.userId,
                         it.itemName,
                         it.extraData,
-                        it.limited
+                    it.limited,
+                    it.buildersClub
                 )
             })
         }
@@ -411,7 +427,8 @@ object ItemDao {
 }
 
 data class ItemPurchaseData(
-        val furnishing: Furnishing,
-        val extraData: String,
-        val limited: Boolean
+    val furnishing: Furnishing,
+    val extraData: String,
+    val limited: Boolean,
+    val buildersClub: Boolean,
 )

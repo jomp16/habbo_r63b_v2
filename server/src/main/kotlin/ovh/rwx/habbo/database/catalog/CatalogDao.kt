@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import ovh.rwx.habbo.game.catalog.CatalogDeal
 import ovh.rwx.habbo.game.catalog.CatalogItem
 import ovh.rwx.habbo.game.catalog.CatalogPage
+import ovh.rwx.habbo.game.user.subscription.ClubType
 import java.util.concurrent.atomic.AtomicInteger
 
 object CatalogDao {
@@ -87,11 +88,13 @@ object CatalogDao {
                 it.int("id"),
                 it.int("item_id"),
                 it.string("name").trim(),
+                ClubType.valueOf(it.string("club_type").uppercase()),
                 it.int("months"),
                 it.int("credits"),
                 it.int("points"),
                 it.int("points_type"),
-                it.boolean("giftable")
+                it.boolean("giftable"),
+                it.int("items_limit")
             )
         }
     }

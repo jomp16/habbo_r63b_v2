@@ -36,15 +36,16 @@ import ovh.rwx.habbo.util.Vector3
 import java.io.Serializable
 
 data class RoomItem(
-        val id: Int,
-        var userId: Int,
-        var roomId: Int,
-        val itemName: String,
-        var extraData: String,
-        var position: Vector3,
-        var rotation: Int,
-        var wallPosition: String,
-        val limited: Boolean
+    val id: Int,
+    var userId: Int,
+    var roomId: Int,
+    val itemName: String,
+    var extraData: String,
+    var position: Vector3,
+    var rotation: Int,
+    var wallPosition: String,
+    val limited: Boolean,
+    val buildersClub: Boolean,
 ) : IHabboResponseSerialize, Serializable {
     var magicRemove: Boolean = false
     private val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
@@ -107,7 +108,7 @@ data class RoomItem(
 
             writeInt(-1) // seems this is related to rentals (time in seconds)
             writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
-            writeInt(userId) // todo: is builder ? -12345678 : userId
+            writeInt(if (buildersClub) -12345678 else userId)
         }
     }
 

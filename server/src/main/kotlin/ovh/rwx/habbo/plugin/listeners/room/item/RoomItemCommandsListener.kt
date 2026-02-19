@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -66,12 +66,22 @@ class RoomItemCommandsListener : PluginListener() {
 
         if (username == null) {
             // give item to user calling command
-            roomUser.habboSession.habboInventory.addItems(ItemDao.addItems(roomUser.habboSession.userInformation.id, listOf(ItemPurchaseData(furnishing, "", false))))
+            roomUser.habboSession.habboInventory.addItems(
+                ItemDao.addItems(
+                    roomUser.habboSession.userInformation.id,
+                    listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
+                )
+            )
         } else {
             val userHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)
 
             if (userHabboSession != null) {
-                userHabboSession.habboInventory.addItems(ItemDao.addItems(userHabboSession.userInformation.id, listOf(ItemPurchaseData(furnishing, "", false))))
+                userHabboSession.habboInventory.addItems(
+                    ItemDao.addItems(
+                        userHabboSession.userInformation.id,
+                        listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
+                    )
+                )
 
                 return
             }
@@ -79,7 +89,10 @@ class RoomItemCommandsListener : PluginListener() {
             val userId = UserInformationDao.getUserInformationByUsername(username)?.id
 
             if (userId != null) {
-                ItemDao.addItems(userId, listOf(ItemPurchaseData(furnishing, "", false)))
+                ItemDao.addItems(
+                    userId,
+                    listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
+                )
 
                 return
             }

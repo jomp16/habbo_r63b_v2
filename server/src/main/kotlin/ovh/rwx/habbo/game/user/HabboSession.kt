@@ -33,6 +33,7 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
@@ -416,7 +417,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         // ACH_BasicClub: meses de club ativo (para usuários que já têm club)
         if (habboSubscription.validUserSubscription) {
             val totalMonths = ChronoUnit.MONTHS.between(
-                habboSubscription.subscription?.activated,
+                habboSubscription.habboClubSubscription?.activated,
                 LocalDateTime.now()
             ).toInt()
             HabboServer.habboGame.achievementManager.progress(this, "ACH_BasicClub", totalMonths, accumulate = false)
@@ -424,10 +425,19 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
             // ACH_HC: dias de club ativo
             val totalDays = ChronoUnit.DAYS.between(
-                habboSubscription.subscription?.activated,
+                habboSubscription.habboClubSubscription?.activated,
                 LocalDateTime.now()
             ).toInt()
             HabboServer.habboGame.achievementManager.progress(this, "ACH_HC", totalDays, accumulate = false)
+        }
+
+        // ACH_BuildersClub: dias de Builders Club ativo
+        if (habboSubscription.hasBuildersClub) {
+            val totalDays = ChronoUnit.DAYS.between(
+                habboSubscription.buildersClubSubscription?.activated,
+                LocalDateTime.now()
+            ).toInt()
+            HabboServer.habboGame.achievementManager.progress(this, "ACH_BuildersClub", totalDays, accumulate = false)
         }
     }
 
@@ -457,6 +467,26 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
         currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
+
+        if (room.hasBuildersClubItems && userInformation.id != room.roomData.ownerId) {
+            val ownerHasBuildersClub = SubscriptionDao.hasActiveBuildersClub(room.roomData.ownerId)
+            if (!ownerHasBuildersClub) {
+                if (release != "R63A") {
+                    sendHabboResponse(
+                        Outgoing.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
+                    )
+                    sendHabboResponse(Outgoing.ROOM_EXIT)
+                } else {
+                    sendHabboResponse(
+                        OutgoingR63A.MISC_GENERIC_ERROR,
+                        MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
+                    )
+                    sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+                }
+                return
+            }
+        }
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 

@@ -194,7 +194,10 @@ class CameraManager {
                 "t" to "${TimeUnit.SECONDS.toMillis(createdAt.atZone(ZoneOffset.systemDefault()).toEpochSecond())}"
         )
         val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
-        val userItem = ItemDao.addItems(habboSession.userInformation.id, listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, false))).first()
+        val userItem = ItemDao.addItems(
+            habboSession.userInformation.id,
+            listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, limited = false, buildersClub = false))
+        ).first()
 
         habboSession.habboInventory.addItems(listOf(userItem))
 

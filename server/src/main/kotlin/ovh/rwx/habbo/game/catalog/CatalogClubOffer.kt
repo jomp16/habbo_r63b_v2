@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,13 +19,17 @@
 
 package ovh.rwx.habbo.game.catalog
 
+import ovh.rwx.habbo.game.user.subscription.ClubType
+
 data class CatalogClubOffer(
         val id: Int,
         val itemId: Int,
         val name: String,
+        val clubType: ClubType,
         val months: Int,
         val credits: Int,
         val points: Int,
         val pointsType: Int,
-        val giftable: Boolean
+        val giftable: Boolean,
+        val itemsLimit: Int
 )

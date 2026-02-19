@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,10 @@ import java.time.LocalDateTime
 
 data class Subscription(
         val id: Int,
+        val userId: Int,
+        val clubType: ClubType,
         var activated: LocalDateTime,
-        var expire: LocalDateTime
+        var expire: LocalDateTime,
+        var itemsLimit: Int = 0,
+        var itemsUsed: Int = 0
 )
