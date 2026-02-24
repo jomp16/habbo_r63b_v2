@@ -17,15 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger
+package ovh.rwx.habbo.game.room.games
 
-import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredContext
-import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.room.Room
+enum class RoomGameClockAdjustMode(val code: Int) {
+    /** Aumentar tempo */
+    INCREASE(0),
 
-abstract class WiredTrigger(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    abstract fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean
+    /** Diminuir tempo */
+    DECREASE(1),
 
-    open fun resetTriggered() {}
+    /** Configurar tempo exato */
+    SET(2);
+
+    companion object {
+        fun fromCode(code: Int) = entries.find { it.code == code } ?: SET
+    }
 }

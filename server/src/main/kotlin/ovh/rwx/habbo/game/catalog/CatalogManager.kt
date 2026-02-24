@@ -32,11 +32,8 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.subscription.ClubType
-import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -275,7 +272,8 @@ class CatalogManager {
                     it.limitedNumber > 0,
                     buildersClub = false
                 )
-            })
+            },
+        )
 
         furnishingToPurchase.filter { it.limitedNumber > 0 }.forEach {
             ItemDao.addLimitedItem(
@@ -283,74 +281,6 @@ class CatalogManager {
                 it.limitedNumber,
                 catalogItem.limitedTotal
             )
-        }
-        // todo: move queries to ItemDao
-        HabboServer.database {
-            val copyUserItems = userItems.toMutableList()
-
-            userItems.forEach { userItem ->
-                if (!copyUserItems.contains(userItem)) return@forEach
-
-                when {
-                    userItem.furnishing.interactionType == InteractionType.TELEPORT -> {
-                        val teleporterItem =
-                            copyUserItems.find { it.furnishing == userItem.furnishing && it != userItem }
-                                ?: return@forEach
-
-                        copyUserItems.remove(teleporterItem)
-
-                        batchInsertAndGetGeneratedKeys(
-                            "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
-                            listOf(
-                                mapOf(
-                                    "teleport_one_id" to userItem.id,
-                                    "teleport_two_id" to teleporterItem.id
-                                ),
-                                mapOf(
-                                    "teleport_two_id" to userItem.id,
-                                    "teleport_one_id" to teleporterItem.id
-                                )
-                            )
-                        )
-
-                        HabboServer.habboGame.itemManager.teleportLinks[userItem.id] = teleporterItem.id
-                        HabboServer.habboGame.itemManager.roomTeleportLinks[userItem.id] = 0
-                        HabboServer.habboGame.itemManager.teleportLinks[teleporterItem.id] = userItem.id
-                        HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
-                    }
-
-                    userItem.furnishing.interactionType.name.startsWith("WIRED_") -> {
-                        val defaultWiredData =
-                            HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
-                                ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
-                        insertAndGetGeneratedKey(
-                            "INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
-                            mapOf(
-                                "item_id" to userItem.id,
-                                "delay" to defaultWiredData.delay,
-                                "items" to defaultWiredData.items.joinToString(","),
-                                "message" to defaultWiredData.message,
-                                "options" to defaultWiredData.options.joinToString(","),
-                                "extradata" to defaultWiredData.extradata
-                            )
-                        )
-                    }
-
-                    userItem.furnishing.interactionType == InteractionType.DIMMER -> {
-                        insertAndGetGeneratedKey(
-                            "INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
-                            mapOf(
-                                "item_id" to userItem.id,
-                                "enabled" to false,
-                                "current_preset" to 1,
-                                "preset_one" to "#000000,255,0",
-                                "preset_two" to "#000000,255,0",
-                                "preset_three" to "#000000,255,0"
-                            )
-                        )
-                    }
-                }
-            }
         }
 
         habboSession.habboInventory.addItems(userItems)

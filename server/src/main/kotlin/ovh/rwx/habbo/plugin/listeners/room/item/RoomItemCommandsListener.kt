@@ -20,6 +20,8 @@
 package ovh.rwx.habbo.plugin.listeners.room.item
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.wired.WiredRewardNotificationResponse
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.database.user.UserInformationDao
@@ -64,39 +66,14 @@ class RoomItemCommandsListener : PluginListener() {
             return
         }
 
-        if (username == null) {
-            // give item to user calling command
-            roomUser.habboSession.habboInventory.addItems(
-                ItemDao.addItems(
-                    roomUser.habboSession.userInformation.id,
-                    listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
-                )
-            )
-        } else {
-            val userHabboSession = HabboServer.habboSessionManager.getHabboSessionByUsername(username)
+        val extraData =
+            HabboServer.habboGame.itemManager.correctExtradataCatalog(roomUser.habboSession, "", furnishing) ?: ""
+        val userId =
+            if (username == null) roomUser.habboSession.userInformation.id else UserInformationDao.getUserInformationByUsername(
+                username
+            )?.id
 
-            if (userHabboSession != null) {
-                userHabboSession.habboInventory.addItems(
-                    ItemDao.addItems(
-                        userHabboSession.userInformation.id,
-                        listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
-                    )
-                )
-
-                return
-            }
-
-            val userId = UserInformationDao.getUserInformationByUsername(username)?.id
-
-            if (userId != null) {
-                ItemDao.addItems(
-                    userId,
-                    listOf(ItemPurchaseData(furnishing, "", limited = false, buildersClub = false))
-                )
-
-                return
-            }
-
+        if (userId == null) {
             roomUser.chat(
                 roomUser.virtualID,
                 "We couldn't find the user $username!",
@@ -104,6 +81,26 @@ class RoomItemCommandsListener : PluginListener() {
                 RoomChatType.WHISPER,
                 true
             )
+
+            return
+        }
+
+        val userItems = ItemDao.addItems(
+            userId,
+            listOf(ItemPurchaseData(furnishing, extraData, limited = false, buildersClub = false)),
+        )
+
+        HabboServer.habboSessionManager.getHabboSessionById(userId)?.let { habboSession ->
+            habboSession.habboInventory.addItems(userItems)
+
+            if (habboSession.release == "R63A") {
+                habboSession.sendNotification("You got a new item, check your inventory.")
+            } else {
+                habboSession.sendHabboResponse(
+                    Outgoing.WIRED_REWARD_NOTIFICATION,
+                    WiredRewardNotificationResponse.WiredRewardNotification.ITEM_REWARDED
+                )
+            }
         }
     }
 }

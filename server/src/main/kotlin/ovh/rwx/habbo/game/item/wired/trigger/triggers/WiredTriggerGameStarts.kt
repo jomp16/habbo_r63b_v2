@@ -17,15 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger
+package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
+import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
-import ovh.rwx.habbo.game.item.wired.WiredItem
+import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
-abstract class WiredTrigger(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    abstract fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean
+@WiredItemInteractor(InteractionType.WIRED_TRIGGER_GAME_STARTS)
+class WiredTriggerGameStarts(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+    override fun code() = WiredTriggerType.GAME_STARTS.code
 
-    open fun resetTriggered() {}
+    override fun setData() {}
+
+    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean = true
 }

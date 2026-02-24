@@ -43,45 +43,46 @@ object ItemDao {
                 val itemType = ItemType.fromString(it.string("type"))
                 val interactionType = InteractionType.fromString(it.string("interaction_type"))
 
-                Furnishing(itemName,
-                        furniXMLInfo.spriteId,
-                        furniXMLInfo.offerId,
-                        itemType,
-                        furniXMLInfo.xDim,
-                        furniXMLInfo.yDim,
-                        it.string("stack_height").split(';').map { s -> s.trim().toDouble() },
-                        it.boolean("can_stack"),
-                        furniXMLInfo.canSitOn,
-                        furniXMLInfo.canLayOn,
-                        interactionType != InteractionType.GATE && interactionType != InteractionType.TELEPORT && furniXMLInfo.canStandOn,
-                        it.boolean("allow_recycle"),
-                        it.boolean("allow_trade"),
-                        it.boolean("allow_marketplace_sell"),
-                        it.boolean("allow_gift"),
-                        it.boolean("allow_inventory_stack"),
-                        interactionType,
-                        it.int("interaction_modes_count"),
-                        it.string("vending_ids").split(',').map { s -> s.trim().toInt() })
+                Furnishing(
+                    itemName,
+                    furniXMLInfo.spriteId,
+                    furniXMLInfo.offerId,
+                    itemType,
+                    furniXMLInfo.xDim,
+                    furniXMLInfo.yDim,
+                    it.string("stack_height").split(';').map { s -> s.trim().toDouble() },
+                    it.boolean("can_stack"),
+                    furniXMLInfo.canSitOn,
+                    furniXMLInfo.canLayOn,
+                    interactionType != InteractionType.GATE && interactionType != InteractionType.TELEPORT && furniXMLInfo.canStandOn,
+                    it.boolean("allow_recycle"),
+                    it.boolean("allow_trade"),
+                    it.boolean("allow_marketplace_sell"),
+                    it.boolean("allow_gift"),
+                    it.boolean("allow_inventory_stack"),
+                    interactionType,
+                    it.string("vending_ids").split(',').map { s -> s.trim().toInt() })
             }
         }
     }
 
     fun getRoomItems(roomId: Int): Map<Int, RoomItem> {
         return HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/items/room/select_room_items.sql").readText(),
-                    mapOf(
-                            "room_id" to roomId
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/items/room/select_room_items.sql").readText(),
+                mapOf(
+                    "room_id" to roomId
+                )
             ) {
                 RoomItem(
-                        it.int("id"),
-                        it.int("user_id"),
-                        it.int("room_id"),
-                        it.string("item_name"),
-                        it.string("extra_data"),
-                        Vector3(it.int("x"), it.int("y"), it.double("z")),
-                        it.int("rot"),
-                        it.string("wall_pos"),
+                    it.int("id"),
+                    it.int("user_id"),
+                    it.int("room_id"),
+                    it.string("item_name"),
+                    it.string("extra_data"),
+                    Vector3(it.int("x"), it.int("y"), it.double("z")),
+                    it.int("rot"),
+                    it.string("wall_pos"),
                     it.boolean("is_limited"),
                     it.boolean("is_builders_club")
                 )
@@ -91,16 +92,17 @@ object ItemDao {
 
     fun getUserItems(userId: Int): Map<Int, UserItem> {
         return HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/items/user/select_user_items.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/items/user/select_user_items.sql").readText(),
+                mapOf(
+                    "user_id" to userId
+                )
             ) {
                 UserItem(
-                        it.int("id"),
-                        it.int("user_id"),
-                        it.string("item_name"),
-                        it.string("extra_data"),
+                    it.int("id"),
+                    it.int("user_id"),
+                    it.string("item_name"),
+                    it.string("extra_data"),
                     it.boolean("is_limited"),
                     it.boolean("is_builders_club")
                 )
@@ -156,16 +158,17 @@ object ItemDao {
     fun getLimitedData(itemId: Int): LimitedItemData? {
         if (!limitedItemDatas.containsKey(itemId)) {
             val limitedItemData = HabboServer.database {
-                select(javaClass.classLoader.getResource("sql/items/limited/select_limited.sql").readText(),
-                        mapOf(
-                                "item_id" to itemId
-                        )
+                select(
+                    javaClass.classLoader.getResource("sql/items/limited/select_limited.sql").readText(),
+                    mapOf(
+                        "item_id" to itemId
+                    )
                 ) {
                     LimitedItemData(
-                            it.int("id"),
-                            it.int("item_id"),
-                            it.int("limited_num"),
-                            it.int("limited_total")
+                        it.int("id"),
+                        it.int("item_id"),
+                        it.int("limited_num"),
+                        it.int("limited_total")
                     )
                 }.firstOrNull()
             }
@@ -179,17 +182,18 @@ object ItemDao {
     fun getWiredData(itemId: Int): WiredData? {
         if (!wiredDatas.containsKey(itemId)) {
             val wiredData = HabboServer.database {
-                select(javaClass.classLoader.getResource("sql/items/wired/select_wired_data.sql").readText(),
-                        mapOf(
-                                "item_id" to itemId
-                        )
+                select(
+                    javaClass.classLoader.getResource("sql/items/wired/select_wired_data.sql").readText(),
+                    mapOf(
+                        "item_id" to itemId
+                    )
                 ) {
                     WiredData(
-                            it.int("id"),
-                            it.int("delay"),
-                            it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
-                            it.string("message"),
-                            it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
+                        it.int("id"),
+                        it.int("delay"),
+                        it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
+                        it.string("message"),
+                        it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
                         it.string("extradata"),
                         it.boolean("is_filter"),
                         it.boolean("is_inverse"),
@@ -210,21 +214,23 @@ object ItemDao {
     }
 
     fun getLinkedTeleport(teleportIds: Set<Int>): List<Pair<Int, Int>> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/items/teleport/select_room_id_from_linked_teleport.sql").readText(),
-                mapOf(
-                        "teleport_ids" to teleportIds
-                )
+        select(
+            javaClass.classLoader.getResource("sql/items/teleport/select_room_id_from_linked_teleport.sql").readText(),
+            mapOf(
+                "teleport_ids" to teleportIds
+            )
         ) { it.int("teleport_id") to (it.intOrNull("room_id") ?: 0) }
     }
 
     fun deleteItems(itemIds: List<Int>) {
         HabboServer.database {
-            batchUpdate(javaClass.classLoader.getResource("sql/items/item/delete_item.sql").readText(),
-                    itemIds.map {
-                        mapOf(
-                                "id" to it
-                        )
-                    }
+            batchUpdate(
+                javaClass.classLoader.getResource("sql/items/item/delete_item.sql").readText(),
+                itemIds.map {
+                    mapOf(
+                        "id" to it
+                    )
+                }
             )
         }
     }
@@ -233,13 +239,14 @@ object ItemDao {
         if (roomItemsToRemove.isEmpty()) return
 
         HabboServer.database {
-            batchUpdate(javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
-                    roomItemsToRemove.map {
-                        mapOf(
-                                "room_id" to null,
-                                "id" to it.id
-                        )
-                    }
+            batchUpdate(
+                javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
+                roomItemsToRemove.map {
+                    mapOf(
+                        "room_id" to null,
+                        "id" to it.id
+                    )
+                }
             )
         }
     }
@@ -247,21 +254,22 @@ object ItemDao {
     fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
         if (!roomDimmers.containsKey(roomItem.id)) {
             val roomDimmer = HabboServer.database {
-                select(javaClass.classLoader.getResource("sql/items/dimmer/select_dimmer.sql").readText(),
-                        mapOf(
-                                "item_id" to roomItem.id
-                        )
+                select(
+                    javaClass.classLoader.getResource("sql/items/dimmer/select_dimmer.sql").readText(),
+                    mapOf(
+                        "item_id" to roomItem.id
+                    )
                 ) {
                     RoomDimmer(
-                            it.int("id"),
-                            roomItem,
-                            it.boolean("enabled"),
-                            it.int("current_preset"),
-                            mutableListOf(
-                                    RoomDimmer.generatePreset(it.string("preset_one")),
-                                    RoomDimmer.generatePreset(it.string("preset_two")),
-                                    RoomDimmer.generatePreset(it.string("preset_three"))
-                            )
+                        it.int("id"),
+                        roomItem,
+                        it.boolean("enabled"),
+                        it.int("current_preset"),
+                        mutableListOf(
+                            RoomDimmer.generatePreset(it.string("preset_one")),
+                            RoomDimmer.generatePreset(it.string("preset_two")),
+                            RoomDimmer.generatePreset(it.string("preset_three"))
+                        )
                     )
                 }.firstOrNull()
             }
@@ -277,15 +285,16 @@ object ItemDao {
 
     fun saveDimmer(roomDimmer: RoomDimmer) {
         HabboServer.database {
-            update(javaClass.classLoader.getResource("sql/items/dimmer/update_dimmer.sql").readText(),
-                    mapOf(
-                            "enabled" to roomDimmer.enabled,
-                            "current_preset" to roomDimmer.currentPreset,
-                            "preset_one" to roomDimmer.presets[0].toString(),
-                            "preset_two" to roomDimmer.presets[1].toString(),
-                            "preset_three" to roomDimmer.presets[2].toString(),
-                            "id" to roomDimmer.id
-                    )
+            update(
+                javaClass.classLoader.getResource("sql/items/dimmer/update_dimmer.sql").readText(),
+                mapOf(
+                    "enabled" to roomDimmer.enabled,
+                    "current_preset" to roomDimmer.currentPreset,
+                    "preset_one" to roomDimmer.presets[0].toString(),
+                    "preset_two" to roomDimmer.presets[1].toString(),
+                    "preset_three" to roomDimmer.presets[2].toString(),
+                    "id" to roomDimmer.id
+                )
             )
         }
     }
@@ -314,22 +323,27 @@ object ItemDao {
         }
     }
 
-    fun addItems(userId: Int, itemPurchaseDatas: List<ItemPurchaseData>): List<UserItem> {
+    fun addItems(
+        userId: Int,
+        itemPurchaseDatas: List<ItemPurchaseData>,
+        ignoreSpecialHandling: Boolean = false
+    ): List<UserItem> {
         val itemIds = HabboServer.database {
-            batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/items/item/insert_item.sql").readText(),
-                    itemPurchaseDatas.map { itemPurchaseData ->
-                        mapOf(
-                                "user_id" to userId,
-                                "item_name" to itemPurchaseData.furnishing.itemName,
-                                "extra_data" to itemPurchaseData.extraData,
-                            "wall_pos" to "",
-                            "is_builders_club" to itemPurchaseData.buildersClub
-                        )
-                    }
+            batchInsertAndGetGeneratedKeys(
+                javaClass.classLoader.getResource("sql/items/item/insert_item.sql").readText(),
+                itemPurchaseDatas.map { itemPurchaseData ->
+                    mapOf(
+                        "user_id" to userId,
+                        "item_name" to itemPurchaseData.furnishing.itemName,
+                        "extra_data" to itemPurchaseData.extraData,
+                        "wall_pos" to "",
+                        "is_builders_club" to itemPurchaseData.buildersClub
+                    )
+                }
             )
         }
 
-        return itemIds.mapIndexed { i, id ->
+        val userItems = itemIds.mapIndexed { i, id ->
             UserItem(
                 id,
                 userId,
@@ -339,24 +353,42 @@ object ItemDao {
                 itemPurchaseDatas[i].buildersClub
             )
         }
+
+        if (!ignoreSpecialHandling) {
+            userItems.forEach { userItem ->
+                addSpecialItemData(userItem)
+            }
+        }
+
+        return userItems
     }
 
-    fun addGiftItem(userId: Int, giftFurnishing: Furnishing, amount: Int, giftExtradata: String, furnishing: Furnishing, extraData: String, limitedNumber: Int = 0, limitedTotal: Int = 0): UserItem {
+    fun addGiftItem(
+        userId: Int,
+        giftFurnishing: Furnishing,
+        amount: Int,
+        giftExtradata: String,
+        furnishing: Furnishing,
+        extraData: String,
+        limitedNumber: Int = 0,
+        limitedTotal: Int = 0
+    ): UserItem {
         val giftUserItem = addItems(
             userId,
-            listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0, buildersClub = false))
+            listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0, buildersClub = false)),
         ).first()
 
         if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
 
         HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/items/gift/insert_gift.sql").readText(),
-                    mapOf(
-                            "item_id" to giftUserItem.id,
-                            "item_name" to furnishing.itemName,
-                            "amount" to amount,
-                            "extradata" to extraData
-                    )
+            insertAndGetGeneratedKey(
+                javaClass.classLoader.getResource("sql/items/gift/insert_gift.sql").readText(),
+                mapOf(
+                    "item_id" to giftUserItem.id,
+                    "item_name" to furnishing.itemName,
+                    "amount" to amount,
+                    "extradata" to extraData
+                )
             )
         }
 
@@ -365,17 +397,18 @@ object ItemDao {
 
     fun getGiftData(itemId: Int): GiftData? {
         return HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/items/gift/select_gift.sql").readText(),
-                    mapOf(
-                            "item_id" to itemId
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/items/gift/select_gift.sql").readText(),
+                mapOf(
+                    "item_id" to itemId
+                )
             ) {
                 GiftData(
-                        it.int("id"),
-                        it.string("item_name"),
-                        it.int("amount"),
-                        it.string("extradata"),
-                        it.boolean("is_limited")
+                    it.int("id"),
+                    it.string("item_name"),
+                    it.int("amount"),
+                    it.string("extradata"),
+                    it.boolean("is_limited")
                 )
             }
         }.firstOrNull()
@@ -383,22 +416,24 @@ object ItemDao {
 
     fun addLimitedItem(itemId: Int, limitedNumber: Int, limitedTotal: Int): Int {
         return HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/items/limited/insert_limited.sql").readText(),
-                    mapOf(
-                            "item_id" to itemId,
-                            "limited_num" to limitedNumber,
-                            "limited_total" to limitedTotal
-                    )
+            insertAndGetGeneratedKey(
+                javaClass.classLoader.getResource("sql/items/limited/insert_limited.sql").readText(),
+                mapOf(
+                    "item_id" to itemId,
+                    "limited_num" to limitedNumber,
+                    "limited_total" to limitedTotal
+                )
             )
         }
     }
 
     fun deleteGiftData(id: Int) {
         HabboServer.database {
-            update(javaClass.classLoader.getResource("sql/items/gift/delete_gift.sql").readText(),
-                    mapOf(
-                            "id" to id
-                    )
+            update(
+                javaClass.classLoader.getResource("sql/items/gift/delete_gift.sql").readText(),
+                mapOf(
+                    "id" to id
+                )
             )
         }
     }
@@ -409,20 +444,95 @@ object ItemDao {
         roomItemsGrouped.keys.forEach { userId ->
             val habboSession = HabboServer.habboSessionManager.getHabboSessionById(userId)
 
-            habboSession?.habboInventory?.addItems((roomItemsGrouped[userId]
+            habboSession?.habboInventory?.addItems(
+                (roomItemsGrouped[userId]
                     ?: error("Can't find the room items!")).map {
-                UserItem(
+                    UserItem(
                         it.id,
                         it.userId,
                         it.itemName,
                         it.extraData,
-                    it.limited,
-                    it.buildersClub
-                )
-            })
+                        it.limited,
+                        it.buildersClub
+                    )
+                })
         }
 
         removeRoomItems(roomItems)
+    }
+
+    private fun addSpecialItemData(userItem: UserItem) {
+        if (userItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+            val defaultWiredData =
+                HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
+                    ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
+
+            HabboServer.database {
+                insertAndGetGeneratedKey(
+                    "INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
+                    mapOf(
+                        "item_id" to userItem.id,
+                        "delay" to defaultWiredData.delay,
+                        "items" to defaultWiredData.items.joinToString(","),
+                        "message" to defaultWiredData.message,
+                        "options" to defaultWiredData.options.joinToString(","),
+                        "extradata" to defaultWiredData.extradata
+                    )
+                )
+            }
+
+            return
+        }
+
+        when (userItem.furnishing.interactionType) {
+            InteractionType.TELEPORT -> {
+                val teleporterItem = addItems(
+                    userItem.userId,
+                    listOf(
+                        ItemPurchaseData(
+                            userItem.furnishing,
+                            userItem.extraData,
+                            limited = false,
+                            buildersClub = false
+                        )
+                    ),
+                    ignoreSpecialHandling = true,
+                ).first()
+
+                HabboServer.database {
+                    batchInsertAndGetGeneratedKeys(
+                        "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
+                        listOf(
+                            mapOf("teleport_one_id" to userItem.id, "teleport_two_id" to teleporterItem.id),
+                            mapOf("teleport_two_id" to userItem.id, "teleport_one_id" to teleporterItem.id)
+                        )
+                    )
+                }
+
+                HabboServer.habboGame.itemManager.teleportLinks[userItem.id] = teleporterItem.id
+                HabboServer.habboGame.itemManager.roomTeleportLinks[userItem.id] = 0
+                HabboServer.habboGame.itemManager.teleportLinks[teleporterItem.id] = userItem.id
+                HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
+            }
+
+            InteractionType.DIMMER -> {
+                HabboServer.database {
+                    insertAndGetGeneratedKey(
+                        "INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
+                        mapOf(
+                            "item_id" to userItem.id,
+                            "enabled" to false,
+                            "current_preset" to 1,
+                            "preset_one" to "#000000,255,0",
+                            "preset_two" to "#000000,255,0",
+                            "preset_three" to "#000000,255,0"
+                        )
+                    )
+                }
+            }
+
+            else -> {}
+        }
     }
 }
 

@@ -23,11 +23,22 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 
-class RoomGameManager(private val room: Room) {
-    private val games = mutableMapOf<String, RoomGame>()
+class RoomGameManager(val room: Room) {
+    val games = mutableMapOf<RoomGameType, RoomGame>()
 
-    fun registerGame(gameType: String, game: RoomGame) {
-        games[gameType] = game
+    fun getGame(gameType: RoomGameType) = games[gameType]
+
+    fun registerGame(gameType: RoomGameType) {
+        if (games.containsKey(gameType)) return
+
+        val roomGame = when (gameType) {
+            RoomGameType.BATTLE_BANZAI -> BattleBanzaiGame(room)
+            else -> null
+        }
+
+        if (roomGame == null) return
+
+        games[gameType] = roomGame
     }
 
     fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {
@@ -48,8 +59,8 @@ class RoomGameManager(private val room: Room) {
 
     private fun getGameForItem(roomItem: RoomItem): RoomGame? {
         return when {
-            roomItem.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") -> games["banzai"]
-            roomItem.furnishing.interactionType.name.startsWith("FREEZE") -> games["freeze"]
+            roomItem.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") -> games[RoomGameType.BATTLE_BANZAI]
+            roomItem.furnishing.interactionType.name.startsWith("FREEZE") -> games[RoomGameType.FREEZE]
             else -> null
         }
     }
@@ -57,4 +68,9 @@ class RoomGameManager(private val room: Room) {
     fun tick() {
         games.values.forEach { it.tick() }
     }
+}
+
+enum class RoomGameType {
+    BATTLE_BANZAI,
+    FREEZE,
 }

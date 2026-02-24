@@ -25,6 +25,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.camera.HabboCameraRenderer
+import ovh.rwx.habbo.camera.SwfInfo
 import ovh.rwx.habbo.camera.json.HabboCamera
 import ovh.rwx.habbo.database.camera.CameraDao
 import ovh.rwx.habbo.database.item.ItemDao
@@ -55,6 +56,8 @@ class CameraManager {
     private val currentPictureForUsers: MutableMap<String, Pair<LocalDateTime, String>> = mutableMapOf()
     private val jacksonJson = jacksonObjectMapper()
     private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath)
+
+    fun getSwfInfo(swfName: String): SwfInfo? = habboCameraRenderer.getSwfInfo(swfName)
 
     fun load() {
         log.info("Loading camera...")
@@ -196,7 +199,7 @@ class CameraManager {
         val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
         val userItem = ItemDao.addItems(
             habboSession.userInformation.id,
-            listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, limited = false, buildersClub = false))
+            listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, limited = false, buildersClub = false)),
         ).first()
 
         habboSession.habboInventory.addItems(listOf(userItem))

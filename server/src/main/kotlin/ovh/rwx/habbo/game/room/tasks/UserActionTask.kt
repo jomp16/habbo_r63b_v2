@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -70,5 +71,7 @@ class UserActionTask(private val roomUser: RoomUser, private val action: UserAct
 
             else -> {}
         }
+
+        room.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, roomUser, action)
     }
 }
