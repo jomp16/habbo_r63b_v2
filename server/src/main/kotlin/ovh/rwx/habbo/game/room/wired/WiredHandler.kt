@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -60,8 +60,7 @@ class WiredHandler {
         wiredStack.values.forEach { wiredStackMap ->
             // Filtramos todos os triggers do tipo solicitado nesta pilha
             val triggersInStack = wiredStackMap.values
-                .filterIsInstance<WiredTrigger>()
-                .filter { triggerClass.java.isInstance(it) }
+                .filterIsInstance(triggerClass.java)
 
             triggersInStack.forEach { trigger ->
                 val wiredContext = WiredContext(
@@ -87,23 +86,21 @@ class WiredHandler {
                     // 3. Processamos as Condições (Validam se a pilha prossegue)
                     // No 2.0, usamos 'all' porque todas precisam ser verdadeiras
                     val conditionsPassed = sortedStack.filterIsInstance<WiredCondition>().all { condition ->
-                        val result = condition.onCondition(wiredContext)
-
-                        if (result) lightWired(condition)
-
-                        return@all result
+                        condition.onCondition(wiredContext).also { passed ->
+                            if (passed) lightWired(condition)
+                        }
                     }
 
                     // Se as condições passarem, executamos os efeitos
                     if (conditionsPassed) {
                         // 4. Processamos os Efeitos (Ações finais)
-                        sortedStack.filterIsInstance<WiredEffect>().forEach { effect ->
-                            if (!wiredContext.cancelled) {
+                        sortedStack.filterIsInstance<WiredEffect>()
+                            .takeWhile { !wiredContext.cancelled }
+                            .forEach { effect ->
                                 lightWired(effect)
 
                                 effect.handle(wiredContext, roomUser)
                             }
-                        }
                     }
                 }
             }
@@ -130,6 +127,13 @@ class WiredHandler {
                 }
             }
         }
+    }
+
+    fun resetTriggerer(triggerClass: KClass<out WiredTrigger>) {
+        wiredStack.values
+            .flatMap { it.values }
+            .filterIsInstance(triggerClass.java)
+            .forEach { it.resetTriggered() }
     }
 
     fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest, habboAir: Boolean = false): Boolean {

@@ -19,15 +19,27 @@
 
 package ovh.rwx.habbo.game.room.games
 
+import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import java.time.Duration
 
 abstract class RoomGame(val room: Room) {
-    var isRunning: Boolean = false
+    var running: Boolean = false
         protected set
 
+    val teamScores = mutableMapOf<GameTeam, Int>()
+
+    open fun load() {}
+
+    open fun unload() {}
+
     abstract fun start()
+
+    abstract fun pause()
+
+    abstract fun resume()
 
     abstract fun stop()
 
@@ -40,4 +52,16 @@ abstract class RoomGame(val room: Room) {
     open fun tick() {}
 
     open fun onUserLeaveRoom(roomUser: RoomUser) {}
+
+    open fun addScore(gameTeam: GameTeam, points: Int) {}
+
+    open fun adjustClock(duration: Duration, mode: RoomGameClockAdjustMode) {}
+
+    open fun updateClock() {}
+
+    open fun getTeamColor(interactionType: InteractionType): GameTeam? = null
+
+    open fun joinTeam(gameTeam: GameTeam, roomUser: RoomUser) {}
+
+    open fun leaveTeam(gameTeam: GameTeam, roomUser: RoomUser) {}
 }

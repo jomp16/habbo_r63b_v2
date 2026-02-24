@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,27 +22,28 @@ package ovh.rwx.habbo.game.item
 import ovh.rwx.habbo.HabboServer
 
 data class Furnishing(
-        val itemName: String,
-        val spriteId: Int,
-        val offerId: Int,
-        val type: ItemType,
-        val width: Int,
-        val height: Int,
-        val stackHeight: List<Double>,
-        val canStack: Boolean,
-        val canSit: Boolean,
-        val canLay: Boolean,
-        val walkable: Boolean,
-        val allowRecycle: Boolean,
-        val allowTrade: Boolean,
-        val allowMarketplaceSell: Boolean,
-        val canGift: Boolean,
-        val allowInventoryStack: Boolean,
-        val interactionType: InteractionType,
-        val interactionModesCount: Int,
-        val vendingIds: List<Int>
+    val itemName: String,
+    val spriteId: Int,
+    val offerId: Int,
+    val type: ItemType,
+    val width: Int,
+    val height: Int,
+    val stackHeight: List<Double>,
+    val canStack: Boolean,
+    val canSit: Boolean,
+    val canLay: Boolean,
+    val walkable: Boolean,
+    val allowRecycle: Boolean,
+    val allowTrade: Boolean,
+    val allowMarketplaceSell: Boolean,
+    val canGift: Boolean,
+    val allowInventoryStack: Boolean,
+    val interactionType: InteractionType,
+    val vendingIds: List<Int>
 ) {
     val stackMultiple: Boolean = stackHeight.size > 1
     val interactor: ItemInteractor?
         get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]
+    val interactionModesCount: Int
+        get() = HabboServer.habboGame.cameraManager.getSwfInfo(itemName)?.directions?.size ?: 0
 }

@@ -17,15 +17,16 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.item.wired.trigger
+package ovh.rwx.habbo.game.room.games
 
-import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredContext
-import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.room.Room
+enum class GameTeam(val color: Int) {
+    NONE(0),
+    RED(1),
+    BLUE(2),
+    GREEN(3),
+    YELLOW(4);
 
-abstract class WiredTrigger(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    abstract fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean
-
-    open fun resetTriggered() {}
+    companion object {
+        fun fromColor(color: Int) = entries.firstOrNull { it.color == color } ?: NONE
+    }
 }

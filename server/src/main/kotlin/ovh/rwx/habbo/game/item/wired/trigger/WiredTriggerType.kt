@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,7 @@ enum class WiredTriggerType(val code: Int) {
     BOT_DESTINATION_REACHED(13), // has custom UI
     BOT_AVATAR_REACHED(14), // has custom UI
     CLOCK_REACH_TIME(15), // has custom UI
-    UNKNOWN_16(16), // has custom UI
+    USER_PERFORMS_ACTION(16), // has custom UI
     RECEIVE_SIGNAL(17),
     AVATAR_CLICKS_FURNI(18),
     PERIODIC_SHORT(19), // has custom UI

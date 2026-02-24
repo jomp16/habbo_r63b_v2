@@ -40,8 +40,8 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
-import ovh.rwx.habbo.game.room.games.BattleBanzaiGame
 import ovh.rwx.habbo.game.room.games.RoomGameManager
+import ovh.rwx.habbo.game.room.games.RoomGameType
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.tasks.UserJoinRoomTask
 import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
@@ -111,7 +111,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             }
 
             if (roomItems.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
-                gameManager.registerGame("banzai", BattleBanzaiGame(this))
+                gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
             }
 
             group?.let {
@@ -366,7 +366,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         roomItem.position.vector2 == position && roomItem.rotation != rotation
 
         if (position == roomModel.doorVector3.vector2) return false
-        if (roomItem.position.vector2 == position && roomItem.rotation == rotation) return false
+        if ((roomItem.position.vector2 == position && roomItem.rotation == rotation) && overrideZ == (-1).toDouble()) return false
 //        if (roomGamemap.isBlocked(position, true)) return false
 
         HabboServer.habboGame.itemManager.getAffectedTiles(
@@ -460,7 +460,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             )
         } else {
             // Verifica se houve movimento real de posição
-            val hasMoved = oldPosition.vector2 != roomItem.position.vector2
+            val hasMoved = oldPosition != roomItem.position
 
             // Se rollerId for -1, é teleporte/giro instantâneo.
             // Se for >= 0 e houve movimento, é animação (Slide).

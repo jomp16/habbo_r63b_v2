@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -192,7 +192,6 @@ enum class InteractionType(val type: String) {
     WIRED_SELECTOR_USERS_TEAM("wf_slc_users_team"),
     WIRED_SELECTOR_USERS_WITH_VAR("wf_slc_users_with_var"),
     WIRED_TRIGGER_AT_GIVEN_TIME("wf_trg_at_given_time"),
-    WIRED_TRIGGER_AT_TIME_LONG("wf_trg_at_time_long"),
     WIRED_TRIGGER_BOT_REACHES_AVATAR("wf_trg_bot_reached_avtr"),
     WIRED_TRIGGER_BOT_REACHES_FURNI("wf_trg_bot_reached_stf"),
     WIRED_TRIGGER_CLICK_FURNI("wf_trg_click_furni"),

@@ -49,7 +49,7 @@ enum class Direction(val code: Int) {
     }
 
     companion object {
-        fun fromCode(code: Int) = values().find { it.code == code } ?: NORTH
+        fun fromCode(code: Int) = entries.find { it.code == code } ?: NORTH
 
         fun calculate(x1: Int, y1: Int, x2: Int, y2: Int) = when {
             x1 > x2 && y1 > y2 -> 7
