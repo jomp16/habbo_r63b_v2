@@ -209,6 +209,7 @@ enum class Incoming {
     ROOM_USER_ACTION,
     ROOM_USER_CHAT,
     ROOM_USER_CLICKED_ITEM, // for wired click on item
+    ROOM_USER_CLICKED_USER, // for wired click on user
     ROOM_USER_DANCE,
     ROOM_USER_DROP_HANDITEM,
     ROOM_USER_GIVE_HANDITEM,

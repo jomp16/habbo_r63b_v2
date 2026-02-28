@@ -21,32 +21,31 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserSitHandler {
-    @Handler(Incoming.ROOM_USER_SIT)
+class RoomKickUserHandler {
+    @Handler(Incoming.ROOM_KICK_USER)
+    @HandlerR63A(IncomingR63A.ROOM_KICK_USER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || habboSession.roomUser == null || habboSession.roomUser!!.walking || habboSession.roomUser!!.statusMap.containsKey(
-                "sit"
-            ) || habboSession.roomUser!!.statusMap.containsKey("lay")
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+                habboSession,
+                true
+            )
         ) return
-        val sit = habboRequest.readInt() == 1
 
-        habboSession.roomUser?.let { roomUser ->
-            if (sit) {
-                if (roomUser.bodyRotation % 2 != 0) {
-                    roomUser.headRotation -= 1
-                    roomUser.bodyRotation -= 1
-                }
+        val userId = habboRequest.readInt()
 
-                roomUser.addStatus("sit", "0.55")
-            } else {
-                roomUser.removeStatus("sit")
-            }
+        val roomUser =
+            habboSession.currentRoom?.roomUsers?.values?.find { it.habboSession?.userInformation?.id == userId }
+                ?: return
 
-            roomUser.updateNeeded = true
-        }
+        if (roomUser.room != habboSession.currentRoom || roomUser.room.hasRights(roomUser.habboSession, true)) return
+
+        roomUser.kicked = true
+        roomUser.moveTo(roomUser.room.roomModel.doorVector3.vector2, roomUser.room.roomModel.doorDir)
     }
 }

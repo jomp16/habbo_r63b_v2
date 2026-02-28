@@ -22,31 +22,20 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerClickUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserSitHandler {
-    @Handler(Incoming.ROOM_USER_SIT)
+class RoomUserClickedUserHandler {
+    @Handler(Incoming.ROOM_USER_CLICKED_USER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || habboSession.roomUser == null || habboSession.roomUser!!.walking || habboSession.roomUser!!.statusMap.containsKey(
-                "sit"
-            ) || habboSession.roomUser!!.statusMap.containsKey("lay")
-        ) return
-        val sit = habboRequest.readInt() == 1
+        val currentRoom = habboSession.currentRoom ?: return
+        val roomUser = habboSession.roomUser ?: return
 
-        habboSession.roomUser?.let { roomUser ->
-            if (sit) {
-                if (roomUser.bodyRotation % 2 != 0) {
-                    roomUser.headRotation -= 1
-                    roomUser.bodyRotation -= 1
-                }
+        val roomUserId = habboRequest.readInt()
 
-                roomUser.addStatus("sit", "0.55")
-            } else {
-                roomUser.removeStatus("sit")
-            }
+        val clickedRoomUser = currentRoom.roomUsers[roomUserId] ?: return
 
-            roomUser.updateNeeded = true
-        }
+        currentRoom.wiredHandler.triggerWired(WiredTriggerClickUser::class, roomUser, clickedRoomUser)
     }
 }

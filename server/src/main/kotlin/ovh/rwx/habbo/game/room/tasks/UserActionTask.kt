@@ -72,6 +72,10 @@ class UserActionTask(private val roomUser: RoomUser, private val action: UserAct
             else -> {}
         }
 
-        room.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, roomUser, action)
+        room.wiredHandler.triggerWired(
+            WiredTriggerUserPerformsAction::class,
+            roomUser,
+            WiredTriggerUserPerformsAction.WiredUserAction.fromUserAction(action)
+        )
     }
 }

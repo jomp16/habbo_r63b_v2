@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -65,12 +65,16 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
                     true
                 )
 
-                MessageVisibility.ALL_USERS -> room.roomUsers.values.forEach {
-                    it.chat(
-                        it.virtualID,
+                MessageVisibility.ALL_USERS -> {
+                    // Pegamos o triggerer (ou um bot/dono) para falar UMA VEZ para a sala
+                    // Não fazemos loop aqui, pois o Task já faz o loop de broadcast!
+                    val speaker = wiredContext.triggererUser ?: room.roomUsers.values.firstOrNull()
+
+                    speaker?.chat(
+                        speaker.virtualID,
                         message,
                         bubble,
-                        RoomChatType.CHAT,
+                        RoomChatType.WHISPER,
                         true
                     )
                 }
@@ -83,7 +87,7 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
         ALL_USERS(1);
 
         companion object {
-            fun fromCode(code: Int) = values().find { it.code == code } ?: USER_ONLY
+            fun fromCode(code: Int) = entries.find { it.code == code } ?: USER_ONLY
         }
     }
 

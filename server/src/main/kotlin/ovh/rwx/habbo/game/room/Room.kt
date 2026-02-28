@@ -32,6 +32,7 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.database.group.GroupDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
@@ -74,6 +75,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
     val hasBuildersClubItems: Boolean
         get() = roomItems.values.any { it.buildersClub && it.userId == roomData.ownerId }
+    val hiddenBuildersClub: Boolean
+        get() = hasBuildersClubItems && !SubscriptionDao.hasActiveBuildersClub(roomData.ownerId)
     val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
     val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap() }
@@ -363,30 +366,28 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         rollerDelay: Long = 750
     ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
-        roomItem.position.vector2 == position && roomItem.rotation != rotation
 
         if (position == roomModel.doorVector3.vector2) return false
         if ((roomItem.position.vector2 == position && roomItem.rotation == rotation) && overrideZ == (-1).toDouble()) return false
-//        if (roomGamemap.isBlocked(position, true)) return false
 
-        HabboServer.habboGame.itemManager.getAffectedTiles(
+        // 1. Calcular os NOVOS tiles afetados antes de aplicar a mudança
+        val newAffectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
             position.x,
             position.y,
             rotation,
             roomItem.furnishing.width,
             roomItem.furnishing.height
-        ).forEach {
+        )
+
+        // Verificação de bloqueio
+        newAffectedTiles.forEach {
             if (roomGamemap.isBlocked(it, true) && roomGamemap.cannotStackItem[it.x][it.y]) {
-                // Check if the blocked tile is from the same item being moved
                 val itemsOnTile = roomGamemap.roomItemMap[it] ?: emptyList()
                 val isOwnTile = itemsOnTile.any { item -> item.id == roomItem.id }
-
-                if (!isOwnTile) {
-                    // cannot set item, because at least one tile is blocked by another item
-                    return false
-                }
+                if (!isOwnTile) return false
             }
         }
+
         val affectedTiles = HashSet<Vector2>()
         val wiredItem: WiredItem? = if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
             if (!newItem) wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
@@ -394,29 +395,26 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         } else null
 
         if (!newItem) {
+            // Guardar tiles antigos para comparação
+            val oldAffectedTiles = roomItem.affectedTiles
             roomGamemap.removeRoomItem(roomItem)
 
-            HabboServer.habboGame.itemManager.getAffectedTiles(
-                roomItem.position.x,
-                roomItem.position.y,
-                roomItem.rotation,
-                roomItem.furnishing.width,
-                roomItem.furnishing.height
-            ).let {
-                it.forEach { vector2 ->
-                    roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
-                        roomItem.onUserWalksOff(roomUser1, true)
+            oldAffectedTiles.forEach { vector2 ->
+                roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
+                    // Só remove status se o usuário NÃO estiver nos novos tiles
+                    val isStillOnItem = newAffectedTiles.contains(roomUser1.currentVector3.vector2)
 
+                    roomItem.onUserWalksOff(roomUser1, true)
+
+                    if (!isStillOnItem) {
                         roomUser1.removeUserStatuses()
-
-                        roomUser1.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                        roomUser1.updateNeeded = true
                     }
+
+                    roomUser1.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
+                    roomUser1.updateNeeded = true
                 }
-
-                affectedTiles += it
             }
-
+            affectedTiles += oldAffectedTiles
             roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
         }
         val oldPosition = roomItem.position
@@ -430,8 +428,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         roomGamemap.addRoomItem(roomItem)
 
-        roomItem.affectedTiles.let {
-            it.forEach { vector2 ->
+        // Aplicar aos novos tiles
+        roomItem.affectedTiles.let { tiles ->
+            tiles.forEach { vector2 ->
                 roomGamemap.getUsersFromVector2(vector2).forEach { roomUser1 ->
                     roomItem.onUserWalksOn(roomUser1, true)
 
@@ -441,8 +440,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     roomUser1.updateNeeded = true
                 }
             }
-
-            affectedTiles += it
+            affectedTiles += tiles
         }
 
         if (wiredItem != null) wiredHandler.addWiredItem(position, wiredItem)
@@ -451,12 +449,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         if (newItem) {
             roomItems[roomItem.id] = roomItem
-
             roomItem.addToRoom(
                 this,
-                updateDb = true,
-                updateClient = true,
-                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
+                true,
+                true,
+                UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
             )
         } else {
             // Verifica se houve movimento real de posição
@@ -606,10 +603,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     }
                 }
             }
+
             ItemType.WALL -> {
                 sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem)
                 sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_REMOVE, roomItem)
             }
+
             else -> {}
         }
 
@@ -656,9 +655,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                                         roomData.id,
                                         1
                                     )
+
                                     else -> log.error("Couldn't send response!")
                                 }
                             }
+
                             roomUser.statusMap.containsKey("flatctrl") -> {
                                 roomUser.removeStatus("flatctrl")
 
@@ -669,9 +670,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                                         roomData.id,
                                         0
                                     )
+
                                     else -> log.error("Couldn't send response!")
                                 }
                             }
+
                             else -> log.error("Couldn't send response!")
                         }
                     }
