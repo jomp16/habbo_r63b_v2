@@ -48,8 +48,6 @@ object ItemDao {
                     furniXMLInfo.spriteId,
                     furniXMLInfo.offerId,
                     itemType,
-                    furniXMLInfo.xDim,
-                    furniXMLInfo.yDim,
                     it.string("stack_height").split(';').map { s -> s.trim().toDouble() },
                     it.boolean("can_stack"),
                     furniXMLInfo.canSitOn,

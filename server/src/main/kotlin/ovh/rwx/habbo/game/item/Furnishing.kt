@@ -20,14 +20,15 @@
 package ovh.rwx.habbo.game.item
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.camera.Dimensions
+import ovh.rwx.habbo.camera.SwfInfo
+import kotlin.math.max
 
 data class Furnishing(
     val itemName: String,
     val spriteId: Int,
     val offerId: Int,
     val type: ItemType,
-    val width: Int,
-    val height: Int,
     val stackHeight: List<Double>,
     val canStack: Boolean,
     val canSit: Boolean,
@@ -42,8 +43,35 @@ data class Furnishing(
     val vendingIds: List<Int>
 ) {
     val stackMultiple: Boolean = stackHeight.size > 1
+
     val interactor: ItemInteractor?
         get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]
-    val interactionModesCount: Int
-        get() = HabboServer.habboGame.cameraManager.getSwfInfo(itemName)?.directions?.size ?: 0
+
+    val swfInfo: SwfInfo? by lazy {
+        HabboServer.habboGame.cameraManager.getSwfInfo(itemName)
+    }
+
+    val interactionModesCount: Int by lazy {
+        max(1, swfInfo?.states?.size ?: 1)
+    }
+
+    val width: Int by lazy {
+        val swfX = swfInfo?.dimensions?.x?.toInt() ?: 1
+        // Se for item de parede (W), permitimos 0. Se for piso (S), mínimo 1.
+        if (type == ItemType.WALL) swfX else max(1, swfX)
+    }
+
+    val height: Int by lazy {
+        val swfY = swfInfo?.dimensions?.y?.toInt() ?: 1
+        // Se for item de parede (W), permitimos 0. Se for piso (S), mínimo 1.
+        if (type == ItemType.WALL) swfY else max(1, swfY)
+    }
+
+    val swfDimensions: Dimensions? by lazy {
+        swfInfo?.dimensions
+    }
+
+    val allowedDirections: List<Int> by lazy {
+        swfInfo?.directions?.ifEmpty { listOf(0) } ?: listOf(0)
+    }
 }

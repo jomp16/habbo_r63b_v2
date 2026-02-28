@@ -56,17 +56,20 @@ data class RoomItem(
         get() = HabboServer.habboGame.roomManager.rooms[roomId]!!
     val height: Double
         get() {
-            if (furnishing.stackMultiple) {
-                if (extraData.isBlank()) {
-                    extraData = "0"
+            // Se for multi-height (mais de 1 valor no banco), usamos a lista do banco baseada no estado atual
+            if (furnishing.stackMultiple && furnishing.stackHeight.isNotEmpty()) {
+                // Se extraData estiver vazio ou for texto inválido, assume 0
+                val mode = extraData.toIntOrNull() ?: 0
 
-                    update(updateDb = true, updateClient = true)
-                }
+                // Garante que o index está dentro do limite da array (0 até size-1)
+                val safeIndex = mode.coerceIn(furnishing.stackHeight.indices)
 
-                return furnishing.stackHeight[extraData.toInt()]
+                return furnishing.stackHeight[safeIndex]
             }
 
-            return furnishing.stackHeight[0]
+            // Se não for multi-height, PRIORIZAMOS o Z do SWF.
+            // Caso o SWF falhe ao carregar (null), usamos a base do banco ou 0.0
+            return furnishing.swfDimensions?.z ?: furnishing.stackHeight.firstOrNull() ?: 0.0
         }
     val totalHeight: Double
         get() = position.z + height

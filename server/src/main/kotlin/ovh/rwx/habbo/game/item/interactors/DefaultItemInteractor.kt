@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,16 +35,13 @@ class DefaultItemInteractor : ItemInteractor() {
 
         if (!hasRights) return
         val modes = roomItem.furnishing.interactionModesCount - 1
-        var currentMode = if (roomItem.extraData.isEmpty()) 0 else roomItem.extraData.toInt()
-
-        if (modes == 0) return
-        // todo: check if this is working properly
+        var currentMode = roomItem.extraData.toIntOrNull() ?: 0
+        if (modes <= 0) return
         if (++currentMode > modes) currentMode = 0
 
         roomItem.extraData = currentMode.toString()
 
         if (roomItem.furnishing.stackMultiple) {
-            // todo: check if this is working properly
             room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser, roomItem.totalHeight)
         }
 
