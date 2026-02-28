@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -93,6 +93,6 @@ enum class RoomChatMessageBubbles(
     MAGNIFYING_GLASS(252, "MAGNIFYING_GLASS", "", true, true);
 
     companion object {
-        fun fromType(type: Int) = values().find { it.type == type } ?: NORMAL
+        fun fromType(type: Int) = entries.find { it.type == type } ?: NORMAL
     }
 }

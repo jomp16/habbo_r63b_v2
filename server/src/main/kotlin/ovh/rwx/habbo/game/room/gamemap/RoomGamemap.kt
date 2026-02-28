@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -106,7 +106,6 @@ class RoomGamemap(private val room: Room) {
                     && !(roomItem.position.z <= room.roomModel.floorHeight[vector2.x][vector2.y] + 0.1
                     && roomItem.furnishing.interactionType == InteractionType.GATE
                     && roomItem.extraData == "1")
-                    && !(roomItem.furnishing.canSit || roomItem.furnishing.interactionType == InteractionType.BED)
         }
     }
 

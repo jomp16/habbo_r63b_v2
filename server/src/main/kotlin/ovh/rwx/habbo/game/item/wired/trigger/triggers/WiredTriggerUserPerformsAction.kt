@@ -31,25 +31,81 @@ import ovh.rwx.habbo.game.room.tasks.UserAction
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_USER_PERFORMS_ACTION)
 class WiredTriggerUserPerformsAction(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var userAction: UserAction = UserAction.NONE
+    private var userAction: WiredUserAction = WiredUserAction.WAVE
+    private var filter: String = ""
+
     override fun code() = WiredTriggerType.USER_PERFORMS_ACTION.code
 
     override fun setData() {
         roomItem.wiredData?.let {
-            userAction = UserAction.fromValue(it.options.getOrElse(0) { -1 } + 1)
+            userAction = WiredUserAction.fromValue(it.options.getOrElse(0) { 1 })
+            filter = it.message.removePrefix("dance").trim()
         }
     }
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val action = data as? UserAction ?: return false
+        if (data is WiredUserAction) {
+            return data == userAction
+        } else if (data is List<*>) {
+            val action = data.first() as WiredUserAction
 
-        return action == userAction
+            if (action != userAction) {
+                return false
+            }
+
+            return when (action) {
+                WiredUserAction.SIGN -> {
+                    val sign = data[1] as Int
+
+                    if (filter.isEmpty()) {
+                        true
+                    } else {
+                        sign == (filter.toIntOrNull() ?: 0)
+                    }
+                }
+
+                WiredUserAction.DANCE -> {
+                    val dance = data[1] as Int
+
+                    if (filter.isEmpty()) {
+                        true
+                    } else {
+                        dance == (filter.toIntOrNull() ?: 0)
+                    }
+                }
+
+                else -> false
+            }
+        }
+
+        return false
     }
 
     companion object {
         @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0), "")
+        }
+    }
+
+    enum class WiredUserAction(val wiredIndex: Int, val userAction: UserAction? = null) {
+        WAVE(0, UserAction.WAVE),
+        BLOW_KISS(1, UserAction.BLOW_KISS),
+        LAUGH(2, UserAction.LAUGH),
+        THUMB_UP(3, UserAction.THUMB_UP),
+        AWAKE(4),
+        IDLE(5, UserAction.IDLE),
+        SIT(6),
+        STAND(7),
+        LAY(8),
+        SWIM(9),
+        SIGN(10),
+        DANCE(11);
+
+        companion object {
+            fun fromValue(index: Int) = entries.find { it.wiredIndex == index } ?: WAVE
+
+            fun fromUserAction(userAction: UserAction) = entries.find { it.userAction == userAction } ?: WAVE
         }
     }
 }

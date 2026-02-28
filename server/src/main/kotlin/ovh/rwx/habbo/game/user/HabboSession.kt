@@ -33,7 +33,6 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
-import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
@@ -468,24 +467,21 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
 
-        if (room.hasBuildersClubItems && userInformation.id != room.roomData.ownerId) {
-            val ownerHasBuildersClub = SubscriptionDao.hasActiveBuildersClub(room.roomData.ownerId)
-            if (!ownerHasBuildersClub) {
-                if (release != "R63A") {
-                    sendHabboResponse(
-                        Outgoing.MISC_GENERIC_ERROR,
-                        MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
-                    )
-                    sendHabboResponse(Outgoing.ROOM_EXIT)
-                } else {
-                    sendHabboResponse(
-                        OutgoingR63A.MISC_GENERIC_ERROR,
-                        MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
-                    )
-                    sendHabboResponse(OutgoingR63A.ROOM_EXIT)
-                }
-                return
+        if (room.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
+            if (release != "R63A") {
+                sendHabboResponse(
+                    Outgoing.MISC_GENERIC_ERROR,
+                    MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
+                )
+                sendHabboResponse(Outgoing.ROOM_EXIT)
+            } else {
+                sendHabboResponse(
+                    OutgoingR63A.MISC_GENERIC_ERROR,
+                    MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
+                )
+                sendHabboResponse(OutgoingR63A.ROOM_EXIT)
             }
+            return
         }
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)

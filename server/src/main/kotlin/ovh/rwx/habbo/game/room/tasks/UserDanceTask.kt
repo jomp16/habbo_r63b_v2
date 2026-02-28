@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.tasks
 
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -28,5 +29,11 @@ class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : 
         roomUser.idle = false
         roomUser.handItem = 0
         roomUser.danceId = danceId
+
+        room.wiredHandler.triggerWired(
+            WiredTriggerUserPerformsAction::class,
+            roomUser,
+            listOf(WiredTriggerUserPerformsAction.WiredUserAction.DANCE, danceId),
+        )
     }
 }

@@ -28,6 +28,8 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.kotlin.containsAny
 import ovh.rwx.habbo.plugin.event.events.room.RoomUserChatEvent
 import ovh.rwx.habbo.util.Direction
 import java.util.*
@@ -44,11 +46,17 @@ class UserChatTask(
         roomUser.idle = false
         val speechEmotion = getSpeechEmotion(message.uppercase(Locale.getDefault()))
 
-        if (!skipCommands) {
-            HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))
-
-            if (message.startsWith(':')) return
+        if (skipCommands) {
+            // Se skipCommands é true, apenas enviamos o pacote para os usuários
+            // e ignoramos Wireds, Filtros e Plugins para evitar loop.
+            broadcastMessage(room, filterMessage = message, speechEmotion = speechEmotion)
+            return
         }
+
+        HabboServer.pluginManager.executeEventAsync(RoomUserChatEvent(room, roomUser, message, bubble, type))
+
+        if (message.startsWith(':')) return
+
         var filterMessage = message
 
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
@@ -56,91 +64,57 @@ class UserChatTask(
         val triggeredWireds = room.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)
 
         if (triggeredWireds.isNotEmpty()) {
-            // Verifica se deve esconder a mensagem usando os wireds acionados
-            val shouldHide = triggeredWireds
-                .filterIsInstance<WiredTriggerSaysSomething>()
-                .any { it.shouldHideMessage() }
+            val shouldHide =
+                triggeredWireds.filterIsInstance<WiredTriggerSaysSomething>().any { it.shouldHideMessage() }
+            if (shouldHide) return
 
-            if (shouldHide) {
-                // Não exibe a mensagem - apenas processa o trigger
-                return
-            } else {
-                // Exibe como whisper quando wired é ativado mas não deve esconder
-                roomUser.habboSession?.sendHabboResponse(
-                    Outgoing.ROOM_USER_WHISPER,
+            // Se o wired não esconde, ele vira um sussurro privado por padrão em muitas builds
+            roomUser.habboSession?.let {
+                sendResponse(
+                    it,
+                    RoomChatType.WHISPER,
                     roomUser.virtualID,
                     filterMessage,
                     speechEmotion,
                     bubble
                 )
-                return
             }
+            return
         }
 
-        if (type == RoomChatType.WHISPER) {
-            roomUser.habboSession?.sendHabboResponse(
-                Outgoing.ROOM_USER_WHISPER,
-                virtualID,
-                filterMessage,
-                speechEmotion,
-                bubble
-            )
+        broadcastMessage(room, filterMessage, speechEmotion)
+    }
+
+    /**
+     * Envia a resposta de chat baseada na versão do protocolo do cliente (R63A ou R63B/v2)
+     */
+    private fun sendResponse(
+        habboSession: HabboSession,
+        chatType: RoomChatType,
+        virtualId: Int,
+        message: String,
+        emotion: Int,
+        bubble: RoomChatMessageBubbles
+    ) {
+        val isR63A = habboSession.release == "R63A"
+
+        val header = when (chatType) {
+            RoomChatType.WHISPER -> if (isR63A) OutgoingR63A.ROOM_USER_WHISPER else Outgoing.ROOM_USER_WHISPER
+            RoomChatType.SHOUT -> if (isR63A) OutgoingR63A.ROOM_USER_SHOUT else Outgoing.ROOM_USER_SHOUT
+            else -> if (isR63A) OutgoingR63A.ROOM_USER_CHAT else Outgoing.ROOM_USER_CHAT
+        }
+
+        if (isR63A) {
+            // R63A: ID Virtual, Mensagem, Emoção (Não suporta Bubble ID)
+            habboSession.sendHabboResponse(header as OutgoingR63A, virtualId, message, emotion)
         } else {
-            room.roomUsers.values.forEach {
-                if (type == RoomChatType.CHAT && room.roomData.chatMaxDistance > 0 && room.roomGamemap.tileDistance(
-                        roomUser.currentVector3.x,
-                        roomUser.currentVector3.y,
-                        it.currentVector3.x,
-                        it.currentVector3.y
-                    ) <= room.roomData.chatMaxDistance
-                ) {
-                    it.habboSession?.let { habboSession ->
-                        if (habboSession.release != "R63A") {
-                            habboSession.sendHabboResponse(
-                                Outgoing.ROOM_USER_CHAT,
-                                virtualID,
-                                filterMessage,
-                                speechEmotion,
-                                bubble
-                            )
-                        } else {
-                            habboSession.sendHabboResponse(
-                                OutgoingR63A.ROOM_USER_CHAT,
-                                virtualID,
-                                filterMessage,
-                                speechEmotion,
-                            )
-                        }
-                    }
-                    turnHeadTowardsSpeaker(it, roomUser)
-                } else if (type == RoomChatType.SHOUT) {
-                    it.habboSession?.let { habboSession ->
-                        if (habboSession.release != "R63A") {
-                            habboSession.sendHabboResponse(
-                                Outgoing.ROOM_USER_SHOUT,
-                                virtualID,
-                                filterMessage,
-                                speechEmotion,
-                                bubble
-                            )
-                        } else {
-                            habboSession.sendHabboResponse(
-                                OutgoingR63A.ROOM_USER_SHOUT,
-                                virtualID,
-                                filterMessage,
-                                speechEmotion,
-                            )
-                        }
-                    }
-                    turnHeadTowardsSpeaker(it, roomUser)
-                }
-            }
+            // R63B: ID Virtual, Mensagem, Emoção, ID do Balão
+            habboSession.sendHabboResponse(header as Outgoing, virtualId, message, emotion, bubble)
         }
     }
 
     private fun turnHeadTowardsSpeaker(listener: RoomUser, speaker: RoomUser) {
-        if (listener == speaker) return
-        if (listener.walking || listener.idle) return
+        if (listener == speaker || listener.walking || listener.idle || listener.kicked) return
         if (listener.statusMap.containsKey("sit") || listener.statusMap.containsKey("lay")) return
 
         val targetRotation = Direction.calculate(
@@ -156,71 +130,42 @@ class UserChatTask(
             listener.updateNeeded = true
         }
     }
+
+    private fun broadcastMessage(room: Room, filterMessage: String, speechEmotion: Int) {
+        if (type == RoomChatType.WHISPER) {
+            roomUser.habboSession?.let { sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble) }
+        } else {
+            room.roomUsers.values.forEach { targetUser ->
+                // Adicionado check para não enviar para quem foi desconectado/kicked no meio do loop
+                if (targetUser.kicked) return@forEach
+
+                val canHear = when (type) {
+                    RoomChatType.CHAT -> room.roomData.chatMaxDistance <= 0 ||
+                            room.roomGamemap.tileDistance(
+                                roomUser.currentVector3.x, roomUser.currentVector3.y,
+                                targetUser.currentVector3.x, targetUser.currentVector3.y
+                            ) <= room.roomData.chatMaxDistance
+
+                    RoomChatType.SHOUT -> true
+                }
+
+                if (canHear) {
+                    targetUser.habboSession?.let {
+                        sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble)
+                    }
+                    turnHeadTowardsSpeaker(targetUser, roomUser)
+                }
+            }
+        }
+    }
 }
 
 private fun getSpeechEmotion(message: String): Int {
-    // Happy face
-    if (message.contains(":)") ||
-        message.contains(";)") ||
-        message.contains(":D") ||
-        message.contains(";D") ||
-        message.contains(":]") ||
-        message.contains(";]") ||
-        message.contains("=)") ||
-        message.contains("=]") ||
-        message.contains("=D") ||
-        message.contains(":>") ||
-        message.contains(":-]") ||
-        message.contains(":-)") ||
-        message.contains(":-D")
-    ) {
-        return 1
+    return when {
+        message.containsAny(":)", ";)", ":D", ";D", "[:", "]=D", ":-)") -> 1
+        message.containsAny(">:(", ">:[", ":@", ">=(") -> 2
+        message.containsAny(":O", ":0", "O_O", "o.O") -> 3
+        message.containsAny(":(", ":[", "=(", "='(", ":<") -> 4
+        else -> 0
     }
-    // Angry face
-    if (message.contains(">:(") ||
-        message.contains(">;(") ||
-        message.contains(">:[") ||
-        message.contains(">;[") ||
-        message.contains(">=(") ||
-        message.contains(">=[") ||
-        message.contains(":@")
-    ) {
-        return 2
-    }
-    // Surprised face
-    if (message.contains(":O") ||
-        message.contains(";O") ||
-        message.contains(":0") ||
-        message.contains(";0") ||
-        message.contains(">:O") ||
-        message.contains(">;O") ||
-        message.contains(">:0") ||
-        message.contains(">;0") ||
-        message.contains("=O") ||
-        message.contains(">=O")
-    ) {
-        return 3
-    }
-    // Sad face
-    if (message.contains(":(") ||
-        message.contains(":[") ||
-        message.contains("=(") ||
-        message.contains("=[") ||
-        message.contains(":C") ||
-        message.contains("=C") ||
-        message.contains(":'(") ||
-        message.contains(":'[") ||
-        message.contains("='(") ||
-        message.contains("='[") ||
-        message.contains(":'C") ||
-        message.contains("='C") ||
-        message.contains(":<") ||
-        message.contains(":-[") ||
-        message.contains(":-(")
-    ) {
-        return 4
-    }
-    // Normal face
-    return 0
 }
-

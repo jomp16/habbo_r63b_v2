@@ -37,7 +37,7 @@ class RoomSettingsResponse {
             writeInt(room.roomData.state.state)
             writeInt(room.roomData.category)
             writeInt(room.roomData.usersMax)
-            writeInt(if (room.roomModel.mapSizeX * room.roomModel.mapSizeY > 100) 50 else 25)
+            writeInt(if (room.roomModel.mapSizeX * room.roomModel.mapSizeY > 100) 50 else 25) // maximumVisitorsLimit
 
             writeInt(room.roomData.tags.size)
 
@@ -48,17 +48,18 @@ class RoomSettingsResponse {
             writeInt(if (room.roomData.allowPetsEat) 1 else 0)
             writeInt(if (room.roomData.allowWalkThrough) 1 else 0)
             writeInt(if (room.roomData.hideWall) 1 else 0)
-            writeInt(room.roomData.floorThick)
             writeInt(room.roomData.wallThick)
+            writeInt(room.roomData.floorThick)
             writeInt(room.roomData.chatType)
             writeInt(room.roomData.chatBalloon)
             writeInt(room.roomData.chatSpeed)
             writeInt(room.roomData.chatMaxDistance)
             writeInt(room.roomData.chatFloodProtection)
-            writeBoolean(true)
+            writeBoolean(true) // allowNavigatorDynamicCats
             writeInt(room.roomData.muteSettings)
             writeInt(room.roomData.kickSettings)
             writeInt(room.roomData.banSettings)
+            writeBoolean(room.hiddenBuildersClub)
         }
     }
 

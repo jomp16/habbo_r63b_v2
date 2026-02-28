@@ -144,9 +144,6 @@ class RoomTask : Runnable {
                         }
 
                         room.roomUsers.values.let {
-                            it.filter { roomUser -> roomUser.habboSession?.currentRoom != room }.forEach { roomUser ->
-                                room.removeUser(roomUser, notifyClient = false, kickNotification = false)
-                            }
                             it.forEach { roomUser -> roomUser.onCycle() }
 
                             it.filter { roomUser -> roomUser.updateNeeded }.let { list ->
@@ -167,7 +164,11 @@ class RoomTask : Runnable {
 
                         if (room.errorsCounter.get() > 0) room.errorsCounter.set(0)
                     } catch (e: Exception) {
-                        log.error("An exception happened on room task, room n° ${room.roomData.id}. Cause: {}", e)
+                        log.error(
+                            "An exception happened on room task, room n° ${room.roomData.id}. Cause: {}",
+                            e.message,
+                            e
+                        )
 
                         if (room.errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
                             log.error("Forcing close of room n° {} since it crashed over {} times!", room.roomData.id, HabboServer.habboConfig.roomTaskConfig.errorThreshold)

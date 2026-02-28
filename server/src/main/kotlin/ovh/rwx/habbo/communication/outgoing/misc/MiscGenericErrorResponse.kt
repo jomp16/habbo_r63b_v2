@@ -42,6 +42,7 @@ class MiscGenericErrorResponse {
         INVALID_ROOM_NAME(4010), // navigator.alert.invalid_room_name
         CANNOT_PERM_BAN(4011), // navigator.alert.cannot_perm_ban
         ROOM_IN_MAINTENANCE(4013), // navigator.alert.room_in_maintenance
-        BUILDERS_CLUB_ROOM_LOCKED(-400) // builders_club.visit_denied_for_visitor
+        BUILDERS_CLUB_ROOM_LOCKED(-400), // builders_club.visit_denied_for_visitor
+        NFT_TOKEN_REQUIRED(-100005), // nft_token_required
     }
 }

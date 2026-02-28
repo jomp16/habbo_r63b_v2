@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
@@ -67,6 +68,7 @@ class RoomUser(
     internal var headResetCycle: Int = 0
     var walkingBlocked: Boolean = false
     var frozen: Boolean = false
+    var kicked: Boolean = false
     var ignoreBlocking: Boolean = false
     private var overrideBlocking: Boolean = false
     var rollerId: Int = -1
@@ -125,18 +127,52 @@ class RoomUser(
     private var lastEffect: RoomUserEffect? = null
 
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
+        val hasStatus = statusMap.containsKey(key)
+
         statusMap[key] = Pair(
             if (milliseconds == -1) null
             else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value
         )
 
-        updateNeeded = true
+        if (!hasStatus) {
+            updateNeeded = true
+
+            when (key) {
+                "sit" -> {
+                    room.wiredHandler.triggerWired(
+                        WiredTriggerUserPerformsAction::class,
+                        this,
+                        WiredTriggerUserPerformsAction.WiredUserAction.SIT,
+                    )
+                }
+
+                "lay" -> {
+                    room.wiredHandler.triggerWired(
+                        WiredTriggerUserPerformsAction::class,
+                        this,
+                        WiredTriggerUserPerformsAction.WiredUserAction.LAY,
+                    )
+                }
+            }
+        }
     }
 
     fun removeStatus(key: String) {
-        statusMap.remove(key)
+        val removed = statusMap.remove(key)
 
         updateNeeded = true
+
+        if (removed != null) {
+            when (key) {
+                "sit", "lay" -> {
+                    room.wiredHandler.triggerWired(
+                        WiredTriggerUserPerformsAction::class,
+                        this,
+                        WiredTriggerUserPerformsAction.WiredUserAction.STAND,
+                    )
+                }
+            }
+        }
     }
 
     fun onCycle() {
@@ -241,7 +277,7 @@ class RoomUser(
                     }
 
                     if (vector2 == room.roomModel.doorVector3.vector2) {
-                        room.removeUser(this, notifyClient = true, kickNotification = false)
+                        room.removeUser(this, notifyClient = true, kickNotification = kicked)
 
                         return
                     }
@@ -366,13 +402,23 @@ class RoomUser(
     private fun calculatePath() {
         if (objectiveVector2 == null) return
 
+        // 1. Pegamos o item mais alto no destino
+        val targetItem = room.roomGamemap.getHighestItem(objectiveVector2!!)
+
+        // 2. Só permitimos "ignorar o bloqueio" se for algo sentável ou cama
+        val isInterative = targetItem?.let {
+            it.furnishing.canSit || it.furnishing.interactionType == InteractionType.BED
+        } ?: false
+
+        // 3. Chamamos o Finder passando essa informação
         path = room.pathfinder.findPath(
             room.roomGamemap.grid,
             currentVector3.x,
             currentVector3.y,
             objectiveVector2!!.x,
             objectiveVector2!!.y,
-            ignoreBlocking || overrideBlocking
+            overrideBlocking, // override normal
+            isInterative     // Novo parâmetro: allowTargetBlocking
         ).toMutableList()
     }
 
@@ -458,6 +504,45 @@ class RoomUser(
             bodyRotation = roomItem.rotation
             headRotation = roomItem.rotation
             // todo: add effects
+
+            if (roomItem.furnishing.interactionType == InteractionType.BED) {
+                val oldVector3 = currentVector3
+
+                // Pegamos a posição atual onde o usuário parou (o tile que ele clicou)
+                val userPosition = oldVector3.vector2
+
+                // A posição final será:
+                // 1. A altura (Z) do item.
+                // 2. O X e Y dependem da rotação.
+                val finalX: Int
+                val finalY: Int
+
+                when (roomItem.rotation) {
+                    0, 4 -> {
+                        // Cama vertical: Mantemos o X do usuário (lado) e forçamos o Y do item (cabeceira)
+                        finalX = userPosition.x
+                        finalY = roomItem.position.y
+                    }
+
+                    2, 6 -> {
+                        // Cama horizontal: Mantemos o Y do usuário (lado) e forçamos o X do item (cabeceira)
+                        finalX = roomItem.position.x
+                        finalY = userPosition.y
+                    }
+
+                    else -> {
+                        finalX = roomItem.position.x
+                        finalY = roomItem.position.y
+                    }
+                }
+
+                currentVector3 = Vector3(finalX, finalY, roomItem.position.z)
+
+                // Atualiza o mapa de usuários para o novo tile (caso tenha mudado)
+                if (oldVector3.x != finalX || oldVector3.y != finalY) {
+                    room.roomGamemap.updateRoomUserMovement(this, oldVector3.vector2, Vector2(finalX, finalY))
+                }
+            }
         }
 
         updateNeeded = true
