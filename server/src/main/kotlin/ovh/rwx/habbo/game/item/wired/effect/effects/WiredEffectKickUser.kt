@@ -36,7 +36,7 @@ class WiredEffectKickUser(room: Room, roomItem: RoomItem) : WiredEffect(room, ro
     }
 
     override fun code() = WiredEffectType.KICK_FROM_ROOM.code
-    override fun requiresItems() = false
+    override val requiresItems = false
 
     override fun onEffect(wiredContext: WiredContext) {
         val targets = wiredContext.getEffectiveUsers(this)

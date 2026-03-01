@@ -34,7 +34,13 @@ class WiredTriggerClickUser(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     override fun code() = WiredTriggerType.USER_CLICKS_USER.code
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        return data != null && data is RoomUser
+        val triggered = data != null && data is RoomUser
+
+        if (triggered) {
+            wiredContext.targetUsers += data
+        }
+
+        return triggered
     }
 
     companion object {

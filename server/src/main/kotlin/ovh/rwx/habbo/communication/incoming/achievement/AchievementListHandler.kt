@@ -38,14 +38,12 @@ class AchievementListHandler {
             habboSession.sendHabboResponse(
                 OutgoingR63A.ACHIEVEMENT_LIST,
                 habboSession.userInformation.achievementUsers,
-                HabboServer.habboGame.achievementManager.achievementGroups,
                 HabboServer.habboGame.achievementManager.groupedAchievements
             )
         } else {
             habboSession.sendHabboResponse(
                 Outgoing.ACHIEVEMENT_LIST,
                 habboSession.userInformation.achievementUsers,
-                HabboServer.habboGame.achievementManager.achievementGroups,
                 HabboServer.habboGame.achievementManager.groupedAchievements
             )
         }

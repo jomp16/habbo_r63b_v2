@@ -23,6 +23,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
+import ovh.rwx.habbo.game.item.wired.WiredMoveEntry
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
@@ -30,12 +31,14 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
+import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.slide.flushWiredMovements
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
-class WiredHandler {
+class WiredHandler(val room: Room) {
     private val wiredStack: MutableMap<Vector2, MutableMap<Int, WiredItem>> = ConcurrentHashMap()
 
     fun addWiredItem(vector2: Vector2, wiredItem: WiredItem) {
@@ -56,6 +59,7 @@ class WiredHandler {
      */
     fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): List<WiredTrigger> {
         val triggeredWireds = mutableListOf<WiredTrigger>()
+        val batchedMovements: MutableList<WiredMoveEntry> = mutableListOf()
 
         wiredStack.values.forEach { wiredStackMap ->
             // Filtramos todos os triggers do tipo solicitado nesta pilha
@@ -101,10 +105,18 @@ class WiredHandler {
 
                                 effect.handle(wiredContext, roomUser)
                             }
+
+                        // NOVO: Faz o flush dos movimentos após todos os efeitos rodarem
+                        if (wiredContext.batchedMovements.isNotEmpty()) {
+                            batchedMovements += wiredContext.batchedMovements
+                            wiredContext.batchedMovements.clear() // Limpa para evitar reenvio
+                        }
                     }
                 }
             }
         }
+
+        room.flushWiredMovements(batchedMovements)
 
         return triggeredWireds
     }

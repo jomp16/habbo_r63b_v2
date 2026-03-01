@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,11 +35,19 @@ class WiredTriggerWalksOffFurni(room: Room, roomItem: RoomItem) : WiredTrigger(r
     }
 
     override fun code() = WiredTriggerType.WALKS_OFF_FURNI.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         val items = roomItem.wiredData?.items ?: return false
-        return data != null && data is RoomItem && items.any { it == data.id }
+
+        val walkedItem = data as? RoomItem ?: return false
+        val triggered = items.contains(walkedItem.id)
+
+        if (triggered) {
+            wiredContext.sourceItem = walkedItem
+        }
+
+        return triggered
     }
 
     companion object {

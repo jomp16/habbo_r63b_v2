@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,7 +38,7 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     override fun code() = WiredEffectType.TELEPORT.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun onEffect(wiredContext: WiredContext) {
         if (wiredContext.triggererUser == null) return

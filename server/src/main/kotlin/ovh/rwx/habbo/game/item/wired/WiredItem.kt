@@ -27,11 +27,25 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 
-abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
+abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     abstract fun code(): Int
-    open fun requiresItems(): Boolean = false
+    open val requiresItems: Boolean = false
+
+    // As subclasses devem sobrescrever isso se quiserem habilitar opções avançadas
+    open val allowedFurniSources: List<WiredFurniSource>
+        get() = if (requiresItems) {
+            listOf(WiredFurniSource.SELECTED_ITEMS) // Tem mobis? Então o padrão é "Mobis Escolhidos"
+        } else {
+            emptyList() // Não tem mobis? Esconde as opções de fontes de mobis!
+        }
+
+    open val defaultFurniSource: WiredFurniSource
+        get() = if (requiresItems) WiredFurniSource.SELECTED_ITEMS else WiredFurniSource.TRIGGERING_ITEM
+
+    open val allowedUserSources: List<WiredUserSource> = emptyList()
+    open val defaultUserSource: WiredUserSource = WiredUserSource.TRIGGERING_USER
 
     fun saveWired(habboRequest: HabboRequest, habboAir: Boolean): Boolean {
         roomItem.wiredData?.let {
@@ -45,7 +59,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             // param4: stringParam
             it.message = habboRequest.readUTF()
 
-            // param5: stuffIds
+            // param5: stuffIds (Mobis selecionados no quarto)
             val itemsCount = habboRequest.readInt()
             val roomItemsIds = mutableListOf<Int>()
             repeat(itemsCount) { _ ->
@@ -68,7 +82,6 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
                     roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> {
                         // Condition: param7 = resolveQuantifier()
-                        @Suppress("UNUSED_VARIABLE")
                         val quantifier = habboRequest.readInt() // TODO: implement quantifier
                         log.info("[WIRED] TODO: condition quantifier: {}", quantifier)
                     }
@@ -80,25 +93,21 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
                     }
                 }
 
-                // param7/param8: resolveFurniSources() - TODO: implement furniSources
+                // param7/param8: furniSourceTypes (Ex: 0 = Selected Furni, 100 = Triggering Furni)
                 val furniSourcesCount = habboRequest.readInt()
-                if (furniSourcesCount > 0) {
-                    log.info("[WIRED] TODO: furniSourcesCount: {}", furniSourcesCount)
-                    repeat(furniSourcesCount) { _ ->
-                        @Suppress("UNUSED_VARIABLE")
-                        val furniSource = habboRequest.readInt()
-                    }
+                val furniSources = mutableListOf<Int>()
+                repeat(furniSourcesCount) { _ ->
+                    furniSources += habboRequest.readInt()
                 }
+                it.furniSources = furniSources
 
-                // param8/param9: resolveUserSources() - TODO: implement userSources
+                // param8/param9: userSourceTypes (Ex: 0 = Triggering User)
                 val userSourcesCount = habboRequest.readInt()
-                if (userSourcesCount > 0) {
-                    log.info("[WIRED] TODO: userSourcesCount: {}", userSourcesCount)
-                    repeat(userSourcesCount) { _ ->
-                        @Suppress("UNUSED_VARIABLE")
-                        val userSource = habboRequest.readInt()
-                    }
+                val userSources = mutableListOf<Int>()
+                repeat(userSourcesCount) { _ ->
+                    userSources += habboRequest.readInt()
                 }
+                it.userSources = userSources
 
                 // param3: resolveVariableIds() - TODO: implement variableIds
                 val variableIdsCount = habboRequest.readInt()
@@ -106,19 +115,24 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
                     log.info("[WIRED] TODO: variableIdsCount: {}", variableIdsCount)
                     repeat(variableIdsCount) { _ ->
                         @Suppress("UNUSED_VARIABLE")
-                        val variableId = habboRequest.readInt()
+                        val variableId = habboRequest.readUTF() // CORRIGIDO: O AS3 envia uma String aqui!
                     }
                 }
 
-                // param6: getStuffIds2() - TODO: implement stuffIds2
+                // param6: getStuffIds2() (Mobis secundários)
                 val stuffIds2Count = habboRequest.readInt()
-                if (stuffIds2Count > 0) {
-                    log.info("[WIRED] TODO: stuffIds2Count: {}", stuffIds2Count)
-                    repeat(stuffIds2Count) { _ ->
-                        @Suppress("UNUSED_VARIABLE")
-                        val stuffId2 = habboRequest.readInt()
+                val roomItemsIds2 = mutableListOf<Int>()
+                repeat(stuffIds2Count) { _ ->
+                    val itemId = habboRequest.readInt()
+                    if (room.roomItems.containsKey(itemId)) {
+                        val roomItem2 = room.roomItems[itemId] ?: return@repeat
+                        if (!roomItem2.furnishing.interactionType.name.startsWith("WIRED")) {
+                            roomItemsIds2 += itemId
+                        }
                     }
                 }
+                it.stuffIds2 = roomItemsIds2
+
             } else {
                 // Delay apenas para effects na versão antiga
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
@@ -128,6 +142,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
             it.options = options
             it.items = roomItemsIds
+            log.debug("WiredData salvo com sucesso: {}", it)
             setData()
             return true
         }
@@ -141,7 +156,7 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
     fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData, habboAir: Boolean) {
         habboResponse.apply {
             // Determine if this wired uses items
-            if (requiresItems()) {
+            if (requiresItems) {
                 writeItems(wiredData, habboAir)
             } else {
                 writeEmptyItems(habboAir)
@@ -160,9 +175,14 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             writeSettings(this, wiredData.message, wiredData.options, settingsCount, habboAir)
 
             if (habboAir) {
-                writeListOfIds(emptyList()) // variable ids
-                writeListOfIds(if (requiresItems()) wiredData.items else emptyList()) // furni ids
-                writeListOfIds(emptyList()) // user ids
+                writeListOfIds(emptyList()) // todo: variable ids
+                // furniSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
+                val fSources = wiredData.furniSources.ifEmpty { listOf(this@WiredItem.defaultFurniSource.code) }
+                writeListOfIds(fSources)
+
+                // userSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
+                val uSources = wiredData.userSources.ifEmpty { listOf(this@WiredItem.defaultUserSource.code) }
+                writeListOfIds(uSources)
             }
 
             // Para o Habbo antes do AIR , a classe pai termina antes de CODE
@@ -177,9 +197,12 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             }
 
             if (habboAir) {
-                writeBoolean(true) // advanced mode
-                writeInputSourcesConf()
-                writeBoolean(true) // allowWallFurni
+                // A aba "Avançado" só deve aparecer se o Wired tiver mais de 1 opção de fonte de Mobi ou de Usuário!
+                val hasAdvancedMode =
+                    this@WiredItem.allowedFurniSources.size > 1 || this@WiredItem.allowedUserSources.size > 1
+                writeBoolean(hasAdvancedMode)
+                writeInputSourcesConf(this@WiredItem)
+                writeBoolean(false) // allowWallFurni
 
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
                     writeConditionTypeSpecifics(quantifierType = 0, isInvert = false)
@@ -210,14 +233,21 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
 
         fun HabboResponse.writeItems(wiredData: WiredData, habboAir: Boolean) {
             writeInt(20) // selectable items
-            if (wiredData.items.isEmpty()) writeInt(0)
-            else wiredData.items.let { roomItems ->
-                writeInt(roomItems.size) // how many selected items
-                roomItems.forEach { writeInt(it) } // items
+            if (wiredData.items.isEmpty()) {
+                writeInt(0)
+            } else {
+                wiredData.items.let { roomItems ->
+                    writeInt(roomItems.size) // how many selected items
+                    roomItems.forEach { writeInt(it) } // items
+                }
             }
 
             if (habboAir) {
-                writeInt(0) // todo: stuffIds2
+                // stuffIds2 (Lista secundária)
+                wiredData.stuffIds2.let { stuffIds2 ->
+                    writeInt(stuffIds2.size)
+                    stuffIds2.forEach { writeInt(it) }
+                }
             }
         }
 
@@ -267,9 +297,11 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
             response.writeInt(exceptedSettingsSize)
 
             if (exceptedSettingsSize > 0) {
-                @Suppress("ForEachParameterNotUsed")
-                if (settings.size != exceptedSettingsSize) (0 until exceptedSettingsSize).forEach { response.writeInt(0) }
-                else settings.forEach { response.writeInt(it) }
+                if (settings.size != exceptedSettingsSize) {
+                    repeat((0 until exceptedSettingsSize).count()) { response.writeInt(0) }
+                } else {
+                    settings.forEach { response.writeInt(it) }
+                }
             }
 
             if (!habboAir) {
@@ -278,25 +310,52 @@ abstract class WiredItem(protected val room: Room, val roomItem: RoomItem) {
         }
 
         fun HabboResponse.writeListOfIds(listOfIds: List<Int>) {
-            // TODO: needs implementing
             writeInt(listOfIds.size) // amountFurniSelections
             listOfIds.forEach {
                 writeInt(it)
             }
         }
 
-        fun HabboResponse.writeInputSourcesConf() {
-            // TODO: needs implementing
-            writeInt(0) // amountFurniSelections
-            // writeInt() size for for
-            // writeInt() for
-            writeInt(0) // amountUserSelections
-            // writeInt() size for for
-            // writeInt() for
-            writeInt(0) // defaultFurniSources
-            // writeInt() for
-            writeInt(0) // defaultUserSources
-            // writeInt() for
+        /**
+         * Constrói dinamicamente os menus dropdown de origem do Wired baseado
+         * nas permissões definidas na subclasse (allowedFurniSources / allowedUserSources).
+         */
+        fun HabboResponse.writeInputSourcesConf(wiredItem: WiredItem) {
+            val furniCodes = wiredItem.allowedFurniSources.map { it.code }
+            val userCodes = wiredItem.allowedUserSources.map { it.code }
+
+            // 1. _SafeStr_6921 (getAllowedFurniSources)
+            // O cliente aceita múltiplas listas, mas 99% dos Wireds usam apenas 1 lista principal.
+            writeInt(if (furniCodes.isNotEmpty()) 1 else 0) // Quantidade de grupos de seleção
+            if (furniCodes.isNotEmpty()) {
+                writeInt(furniCodes.size) // Quantidade de opções neste grupo
+                furniCodes.forEach { writeInt(it) }
+            }
+
+            // 2. _SafeStr_6922 (getAllowedUserSources)
+            writeInt(if (userCodes.isNotEmpty()) 1 else 0)
+            if (userCodes.isNotEmpty()) {
+                writeInt(userCodes.size)
+                userCodes.forEach { writeInt(it) }
+            }
+
+            // 3. _SafeStr_6923 (defaultFurniSources)
+            // Se o Wired suportar mobis, enviamos o padrão definido pela classe
+            if (furniCodes.isNotEmpty()) {
+                writeInt(1)
+                writeInt(wiredItem.defaultFurniSource.code)
+            } else {
+                writeInt(0)
+            }
+
+            // 4. _SafeStr_6924 (defaultUserSources)
+            // Se o Wired suportar usuários, enviamos o padrão definido pela classe
+            if (userCodes.isNotEmpty()) {
+                writeInt(1)
+                writeInt(wiredItem.defaultUserSource.code)
+            } else {
+                writeInt(0)
+            }
         }
 
         fun HabboResponse.writeWiredContext() {

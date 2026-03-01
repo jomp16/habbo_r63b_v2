@@ -122,9 +122,7 @@ class BuildersClubPlaceWallItemHandler {
             return
         }
 
+        // Sucesso
         habboSession.habboSubscription.incrementBuildersItemsUsed()
-
-        // Sucesso - NAO envia BUILDERS_PLACE_ITEM_WARNING!
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,7 +33,13 @@ class WiredTriggerClickFurni(room: Room, roomItem: RoomItem) : WiredTrigger(room
     override fun code() = WiredTriggerType.AVATAR_CLICKS_FURNI.code
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        return data != null && data is RoomItem
+        val triggered = data != null && data is RoomItem
+
+        if (triggered) {
+            wiredContext.targetFurnis += data
+        }
+
+        return triggered
     }
 
     companion object {

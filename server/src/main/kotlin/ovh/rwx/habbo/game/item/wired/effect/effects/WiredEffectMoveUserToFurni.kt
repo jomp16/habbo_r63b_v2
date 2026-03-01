@@ -40,7 +40,7 @@ class WiredEffectMoveUserToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     override fun code() = WiredEffectType.MOVE_USER_TO_FURNI.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun setData() {
         roomItem.wiredData?.let {

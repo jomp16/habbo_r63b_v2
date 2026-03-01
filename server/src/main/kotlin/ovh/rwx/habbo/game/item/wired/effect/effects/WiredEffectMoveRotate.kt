@@ -23,6 +23,8 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniMove
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -40,7 +42,17 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     }
 
     override fun code() = WiredEffectType.MOVE_FURNI.code
-    override fun requiresItems() = true
+    override val requiresItems = true
+
+    // Define QUAIS opções vão aparecer na aba de Mobis do quarto
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,   // "Use mobis escolhidos"
+        WiredFurniSource.TRIGGERING_ITEM,  // "Use o item de ativação"
+        WiredFurniSource.SELECTOR_ITEMS    // "Usar mobis do seletor"
+    )
+
+    // Qual opção vem marcada por padrão quando o usuário abre o Wired novo?
+    override val defaultFurniSource = WiredFurniSource.SELECTED_ITEMS
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -50,13 +62,28 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
     }
 
     override fun onEffect(wiredContext: WiredContext) {
-        roomItem.wiredData?.items?.forEach { itemId ->
-            val roomItem = room.roomItems[itemId] ?: return@forEach
+        wiredContext.getEffectiveFurnis(this).forEach { item ->
+            val newVector2 = getVector2(item.position.vector2)
+            val newRotation = getRotation(item.rotation)
 
-            val newVector2 = getVector2(roomItem.position.vector2)
-            val newRotation = getRotation(roomItem.rotation)
+            val oldPos = item.position.copy() // Salva posição original
 
-            room.setFloorItem(roomItem, newVector2, newRotation, null, rollerId = -2)
+            if (room.setFloorItem(item, newVector2, newRotation, null)) {
+                // Adiciona ao acumulador do ciclo
+                wiredContext.batchedMovements.add(
+                    WiredFurniMove(
+                        furniId = item.id,
+                        sourceX = oldPos.x,
+                        sourceY = oldPos.y,
+                        sourceZ = oldPos.z,
+                        targetX = item.position.x,
+                        targetY = item.position.y,
+                        targetZ = item.position.z,
+                        animationTime = 500,
+                        rotation = item.rotation
+                    )
+                )
+            }
         }
     }
 
@@ -142,7 +169,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         LEFT(7);
 
         companion object {
-            fun getDirectionState(i: Int) = values().firstOrNull { it.i == i } ?: NONE
+            fun getDirectionState(i: Int) = entries.firstOrNull { it.i == i } ?: NONE
         }
     }
 
@@ -153,7 +180,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         RANDOM(3);
 
         companion object {
-            fun getRotationState(i: Int) = values().firstOrNull { it.i == i } ?: NONE
+            fun getRotationState(i: Int) = entries.firstOrNull { it.i == i } ?: NONE
         }
     }
 

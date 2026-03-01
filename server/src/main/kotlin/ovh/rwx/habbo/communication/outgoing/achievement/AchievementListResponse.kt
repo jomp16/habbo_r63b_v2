@@ -35,14 +35,13 @@ class AchievementListResponse {
     fun response(
         habboResponse: HabboResponse,
         achievementUsers: List<AchievementUser>,
-        achievementGroups: Map<String, AchievementGroup>,
         groupedAchievements: Map<AchievementGroup, List<Achievement>>
     ) {
         habboResponse.apply {
-            writeInt(achievementGroups.size)
+            writeInt(groupedAchievements.size)
 
-            achievementGroups.values.forEach { achievementGroup ->
-                commonStuff(habboResponse, achievementUsers, groupedAchievements, achievementGroup)
+            groupedAchievements.forEach { achievementGroup ->
+                commonStuff(habboResponse, achievementUsers, achievementGroup)
             }
 
             writeUTF("") // defaultCategory
@@ -53,39 +52,41 @@ class AchievementListResponse {
     fun responseR63A(
         habboResponse: HabboResponse,
         achievementUsers: List<AchievementUser>,
-        achievementGroups: Map<String, AchievementGroup>,
         groupedAchievements: Map<AchievementGroup, List<Achievement>>
     ) {
         habboResponse.apply {
-            writeInt(achievementGroups.size)
+            writeInt(groupedAchievements.size)
 
-            achievementGroups.values.forEach { achievementGroup ->
-                val userAchievement = achievementUsers.find { it.group == achievementGroup }
+            groupedAchievements.forEach { achievementGroupEntry ->
+                val userAchievement = achievementUsers.find { it.group == achievementGroupEntry }
+
+                val totalLevels = achievementGroupEntry.key.totalLevels
+                val isMaxLevel = (userAchievement?.level ?: 0) >= totalLevels
+
                 var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-                val totalLevels = achievementGroup.totalLevels
                 targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-                val groupList = groupedAchievements[achievementGroup]
-                val targetAchievement = groupList?.find { it.level == targetLevel }
-                    ?: groupList?.lastOrNull()
+                val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
+                    ?: achievementGroupEntry.value.lastOrNull()
                     ?: return@forEach
 
-                val badgeCode = if (achievementGroup.badgeAppendLevel) {
-                    achievementGroup.name + targetLevel
+                val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
+                    achievementGroupEntry.key.name + targetLevel
                 } else {
-                    achievementGroup.name
+                    achievementGroupEntry.key.name
                 }
 
-                writeInt(achievementGroup.id)
+                writeInt(achievementGroupEntry.key.id)
                 writeInt(targetLevel)
                 writeUTF(badgeCode)
                 writeInt(targetAchievement.progressRequirement) // scoreLimit
                 writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
                 writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
                 writeInt(userAchievement?.progress ?: 0) // currentPoints
-                writeBoolean((userAchievement?.level ?: 0) >= totalLevels) // finalLevel
-                writeUTF(achievementGroup.category.category)
+                writeBoolean(isMaxLevel) // finalLevel
+                writeUTF(achievementGroupEntry.key.category.category)
                 writeInt(totalLevels) // levelCount
             }
+            writeUTF("") // defaultCategory
         }
     }
 
@@ -93,14 +94,13 @@ class AchievementListResponse {
     fun responseHabboAir(
         habboResponse: HabboResponse,
         achievementUsers: List<AchievementUser>,
-        achievementGroups: Map<String, AchievementGroup>,
         groupedAchievements: Map<AchievementGroup, List<Achievement>>
     ) {
         habboResponse.apply {
-            writeInt(achievementGroups.size)
+            writeInt(groupedAchievements.size)
 
-            achievementGroups.values.forEach { achievementGroup ->
-                commonStuff(habboResponse, achievementUsers, groupedAchievements, achievementGroup)
+            groupedAchievements.forEach { achievementGroupEntry ->
+                commonStuff(habboResponse, achievementUsers, achievementGroupEntry)
                 writeShort(0) // state
             }
 
@@ -111,30 +111,31 @@ class AchievementListResponse {
     private fun HabboResponse.commonStuff(
         habboResponse: HabboResponse,
         achievementUsers: List<AchievementUser>,
-        groupedAchievements: Map<AchievementGroup, List<Achievement>>,
-        achievementGroup: AchievementGroup
+        achievementGroupEntry: Map.Entry<AchievementGroup, List<Achievement>>
     ) {
-        val userAchievement = achievementUsers.find { it.group == achievementGroup }
+        val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
+
+        val totalLevels = achievementGroupEntry.key.totalLevels
+        val isMaxLevel = (userAchievement?.level ?: 0) >= totalLevels
 
         var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-        val totalLevels = achievementGroup.totalLevels
         targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-        val groupList = groupedAchievements[achievementGroup]
-        val targetAchievement = groupList?.find { it.level == targetLevel }
-            ?: groupList?.lastOrNull()
+        val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
+            ?: achievementGroupEntry.value.lastOrNull()
             ?: return // Se não tiver NENHUMA conquista no grupo, aborta esse loop (não envia nada desse grupo)
-        val badgeCode = if (achievementGroup.badgeAppendLevel) {
-            achievementGroup.name + targetLevel // Padrão (ACH_Login1)
+        val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
+            achievementGroupEntry.key.name + targetLevel // Padrão (ACH_Login1)
         } else {
-            achievementGroup.name // Estático (ACH_VipParties2_Entry)
+            achievementGroupEntry.key.name // Estático (ACH_VipParties2_Entry)
         }
         // Se for nível 1, começa do 0. Se for nível 2, começa onde o nível 1 terminou.
         val scoreAtStart = if (targetLevel == 1) 0 else {
             // Pega o achievement do nível anterior para saber onde ele terminava
-            groupedAchievements[achievementGroup]?.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
+            achievementGroupEntry.value.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
         }
+        val displayMethod = if (isMaxLevel && totalLevels == 1) 1 else 0
 
-        writeInt(achievementGroup.id)
+        writeInt(achievementGroupEntry.key.id)
         writeInt(targetLevel)
         writeUTF(badgeCode) // Envia o código corrigido
         writeInt(scoreAtStart) // <--- Corrigido (Envia 0 para lvl 1, 20 para lvl 2, etc)
@@ -142,10 +143,10 @@ class AchievementListResponse {
         writeInt(targetAchievement.rewardActivityPoints)
         writeInt(ActivityPointType.PIXELS.code) // type of reward
         writeInt(userAchievement?.progress ?: 0)
-        writeBoolean((userAchievement?.level ?: 0) >= totalLevels) // is 100% complete
-        writeUTF(achievementGroup.category.category)
+        writeBoolean(isMaxLevel) // is 100% complete
+        writeUTF(achievementGroupEntry.key.category.category)
         writeUTF("") // subCategory
         writeInt(totalLevels)
-        writeInt(0) // displayMethod
+        writeInt(displayMethod) // displayMethod
     }
 }

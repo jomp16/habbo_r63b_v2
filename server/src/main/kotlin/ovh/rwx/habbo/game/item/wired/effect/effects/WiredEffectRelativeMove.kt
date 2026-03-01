@@ -23,6 +23,8 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniMove
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -40,7 +42,12 @@ class WiredEffectRelativeMove(room: Room, roomItem: RoomItem) : WiredEffect(room
     }
 
     override fun code() = WiredEffectType.RELATIVE_FURNI_MOVE.code
-    override fun requiresItems() = true
+    override val requiresItems = true
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.SELECTOR_ITEMS
+    )
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -59,7 +66,23 @@ class WiredEffectRelativeMove(room: Room, roomItem: RoomItem) : WiredEffect(room
             )
 
             if (!room.roomGamemap.isBlocked(newPos, ignoreUsers = true)) {
-                room.setFloorItem(item, newPos, item.rotation, null, rollerId = -2)
+                val oldPos = item.position.copy() // Salva posição original
+
+                if (room.setFloorItem(item, newPos, item.rotation, null)) {
+                    // Adiciona ao acumulador do ciclo
+                    wiredContext.batchedMovements.add(
+                        WiredFurniMove(
+                            furniId = item.id,
+                            sourceX = oldPos.x,
+                            sourceY = oldPos.y,
+                            sourceZ = oldPos.z,
+                            targetX = item.position.x,
+                            targetY = item.position.y,
+                            targetZ = item.position.z,
+                            rotation = item.rotation
+                        )
+                    )
+                }
             }
         }
     }

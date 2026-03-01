@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,7 +32,7 @@ import ovh.rwx.habbo.game.room.Room
 @WiredItemInteractor(InteractionType.WIRED_SELECTOR_FURNI_PICKS)
 class WiredSelectorFurniPicks(room: Room, roomItem: RoomItem) : WiredSelector(room, roomItem) {
     override fun code() = WiredSelectorType.FURNI_BY_FURNI.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun onSelect(context: WiredContext) {
         val mySelectedItems = getItemsFromConfig()

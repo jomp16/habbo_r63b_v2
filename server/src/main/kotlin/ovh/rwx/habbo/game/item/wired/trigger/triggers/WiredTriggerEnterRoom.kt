@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -46,6 +46,13 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         if (roomItem.wiredData == null) return false
 
-        return username.isBlank() || wiredContext.triggererUser != null && username == wiredContext.triggererUser.habboSession!!.userInformation.username
+        val user = wiredContext.triggererUser // Já vem preenchido pelo WiredHandler!
+        val triggered = username.isBlank() || (user != null && username == user.habboSession!!.userInformation.username)
+
+        // Não precisa fazer mais nada!
+        // O WiredHandler já colocou o RoomUser no `wiredContext.triggererUser`.
+        // Qualquer Efeito com Fonte 0 (Usuário Acionador) já vai conseguir puxar ele!
+
+        return triggered
     }
 }

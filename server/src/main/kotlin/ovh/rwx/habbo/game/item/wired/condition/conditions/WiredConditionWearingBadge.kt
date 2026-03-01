@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
@@ -41,6 +42,12 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
     override fun code() =
         if (isNegative) WiredConditionType.NOT_ACTOR_IS_WEARING_BADGE.code else WiredConditionType.ACTOR_IS_WEARING_BADGE.code
 
+    override val allowedUserSources = listOf(
+        WiredUserSource.TRIGGERING_USER,
+        WiredUserSource.USER_BY_NAME,
+        WiredUserSource.SELECTOR_USERS
+    )
+
     override fun setData() {
         roomItem.wiredData?.let {
             badgeCode = it.message
@@ -48,11 +55,16 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
     }
 
     override fun onCondition(wiredContext: WiredContext): Boolean {
-        if (wiredContext.triggererUser == null || badgeCode.isBlank()) return false
+        // Puxa os alvos. Pode ser quem pisou no piso, ou quem veio de um Selector!
+        val targetUsers = wiredContext.getEffectiveUsers(this)
 
-        val equippedBadges =
-            wiredContext.triggererUser.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
-        val hasBadge = equippedBadges.any { it.code == badgeCode }
+        if (targetUsers.isEmpty() || badgeCode.isBlank()) return false
+
+        // Condição: TODOS os usuários selecionados precisam estar com o emblema
+        val hasBadge = targetUsers.all { user ->
+            val equippedBadges = user.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
+            equippedBadges.any { it.code == badgeCode }
+        }
 
         return if (isNegative) !hasBadge else hasBadge
     }

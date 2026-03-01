@@ -42,7 +42,7 @@ class WiredEffectControlClock(room: Room, roomItem: RoomItem) : WiredEffect(room
     }
 
     override fun code() = WiredEffectType.CONTROL_CLOCK.code
-    override fun requiresItems() = false
+    override val requiresItems = false
 
     override fun setData() {
         roomItem.wiredData?.let {

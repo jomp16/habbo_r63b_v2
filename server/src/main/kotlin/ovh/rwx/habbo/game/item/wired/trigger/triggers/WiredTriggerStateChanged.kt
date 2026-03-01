@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,11 +35,22 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
     }
 
     override fun code() = WiredTriggerType.STATE_CHANGE.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         val items = roomItem.wiredData?.items ?: return false
-        return data != null && data is RoomItem && items.any { it == data.id }
+
+        val changedItem = data as? RoomItem ?: return false
+
+        // Verifica se o item que mudou está na lista de monitoramento deste Wired
+        val triggered = items.contains(changedItem.id)
+
+        if (triggered) {
+            // Define a fonte de origem para os efeitos (Fonte 0)
+            wiredContext.sourceItem = changedItem
+        }
+
+        return triggered
     }
 
     companion object {

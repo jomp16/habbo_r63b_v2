@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,7 +22,9 @@ package ovh.rwx.habbo.game.item.wired.condition.conditions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
@@ -35,23 +37,31 @@ import ovh.rwx.habbo.game.room.Room
 class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
     private val isNegative = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_NOT_TRIGGER_ON_FURNI
 
-    init {
-        setData()
-    }
-
     override fun code() =
         if (isNegative) WiredConditionType.NOT_TRIGGERER_IS_ON_FURNI.code else WiredConditionType.TRIGGERER_IS_ON_FURNI.code
-    override fun requiresItems() = true
+
+    override val requiresItems = true
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.SELECTOR_ITEMS
+    )
+    override val allowedUserSources = listOf(
+        WiredUserSource.TRIGGERING_USER,
+        WiredUserSource.SELECTOR_USERS
+    )
 
     override fun onCondition(wiredContext: WiredContext): Boolean {
-        if (wiredContext.triggererUser == null) return false
-        val items = roomItem.wiredData?.items ?: return false
-        if (items.isEmpty()) return false
+        // Wired 2.0: Pega os usuários E os mobis usando o resolvedor!
+        val targetUsers = wiredContext.getEffectiveUsers(this)
+        val targetFurnis = wiredContext.getEffectiveFurnis(this)
 
-        val isOnFurni = items.any { itemId ->
-            val roomItem = room.roomItems[itemId] ?: return@any false
-            roomItem.affectedTiles.any { tile ->
-                wiredContext.triggererUser.currentVector3.vector2 == tile
+        if (targetUsers.isEmpty() || targetFurnis.isEmpty()) return false
+
+        // A condição passa se TODOS os usuários alvo estiverem em cima de ALGUM dos mobis alvo
+        val isOnFurni = targetUsers.all { user ->
+            targetFurnis.any { furni ->
+                furni.affectedTiles.contains(user.currentVector3.vector2)
             }
         }
 

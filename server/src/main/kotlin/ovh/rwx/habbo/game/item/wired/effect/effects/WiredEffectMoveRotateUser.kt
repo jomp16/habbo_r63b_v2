@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.slide.ObjectSlide
 import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
@@ -44,7 +45,7 @@ class WiredEffectMoveRotateUser(room: Room, roomItem: RoomItem) : WiredEffect(ro
     }
 
     override fun code() = WiredEffectType.MOVE_USER.code
-    override fun requiresItems() = false
+    override val requiresItems = false
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -62,12 +63,18 @@ class WiredEffectMoveRotateUser(room: Room, roomItem: RoomItem) : WiredEffect(ro
 
         targets.forEach { user ->
             val offset = if (moveDirection == -1) Pair(0, 0) else Direction.fromCode(moveDirection).getOffset()
-            val oldPos = user.currentVector3
+
+            // Guardamos a posição antiga (origem)
+            val oldPos = user.currentVector3.copy()
+
             val newPos = Vector2(
                 user.currentVector3.x + offset.first,
                 user.currentVector3.y + offset.second
             )
-            val newPosVector3 = Vector3(newPos, room.roomGamemap.getAbsoluteHeight(newPos))
+
+            // Calculamos a nova altura no destino
+            val newHeight = room.roomGamemap.getAbsoluteHeight(newPos)
+            val newPosVector3 = Vector3(newPos, newHeight)
 
             val newRotation = when (rotateDirection) {
                 -1 -> user.bodyRotation
@@ -78,18 +85,22 @@ class WiredEffectMoveRotateUser(room: Room, roomItem: RoomItem) : WiredEffect(ro
             }
 
             if (!room.roomGamemap.isBlocked(newPos, ignoreUsers = true)) {
+                // Executa a lógica de movimento no servidor
                 if (user.moveTo(newPos, newRotation, rollerId = -2, ignoreBlocking = true)) {
-                    room.sendHabboResponse(Outgoing.ROOM_ROLLER, oldPos, newPosVector3, user.virtualID, roomItem.id, -1)
-                    room.sendHabboResponse(
-                        OutgoingR63A.ROOM_ROLLER,
-                        oldPos,
-                        newPosVector3,
-                        user.virtualID,
-                        roomItem.id,
-                        -1
+                    // Criamos o objeto de slide usando o utilitário
+                    // Usamos roomItem.id como o causador do slide visual (o Wired)
+                    val slide = ObjectSlide.createUserSlide(
+                        source = oldPos,
+                        target = newPosVector3,
+                        rollerId = roomItem.id,
+                        virtualId = user.virtualID
                     )
+
+                    room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, slide)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
                 }
             } else if (rotateDirection != -1) {
+                // Se estiver bloqueado mas houver rotação, apenas gira o usuário no lugar
                 user.bodyRotation = newRotation
                 user.headRotation = newRotation
                 user.updateNeeded = true

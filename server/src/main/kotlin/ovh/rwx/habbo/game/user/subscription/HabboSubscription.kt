@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.user.subscription
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
@@ -79,8 +80,6 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun addOrExtendHabboClub(months: Int) {
-        val isFirstTime = habboClubSubscription == null
-
         if (habboClubSubscription == null) {
             habboClubSubscription = SubscriptionDao.createSubscription(
                 habboSession.userInformation.id,
@@ -89,16 +88,6 @@ class HabboSubscription(private val habboSession: HabboSession) {
             )
         } else {
             SubscriptionDao.extendSubscription(habboClubSubscription, months.toLong())
-        }
-
-        if (hasHabboClub && !habboSession.habboBadge.badges.containsKey("ACH_VipHC1")) {
-            habboSession.habboBadge.addBadge("ACH_VipHC1")
-        }
-
-        if (isFirstTime) {
-            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_BasicClub", 1, accumulate = true)
-            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_HC", 1, accumulate = true)
-            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_VipHC", 1, accumulate = true)
         }
 
         updateHabboClubStatus()
@@ -112,21 +101,35 @@ class HabboSubscription(private val habboSession: HabboSession) {
         currentSubscription.expire = currentSubscription.expire?.plusMonths(months.toLong())
         SubscriptionDao.updateBuildersClubSubscription(currentSubscription)
 
-//        if (isFirstTime) {
-//            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_BuildersClub", 1, accumulate = true)
-//        }
-
         updateBuildersClubStatus()
     }
 
     fun incrementBuildersItemsUsed() {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_RoomDecoBC", 1, accumulate = true)
         SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed + 1)
+
+        if (buildersClubSubscription.trial && buildersClubSubscription.itemsUsed == 0) {
+            if (habboSession.release == "R63A") {
+                habboSession.sendNotification($$"${notification.builders_club.room_locked.message}")
+            } else {
+                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_LOCKED)
+                habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
+            }
+        }
     }
 
     fun decrementBuildersItemsUsed() {
         if (buildersClubSubscription.itemsUsed > 0) {
             SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed - 1)
+
+            if (buildersClubSubscription.itemsUsed <= 0) {
+                if (habboSession.release == "R63A") {
+                    habboSession.sendNotification($$"${notification.builders_club.room_unlocked.message}")
+                } else {
+                    habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_UNLOCKED)
+                    habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
+                }
+            }
         }
     }
 

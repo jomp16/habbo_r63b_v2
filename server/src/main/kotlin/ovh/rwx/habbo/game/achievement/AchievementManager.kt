@@ -149,44 +149,39 @@ class AchievementManager {
                 habboSession.habboBadge.addBadge(newBadgeCode)
             }
 
-            habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, 0)
-            habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-
             if (habboSession.release == "R63A") {
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.ACTIVITY_POINTS_BALANCE,
+                    habboSession.userInformation.pixels,
+                    0
+                )
+                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
                 habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
                 habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
+
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.ACHIEVEMENT_LIST,
+                    habboSession.userInformation.achievementUsers,
+                    groupedAchievements
+                )
             } else {
+                habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, 0)
+                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
+
+                habboSession.sendHabboResponse(
+                    Outgoing.ACHIEVEMENT_LIST,
+                    habboSession.userInformation.achievementUsers,
+                    groupedAchievements
+                )
             }
-            
-            habboSession.sendHabboResponse(
-                Outgoing.ACHIEVEMENT_LIST,
-                habboSession.userInformation.achievementUsers,
-                achievementGroups,
-                groupedAchievements
-            )
         } else {
             if (habboSession.release == "R63A") {
                 habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
             } else {
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
             }
-        }
-    }
-
-    private fun handleBadges(habboSession: HabboSession, group: AchievementGroup, newLevel: Int) {
-        if (newLevel > 1) {
-            val prevLevel = newLevel - 1
-            val oldBadgeCode = if (group.badgeAppendLevel) "${group.name}$prevLevel" else group.name
-            habboSession.habboBadge.badges[oldBadgeCode]?.let {
-                habboSession.habboBadge.removeBadge(oldBadgeCode)
-            }
-        }
-
-        val newBadgeCode = if (group.badgeAppendLevel) "${group.name}$newLevel" else group.name
-        if (!habboSession.habboBadge.badges.containsKey(newBadgeCode)) {
-            habboSession.habboBadge.addBadge(newBadgeCode)
         }
     }
 }

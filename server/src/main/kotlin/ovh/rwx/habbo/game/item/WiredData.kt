@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,12 +20,17 @@
 package ovh.rwx.habbo.game.item
 
 data class WiredData(
-        val id: Int,
-        var delay: Int, // delay
-        var items: List<Int>, // items
-        var message: String, // text box
-        var options: List<Int>, // options
-        var extradata: String,  // extra data
-        var filter: Boolean = false, // selector filter field
-        var inverse: Boolean = false // selector inverse field
+    val id: Int,
+    var delay: Int, // delay
+    var items: List<Int>, // items (stuffIds principais)
+    var message: String, // text box
+    var options: List<Int>, // options
+    var extradata: String,  // extra data
+    var filter: Boolean = false, // selector filter field
+    var inverse: Boolean = false, // selector inverse field
+
+    // --- NOVOS CAMPOS AIR / INPUT SOURCES ---
+    var furniSources: List<Int> = emptyList(), // IDs de origem dos Mobis (ex: [100])
+    var userSources: List<Int> = emptyList(),  // IDs de origem dos Usuários (ex: [0])
+    var stuffIds2: List<Int> = emptyList()     // Lista secundária de itens selecionados
 )

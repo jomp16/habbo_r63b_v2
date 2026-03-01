@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,11 +19,14 @@
 
 UPDATE
     `items_wired`
-SET `delay`     = :delay,
-    `items`     = :items,
-    `message`   = :message,
-    `options`   = :options,
-    `extradata`  = :extradata,
-    `is_filter`  = :is_filter,
-    `is_inverse` = :is_inverse
+SET `delay`         = :delay,
+    `items`         = :items,
+    `message`       = :message,
+    `options`       = :options,
+    `extradata`     = :extradata,
+    `is_filter`     = :is_filter,
+    `is_inverse`    = :is_inverse,
+    `furni_sources` = :furni_sources,
+    `user_sources`  = :user_sources,
+    `stuff_ids2`    = :stuff_ids2
 WHERE `id` = :id
