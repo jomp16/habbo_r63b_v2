@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,19 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.wired
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomWiredPermissionsResponse {
-    @Response(Outgoing.WIRED_PERMISSIONS)
-    fun response(habboResponse: HabboResponse, canModify: Boolean, canRead: Boolean) {
+class WiredEnvironmentResponse {
+    @Response(Outgoing.WIRED_ENVIRONMENT)
+    fun response(habboResponse: HabboResponse, hasClickUserWired: Boolean) {
         habboResponse.apply {
-            writeBoolean(canModify)
-            writeBoolean(canRead)
+            writeBoolean(hasClickUserWired)
         }
     }
 }

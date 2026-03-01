@@ -37,3 +37,7 @@ fun urlUserAgent(url: String, userAgent: String = "Mozilla/5.0 (X11; Linux x86_6
 }
 
 fun String.containsAny(vararg list: String): Boolean = list.any { this.contains(it) }
+
+fun String.toIntList(): List<Int> {
+    return this.split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt)
+}

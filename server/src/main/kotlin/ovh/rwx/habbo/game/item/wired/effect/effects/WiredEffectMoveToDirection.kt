@@ -24,6 +24,8 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniMove
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -47,7 +49,12 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     override fun code() = WiredEffectType.MOVE_TO_DIRECTION.code
-    override fun requiresItems() = true
+    override val requiresItems = true
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.SELECTOR_ITEMS
+    )
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -95,27 +102,56 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
                 val newDirection = handleBlockedMovement(currentDirection)
                 itemDirections[item.id] = newDirection
 
-                val visualRotation = if (item.furnishing.interactionModesCount == 4) {
+                val visualRotation = if (item.furnishing.allowedDirections.size == 4) {
                     (newDirection.code / 2) * 2
                 } else {
                     newDirection.code
                 }
 
                 if (turnBehavior != TurnBehavior.WAIT) {
-                    // Aqui mandamos rollerId = -1 ou 0 dependendo da sua lógica de giro no lugar
-                    // Para girar no lugar, geralmente é um movimento instantâneo (-1)
-                    room.setFloorItem(item, item.position.vector2, visualRotation, null, rollerId = -1)
+                    val oldPos = item.position.copy() // Salva posição original
+
+                    if (room.setFloorItem(item, item.position.vector2, visualRotation, null)) {
+                        // Adiciona ao acumulador do ciclo
+                        wiredContext.batchedMovements.add(
+                            WiredFurniMove(
+                                furniId = item.id,
+                                sourceX = oldPos.x,
+                                sourceY = oldPos.y,
+                                sourceZ = oldPos.z,
+                                targetX = item.position.x,
+                                targetY = item.position.y,
+                                targetZ = item.position.z,
+                                rotation = item.rotation
+                            )
+                        )
+                    }
                 }
             } else {
                 // Caminho livre! Mover.
-                // rollerId = -2 parece ser um código interno seu para wired,
-                // ou use 0 se seguir a lógica que discutimos antes (animação)
-                val visualRotation = if (item.furnishing.interactionModesCount == 4) {
+                val visualRotation = if (item.furnishing.allowedDirections.size == 4) {
                     (currentDirection.code / 2) * 2
                 } else {
                     currentDirection.code
                 }
-                room.setFloorItem(item, nextPosition, visualRotation, null, rollerId = 0)
+
+                val oldPos = item.position.copy() // Salva posição original
+
+                if (room.setFloorItem(item, nextPosition, visualRotation, null)) {
+                    // Adiciona ao acumulador do ciclo
+                    wiredContext.batchedMovements.add(
+                        WiredFurniMove(
+                            furniId = item.id,
+                            sourceX = oldPos.x,
+                            sourceY = oldPos.y,
+                            sourceZ = oldPos.z,
+                            targetX = item.position.x,
+                            targetY = item.position.y,
+                            targetZ = item.position.z,
+                            rotation = item.rotation
+                        )
+                    )
+                }
             }
         }
     }

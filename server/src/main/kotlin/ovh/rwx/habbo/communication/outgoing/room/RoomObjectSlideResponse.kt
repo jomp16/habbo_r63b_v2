@@ -24,33 +24,39 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.util.Vector3
+import ovh.rwx.habbo.game.room.slide.ObjectSlide
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomRollerResponse {
-    @Response(Outgoing.ROOM_ROLLER)
-    @ResponseR63A(OutgoingR63A.ROOM_ROLLER)
-    fun response(habboResponse: HabboResponse, source: Vector3, target: Vector3, virtualId: Int, rollerId: Int, itemId: Int) {
+class RoomObjectSlideResponse {
+    @Response(Outgoing.ROOM_OBJECT_SLIDE)
+    @ResponseR63A(OutgoingR63A.ROOM_OBJECT_SLIDE)
+    fun response(habboResponse: HabboResponse, slide: ObjectSlide) {
         habboResponse.apply {
-            writeInt(source.x)
-            writeInt(source.y)
-            writeInt(target.x)
-            writeInt(target.y)
+            // Coordenadas base
+            writeInt(slide.source.x)
+            writeInt(slide.source.y)
+            writeInt(slide.target.x)
+            writeInt(slide.target.y)
 
-            if (itemId != -1) {
-                writeInt(1) // items count
-                writeInt(itemId)
-                writeUTF(source.z.toString())
-                writeUTF(target.z.toString())
-                writeInt(0) // roller ID
+            // Bloco de Móveis (Furniture)
+            writeInt(slide.items.size)
+            for (item in slide.items) {
+                writeInt(item.id)
+                writeUTF(item.zSrc.toString())
+                writeUTF(item.zTgt.toString())
+            }
+
+            // O ID do Roller/Mobi causador
+            writeInt(slide.rollerId)
+
+            // Bloco de Usuário (Avatar)
+            if (slide.user != null) {
+                writeInt(slide.user.type.value)
+                writeInt(slide.user.virtualId)
+                writeUTF(slide.user.zSrc.toString())
+                writeUTF(slide.user.zTgt.toString())
             } else {
-                writeInt(0) // items count
-                writeInt(rollerId)
-                writeInt(2) // 1 - move / 2 - slide
-                writeInt(virtualId)
-                writeUTF(source.z.toString())
-                writeUTF(target.z.toString())
-                writeInt(rollerId)
+                writeInt(0) // Indica que nenhum usuário se moveu
             }
         }
     }

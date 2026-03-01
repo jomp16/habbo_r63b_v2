@@ -23,11 +23,12 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniMove
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 
 @Suppress("unused")
@@ -41,7 +42,12 @@ class WiredEffectSetAltitude(room: Room, roomItem: RoomItem) : WiredEffect(room,
     }
 
     override fun code() = WiredEffectType.SET_FURNI_ALTITUDE.code
-    override fun requiresItems() = true
+    override val requiresItems = true
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.SELECTOR_ITEMS
+    )
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -70,12 +76,23 @@ class WiredEffectSetAltitude(room: Room, roomItem: RoomItem) : WiredEffect(room,
                 Operator.SET -> altitude
             }
 
-            room.setFloorItem(
-                item, Vector2(
-                    item.position.x,
-                    item.position.y
-                ), item.rotation, null, newAltitude, rollerId = -2
-            )
+            val oldPos = item.position.copy() // Salva posição original
+
+            if (room.setFloorItem(item, oldPos.vector2, item.rotation, null, newAltitude)) {
+                // Adiciona ao acumulador do ciclo
+                wiredContext.batchedMovements.add(
+                    WiredFurniMove(
+                        furniId = item.id,
+                        sourceX = oldPos.x,
+                        sourceY = oldPos.y,
+                        sourceZ = oldPos.z,
+                        targetX = item.position.x,
+                        targetY = item.position.y,
+                        targetZ = item.position.z,
+                        rotation = item.rotation
+                    )
+                )
+            }
         }
     }
 

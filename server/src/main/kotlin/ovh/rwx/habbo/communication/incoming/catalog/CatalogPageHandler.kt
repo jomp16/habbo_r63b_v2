@@ -75,7 +75,7 @@ class CatalogPageHandler {
         val category = "NORMAL"
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, category, chosenOfferId)
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, chosenOfferId)
         }
     }
 }

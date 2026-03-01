@@ -325,6 +325,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
                 // Daily Login Achievement
                 if (userStats.firstLoginOfDay) {
+                    // todo: test this, if it resets after some gap.
                     HabboServer.habboGame.achievementManager.progress(
                         this@HabboSession,
                         "ACH_Login",
@@ -421,7 +422,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 LocalDateTime.now()
             ).toInt()
             HabboServer.habboGame.achievementManager.progress(this, "ACH_BasicClub", totalMonths, accumulate = false)
-            HabboServer.habboGame.achievementManager.progress(this, "ACH_VipHC", totalMonths, accumulate = false)
 
             // ACH_HC: dias de club ativo
             val totalDays = ChronoUnit.DAYS.between(
@@ -432,9 +432,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         // ACH_BuildersClub: dias de Builders Club ativo
-        if (habboSubscription.hasBuildersClub) {
+        if (habboSubscription.hasBuildersClub && !habboSubscription.buildersClubSubscription.trial) {
             val totalDays = ChronoUnit.DAYS.between(
-                habboSubscription.buildersClubSubscription?.activated,
+                habboSubscription.buildersClubSubscription.activated,
                 LocalDateTime.now()
             ).toInt()
             HabboServer.habboGame.achievementManager.progress(this, "ACH_BuildersClub", totalDays, accumulate = false)

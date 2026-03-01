@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
@@ -36,20 +37,23 @@ class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(
     override fun code() =
         if (isNegative) WiredConditionType.NOT_FURNIS_HAVE_AVATARS.code else WiredConditionType.FURNIS_HAVE_AVATARS.code
 
-    override fun requiresItems() = true
-
-    init {
-        setData()
-    }
+    override val requiresItems = true
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.SELECTOR_ITEMS
+    )
 
     override fun onCondition(wiredContext: WiredContext): Boolean {
-        val items = roomItem.wiredData?.items ?: return false
-        if (items.isEmpty()) return false
+        val targetFurnis = wiredContext.getEffectiveFurnis(this)
 
-        val hasAvatars = items.all { itemId ->
-            val roomItem = room.roomItems[itemId] ?: return false
-            roomItem.affectedTiles.any { tile ->
-                room.roomUsers.values.any { user -> user.currentVector3.vector2 == tile }
+        if (targetFurnis.isEmpty()) return false
+
+        // A regra do Habbo: TODOS os mobis alvos precisam ter um avatar em cima
+        val hasAvatars = targetFurnis.all { item ->
+            item.affectedTiles.any { tile ->
+                // OTIMIZAÇÃO: Usar o GameMap é muito mais rápido do que iterar todos os usuários do quarto (roomUsers.values.any)
+                room.roomGamemap.getUsersFromVector2(tile).isNotEmpty()
             }
         }
 

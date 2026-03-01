@@ -34,7 +34,9 @@ object AchievementDao {
                 it.string("name") to AchievementGroup(
                     it.int("id"),
                     it.string("name"),
-                    AchievementCategory.valueOf(it.string("category").uppercase(Locale.getDefault())),
+                    if (it.string("category").isEmpty()) AchievementCategory.EMPTY else AchievementCategory.valueOf(
+                        it.string("category").uppercase(Locale.getDefault())
+                    ),
                     it.boolean("badge_append_level")
                 )
             }

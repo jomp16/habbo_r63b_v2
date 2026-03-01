@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,7 +27,6 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import java.util.Locale.getDefault
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
 class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
@@ -56,9 +55,7 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
         if (onlyOwner && !room.hasRights(wiredContext.triggererUser.habboSession, true)) return false
 
         return when (triggerType) {
-            ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.lowercase(getDefault())
-                .contains(message.lowercase(getDefault()))
-
+            ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.contains(message, ignoreCase = true)
             ChatTriggerType.EXACT_MATCH -> data.equals(message, ignoreCase = true)
             ChatTriggerType.ALL_MESSAGES -> true
         }
@@ -72,7 +69,7 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
         ALL_MESSAGES(2);
 
         companion object {
-            fun fromValue(value: Int) = values().find { it.value == value } ?: CONTAINS
+            fun fromValue(value: Int) = entries.find { it.value == value } ?: CONTAINS
         }
     }
 

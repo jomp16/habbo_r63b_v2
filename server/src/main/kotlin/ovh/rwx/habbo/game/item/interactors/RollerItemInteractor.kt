@@ -26,6 +26,8 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.slide.ObjectSlide
+import ovh.rwx.habbo.game.room.slide.SlideItem
 import ovh.rwx.habbo.util.Vector3
 
 @Suppress("unused")
@@ -35,29 +37,57 @@ class RollerItemInteractor : ItemInteractor() {
     override fun onCycle(room: Room, roomItem: RoomItem) {
         super.onCycle(room, roomItem)
         val frontVector2 = roomItem.getFrontPosition()
-        val frontVector3 = Vector3(frontVector2, room.roomGamemap.getAbsoluteHeight(frontVector2))
+        val frontHeight = room.roomGamemap.getAbsoluteHeight(frontVector2)
+        val frontVector3 = Vector3(frontVector2, frontHeight)
         var reCycle = true
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {
-            // moving players
+            // 1. Moving players (Processamento individual pois geralmente há apenas 1)
             room.roomGamemap.roomUserMap[roomItem.position.vector2]?.filter { !it.walking }?.forEach {
-                val copy = it.currentVector3
+                val oldPos = it.currentVector3.copy()
 
                 if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
-                    room.sendHabboResponse(Outgoing.ROOM_ROLLER, copy, frontVector3, it.virtualID, roomItem.id, -1)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_ROLLER, copy, frontVector3, it.virtualID, roomItem.id, -1)
-
+                    val userSlide = ObjectSlide.createUserSlide(oldPos, frontVector3, roomItem.id, it.virtualID)
+                    room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, userSlide)
+                    room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, userSlide)
                     reCycle = false
                 }
             }
-            // Moving items
-            room.roomGamemap.roomItemMap[roomItem.position.vector2]?.filter { it.id != roomItem.id && it.position.z > roomItem.position.z }?.let {
-                val roomItems = if (it.size > 10) it.take(10) else it
 
-                roomItems.forEach { roomItem1 ->
-                    if (room.setFloorItem(roomItem1, frontVector2, roomItem1.rotation, null, rollerId = roomItem.id)) reCycle = false
+            // 2. Moving items (Agrupamento da pilha)
+            room.roomGamemap.roomItemMap[roomItem.position.vector2]
+                ?.filter { it.id != roomItem.id && it.position.z > roomItem.position.z }
+                ?.let { itemsAtPos ->
+                    val roomItems = if (itemsAtPos.size > 10) itemsAtPos.take(10) else itemsAtPos
+                    val slideItems = mutableListOf<SlideItem>()
+
+                    roomItems.forEach { itemToMove ->
+                        val zSrc = itemToMove.position.z // Guardamos o Z antes de mover
+
+                        // Chamamos o setFloorItem com sendSlide = false para evitar pacotes duplicados
+                        if (room.setFloorItem(
+                                itemToMove, frontVector2, itemToMove.rotation, null,
+                                rollerId = roomItem.id, sendSlide = false
+                            )
+                        ) {
+                            // Adicionamos à lista para o pacote único
+                            slideItems.add(SlideItem(itemToMove.id, zSrc, itemToMove.position.z))
+                            reCycle = false
+                        }
+                    }
+
+                    // Se a lista não estiver vazia, enviamos o "Bundle" (pacote agrupado)
+                    if (slideItems.isNotEmpty()) {
+                        val batchSlide = ObjectSlide(
+                            source = roomItem.position, // Origem: Onde o roller está
+                            target = frontVector3,      // Destino: Para onde o roller aponta
+                            rollerId = roomItem.id,
+                            items = slideItems
+                        )
+                        room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, batchSlide)
+                        room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, batchSlide)
+                    }
                 }
-            }
         }
 
         if (reCycle) roomItem.requestCycles(HabboServer.habboConfig.timerConfig.roller)

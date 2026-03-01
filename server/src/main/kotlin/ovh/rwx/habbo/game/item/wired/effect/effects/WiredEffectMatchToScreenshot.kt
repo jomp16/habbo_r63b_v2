@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,6 +25,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniMove
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -48,7 +49,7 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
     }
 
     override fun code() = WiredEffectType.MATCH_SSHOT.code
-    override fun requiresItems() = true
+    override val requiresItems = true
 
     override fun setData() {
         roomItem.wiredData?.let { wiredData ->
@@ -112,7 +113,23 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
                 val newZ = if (setHeight) snapshot.z else item.position.z
                 val newRotation = if (setDirection) snapshot.rotation else item.rotation
 
-                room.setFloorItem(item, Vector2(newX, newY), newRotation, null, newZ, -2)
+                val oldPos = item.position.copy() // Salva posição original
+
+                if (room.setFloorItem(item, Vector2(newX, newY), newRotation, null, newZ)) {
+                    // Adiciona ao acumulador do ciclo
+                    wiredContext.batchedMovements.add(
+                        WiredFurniMove(
+                            furniId = item.id,
+                            sourceX = oldPos.x,
+                            sourceY = oldPos.y,
+                            sourceZ = oldPos.z,
+                            targetX = item.position.x,
+                            targetY = item.position.y,
+                            targetZ = item.position.z,
+                            rotation = item.rotation
+                        )
+                    )
+                }
             }
 
             if (needsStateChange) {

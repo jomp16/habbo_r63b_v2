@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.kotlin.toIntList
 import ovh.rwx.habbo.util.Vector3
 
 object ItemDao {
@@ -187,19 +188,26 @@ object ItemDao {
                     )
                 ) {
                     WiredData(
-                        it.int("id"),
-                        it.int("delay"),
-                        it.string("items").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
-                        it.string("message"),
-                        it.string("options").split(',').map(String::trim).filter(String::isNotBlank).map(String::toInt),
-                        it.string("extradata"),
-                        it.boolean("is_filter"),
-                        it.boolean("is_inverse"),
+                        id = it.int("id"),
+                        delay = it.int("delay"),
+                        items = it.string("items").toIntList(),
+                        message = it.string("message"),
+                        options = it.string("options").toIntList(),
+                        extradata = it.string("extradata"),
+                        filter = it.boolean("is_filter"),
+                        inverse = it.boolean("is_inverse"),
+
+                        // --- NOVOS CAMPOS ---
+                        furniSources = it.string("furni_sources").toIntList(),
+                        userSources = it.string("user_sources").toIntList(),
+                        stuffIds2 = it.string("stuff_ids2").toIntList()
                     )
                 }.firstOrNull()
             }
 
-            wiredDatas[itemId] = wiredData
+            if (wiredData != null) {
+                wiredDatas[itemId] = wiredData
+            }
         }
 
         return wiredDatas[itemId]
@@ -298,7 +306,7 @@ object ItemDao {
     }
 
     fun saveWireds(wireds: List<RoomItem>) {
-        val wiredData = wireds.filter { it.wiredData != null }.map { it.wiredData!! }
+        val wiredData = wireds.mapNotNull { it.wiredData }
 
         if (wiredData.isEmpty()) return
 
@@ -314,6 +322,9 @@ object ItemDao {
                         "extradata" to it.extradata,
                         "is_filter" to it.filter,
                         "is_inverse" to it.inverse,
+                        "furni_sources" to it.furniSources.joinToString(","),
+                        "user_sources" to it.userSources.joinToString(","),
+                        "stuff_ids2" to it.stuffIds2.joinToString(","),
                         "id" to it.id
                     )
                 }

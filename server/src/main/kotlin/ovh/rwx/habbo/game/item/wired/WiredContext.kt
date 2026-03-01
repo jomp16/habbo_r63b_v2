@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,37 +24,113 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 data class WiredContext(
-    // Itens e Usuários selecionados (Alvos)
+    // Itens e Usuários selecionados (Alvos definidos por Selectors)
     val targetFurnis: MutableList<RoomItem> = mutableListOf(),
     val targetUsers: MutableList<RoomUser> = mutableListOf(),
 
     // Quem ou o que disparou a pilha
-    val triggererUser: RoomUser? = null,
-    val sourceItem: RoomItem? = null,
-    val trigger: WiredTrigger? = null,
+    val triggererUser: RoomUser?,
+    var sourceItem: RoomItem? = null,
+    val trigger: WiredTrigger,
 
-    // Variáveis (Futuro)
-    // Map de Nome da Variável -> Valor (String, Int, etc.)
+    // Variáveis
     val variables: MutableMap<String, Any> = mutableMapOf(),
 
     // Controle de Fluxo
-    var cancelled: Boolean = false
+    var cancelled: Boolean = false,
+
+    val batchedMovements: MutableList<WiredMoveEntry> = mutableListOf()
 ) {
-    // Para efeitos que mexem em mobis (como o seu de Direção)
+    /**
+     * Resolve em quais mobis o efeito deve ser aplicado, com base na Fonte de Origem
+     * escolhida pelo usuário e salva no WiredData.
+     */
     fun getEffectiveFurnis(wiredItem: WiredItem): List<RoomItem> {
-        if (targetFurnis.isNotEmpty()) return targetFurnis
+        val wiredData = wiredItem.roomItem.wiredData ?: return emptyList()
 
-        val legacy = wiredItem.roomItem.wiredData?.items?.mapNotNull { id -> wiredItem.roomItem.room.roomItems[id] }
-        if (!legacy.isNullOrEmpty()) return legacy
+        // Pega a primeira fonte configurada, ou o padrão do Wired caso não exista
+        val sourceCode = wiredData.furniSources.firstOrNull() ?: wiredItem.defaultFurniSource.code
+        val sourceEnum = WiredFurniSource.fromCode(sourceCode)
 
-        return sourceItem?.let { listOf(it) } ?: emptyList()
+        return when (sourceEnum) {
+            WiredFurniSource.TRIGGERING_ITEM -> {
+                // "Use o item de ativação"
+                sourceItem?.let { listOf(it) } ?: emptyList()
+            }
+
+            WiredFurniSource.SELECTED_ITEMS -> {
+                // "Use mobis escolhidos" (A lista clássica)
+                wiredData.items.mapNotNull { wiredItem.room.roomItems[it] }
+            }
+
+            WiredFurniSource.SELECTOR_ITEMS -> {
+                // "Usar mobis do seletor" (Preenchido na mesma tick por um Wired Selector)
+                targetFurnis
+            }
+
+            WiredFurniSource.ALL_ROOM_ITEMS -> {
+                // "Todos os mobis do quarto"
+                wiredItem.room.roomItems.values.toList()
+            }
+
+            else -> emptyList() // Fallback seguro
+        }
     }
 
-    // Para efeitos que mexem em usuários (como Teleporte ou Mensagem)
+    /**
+     * Resolve quais usuários devem ser afetados pelo Wired, com base na Fonte de Origem
+     * escolhida pelo jogador.
+     */
     fun getEffectiveUsers(wiredItem: WiredItem): List<RoomUser> {
-        if (targetUsers.isNotEmpty()) return targetUsers
+        val wiredData = wiredItem.roomItem.wiredData ?: return emptyList()
 
-        // Fallback padrão: quem causou o evento
-        return triggererUser?.let { listOf(it) } ?: emptyList()
+        // Pega a primeira fonte configurada, ou o padrão do Wired caso não exista
+        val sourceCode = wiredData.userSources.firstOrNull() ?: wiredItem.defaultUserSource.code
+        val sourceEnum = WiredUserSource.fromCode(sourceCode)
+
+        return when (sourceEnum) {
+            WiredUserSource.TRIGGERING_USER -> {
+                // "Use o usuário acionador" (Fonte 0)
+                triggererUser?.let { listOf(it) } ?: emptyList()
+            }
+
+            WiredUserSource.SELECTOR_USERS -> {
+                // "Usar usuários do seletor" (Fonte 200)
+                targetUsers
+            }
+
+            WiredUserSource.ALL_ROOM_USERS -> {
+                // "Todos os usuários no quarto" (Fonte 900)
+                wiredItem.room.roomUsers.values.toList()
+            }
+
+            WiredUserSource.USER_BY_NAME -> {
+                // "Use o Habbo especificado pelo nome" (Fonte 101)
+                // Lê a string do wiredData e busca na lista de usuários do quarto
+                val username = wiredData.message
+                val target = wiredItem.room.roomUsers.values.find {
+                    it.habboSession?.userInformation?.username.equals(username, ignoreCase = true)
+                }
+                target?.let { listOf(it) } ?: emptyList()
+            }
+
+            WiredUserSource.BOT_BY_NAME -> {
+                // todo: implementar bots
+                emptyList()
+                /*// "Use o bot especificado pelo nome" (Fonte 100)
+                val botName = wiredData.message
+                // NOTA: Ajuste `isBot` ou a forma como sua base identifica Bots
+                val bot = wiredItem.room.roomUsers.values.find {
+                    it.isBot() && it.name.equals(botName, ignoreCase = true)
+                }
+                bot?.let { listOf(it) } ?: emptyList()*/
+            }
+            // Fontes Especiais de Colisão/Clique (10, 11) - Fallback para Acionador por enquanto
+            WiredUserSource.REACHED_USER, WiredUserSource.CLICKED_USER -> {
+                triggererUser?.let { listOf(it) } ?: emptyList()
+            }
+
+            else -> emptyList() // Fallback seguro
+        }
     }
 }

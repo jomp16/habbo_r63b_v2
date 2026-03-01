@@ -25,11 +25,11 @@ import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 
 data class AchievementUser(
-        val id: Int,
-        val userId: Int,
-        val groupId: Int,
-        var level: Int,
-        var progress: Int
+    val id: Int,
+    val userId: Int,
+    val groupId: Int,
+    var level: Int,
+    var progress: Int
 ) : IHabboResponseSerialize {
     val group: AchievementGroup by lazy { HabboServer.habboGame.achievementManager.achievementGroups.values.find { it.id == groupId }!! }
 

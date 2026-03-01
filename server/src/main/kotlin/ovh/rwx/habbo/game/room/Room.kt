@@ -44,6 +44,7 @@ import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.games.RoomGameManager
 import ovh.rwx.habbo.game.room.games.RoomGameType
 import ovh.rwx.habbo.game.room.model.RoomModel
+import ovh.rwx.habbo.game.room.slide.ObjectSlide
 import ovh.rwx.habbo.game.room.tasks.UserJoinRoomTask
 import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -84,7 +85,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
     lateinit var roomGamemap: RoomGamemap
     val pathfinder: IFinder by lazy { AStarFinder(DiagonalMovement.ALWAYS, EuclideanHeuristic()) }
-    val wiredHandler: WiredHandler by lazy { WiredHandler() }
+    val wiredHandler: WiredHandler by lazy { WiredHandler(this) }
     val gameManager: RoomGameManager by lazy { RoomGameManager(this) }
 
     @Suppress("RemoveExplicitTypeArguments")
@@ -363,7 +364,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         roomUser: RoomUser?,
         overrideZ: Double = (-1).toDouble(),
         rollerId: Int = -1,
-        rollerDelay: Long = 750
+        rollerDelay: Long = 750,
+        sendSlide: Boolean = true
     ): Boolean {
         val newItem = !roomItems.containsKey(roomItem.id)
 
@@ -470,10 +472,15 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             } else {
                 // CASO 2: Animação (Wired ou Roller)
 
-                // 1. Envia o Slide Visual (Tempo 0ms)
-                // O cliente começa a mover o item visualmente de Old -> New
-                sendHabboResponse(Outgoing.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
-                sendHabboResponse(OutgoingR63A.ROOM_ROLLER, oldPosition, roomItem.position, -1, rollerId, roomItem.id)
+
+                if (sendSlide) {
+                    // 1. Envia o Slide Visual (Tempo 0ms)
+                    // O cliente começa a mover o item visualmente de Old -> New
+                    // Só envia se não for parte de um "Batch"
+                    val slide = ObjectSlide.createItemSlide(oldPosition, roomItem.position, rollerId, roomItem.id)
+                    sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, slide)
+                    sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
+                }
 
                 // 2. Salva no Banco (Assíncrono para não travar)
                 addItemToSave(roomItem)

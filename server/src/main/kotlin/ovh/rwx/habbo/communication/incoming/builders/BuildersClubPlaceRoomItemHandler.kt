@@ -25,7 +25,6 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.builders.BuildersClubPlacementWarningResponse
-import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.ItemType
@@ -139,14 +138,7 @@ class BuildersClubPlaceRoomItemHandler {
             return
         }
 
-        if (habboSession.habboSubscription.buildersClubSubscription.trial && habboSession.habboSubscription.buildersClubSubscription.itemsUsed == 0) {
-            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_LOCKED)
-        }
-
+        // Sucesso
         habboSession.habboSubscription.incrementBuildersItemsUsed()
-
-        // Sucesso - NAO envia BUILDERS_PLACE_ITEM_WARNING!
-        // Apenas atualiza o contador
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
     }
 }
