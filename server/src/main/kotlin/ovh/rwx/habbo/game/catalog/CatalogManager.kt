@@ -170,7 +170,7 @@ class CatalogManager {
 
         // Ao extender, usar o maior itemsLimit entre atual e novo
         val newItemsLimit = maxOf(
-            habboSession.habboSubscription.buildersItemsLimit,
+            habboSession.habboSubscription.buildersClubSubscription.itemsLimit,
             clubOffer.itemsLimit
         )
         habboSession.habboSubscription.addOrExtendBuildersClub(clubOffer.months, newItemsLimit)

@@ -23,32 +23,40 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.subscription.ClubType
 import ovh.rwx.habbo.game.user.subscription.Subscription
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.localDateTime
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
+import ovh.rwx.habbo.kotlin.localDateTimeNullable
+import java.time.LocalDateTime
 
 object SubscriptionDao {
     fun getSubscription(userId: Int, clubType: ClubType): Subscription? = HabboServer.database {
-        select(
+        val subscription = select(
             javaClass.classLoader.getResource("sql/subscription/select_subscription_by_type.sql").readText(),
-                mapOf(
-                    "user_id" to userId,
-                    "club_type" to clubType.name.lowercase()
-                )
+            mapOf(
+                "user_id" to userId,
+                "club_type" to clubType.name.lowercase()
+            )
         ) {
             Subscription(
-                    it.int("id"),
+                it.int("id"),
                 it.int("user_id"),
                 ClubType.valueOf(it.string("club_type").uppercase()),
-                    it.localDateTime("activated"),
-                it.localDateTime("expire"),
+                it.localDateTimeNullable("activated"),
+                it.localDateTimeNullable("expire"),
                 it.int("items_limit"),
                 it.int("items_used")
             )
         }.firstOrNull()
+
+        if (subscription == null && clubType == ClubType.BUILDERS_CLUB) {
+            return@database createSubscription(userId, 0, clubType, 100, activated = null, expire = null)
+        }
+
+        return@database subscription
     }
 
     fun hasActiveBuildersClub(userId: Int): Boolean {
         val subscription = getSubscription(userId, ClubType.BUILDERS_CLUB) ?: return false
+        if (subscription.trial) return false
         return localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription.expire)
     }
 
@@ -61,9 +69,7 @@ object SubscriptionDao {
         }.firstOrNull() ?: 0
     }
 
-    fun syncBuildersItemsUsed(subscription: Subscription?, userId: Int) {
-        if (subscription == null) return
-
+    fun syncBuildersItemsUsed(subscription: Subscription, userId: Int) {
         val actualCount = countBuildersItems(userId)
 
         if (subscription.itemsUsed != actualCount) {
@@ -71,55 +77,61 @@ object SubscriptionDao {
         }
     }
 
-    fun createSubscription(userId: Int, months: Long, clubType: ClubType, itemsLimit: Int = 0): Subscription =
+    fun createSubscription(
+        userId: Int,
+        months: Long,
+        clubType: ClubType,
+        itemsLimit: Int = 0,
+        activated: LocalDateTime? = localDateTimeNowWithoutSecondsAndNanos(),
+        expire: LocalDateTime? = activated?.plusMonths(months)
+    ): Subscription =
         HabboServer.database {
-        val activated = localDateTimeNowWithoutSecondsAndNanos()
-        val expire = localDateTimeNowWithoutSecondsAndNanos().plusMonths(months)
             val id = insertAndGetGeneratedKey(
                 javaClass.classLoader.getResource("sql/subscription/insert_subscription_with_type.sql").readText(),
                 mapOf(
-                        "user_id" to userId,
+                    "user_id" to userId,
                     "club_type" to clubType.name.lowercase(),
-                        "activated" to activated,
+                    "activated" to activated,
                     "expire" to expire,
                     "items_limit" to itemsLimit,
                     "items_used" to 0
                 )
-        )
+            )
 
             Subscription(id, userId, clubType, activated, expire, itemsLimit, 0)
-    }
+        }
 
     fun extendSubscription(subscription: Subscription?, months: Long) {
         if (subscription == null) return
 
         HabboServer.database {
-            subscription.expire = subscription.expire.plusMonths(months)
+            subscription.expire?.let { expire ->
+                subscription.expire = expire.plusMonths(months)
 
-            update(
-                javaClass.classLoader.getResource("sql/subscription/update_subscription_expire.sql").readText(),
-                mapOf(
-                    "expire" to subscription.expire,
-                    "id" to subscription.id
+                update(
+                    javaClass.classLoader.getResource("sql/subscription/update_subscription_expire.sql").readText(),
+                    mapOf(
+                        "expire" to subscription.expire,
+                        "id" to subscription.id
+                    )
                 )
-            )
+            }
         }
     }
 
-    fun extendBuildersClubSubscription(subscription: Subscription?, months: Long, itemsLimit: Int) {
+    fun updateBuildersClubSubscription(subscription: Subscription?) {
         if (subscription == null) return
 
         HabboServer.database {
-            subscription.expire = subscription.expire.plusMonths(months)
-
             update(
                 javaClass.classLoader.getResource("sql/subscription/update_subscription_expire_with_limit.sql")
                     .readText(),
-                    mapOf(
-                            "expire" to subscription.expire,
-                        "items_limit" to itemsLimit,
-                        "id" to subscription.id
-                    )
+                mapOf(
+                    "activated" to subscription.activated,
+                    "expire" to subscription.expire,
+                    "items_limit" to subscription.itemsLimit,
+                    "id" to subscription.id
+                )
             )
         }
     }
@@ -134,8 +146,8 @@ object SubscriptionDao {
                 javaClass.classLoader.getResource("sql/subscription/update_builders_items_used.sql").readText(),
                 mapOf(
                     "items_used" to itemsUsed,
-                            "id" to subscription.id
-                    )
+                    "id" to subscription.id
+                )
             )
         }
     }
@@ -143,13 +155,17 @@ object SubscriptionDao {
     fun clearSubscription(subscription: Subscription?) {
         if (subscription == null) return
 
-        HabboServer.database {
-            update(
-                javaClass.classLoader.getResource("sql/subscription/delete_subscription.sql").readText(),
+        if (subscription.clubType == ClubType.BUILDERS_CLUB) {
+
+        } else {
+            HabboServer.database {
+                update(
+                    javaClass.classLoader.getResource("sql/subscription/delete_subscription.sql").readText(),
                     mapOf(
-                            "id" to subscription.id
+                        "id" to subscription.id
                     )
-            )
+                )
+            }
         }
     }
 }

@@ -74,7 +74,7 @@ class BuildersClubPlaceWallItemHandler {
             return
         }
 
-        if (habboSession.habboSubscription.buildersItemsUsed >= habboSession.habboSubscription.buildersItemsLimit) {
+        if (habboSession.habboSubscription.buildersClubSubscription.itemsUsed >= habboSession.habboSubscription.buildersClubSubscription.itemsLimit) {
             sendWallError(habboSession, pageId, offerId, extraParam, wallLocation)
             return
         }

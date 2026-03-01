@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,10 +26,10 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class CameraThumbnailAlertResponse {
     @Response(Outgoing.CAMERA_THUMBNAIL_ALERT)
-    fun response(habboResponse: HabboResponse, success: Boolean, showError: Boolean) {
+    fun response(habboResponse: HabboResponse, success: Boolean, renderLimitHit: Boolean) {
         habboResponse.apply {
             writeBoolean(success)
-            writeBoolean(showError)
+            writeBoolean(renderLimitHit)
         }
     }
 }

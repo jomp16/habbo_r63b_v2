@@ -83,6 +83,10 @@ class UserChatTask(
         }
 
         broadcastMessage(room, filterMessage, speechEmotion)
+
+        if (type != RoomChatType.WHISPER && roomUser.habboSession != null) {
+            HabboServer.habboGame.achievementManager.progress(roomUser.habboSession, "ACH_Tutorial3", 1, false)
+        }
     }
 
     /**

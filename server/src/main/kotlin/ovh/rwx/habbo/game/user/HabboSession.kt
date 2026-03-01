@@ -137,6 +137,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                     sendHabboResponse(Outgoing.MISC_MOTD_NOTIFICATION, message)
                 }
             }
+
             NotificationType.BROADCAST_ALERT -> {
                 if (release == "R63A") {
                     sendHabboResponse(OutgoingR63A.MISC_BROADCAST_NOTIFICATION, message)
@@ -469,17 +470,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (room.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
             if (release != "R63A") {
-                sendHabboResponse(
-                    Outgoing.MISC_GENERIC_ERROR,
-                    MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
-                )
                 sendHabboResponse(Outgoing.ROOM_EXIT)
+                sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_VISIT_DENIED_GUEST)
             } else {
-                sendHabboResponse(
-                    OutgoingR63A.MISC_GENERIC_ERROR,
-                    MiscGenericErrorResponse.MiscGenericError.BUILDERS_CLUB_ROOM_LOCKED
-                )
                 sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+                sendNotification($$"${notification.builders_club.visit_denied_for_visitor.message}")
             }
             return
         }

@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.builders.BuildersClubPlacementWarningResponse
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.ItemType
@@ -69,6 +70,12 @@ class BuildersClubPlaceRoomItemHandler {
         val y = habboRequest.readInt()
         val direction = habboRequest.readInt()
 
+        val accepted = if (habboRequest.byteBuf.readableBytes() > 0) {
+            habboRequest.readBoolean() || habboSession.habboSubscription.buildersClubSubscription.itemsUsed > 0
+        } else {
+            true
+        }
+
         val room = habboSession.currentRoom ?: return
 
         // Validacoes - retorna erro se falhar
@@ -77,12 +84,12 @@ class BuildersClubPlaceRoomItemHandler {
             return
         }
 
-        if (!habboSession.habboSubscription.hasBuildersClub) {
+        if (!habboSession.habboSubscription.hasBuildersClub && !accepted) {
             sendFloorError(habboSession, pageId, offerId, extraParam, x, y, direction)
             return
         }
 
-        if (habboSession.habboSubscription.buildersItemsUsed >= habboSession.habboSubscription.buildersItemsLimit) {
+        if (habboSession.habboSubscription.buildersClubSubscription.itemsUsed >= habboSession.habboSubscription.buildersClubSubscription.itemsLimit) {
             sendFloorError(habboSession, pageId, offerId, extraParam, x, y, direction)
             return
         }
@@ -130,6 +137,10 @@ class BuildersClubPlaceRoomItemHandler {
             ItemDao.deleteItems(listOf(userItem.id))
             sendFloorError(habboSession, pageId, offerId, extraParam, x, y, direction)
             return
+        }
+
+        if (habboSession.habboSubscription.buildersClubSubscription.trial && habboSession.habboSubscription.buildersClubSubscription.itemsUsed == 0) {
+            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_LOCKED)
         }
 
         habboSession.habboSubscription.incrementBuildersItemsUsed()

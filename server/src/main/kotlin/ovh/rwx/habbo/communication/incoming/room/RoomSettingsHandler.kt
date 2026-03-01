@@ -39,6 +39,8 @@ class RoomSettingsHandler {
         if (!room.hasRights(habboSession, true)) return
 
         habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS, room)
+
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial4", 1, false)
     }
 
     @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
@@ -49,5 +51,7 @@ class RoomSettingsHandler {
         if (!room.hasRights(habboSession, true)) return
 
         habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS, room)
+
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial4", 1, false)
     }
 }

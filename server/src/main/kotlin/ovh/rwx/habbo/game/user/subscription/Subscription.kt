@@ -22,11 +22,14 @@ package ovh.rwx.habbo.game.user.subscription
 import java.time.LocalDateTime
 
 data class Subscription(
-        val id: Int,
-        val userId: Int,
-        val clubType: ClubType,
-        var activated: LocalDateTime,
-        var expire: LocalDateTime,
-        var itemsLimit: Int = 0,
-        var itemsUsed: Int = 0
-)
+    val id: Int,
+    val userId: Int,
+    val clubType: ClubType,
+    var activated: LocalDateTime?,
+    var expire: LocalDateTime?,
+    var itemsLimit: Int = 0,
+    var itemsUsed: Int = 0
+) {
+    val trial: Boolean
+        get() = activated == null && expire == null
+}

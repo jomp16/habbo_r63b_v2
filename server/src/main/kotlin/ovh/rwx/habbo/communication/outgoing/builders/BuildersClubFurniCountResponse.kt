@@ -29,7 +29,7 @@ class BuildersClubFurniCountResponse {
     @Response(Outgoing.BUILDERS_FURNI_COUNT)
     fun response(habboResponse: HabboResponse, habboSubscription: HabboSubscription) {
         habboResponse.apply {
-            writeInt(habboSubscription.buildersItemsUsed)
+            writeInt(habboSubscription.buildersClubSubscription.itemsUsed)
         }
     }
 }

@@ -58,7 +58,7 @@ class HandshakeSSOTicketHandler {
 
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_OK)
         habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, false, 0, listOf<Int>())
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, false, 0, listOf<Int>())
         habboSession.sendHabboResponse(
             Outgoing.HOME_ROOM,
             habboSession.userInformation.homeRoom,
@@ -145,7 +145,7 @@ class HandshakeSSOTicketHandler {
 
         habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_OK, habboSession)
         habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, false, 0, listOf<Int>())
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, false, 0, listOf<Int>())
         habboSession.sendHabboResponse(
             Outgoing.HOME_ROOM,
             habboSession.userInformation.homeRoom,

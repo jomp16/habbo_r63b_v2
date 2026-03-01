@@ -57,16 +57,23 @@ class HabboGame {
 
     init {
         HabboServer.applicationScope.launch { landingManager.load() }
-        HabboServer.applicationScope.launch { roomManager.load() }
         HabboServer.applicationScope.launch { itemManager.load() }
         HabboServer.applicationScope.launch { catalogManager.load() }
         HabboServer.applicationScope.launch { navigatorManager.load() }
         HabboServer.applicationScope.launch { permissionManager.load() }
         HabboServer.applicationScope.launch { moderationManager.load() }
         HabboServer.applicationScope.launch { groupManager.load() }
-        HabboServer.applicationScope.launch { cameraManager.load() }
         HabboServer.applicationScope.launch { achievementManager.load() }
         HabboServer.applicationScope.launch { antiMutantManager.load() }
+
+        // 1. Guardamos a referência do Job do RoomManager
+        val roomJob = HabboServer.applicationScope.launch { roomManager.load() }
+
+        // 2. Lançamos o CameraManager, mas mandamos ele esperar o RoomManager terminar
+        HabboServer.applicationScope.launch {
+            roomJob.join() // Suspende essa coroutine até que roomManager.load() termine
+            cameraManager.load()
+        }
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }

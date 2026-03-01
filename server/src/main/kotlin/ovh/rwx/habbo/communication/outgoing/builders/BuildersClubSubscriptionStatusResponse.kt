@@ -33,24 +33,17 @@ class BuildersClubSubscriptionStatusResponse {
         habboResponse.apply {
             val subscription = habboSubscription.buildersClubSubscription
 
-            if (subscription == null) {
-                writeInt(0) // secondsLeft
-                writeInt(0) // furniLimit
-                writeInt(0) // maxFurniLimit
-                writeInt(0) // secondsLeftWithGrace
-            } else {
-                val secondsLeft = ChronoUnit.SECONDS.between(
-                    LocalDateTime.now(),
-                    subscription.expire
-                ).toInt().coerceAtLeast(0)
+            val secondsLeft = if (subscription.trial) 0 else ChronoUnit.SECONDS.between(
+                LocalDateTime.now(),
+                subscription.expire
+            ).toInt().coerceAtLeast(0)
 
-                val secondsLeftWithGrace = secondsLeft + 3600
+            val secondsLeftWithGrace = if (subscription.trial) 0 else secondsLeft + 3600
 
-                writeInt(secondsLeft)
-                writeInt(subscription.itemsLimit)
-                writeInt(subscription.itemsLimit)
-                writeInt(secondsLeftWithGrace)
-            }
+            writeInt(secondsLeft)
+            writeInt(subscription.itemsLimit)
+            writeInt(subscription.itemsLimit)
+            writeInt(secondsLeftWithGrace)
         }
     }
 }

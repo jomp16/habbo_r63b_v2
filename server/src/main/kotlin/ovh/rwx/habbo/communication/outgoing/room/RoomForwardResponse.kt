@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,14 +21,26 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.RoomType
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomForwardResponse {
     @Response(Outgoing.ROOM_FORWARD)
-    fun response(habboResponse: HabboResponse, roomId: Int) {
+    fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
-            writeInt(roomId)
+            writeInt(room.roomData.id)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_FORWARD)
+    fun responseR63A(habboResponse: HabboResponse, room: Room) {
+        habboResponse.apply {
+            writeBoolean(room.roomData.roomType == RoomType.PUBLIC)
+            writeInt(room.roomData.id)
         }
     }
 }

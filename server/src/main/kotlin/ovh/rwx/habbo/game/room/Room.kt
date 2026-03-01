@@ -451,9 +451,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             roomItems[roomItem.id] = roomItem
             roomItem.addToRoom(
                 this,
-                true,
-                true,
-                UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
+                updateDb = true,
+                updateClient = true,
+                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
             )
         } else {
             // Verifica se houve movimento real de posição
