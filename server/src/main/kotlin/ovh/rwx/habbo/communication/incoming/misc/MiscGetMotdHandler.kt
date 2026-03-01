@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,9 +36,9 @@ class MiscGetMotdHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (HabboServer.habboConfig.motdEnabled) {
             val motd = HabboServer.habboConfig.motdContents
-                .replace("\$server_name", BuildConfig.NAME)
-                .replace("\$server_version", BuildConfig.VERSION)
-                .replace("\$username", habboSession.userInformation.username)
+                .replace($$"$server_name", BuildConfig.NAME)
+                .replace($$"$server_version", BuildConfig.VERSION)
+                .replace($$"$username", habboSession.userInformation.username)
 
             habboSession.sendNotification(NotificationType.MOTD_ALERT, motd)
         }

@@ -70,6 +70,7 @@ class CatalogPageResponse {
                         writeInt(-1)
                     }
                 }
+
                 "vip_buy" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -78,13 +79,14 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTeaser)
                     writeInt(0)
                 }
+
                 "builders_club_frontpage_normal",
                 "builders_club_frontpage" -> {
                     writeUTF(category)
                     writeUTF("builders_club_frontpage")
                     writeInt(0)
                     writeInt(1)
-                    writeUTF(catalogPage.pageHeadline)
+                    writeUTF(catalogPage.pageText1)
 
                     val buildersOffers = HabboServer.habboGame.catalogManager.catalogClubOffers
                         .filter { it.clubType == ClubType.BUILDERS_CLUB }
@@ -95,15 +97,22 @@ class CatalogPageResponse {
                     buildersOffers.forEach { offer ->
                         writeInt(offer.itemId)
                         writeUTF(offer.name)
+                        writeBoolean(false) // isRent
+                        writeInt(offer.credits)
+                        writeInt(offer.points)
+                        writeInt(offer.pointsType)
+                        if (habboAir) {
+                            writeInt(0) // priceInSilver
+                        }
+                        writeBoolean(true) // giftable
+                        writeInt(0) // items
+                        writeInt(0) // club only
+                        writeBoolean(true)
+                        writeBoolean(false) // is pet
                         writeUTF("")
-                        writeInt(if (offer.credits == 0) 2560000 else offer.credits)
-                        writeInt(if (offer.credits == 0) 2560000 else offer.credits)
-                        writeInt(if (offer.points == 0) 1024 else offer.points)
-                        writeInt(offer.itemsLimit)
-                        writeInt(0)
-                        writeBoolean(false)
                     }
                 }
+
                 "pets",
                 "pets2",
                 "pets3" -> {
@@ -118,6 +127,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageTextTeaser)
                 }
+
                 "spaces_new" -> {
                     writeUTF(category)
                     writeUTF("spaces_new")
@@ -126,6 +136,7 @@ class CatalogPageResponse {
                     writeInt(1)
                     writeUTF(catalogPage.pageText1)
                 }
+
                 "guild_frontpage" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -137,6 +148,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageText2)
                 }
+
                 "guild_custom_furni" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -149,6 +161,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageTextDetails)
                     writeUTF(catalogPage.pageText2)
                 }
+
                 "badge_display" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -160,6 +173,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText2)
                     writeUTF(catalogPage.pageTextDetails)
                 }
+
                 "trophies" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -169,6 +183,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText1)
                     writeUTF(catalogPage.pageTextDetails)
                 }
+
                 "recycler" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -178,6 +193,7 @@ class CatalogPageResponse {
                     writeInt(1)
                     writeUTF(catalogPage.pageText1)
                 }
+
                 "recycler_info" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -189,6 +205,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText2)
                     writeUTF(catalogPage.pageTextDetails)
                 }
+
                 "recycler_prizes" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -197,6 +214,7 @@ class CatalogPageResponse {
                     writeInt(1)
                     writeUTF(catalogPage.pageText1)
                 }
+
                 "marketplace_own_items",
                 "marketplace" -> {
                     writeUTF(category)
@@ -205,12 +223,14 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageHeadline)
                     writeInt(0)
                 }
+
                 "empty" -> {
                     writeUTF(category)
                     writeUTF("")
                     writeInt(0)
                     writeInt(0)
                 }
+
                 "roomads" -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)
@@ -221,6 +241,7 @@ class CatalogPageResponse {
                     writeUTF(catalogPage.pageText1)
                     writeUTF(catalogPage.pageTextDetails)
                 }
+
                 else -> {
                     writeUTF(category)
                     writeUTF(catalogPage.pageLayout)

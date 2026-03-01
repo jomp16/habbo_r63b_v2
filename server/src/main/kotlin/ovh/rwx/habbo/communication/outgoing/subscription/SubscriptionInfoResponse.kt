@@ -32,17 +32,23 @@ class SubscriptionInfoResponse {
     @Response(Outgoing.HABBO_CLUB_INFO)
     fun response(habboResponse: HabboResponse, subscription: Subscription?) {
         habboResponse.apply {
-            if (subscription != null) {
-                // todo: stub
-                writeInt(Duration.between(subscription.activated, LocalDateTime.now()).toDays().toInt()) // streakduration - in days
-                writeUTF(subscription.activated.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)) // Time joined HC
-                writeDouble(50.toDouble() / 100) // credits multiplier / 10 -- %streakduration%
-                writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
-                writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
-                writeInt(100) // credits spent on catalog
-                writeInt(5) // credits bonus
-                writeInt(150) // credits to receive with multiplier
-                writeInt(Duration.between(LocalDateTime.now(), LocalDateTime.now().plusMonths(2)).toMinutes().toInt()) // how long in minutes to get next bonus
+            if (subscription != null && !subscription.trial) {
+                subscription.activated?.let { activated ->
+                    // todo: stub
+                    writeInt(
+                        Duration.between(activated, LocalDateTime.now()).toDays().toInt()
+                    ) // streakduration - in days
+                    writeUTF(activated.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)) // Time joined HC
+                    writeDouble(50.toDouble() / 100) // credits multiplier / 10 -- %streakduration%
+                    writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
+                    writeInt(0) // useless, I couldn't find any references on Habbo_scripts.txt
+                    writeInt(100) // credits spent on catalog
+                    writeInt(5) // credits bonus
+                    writeInt(150) // credits to receive with multiplier
+                    writeInt(
+                        Duration.between(LocalDateTime.now(), LocalDateTime.now().plusMonths(2)).toMinutes().toInt()
+                    ) // how long in minutes to get next bonus
+                }
             } else {
                 writeInt(0)
                 writeUTF("")

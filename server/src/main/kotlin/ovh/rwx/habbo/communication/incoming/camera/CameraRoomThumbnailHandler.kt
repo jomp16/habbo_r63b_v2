@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,13 +30,16 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CameraRoomThumbnailHandler {
     @Handler(Incoming.CAMERA_ROOM_THUMBNAIL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.hasPermission("acc_can_use_camera")) return
+        if (habboSession.currentRoom == null || !habboSession.hasPermission("acc_can_use_camera")) {
+            habboSession.sendHabboResponse(Outgoing.CAMERA_THUMBNAIL_ALERT, false, false)
+            return
+        }
 
         ByteArray(habboRequest.readInt()).let {
             habboRequest.readBytes(it)
             val success = HabboServer.habboGame.cameraManager.createRoomThumbnail(habboSession, habboSession.currentRoom!!.roomData.id, it)
 
-            habboSession.sendHabboResponse(Outgoing.CAMERA_THUMBNAIL_ALERT, success, !success)
+            habboSession.sendHabboResponse(Outgoing.CAMERA_THUMBNAIL_ALERT, success, false)
         }
     }
 }

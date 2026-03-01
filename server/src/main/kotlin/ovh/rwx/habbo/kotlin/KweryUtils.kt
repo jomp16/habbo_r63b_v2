@@ -50,3 +50,4 @@ fun Session.batchInsertWithIntGeneratedKey(
 fun Session.batchInsertAndGetGeneratedKeys(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
 fun Row.localDateTime(name: String): LocalDateTime = timestampOrNull(name)?.toLocalDateTime()!!
+fun Row.localDateTimeNullable(name: String): LocalDateTime? = timestampOrNull(name)?.toLocalDateTime()

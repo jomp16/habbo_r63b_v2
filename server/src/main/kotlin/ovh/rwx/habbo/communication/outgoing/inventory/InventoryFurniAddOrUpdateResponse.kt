@@ -17,8 +17,20 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-UPDATE `users_subscriptions`
-SET `expire`      = :expire,
-    `activated` = :activated,
-    `items_limit` = :items_limit
-WHERE `id` = :id
+package ovh.rwx.habbo.communication.outgoing.inventory
+
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.item.user.UserItem
+
+@Suppress("unused", "UNUSED_PARAMETER")
+class InventoryFurniAddOrUpdateResponse {
+    @Response(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE)
+    fun response(habboResponse: HabboResponse, items: Collection<UserItem>) {
+        habboResponse.apply {
+            writeInt(items.size)
+            items.forEach { habboResponse.serialize(it) }
+        }
+    }
+}

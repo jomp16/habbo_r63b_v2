@@ -41,7 +41,10 @@ class RoomPlaceItemHandler {
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
         if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
-            habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message", "\${room.error.cant_set_not_owner}")
+            habboSession.sendSuperNotification(
+                MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message",
+                $$"${room.error.cant_set_not_owner}"
+            )
 
             return
         }
@@ -71,7 +74,7 @@ class RoomPlaceItemHandler {
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
         if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
-            habboSession.sendNotification("\${room.error.cant_set_not_owner}")
+            habboSession.sendNotification($$"${room.error.cant_set_not_owner}")
 
             return
         }
@@ -98,7 +101,7 @@ class RoomPlaceItemHandler {
         if (postIt) {
             // Check if room has more or equals than 50 post it
             if (habboSession.currentRoom!!.wallItems.values.count { it.furnishing.interactionType == InteractionType.POST_IT } >= 50) {
-                habboSession.sendNotification("\${room.error.max_stickies}")
+                habboSession.sendNotification($$"${room.error.max_stickies}")
 
                 return
             }
@@ -107,7 +110,7 @@ class RoomPlaceItemHandler {
         val userItem = habboSession.habboInventory.items[itemId]
 
         if (userItem == null) {
-            habboSession.sendNotification("\${room.error.cant_set_item}")
+            habboSession.sendNotification($$"${room.error.cant_set_item}")
             return
         }
 
@@ -180,8 +183,11 @@ class RoomPlaceItemHandler {
                     accumulate = false
                 )
             }
+
+            // Por mover, girar, escolher ou colocar Mobis nos seus quartos.
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial5", 1, false)
         } else {
-            habboSession.sendNotification("\${room.error.cant_set_item}")
+            habboSession.sendNotification($$"${room.error.cant_set_item}")
         }
     }
 }

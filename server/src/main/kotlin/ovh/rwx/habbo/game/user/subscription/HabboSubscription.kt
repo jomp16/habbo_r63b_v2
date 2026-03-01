@@ -32,8 +32,9 @@ import java.time.temporal.ChronoUnit
 class HabboSubscription(private val habboSession: HabboSession) {
     var habboClubSubscription: Subscription? = null
         private set
-    var buildersClubSubscription: Subscription? = null
-        private set
+    val buildersClubSubscription: Subscription by lazy {
+        SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.BUILDERS_CLUB)!!
+    }
 
     val validUserSubscription: Boolean
         get() = habboClubSubscription != null && localDateTimeNowWithoutSecondsAndNanos().isBefore(habboClubSubscription?.expire)
@@ -42,16 +43,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
         get() = habboClubSubscription != null && isActive(habboClubSubscription)
 
     val hasBuildersClub: Boolean
-        get() = buildersClubSubscription != null && isActive(buildersClubSubscription)
-
-    val buildersItemsUsed: Int
-        get() = buildersClubSubscription?.itemsUsed ?: 0
-
-    val buildersItemsLimit: Int
-        get() = buildersClubSubscription?.itemsLimit ?: 0
-
-    val buildersItemsAvailable: Int
-        get() = buildersItemsLimit - buildersItemsUsed
+        get() = isActive(buildersClubSubscription)
 
     private var initialized: Boolean = false
 
@@ -59,17 +51,18 @@ class HabboSubscription(private val habboSession: HabboSession) {
         if (!initialized) {
             habboClubSubscription =
                 SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.HABBO_CLUB)
-            buildersClubSubscription =
-                SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.BUILDERS_CLUB)
 
             if (!hasHabboClub) {
                 SubscriptionDao.clearSubscription(habboClubSubscription)
                 habboClubSubscription = null
             }
 
-            if (!hasBuildersClub) {
-                SubscriptionDao.clearSubscription(buildersClubSubscription)
-                buildersClubSubscription = null
+            if (!hasBuildersClub && !buildersClubSubscription.trial) {
+                buildersClubSubscription.expire = null
+                buildersClubSubscription.activated = null
+                buildersClubSubscription.itemsLimit = 100
+
+                SubscriptionDao.updateBuildersClubSubscription(buildersClubSubscription)
             } else {
                 // Sincroniza contador de itens BC ao carregar
                 SubscriptionDao.syncBuildersItemsUsed(buildersClubSubscription, habboSession.userInformation.id)
@@ -80,7 +73,9 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     private fun isActive(subscription: Subscription?): Boolean {
-        return subscription != null && localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription.expire)
+        if (subscription == null || subscription.trial) return false
+
+        return localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription.expire)
     }
 
     fun addOrExtendHabboClub(months: Int) {
@@ -110,38 +105,28 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun addOrExtendBuildersClub(months: Int, itemsLimit: Int) {
-        val isFirstTime = buildersClubSubscription == null
         val currentSubscription = buildersClubSubscription
 
-        if (currentSubscription == null) {
-            buildersClubSubscription = SubscriptionDao.createSubscription(
-                habboSession.userInformation.id,
-                months.toLong(),
-                ClubType.BUILDERS_CLUB,
-                itemsLimit
-            )
-        } else {
-            val newLimit = maxOf(currentSubscription.itemsLimit, itemsLimit)
-            currentSubscription.itemsLimit = newLimit
-            SubscriptionDao.extendBuildersClubSubscription(currentSubscription, months.toLong(), newLimit)
-        }
+        val newLimit = maxOf(currentSubscription.itemsLimit, itemsLimit)
+        currentSubscription.itemsLimit = newLimit
+        currentSubscription.expire = currentSubscription.expire?.plusMonths(months.toLong())
+        SubscriptionDao.updateBuildersClubSubscription(currentSubscription)
 
-        if (isFirstTime) {
-            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_BuildersClub", 1, accumulate = true)
-        }
+//        if (isFirstTime) {
+//            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_BuildersClub", 1, accumulate = true)
+//        }
 
         updateBuildersClubStatus()
     }
 
     fun incrementBuildersItemsUsed() {
-        if (buildersClubSubscription == null) return
-        SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersItemsUsed + 1)
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_RoomDecoBC", 1, accumulate = true)
+        SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed + 1)
     }
 
     fun decrementBuildersItemsUsed() {
-        if (buildersClubSubscription == null) return
-        if (buildersItemsUsed > 0) {
-            SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersItemsUsed - 1)
+        if (buildersClubSubscription.itemsUsed > 0) {
+            SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed - 1)
         }
     }
 
@@ -152,13 +137,6 @@ class HabboSubscription(private val habboSession: HabboSession) {
         habboClubSubscription = null
 
         updateHabboClubStatus()
-    }
-
-    fun clearBuildersClub() {
-        if (buildersClubSubscription == null) return
-
-        SubscriptionDao.clearSubscription(buildersClubSubscription)
-        buildersClubSubscription = null
     }
 
     fun updateHabboClubStatus() {

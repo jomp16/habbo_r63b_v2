@@ -327,7 +327,63 @@ class RoomUser(
     ): Boolean {
         if (frozen || (!ignoreBlocking && !overrideBlocking && walkingBlocked)) return false
 
-        room.roomTask?.addTask(room, UserMoveTask(this, Vector2(x, y), rotation, actingItem, ignoreBlocking, rollerId))
+        val currentUserItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
+        var destinationVector2 = Vector2(x, y)
+
+        if (currentUserItem != null) {
+            val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+                currentUserItem.position.x,
+                currentUserItem.position.y,
+                currentUserItem.rotation,
+                currentUserItem.furnishing.width,
+                currentUserItem.furnishing.height
+            )
+
+            val destinationInAffectedTiles = affectedTiles.any { it == destinationVector2 }
+
+            if (destinationInAffectedTiles) {
+                val xAxisChanged = currentVector3.x != x
+                val yAxisChanged = currentVector3.y != y
+
+                val shouldBlock = when (currentUserItem.rotation) {
+                    0, 4 -> !xAxisChanged && yAxisChanged
+                    2, 6 -> xAxisChanged && !yAxisChanged
+                    else -> false
+                }
+
+                if (shouldBlock) return false
+            }
+        }
+
+        val destinationItem = room.roomGamemap.getHighestItem(destinationVector2)
+        if (destinationItem != null && destinationItem.furnishing.interactionType == InteractionType.BED) {
+            val bedHeadX: Int
+            val bedHeadY: Int
+
+            when (destinationItem.rotation) {
+                0, 4 -> {
+                    bedHeadX = x
+                    bedHeadY = destinationItem.position.y
+                }
+
+                2, 6 -> {
+                    bedHeadX = destinationItem.position.x
+                    bedHeadY = y
+                }
+
+                else -> {
+                    bedHeadX = destinationItem.position.x
+                    bedHeadY = destinationItem.position.y
+                }
+            }
+
+            destinationVector2 = Vector2(bedHeadX, bedHeadY)
+        }
+
+        room.roomTask?.addTask(
+            room,
+            UserMoveTask(this, destinationVector2, rotation, actingItem, ignoreBlocking, rollerId)
+        )
 
         return true
     }
@@ -402,23 +458,13 @@ class RoomUser(
     private fun calculatePath() {
         if (objectiveVector2 == null) return
 
-        // 1. Pegamos o item mais alto no destino
-        val targetItem = room.roomGamemap.getHighestItem(objectiveVector2!!)
-
-        // 2. Só permitimos "ignorar o bloqueio" se for algo sentável ou cama
-        val isInterative = targetItem?.let {
-            it.furnishing.canSit || it.furnishing.interactionType == InteractionType.BED
-        } ?: false
-
-        // 3. Chamamos o Finder passando essa informação
         path = room.pathfinder.findPath(
             room.roomGamemap.grid,
             currentVector3.x,
             currentVector3.y,
             objectiveVector2!!.x,
             objectiveVector2!!.y,
-            overrideBlocking, // override normal
-            isInterative     // Novo parâmetro: allowTargetBlocking
+            ignoreBlocking || overrideBlocking
         ).toMutableList()
     }
 

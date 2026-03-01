@@ -45,9 +45,9 @@ class HabboInventory(private val habboSession: HabboSession) {
             habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_NEW_OBJECTS, userItems)
             habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE)
         } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 1, userItems.map { it.id })
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
-//            habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, items.values)
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 1, userItems.map { it.id })
+//            habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE, userItems)
         }
     }
 

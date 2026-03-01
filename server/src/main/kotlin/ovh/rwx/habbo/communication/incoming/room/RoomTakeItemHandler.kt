@@ -19,12 +19,14 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -50,12 +52,24 @@ class RoomTakeItemHandler {
             if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
                 ItemDao.deleteItems(listOf(roomItem.id))
                 habboSession.habboSubscription.decrementBuildersItemsUsed()
-                habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
+
+                if (habboSession.release == "R63A") {
+                    habboSession.sendNotification($$"${notification.builders_club.room_unlocked.message}")
+                } else {
+                    habboSession.sendHabboResponse(Outgoing.BUILDERS_FURNI_COUNT, habboSession.habboSubscription)
+
+                    if (habboSession.habboSubscription.buildersClubSubscription.itemsUsed <= 0) {
+                        habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_UNLOCKED)
+                    }
+                }
             }
         } else {
             if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
                 ItemDao.addRoomItemInventory(mutableListOf(roomItem))
             }
         }
+
+        // Por mover, girar, escolher ou colocar Mobis nos seus quartos.
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial5", 1, false)
     }
 }

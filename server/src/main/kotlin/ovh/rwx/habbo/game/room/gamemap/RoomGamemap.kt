@@ -106,6 +106,7 @@ class RoomGamemap(private val room: Room) {
                     && !(roomItem.position.z <= room.roomModel.floorHeight[vector2.x][vector2.y] + 0.1
                     && roomItem.furnishing.interactionType == InteractionType.GATE
                     && roomItem.extraData == "1")
+                    && !(roomItem.furnishing.canSit || roomItem.furnishing.interactionType == InteractionType.BED)
         }
     }
 

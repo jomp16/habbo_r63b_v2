@@ -48,7 +48,7 @@ class HabboBadge(private val habboSession: HabboSession) {
 
         habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
         habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_NEW_OBJECTS, true, 4, listOf(badge.id))
+        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 4, listOf(badge.id))
     }
 
     fun removeBadge(badgeCode: String) {
