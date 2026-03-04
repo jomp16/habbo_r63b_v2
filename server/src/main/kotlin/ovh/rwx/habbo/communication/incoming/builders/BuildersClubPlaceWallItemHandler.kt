@@ -61,6 +61,11 @@ class BuildersClubPlaceWallItemHandler {
         val offerId = habboRequest.readInt()
         val extraParam = habboRequest.readUTF()
         val wallLocation = habboRequest.readUTF()
+        val accepted = if (habboRequest.byteBuf.readableBytes() > 0) {
+            habboRequest.readBoolean() || habboSession.habboSubscription.buildersClubSubscription.itemsUsed > 0
+        } else {
+            true
+        }
 
         val room = habboSession.currentRoom ?: return
 
@@ -69,7 +74,7 @@ class BuildersClubPlaceWallItemHandler {
             return
         }
 
-        if (!habboSession.habboSubscription.hasBuildersClub) {
+        if (!habboSession.habboSubscription.hasBuildersClub && !accepted) {
             sendWallError(habboSession, pageId, offerId, extraParam, wallLocation)
             return
         }
@@ -123,6 +128,6 @@ class BuildersClubPlaceWallItemHandler {
         }
 
         // Sucesso
-        habboSession.habboSubscription.incrementBuildersItemsUsed()
+        habboSession.habboSubscription.incrementBuildersItemsUsed(room)
     }
 }

@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.room.Room
 
 abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
@@ -36,7 +37,19 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     // As subclasses devem sobrescrever isso se quiserem habilitar opções avançadas
     open val allowedFurniSources: List<WiredFurniSource>
         get() = if (requiresItems) {
-            listOf(WiredFurniSource.SELECTED_ITEMS) // Tem mobis? Então o padrão é "Mobis Escolhidos"
+            if (this is WiredEffect) {
+                listOf(
+                    WiredFurniSource.SELECTED_ITEMS,
+                    WiredFurniSource.SELECTOR_ITEMS
+                ) // Tem mobis? Então o padrão é "Mobis Escolhidos"
+            } else {
+                listOf(
+                    WiredFurniSource.SELECTED_ITEMS,
+                    WiredFurniSource.SELECTOR_ITEMS,
+                    WiredFurniSource.SIGNAL_ITEMS,
+                    WiredFurniSource.TRIGGERING_ITEM,
+                )
+            }
         } else {
             emptyList() // Não tem mobis? Esconde as opções de fontes de mobis!
         }

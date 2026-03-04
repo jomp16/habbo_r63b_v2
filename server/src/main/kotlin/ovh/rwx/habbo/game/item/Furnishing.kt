@@ -48,7 +48,7 @@ data class Furnishing(
         get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]
 
     val swfInfo: SwfInfo? by lazy {
-        HabboServer.habboGame.cameraManager.getSwfInfo(itemName)
+        HabboServer.habboGame.cameraManager.getSwfInfo(itemName.substringBefore('*'))
     }
 
     val interactionModesCount: Int by lazy {
@@ -61,7 +61,7 @@ data class Furnishing(
         if (type == ItemType.WALL) swfX else max(1, swfX)
     }
 
-    val height: Int by lazy {
+    val length: Int by lazy {
         val swfY = swfInfo?.dimensions?.y?.toInt() ?: 1
         // Se for item de parede (W), permitimos 0. Se for piso (S), mínimo 1.
         if (type == ItemType.WALL) swfY else max(1, swfY)

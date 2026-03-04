@@ -163,14 +163,14 @@ class ItemManager {
         log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
     }
 
-    fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, height: Int): List<Vector2> {
+    fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, length: Int): List<Vector2> {
         val list: MutableList<Vector2> = mutableListOf()
 
         for (i in 0 until width) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x
             val y1 = if (rotation == 2 || rotation == 6) y + i else y
 
-            for (j in 0 until height) {
+            for (j in 0 until length) {
                 val xb = if (rotation == 2 || rotation == 6) x1 + j else x1
                 val xn = if (rotation == 0 || rotation == 4) y1 + j else y1
 

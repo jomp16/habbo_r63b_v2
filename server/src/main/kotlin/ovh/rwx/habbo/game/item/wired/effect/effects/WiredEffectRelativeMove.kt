@@ -24,7 +24,6 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredFurniMove
-import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -43,11 +42,6 @@ class WiredEffectRelativeMove(room: Room, roomItem: RoomItem) : WiredEffect(room
 
     override fun code() = WiredEffectType.RELATIVE_FURNI_MOVE.code
     override val requiresItems = true
-    override val allowedFurniSources = listOf(
-        WiredFurniSource.SELECTED_ITEMS,
-        WiredFurniSource.TRIGGERING_ITEM,
-        WiredFurniSource.SELECTOR_ITEMS
-    )
 
     override fun setData() {
         roomItem.wiredData?.let {

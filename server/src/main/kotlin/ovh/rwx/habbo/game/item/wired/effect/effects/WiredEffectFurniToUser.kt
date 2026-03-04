@@ -51,14 +51,14 @@ class WiredEffectFurniToUser(room: Room, roomItem: RoomItem) : WiredEffect(room,
         val userPos = targetUser.currentVector3.vector2
 
         val width = item.furnishing.width
-        val height = item.furnishing.height
+        val length = item.furnishing.length
 
         val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
             userPos.x,
             userPos.y,
             item.rotation,
             width,
-            height
+            length
         )
 
         val freeTiles = affectedTiles.filter { tile ->

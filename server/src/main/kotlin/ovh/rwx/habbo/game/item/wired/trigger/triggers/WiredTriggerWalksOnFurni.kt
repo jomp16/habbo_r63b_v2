@@ -38,10 +38,10 @@ class WiredTriggerWalksOnFurni(room: Room, roomItem: RoomItem) : WiredTrigger(ro
     override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val items = roomItem.wiredData?.items ?: return false
-
         val walkedItem = data as? RoomItem ?: return false
-        val triggered = items.contains(walkedItem.id)
+
+        val items = wiredContext.getEffectiveFurnis(this)
+        val triggered = items.contains(walkedItem)
 
         if (triggered) {
             wiredContext.sourceItem = walkedItem

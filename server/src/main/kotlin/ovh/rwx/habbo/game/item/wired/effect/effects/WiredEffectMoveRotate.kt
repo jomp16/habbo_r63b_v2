@@ -24,7 +24,6 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredFurniMove
-import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -43,16 +42,6 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
 
     override fun code() = WiredEffectType.MOVE_FURNI.code
     override val requiresItems = true
-
-    // Define QUAIS opções vão aparecer na aba de Mobis do quarto
-    override val allowedFurniSources = listOf(
-        WiredFurniSource.SELECTED_ITEMS,   // "Use mobis escolhidos"
-        WiredFurniSource.TRIGGERING_ITEM,  // "Use o item de ativação"
-        WiredFurniSource.SELECTOR_ITEMS    // "Usar mobis do seletor"
-    )
-
-    // Qual opção vem marcada por padrão quando o usuário abre o Wired novo?
-    override val defaultFurniSource = WiredFurniSource.SELECTED_ITEMS
 
     override fun setData() {
         roomItem.wiredData?.let {

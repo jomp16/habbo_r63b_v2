@@ -65,11 +65,7 @@ class RollerItemInteractor : ItemInteractor() {
                         val zSrc = itemToMove.position.z // Guardamos o Z antes de mover
 
                         // Chamamos o setFloorItem com sendSlide = false para evitar pacotes duplicados
-                        if (room.setFloorItem(
-                                itemToMove, frontVector2, itemToMove.rotation, null,
-                                rollerId = roomItem.id, sendSlide = false
-                            )
-                        ) {
+                        if (room.setFloorItem(itemToMove, frontVector2, itemToMove.rotation, null)) {
                             // Adicionamos à lista para o pacote único
                             slideItems.add(SlideItem(itemToMove.id, zSrc, itemToMove.position.z))
                             reCycle = false

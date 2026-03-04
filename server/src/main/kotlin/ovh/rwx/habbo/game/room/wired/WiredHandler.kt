@@ -51,9 +51,9 @@ class WiredHandler(val room: Room) {
 
     /**
      * O fluxo Wired 2.0 deve ser:
-     * 1. Trigger (Ativação)
-     * 2. Ordenação por Z (Base para o topo)
-     * 3. Seletores (Definição de alvos no Contexto)
+     * 1. Seletores (Definição de alvos no Contexto)
+     * 2. Trigger (Ativação)
+     * 3. Ordenação por Z (Base para o topo)
      * 4. Condições (Filtros e Validações)
      * 5. Efeitos (Ações nos alvos)
      */
@@ -72,20 +72,24 @@ class WiredHandler(val room: Room) {
                     trigger = trigger
                 )
 
-                // Se o trigger disparar com sucesso (ex: senha correta ou timer bateu)
+                // Pegamos a pilha inteira ORDENADA pelo Z para respeitar a lógica visual
+                val sortedStack = wiredStackMap.values.sortedBy { it.roomItem.position.z }
+
+                // PROCESSAMOS OS SELETORES PRIMEIRO!
+                // Eles preenchem o context.targetFurnis e context.targetUsers
+                sortedStack.filterIsInstance<WiredSelector>().forEach { selector ->
+                    selector.onSelect(wiredContext)
+                }
+
+                // AGORA avaliamos o Trigger!
+                // O Trigger agora pode usar wiredContext.resolveFurniSources(this)
+                // para saber se o 'data' (ex: o mobi pisado) está na lista do Seletor.
                 if (trigger.onTrigger(wiredContext, data)) {
                     triggeredWireds.add(trigger)
                     lightWired(trigger)
 
-                    // 1. Pegamos a pilha inteira ORDENADA pelo Z para respeitar a lógica visual
-                    val sortedStack = wiredStackMap.values.sortedBy { it.roomItem.position.z }
-
-                    // 2. Processamos os Seletores (Eles preenchem o context.targetFurnis)
-                    sortedStack.filterIsInstance<WiredSelector>().forEach { selector ->
-                        lightWired(selector)
-
-                        selector.onSelect(wiredContext)
-                    }
+                    // Acendemos os seletores que participaram da ativação
+                    sortedStack.filterIsInstance<WiredSelector>().forEach { lightWired(it) }
 
                     // 3. Processamos as Condições (Validam se a pilha prossegue)
                     // No 2.0, usamos 'all' porque todas precisam ser verdadeiras
@@ -97,7 +101,7 @@ class WiredHandler(val room: Room) {
 
                     // Se as condições passarem, executamos os efeitos
                     if (conditionsPassed) {
-                        // 4. Processamos os Efeitos (Ações finais)
+                        // Processamos os Efeitos (Ações finais)
                         sortedStack.filterIsInstance<WiredEffect>()
                             .takeWhile { !wiredContext.cancelled }
                             .forEach { effect ->

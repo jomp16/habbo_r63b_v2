@@ -23,12 +23,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameEnds
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameStarts
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerScoreAchieved
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.slide.ObjectSlide
+import ovh.rwx.habbo.game.room.slide.SlideItem
 import ovh.rwx.habbo.game.room.tasks.BattleBanzaiTilesFlickerTask
 import ovh.rwx.habbo.game.room.tasks.UserAction
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -720,8 +724,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         // Calcula próximo tile baseado na direção
         val (dx, dy) = Direction.fromCode(direction).getOffset()
 
-        val nextX = puck.position.x + dx
-        val nextY = puck.position.y + dy
+        val oldPos = puck.position.copy()
+        val nextX = oldPos.x + dx
+        val nextY = oldPos.y + dy
 
         // Verifica se pode mover
         val nextVector = Vector2(nextX, nextY)
@@ -738,7 +743,15 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         // Calcula delay baseado no próximo step
         val delay = if (totalSteps == 1) 500L else 100L + (nextStep * 100L)
 
-        room.setFloorItem(puck, nextVector, puck.rotation, null, rollerId = 0, rollerDelay = 0)
+        if (room.setFloorItem(puck, nextVector, puck.rotation, null)) {
+            val batchSlide = ObjectSlide(
+                source = oldPos,
+                target = puck.position,
+                items = listOf(SlideItem(puck.id, oldPos.z, puck.position.z))
+            )
+            room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, batchSlide)
+            room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, batchSlide)
+        }
 
         // Pinta o tile apenas se o jogo estiver rodando e tiver time
         if (running && gameTeam != null) {

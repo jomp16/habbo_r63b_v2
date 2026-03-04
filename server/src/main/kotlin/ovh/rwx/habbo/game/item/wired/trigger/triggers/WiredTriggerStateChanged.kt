@@ -38,14 +38,19 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
     override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val items = roomItem.wiredData?.items ?: return false
-
         val changedItem = data as? RoomItem ?: return false
 
+        val items = wiredContext.getEffectiveFurnis(this)
+
         // Verifica se o item que mudou está na lista de monitoramento deste Wired
-        val triggered = items.contains(changedItem.id)
+        val triggered = items.contains(changedItem)
 
         if (triggered) {
+            // todo: Verifica se o usuário ativador está próximo do mobi
+            if (wiredContext.triggererUser != null) {
+
+            }
+
             // Define a fonte de origem para os efeitos (Fonte 0)
             wiredContext.sourceItem = changedItem
         }

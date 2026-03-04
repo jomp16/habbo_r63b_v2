@@ -34,30 +34,34 @@ class RoomTakeItemHandler {
     @Handler(Incoming.ROOM_TAKE_ITEM)
     @HandlerR63A(IncomingR63A.ROOM_TAKE_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null) return
 
-        habboRequest.readInt() // useless
-        val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        habboSession.currentRoom?.let { room ->
+            if (!room.hasRights(habboSession)) return
 
-        if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
+            habboRequest.readInt() // useless
+            val itemId = habboRequest.readInt()
+            val roomItem = room.roomItems[itemId] ?: return
 
-        // Itens BC: apenas o dono do quarto pode remover
-        if (roomItem.buildersClub) {
-            if (habboSession.currentRoom!!.roomData.ownerId != habboSession.userInformation.id) {
-                return
+            if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
+
+            // Itens BC: apenas o dono do quarto pode remover
+            if (roomItem.buildersClub) {
+                if (room.roomData.ownerId != habboSession.userInformation.id) {
+                    return
+                }
+                if (room.removeItem(habboSession.roomUser, roomItem)) {
+                    ItemDao.deleteItems(listOf(roomItem.id))
+                    habboSession.habboSubscription.decrementBuildersItemsUsed(room)
+                }
+            } else {
+                if (room.removeItem(habboSession.roomUser, roomItem)) {
+                    ItemDao.addRoomItemInventory(mutableListOf(roomItem))
+                }
             }
-            if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
-                ItemDao.deleteItems(listOf(roomItem.id))
-                habboSession.habboSubscription.decrementBuildersItemsUsed()
-            }
-        } else {
-            if (habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)) {
-                ItemDao.addRoomItemInventory(mutableListOf(roomItem))
-            }
+
+            // Por mover, girar, escolher ou colocar Mobis nos seus quartos.
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial5", 1, false)
         }
-
-        // Por mover, girar, escolher ou colocar Mobis nos seus quartos.
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial5", 1, false)
     }
 }

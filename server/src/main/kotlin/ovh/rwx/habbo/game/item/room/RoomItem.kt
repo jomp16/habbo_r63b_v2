@@ -67,6 +67,8 @@ data class RoomItem(
                 return furnishing.stackHeight[safeIndex]
             }
 
+            if (!furnishing.canStack && !(furnishing.canSit || furnishing.canLay || furnishing.walkable)) return 0.toDouble()
+
             // Se não for multi-height, PRIORIZAMOS o Z do SWF.
             // Caso o SWF falhe ao carregar (null), usamos a base do banco ou 0.0
             return furnishing.swfDimensions?.z ?: furnishing.stackHeight.firstOrNull() ?: 0.0
@@ -78,7 +80,8 @@ data class RoomItem(
                 position.y,
                 rotation,
                 furnishing.width,
-                furnishing.height)
+            furnishing.length
+        )
     private var cycles: Int = 0
     private var currentCycles: Int = 0
     val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
@@ -287,7 +290,7 @@ data class RoomItem(
             rotation != -1 && rotation != getFrontRotation() -> false
             position.x == vector3.x && position.y == vector3.y -> true
             else -> if (rotation == 2 || rotation == 6) vector3.x == (if (rotation == 6) position.x + 1 else position.x - 1) && vector3.y >= position.y && vector3.y < position.y + furnishing.width
-            else vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.height
+            else vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.length
         }
     }
 }
