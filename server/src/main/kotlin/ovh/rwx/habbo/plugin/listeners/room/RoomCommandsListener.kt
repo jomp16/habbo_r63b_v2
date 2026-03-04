@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -45,8 +45,35 @@ class RoomCommandsListener : PluginListener() {
     fun pickall(room: Room, roomUser: RoomUser, args: List<String>) {
         if (room.hasRights(roomUser.habboSession, true)) {
             val roomItemsRemoved = room.roomItems.values.toList()
-                    .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
-                    .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+                .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
+                .filter { it.userId == roomUser.habboSession?.userInformation?.id }
+                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+
+            ItemDao.addRoomItemInventory(roomItemsRemoved)
+        }
+    }
+
+    @Command(["pickallbc"])
+    fun pickallBuildersClub(room: Room, roomUser: RoomUser, args: List<String>) {
+        if (room.hasRights(roomUser.habboSession, true)) {
+            val roomItemsRemoved = room.roomItems.values.toList()
+                .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
+                .filter { roomItem -> roomItem.buildersClub }
+                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+
+            roomUser.habboSession?.habboSubscription?.decrementBuildersItemsUsed(room, roomItemsRemoved.size)
+        }
+    }
+
+    @Command(["ejectall"])
+    fun ejectall(room: Room, roomUser: RoomUser, args: List<String>) {
+        if (room.hasRights(roomUser.habboSession, true)) {
+            val itemName = args.getOrNull(0)
+
+            val roomItemsRemoved = room.roomItems.values.toList()
+                .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
+                .filter { roomItem -> if (itemName == null) true else roomItem.furnishing.itemName == itemName }
+                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
 
             ItemDao.addRoomItemInventory(roomItemsRemoved)
         }

@@ -139,6 +139,6 @@ class BuildersClubPlaceRoomItemHandler {
         }
 
         // Sucesso
-        habboSession.habboSubscription.incrementBuildersItemsUsed()
+        habboSession.habboSubscription.incrementBuildersItemsUsed(room)
     }
 }

@@ -102,6 +102,14 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
 
+    fun sendAnyResponse(outgoing: Any, vararg args: Any?) {
+        when (outgoing) {
+            is Outgoing -> sendHabboResponse(outgoing, *args)
+            is OutgoingR63A -> sendHabboResponse(outgoing, *args)
+            else -> log.error("Tipo de mensagem desconhecido: ${outgoing::class.simpleName}")
+        }
+    }
+
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
         if (release != "R63A") {
             HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {

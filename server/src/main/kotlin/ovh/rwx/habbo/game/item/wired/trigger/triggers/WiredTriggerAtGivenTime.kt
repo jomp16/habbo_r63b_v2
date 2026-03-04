@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,6 +33,8 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
     private var targetTime = 5
     private var hasTriggered = false
 
+    override val requiresItems = true
+
     init {
         setData()
     }
@@ -46,6 +48,7 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
     }
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+        // todo: fix this wired
         val currentTime = room.roomTimer.get()
 
         if (currentTime >= targetTime && !hasTriggered) {

@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
+import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
 import java.time.LocalDate
@@ -104,11 +105,11 @@ class HabboSubscription(private val habboSession: HabboSession) {
         updateBuildersClubStatus()
     }
 
-    fun incrementBuildersItemsUsed() {
+    fun incrementBuildersItemsUsed(room: Room) {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_RoomDecoBC", 1, accumulate = true)
         SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed + 1)
 
-        if (buildersClubSubscription.trial && buildersClubSubscription.itemsUsed == 0) {
+        if (buildersClubSubscription.trial && room.roomItems.values.count { it.buildersClub } == 1) {
             if (habboSession.release == "R63A") {
                 habboSession.sendNotification($$"${notification.builders_club.room_locked.message}")
             } else {
@@ -118,11 +119,14 @@ class HabboSubscription(private val habboSession: HabboSession) {
         }
     }
 
-    fun decrementBuildersItemsUsed() {
+    fun decrementBuildersItemsUsed(room: Room, count: Int = 1) {
         if (buildersClubSubscription.itemsUsed > 0) {
-            SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed - 1)
+            SubscriptionDao.updateBuildersItemsUsed(
+                buildersClubSubscription,
+                buildersClubSubscription.itemsUsed - count
+            )
 
-            if (buildersClubSubscription.itemsUsed <= 0) {
+            if (room.roomItems.values.count { it.buildersClub } <= 0) {
                 if (habboSession.release == "R63A") {
                     habboSession.sendNotification($$"${notification.builders_club.room_unlocked.message}")
                 } else {

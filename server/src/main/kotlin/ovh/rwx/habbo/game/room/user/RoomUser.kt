@@ -49,23 +49,30 @@ class RoomUser(
     var headRotation: Int,
     var bodyRotation: Int
 ) : IHabboResponseSerialize {
+
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
     private var oldCurrentVector3: Vector3? = null
+
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
     var objectiveItem: RoomItem? = null
-    var stepSeatedVector3: Vector3? = null
+
+    // Antigo stepSeatedVector3: Guarda a posição que o avatar assumirá no próximo ciclo
+    var nextStepVector: Vector3? = null
+    private val hasPendingStep: Boolean
+        get() = nextStepVector != null
+
     val walking: Boolean
         get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
-    private val stepSeated: Boolean
-        get() = stepSeatedVector3 != null
+
     private var idleCount: Int = 0
     private var cycles: Int = 0
     private var currentCycles: Int = 0
     private var handItemCycle: Int = 0
     private var handItemCurrentCycles: Int = 0
     internal var headResetCycle: Int = 0
+
     var walkingBlocked: Boolean = false
     var frozen: Boolean = false
     var kicked: Boolean = false
@@ -74,11 +81,12 @@ class RoomUser(
     var rollerId: Int = -1
     var handleVendingId: Int = -1
     internal var path: MutableList<Path> = mutableListOf()
+
     var idle: Boolean = false
         set(newValue) {
-            idleCount =
-                if (newValue) (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
-                else 0
+            idleCount = if (newValue) {
+                (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+            } else 0
 
             if (field != newValue) {
                 room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
@@ -87,15 +95,18 @@ class RoomUser(
 
             field = newValue
         }
+
     var typing: Boolean = false
         set(newValue) {
             if (field != newValue) {
-                room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_TYPING, virtualID, if (newValue) 1 else 0)
+                val state = if (newValue) 1 else 0
+                room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, state)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_TYPING, virtualID, state)
             }
 
             field = newValue
         }
+
     var danceId: Int = 0
         set(newValue) {
             if (field != newValue) {
@@ -105,6 +116,7 @@ class RoomUser(
 
             field = newValue
         }
+
     var handItem: Int = 0
         set(newValue) {
             if (field != newValue) {
@@ -114,45 +126,36 @@ class RoomUser(
 
             field = newValue
         }
+
     var effect: RoomUserEffect? = null
         set(newValue) {
             if (field != newValue) {
-                room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_EFFECT, virtualID, newValue?.effectId ?: 0)
+                val effectId = newValue?.effectId ?: 0
+                room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, effectId)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_EFFECT, virtualID, effectId)
             }
 
             field = newValue
             lastEffect = newValue
         }
+
     private var lastEffect: RoomUserEffect? = null
 
     fun addStatus(key: String, value: String = "", milliseconds: Int = -1) {
         val hasStatus = statusMap.containsKey(key)
 
-        statusMap[key] = Pair(
-            if (milliseconds == -1) null
-            else LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong())), value
-        )
+        val expiryTime = if (milliseconds == -1) null else {
+            LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(milliseconds.toLong()))
+        }
+
+        statusMap[key] = Pair(expiryTime, value)
 
         if (!hasStatus) {
             updateNeeded = true
 
             when (key) {
-                "sit" -> {
-                    room.wiredHandler.triggerWired(
-                        WiredTriggerUserPerformsAction::class,
-                        this,
-                        WiredTriggerUserPerformsAction.WiredUserAction.SIT,
-                    )
-                }
-
-                "lay" -> {
-                    room.wiredHandler.triggerWired(
-                        WiredTriggerUserPerformsAction::class,
-                        this,
-                        WiredTriggerUserPerformsAction.WiredUserAction.LAY,
-                    )
-                }
+                "sit" -> triggerWiredAction(WiredTriggerUserPerformsAction.WiredUserAction.SIT)
+                "lay" -> triggerWiredAction(WiredTriggerUserPerformsAction.WiredUserAction.LAY)
             }
         }
     }
@@ -162,42 +165,56 @@ class RoomUser(
 
         updateNeeded = true
 
-        if (removed != null) {
-            when (key) {
-                "sit", "lay" -> {
-                    room.wiredHandler.triggerWired(
-                        WiredTriggerUserPerformsAction::class,
-                        this,
-                        WiredTriggerUserPerformsAction.WiredUserAction.STAND,
-                    )
-                }
+        if (removed != null && (key == "sit" || key == "lay")) {
+            triggerWiredAction(WiredTriggerUserPerformsAction.WiredUserAction.STAND)
+        }
+    }
+
+    private fun triggerWiredAction(action: WiredTriggerUserPerformsAction.WiredUserAction) {
+        room.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, this, action)
+    }
+
+    fun onCycle() {
+        processExpiredStatuses()
+        commitPendingMovementStep()
+        processTimers()
+
+        if (walking) {
+            processWalking()
+        } else if (!idle) {
+            handleIdleCounter()
+        }
+    }
+
+    private fun processExpiredStatuses() {
+        val now = LocalDateTime.now()
+        statusMap.entries.forEach { (key, value) ->
+            if (value.first != null && now.isAfter(value.first)) {
+                removeStatus(key)
             }
         }
     }
 
-    fun onCycle() {
-        statusMap.entries.forEach {
-            if (it.value.first != null && LocalDateTime.now().isAfter(it.value.first)) removeStatus(it.key)
-        }
-
-        if (stepSeated) {
+    private fun commitPendingMovementStep() {
+        if (hasPendingStep) {
             oldCurrentVector3 = currentVector3
-            currentVector3 = stepSeatedVector3!!
-
-            stepSeatedVector3 = null
+            currentVector3 = nextStepVector!!
+            nextStepVector = null
         }
+    }
 
-        if (handItemCycle > 0) {
-            if (handItemCurrentCycles++ >= handItemCycle) {
-                if (handItem > 0) {
-                    handItemCurrentCycles = 0
-                    handItemCycle = 0
+    private fun processTimers() {
+        // Ciclo do item na mão (bebida/comida)
+        if (handItemCycle > 0 && ++handItemCurrentCycles >= handItemCycle) {
+            if (handItem > 0) {
+                handItemCurrentCycles = 0
+                handItemCycle = 0
 
-                    carryHandItem(0)
-                }
+                carryHandItem(0)
             }
         }
 
+        // Reseta a rotação da cabeça se o usuário parou
         if (headResetCycle > 0 && --headResetCycle == 0) {
             if (!walking && !idle) {
                 headRotation = bodyRotation
@@ -205,107 +222,127 @@ class RoomUser(
             }
         }
 
+        // Efeitos temporários
         effect?.let {
             if (it.hasEffect && it.duration-- <= 0) effect = null
         }
 
-        if (cycles > 0) {
-            if (currentCycles++ >= cycles) {
-                if (handleVendingId > 0) {
-                    handItemCycle = 240
+        // Ciclos de ações agendadas (ex: máquina de vendas)
+        if (cycles > 0 && ++currentCycles >= cycles) {
+            if (handleVendingId > 0) {
+                handItemCycle = 240
 
-                    carryHandItem(handleVendingId)
+                carryHandItem(handleVendingId)
 
-                    handleVendingId = 0
-                }
-
-                walkingBlocked = false
-
-                cycles = 0
-                currentCycles = 0
+                handleVendingId = 0
             }
-        }
 
-        if (walking && frozen) {
+            walkingBlocked = false
+
+            cycles = 0
+            currentCycles = 0
+        }
+    }
+
+    private fun processWalking() {
+        if (frozen) {
             stopWalking()
             updateNeeded = true
+            return
         }
 
-        if (walking && !frozen) {
-            if (objectiveVector2 == currentVector3.vector2) {
+        if (objectiveVector2 == currentVector3.vector2) {
+            stopWalking()
+            return
+        }
+
+        if (path.isEmpty()) calculatePath()
+
+        if (path.isEmpty()) {
+            stopWalking()
+            return
+        }
+
+        var step = path.removeAt(0)
+        var stepVector2 = Vector2(step.x, step.y)
+
+        // Usa a função centralizada do Gamemap para avaliar tudo (itens, usuários, buracos no mapa)
+        if (room.roomGamemap.isBlocked(
+                stepVector2,
+                ignoreUsers = ignoreBlocking,
+                overrideBlocking = overrideBlocking
+            )
+        ) {
+            calculatePath() // Recalcula a rota, pois algo bloqueou o caminho (usuário ou mobi)
+
+            if (path.isEmpty()) {
                 stopWalking()
-            } else {
-                if (path.isEmpty()) calculatePath()
-
-                if (path.isEmpty()) {
-                    stopWalking()
-                } else {
-                    var step = path.removeAt(0)
-
-                    if (room.roomGamemap.roomUserMap[Vector2(
-                            step.x,
-                            step.y
-                        )]?.isNotEmpty() == true && !ignoreBlocking && !overrideBlocking
-                    ) {
-                        calculatePath()
-
-                        if (path.isEmpty()) stopWalking()
-                        else step = path.removeAt(0)
-                    }
-
-                    if (!ignoreBlocking && !overrideBlocking && room.roomGamemap.getAbsoluteHeight(
-                            step.x,
-                            step.y
-                        ) - room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y) > 3
-                    ) {
-                        stopWalking()
-
-                        return
-                    }
-                    val vector2 = Vector2(step.x, step.y)
-                    val roomItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
-                    val roomItem1 = room.roomGamemap.getHighestItem(vector2)
-
-                    if (rollerId == -1) {
-                        bodyRotation = Direction.calculate(currentVector3.x, currentVector3.y, step.x, step.y)
-                        headRotation = bodyRotation
-                    }
-
-                    if (roomItem != roomItem1) {
-                        roomItem?.onUserWalksOff(this, true)
-                        roomItem1?.onUserWalksOn(this, true)
-                    }
-
-                    if (vector2 == room.roomModel.doorVector3.vector2) {
-                        room.removeUser(this, notifyClient = true, kickNotification = kicked)
-
-                        return
-                    }
-
-                    room.roomGamemap.updateRoomUserMovement(this, currentVector3.vector2, vector2)
-                    val z = room.roomGamemap.getAbsoluteHeight(vector2)
-
-                    stepSeatedVector3 = Vector3(vector2, z)
-
-                    if (rollerId == -1) {
-                        removeUserStatuses()
-
-                        addStatus("mv", "${step.x},${step.y},$z")
-
-                        // ACH_LegDay: caminhar quadrados
-                        habboSession?.let {
-                            HabboServer.habboGame.achievementManager.progress(it, "ACH_LegDay", 1, accumulate = true)
-                        }
-                    }
-                }
+                return
             }
-        } else {
-            if (!idle) {
-                idleCount++
-                // check and commit idle state to room
-                if (TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong()) >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) idle =
-                    true
+
+            step = path.removeAt(0)
+            stepVector2 = Vector2(step.x, step.y)
+        }
+
+        // ATENÇÃO: A checagem de altura CONTINUA necessária logo abaixo!
+        // O isBlocked diz se o piso X,Y está livre, mas não avalia se o degrau é muito alto para subir.
+        if (!ignoreBlocking && !overrideBlocking) {
+            val currentHeight = room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y)
+            val stepHeight = room.roomGamemap.getAbsoluteHeight(step.x, step.y)
+
+            if (stepHeight - currentHeight > 3) {
+                stopWalking()
+                return
             }
+        }
+
+        handleTileTransition(stepVector2)
+    }
+
+    private fun handleTileTransition(stepVector2: Vector2) {
+        val currentItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
+        val nextItem = room.roomGamemap.getHighestItem(stepVector2)
+
+        if (rollerId == -1) {
+            bodyRotation = Direction.calculate(currentVector3.x, currentVector3.y, stepVector2.x, stepVector2.y)
+            headRotation = bodyRotation
+        }
+
+        if (currentItem != nextItem) {
+            currentItem?.onUserWalksOff(this, true)
+            nextItem?.onUserWalksOn(this, true)
+        }
+
+        if (stepVector2 == room.roomModel.doorVector3.vector2) {
+            room.removeUser(this, notifyClient = true, kickNotification = kicked)
+
+            return
+        }
+
+        room.roomGamemap.updateRoomUserMovement(this, currentVector3.vector2, stepVector2)
+        val z = room.roomGamemap.getAbsoluteHeight(stepVector2)
+
+        // Prepara a posição para ser aplicada no próximo ciclo
+        nextStepVector = Vector3(stepVector2, z)
+
+        if (rollerId == -1) {
+            removeUserStatuses()
+            addStatus("mv", "${stepVector2.x},${stepVector2.y},$z")
+
+            // ACH_LegDay: caminhar quadrados
+            habboSession?.let {
+                HabboServer.habboGame.achievementManager.progress(it, "ACH_LegDay", 1, accumulate = true)
+            }
+        }
+    }
+
+    private fun handleIdleCounter() {
+        idleCount++
+        val secondsIdle =
+            TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
+
+        if (secondsIdle >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) {
+            idle = true
         }
     }
 
@@ -336,12 +373,10 @@ class RoomUser(
                 currentUserItem.position.y,
                 currentUserItem.rotation,
                 currentUserItem.furnishing.width,
-                currentUserItem.furnishing.height
+                currentUserItem.furnishing.length
             )
 
-            val destinationInAffectedTiles = affectedTiles.any { it == destinationVector2 }
-
-            if (destinationInAffectedTiles) {
+            if (affectedTiles.any { it == destinationVector2 }) {
                 val xAxisChanged = currentVector3.x != x
                 val yAxisChanged = currentVector3.y != y
 
@@ -357,27 +392,11 @@ class RoomUser(
 
         val destinationItem = room.roomGamemap.getHighestItem(destinationVector2)
         if (destinationItem != null && destinationItem.furnishing.interactionType == InteractionType.BED) {
-            val bedHeadX: Int
-            val bedHeadY: Int
-
-            when (destinationItem.rotation) {
-                0, 4 -> {
-                    bedHeadX = x
-                    bedHeadY = destinationItem.position.y
-                }
-
-                2, 6 -> {
-                    bedHeadX = destinationItem.position.x
-                    bedHeadY = y
-                }
-
-                else -> {
-                    bedHeadX = destinationItem.position.x
-                    bedHeadY = destinationItem.position.y
-                }
+            destinationVector2 = when (destinationItem.rotation) {
+                0, 4 -> Vector2(x, destinationItem.position.y)
+                2, 6 -> Vector2(destinationItem.position.x, y)
+                else -> Vector2(destinationItem.position.x, destinationItem.position.y)
             }
-
-            destinationVector2 = Vector2(bedHeadX, bedHeadY)
         }
 
         room.roomTask?.addTask(
@@ -427,8 +446,8 @@ class RoomUser(
     }
 
     fun stopWalking() {
-        path = mutableListOf()
-        stepSeatedVector3 = null
+        path.clear()
+        nextStepVector = null
         objectiveVector2 = null
         ignoreBlocking = false
 
@@ -441,14 +460,8 @@ class RoomUser(
             objectiveRotation = -1
         }
 
-        if (objectiveItem != null) {
-            objectiveItem!!.furnishing.interactor?.onTrigger(
-                room,
-                this,
-                objectiveItem!!,
-                room.hasRights(habboSession, false),
-                0
-            )
+        objectiveItem?.let { item ->
+            item.furnishing.interactor?.onTrigger(room, this, item, room.hasRights(habboSession, false), 0)
             objectiveItem = null
         }
 

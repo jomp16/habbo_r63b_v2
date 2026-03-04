@@ -25,7 +25,6 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredFurniMove
-import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
@@ -50,11 +49,6 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
 
     override fun code() = WiredEffectType.MOVE_TO_DIRECTION.code
     override val requiresItems = true
-    override val allowedFurniSources = listOf(
-        WiredFurniSource.SELECTED_ITEMS,
-        WiredFurniSource.TRIGGERING_ITEM,
-        WiredFurniSource.SELECTOR_ITEMS
-    )
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -78,7 +72,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
 
             // 1. Pegamos a largura e altura do item
             val width = item.furnishing.width
-            val height = item.furnishing.height
+            val length = item.furnishing.length
 
             // 2. Calculamos quais quadrados ele ocuparia SE se movesse para nextPosition
             // Nota: Mantemos a item.rotation atual, pois o wired move sem girar o corpo (exceto colisão)
@@ -87,7 +81,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
                 nextPosition.y,
                 item.rotation,
                 width,
-                height
+                length
             )
 
             // 3. Verificamos se ALGUM desses quadrados está bloqueado
@@ -96,48 +90,64 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
 
             if (isBlocked) {
                 // TODO: Acionar Wired Trigger: Collision (Triggers quando o mobi bate na parede/mobis)
-                // Exemplo: wiredHandler.onEvent(WiredTriggerType.COLLISION, item)
-
-                // Lógica de Colisão (Girar/Rebater)
-                val newDirection = handleBlockedMovement(currentDirection)
-                itemDirections[item.id] = newDirection
-
-                val visualRotation = if (item.furnishing.allowedDirections.size == 4) {
-                    (newDirection.code / 2) * 2
-                } else {
-                    newDirection.code
-                }
-
                 if (turnBehavior != TurnBehavior.WAIT) {
-                    val oldPos = item.position.copy() // Salva posição original
+                    var testDirection = currentDirection
+                    var testNextPosition = nextPosition
+                    var isTestBlocked = true
+                    var attempts = 0
 
-                    if (room.setFloorItem(item, item.position.vector2, visualRotation, null)) {
-                        // Adiciona ao acumulador do ciclo
-                        wiredContext.batchedMovements.add(
-                            WiredFurniMove(
-                                furniId = item.id,
-                                sourceX = oldPos.x,
-                                sourceY = oldPos.y,
-                                sourceZ = oldPos.z,
-                                targetX = item.position.x,
-                                targetY = item.position.y,
-                                targetZ = item.position.z,
-                                rotation = item.rotation
-                            )
+                    // Tenta encontrar o próximo caminho livre aplicando a regra de giro sucessivamente.
+                    // Limite de 8 tentativas para girar até 360º (evita crash se o item estiver 100% preso).
+                    while (isTestBlocked && attempts < 8) {
+                        testDirection = handleBlockedMovement(testDirection)
+                        testNextPosition = getNextPosition(item.position.vector2, testDirection)
+
+                        val newAffectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+                            testNextPosition.x,
+                            testNextPosition.y,
+                            item.rotation,
+                            width,
+                            length
                         )
+
+                        isTestBlocked = newAffectedTiles.any { tile -> isPositionBlocked(tile) }
+                        attempts++
                     }
+
+                    if (!isTestBlocked) {
+                        // Encontrou um caminho livre neste mesmo ciclo!
+                        itemDirections[item.id] = testDirection
+                        val oldPos = item.position.copy()
+
+                        if (room.setFloorItem(item, testNextPosition, item.rotation, null)) {
+                            wiredContext.batchedMovements.add(
+                                WiredFurniMove(
+                                    furniId = item.id,
+                                    sourceX = oldPos.x,
+                                    sourceY = oldPos.y,
+                                    sourceZ = oldPos.z,
+                                    targetX = item.position.x,
+                                    targetY = item.position.y,
+                                    targetZ = item.position.z,
+                                    rotation = item.rotation
+                                )
+                            )
+                        }
+                    } else {
+                        // Se tentou todas as direções e absolutamente TUDO está bloqueado,
+                        // ele não se move. Atualizamos a direção com apenas 1 giro para
+                        // simular a mudança visual/lógica padrão para o próximo turno.
+                        itemDirections[item.id] = handleBlockedMovement(currentDirection)
+                    }
+                } else {
+                    // TurnBehavior.WAIT: não faz nada, só mantém a direção batendo na parede
+                    itemDirections[item.id] = currentDirection
                 }
             } else {
-                // Caminho livre! Mover.
-                val visualRotation = if (item.furnishing.allowedDirections.size == 4) {
-                    (currentDirection.code / 2) * 2
-                } else {
-                    currentDirection.code
-                }
-
+                // Caminho livre na primeira tentativa! Mover.
                 val oldPos = item.position.copy() // Salva posição original
 
-                if (room.setFloorItem(item, nextPosition, visualRotation, null)) {
+                if (room.setFloorItem(item, nextPosition, item.rotation, null)) {
                     // Adiciona ao acumulador do ciclo
                     wiredContext.batchedMovements.add(
                         WiredFurniMove(
@@ -159,6 +169,10 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
     private fun isPositionBlocked(position: Vector2): Boolean {
         // 1. Verificação de Limites do Mapa
         if (!room.roomGamemap.grid.isInside(position.x, position.y)) {
+            return true
+        }
+
+        if (room.roomModel.doorVector3.vector2 == position) {
             return true
         }
 
@@ -219,7 +233,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
         RANDOM_DIRECTION(6);
 
         companion object {
-            fun fromCode(code: Int) = values().find { it.code == code } ?: WAIT
+            fun fromCode(code: Int) = entries.find { it.code == code } ?: WAIT
         }
     }
 
