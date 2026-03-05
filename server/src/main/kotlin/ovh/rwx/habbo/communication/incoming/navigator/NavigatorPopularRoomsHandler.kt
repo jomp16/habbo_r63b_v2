@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,10 +35,10 @@ class NavigatorPopularRoomsHandler {
         println(categoryId)
 
         val rooms =
-            if (categoryId == -1) HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
-                .sortedBy { it.roomUsers.size }.take(8)
-            else HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() && it.roomData.category == categoryId }
-                .sortedBy { it.roomUsers.size }.take(8)
+            if (categoryId == -1) HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
+                .sortedBy { it.userManager.users.size }.take(8)
+            else HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() && it.roomData.category == categoryId }
+                .sortedBy { it.userManager.users.size }.take(8)
 
         habboSession.sendHabboResponse(
             OutgoingR63A.NAVIGATOR_LIST_ROOMS,

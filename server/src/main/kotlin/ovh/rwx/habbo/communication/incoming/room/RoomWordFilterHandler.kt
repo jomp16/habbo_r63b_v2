@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,7 +33,7 @@ class RoomWordFilterHandler {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
-        if (!room.hasRights(habboSession, true)) return
+        if (!room.userManager.hasRights(habboSession, true)) return
 
         habboSession.sendHabboResponse(Outgoing.ROOM_WORD_FILTER, room.wordFilter)
     }

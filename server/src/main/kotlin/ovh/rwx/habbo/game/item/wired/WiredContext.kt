@@ -49,8 +49,7 @@ data class WiredContext(
         val wiredData = wiredItem.roomItem.wiredData ?: return emptyList()
 
         // Pega a primeira fonte configurada, ou o padrão do Wired caso não exista
-        val sourceCode = wiredData.furniSources.firstOrNull() ?: wiredItem.defaultFurniSource.code
-        val sourceEnum = WiredFurniSource.fromCode(sourceCode)
+        val sourceEnum = wiredData.furniSources.firstOrNull() ?: wiredItem.defaultFurniSource
 
         return when (sourceEnum) {
             WiredFurniSource.TRIGGERING_ITEM -> {
@@ -60,7 +59,7 @@ data class WiredContext(
 
             WiredFurniSource.SELECTED_ITEMS -> {
                 // "Use mobis escolhidos" (A lista clássica)
-                wiredData.items.mapNotNull { wiredItem.room.roomItems[it] }
+                wiredData.items.mapNotNull { wiredItem.room.itemManager.items[it] }
             }
 
             WiredFurniSource.SELECTOR_ITEMS -> {
@@ -70,7 +69,7 @@ data class WiredContext(
 
             WiredFurniSource.ALL_ROOM_ITEMS -> {
                 // "Todos os mobis do quarto"
-                wiredItem.room.roomItems.values.toList()
+                wiredItem.room.itemManager.items.values.toList()
             }
 
             else -> emptyList() // Fallback seguro
@@ -85,8 +84,7 @@ data class WiredContext(
         val wiredData = wiredItem.roomItem.wiredData ?: return emptyList()
 
         // Pega a primeira fonte configurada, ou o padrão do Wired caso não exista
-        val sourceCode = wiredData.userSources.firstOrNull() ?: wiredItem.defaultUserSource.code
-        val sourceEnum = WiredUserSource.fromCode(sourceCode)
+        val sourceEnum = wiredData.userSources.firstOrNull() ?: wiredItem.defaultUserSource
 
         return when (sourceEnum) {
             WiredUserSource.TRIGGERING_USER -> {
@@ -101,14 +99,14 @@ data class WiredContext(
 
             WiredUserSource.ALL_ROOM_USERS -> {
                 // "Todos os usuários no quarto" (Fonte 900)
-                wiredItem.room.roomUsers.values.toList()
+                wiredItem.room.userManager.users.values.toList()
             }
 
             WiredUserSource.USER_BY_NAME -> {
                 // "Use o Habbo especificado pelo nome" (Fonte 101)
                 // Lê a string do wiredData e busca na lista de usuários do quarto
                 val username = wiredData.message
-                val target = wiredItem.room.roomUsers.values.find {
+                val target = wiredItem.room.userManager.users.values.find {
                     it.habboSession?.userInformation?.username.equals(username, ignoreCase = true)
                 }
                 target?.let { listOf(it) } ?: emptyList()
@@ -120,7 +118,7 @@ data class WiredContext(
                 /*// "Use o bot especificado pelo nome" (Fonte 100)
                 val botName = wiredData.message
                 // NOTA: Ajuste `isBot` ou a forma como sua base identifica Bots
-                val bot = wiredItem.room.roomUsers.values.find {
+                val bot = wiredItem.room.userManager.users.values.find {
                     it.isBot() && it.name.equals(botName, ignoreCase = true)
                 }
                 bot?.let { listOf(it) } ?: emptyList()*/

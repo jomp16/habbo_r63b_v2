@@ -42,11 +42,21 @@ class DefaultItemInteractor : ItemInteractor() {
         roomItem.extraData = currentMode.toString()
 
         if (roomItem.furnishing.stackMultiple) {
-            room.setFloorItem(roomItem, roomItem.position.vector2, roomItem.rotation, roomUser, roomItem.totalHeight)
+            room.itemManager.setFloorItem(
+                roomItem,
+                roomItem.position.vector2,
+                roomItem.rotation,
+                roomUser,
+                roomItem.totalHeight
+            )
         }
 
         roomItem.update(updateDb = true, updateClient = true)
 
-        if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        if (roomUser != null) room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStateChanged::class,
+            roomUser,
+            roomItem
+        )
     }
 }

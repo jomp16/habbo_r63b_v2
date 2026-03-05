@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,9 +29,13 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomReedemExchangeItemHandler {
     @Handler(Incoming.ROOM_REEDEM_EXCHANGE_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
+                habboSession,
+                true
+            )
+        ) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
         if (!roomItem.itemName.startsWith("CF_") && !roomItem.itemName.startsWith("CFC_")) return
         val split = roomItem.itemName.split('_')
@@ -40,7 +44,7 @@ class RoomReedemExchangeItemHandler {
         habboSession.userInformation.credits += credits
         habboSession.updateAllCurrencies()
 
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser, roomItem)
+        habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, roomItem)
         ItemDao.deleteItems(listOf(itemId))
     }
 }

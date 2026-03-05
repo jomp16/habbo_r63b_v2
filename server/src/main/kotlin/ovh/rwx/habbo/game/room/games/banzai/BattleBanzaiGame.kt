@@ -17,7 +17,7 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.room.games
+package ovh.rwx.habbo.game.room.games.banzai
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,6 +31,8 @@ import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameEnds
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameStarts
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerScoreAchieved
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.games.GameTeam
+import ovh.rwx.habbo.game.room.games.RoomGame
 import ovh.rwx.habbo.game.room.slide.ObjectSlide
 import ovh.rwx.habbo.game.room.slide.SlideItem
 import ovh.rwx.habbo.game.room.tasks.BattleBanzaiTilesFlickerTask
@@ -39,16 +41,11 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
-import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 
 class BattleBanzaiGame(room: Room) : RoomGame(room) {
     private val userTeams = mutableMapOf<Int, GameTeam>()
     private val gateAssignments = mutableMapOf<Int, Int>() // userId -> gateId
-    private var timeRemaining = 0
-    var configuredTime = 30
-        private set
-    private var tickCounter = 0
     private val pendingTileUpdates = mutableListOf<Pair<RoomUser, RoomItem>>()
     private val movingPucks = mutableSetOf<Int>() // IDs dos pucks em movimento
     private val puckLastMoveTime = ConcurrentHashMap<Int, Long>()
@@ -74,29 +71,15 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         resetTiles()
         resetScores()
 
-        // Carrega o tempo configurado de qualquer counter ao iniciar o jogo
-        room.roomItems.values
-            .firstOrNull { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_COUNTER }
-            ?.let { counter ->
-                configuredTime = counter.extraData.toIntOrNull() ?: 30
-                if (configuredTime == 0) configuredTime = 30
-            }
-
-        timeRemaining = configuredTime
-        tickCounter = 0
-
-        // Atualiza TODOS os counters para mostrar o tempo inicial
-        updateClock()
-
         // Acionar Wired
-        room.wiredHandler.triggerWired(WiredTriggerGameStarts::class, null, null)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameStarts::class, null, null)
     }
 
     override fun pause() {
         if (!running) return
 
         // Reseta tiles que ficaram em "1" (não foram pintados) para "0"
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE && it.extraData == "1" }
             .forEach {
                 it.extraData = "0"
@@ -110,7 +93,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         if (running) return
 
         // Reseta tiles "0" para "1"
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE && it.extraData == "1" }
             .forEach {
                 it.extraData = "1"
@@ -123,21 +106,12 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
     override fun stop() {
         if (!running) return
         running = false
-        tickCounter = 0
 
         // Limpa tiles pendentes
         pendingTileUpdates.clear()
 
-        // 1. Congela o Timer em 00:00
-        room.roomItems.values
-            .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_COUNTER }
-            .forEach { counter ->
-                counter.extraData = "0"
-                counter.update(updateDb = false, updateClient = true)
-            }
-
         // 2. Reseta tiles que ficaram em "1" (não foram pintados) para "0"
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE && it.extraData == "1" }
             .forEach {
                 it.extraData = "0"
@@ -155,7 +129,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
             // Jogadores acenam e ganham achievements
             userTeams.forEach { (userId, team) ->
-                room.roomUsers.values.find { it.habboSession?.userInformation?.id == userId }?.let { roomUser ->
+                room.userManager.users.values.find { it.habboSession?.userInformation?.id == userId }?.let { roomUser ->
                     // ACH_BattleBallPlayer: jogar Battle Banzai
                     roomUser.habboSession?.let {
                         HabboServer.habboGame.achievementManager.progress(
@@ -184,7 +158,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             }
 
             // Tiles vencedores piscam
-            val winningTiles = room.roomItems.values
+            val winningTiles = room.itemManager.items.values
                 .filter {
                     it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                             it.extraData.toIntOrNull()
@@ -199,17 +173,10 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         // NOTA: Tiles pintados (diferentes de "1") ficam para mostrar o resultado
 
         // Resetar triggers de pontuação para o próximo jogo
-        room.wiredHandler.resetTriggerer(WiredTriggerScoreAchieved::class)
+        room.itemManager.wiredHandler.resetTriggerer(WiredTriggerScoreAchieved::class)
 
         // Acionar Wired
-        room.wiredHandler.triggerWired(WiredTriggerGameEnds::class, null, null)
-    }
-
-    override fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int) {
-        when (roomItem.furnishing.interactionType) {
-            InteractionType.BATTLE_BANZAI_COUNTER -> handleCounterInteraction(roomItem, state)
-            else -> {}
-        }
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameEnds::class, null, null)
     }
 
     override fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {
@@ -269,7 +236,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         }
 
         // Verifica se todos os tiles foram locked
-        val allTilesLocked = room.roomItems.values
+        val allTilesLocked = room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE }
             .all {
                 val state = it.extraData.toIntOrNull() ?: 0
@@ -279,22 +246,6 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         if (allTilesLocked) {
             stop()
             return
-        }
-
-        // Tick é chamado a cada 500ms, então 2 ticks = 1 segundo
-        tickCounter++
-        if (tickCounter >= 2) {
-            tickCounter = 0
-            timeRemaining--
-
-            // Atualiza TODOS os counters visuais
-            updateClock()
-
-            // Para o jogo quando o tempo acabar
-            if (timeRemaining <= 0) {
-                stop()
-                // Timer já é setado para "0" no stop()
-            }
         }
     }
 
@@ -372,7 +323,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             else -> return
         }
 
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == gateType }
             .forEach {
                 it.extraData = count.toString()
@@ -444,7 +395,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         val x = tile.position.x
         val y = tile.position.y
 
-        val lockedTilesOfTeam = room.roomItems.values
+        val lockedTilesOfTeam = room.itemManager.items.values
             .filter {
                 it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                         it.extraData.toIntOrNull()
@@ -469,7 +420,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         if (!largestArea.isNullOrEmpty()) {
             largestArea.forEach { (tileX, tileY) ->
-                room.roomItems.values
+                room.itemManager.items.values
                     .filter {
                         it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                                 it.position.x == tileX && it.position.y == tileY &&
@@ -509,7 +460,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         if (hasLockedTileAt(x, y, lockedTiles) || visited.contains(coord)) return visited
 
         // Verifica se o tile atual é do mesmo time e locked - se sim, é uma borda
-        val currentTile = room.roomItems.values.find {
+        val currentTile = room.itemManager.items.values.find {
             it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                     it.position.x == x && it.position.y == y
         }
@@ -537,14 +488,14 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
     }
 
     private fun isOutOfBounds(x: Int, y: Int): Boolean {
-        return room.roomItems.values.none {
+        return room.itemManager.items.values.none {
             it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                     it.position.x == x && it.position.y == y
         }
     }
 
     private fun isForeignLockedTile(x: Int, y: Int, gameTeam: GameTeam): Boolean {
-        return room.roomItems.values.any {
+        return room.itemManager.items.values.any {
             it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                     it.position.x == x && it.position.y == y &&
                     it.extraData.toIntOrNull()?.let { state ->
@@ -557,87 +508,11 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         return lockedTiles.any { it.position.x == x && it.position.y == y }
     }
 
-    private fun handleCounterInteraction(counter: RoomItem, state: Int) {
-        when (state) {
-            2 -> { // Botão Set Time
-                if (!running) {
-                    var currentTime = counter.extraData.toIntOrNull() ?: 0
-                    // Normaliza para múltiplos de 30
-                    currentTime = ((currentTime / 30) * 30)
-                    if (currentTime == 0) currentTime = 30
-                    else {
-                        currentTime += 30
-                        if (currentTime > 300) currentTime = 30
-                    }
-                    configuredTime = currentTime
-
-                    // Atualiza TODOS os counters
-                    room.roomItems.values
-                        .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_COUNTER }
-                        .forEach {
-                            it.extraData = currentTime.toString()
-                            it.update(updateDb = true, updateClient = true)
-                        }
-                }
-            }
-
-            1 -> { // Botão Start/Pause
-                if (!running) {
-                    if (tickCounter > 0) {
-                        resume()
-                    } else {
-                        start()
-                    }
-                } else {
-                    pause()
-                    // Atualiza TODOS os counters
-                    updateClock()
-                }
-            }
-        }
-    }
-
     override fun addScore(gameTeam: GameTeam, points: Int) {
         teamScores[gameTeam] = (teamScores[gameTeam] ?: 0) + points
         updateScoreboards(gameTeam)
 
-        room.wiredHandler.triggerWired(WiredTriggerScoreAchieved::class, null, listOf(gameTeam, points))
-    }
-
-    override fun adjustClock(duration: Duration, mode: RoomGameClockAdjustMode) {
-        val currentTotalSeconds = configuredTime
-        val newConfiguredTime = when (mode) {
-            RoomGameClockAdjustMode.INCREASE -> Duration.ofSeconds(currentTotalSeconds.toLong()).plus(duration)
-                .toSeconds()
-
-            RoomGameClockAdjustMode.DECREASE -> Duration.ofSeconds(currentTotalSeconds.toLong()).minus(duration)
-                .toSeconds()
-
-            RoomGameClockAdjustMode.SET -> duration.toSeconds()
-        }.toInt()
-
-        // Se o jogo está rodando, aplicamos o "delta" ao tempo atual
-        if (running) {
-            val delta = newConfiguredTime - configuredTime
-            // Garante que o tempo restante não fique negativo
-            timeRemaining = (timeRemaining + delta).coerceAtLeast(0)
-        } else {
-            // Se parado, o tempo restante é apenas o novo total
-            timeRemaining = newConfiguredTime
-        }
-
-        configuredTime = newConfiguredTime
-
-        updateClock()
-    }
-
-    override fun updateClock() {
-        room.roomItems.values
-            .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_COUNTER }
-            .forEach { counter ->
-                counter.extraData = timeRemaining.toString()
-                counter.update(updateDb = false, updateClient = true)
-            }
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerScoreAchieved::class, null, listOf(gameTeam, points))
     }
 
     private fun updateScoreboards(gameTeam: GameTeam) {
@@ -650,7 +525,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             else -> return
         }
 
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == scoreboardType }
             .forEach {
                 it.extraData = score.toString()
@@ -684,7 +559,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             }
 
             // Pinta o tile de onde o puck saiu
-            val startTile = room.roomItems.values.find {
+            val startTile = room.itemManager.items.values.find {
                 it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                         it.position.x == puck.position.x && it.position.y == puck.position.y
             }
@@ -743,7 +618,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         // Calcula delay baseado no próximo step
         val delay = if (totalSteps == 1) 500L else 100L + (nextStep * 100L)
 
-        if (room.setFloorItem(puck, nextVector, puck.rotation, null)) {
+        if (room.itemManager.setFloorItem(puck, nextVector, puck.rotation, null)) {
             val batchSlide = ObjectSlide(
                 source = oldPos,
                 target = puck.position,
@@ -755,7 +630,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         // Pinta o tile apenas se o jogo estiver rodando e tiver time
         if (running && gameTeam != null) {
-            val tile = room.roomItems.values.find {
+            val tile = room.itemManager.items.values.find {
                 it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE &&
                         it.position.x == nextX && it.position.y == nextY
             }
@@ -777,7 +652,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
     private fun resetTiles() {
         // Reseta todos os tiles para "1" (estado inicial do jogo)
-        room.roomItems.values
+        room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TILE }
             .forEach {
                 it.extraData = "1"

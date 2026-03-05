@@ -52,7 +52,7 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
         if (data == null || data !is String || wiredContext.triggererUser == null) return false
-        if (onlyOwner && !room.hasRights(wiredContext.triggererUser.habboSession, true)) return false
+        if (onlyOwner && !room.userManager.hasRights(wiredContext.triggererUser.habboSession, true)) return false
 
         return when (triggerType) {
             ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.contains(message, ignoreCase = true)

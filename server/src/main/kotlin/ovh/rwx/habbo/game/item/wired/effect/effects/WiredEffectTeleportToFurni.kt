@@ -27,8 +27,6 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUserEffect
-import ovh.rwx.habbo.util.Vector3
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_TELEPORT_TO)
@@ -38,47 +36,35 @@ class WiredEffectTeleportToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
     }
 
     override fun code() = WiredEffectType.TELEPORT.code
+
     override val requiresItems = true
+    override val requiresUsers = true
 
     override fun onEffect(wiredContext: WiredContext) {
-        if (wiredContext.triggererUser == null) return
+        val targetUsers = wiredContext.getEffectiveUsers(this)
 
-        val roomItem = room.roomGamemap.getHighestItem(wiredContext.triggererUser.currentVector3.vector2)
-        val items = this.roomItem.wiredData?.items ?: return
+        if (targetUsers.isEmpty()) return
 
-        val roomItemId = if (roomItem != null) items.minus(roomItem.id).randomOrNull() else items.randomOrNull()
-        if (roomItemId == null || !room.roomItems.containsKey(roomItemId)) return
+        val targetFurnis = wiredContext.getEffectiveFurnis(this)
+        if (targetFurnis.isEmpty()) return
 
-        roomItem?.onUserWalksOff(wiredContext.triggererUser, true)
+        targetUsers.forEach { user ->
+            val oldPos = user.currentVector3.copy()
 
-        val roomItem1 = room.roomItems[roomItemId] ?: return
+            val currentHighestItem = room.roomGamemap.getHighestItem(oldPos.vector2)
 
-        val affectedTiles = roomItem1.affectedTiles
+            // Tenta não teleportar para o mesmo item que o usuário já está, a menos que seja a única opção
+            var selectedItem = targetFurnis.filter { it.id != currentHighestItem?.id }.randomOrNull()
+            if (selectedItem == null) selectedItem = targetFurnis.randomOrNull()
+            if (selectedItem == null) return@forEach // Pula este usuário se der erro
 
-        affectedTiles.forEach { _ ->
-            val tile = affectedTiles.random()
+            // Encontra um espaço livre no mobi selecionado
+            val validTile = selectedItem.affectedTiles.shuffled().firstOrNull { tile ->
+                !room.roomGamemap.isBlocked(tile)
+            } ?: return@forEach // Pula o usuário se a cadeira/mobi estiver lotada
 
-            if (!room.roomGamemap.isBlocked(tile)) {
-                val newPosition = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
-
-                wiredContext.triggererUser.stopWalking()
-
-                room.roomGamemap.updateRoomUserMovement(
-                    wiredContext.triggererUser,
-                    wiredContext.triggererUser.currentVector3.vector2,
-                    newPosition.vector2
-                )
-
-                wiredContext.triggererUser.effect = RoomUserEffect(4, 5)
-                wiredContext.triggererUser.headRotation = roomItem1.rotation
-                wiredContext.triggererUser.bodyRotation = roomItem1.rotation
-                wiredContext.triggererUser.currentVector3 = newPosition
-                wiredContext.triggererUser.addUserStatuses(roomItem1)
-
-                roomItem1.onUserWalksOn(wiredContext.triggererUser, true)
-
-                return@forEach
-            }
+            // Remove o usuário da posição atual
+            user.teleportTo(validTile)
         }
     }
 

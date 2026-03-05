@@ -34,8 +34,8 @@ class RoomUserClickedUserHandler {
 
         val roomUserId = habboRequest.readInt()
 
-        val clickedRoomUser = currentRoom.roomUsers[roomUserId] ?: return
+        val clickedRoomUser = currentRoom.userManager.users[roomUserId] ?: return
 
-        currentRoom.wiredHandler.triggerWired(WiredTriggerClickUser::class, roomUser, clickedRoomUser)
+        currentRoom.itemManager.wiredHandler.triggerWired(WiredTriggerClickUser::class, roomUser, clickedRoomUser)
     }
 }

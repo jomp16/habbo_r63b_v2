@@ -23,10 +23,11 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
-import java.time.Duration
 
 abstract class RoomGame(val room: Room) {
     var running: Boolean = false
+        protected set
+    var configuredTime = 30
         protected set
 
     val teamScores = mutableMapOf<GameTeam, Int>()
@@ -54,10 +55,6 @@ abstract class RoomGame(val room: Room) {
     open fun onUserLeaveRoom(roomUser: RoomUser) {}
 
     open fun addScore(gameTeam: GameTeam, points: Int) {}
-
-    open fun adjustClock(duration: Duration, mode: RoomGameClockAdjustMode) {}
-
-    open fun updateClock() {}
 
     open fun getTeamColor(interactionType: InteractionType): GameTeam? = null
 

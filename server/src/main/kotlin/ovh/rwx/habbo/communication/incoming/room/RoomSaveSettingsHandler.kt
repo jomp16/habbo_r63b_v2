@@ -37,7 +37,7 @@ class RoomSaveSettingsHandler {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
-        if (!room.hasRights(habboSession, true)) return
+        if (!room.userManager.hasRights(habboSession, true)) return
         var roomName = habboRequest.readUTF().trim()
 
         if (roomName.isBlank()) return
@@ -120,7 +120,7 @@ class RoomSaveSettingsHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-        if (!room.hasRights(habboSession, true)) return
+        if (!room.userManager.hasRights(habboSession, true)) return
 
         var roomName = habboRequest.readUTF().trim()
         if (roomName.isBlank()) return

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -50,7 +50,7 @@ class WiredConditionUserCount(room: Room, roomItem: RoomItem) : WiredCondition(r
     }
 
     override fun onCondition(wiredContext: WiredContext): Boolean {
-        val userCount = room.roomUsers.size
+        val userCount = room.userManager.users.size
         val inRange = userCount in minUsers..maxUsers
         return if (isNegative) !inRange else inRange
     }

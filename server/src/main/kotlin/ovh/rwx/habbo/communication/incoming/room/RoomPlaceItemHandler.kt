@@ -40,7 +40,7 @@ class RoomPlaceItemHandler {
         // floor = [0][7]3 8 4 2
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
-        if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
+        if (!habboSession.currentRoom?.userManager?.hasRights(habboSession)!!) {
             habboSession.sendSuperNotification(
                 MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message",
                 $$"${room.error.cant_set_not_owner}"
@@ -73,7 +73,7 @@ class RoomPlaceItemHandler {
         // floor = [0][7]3 8 4 2
         // wall  = [0][19]2 :w=2,11 l=11,36 l
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
-        if (!habboSession.currentRoom?.hasRights(habboSession)!!) {
+        if (!habboSession.currentRoom?.userManager?.hasRights(habboSession)!!) {
             habboSession.sendNotification($$"${room.error.cant_set_not_owner}")
 
             return
@@ -100,7 +100,7 @@ class RoomPlaceItemHandler {
     private fun finishStuff(itemId: Int, postIt: Boolean, rawDataSplit: List<String>, habboSession: HabboSession) {
         if (postIt) {
             // Check if room has more or equals than 50 post it
-            if (habboSession.currentRoom!!.wallItems.values.count { it.furnishing.interactionType == InteractionType.POST_IT } >= 50) {
+            if (habboSession.currentRoom!!.itemManager.wallItems.values.count { it.furnishing.interactionType == InteractionType.POST_IT } >= 50) {
                 habboSession.sendNotification($$"${room.error.max_stickies}")
 
                 return
@@ -126,7 +126,8 @@ class RoomPlaceItemHandler {
                 userItem
             )
 
-            success = habboSession.currentRoom!!.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
+            success =
+                habboSession.currentRoom!!.itemManager.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
         } else {
             // parse floor data
             if (rawDataSplit.size < 4) return
@@ -138,7 +139,8 @@ class RoomPlaceItemHandler {
                 userItem
             )
 
-            success = habboSession.currentRoom!!.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
+            success =
+                habboSession.currentRoom!!.itemManager.setFloorItem(roomItem, Vector2(x, y), rot, habboSession.roomUser)
         }
 
         if (success) {
@@ -166,7 +168,7 @@ class RoomPlaceItemHandler {
 
             // ACH_RoomDecoFurniCount: quantidade total de mobis no quarto
             habboSession.currentRoom?.let { room ->
-                val totalFurni = room.roomItems.size
+                val totalFurni = room.itemManager.items.size
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
                     "ACH_RoomDecoFurniCount",
@@ -175,7 +177,7 @@ class RoomPlaceItemHandler {
                 )
 
                 // ACH_RoomDecoFurniTypeCount: quantidade de tipos diferentes de mobis
-                val uniqueFurniTypes = room.roomItems.values.map { it.furnishing.itemName }.toSet().size
+                val uniqueFurniTypes = room.itemManager.items.values.map { it.furnishing.itemName }.toSet().size
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
                     "ACH_RoomDecoFurniTypeCount",

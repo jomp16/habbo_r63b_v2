@@ -41,48 +41,55 @@ class WiredEffectFurniToFurni(room: Room, roomItem: RoomItem) : WiredEffect(room
     override val requiresItems = true
 
     override fun onEffect(wiredContext: WiredContext) {
-        val item = wiredContext.sourceItem ?: return
-        val targets = wiredContext.getEffectiveFurnis(this)
+        // todo: fix this wired to use secondary furni source from advanced tab, when fixing wired item
+        val items = wiredContext.getEffectiveFurnis(this)
+        val targets = listOf(room.itemManager.floorItems[1377]!!)
 
+        println("target=${this.roomItem.wiredData?.furniSources}")
+        println("items=$items")
+        println("targets=$targets")
+        if (items.isEmpty()) return
         if (targets.isEmpty()) return
 
         val target = targets.random()
         val targetPos = target.position.vector2
 
-        val width = item.furnishing.width
-        val length = item.furnishing.length
+        items.forEach { item ->
+            val width = item.furnishing.width
+            val length = item.furnishing.length
 
-        val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
-            targetPos.x,
-            targetPos.y,
-            item.rotation,
-            width,
-            length
-        )
+            val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+                targetPos.x,
+                targetPos.y,
+                item.rotation,
+                width,
+                length
+            )
 
-        val freeTiles = affectedTiles.filter { tile ->
-            !room.roomGamemap.isBlocked(tile, ignoreUsers = true) &&
-                    !room.roomGamemap.cannotStackItem[tile.x][tile.y]
-        }
+            val freeTiles = affectedTiles.filter { tile ->
+                !room.roomGamemap.isBlocked(tile, ignoreUsers = true) &&
+                        !room.roomGamemap.cannotStackItem[tile.x][tile.y]
+            }
 
-        if (freeTiles.isNotEmpty()) {
-            val newPos = freeTiles.random()
-            val oldPos = item.position.copy() // Salva posição original
+            if (freeTiles.isNotEmpty()) {
+                val newPos = freeTiles.random()
+                val oldPos = item.position.copy() // Salva posição original
 
-            if (room.setFloorItem(item, newPos, item.rotation, null)) {
-                // Adiciona ao acumulador do ciclo
-                wiredContext.batchedMovements.add(
-                    WiredFurniMove(
-                        furniId = item.id,
-                        sourceX = oldPos.x,
-                        sourceY = oldPos.y,
-                        sourceZ = oldPos.z,
-                        targetX = item.position.x,
-                        targetY = item.position.y,
-                        targetZ = item.position.z,
-                        rotation = item.rotation
+                if (room.itemManager.setFloorItem(item, newPos, item.rotation, null)) {
+                    // Adiciona ao acumulador do ciclo
+                    wiredContext.batchedMovements.add(
+                        WiredFurniMove(
+                            furniId = item.id,
+                            sourceX = oldPos.x,
+                            sourceY = oldPos.y,
+                            sourceZ = oldPos.z,
+                            targetX = item.position.x,
+                            targetY = item.position.y,
+                            targetZ = item.position.z,
+                            rotation = item.rotation
+                        )
                     )
-                )
+                }
             }
         }
     }

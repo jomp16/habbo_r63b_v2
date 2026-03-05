@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,7 +29,11 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomFloorPlanDoorHandler {
     @Handler(Incoming.FLOOR_PLAN_DOOR)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
+                habboSession,
+                true
+            )
+        ) return
 
         habboSession.currentRoom?.let {
             habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_DOOR, it.roomModel.doorVector3, it.roomModel.doorDir)

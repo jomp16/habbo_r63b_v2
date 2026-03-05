@@ -72,7 +72,7 @@ class WiredEffectSetAltitude(room: Room, roomItem: RoomItem) : WiredEffect(room,
 
             val oldPos = item.position.copy() // Salva posição original
 
-            if (room.setFloorItem(item, oldPos.vector2, item.rotation, null, newAltitude)) {
+            if (room.itemManager.setFloorItem(item, oldPos.vector2, item.rotation, null, newAltitude)) {
                 // Adiciona ao acumulador do ciclo
                 wiredContext.batchedMovements.add(
                     WiredFurniMove(

@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_AT_GIVEN_TIME)
 class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var targetTime = 5
+    private var targetTime = 1 // Padrão: 1 tick de 500ms (0.5s)
     private var hasTriggered = false
 
     override val requiresItems = true
@@ -43,26 +43,31 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
 
     override fun setData() {
         roomItem.wiredData?.let {
-            targetTime = it.options.getOrElse(0) { targetTime }
+            // O cliente envia em intervalos de 0.5s (que equivalem perfeitamente ao nosso Major Tick de 500ms)
+            // Trivia Habbo: Limites entre 0.5s (1) e 600s (1200)
+            targetTime = it.options.getOrElse(0) { 1 }.coerceIn(1, 1200)
         }
     }
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        // todo: fix this wired
+        // O roomTimer é incrementado a cada 500ms pelo seu Major Tick no RoomTask
         val currentTime = room.roomTimer.get()
 
-        if (currentTime >= targetTime && !hasTriggered) {
+        // Se o timer da sala for menor que o alvo, significa que o quarto acabou de ser carregado
+        // ou o "WIRED Effect: Timer Reset" zerou o roomTimer. Nesse caso, rearmamos o gatilho.
+        if (currentTime < targetTime) {
+            hasTriggered = false
+            return false
+        }
+
+        // Se alcançou/passou o tempo e ainda não disparou neste ciclo, nós disparamos.
+        if (!hasTriggered) {
             hasTriggered = true
             return true
         }
 
-        if (currentTime < targetTime) {
-            hasTriggered = false
-        }
-
         return false
     }
-
 
     fun resetTimer() {
         hasTriggered = false
@@ -71,7 +76,7 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
     companion object {
         @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(5), "")
+            return WiredData(0, 0, emptyList(), "", listOf(1), "") // Configuração inicial padrão para 0.5s
         }
     }
 }

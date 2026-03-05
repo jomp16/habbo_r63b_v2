@@ -19,45 +19,33 @@
 
 package ovh.rwx.habbo.game.room
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.database.group.GroupDao
-import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
-import ovh.rwx.habbo.database.subscription.SubscriptionDao
-import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.group.Group
-import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.ItemType
-import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.games.RoomGameManager
 import ovh.rwx.habbo.game.room.games.RoomGameType
+import ovh.rwx.habbo.game.room.managers.RoomItemManager
+import ovh.rwx.habbo.game.room.managers.RoomNetworkDispatcher
+import ovh.rwx.habbo.game.room.managers.RoomUserManager
 import ovh.rwx.habbo.game.room.model.RoomModel
-import ovh.rwx.habbo.game.room.tasks.UserJoinRoomTask
-import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
-import ovh.rwx.habbo.game.room.user.RoomUser
-import ovh.rwx.habbo.game.room.wired.WiredHandler
-import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
-import ovh.rwx.habbo.util.Vector2
-import ovh.rwx.habbo.util.Vector3
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
-    private val log: Logger = LoggerFactory.getLogger(javaClass)
+    // region Managers
+    val networkDispatcher = RoomNetworkDispatcher(this)
+    val userManager = RoomUserManager(this)
+    val itemManager = RoomItemManager(this)
+    // endregion
 
     // region Counters & State
     var roomTask: RoomTask? = null
@@ -72,56 +60,24 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     // region Sub-Managers & Helpers
     lateinit var roomGamemap: RoomGamemap
     val pathfinder: IFinder by lazy { AStarFinder(DiagonalMovement.ALWAYS, EuclideanHeuristic()) }
-    val wiredHandler: WiredHandler by lazy { WiredHandler(this) }
     val gameManager: RoomGameManager by lazy { RoomGameManager(this) }
-    var roomDimmer: RoomDimmer? = null
     // endregion
 
-    // region Collections & Data
-    val roomItems: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(roomData.id)) }
-    val wallItems: Map<Int, RoomItem> get() = roomItems.filterValues { it.furnishing.type == ItemType.WALL }
-    val floorItems: Map<Int, RoomItem> get() = roomItems.filterValues { it.furnishing.type == ItemType.FLOOR }
-    private val roomItemsToSave: MutableSet<RoomItem> by lazy { HashSet() }
-
-    val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(roomData.id)) }
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
-
-    val roomUsers: MutableMap<Int, RoomUser> by lazy { HashMap() }
-    val roomUsersWithRights: Set<RoomUser> get() = roomUsers.values.filter { hasRights(it.habboSession, false) }.toSet()
 
     val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
     val loadedGroups: MutableSet<Group> by lazy { HashSet() }
-    // endregion
-
-    // region Computed Properties
-    val hasBuildersClubItems: Boolean
-        get() = roomItems.values.any { it.buildersClub && it.userId == roomData.ownerId }
-
-    val hiddenBuildersClub: Boolean
-        get() = hasBuildersClubItems && !SubscriptionDao.hasActiveBuildersClub(roomData.ownerId)
     // endregion
 
     // region Initialization
     fun initialize() {
         if (initialized) return
 
+        itemManager.loadItems()
         roomGamemap = RoomGamemap(this)
+        itemManager.triggerItems()
 
-        roomItems.values.forEach { item ->
-            item.furnishing.interactor?.onPlace(this, null, item)
-
-            if (item.furnishing.interactionType.name.startsWith("WIRED_")) {
-                HabboServer.habboGame.itemManager.getWiredInstance(this, item)?.let { wired ->
-                    wiredHandler.addWiredItem(item.position.vector2, wired)
-                }
-            }
-        }
-
-        roomItems.values.firstOrNull { it.furnishing.interactionType == InteractionType.DIMMER }?.let {
-            roomDimmer = ItemDao.getRoomDimmer(it)
-        }
-
-        if (roomItems.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
+        if (itemManager.items.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
             gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
         }
 
@@ -132,396 +88,31 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     // region Network / Broadcast
     fun sendHabboResponse(habboResponse: HabboResponse) {
-        // todo: find a way to cache habbo response
-        roomUsers.values.forEach { it.habboSession?.sendHabboResponse(habboResponse) }
+        networkDispatcher.sendResponse(habboResponse)
     }
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
-        // todo: find a way to cache habbo response
-        roomUsers.values.filter { it.habboSession?.release != "R63A" }
-            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        networkDispatcher.sendResponseModern(outgoing, *args)
     }
 
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
-        // todo: find a way to cache habbo response
-        roomUsers.values.filter { it.habboSession?.release == "R63A" }
-            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        networkDispatcher.sendResponseR63A(outgoing, *args)
     }
     // endregion
 
-    // region Permissions & Groups
-    fun hasRights(
-        habboSession: HabboSession?,
-        ownerRight: Boolean = false,
-        ignorePermissionAnyRoomOwner: Boolean = false
-    ): Boolean {
-        if (habboSession == null) return false
-
-        val userId = habboSession.userInformation.id
-        val isOwner =
-            roomData.ownerId == userId || (!ignorePermissionAnyRoomOwner && habboSession.hasPermission("acc_any_room_owner"))
-
-        if (ownerRight) return isOwner
-        if (isOwner) return true
-
-        group?.let { g ->
-            val isGroupAdmin = g.admins.any { it.userId == userId } || habboSession.hasPermission("acc_any_group_admin")
-            if (g.groupData.onlyAdminCanDecorateRoom) {
-                if (isGroupAdmin) return true
-            } else {
-                if (g.members.any { it.userId == userId } || isGroupAdmin) return true
-            }
-        }
-
-        return rights.any { it.userId == userId }
-    }
-
     fun updateGroupInfo() {
-        group?.let { g ->
-            roomUsers.values.mapNotNull { it.habboSession }.forEach { session ->
-                session.sendHabboResponse(
-                    Outgoing.GROUP_INFO,
-                    session.userInformation.id,
-                    session.userStats.favoriteGroupId == g.groupData.id,
-                    g,
-                    false
-                )
-            }
-        }
+        userManager.updateGroupInfo()
     }
 
     fun updateGroupRights() {
-        val currentGroup = group ?: return
-
-        roomUsers.values.mapNotNull { it.habboSession }
-            .filter { it.userInformation.id != currentGroup.groupData.ownerId }
-            .forEach { session ->
-                val roomUser = roomUsers.values.find { it.habboSession == session } ?: return@forEach
-                val methodName =
-                    HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, session.release)
-
-                val hasPermission = hasRights(session, false)
-                val statusKey = "flatctrl"
-
-                if (hasPermission) {
-                    roomUser.addStatus(statusKey, "1")
-                    dispatchRightsResponse(session, methodName, 1)
-                } else if (roomUser.statusMap.containsKey(statusKey)) {
-                    roomUser.removeStatus(statusKey)
-                    dispatchRightsResponse(session, methodName, 0)
-                }
-            }
-    }
-
-    private fun dispatchRightsResponse(session: HabboSession, methodName: String, level: Int) {
-        when (methodName) {
-            "response" -> session.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, level)
-            "responseWithRoomId" -> session.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, roomData.id, level)
-            else -> log.error("Couldn't send response for right level!")
-        }
+        userManager.updateGroupRights()
     }
     // endregion
-
-    // region User Management
-    fun addUser(habboSession: HabboSession) {
-        if (roomTask == null || roomUsers.values.any { it.habboSession == habboSession }) return
-
-        var virtualId: Int
-
-        do {
-            virtualId = (1..Int.MAX_VALUE).random()
-        } while (roomUsers.containsKey(virtualId))
-
-        log.debug("Assigned virtual ID {} to user {}", virtualId, habboSession.userInformation.username)
-
-        val newUser =
-            RoomUser(habboSession, this, virtualId, roomModel.doorVector3, roomModel.doorDir, roomModel.doorDir)
-        roomTask?.addTask(this, UserJoinRoomTask(newUser))
-    }
-
-    fun removeUser(roomUser: RoomUser?, notifyClient: Boolean, kickNotification: Boolean) {
-        if (roomUser == null) return
-
-        roomUser.habboSession?.let { session ->
-            handleUserDisconnectionMessages(session, notifyClient, kickNotification)
-            if (session.currentRoom == this) {
-                session.roomUser = null
-                session.currentRoom = null
-                session.habboMessenger.notifyFriends()
-            }
-        }
-
-        roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
-        roomUser.nextStepVector?.let { roomGamemap.removeRoomUser(roomUser, it.vector2) }
-
-        roomUsers.remove(roomUser.virtualID)
-
-        // Notifica o game manager que o usuário saiu
-        gameManager.onUserLeaveRoom(roomUser)
-
-        roomTask?.addTask(this, UserPartRoomTask(roomUser))
-    }
-
-    private fun handleUserDisconnectionMessages(
-        session: HabboSession,
-        notifyClient: Boolean,
-        kickNotification: Boolean
-    ) {
-        val isR63A = session.release == "R63A"
-
-        if (kickNotification) {
-            val outMsg = if (isR63A) OutgoingR63A.MISC_GENERIC_ERROR else Outgoing.MISC_GENERIC_ERROR
-            session.sendAnyResponse(outMsg, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
-        }
-
-        if (notifyClient) {
-            val exitMsg = if (isR63A) OutgoingR63A.ROOM_EXIT else Outgoing.ROOM_EXIT
-            session.sendAnyResponse(exitMsg)
-        }
-    }
-    // endregion
-
-    // region Item Management
-    fun setFloorItem(
-        roomItem: RoomItem,
-        position: Vector2,
-        rotation: Int,
-        roomUser: RoomUser?,
-        overrideZ: Double = -1.0
-    ): Boolean {
-        if (position == roomModel.doorVector3.vector2) return false
-        if (roomItem.position.vector2 == position && roomItem.rotation == rotation && overrideZ == -1.0) return false
-
-        val newItem = !roomItems.containsKey(roomItem.id)
-        val newAffectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
-            position.x,
-            position.y,
-            rotation,
-            roomItem.furnishing.width,
-            roomItem.furnishing.length
-        )
-
-        if (!canPlaceItemAt(newAffectedTiles, roomItem)) return false
-
-        val affectedTiles = HashSet<Vector2>()
-        val wiredItem = handleWiredRegistration(roomItem, position, newItem)
-
-        if (!newItem) {
-            affectedTiles += processOldItemTiles(roomItem, newAffectedTiles, roomUser)
-        }
-
-        roomItem.position = Vector3(
-            position.x,
-            position.y,
-            if (overrideZ != -1.0) overrideZ else roomGamemap.getAbsoluteHeight(position.x, position.y)
-        )
-        roomItem.rotation = rotation
-        roomGamemap.addRoomItem(roomItem)
-
-        affectedTiles += processNewItemTiles(roomItem)
-
-        if (wiredItem != null) wiredHandler.addWiredItem(position, wiredItem)
-        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
-
-        saveItemState(roomItem, newItem)
-        broadcastItemUpdate(affectedTiles)
-
-        return true
-    }
-
-    private fun canPlaceItemAt(newAffectedTiles: List<Vector2>, roomItem: RoomItem): Boolean {
-        return newAffectedTiles.none { tile ->
-            roomGamemap.isBlocked(tile, true) && roomGamemap.cannotStackItem[tile.x][tile.y] &&
-                    (roomGamemap.roomItemMap[tile] ?: emptyList()).none { it.id == roomItem.id }
-        }
-    }
-
-    private fun handleWiredRegistration(roomItem: RoomItem, position: Vector2, isNewItem: Boolean): WiredItem? {
-        if (!roomItem.furnishing.interactionType.name.startsWith("WIRED_")) return null
-
-        if (!isNewItem) {
-            wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
-        }
-        return HabboServer.habboGame.itemManager.getWiredInstance(this, roomItem)
-    }
-
-    private fun processOldItemTiles(
-        roomItem: RoomItem,
-        newAffectedTiles: List<Vector2>,
-        roomUser: RoomUser?
-    ): List<Vector2> {
-        val oldTiles = roomItem.affectedTiles
-        roomGamemap.removeRoomItem(roomItem)
-
-        oldTiles.forEach { vector2 ->
-            roomGamemap.getUsersFromVector2(vector2).forEach { user ->
-                val isStillOnItem = newAffectedTiles.contains(user.currentVector3.vector2)
-                roomItem.onUserWalksOff(user, true)
-
-                if (!isStillOnItem) user.removeUserStatuses()
-
-                user.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                user.updateNeeded = true
-            }
-        }
-        roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
-        return oldTiles
-    }
-
-    private fun processNewItemTiles(roomItem: RoomItem): List<Vector2> {
-        roomItem.affectedTiles.forEach { vector2 ->
-            roomGamemap.getUsersFromVector2(vector2).forEach { user ->
-                roomItem.onUserWalksOn(user, true)
-                user.addUserStatuses(roomItem)
-                user.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                user.updateNeeded = true
-            }
-        }
-        return roomItem.affectedTiles
-    }
-
-    private fun saveItemState(roomItem: RoomItem, isNew: Boolean) {
-        if (isNew) {
-            roomItems[roomItem.id] = roomItem
-            roomItem.addToRoom(
-                this, updateDb = true, updateClient = true,
-                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
-            )
-        } else {
-            roomItem.update(updateDb = true, updateClient = true)
-        }
-    }
-
-    private fun broadcastItemUpdate(affectedTiles: Set<Vector2>) {
-        sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
-        val validKeys = roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys
-
-        roomUsersWithRights.filter { it.habboSession?.release != "R63A" }.forEach { user ->
-            user.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, validKeys)
-        }
-    }
-
-    fun setWallItem(roomItem: RoomItem, wallData: List<String>, roomUser: RoomUser?): Boolean {
-        if (wallData.size != 3 || !wallData[0].startsWith(":w=") || !wallData[1].startsWith("l=") || (wallData[2] != "r" && wallData[2] != "l")) return false
-
-        val newItem = !roomItems.containsKey(roomItem.id)
-        val wBit = wallData[0].substring(3)
-        val lBit = wallData[1].substring(2)
-
-        if (!wBit.contains(',') || !lBit.contains(',')) return false
-
-        val (w1, w2) = wBit.split(',').map { it.toInt() }
-        val (l1, l2) = lBit.split(',').map { it.toInt() }
-
-        if (listOf(w1, w2, l1, l2).any { it !in 0..200 }) return false
-
-        roomItem.wallPosition = ":w=$w1,$w2 l=$l1,$l2 ${wallData[2]}"
-
-        roomItem.furnishing.interactor?.onPlace(this, roomUser, roomItem)
-
-        if (newItem) {
-            if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
-                if (roomDimmer != null) return false
-
-                roomDimmer = ItemDao.getRoomDimmer(roomItem)
-                roomItem.extraData = roomDimmer!!.generateExtraData()
-            }
-
-            roomItems[roomItem.id] = roomItem
-
-            roomItem.addToRoom(
-                this, updateDb = true, updateClient = true,
-                userName = UserInformationDao.getUserInformationById(roomItem.userId)?.username ?: "No owner name"
-            )
-        } else {
-            roomItem.update(updateDb = true, updateClient = true)
-        }
-
-        return true
-    }
-
-    fun removeItem(roomUser: RoomUser?, roomItem: RoomItem): Boolean {
-        if (!roomItems.containsValue(roomItem)) return false
-
-        roomItems.remove(roomItem.id)
-        roomGamemap.removeRoomItem(roomItem)
-        roomItemsToSave.remove(roomItem)
-
-        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_") && roomItem.wiredData != null) {
-            ItemDao.saveWireds(listOf(roomItem))
-
-            wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
-        }
-
-        if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
-            roomDimmer?.let { ItemDao.saveDimmer(it) }
-            roomDimmer = null
-        }
-
-        roomItem.furnishing.interactor?.onRemove(this, roomUser, roomItem)
-
-        when (roomItem.furnishing.type) {
-            ItemType.FLOOR -> processFloorItemRemovalBroadcast(roomItem)
-            ItemType.WALL -> {
-                sendHabboResponse(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem)
-                sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_REMOVE, roomItem)
-            }
-
-            else -> {}
-        }
-
-        return true
-    }
-
-    private fun processFloorItemRemovalBroadcast(roomItem: RoomItem) {
-        sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false, 0)
-        sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEM_REMOVE, roomItem)
-
-        val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
-            roomItem.position.x, roomItem.position.y, roomItem.rotation,
-            roomItem.furnishing.width, roomItem.furnishing.length
-        )
-
-        affectedTiles.forEach { vector2 ->
-            roomGamemap.getUsersFromVector2(vector2).forEach { user ->
-                roomItem.onUserWalksOff(user, true)
-                user.removeUserStatuses()
-                user.currentVector3 = Vector3(vector2, roomGamemap.getAbsoluteHeight(vector2))
-                user.updateNeeded = true
-            }
-        }
-
-        sendHabboResponse(Outgoing.ROOM_UPDATE_FURNI_STACK, this, affectedTiles)
-
-        val validKeys = roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys
-        roomUsersWithRights.filter { it.habboSession?.release != "R63A" }.forEach { user ->
-            user.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, validKeys)
-        }
-    }
-    // endregion
-
-    // region Database / Persistence
-    fun addItemToSave(roomItem: RoomItem) {
-        roomItemsToSave.add(roomItem)
-    }
 
     fun saveRoom() {
         RoomDao.updateRoomData(roomData)
         group?.let { GroupDao.updateGroupData(it.groupData) }
-
-        if (roomItemsToSave.isEmpty()) return
-
-        RoomDao.saveItems(roomData.id, roomItemsToSave)
-
-        val wiredsToSave =
-            roomItemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") && it.wiredData != null }
-        if (wiredsToSave.isNotEmpty()) ItemDao.saveWireds(wiredsToSave)
-
-        if (roomDimmer != null && roomItemsToSave.contains(roomDimmer!!.roomItem)) {
-            ItemDao.saveDimmer(roomDimmer!!)
-        }
-
-        roomItemsToSave.clear()
+        itemManager.savePendingItems()
     }
     // endregion
 
@@ -535,7 +126,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(roomData.ownerId)
             writeUTF(roomData.ownerName)
             writeInt(roomData.state.state)
-            writeInt(roomUsers.size)
+            writeInt(userManager.users.size)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
             writeInt(roomData.tradeState)
@@ -568,7 +159,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeUTF(roomData.name)
             writeUTF(roomData.ownerName)
             writeInt(roomData.state.state)
-            writeInt(roomUsers.size)
+            writeInt(userManager.users.size)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
             writeBoolean(roomData.tradeState == 1)

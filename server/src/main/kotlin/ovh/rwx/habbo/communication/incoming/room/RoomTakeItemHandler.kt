@@ -37,11 +37,11 @@ class RoomTakeItemHandler {
         if (habboSession.currentRoom == null) return
 
         habboSession.currentRoom?.let { room ->
-            if (!room.hasRights(habboSession)) return
+            if (!room.userManager.hasRights(habboSession)) return
 
             habboRequest.readInt() // useless
             val itemId = habboRequest.readInt()
-            val roomItem = room.roomItems[itemId] ?: return
+            val roomItem = room.itemManager.items[itemId] ?: return
 
             if (roomItem.furnishing.interactionType == InteractionType.POST_IT) return
 
@@ -50,12 +50,12 @@ class RoomTakeItemHandler {
                 if (room.roomData.ownerId != habboSession.userInformation.id) {
                     return
                 }
-                if (room.removeItem(habboSession.roomUser, roomItem)) {
+                if (room.itemManager.removeItem(habboSession.roomUser, roomItem)) {
                     ItemDao.deleteItems(listOf(roomItem.id))
                     habboSession.habboSubscription.decrementBuildersItemsUsed(room)
                 }
             } else {
-                if (room.removeItem(habboSession.roomUser, roomItem)) {
+                if (room.itemManager.removeItem(habboSession.roomUser, roomItem)) {
                     ItemDao.addRoomItemInventory(mutableListOf(roomItem))
                 }
             }

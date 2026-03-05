@@ -39,11 +39,17 @@ class RoomItemMoveFloorHandler {
         val rotation = habboRequest.readInt()
         val newPosition = Vector2(x, y)
 
-        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
+        if (!habboSession.currentRoom!!.itemManager.items.containsKey(itemId)) return
 
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId]!!
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId]!!
 
-        if (habboSession.currentRoom?.setFloorItem(roomItem, newPosition, rotation, habboSession.roomUser) == false) {
+        if (habboSession.currentRoom?.itemManager?.setFloorItem(
+                roomItem,
+                newPosition,
+                rotation,
+                habboSession.roomUser
+            ) == false
+        ) {
             if (roomItem.position.vector2 != newPosition) {
                 habboSession.sendSuperNotification(
                     MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
@@ -65,11 +71,17 @@ class RoomItemMoveFloorHandler {
         val rotation = habboRequest.readInt()
         val newPosition = Vector2(x, y)
 
-        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
+        if (!habboSession.currentRoom!!.itemManager.items.containsKey(itemId)) return
 
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId]!!
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId]!!
 
-        if (habboSession.currentRoom?.setFloorItem(roomItem, newPosition, rotation, habboSession.roomUser) == false) {
+        if (habboSession.currentRoom?.itemManager?.setFloorItem(
+                roomItem,
+                newPosition,
+                rotation,
+                habboSession.roomUser
+            ) == false
+        ) {
             if (roomItem.position.vector2 != newPosition) {
                 habboSession.sendNotification($$"${room.error.cant_set_item}")
             }

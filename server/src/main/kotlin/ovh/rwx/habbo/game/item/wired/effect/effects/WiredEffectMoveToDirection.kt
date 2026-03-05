@@ -119,7 +119,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
                         itemDirections[item.id] = testDirection
                         val oldPos = item.position.copy()
 
-                        if (room.setFloorItem(item, testNextPosition, item.rotation, null)) {
+                        if (room.itemManager.setFloorItem(item, testNextPosition, item.rotation, null)) {
                             wiredContext.batchedMovements.add(
                                 WiredFurniMove(
                                     furniId = item.id,
@@ -147,7 +147,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
                 // Caminho livre na primeira tentativa! Mover.
                 val oldPos = item.position.copy() // Salva posição original
 
-                if (room.setFloorItem(item, nextPosition, item.rotation, null)) {
+                if (room.itemManager.setFloorItem(item, nextPosition, item.rotation, null)) {
                     // Adiciona ao acumulador do ciclo
                     wiredContext.batchedMovements.add(
                         WiredFurniMove(

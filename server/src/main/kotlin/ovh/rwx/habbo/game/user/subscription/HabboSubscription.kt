@@ -109,7 +109,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_RoomDecoBC", 1, accumulate = true)
         SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed + 1)
 
-        if (buildersClubSubscription.trial && room.roomItems.values.count { it.buildersClub } == 1) {
+        if (buildersClubSubscription.trial && room.itemManager.items.values.count { it.buildersClub } == 1) {
             if (habboSession.release == "R63A") {
                 habboSession.sendNotification($$"${notification.builders_club.room_locked.message}")
             } else {
@@ -126,7 +126,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
                 buildersClubSubscription.itemsUsed - count
             )
 
-            if (room.roomItems.values.count { it.buildersClub } <= 0) {
+            if (room.itemManager.items.values.count { it.buildersClub } <= 0) {
                 if (habboSession.release == "R63A") {
                     habboSession.sendNotification($$"${notification.builders_club.room_unlocked.message}")
                 } else {

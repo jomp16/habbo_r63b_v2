@@ -59,7 +59,7 @@ class RoomSettingsResponse {
             writeInt(room.roomData.muteSettings)
             writeInt(room.roomData.kickSettings)
             writeInt(room.roomData.banSettings)
-            writeBoolean(room.hiddenBuildersClub)
+            writeBoolean(room.itemManager.hiddenBuildersClub)
         }
     }
 

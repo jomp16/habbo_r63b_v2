@@ -61,7 +61,8 @@ class UserChatTask(
 
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
 
-        val triggeredWireds = room.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)
+        val triggeredWireds =
+            room.itemManager.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)
 
         if (triggeredWireds.isNotEmpty()) {
             val shouldHide =
@@ -139,7 +140,7 @@ class UserChatTask(
         if (type == RoomChatType.WHISPER) {
             roomUser.habboSession?.let { sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble) }
         } else {
-            room.roomUsers.values.forEach { targetUser ->
+            room.userManager.users.values.forEach { targetUser ->
                 // Adicionado check para não enviar para quem foi desconectado/kicked no meio do loop
                 if (targetUser.kicked) return@forEach
 

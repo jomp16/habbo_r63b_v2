@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -53,7 +53,7 @@ class NavigatorSearchResponse {
                         s.lowercase(getDefault()).matches("(?i:.*$searchTerm.*)".toRegex())
                     }
                 }
-            }.sortedByDescending { it.roomUsers.size }
+            }.sortedByDescending { it.userManager.users.size }
         }
 
         habboResponse.apply {
@@ -124,8 +124,8 @@ class NavigatorSearchResponse {
                     rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
                 "popular" -> {
-                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
-                            .sortedBy { it.roomUsers.size }.take(8).let {
+                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
+                        .sortedBy { it.userManager.users.size }.take(8).let {
                                 writeInt(it.size)
 
                                 it.forEach { room -> habboResponse.serialize(room, false, false) }
@@ -175,9 +175,9 @@ class NavigatorSearchResponse {
             writeBoolean(true)
             writeInt(0)
 
-            HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.roomUsers.isNotEmpty() }
+            HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
                     .filter { it.roomData.category == navigatorRoomCategory.id }
-                    .sortedBy { it.roomUsers.size }.take(8).let {
+                .sortedBy { it.userManager.users.size }.take(8).let {
                         writeInt(it.size)
 
                         it.forEach { room -> habboResponse.serialize(room, false, false) }

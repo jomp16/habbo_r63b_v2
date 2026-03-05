@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -41,7 +41,11 @@ class RoomFloorPlanSaveHandler {
 
     @Handler(Incoming.FLOOR_PLAN_SAVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
+                habboSession,
+                true
+            )
+        ) return
 
         habboSession.currentRoom!!.let { room ->
             val heightmap = habboRequest.readUTF()
@@ -123,7 +127,7 @@ class RoomFloorPlanSaveHandler {
             room.roomData.floorThick = floorThickness
             room.roomData.wallThick = wallThickness
 
-            val roomUsers = room.roomUsers.values.toList()
+            val roomUsers = room.userManager.users.values.toList()
 
             HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
 

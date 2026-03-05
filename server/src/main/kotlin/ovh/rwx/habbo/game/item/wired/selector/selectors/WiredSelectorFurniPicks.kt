@@ -42,12 +42,12 @@ class WiredSelectorFurniPicks(room: Room, roomItem: RoomItem) : WiredSelector(ro
             currentSelection = mySelectedItems,
             isFilter = roomItem.wiredData?.filter ?: false,
             isInverse = roomItem.wiredData?.inverse ?: false,
-            allPossibleTargets = { room.roomItems.values } // Busca todos os mobis do quarto se inverter
+            allPossibleTargets = { room.itemManager.items.values } // Busca todos os mobis do quarto se inverter
         )
     }
 
     private fun getItemsFromConfig(): List<RoomItem> {
-        return roomItem.wiredData?.items?.mapNotNull { room.roomItems[it] } ?: emptyList()
+        return roomItem.wiredData?.items?.mapNotNull { room.itemManager.items[it] } ?: emptyList()
     }
 
     companion object {

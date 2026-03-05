@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,7 +31,15 @@ class RoomItemsHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEMS, habboSession.currentRoom!!, habboSession.currentRoom!!.floorItems.values)
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEMS, habboSession.currentRoom!!, habboSession.currentRoom!!.wallItems.values)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.ROOM_FLOOR_ITEMS,
+            habboSession.currentRoom!!,
+            habboSession.currentRoom!!.itemManager.floorItems.values
+        )
+        habboSession.sendHabboResponse(
+            OutgoingR63A.ROOM_WALL_ITEMS,
+            habboSession.currentRoom!!,
+            habboSession.currentRoom!!.itemManager.wallItems.values
+        )
     }
 }

@@ -77,7 +77,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         private set
     val rooms: List<Room>
         get() = HabboServer.habboGame.roomManager.rooms.values.filter {
-            it.hasRights(
+            it.userManager.hasRights(
                 this,
                 ownerRight = true,
                 ignorePermissionAnyRoomOwner = true
@@ -474,9 +474,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (!bypassAuth && room == currentRoom) return
         val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
-        currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
+        currentRoom?.userManager?.removeUser(roomUser, notifyClient = false, kickNotification = false)
 
-        if (room.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
+        if (room.itemManager.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
             if (release != "R63A") {
                 sendHabboResponse(Outgoing.ROOM_EXIT)
                 sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_VISIT_DENIED_GUEST)
@@ -489,7 +489,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
 
-        if (room.roomUsers.size >= room.roomData.usersMax && !room.hasRights(
+        if (room.userManager.users.size >= room.roomData.usersMax && !room.userManager.hasRights(
                 this,
                 true
             ) && !hasPermission("acc_enter_full_room")
@@ -504,7 +504,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
             return
         }
-        val loading = !bypassAuth && !room.hasRights(this, true)
+        val loading = !bypassAuth && !room.userManager.hasRights(this, true)
 
         if (loading) {
             if (room.roomData.state == RoomState.PASSWORD && !HabboServer.habboGame.passwordEncryptor.checkPassword(
@@ -528,7 +528,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
                 return
             } else if (room.roomData.state == RoomState.LOCKED) {
-                val roomUsersWithRights = room.roomUsersWithRights
+                val roomUsersWithRights = room.userManager.usersWithRights
 
                 if (roomUsersWithRights.isEmpty()) {
                     if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
@@ -578,12 +578,12 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             room.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
         }
 
-        room.addUser(this)
+        room.userManager.addUser(this)
     }
 
     override fun close() {
         if (authenticated) {
-            currentRoom?.removeUser(roomUser, notifyClient = false, kickNotification = false)
+            currentRoom?.userManager?.removeUser(roomUser, notifyClient = false, kickNotification = false)
 
             userStats.lastOnlineDatabase = LocalDateTime.now()
 

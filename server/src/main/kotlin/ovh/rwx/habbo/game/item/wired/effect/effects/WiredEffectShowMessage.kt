@@ -68,7 +68,7 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
                 MessageVisibility.ALL_USERS -> {
                     // Pegamos o triggerer (ou um bot/dono) para falar UMA VEZ para a sala
                     // Não fazemos loop aqui, pois o Task já faz o loop de broadcast!
-                    val speaker = wiredContext.triggererUser ?: room.roomUsers.values.firstOrNull()
+                    val speaker = wiredContext.triggererUser ?: room.userManager.users.values.firstOrNull()
 
                     speaker?.chat(
                         speaker.virtualID,

@@ -109,7 +109,7 @@ enum class SlideType(val value: Int) {
 fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
     if (movements.isEmpty()) return
 
-    this.roomUsers.values.forEach { user ->
+    this.userManager.users.values.forEach { user ->
         val habboSession = user.habboSession ?: return@forEach
 
         val responseMethod = if (habboSession.release == "R63A") "DISABLED" else
@@ -136,8 +136,7 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
                         }
 
                         // O legado não gira mobis no Slide. Se rotacionou, enviamos um Update à força.
-                        // (Requer acesso ao room.roomItems para pegar o objeto real)
-                        val item = this.roomItems[move.furniId]
+                        val item = this.itemManager.items[move.furniId]
                         if (item != null && item.rotation != move.rotation) {
                             item.rotation = move.rotation
                             item.update(updateDb = false, updateClient = true)
@@ -163,7 +162,7 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
                         }
 
                         // O legado precisa do pacote UserUpdate para girar a cabeça/corpo no lugar
-                        val roomUser = this.roomUsers[move.userIndex]
+                        val roomUser = this.userManager.users[move.userIndex]
                         if (roomUser != null && (roomUser.bodyRotation != move.bodyDirection || roomUser.headRotation != move.headDirection)) {
                             roomUser.bodyRotation = move.bodyDirection
                             roomUser.headRotation = move.headDirection

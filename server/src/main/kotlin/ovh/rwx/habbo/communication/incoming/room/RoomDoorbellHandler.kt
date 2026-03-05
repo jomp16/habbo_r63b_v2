@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -72,7 +72,7 @@ class RoomDoorbellHandler {
                 }
             }
 
-            habboSession.currentRoom?.roomUsersWithRights?.forEach {
+            habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
                 it.habboSession?.let { requestHabboSession ->
                     val isR63ARights = requestHabboSession.release == "R63A"
                     val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
@@ -125,7 +125,7 @@ class RoomDoorbellHandler {
                 }
             }
 
-            habboSession.currentRoom?.roomUsersWithRights?.forEach {
+            habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
                 it.habboSession?.let { requestHabboSession ->
                     val isR63ARights = requestHabboSession.release == "R63A"
                     val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(

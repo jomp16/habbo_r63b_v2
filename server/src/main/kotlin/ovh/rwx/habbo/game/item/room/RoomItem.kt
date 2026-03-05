@@ -166,21 +166,21 @@ data class RoomItem(
             }
         }
 
-        if (updateDb) room.addItemToSave(this)
+        if (updateDb) room.itemManager.addItemToSave(this)
     }
 
     fun addToRoom(room: Room, updateDb: Boolean, updateClient: Boolean, userName: String) {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (furnishing.type) {
             ItemType.FLOOR -> {
-                if (updateDb) room.addItemToSave(this)
+                if (updateDb) room.itemManager.addItemToSave(this)
                 if (updateClient) {
                     room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
                     room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this)
                 }
             }
             ItemType.WALL -> {
-                if (updateDb) room.addItemToSave(this)
+                if (updateDb) room.itemManager.addItemToSave(this)
                 if (updateClient) {
                     room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
                     room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this)
@@ -198,14 +198,17 @@ data class RoomItem(
     }
 
     fun onCycle() {
-        if (cycles != 0 || furnishing.interactionType == InteractionType.ROLLER) {
-            if (currentCycles++ >= cycles || furnishing.interactionType == InteractionType.ROLLER) {
+        // Se o item solicitou um tempo de espera (ex: porta fechar após 2 ciclos)
+        if (cycles > 0) {
+            if (++currentCycles >= cycles) {
+
+                // IMPORTANTE: Zeramos os ciclos ANTES de chamar o interactor.
+                // Isso permite que o interactor chame requestCycles() novamente
+                // se quiser criar um looping contínuo.
                 cycles = 0
                 currentCycles = 0
 
                 furnishing.interactor?.onCycle(room, this)
-
-                return
             }
         }
     }
@@ -213,22 +216,22 @@ data class RoomItem(
     fun onUserWalksOn(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomUser, this)
 
-        room.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, this)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, this)
     }
 
     fun onUserWalksOff(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomUser, this)
 
-        room.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, this)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, this)
     }
 
     fun canClose(): Boolean {
         var closeable = true
 
         affectedTiles.forEach {
-            val roomUsers = room.roomGamemap.roomUserMap[it]
+            val roomUsers = room.roomGamemap.getUsersFromVector2(it)
 
-            if (roomUsers != null && closeable) closeable = roomUsers.isEmpty()
+            if (closeable) closeable = roomUsers.isEmpty()
         }
 
         return closeable

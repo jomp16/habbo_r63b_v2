@@ -21,16 +21,10 @@ package ovh.rwx.habbo.game.item.wired.selector
 
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
-import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItem
-import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.room.Room
 
 abstract class WiredSelector(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    // Seletores NUNCA têm a aba "Avançado" (Engrenagem) de selecionar fontes!
-    override val allowedFurniSources: List<WiredFurniSource> = emptyList()
-    override val allowedUserSources: List<WiredUserSource> = emptyList()
-
     abstract fun onSelect(context: WiredContext)
 
     /**

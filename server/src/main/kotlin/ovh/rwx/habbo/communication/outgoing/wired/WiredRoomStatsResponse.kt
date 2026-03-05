@@ -31,9 +31,9 @@ class WiredRoomStatsResponse {
             writeDouble(0.0) // executionCost
             writeDouble(0.0) // executionCostCap
             writeBoolean(false) // isHeavy
-            writeInt(room.floorItems.size) // floorItemCount
+            writeInt(room.itemManager.floorItems.size) // floorItemCount
             writeInt(0) // floorItemCap
-            writeInt(room.wallItems.size) // wallItemCount
+            writeInt(room.itemManager.wallItems.size) // wallItemCount
             writeInt(0) // wallItemCap
             writeInt(0) // permanentFurniVariables
             writeInt(0) // maxPermanentFurniVariables

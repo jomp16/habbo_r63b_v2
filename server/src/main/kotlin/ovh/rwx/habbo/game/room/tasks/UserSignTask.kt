@@ -30,7 +30,7 @@ class UserSignTask(private val roomUser: RoomUser, private val sign: Int) : IRoo
         // 500 millis
         roomUser.addStatus("sign", sign.toString(), 500)
 
-        room.wiredHandler.triggerWired(
+        room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
             roomUser,
             listOf(

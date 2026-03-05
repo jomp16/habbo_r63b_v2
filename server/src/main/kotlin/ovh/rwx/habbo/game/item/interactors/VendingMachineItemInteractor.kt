@@ -48,7 +48,7 @@ class VendingMachineItemInteractor : ItemInteractor() {
 
         roomItem.requestCycles(2)
 
-        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {

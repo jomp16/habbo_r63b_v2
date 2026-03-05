@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIODICALLY)
 class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var delay = 1
+    private var delay = 10 // Padrão: 500ms = 10 ticks
     private var delayState = 0
 
     init {
@@ -41,7 +41,9 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
 
     override fun setData() {
         roomItem.wiredData?.let {
-            delay = it.options.getOrElse(0) { delay }
+            // O client envia em blocos de 0.5s. Multiplicamos por 10 para converter em ticks de 50ms.
+            val rawDelay = it.options.getOrElse(0) { 1 }
+            delay = rawDelay * 10
         }
     }
 
@@ -62,8 +64,6 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
 
     companion object {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(1), "")
-        }
+        fun getDefaultWiredData() = WiredData(0, 0, emptyList(), "", listOf(1), "")
     }
 }

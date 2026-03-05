@@ -43,7 +43,7 @@ class RollerItemInteractor : ItemInteractor() {
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {
             // 1. Moving players (Processamento individual pois geralmente há apenas 1)
-            room.roomGamemap.roomUserMap[roomItem.position.vector2]?.filter { !it.walking }?.forEach {
+            room.roomGamemap.getUsersFromVector2(roomItem.position.vector2).filter { !it.walking }.forEach {
                 val oldPos = it.currentVector3.copy()
 
                 if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
@@ -55,9 +55,9 @@ class RollerItemInteractor : ItemInteractor() {
             }
 
             // 2. Moving items (Agrupamento da pilha)
-            room.roomGamemap.roomItemMap[roomItem.position.vector2]
-                ?.filter { it.id != roomItem.id && it.position.z > roomItem.position.z }
-                ?.let { itemsAtPos ->
+            room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
+                .filter { it.id != roomItem.id && it.position.z > roomItem.position.z }
+                .let { itemsAtPos ->
                     val roomItems = if (itemsAtPos.size > 10) itemsAtPos.take(10) else itemsAtPos
                     val slideItems = mutableListOf<SlideItem>()
 
@@ -65,7 +65,7 @@ class RollerItemInteractor : ItemInteractor() {
                         val zSrc = itemToMove.position.z // Guardamos o Z antes de mover
 
                         // Chamamos o setFloorItem com sendSlide = false para evitar pacotes duplicados
-                        if (room.setFloorItem(itemToMove, frontVector2, itemToMove.rotation, null)) {
+                        if (room.itemManager.setFloorItem(itemToMove, frontVector2, itemToMove.rotation, null)) {
                             // Adicionamos à lista para o pacote único
                             slideItems.add(SlideItem(itemToMove.id, zSrc, itemToMove.position.z))
                             reCycle = false

@@ -29,9 +29,8 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIOD_SHORT)
-// todo: implement this wired correctly on HabboGame, since a room runs on a cycle of 500ms, this wired requires 50ms cycles
 class WiredTriggerPeriodicallyShort(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var delay = 1
+    private var delay = 1 // Padrão: 50ms = 1 tick
     private var delayState = 0
 
     init {
@@ -42,10 +41,9 @@ class WiredTriggerPeriodicallyShort(room: Room, roomItem: RoomItem) : WiredTrigg
 
     override fun setData() {
         roomItem.wiredData?.let {
-            delay = it.options.getOrElse(0) { delay }
-
-            if (delay < 0) delay = 0
-            if (delay > 10) delay = 10
+            // O client envia em blocos de 0.05s (50ms). 1 passo = 1 tick direto.
+            // Travamos entre 1 e 10 para evitar zero-ticks (loop infinito/spam) ou valores absurdos.
+            delay = it.options.getOrElse(0) { 1 }.coerceIn(1, 10)
         }
     }
 
@@ -63,8 +61,6 @@ class WiredTriggerPeriodicallyShort(room: Room, roomItem: RoomItem) : WiredTrigg
 
     companion object {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(1), "")
-        }
+        fun getDefaultWiredData() = WiredData(0, 0, emptyList(), "", listOf(1), "")
     }
 }

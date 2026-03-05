@@ -19,6 +19,9 @@
 
 package ovh.rwx.habbo.game.item
 
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
+import ovh.rwx.habbo.game.item.wired.WiredUserSource
+
 data class WiredData(
     val id: Int,
     var delay: Int, // delay
@@ -30,7 +33,7 @@ data class WiredData(
     var inverse: Boolean = false, // selector inverse field
 
     // --- NOVOS CAMPOS AIR / INPUT SOURCES ---
-    var furniSources: List<Int> = emptyList(), // IDs de origem dos Mobis (ex: [100])
-    var userSources: List<Int> = emptyList(),  // IDs de origem dos Usuários (ex: [0])
+    var furniSources: List<WiredFurniSource> = emptyList(),
+    var userSources: List<WiredUserSource> = emptyList(),
     var stuffIds2: List<Int> = emptyList()     // Lista secundária de itens selecionados
 )

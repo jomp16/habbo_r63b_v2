@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -43,7 +43,7 @@ class WiredEffectResetTimers(room: Room, roomItem: RoomItem) : WiredEffect(room,
         room.roomTimer.set(0)
 
         // Reset all wired triggers with internal timers
-        room.wiredHandler.resetTimers()
+        room.itemManager.wiredHandler.resetTimers()
     }
 
     companion object {

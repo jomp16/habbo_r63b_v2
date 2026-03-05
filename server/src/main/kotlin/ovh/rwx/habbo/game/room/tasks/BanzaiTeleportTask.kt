@@ -45,7 +45,7 @@ class BanzaiTeleportTask(
                 targetItem.update(updateDb = false, updateClient = true)
 
                 // Trigger walks off on source
-                room.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, sourceItem)
+                room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, sourceItem)
 
                 // Re-schedule for next cycle to teleport user
                 room.roomTask?.addTask(room, this)
@@ -63,7 +63,7 @@ class BanzaiTeleportTask(
 
                 // Trigger walks on at target only if not a banzai teleport
                 if (targetItem.furnishing.interactionType != InteractionType.BATTLE_BANZAI_TELEPORT) {
-                    room.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, targetItem)
+                    room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, targetItem)
                 }
 
                 // Reset target effect after 2 cycles

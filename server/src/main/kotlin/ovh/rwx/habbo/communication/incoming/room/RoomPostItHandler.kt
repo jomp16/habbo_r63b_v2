@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -36,7 +36,7 @@ class RoomPostItHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 

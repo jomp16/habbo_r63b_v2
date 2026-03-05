@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,9 +31,13 @@ class WiredSaveHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
-        if (habboSession.currentRoom!!.wiredHandler.saveWired(roomItem, habboRequest)) habboSession.sendHabboResponse(
+        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(
+                roomItem,
+                habboRequest
+            )
+        ) habboSession.sendHabboResponse(
             Outgoing.WIRED_SAVED
         )
     }
@@ -45,9 +49,9 @@ class WiredSaveHandler {
     fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
-        if (habboSession.currentRoom!!.wiredHandler.saveWired(
+        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(
                 roomItem,
                 habboRequest,
                 true

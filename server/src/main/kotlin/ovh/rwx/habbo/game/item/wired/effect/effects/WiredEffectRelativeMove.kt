@@ -62,7 +62,7 @@ class WiredEffectRelativeMove(room: Room, roomItem: RoomItem) : WiredEffect(room
             if (!room.roomGamemap.isBlocked(newPos, ignoreUsers = true)) {
                 val oldPos = item.position.copy() // Salva posição original
 
-                if (room.setFloorItem(item, newPos, item.rotation, null)) {
+                if (room.itemManager.setFloorItem(item, newPos, item.rotation, null)) {
                     // Adiciona ao acumulador do ciclo
                     wiredContext.batchedMovements.add(
                         WiredFurniMove(

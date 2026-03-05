@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -43,6 +43,10 @@ class GateItemInteractor : ItemInteractor() {
             roomItem.update(updateDb = true, updateClient = true)
         }
 
-        if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        if (roomUser != null) room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStateChanged::class,
+            roomUser,
+            roomItem
+        )
     }
 }

@@ -31,7 +31,7 @@ class RoomKickUserHandler {
     @Handler(Incoming.ROOM_KICK_USER)
     @HandlerR63A(IncomingR63A.ROOM_KICK_USER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
             )
@@ -40,10 +40,14 @@ class RoomKickUserHandler {
         val userId = habboRequest.readInt()
 
         val roomUser =
-            habboSession.currentRoom?.roomUsers?.values?.find { it.habboSession?.userInformation?.id == userId }
+            habboSession.currentRoom?.userManager?.users?.values?.find { it.habboSession?.userInformation?.id == userId }
                 ?: return
 
-        if (roomUser.room != habboSession.currentRoom || roomUser.room.hasRights(roomUser.habboSession, true)) return
+        if (roomUser.room != habboSession.currentRoom || roomUser.room.userManager.hasRights(
+                roomUser.habboSession,
+                true
+            )
+        ) return
 
         roomUser.kicked = true
         roomUser.moveTo(roomUser.room.roomModel.doorVector3.vector2, roomUser.room.roomModel.doorDir)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -42,7 +42,11 @@ class RoomTakeRightsHandler {
     }
 
     private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
+                habboSession,
+                true
+            )
+        ) return
 
         val amount = habboRequest.readInt()
         val userInformations = mutableListOf<UserInformation>()
@@ -55,9 +59,10 @@ class RoomTakeRightsHandler {
                     ?: return@repeat
         }
 
-        val rightsData = habboSession.currentRoom!!.rights.filter { rights -> userInformations.any { rights.userId == it.id } }
+        val rightsData =
+            habboSession.currentRoom!!.userManager.rights.filter { rights -> userInformations.any { rights.userId == it.id } }
 
-        habboSession.currentRoom!!.rights.removeAll(rightsData)
+        habboSession.currentRoom!!.userManager.rights.removeAll(rightsData.toSet())
 
         rightsData.forEach {
             val habboSession1 = HabboServer.habboSessionManager.getHabboSessionById(it.userId)

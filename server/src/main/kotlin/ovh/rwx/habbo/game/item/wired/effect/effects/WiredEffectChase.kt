@@ -58,7 +58,7 @@ class WiredEffectChase(room: Room, roomItem: RoomItem) : WiredEffect(room, roomI
         var closestUser: RoomUser? = null
         var minDistance = Int.MAX_VALUE
 
-        room.roomUsers.values.forEach { user ->
+        room.userManager.users.values.forEach { user ->
             val userPos = user.currentVector3.vector2
             if (userPos.x == itemPos.x || userPos.y == itemPos.y) {
                 val distance = abs(userPos.x - itemPos.x) + abs(userPos.y - itemPos.y)
@@ -90,7 +90,7 @@ class WiredEffectChase(room: Room, roomItem: RoomItem) : WiredEffect(room, roomI
         if (!room.roomGamemap.isBlocked(newPos, ignoreUsers = true)) {
             val oldPos = item.position.copy() // Salva posição original
 
-            if (room.setFloorItem(item, newPos, item.rotation, null)) {
+            if (room.itemManager.setFloorItem(item, newPos, item.rotation, null)) {
                 // Adiciona ao acumulador do ciclo
                 wiredContext.batchedMovements.add(
                     WiredFurniMove(

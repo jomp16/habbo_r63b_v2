@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,12 +31,12 @@ class RoomSwitchDimmerHandler {
     @Handler(Incoming.ROOM_DIMMER_SWITCH)
     @HandlerR63A(IncomingR63A.ROOM_DIMMER_SWITCH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
-            ) || habboSession.currentRoom!!.roomDimmer == null
+            ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
         ) return
 
-        habboSession.currentRoom!!.roomDimmer!!.switchState()
+        habboSession.currentRoom!!.itemManager.roomDimmer!!.switchState()
     }
 }

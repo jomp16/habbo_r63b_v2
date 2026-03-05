@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -63,7 +63,7 @@ class NavigatorSearchHandler {
                 }
                 false
             }
-            .sortedBy { it.roomUsers.size }
+            .sortedBy { it.userManager.users.size }
             .take(50)
 
         habboSession.sendHabboResponse(

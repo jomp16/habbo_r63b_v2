@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,16 +31,16 @@ class RoomUpdateDimmerHandler {
     @Handler(Incoming.ROOM_DIMMER_UPDATE)
     @HandlerR63A(IncomingR63A.ROOM_DIMMER_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
-            ) || habboSession.currentRoom!!.roomDimmer == null
+            ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
         ) return
         val preset = habboRequest.readInt()
         val backgroundOnly = habboRequest.readInt() >= 2
         val colorCode = habboRequest.readUTF()
         val intensity = habboRequest.readInt()
 
-        habboSession.currentRoom!!.roomDimmer!!.updatePreset(preset, colorCode, intensity, backgroundOnly)
+        habboSession.currentRoom!!.itemManager.roomDimmer!!.updatePreset(preset, colorCode, intensity, backgroundOnly)
     }
 }
