@@ -74,7 +74,7 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
                 itemSnapshots.clear()
 
                 wiredData.items.forEach { itemId ->
-                    room.roomItems[itemId]?.let { item ->
+                    room.itemManager.items[itemId]?.let { item ->
                         itemSnapshots[itemId] = ItemSnapshot(
                             item.position.x,
                             item.position.y,
@@ -98,7 +98,7 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
 
     override fun onEffect(wiredContext: WiredContext) {
         roomItem.wiredData?.items?.forEach { itemId ->
-            val item = room.roomItems[itemId] ?: return@forEach
+            val item = room.itemManager.items[itemId] ?: return@forEach
             val snapshot = itemSnapshots[itemId] ?: return@forEach
 
             // Check if item needs to be restored
@@ -115,7 +115,7 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
 
                 val oldPos = item.position.copy() // Salva posição original
 
-                if (room.setFloorItem(item, Vector2(newX, newY), newRotation, null, newZ)) {
+                if (room.itemManager.setFloorItem(item, Vector2(newX, newY), newRotation, null, newZ)) {
                     // Adiciona ao acumulador do ciclo
                     wiredContext.batchedMovements.add(
                         WiredFurniMove(

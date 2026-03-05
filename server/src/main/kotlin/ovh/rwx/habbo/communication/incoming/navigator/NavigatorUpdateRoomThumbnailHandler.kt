@@ -32,7 +32,7 @@ class NavigatorUpdateRoomThumbnailHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-        if (!room.hasRights(habboSession, true)) return
+        if (!room.userManager.hasRights(habboSession, true)) return
 
         val backgroundImage = habboRequest.readInt()
         val foregroundImage = habboRequest.readInt()

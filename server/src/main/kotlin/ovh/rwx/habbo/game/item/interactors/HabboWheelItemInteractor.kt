@@ -53,7 +53,11 @@ class HabboWheelItemInteractor : ItemInteractor() {
             roomItem.requestCycles(6)
         }
 
-        if (roomUser != null) room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        if (roomUser != null) room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStateChanged::class,
+            roomUser,
+            roomItem
+        )
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {

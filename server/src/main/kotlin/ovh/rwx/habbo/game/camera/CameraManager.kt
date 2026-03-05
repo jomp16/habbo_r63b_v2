@@ -164,7 +164,8 @@ class CameraManager {
         val room = HabboServer.habboGame.roomManager.rooms[habboCamera.roomId.toInt()]
 
         // 2. Busca o item do Dimmer na parede (ajuste "dimmer" para o itemName do seu banco)
-        val dimmerItem = room?.wallItems?.values?.find { it.furnishing.interactionType == InteractionType.DIMMER }
+        val dimmerItem =
+            room?.itemManager?.wallItems?.values?.find { it.furnishing.interactionType == InteractionType.DIMMER }
 
         // 3. Verifica se o dimmer existe e está ligado
         if (dimmerItem != null && dimmerItem.extraData.isNotEmpty()) {

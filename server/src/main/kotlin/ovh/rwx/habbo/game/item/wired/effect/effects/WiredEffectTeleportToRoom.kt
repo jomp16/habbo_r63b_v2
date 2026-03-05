@@ -82,7 +82,7 @@ class WiredEffectTeleportToRoom(room: Room, roomItem: RoomItem) : WiredEffect(ro
                 user.bodyRotation = 0
                 user.currentVector3 = position
 
-                targetRoom.roomUsers[user.virtualID] = user
+                targetRoom.userManager.users[user.virtualID] = user
 
                 // todo
                 /*user.habboSession.sendHabboResponse(

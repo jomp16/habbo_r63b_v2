@@ -52,7 +52,6 @@ class RoomUser(
 
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
-    private var oldCurrentVector3: Vector3? = null
 
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
@@ -81,6 +80,10 @@ class RoomUser(
     var rollerId: Int = -1
     var handleVendingId: Int = -1
     internal var path: MutableList<Path> = mutableListOf()
+
+    // Buffer para teletransportes que devem ocorrer no início do próximo ciclo
+    private var pendingTeleport: Vector3? = null
+    private var pendingTeleportRotation: Int = -1
 
     var idle: Boolean = false
         set(newValue) {
@@ -171,14 +174,20 @@ class RoomUser(
     }
 
     private fun triggerWiredAction(action: WiredTriggerUserPerformsAction.WiredUserAction) {
-        room.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, this, action)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, this, action)
     }
 
     fun onCycle() {
         processExpiredStatuses()
+
+        // 1. Processa teleporte agendado no tick anterior (Dá tempo do cliente ver o piso aceso)
+        processPendingTeleport()
+
+        // 2. Efetiva o passo da caminhada normal
         commitPendingMovementStep()
         processTimers()
 
+        // 3. Calcula o próximo passo
         if (walking) {
             processWalking()
         } else if (!idle) {
@@ -196,11 +205,29 @@ class RoomUser(
     }
 
     private fun commitPendingMovementStep() {
-        if (hasPendingStep) {
-            oldCurrentVector3 = currentVector3
-            currentVector3 = nextStepVector!!
-            nextStepVector = null
+        if (!hasPendingStep) return
+
+        val oldPos = currentVector3.copy()
+        val nextPos = nextStepVector!!
+
+        // 1. Oficializa a posição física
+        this.currentVector3 = nextPos
+        this.nextStepVector = null
+        room.roomGamemap.updateRoomUserMovement(this, oldPos.vector2, currentVector3.vector2)
+
+        val oldItem = room.roomGamemap.getHighestItem(oldPos.vector2)
+        val newItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
+
+        // 2. DISPARO DE EVENTOS: Aqui você "pisou" oficialmente no gatilho (12, 6)
+        if (oldItem != newItem) {
+            oldItem?.onUserWalksOff(this, true)
+
+            // Se o newItem for um gatilho Wired, ele chamará teleportTo()
+            // Isso vai agendar o pendingTeleport para o PRÓXIMO ciclo
+            newItem?.onUserWalksOn(this, true)
         }
+
+        this.updateNeeded = true
     }
 
     private fun processTimers() {
@@ -300,32 +327,23 @@ class RoomUser(
     }
 
     private fun handleTileTransition(stepVector2: Vector2) {
-        val currentItem = room.roomGamemap.getHighestItem(currentVector3.vector2)
-        val nextItem = room.roomGamemap.getHighestItem(stepVector2)
-
+        // Apenas preparamos o terreno. O "pisar" oficial ocorre no commit.
         if (rollerId == -1) {
             bodyRotation = Direction.calculate(currentVector3.x, currentVector3.y, stepVector2.x, stepVector2.y)
             headRotation = bodyRotation
         }
 
-        if (currentItem != nextItem) {
-            currentItem?.onUserWalksOff(this, true)
-            nextItem?.onUserWalksOn(this, true)
-        }
-
         if (stepVector2 == room.roomModel.doorVector3.vector2) {
-            room.removeUser(this, notifyClient = true, kickNotification = kicked)
-
+            room.userManager.removeUser(this, notifyClient = true, kickNotification = kicked)
             return
         }
 
-        room.roomGamemap.updateRoomUserMovement(this, currentVector3.vector2, stepVector2)
         val z = room.roomGamemap.getAbsoluteHeight(stepVector2)
 
         // Prepara a posição para ser aplicada no próximo ciclo
         nextStepVector = Vector3(stepVector2, z)
 
-        if (rollerId == -1) {
+        if (rollerId == -1 && walking) {
             removeUserStatuses()
             addStatus("mv", "${stepVector2.x},${stepVector2.y},$z")
 
@@ -461,7 +479,7 @@ class RoomUser(
         }
 
         objectiveItem?.let { item ->
-            item.furnishing.interactor?.onTrigger(room, this, item, room.hasRights(habboSession, false), 0)
+            item.furnishing.interactor?.onTrigger(room, this, item, room.userManager.hasRights(habboSession, false), 0)
             objectiveItem = null
         }
 
@@ -605,5 +623,38 @@ class RoomUser(
         }
 
         updateNeeded = true
+    }
+
+    fun teleportTo(vector2: Vector2, rotation: Int = -1, showSlide: Boolean = false) {
+        this.stopWalking()
+
+        val z = room.roomGamemap.getAbsoluteHeight(vector2.x, vector2.y)
+        this.pendingTeleport = Vector3(vector2, z)
+        this.pendingTeleportRotation = rotation
+        this.effect = RoomUserEffect(4, 5)
+        this.updateNeeded = true
+    }
+
+    private fun processPendingTeleport() {
+        val target = pendingTeleport ?: return
+        pendingTeleport = null
+
+        val oldPos = currentVector3.copy()
+        val oldItem = room.roomGamemap.getHighestItem(oldPos.vector2)
+
+        // Agora o oldItem será o seu gatilho, e a luz apagará!
+        oldItem?.onUserWalksOff(this, true)
+        this.removeUserStatuses()
+
+        room.roomGamemap.updateRoomUserMovement(this, oldPos.vector2, target.vector2)
+        this.currentVector3 = target
+
+        val newItem = room.roomGamemap.getHighestItem(target.vector2)
+        if (newItem != null) {
+            this.addUserStatuses(newItem)
+            newItem.onUserWalksOn(this, true)
+        }
+
+        this.updateNeeded = true
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,8 +35,12 @@ class RoomItemMoveWallHandler {
         val itemId = habboRequest.readInt()
         val wallData = habboRequest.readUTF().split(' ')
 
-        if (!habboSession.currentRoom!!.roomItems.containsKey(itemId)) return
+        if (!habboSession.currentRoom!!.itemManager.items.containsKey(itemId)) return
 
-        habboSession.currentRoom?.setWallItem(habboSession.currentRoom!!.roomItems[itemId]!!, wallData, habboSession.roomUser)
+        habboSession.currentRoom?.itemManager?.setWallItem(
+            habboSession.currentRoom!!.itemManager.items[itemId]!!,
+            wallData,
+            habboSession.roomUser
+        )
     }
 }

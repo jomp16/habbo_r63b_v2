@@ -49,8 +49,8 @@ class RoomTriggerItemHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.currentRoom?.let {
-            val item = it.roomItems[habboRequest.readInt()] ?: return@let
+        habboSession.currentRoom?.let { room ->
+            val item = room.itemManager.items[habboRequest.readInt()] ?: return@let
 
             if (item.furnishing.itemName == "external_image_wallitem_poster_small") return@let
             val interactor = item.furnishing.interactor
@@ -58,10 +58,10 @@ class RoomTriggerItemHandler {
             when {
                 interactor != null -> {
                     interactor.onTrigger(
-                        it,
+                        room,
                         habboSession.roomUser,
                         item,
-                        it.hasRights(habboSession),
+                        room.userManager.hasRights(habboSession),
                         habboRequest.readInt()
                     )
 

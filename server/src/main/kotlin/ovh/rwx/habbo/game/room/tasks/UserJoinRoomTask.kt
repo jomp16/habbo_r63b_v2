@@ -30,7 +30,7 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 
 class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
-        if (room.roomUsers.containsValue(roomUser)) return
+        if (room.userManager.users.containsValue(roomUser)) return
 
         roomUser.habboSession?.let { habboSession ->
             habboSession.roomUser = roomUser
@@ -39,7 +39,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
 
             if (habboSession.teleporting) {
-                room.roomItems[habboSession.targetTeleportId]?.let { teleportItem ->
+                room.itemManager.items[habboSession.targetTeleportId]?.let { teleportItem ->
                     if (!teleportItem.interactingUsers.containsKey(2)) {
                         roomUser.walkingBlocked = true
                         roomUser.currentVector3 = teleportItem.position
@@ -94,7 +94,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 habboSession.sendHabboResponse(
                     Outgoing.ROOM_OWNERSHIP,
                     room.roomData.id,
-                    room.hasRights(habboSession, true)
+                    room.userManager.hasRights(habboSession, true)
                 )
                 habboSession.sendHabboResponse(
                     Outgoing.ROOM_VISUALIZATION_THICKNESS,
@@ -104,13 +104,13 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 )
                 // todo: events
 
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.roomUsers.values)
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.roomUsers.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.userManager.users.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.userManager.users.values)
 
-                habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.floorItems.values)
-                habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.wallItems.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.itemManager.floorItems.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.itemManager.wallItems.values)
 
-                room.roomUsers.values.forEach {
+                room.userManager.users.values.forEach {
                     if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
                     if (it.danceId > 0) habboSession.sendHabboResponse(
                         Outgoing.ROOM_USER_DANCE,
@@ -134,8 +134,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 habboSession.sendHabboResponse(Outgoing.WIRED_ENVIRONMENT, false) // hasClickUserWired
                 habboSession.sendHabboResponse(
                     Outgoing.WIRED_PERMISSIONS,
-                    room.hasRights(habboSession),
-                    room.hasRights(habboSession)
+                    room.userManager.hasRights(habboSession),
+                    room.userManager.hasRights(habboSession)
                 ) // todo: adicionar permissão wired: canModify / canRead
             } else {
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_OPEN)
@@ -167,7 +167,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                     OutgoingR63A.ROOM_OWNERSHIP,
                     room.roomData.roomType == RoomType.PRIVATE,
                     room.roomData.id,
-                    room.hasRights(habboSession, true)
+                    room.userManager.hasRights(habboSession, true)
                 )
                 habboSession.sendHabboResponse(
                     OutgoingR63A.ROOM_VISUALIZATION_THICKNESS,
@@ -177,11 +177,11 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 )
                 // todo: events
 
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.roomUsers.values)
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.roomUsers.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.userManager.users.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.userManager.users.values)
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, true, false)
 
-                room.roomUsers.values.forEach {
+                room.userManager.users.values.forEach {
                     if (it.idle) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, it.virtualID, true)
                     if (it.danceId > 0) habboSession.sendHabboResponse(
                         OutgoingR63A.ROOM_USER_DANCE,
@@ -203,8 +203,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 }
             }
 
-            if (room.hasRights(habboSession)) {
-                if (room.hasRights(habboSession, true)) {
+            if (room.userManager.hasRights(habboSession)) {
+                if (room.userManager.hasRights(habboSession, true)) {
                     roomUser.addStatus("flatctrl", "4")
 
                     if (habboSession.release != "R63A") {
@@ -247,7 +247,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.habboMessenger.notifyFriends()
             // items at end because optimization
 
-            room.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
+            room.itemManager.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
 
             // ACH_RoomEntry: visitar quartos de outras pessoas
             if (room.roomData.ownerId != habboSession.userInformation.id) {
@@ -255,7 +255,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             }
         }
 
-        room.roomUsers[roomUser.virtualID] = roomUser
+        room.userManager.users[roomUser.virtualID] = roomUser
         room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
 
         // todo: add support to bots

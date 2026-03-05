@@ -31,7 +31,7 @@ import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
 class RoomCommandsListener : PluginListener() {
     @Command(["unload", "close"])
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (!room.hasRights(roomUser.habboSession, true)) return
+        if (!room.userManager.hasRights(roomUser.habboSession, true)) return
 
         HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
     }
@@ -43,11 +43,11 @@ class RoomCommandsListener : PluginListener() {
 
     @Command(["pickall"])
     fun pickall(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (room.hasRights(roomUser.habboSession, true)) {
-            val roomItemsRemoved = room.roomItems.values.toList()
+        if (room.userManager.hasRights(roomUser.habboSession, true)) {
+            val roomItemsRemoved = room.itemManager.items.values.toList()
                 .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
                 .filter { it.userId == roomUser.habboSession?.userInformation?.id }
-                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+                .filter { roomItem -> room.itemManager.removeItem(roomUser, roomItem) }
 
             ItemDao.addRoomItemInventory(roomItemsRemoved)
         }
@@ -55,11 +55,11 @@ class RoomCommandsListener : PluginListener() {
 
     @Command(["pickallbc"])
     fun pickallBuildersClub(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (room.hasRights(roomUser.habboSession, true)) {
-            val roomItemsRemoved = room.roomItems.values.toList()
+        if (room.userManager.hasRights(roomUser.habboSession, true)) {
+            val roomItemsRemoved = room.itemManager.items.values.toList()
                 .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
                 .filter { roomItem -> roomItem.buildersClub }
-                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+                .filter { roomItem -> room.itemManager.removeItem(roomUser, roomItem) }
 
             roomUser.habboSession?.habboSubscription?.decrementBuildersItemsUsed(room, roomItemsRemoved.size)
         }
@@ -67,13 +67,13 @@ class RoomCommandsListener : PluginListener() {
 
     @Command(["ejectall"])
     fun ejectall(room: Room, roomUser: RoomUser, args: List<String>) {
-        if (room.hasRights(roomUser.habboSession, true)) {
+        if (room.userManager.hasRights(roomUser.habboSession, true)) {
             val itemName = args.getOrNull(0)
 
-            val roomItemsRemoved = room.roomItems.values.toList()
+            val roomItemsRemoved = room.itemManager.items.values.toList()
                 .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
                 .filter { roomItem -> if (itemName == null) true else roomItem.furnishing.itemName == itemName }
-                .filter { roomItem -> room.removeItem(roomUser, roomItem) }
+                .filter { roomItem -> room.itemManager.removeItem(roomUser, roomItem) }
 
             ItemDao.addRoomItemInventory(roomItemsRemoved)
         }

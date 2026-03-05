@@ -48,7 +48,7 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         super.onUserWalksOn(room, roomUser, roomItem)
 
         // Find all other banzai teleports in the room
-        val teleports = room.floorItems.values.filter {
+        val teleports = room.itemManager.floorItems.values.filter {
             it.furnishing.interactionType == InteractionType.BATTLE_BANZAI_TELEPORT && it.id != roomItem.id
         }
 

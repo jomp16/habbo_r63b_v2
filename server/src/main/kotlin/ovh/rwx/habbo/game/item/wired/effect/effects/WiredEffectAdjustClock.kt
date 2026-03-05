@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.item.wired.effect.effects
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.interactors.TimerItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
@@ -28,13 +29,13 @@ import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.RoomGameClockAdjustMode
-import ovh.rwx.habbo.game.room.games.RoomGameType
-import java.time.Duration
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_ADJUST_CLOCK)
 class WiredEffectAdjustClock(room: Room, roomItem: RoomItem) : WiredEffect(room, roomItem) {
-    private var duration = Duration.ZERO
+
+    // Convertemos tudo para meios-segundos (0.5s) para simplificar a matemática
+    private var durationHalfSeconds = 0
     private var mode: RoomGameClockAdjustMode = RoomGameClockAdjustMode.INCREASE
 
     init {
@@ -42,7 +43,8 @@ class WiredEffectAdjustClock(room: Room, roomItem: RoomItem) : WiredEffect(room,
     }
 
     override fun code() = WiredEffectType.ADJUST_CLOCK.code
-    override val requiresItems = false
+
+    override val requiresItems = true
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -51,17 +53,23 @@ class WiredEffectAdjustClock(room: Room, roomItem: RoomItem) : WiredEffect(room,
             val fractionalSeconds = it.options.getOrElse(2) { 0 }
             mode = RoomGameClockAdjustMode.fromCode(it.options.getOrElse(3) { 0 })
 
-            duration = Duration
-                .ofMinutes(minutes.toLong())
-                .plusSeconds(seconds.toLong())
-                .plusMillis(if (fractionalSeconds > 0) fractionalSeconds * 500.toLong() else 0)
+            // Converte tempo para base de 0.5s
+            val extraHalfSecond = if (fractionalSeconds > 0) 1 else 0
+            durationHalfSeconds = (minutes * 120) + (seconds * 2) + extraHalfSecond
         }
     }
 
     override fun onEffect(wiredContext: WiredContext) {
-        val game = room.gameManager.getGame(RoomGameType.BATTLE_BANZAI) ?: return
+        val targetItems = wiredContext.getEffectiveFurnis(this)
 
-        game.adjustClock(duration, mode)
+        targetItems.forEach { targetItem ->
+            val interactor = targetItem.furnishing.interactor
+
+            // Se o interactor do mobi for do tipo TimerItemInteractor, usamos a função centralizada
+            if (interactor is TimerItemInteractor) {
+                interactor.adjustClock(targetItem, durationHalfSeconds, mode)
+            }
+        }
     }
 
     companion object {

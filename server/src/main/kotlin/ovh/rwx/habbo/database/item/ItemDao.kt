@@ -23,6 +23,8 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
+import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
@@ -198,8 +200,10 @@ object ItemDao {
                         inverse = it.boolean("is_inverse"),
 
                         // --- NOVOS CAMPOS ---
-                        furniSources = it.string("furni_sources").toIntList(),
-                        userSources = it.string("user_sources").toIntList(),
+                        furniSources = it.string("furni_sources").toIntList()
+                            .mapNotNull { code -> WiredFurniSource.fromCode(code) },
+                        userSources = it.string("user_sources").toIntList()
+                            .mapNotNull { code -> WiredUserSource.fromCode(code) },
                         stuffIds2 = it.string("stuff_ids2").toIntList()
                     )
                 }.firstOrNull()
@@ -322,8 +326,8 @@ object ItemDao {
                         "extradata" to it.extradata,
                         "is_filter" to it.filter,
                         "is_inverse" to it.inverse,
-                        "furni_sources" to it.furniSources.joinToString(","),
-                        "user_sources" to it.userSources.joinToString(","),
+                        "furni_sources" to it.furniSources.map { source -> source.code }.joinToString(","),
+                        "user_sources" to it.userSources.map { source -> source.code }.joinToString(","),
                         "stuff_ids2" to it.stuffIds2.joinToString(","),
                         "id" to it.id
                     )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.game.item
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -28,30 +27,9 @@ abstract class ItemInteractor {
     abstract val interactionType: List<InteractionType>
 
     open fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        roomItem.affectedTiles.forEach { vector2 ->
-            val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
-
-            if (roomUser != null && roomItem1.furnishing.interactionType === InteractionType.PRESSURE_PAD) {
-                roomItem1.onUserWalksOn(roomUser, true)
-
-                return@forEach
-            } else if (roomItem1.furnishing.interactionType === InteractionType.ROLLER) {
-                roomItem1.requestCycles(HabboServer.habboConfig.timerConfig.roller)
-
-                return@forEach
-            }
-        }
     }
 
     open fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        roomItem.affectedTiles.forEach { vector2 ->
-            val roomItem1 = room.roomGamemap.getHighestItem(vector2) ?: return@forEach
-
-            if (roomItem1.furnishing.interactionType == InteractionType.PRESSURE_PAD && roomItem1.extraData == "1") {
-                roomItem1.extraData = "0"
-                roomItem1.update(updateDb = false, updateClient = true)
-            }
-        }
     }
 
     open fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {

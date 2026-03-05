@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,4 +21,8 @@ package ovh.rwx.habbo.game.room
 
 interface IRoomTask {
     fun executeTask(room: Room)
+
+    // Por padrão é false (500ms). Mude para true em tarefas de movimento/rollers.
+    val highFrequency: Boolean
+        get() = false
 }

@@ -39,7 +39,7 @@ class RoomItemOpenGiftHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val giftItemId = habboRequest.readInt()
-        val giftRoomItem = habboSession.currentRoom!!.roomItems[giftItemId]
+        val giftRoomItem = habboSession.currentRoom!!.itemManager.items[giftItemId]
 
         if (giftRoomItem == null || giftRoomItem.userId != habboSession.userInformation.id) return
 
@@ -58,7 +58,7 @@ class RoomItemOpenGiftHandler {
     private fun openBox(habboSession: HabboSession, giftRoomItem: RoomItem) {
         val giftData = ItemDao.getGiftData(giftRoomItem.id) ?: return
         // replace current gift item to the gifted item
-        habboSession.currentRoom!!.removeItem(habboSession.roomUser, giftRoomItem)
+        habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, giftRoomItem)
         val shouldAddToRoom = giftData.furnishing.type == ItemType.FLOOR && giftData.amount == 1
 
         if (shouldAddToRoom) {
@@ -75,7 +75,12 @@ class RoomItemOpenGiftHandler {
                 buildersClub = false
             )
 
-            habboSession.currentRoom!!.setFloorItem(roomItem, giftRoomItem.position.vector2, giftRoomItem.rotation, habboSession.roomUser)
+            habboSession.currentRoom!!.itemManager.setFloorItem(
+                roomItem,
+                giftRoomItem.position.vector2,
+                giftRoomItem.rotation,
+                habboSession.roomUser
+            )
         } else if (giftData.furnishing.interactionType == InteractionType.TELEPORT) {
             // todo: add custom item types here, like teleports, dimmers, etc
             // either gift isn't a floor item, or amount > 1

@@ -32,7 +32,9 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     abstract fun code(): Int
+
     open val requiresItems: Boolean = false
+    open val requiresUsers: Boolean = false
 
     // As subclasses devem sobrescrever isso se quiserem habilitar opções avançadas
     open val allowedFurniSources: List<WiredFurniSource>
@@ -41,7 +43,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 listOf(
                     WiredFurniSource.SELECTED_ITEMS,
                     WiredFurniSource.SELECTOR_ITEMS
-                ) // Tem mobis? Então o padrão é "Mobis Escolhidos"
+                )
             } else {
                 listOf(
                     WiredFurniSource.SELECTED_ITEMS,
@@ -51,13 +53,23 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 )
             }
         } else {
-            emptyList() // Não tem mobis? Esconde as opções de fontes de mobis!
+            emptyList()
         }
 
     open val defaultFurniSource: WiredFurniSource
         get() = if (requiresItems) WiredFurniSource.SELECTED_ITEMS else WiredFurniSource.TRIGGERING_ITEM
 
-    open val allowedUserSources: List<WiredUserSource> = emptyList()
+    open val allowedUserSources: List<WiredUserSource>
+        get() = if (requiresUsers) {
+            listOf(
+                WiredUserSource.TRIGGERING_USER, // Usar o usuário acionador (Padrão)
+                WiredUserSource.SELECTOR_USERS,  // Usar usuários do seletor
+                WiredUserSource.SIGNAL_USERS     // Usar usuários do sinal
+            )
+        } else {
+            emptyList() // Se for false, esconde o menu de opções de usuário no client
+        }
+
     open val defaultUserSource: WiredUserSource = WiredUserSource.TRIGGERING_USER
 
     fun saveWired(habboRequest: HabboRequest, habboAir: Boolean): Boolean {
@@ -77,8 +89,8 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             val roomItemsIds = mutableListOf<Int>()
             repeat(itemsCount) { _ ->
                 val itemId = habboRequest.readInt()
-                if (room.roomItems.containsKey(itemId)) {
-                    val roomItem1 = room.roomItems[itemId] ?: return@repeat
+                if (room.itemManager.items.containsKey(itemId)) {
+                    val roomItem1 = room.itemManager.items[itemId] ?: return@repeat
                     if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) {
                         roomItemsIds += itemId
                     }
@@ -108,17 +120,17 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
                 // param7/param8: furniSourceTypes (Ex: 0 = Selected Furni, 100 = Triggering Furni)
                 val furniSourcesCount = habboRequest.readInt()
-                val furniSources = mutableListOf<Int>()
+                val furniSources = mutableListOf<WiredFurniSource>()
                 repeat(furniSourcesCount) { _ ->
-                    furniSources += habboRequest.readInt()
+                    furniSources += WiredFurniSource.fromCode(habboRequest.readInt()) ?: return@repeat
                 }
                 it.furniSources = furniSources
 
                 // param8/param9: userSourceTypes (Ex: 0 = Triggering User)
                 val userSourcesCount = habboRequest.readInt()
-                val userSources = mutableListOf<Int>()
+                val userSources = mutableListOf<WiredUserSource>()
                 repeat(userSourcesCount) { _ ->
-                    userSources += habboRequest.readInt()
+                    userSources += WiredUserSource.fromCode(habboRequest.readInt()) ?: return@repeat
                 }
                 it.userSources = userSources
 
@@ -137,8 +149,8 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 val roomItemsIds2 = mutableListOf<Int>()
                 repeat(stuffIds2Count) { _ ->
                     val itemId = habboRequest.readInt()
-                    if (room.roomItems.containsKey(itemId)) {
-                        val roomItem2 = room.roomItems[itemId] ?: return@repeat
+                    if (room.itemManager.items.containsKey(itemId)) {
+                        val roomItem2 = room.itemManager.items[itemId] ?: return@repeat
                         if (!roomItem2.furnishing.interactionType.name.startsWith("WIRED")) {
                             roomItemsIds2 += itemId
                         }
@@ -190,11 +202,13 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             if (habboAir) {
                 writeListOfIds(emptyList()) // todo: variable ids
                 // furniSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
-                val fSources = wiredData.furniSources.ifEmpty { listOf(this@WiredItem.defaultFurniSource.code) }
+                val fSources =
+                    wiredData.furniSources.ifEmpty { listOf(this@WiredItem.defaultFurniSource) }.map { it.code }
                 writeListOfIds(fSources)
 
                 // userSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
-                val uSources = wiredData.userSources.ifEmpty { listOf(this@WiredItem.defaultUserSource.code) }
+                val uSources =
+                    wiredData.userSources.ifEmpty { listOf(this@WiredItem.defaultUserSource) }.map { it.code }
                 writeListOfIds(uSources)
             }
 
@@ -339,6 +353,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
             // 1. _SafeStr_6921 (getAllowedFurniSources)
             // O cliente aceita múltiplas listas, mas 99% dos Wireds usam apenas 1 lista principal.
+            // todo: corrigir acima, o wired mover mobi para mobi tem 2 furni source.
             writeInt(if (furniCodes.isNotEmpty()) 1 else 0) // Quantidade de grupos de seleção
             if (furniCodes.isNotEmpty()) {
                 writeInt(furniCodes.size) // Quantidade de opções neste grupo

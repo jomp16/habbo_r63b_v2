@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.room.games
 
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.games.banzai.BattleBanzaiGame
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 class RoomGameManager(val room: Room) {
@@ -57,7 +58,7 @@ class RoomGameManager(val room: Room) {
         games.values.forEach { it.onUserLeaveRoom(roomUser) }
     }
 
-    private fun getGameForItem(roomItem: RoomItem): RoomGame? {
+    fun getGameForItem(roomItem: RoomItem): RoomGame? {
         return when {
             roomItem.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") -> games[RoomGameType.BATTLE_BANZAI]
             roomItem.furnishing.interactionType.name.startsWith("FREEZE") -> games[RoomGameType.FREEZE]

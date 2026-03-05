@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,23 +32,26 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomDimmerInfoHandler {
     @Handler(Incoming.ROOM_DIMMER_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
-            ) || habboSession.currentRoom!!.roomDimmer == null
+            ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
         ) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_DIMMER_INFO, habboSession.currentRoom!!.roomDimmer!!)
+        habboSession.sendHabboResponse(Outgoing.ROOM_DIMMER_INFO, habboSession.currentRoom!!.itemManager.roomDimmer!!)
     }
 
     @HandlerR63A(IncomingR63A.ROOM_DIMMER_INFO)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
-            ) || habboSession.currentRoom!!.roomDimmer == null
+            ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
         ) return
 
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_DIMMER_INFO, habboSession.currentRoom!!.roomDimmer!!)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.ROOM_DIMMER_INFO,
+            habboSession.currentRoom!!.itemManager.roomDimmer!!
+        )
     }
 }

@@ -27,17 +27,18 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import java.time.Duration
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLOCK_COUNTER)
 class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
-    private var duration = Duration.ZERO
+    // O tempo alvo convertido totalmente para a unidade de "meios-segundos" (0.5s)
+    private var targetTimeHalfSeconds = 0
+
+    override val requiresItems = true
 
     init {
         setData()
     }
 
-    // todo
     override fun code() = WiredTriggerType.CLOCK_REACH_TIME.code
 
     override fun setData() {
@@ -46,24 +47,35 @@ class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger(ro
             val minutes = it.options.getOrElse(1) { 0 }
             val fractionalSeconds = it.options.getOrElse(2) { 0 }
 
-            duration = Duration
-                .ofMinutes(minutes.toLong())
-                .plusSeconds(seconds.toLong())
-                .plusMillis(if (fractionalSeconds > 0) fractionalSeconds * 500.toLong() else 0)
+            // Converte tudo para a base de 0.5s.
+            // Se fractionalSeconds for maior que 0, adicionamos 1 (que equivale a 500ms)
+            val extraHalfSecond = if (fractionalSeconds > 0) 1 else 0
+
+            targetTimeHalfSeconds = (minutes * 120) + (seconds * 2) + extraHalfSecond
         }
     }
 
     override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        // todo
-        return false
-        /*val clockTime = data as? Int ?: 0
-        return clockTime >= targetTime*/
+        // Recebemos o Par (ID do Cronômetro, Tempo Atual em 0.5s)
+        val payload = data as? Pair<*, *> ?: return false
+        val tickingClockId = payload.first as? Int ?: return false
+        val currentClockTimeHalfSeconds = payload.second as? Int ?: return false
+
+        // REGRA 1: O cronômetro que apitou foi selecionado neste Wired?
+        val selectedClocks = wiredContext.getEffectiveFurnis(this)
+        if (selectedClocks.find { it.id == tickingClockId } == null) {
+            return false // Ignora, foi um cronômetro de outro jogo na mesma sala
+        }
+
+        // REGRA 2: O tempo é o exato configurado?
+        return currentClockTimeHalfSeconds == targetTimeHalfSeconds
     }
 
     companion object {
         @Suppress("unused")
         fun getDefaultWiredData(): WiredData {
-            return WiredData(0, 0, emptyList(), "", listOf(0), "")
+            // Padrão do client para os 3 ints (segundos, minutos, fração)
+            return WiredData(0, 0, emptyList(), "", listOf(0, 0, 0), "")
         }
     }
 }

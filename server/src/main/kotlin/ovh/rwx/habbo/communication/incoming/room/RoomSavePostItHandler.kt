@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,9 +30,9 @@ import java.util.*
 class RoomSavePostItHandler {
     @Handler(Incoming.ROOM_SAVE_POST_IT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(habboSession)) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
         val color = habboRequest.readUTF().trim().uppercase(Locale.getDefault())

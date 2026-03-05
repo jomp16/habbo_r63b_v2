@@ -30,7 +30,7 @@ class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : 
         roomUser.handItem = 0
         roomUser.danceId = danceId
 
-        room.wiredHandler.triggerWired(
+        room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
             roomUser,
             listOf(WiredTriggerUserPerformsAction.WiredUserAction.DANCE, danceId),

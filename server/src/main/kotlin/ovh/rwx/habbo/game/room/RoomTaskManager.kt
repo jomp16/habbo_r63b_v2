@@ -19,31 +19,63 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.ConcurrentHashMap
 
 class RoomTaskManager {
-    private val scheduledFutureMap: MutableMap<RoomTask, ScheduledFuture<*>> = mutableMapOf()
+    private val taskJobs: MutableMap<RoomTask, Job> = ConcurrentHashMap()
     val rooms: MutableSet<Room> = HashSet()
 
-    fun addRoomToTask(room: Room) {
-        if (rooms.contains(room)) return
+    // O novo "pulso" global do Habbo (50ms = 20 TPS)
+    private val baseTickRateMs = 50L
 
-        rooms += room
-        val tmpTasks = scheduledFutureMap.keys.filter { it.rooms.size < HabboServer.habboConfig.roomTaskConfig.maxRoomPerThread }
+    fun addRoomToTask(room: Room) {
+        if (!rooms.add(room)) return
+
+        val tmpTasks = taskJobs.keys.filter { it.rooms.size < HabboServer.habboConfig.roomTaskConfig.maxRoomPerThread }
         val roomTask = if (tmpTasks.isNotEmpty()) tmpTasks.random() else RoomTask()
 
-        if (!scheduledFutureMap.containsKey(roomTask)) scheduledFutureMap[roomTask] = HabboServer.serverScheduledExecutor.scheduleAtFixedRate(roomTask, 0, HabboServer.habboConfig.roomTaskConfig.delayMilliseconds.toLong(), TimeUnit.MILLISECONDS)
+        // Se a RoomTask é nova e não tem um loop rodando, nós o iniciamos
+        if (!taskJobs.containsKey(roomTask)) {
+            taskJobs[roomTask] = startTaskLoop(roomTask)
+        }
 
         roomTask.addRoom(room)
     }
 
     fun removeRoomFromTask(room: Room) {
-        if (!rooms.contains(room)) return
+        if (!rooms.remove(room)) return
 
-        rooms -= room
+        taskJobs.keys.filter { it.rooms.contains(room) }.forEach { roomTask ->
+            roomTask.removeRoom(room)
 
-        scheduledFutureMap.keys.filter { it.rooms.contains(room) }.forEach { it.removeRoom(room) }
+            // Otimização: Se a task ficar vazia, matamos o loop (Coroutine) para poupar CPU
+            if (roomTask.rooms.isEmpty()) {
+                taskJobs.remove(roomTask)?.cancel()
+            }
+        }
+    }
+
+    private fun startTaskLoop(roomTask: RoomTask): Job {
+        return HabboServer.applicationScope.launch {
+            while (isActive) {
+                val startTime = System.currentTimeMillis()
+
+                // Executa a lógica da sala
+                roomTask.run()
+
+                // Game Loop com Delta Time Constante:
+                // Calcula quanto tempo a execução demorou e subtrai dos 50ms.
+                // Isso evita que o tempo de execução se acumule e atrase o servidor.
+                val executionTime = System.currentTimeMillis() - startTime
+                val sleepTime = (baseTickRateMs - executionTime).coerceAtLeast(1L)
+
+                delay(sleepTime)
+            }
+        }
     }
 }

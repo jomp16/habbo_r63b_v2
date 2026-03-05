@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,16 +35,16 @@ class NavigatorPopularTagsHandler {
 
         HabboServer.habboGame.roomManager.rooms.values
             .filter { room ->
-                !room.roomUsers.isEmpty() && room.roomData.roomType === RoomType.PRIVATE
+                !room.userManager.users.isEmpty() && room.roomData.roomType === RoomType.PRIVATE
             }
-            .sortedBy { room -> room.roomUsers.size }
+            .sortedBy { room -> room.userManager.users.size }
             .take(50)
             .forEach { room ->
                 for (tag in room.roomData.tags) {
                     if (popularTags.containsKey(tag)) {
-                        popularTags[tag] = popularTags[tag]!! + room.roomUsers.size
+                        popularTags[tag] = popularTags[tag]!! + room.userManager.users.size
                     } else {
-                        popularTags[tag] = room.roomUsers.size
+                        popularTags[tag] = room.userManager.users.size
                     }
                 }
             }

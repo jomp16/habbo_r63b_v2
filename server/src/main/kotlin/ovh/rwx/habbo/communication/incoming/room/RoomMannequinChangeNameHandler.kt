@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,10 +29,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomMannequinChangeNameHandler {
     @Handler(Incoming.ROOM_MANNEQUIN_CHANGE_NAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(habboSession)) return
         val itemId = habboRequest.readInt()
         val name = habboRequest.readUTF()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.MANNEQUIN) return
         val split = roomItem.extraData.split(7.toChar()).toTypedArray()

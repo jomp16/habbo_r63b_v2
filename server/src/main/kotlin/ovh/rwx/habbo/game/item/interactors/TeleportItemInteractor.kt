@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -70,7 +70,7 @@ class TeleportItemInteractor : ItemInteractor() {
             roomItem.requestCycles(2)
         }
 
-        room.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
@@ -89,10 +89,10 @@ class TeleportItemInteractor : ItemInteractor() {
                 var targetRoomItem: RoomItem? = null
                 var showUpdate = false
 
-                if (room.roomItems.containsKey(teleportTwoId)) {
+                if (room.itemManager.items.containsKey(teleportTwoId)) {
                     showUpdate = true
 
-                    targetRoomItem = room.roomItems[teleportTwoId] ?: return
+                    targetRoomItem = room.itemManager.items[teleportTwoId] ?: return
                 } else {
                     HabboServer.habboGame.roomManager.rooms[HabboServer.habboGame.itemManager.roomTeleportLinks[teleportTwoId]]?.let {
                         showUpdate = true

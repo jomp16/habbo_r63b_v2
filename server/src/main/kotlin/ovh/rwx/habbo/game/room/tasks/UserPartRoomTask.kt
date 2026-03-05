@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,6 +35,6 @@ class UserPartRoomTask(
         room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomUser.virtualID)
         room.sendHabboResponse(OutgoingR63A.ROOM_USER_REMOVE, roomUser.virtualID)
 
-        room.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomUser, null)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomUser, null)
     }
 }

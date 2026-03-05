@@ -130,7 +130,7 @@ class BuildersClubPlaceRoomItemHandler {
             userItem
         )
 
-        val success = room.setFloorItem(roomItem, Vector2(x, y), direction, habboSession.roomUser)
+        val success = room.itemManager.setFloorItem(roomItem, Vector2(x, y), direction, habboSession.roomUser)
 
         if (!success) {
             ItemDao.deleteItems(listOf(userItem.id))

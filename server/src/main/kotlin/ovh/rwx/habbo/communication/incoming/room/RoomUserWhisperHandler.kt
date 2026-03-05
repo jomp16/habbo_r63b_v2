@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -40,7 +40,8 @@ class RoomUserWhisperHandler {
         if (message.length > 100) message = message.take(100)
 
         if (habboSession.userInformation.username == targetName) return
-        val targetRoomUser = habboSession.currentRoom!!.roomUsers.values.filter { it.habboSession != null }.find { it.habboSession!!.userInformation.username == targetName }
+        val targetRoomUser = habboSession.currentRoom!!.userManager.users.values.filter { it.habboSession != null }
+            .find { it.habboSession!!.userInformation.username == targetName }
                 ?: return
 
         habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)

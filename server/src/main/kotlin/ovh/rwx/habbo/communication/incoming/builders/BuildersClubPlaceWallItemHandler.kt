@@ -119,7 +119,7 @@ class BuildersClubPlaceWallItemHandler {
         roomItem.wallPosition = wallLocation
 
         val correctedWallData = wallLocation.split(' ')
-        val success = room.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
+        val success = room.itemManager.setWallItem(roomItem, correctedWallData, habboSession.roomUser)
 
         if (!success) {
             ItemDao.deleteItems(listOf(userItem.id))

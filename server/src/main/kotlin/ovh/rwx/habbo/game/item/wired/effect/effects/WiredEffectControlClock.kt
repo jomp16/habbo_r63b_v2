@@ -21,16 +21,13 @@ package ovh.rwx.habbo.game.item.wired.effect.effects
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.interactors.TimerItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.games.BattleBanzaiGame
-import ovh.rwx.habbo.game.room.games.RoomGameClockAdjustMode
-import ovh.rwx.habbo.game.room.games.RoomGameType
-import java.time.Duration
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_CONTROL_CLOCK)
@@ -42,7 +39,8 @@ class WiredEffectControlClock(room: Room, roomItem: RoomItem) : WiredEffect(room
     }
 
     override fun code() = WiredEffectType.CONTROL_CLOCK.code
-    override val requiresItems = false
+
+    override val requiresItems = true
 
     override fun setData() {
         roomItem.wiredData?.let {
@@ -51,18 +49,14 @@ class WiredEffectControlClock(room: Room, roomItem: RoomItem) : WiredEffect(room
     }
 
     override fun onEffect(wiredContext: WiredContext) {
-        val game = room.gameManager.getGame(RoomGameType.BATTLE_BANZAI) as? BattleBanzaiGame ?: return
+        val targetItems = wiredContext.getEffectiveFurnis(this)
 
-        when (action) {
-            Action.START -> game.start()
-            Action.STOP -> game.stop()
-            Action.RESET -> game.adjustClock(
-                Duration.ofSeconds(game.configuredTime.toLong()),
-                RoomGameClockAdjustMode.SET
-            )
+        targetItems.forEach { targetItem ->
+            // Checamos se o item selecionado é realmente um cronômetro e possui o Interactor de tempo
+            val interactor = targetItem.furnishing.interactor as? TimerItemInteractor
 
-            Action.PAUSE -> game.pause()
-            Action.RESTART -> game.resume()
+            // Se for um cronômetro válido, aplicamos a ação diretamente nele
+            interactor?.applyWiredAction(room, targetItem, action)
         }
     }
 

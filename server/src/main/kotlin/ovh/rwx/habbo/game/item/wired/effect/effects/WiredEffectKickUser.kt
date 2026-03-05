@@ -42,7 +42,7 @@ class WiredEffectKickUser(room: Room, roomItem: RoomItem) : WiredEffect(room, ro
         val targets = wiredContext.getEffectiveUsers(this)
 
         targets.forEach { user ->
-            room.removeUser(user, notifyClient = true, kickNotification = true)
+            room.userManager.removeUser(user, notifyClient = true, kickNotification = true)
 
             roomItem.wiredData?.message?.let { message ->
                 user.habboSession?.sendNotification(message)

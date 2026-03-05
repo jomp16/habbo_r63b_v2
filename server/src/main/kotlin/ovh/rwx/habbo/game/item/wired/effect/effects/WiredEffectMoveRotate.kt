@@ -57,7 +57,7 @@ class WiredEffectMoveRotate(room: Room, roomItem: RoomItem) : WiredEffect(room, 
 
             val oldPos = item.position.copy() // Salva posição original
 
-            if (room.setFloorItem(item, newVector2, newRotation, null)) {
+            if (room.itemManager.setFloorItem(item, newVector2, newRotation, null)) {
                 // Adiciona ao acumulador do ciclo
                 wiredContext.batchedMovements.add(
                     WiredFurniMove(

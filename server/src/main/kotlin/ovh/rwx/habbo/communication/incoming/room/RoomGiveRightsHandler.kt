@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -41,13 +41,17 @@ class RoomGiveRightsHandler {
     }
 
     private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession, true)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
+                habboSession,
+                true
+            )
+        ) return
 
         val userId = habboRequest.readInt()
 
         // Probably something more?
 
-        if (habboSession.currentRoom!!.rights.singleOrNull { it.userId == userId } != null) return
+        if (habboSession.currentRoom!!.userManager.rights.singleOrNull { it.userId == userId } != null) return
 
         val userInformation = HabboServer.habboSessionManager.getHabboSessionById(userId)?.userInformation
                 ?: UserInformationDao.getUserInformationById(userId)
@@ -56,7 +60,7 @@ class RoomGiveRightsHandler {
         // Create rights
         val rightData = RoomDao.addRight(userInformation.id, habboSession.currentRoom!!.roomData.id)
 
-        habboSession.currentRoom!!.rights.add(rightData)
+        habboSession.currentRoom!!.userManager.rights.add(rightData)
 
         HabboServer.habboSessionManager.getHabboSessionById(userId)?.let { habboSession1 ->
             if (habboSession1.currentRoom == habboSession.currentRoom) {

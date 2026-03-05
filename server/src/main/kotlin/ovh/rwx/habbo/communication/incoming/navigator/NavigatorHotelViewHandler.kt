@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,6 +33,10 @@ class NavigatorHotelViewHandler {
     @HandlerR63A(IncomingR63A.GO_TO_HOTEL_VIEW)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
-        else habboSession.currentRoom?.removeUser(habboSession.roomUser, notifyClient = true, kickNotification = false)
+        else habboSession.currentRoom?.userManager?.removeUser(
+            habboSession.roomUser,
+            notifyClient = true,
+            kickNotification = false
+        )
     }
 }

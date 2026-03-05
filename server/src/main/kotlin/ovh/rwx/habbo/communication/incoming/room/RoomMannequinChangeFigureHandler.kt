@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -30,9 +30,9 @@ import java.util.Locale.getDefault
 class RoomMannequinChangeFigureHandler {
     @Handler(Incoming.ROOM_MANNEQUIN_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.hasRights(habboSession)) return
+        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(habboSession)) return
         val itemId = habboRequest.readInt()
-        val roomItem = habboSession.currentRoom!!.roomItems[itemId] ?: return
+        val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
         if (roomItem.furnishing.interactionType != InteractionType.MANNEQUIN) return
         val split = roomItem.extraData.split(7.toChar()).toTypedArray()
