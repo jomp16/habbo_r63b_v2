@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
@@ -174,7 +175,10 @@ class RoomUser(
     }
 
     private fun triggerWiredAction(action: WiredTriggerUserPerformsAction.WiredUserAction) {
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerUserPerformsAction::class, this, action)
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerUserPerformsAction::class, this,
+            UserActionTriggerData(action)
+        )
     }
 
     fun onCycle() {

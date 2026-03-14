@@ -24,13 +24,14 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.GameTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.GameTeam
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SCORE_ACHIEVED)
-class WiredTriggerScoreAchieved(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerScoreAchieved(room: Room, roomItem: RoomItem) : WiredTrigger<GameTriggerData>(room, roomItem) {
     private var gameTeam = GameTeam.NONE
     private var scoreRequirement = 0
     private var triggered = false
@@ -48,11 +49,9 @@ class WiredTriggerScoreAchieved(room: Room, roomItem: RoomItem) : WiredTrigger(r
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val args = data as? List<*> ?: return false
-
-        val team = args[0] as? GameTeam ?: GameTeam.NONE
-        val score = args[1] as? Int ?: 0
+    override fun onTrigger(wiredContext: WiredContext, data: GameTriggerData): Boolean {
+        val team = data.team
+        val score = data.score
 
         if (triggered) return false
 

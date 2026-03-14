@@ -24,8 +24,28 @@ import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
 
-abstract class WiredTrigger(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    abstract fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean
+/**
+ * Base class para todos os triggers Wired.
+ * Usa generics para garantir type safety nos dados do trigger.
+ */
+abstract class WiredTrigger<in T : WiredTriggerData>(
+    room: Room,
+    roomItem: RoomItem
+) : WiredItem(room, roomItem) {
 
+    /**
+     * Método principal que é chamado quando o trigger é ativado.
+     * Recebe dados tipados em vez de Any?, garantindo type safety.
+     * 
+     * @param wiredContext Contexto do Wired com alvos, usuário acionador, etc.
+     * @param data Dados do trigger, tipados conforme a subclasse
+     * @return true se o trigger foi ativado, false caso contrário
+     */
+    abstract fun onTrigger(wiredContext: WiredContext, data: T): Boolean
+
+    /**
+     * Método opcional para resetar o estado do trigger.
+     * Sobrescrever quando necessário.
+     */
     open fun resetTriggered() {}
 }

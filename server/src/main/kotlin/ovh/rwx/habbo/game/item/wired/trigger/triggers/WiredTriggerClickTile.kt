@@ -24,20 +24,18 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.TileTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_TILE)
-class WiredTriggerClickTile(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerClickTile(room: Room, roomItem: RoomItem) : WiredTrigger<TileTriggerData>(room, roomItem) {
     override fun code() = WiredTriggerType.UNKNOWN_21.code
 
-    override fun setData() {
-        // Não há dados específicos para este trigger
-    }
-
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        return true
+    override fun onTrigger(wiredContext: WiredContext, data: TileTriggerData): Boolean {
+        // O tile foi clicado nas coordenadas específicas
+        return data.x >= 0 && data.y >= 0
     }
 
     companion object {

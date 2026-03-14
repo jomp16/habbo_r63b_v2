@@ -24,12 +24,13 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.TimerTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLOCK_COUNTER)
-class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger<TimerTriggerData>(room, roomItem) {
     // O tempo alvo convertido totalmente para a unidade de "meios-segundos" (0.5s)
     private var targetTimeHalfSeconds = 0
 
@@ -55,11 +56,10 @@ class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger(ro
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: TimerTriggerData): Boolean {
         // Recebemos o Par (ID do Cronômetro, Tempo Atual em 0.5s)
-        val payload = data as? Pair<*, *> ?: return false
-        val tickingClockId = payload.first as? Int ?: return false
-        val currentClockTimeHalfSeconds = payload.second as? Int ?: return false
+        val tickingClockId = data.furniId
+        val currentClockTimeHalfSeconds = data.time
 
         // REGRA 1: O cronômetro que apitou foi selecionado neste Wired?
         val selectedClocks = wiredContext.getEffectiveFurnis(this)

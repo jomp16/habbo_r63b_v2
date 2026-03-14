@@ -26,6 +26,8 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
@@ -156,10 +158,10 @@ class RoomTask : Runnable {
         // Estas chamadas agora são processadas a cada 50ms.
         // É essencial que a lógica interna dessas classes do Wired
         // controle seus próprios delays (se precisarem) baseados neste novo ritmo.
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, null)
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyShort::class, null, null)
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, null)
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, null)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, PeriodicTriggerData)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyShort::class, null, PeriodicTriggerData)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, PeriodicTriggerData)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, EmptyTriggerData)
 
         if (isMajorTick) {
             room.gameManager.tick()

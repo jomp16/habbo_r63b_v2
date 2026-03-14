@@ -27,6 +27,8 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.GameTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameEnds
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerGameStarts
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerScoreAchieved
@@ -72,7 +74,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         resetScores()
 
         // Acionar Wired
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameStarts::class, null, null)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameStarts::class, null, EmptyTriggerData)
     }
 
     override fun pause() {
@@ -176,7 +178,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         room.itemManager.wiredHandler.resetTriggerer(WiredTriggerScoreAchieved::class)
 
         // Acionar Wired
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameEnds::class, null, null)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerGameEnds::class, null, EmptyTriggerData)
     }
 
     override fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {
@@ -512,7 +514,10 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         teamScores[gameTeam] = (teamScores[gameTeam] ?: 0) + points
         updateScoreboards(gameTeam)
 
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerScoreAchieved::class, null, listOf(gameTeam, points))
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerScoreAchieved::class, null,
+            GameTriggerData(gameTeam, points)
+        )
     }
 
     private fun updateScoreboards(gameTeam: GameTeam) {

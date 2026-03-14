@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.item.interactors
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -56,7 +57,7 @@ class DefaultItemInteractor : ItemInteractor() {
         if (roomUser != null) room.itemManager.wiredHandler.triggerWired(
             WiredTriggerStateChanged::class,
             roomUser,
-            roomItem
+            StateTriggerData(roomItem)
         )
     }
 }

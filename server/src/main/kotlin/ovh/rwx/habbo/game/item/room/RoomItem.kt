@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.*
+import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import ovh.rwx.habbo.game.room.Room
@@ -76,10 +77,11 @@ data class RoomItem(
     val totalHeight: Double
         get() = position.z + height
     val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(position.x,
-                position.y,
-                rotation,
-                furnishing.width,
+        get() = HabboServer.habboGame.itemManager.getAffectedTiles(
+            position.x,
+            position.y,
+            rotation,
+            furnishing.width,
             furnishing.length
         )
     private var cycles: Int = 0
@@ -159,6 +161,7 @@ data class RoomItem(
                     room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
                     room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_UPDATE, this)
                 }
+
                 else -> {
                     room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
                     room.sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEM_UPDATE, this)
@@ -179,6 +182,7 @@ data class RoomItem(
                     room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this)
                 }
             }
+
             ItemType.WALL -> {
                 if (updateDb) room.itemManager.addItemToSave(this)
                 if (updateClient) {
@@ -186,6 +190,7 @@ data class RoomItem(
                     room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this)
                 }
             }
+
             else -> {}
         }
     }
@@ -216,13 +221,21 @@ data class RoomItem(
     fun onUserWalksOn(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomUser, this)
 
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, this)
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerWalksOnFurni::class,
+            roomUser,
+            FurniTriggerData(this)
+        )
     }
 
     fun onUserWalksOff(roomUser: RoomUser, handleInteractor: Boolean) {
         if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomUser, this)
 
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, this)
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerWalksOffFurni::class,
+            roomUser,
+            FurniTriggerData(this)
+        )
     }
 
     fun canClose(): Boolean {

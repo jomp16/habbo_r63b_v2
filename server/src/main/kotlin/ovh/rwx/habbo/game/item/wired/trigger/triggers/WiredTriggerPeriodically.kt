@@ -24,12 +24,13 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_PERIODICALLY)
-class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger<PeriodicTriggerData>(room, roomItem) {
     private var delay = 10 // Padrão: 500ms = 10 ticks
     private var delayState = 0
 
@@ -47,7 +48,7 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: PeriodicTriggerData): Boolean {
         if (++delayState >= delay) {
             delayState = 0
 
@@ -57,8 +58,7 @@ class WiredTriggerPeriodically(room: Room, roomItem: RoomItem) : WiredTrigger(ro
         return false
     }
 
-
-    fun resetTimer() {
+    override fun resetTriggered() {
         delayState = 0
     }
 

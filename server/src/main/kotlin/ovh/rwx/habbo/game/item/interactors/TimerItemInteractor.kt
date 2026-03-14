@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.effect.effects.WiredEffectControlClock
+import ovh.rwx.habbo.game.item.wired.trigger.TimerTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerClockCounter
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.RoomGameClockAdjustMode
@@ -129,7 +130,7 @@ class TimerItemInteractor : ItemInteractor() {
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerClockCounter::class,
             null,
-            Pair(roomItem.id, state.timeHalfSeconds)
+            TimerTriggerData(roomItem.id, state.timeHalfSeconds)
         )
 
         // 2. Atualiza o visual a cada 1 segundo real (a cada 2 chamadas de 500ms)
