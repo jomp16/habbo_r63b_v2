@@ -24,23 +24,19 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.UserTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_USER)
-class WiredTriggerClickUser(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerClickUser(room: Room, roomItem: RoomItem) : WiredTrigger<UserTriggerData>(room, roomItem) {
     override fun code() = WiredTriggerType.USER_CLICKS_USER.code
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val triggered = data != null && data is RoomUser
+    override fun onTrigger(wiredContext: WiredContext, data: UserTriggerData): Boolean {
+        wiredContext.targetUsers += data.roomUser
 
-        if (triggered) {
-            wiredContext.targetUsers += data
-        }
-
-        return triggered
+        return true
     }
 
     companion object {

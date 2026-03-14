@@ -24,12 +24,13 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
-class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger<StateTriggerData>(room, roomItem) {
     init {
         setData()
     }
@@ -37,8 +38,8 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger(ro
     override fun code() = WiredTriggerType.STATE_CHANGE.code
     override val requiresItems = true
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        val changedItem = data as? RoomItem ?: return false
+    override fun onTrigger(wiredContext: WiredContext, data: StateTriggerData): Boolean {
+        val changedItem = data.roomItem
 
         val items = wiredContext.getEffectiveFurnis(this)
 

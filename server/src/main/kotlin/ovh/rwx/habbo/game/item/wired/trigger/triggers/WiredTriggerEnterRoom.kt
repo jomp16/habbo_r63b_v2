@@ -20,15 +20,17 @@
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_ENTER_ROOM)
-class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger<RoomEventTriggerData>(room, roomItem) {
     private var username = ""
 
     init {
@@ -38,12 +40,10 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
     override fun code() = WiredTriggerType.AVATAR_ENTERS_ROOM.code
 
     override fun setData() {
-        roomItem.wiredData?.let {
-            username = it.message
-        }
+        username = roomItem.wiredData?.message ?: ""
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: RoomEventTriggerData): Boolean {
         if (roomItem.wiredData == null) return false
 
         val user = wiredContext.triggererUser // Já vem preenchido pelo WiredHandler!
@@ -54,5 +54,12 @@ class WiredTriggerEnterRoom(room: Room, roomItem: RoomItem) : WiredTrigger(room,
         // Qualquer Efeito com Fonte 0 (Usuário Acionador) já vai conseguir puxar ele!
 
         return triggered
+    }
+
+    companion object {
+        @Suppress("unused")
+        fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
+        }
     }
 }

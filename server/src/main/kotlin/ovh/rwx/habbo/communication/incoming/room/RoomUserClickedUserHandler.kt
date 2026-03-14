@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.item.wired.trigger.UserTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerClickUser
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -36,6 +37,10 @@ class RoomUserClickedUserHandler {
 
         val clickedRoomUser = currentRoom.userManager.users[roomUserId] ?: return
 
-        currentRoom.itemManager.wiredHandler.triggerWired(WiredTriggerClickUser::class, roomUser, clickedRoomUser)
+        currentRoom.itemManager.wiredHandler.triggerWired(
+            WiredTriggerClickUser::class,
+            roomUser,
+            UserTriggerData(clickedRoomUser)
+        )
     }
 }

@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import ovh.rwx.habbo.game.room.IRoomTask
@@ -45,7 +46,10 @@ class BanzaiTeleportTask(
                 targetItem.update(updateDb = false, updateClient = true)
 
                 // Trigger walks off on source
-                room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOffFurni::class, roomUser, sourceItem)
+                room.itemManager.wiredHandler.triggerWired(
+                    WiredTriggerWalksOffFurni::class, roomUser,
+                    FurniTriggerData(sourceItem)
+                )
 
                 // Re-schedule for next cycle to teleport user
                 room.roomTask?.addTask(room, this)
@@ -63,7 +67,10 @@ class BanzaiTeleportTask(
 
                 // Trigger walks on at target only if not a banzai teleport
                 if (targetItem.furnishing.interactionType != InteractionType.BATTLE_BANZAI_TELEPORT) {
-                    room.itemManager.wiredHandler.triggerWired(WiredTriggerWalksOnFurni::class, roomUser, targetItem)
+                    room.itemManager.wiredHandler.triggerWired(
+                        WiredTriggerWalksOnFurni::class, roomUser,
+                        FurniTriggerData(sourceItem)
+                    )
                 }
 
                 // Reset target effect after 2 cycles

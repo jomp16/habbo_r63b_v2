@@ -24,15 +24,21 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.UserAction
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_USER_PERFORMS_ACTION)
-class WiredTriggerUserPerformsAction(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerUserPerformsAction(room: Room, roomItem: RoomItem) :
+    WiredTrigger<UserActionTriggerData>(room, roomItem) {
     private var userAction: WiredUserAction = WiredUserAction.WAVE
     private var filter: String = ""
+
+    init {
+        setData()
+    }
 
     override fun code() = WiredTriggerType.USER_PERFORMS_ACTION.code
 
@@ -43,42 +49,32 @@ class WiredTriggerUserPerformsAction(room: Room, roomItem: RoomItem) : WiredTrig
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        if (data is WiredUserAction) {
-            return data == userAction
-        } else if (data is List<*>) {
-            val action = data.first() as WiredUserAction
+    override fun onTrigger(wiredContext: WiredContext, data: UserActionTriggerData): Boolean {
+        val action = data.action
 
-            if (action != userAction) {
-                return false
-            }
-
-            return when (action) {
-                WiredUserAction.SIGN -> {
-                    val sign = data[1] as Int
-
-                    if (filter.isEmpty()) {
-                        true
-                    } else {
-                        sign == (filter.toIntOrNull() ?: 0)
-                    }
-                }
-
-                WiredUserAction.DANCE -> {
-                    val dance = data[1] as Int
-
-                    if (filter.isEmpty()) {
-                        true
-                    } else {
-                        dance == (filter.toIntOrNull() ?: 0)
-                    }
-                }
-
-                else -> false
-            }
+        if (action != userAction) {
+            return false
         }
 
-        return false
+        return when (action) {
+            WiredUserAction.SIGN -> {
+                if (filter.isEmpty()) {
+                    true
+                } else {
+                    data.signId == (filter.toIntOrNull() ?: 0)
+                }
+            }
+
+            WiredUserAction.DANCE -> {
+                if (filter.isEmpty()) {
+                    true
+                } else {
+                    data.danceId == (filter.toIntOrNull() ?: 0)
+                }
+            }
+
+            else -> false
+        }
     }
 
     companion object {

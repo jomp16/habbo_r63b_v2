@@ -31,7 +31,7 @@ data class WiredContext(
     // Quem ou o que disparou a pilha
     val triggererUser: RoomUser?,
     var sourceItem: RoomItem? = null,
-    val trigger: WiredTrigger,
+    val trigger: WiredTrigger<*>,
 
     // Variáveis
     val variables: MutableMap<String, Any> = mutableMapOf(),

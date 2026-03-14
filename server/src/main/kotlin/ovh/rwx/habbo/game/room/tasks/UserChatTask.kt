@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room.tasks
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.wired.trigger.SayTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
@@ -62,7 +63,10 @@ class UserChatTask(
         room.wordFilter.forEach { filterMessage = filterMessage.replace(it, "bobba") }
 
         val triggeredWireds =
-            room.itemManager.wiredHandler.triggerWired(WiredTriggerSaysSomething::class, roomUser, filterMessage)
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerSaysSomething::class, roomUser,
+                SayTriggerData(filterMessage)
+            )
 
         if (triggeredWireds.isNotEmpty()) {
             val shouldHide =

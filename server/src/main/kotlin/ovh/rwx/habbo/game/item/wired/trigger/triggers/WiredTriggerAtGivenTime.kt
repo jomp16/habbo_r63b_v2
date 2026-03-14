@@ -24,12 +24,13 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_AT_GIVEN_TIME)
-class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger<EmptyTriggerData>(room, roomItem) {
     private var targetTime = 1 // Padrão: 1 tick de 500ms (0.5s)
     private var hasTriggered = false
 
@@ -49,7 +50,7 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
+    override fun onTrigger(wiredContext: WiredContext, data: EmptyTriggerData): Boolean {
         // O roomTimer é incrementado a cada 500ms pelo seu Major Tick no RoomTask
         val currentTime = room.roomTimer.get()
 
@@ -69,7 +70,7 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger(roo
         return false
     }
 
-    fun resetTimer() {
+    override fun resetTriggered() {
         hasTriggered = false
     }
 

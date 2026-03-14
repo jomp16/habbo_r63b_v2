@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room.tasks
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
@@ -247,7 +248,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             habboSession.habboMessenger.notifyFriends()
             // items at end because optimization
 
-            room.itemManager.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, null)
+            room.itemManager.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, RoomEventTriggerData)
 
             // ACH_RoomEntry: visitar quartos de outras pessoas
             if (room.roomData.ownerId != habboSession.userInformation.id) {

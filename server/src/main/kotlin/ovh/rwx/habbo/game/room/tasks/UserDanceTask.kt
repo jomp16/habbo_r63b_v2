@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.tasks
 
+import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
@@ -33,7 +34,7 @@ class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
             roomUser,
-            listOf(WiredTriggerUserPerformsAction.WiredUserAction.DANCE, danceId),
+            UserActionTriggerData(WiredTriggerUserPerformsAction.WiredUserAction.DANCE, danceId = danceId),
         )
     }
 }

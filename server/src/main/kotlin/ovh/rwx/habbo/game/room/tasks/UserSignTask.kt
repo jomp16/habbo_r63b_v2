@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.tasks
 
+import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
@@ -33,9 +34,9 @@ class UserSignTask(private val roomUser: RoomUser, private val sign: Int) : IRoo
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
             roomUser,
-            listOf(
+            UserActionTriggerData(
                 WiredTriggerUserPerformsAction.WiredUserAction.SIGN,
-                sign
+                signId = sign
             )
         )
     }

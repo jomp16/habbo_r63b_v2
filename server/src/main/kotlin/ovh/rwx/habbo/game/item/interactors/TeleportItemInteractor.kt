@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -70,7 +71,10 @@ class TeleportItemInteractor : ItemInteractor() {
             roomItem.requestCycles(2)
         }
 
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerStateChanged::class, roomUser, roomItem)
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStateChanged::class, roomUser,
+            StateTriggerData(roomItem)
+        )
     }
 
     override fun onCycle(room: Room, roomItem: RoomItem) {
@@ -81,7 +85,10 @@ class TeleportItemInteractor : ItemInteractor() {
 
         if (outgoingUser?.habboSession != null) {
             if (roomItem.extraData == "2") {
-                if (outgoingUser.habboSession.teleporting) outgoingUser.habboSession.enterRoom(outgoingUser.habboSession.teleportRoom!!, bypassAuth = true)
+                if (outgoingUser.habboSession.teleporting) outgoingUser.habboSession.enterRoom(
+                    outgoingUser.habboSession.teleportRoom!!,
+                    bypassAuth = true
+                )
 
                 roomItem.interactingUsers.remove(1)
             } else {
@@ -108,13 +115,21 @@ class TeleportItemInteractor : ItemInteractor() {
 
                         roomItem.interactingUsers.remove(1)
                     }
+
                     showUpdate -> {
                         extraData = "2"
 
                         if (targetRoomItem != null) {
-                            val newVector3 = Vector3(targetRoomItem.position.vector2, room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2))
+                            val newVector3 = Vector3(
+                                targetRoomItem.position.vector2,
+                                room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2)
+                            )
 
-                            room.roomGamemap.updateRoomUserMovement(outgoingUser, outgoingUser.currentVector3.vector2, newVector3.vector2)
+                            room.roomGamemap.updateRoomUserMovement(
+                                outgoingUser,
+                                outgoingUser.currentVector3.vector2,
+                                newVector3.vector2
+                            )
 
                             outgoingUser.currentVector3 = newVector3
                             outgoingUser.headRotation = targetRoomItem.rotation
@@ -133,6 +148,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
                         roomItem.requestCycles(1)
                     }
+
                     else -> {
                         extraData = "1"
 

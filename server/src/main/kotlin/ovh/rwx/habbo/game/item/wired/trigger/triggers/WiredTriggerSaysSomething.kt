@@ -24,12 +24,13 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.trigger.SayTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
-class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(room, roomItem) {
+class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger<SayTriggerData>(room, roomItem) {
     var message = ""
     private var onlyOwner = false
     private var triggerType = ChatTriggerType.CONTAINS
@@ -50,13 +51,13 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger(r
         }
     }
 
-    override fun onTrigger(wiredContext: WiredContext, data: Any?): Boolean {
-        if (data == null || data !is String || wiredContext.triggererUser == null) return false
+    override fun onTrigger(wiredContext: WiredContext, data: SayTriggerData): Boolean {
+        if (wiredContext.triggererUser == null) return false
         if (onlyOwner && !room.userManager.hasRights(wiredContext.triggererUser.habboSession, true)) return false
 
         return when (triggerType) {
-            ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.contains(message, ignoreCase = true)
-            ChatTriggerType.EXACT_MATCH -> data.equals(message, ignoreCase = true)
+            ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.text.contains(message, ignoreCase = true)
+            ChatTriggerType.EXACT_MATCH -> data.text.equals(message, ignoreCase = true)
             ChatTriggerType.ALL_MESSAGES -> true
         }
     }

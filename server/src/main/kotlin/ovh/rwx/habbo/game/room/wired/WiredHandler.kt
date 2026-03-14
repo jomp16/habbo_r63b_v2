@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
@@ -57,14 +58,23 @@ class WiredHandler(val room: Room) {
      * 4. Condições (Filtros e Validações)
      * 5. Efeitos (Ações nos alvos)
      */
-    fun triggerWired(triggerClass: KClass<out WiredTrigger>, roomUser: RoomUser?, data: Any?): List<WiredTrigger> {
-        val triggeredWireds = mutableListOf<WiredTrigger>()
+    fun <T : WiredTriggerData> triggerWired(
+        triggerClass: KClass<out WiredTrigger<T>>,
+        roomUser: RoomUser?,
+        data: T
+    ): List<WiredTrigger<T>> {
+        val triggeredWireds = mutableListOf<WiredTrigger<T>>()
         val batchedMovements: MutableList<WiredMoveEntry> = mutableListOf()
+
+        // 1. Cast the class once
+        @Suppress("UNCHECKED_CAST")
+        val targetClass = triggerClass.java as Class<WiredTrigger<T>>
 
         wiredStack.values.forEach { wiredStackMap ->
             // Filtramos todos os triggers do tipo solicitado nesta pilha
-            val triggersInStack = wiredStackMap.values
-                .filterIsInstance(triggerClass.java)
+            val triggersInStack = wiredStackMap.values.filterIsInstance(targetClass)
+
+            if (triggersInStack.isEmpty()) return@forEach
 
             triggersInStack.forEach { trigger ->
                 val wiredContext = WiredContext(
@@ -82,8 +92,6 @@ class WiredHandler(val room: Room) {
                 }
 
                 // AGORA avaliamos o Trigger!
-                // O Trigger agora pode usar wiredContext.resolveFurniSources(this)
-                // para saber se o 'data' (ex: o mobi pisado) está na lista do Seletor.
                 if (trigger.onTrigger(wiredContext, data)) {
                     triggeredWireds.add(trigger)
                     lightWired(trigger)
@@ -137,18 +145,21 @@ class WiredHandler(val room: Room) {
         wiredStack.values.forEach { wiredStackMap ->
             wiredStackMap.values.forEach { wiredItem ->
                 when (wiredItem) {
-                    is WiredTriggerPeriodically -> wiredItem.resetTimer()
-                    is WiredTriggerPeriodicallyLong -> wiredItem.resetTimer()
-                    is WiredTriggerAtGivenTime -> wiredItem.resetTimer()
+                    is WiredTriggerPeriodically -> wiredItem.resetTriggered()
+                    is WiredTriggerPeriodicallyLong -> wiredItem.resetTriggered()
+                    is WiredTriggerAtGivenTime -> wiredItem.resetTriggered()
                 }
             }
         }
     }
 
-    fun resetTriggerer(triggerClass: KClass<out WiredTrigger>) {
+    fun <T : WiredTriggerData> resetTriggerer(triggerClass: KClass<out WiredTrigger<T>>) {
+        @Suppress("UNCHECKED_CAST")
+        val targetClass = triggerClass.java as Class<WiredTrigger<T>>
+
         wiredStack.values
             .flatMap { it.values }
-            .filterIsInstance(triggerClass.java)
+            .filterIsInstance(targetClass)
             .forEach { it.resetTriggered() }
     }
 
