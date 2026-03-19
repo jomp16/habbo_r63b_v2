@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,7 +22,18 @@ import org.apache.tools.ant.filters.ReplaceTokens
 def mDestinationDirectory = file("$rootDir/plugins")
 
 processResources {
-    filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    filesMatching("**/*.properties") {
+        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    }
+    filesMatching("**/*.json") {
+        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    }
+    filesMatching("**/*.yml") {
+        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    }
+    filesMatching("**/*.yaml") {
+        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    }
 }
 
 task cleanLibsDir {

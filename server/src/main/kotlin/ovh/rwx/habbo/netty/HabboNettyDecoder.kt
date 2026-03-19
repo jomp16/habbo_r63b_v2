@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboBase64
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
@@ -91,11 +92,6 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 messageLength = HabboBase64.decode(messageLengthBytes)
                 headerId = HabboBase64.decode(headerIdBytes)
                 size = messageLength - 2
-
-                if (headerId == 206) {
-                    // Init crypto, mark session as old client
-                    habboSession.release = "R63A"
-                }
             } else {
                 if (msg.readableBytes() < 6) return
                 // R63B
@@ -128,7 +124,14 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 if (habboSession.release.startsWith("NITRO")) {
                     log.info("Changing ${habboSession.release} to PRODUCTION-201611291003-338511768")
                     habboSession.release = "PRODUCTION-201611291003-338511768"
+                } else if (habboSession.release == "development") {
+                    habboSession.release = "R63A"
+                    habboSession.r63ANewEncoding = true
                 }
+            } else if (!habboSession.releaseInitialized && headerId == 206) {
+                // Init crypto, mark session as old client
+                habboSession.release = "R63A"
+                habboSession.r63ANewEncoding = delimiter != 64.toByte()
             }
 
             out += habboRequest
@@ -142,7 +145,8 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                     else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name
                         ?: "null"
                 } else {
-                    HabboServer.habboHandler.incomingNamesR63A[habboSession.release]?.find { it.first == headerId }?.second?.name
+                    if (headerId == 4000) IncomingR63A.RELEASE_CHECK.name
+                    else HabboServer.habboHandler.incomingNamesR63A[habboSession.release]?.find { it.first == headerId }?.second?.name
                         ?: "null"
                 }
 

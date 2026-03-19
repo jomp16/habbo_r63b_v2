@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeInitCryptoHandler {
@@ -46,6 +47,10 @@ class HandshakeInitCryptoHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.handshaking = true
 
-        habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
+        val dh = HabboServer.habboEncryptionHandler.generateDiffieHellmanParameterSpec()
+        habboSession.diffieHellmanParams = dh
+        habboSession.cryptoToken = UUID.randomUUID().toString().replace("-", "")
+
+        habboSession.sendHabboResponse(OutgoingR63A.INIT_CRYPTO, habboSession.cryptoToken)
     }
 }

@@ -124,7 +124,11 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
         habboSession.sendHabboResponse(OutgoingR63A.AVAILABILITY_STATUS)
         habboSession.sendHabboResponse(OutgoingR63A.ENABLE_TRADING, true)
-        habboSession.sendHabboResponse(OutgoingR63A.HOME_ROOM, habboSession.userInformation.homeRoom)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.HOME_ROOM,
+            habboSession.userInformation.homeRoom,
+            HabboServer.habboConfig.autoJoinRoom
+        )
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(OutgoingR63A.MODERATION_INIT)
 

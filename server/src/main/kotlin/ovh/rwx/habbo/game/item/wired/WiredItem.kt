@@ -238,7 +238,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 writeWiredContext()
                 writeDefaultIntParams()
             } else {
-                // Legacy format
+                // Legacy format - conflictingActions
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER")) {
                     writeBlockedTriggers(wiredData)
                 } else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
@@ -332,7 +332,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             }
 
             if (!habboAir) {
-                response.writeInt(0) // ???
+                response.writeInt(0) // stuffTypeSelectionCode
             }
         }
 

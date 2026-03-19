@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,11 +19,15 @@
 
 package ovh.rwx.habbo.communication.incoming.handshake
 
+import org.bouncycastle.util.encoders.Hex
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.encryption.RC4Encryption
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -37,6 +41,33 @@ class HandshakeSecretKeyHandler {
             habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second.toByteArray())
 
             habboSession.sendHabboResponse(Outgoing.SECRET_KEY, HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first.toString().toByteArray()))
+        }
+    }
+
+    @HandlerR63A(IncomingR63A.SECRET_KEY, requiredAuth = false)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        try {
+            if (HabboServer.habboConfig.encryptionConfig.rc4) {
+                val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(
+                    habboSession.diffieHellmanParams,
+                    habboRequest.readUTF()
+                )
+
+                // CORREÇÃO: Simular o comportamento do cliente AS3 (BigInt -> Hex String -> Hex Decode)
+                var sharedSecretHex = sharedKeyPair.second.toString(16)
+                if (sharedSecretHex.length % 2 != 0) {
+                    sharedSecretHex = "0$sharedSecretHex" // Padrona zero à esquerda se for ímpar
+                }
+
+                habboSession.rc4Encryption = RC4Encryption(Hex.decode(sharedSecretHex))
+
+                // Enviamos nossa chave pública pro cliente
+                // O cliente espera a chave pública do servidor em TEXTO PLANO (Base 10).
+                val serverPublicKeyStr = sharedKeyPair.first.toString(10)
+                habboSession.sendHabboResponse(OutgoingR63A.SECRET_KEY, serverPublicKeyStr)
+            }
+        } catch (e: NumberFormatException) {
+            habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
         }
     }
 }

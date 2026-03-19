@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -69,6 +69,8 @@ class HabboSessionManager {
     fun getHabboSessionById(id: Int) = habboSessions.values.find { it.authenticated && it.userInformation.id == id }
 
     fun getHabboSessionByUsername(username: String) = habboSessions.values.find { it.authenticated && it.userInformation.username == username }
+
+    fun getHabboSessionByCryptoToken(token: String) = habboSessions.values.find { it.cryptoToken == token }
 
     fun containsHabboSessionById(id: Int) = getHabboSessionById(id) != null
 

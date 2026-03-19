@@ -105,7 +105,7 @@ data class RoomItem(
                     extraData,
                     furnishing,
                     limitedItemData,
-                    magicRemove
+                    magicRemove,
                 )
             } else {
                 writeUTF(id.toString())
@@ -130,14 +130,14 @@ data class RoomItem(
                 writeInt(position.y)
                 writeInt(rotation)
                 writeUTF(position.z.toString())
-                writeUTF(height.toString())
 
                 HabboServer.habboGame.itemManager.writeExtradata(
                     habboResponse,
                     extraData,
                     furnishing,
                     limitedItemData,
-                    magicRemove
+                    magicRemove,
+                    r63A = true
                 )
             } else {
                 writeUTF(id.toString())
@@ -197,7 +197,8 @@ data class RoomItem(
 
     fun requestCycles(cycles1: Int) {
         if (currentCycles == 0 || cycles1 == 0) {
-            cycles = cycles1
+            // Multiplicamos por 10 porque passaremos a contabilizar a cada 50ms (1 ciclo = 500ms = 10 ticks)
+            cycles = cycles1 * 10
             currentCycles = 0
         }
     }

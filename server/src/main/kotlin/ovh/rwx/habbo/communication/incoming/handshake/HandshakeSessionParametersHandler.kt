@@ -17,24 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.misc
+package ovh.rwx.habbo.communication.incoming.handshake
 
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
-@Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
-class MiscClientVariablesHandler {
-    @Handler(Incoming.MISC_CLIENT_VARIABLES, requiredAuth = false)
-    @HandlerR63A(IncomingR63A.MISC_CLIENT_VARIABLES, requiredAuth = false)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // In PRODUCTION-201912102204-233022976, the structure changed to int - string - string
-        // I don't know which client version changed, so I commented it
-
-        // val gordonUrl = habboRequest.readUTF()
-        // val externalVariablesUrl = habboRequest.readUTF()
+@Suppress("unused", "UNUSED_PARAMETER")
+class HandshakeSessionParametersHandler {
+    @HandlerR63A(IncomingR63A.HANDSHAKE_SESSION_PARAMS, requiredAuth = false)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
     }
 }

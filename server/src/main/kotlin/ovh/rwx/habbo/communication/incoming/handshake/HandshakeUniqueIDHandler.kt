@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.handshake
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -39,5 +42,14 @@ class HandshakeUniqueIDHandler {
         habboSession.osInformation = osInformation
 
         habboSession.sendHabboResponse(Outgoing.UNIQUE_ID, uniqueID)
+    }
+
+    @HandlerR63A(IncomingR63A.UNIQUE_ID, requiredAuth = false)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val uniqueID = habboRequest.readUTF()
+
+        habboSession.uniqueID = uniqueID
+
+        habboSession.sendHabboResponse(OutgoingR63A.UNIQUE_ID, uniqueID)
     }
 }

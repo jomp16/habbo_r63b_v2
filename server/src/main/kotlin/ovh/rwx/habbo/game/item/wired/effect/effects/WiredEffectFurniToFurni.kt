@@ -45,9 +45,6 @@ class WiredEffectFurniToFurni(room: Room, roomItem: RoomItem) : WiredEffect(room
         val items = wiredContext.getEffectiveFurnis(this)
         val targets = listOf(room.itemManager.floorItems[1377]!!)
 
-        println("target=${this.roomItem.wiredData?.furniSources}")
-        println("items=$items")
-        println("targets=$targets")
         if (items.isEmpty()) return
         if (targets.isEmpty()) return
 
