@@ -49,8 +49,6 @@ class WiredSelectorFurniByType(room: Room, roomItem: RoomItem) : WiredSelector(r
     override fun onSelect(context: WiredContext) {
         val mySelectedItems = getItemsByType(context)
 
-        println("mySelectedItems=$mySelectedItems")
-
         refineTargets(
             contextTargets = context.targetFurnis,
             currentSelection = mySelectedItems,
@@ -63,18 +61,13 @@ class WiredSelectorFurniByType(room: Room, roomItem: RoomItem) : WiredSelector(r
     private fun getItemsByType(context: WiredContext): List<RoomItem> {
         val selectedItems = context.getEffectiveFurnis(this)
 
-        println("selectedItems=$selectedItems")
         if (selectedItems.isEmpty()) return emptyList()
 
         val result = mutableSetOf<RoomItem>()
         val selectedFurnishingIds = selectedItems.map { it.furnishing.itemName }.toSet()
 
-        println("selectedFurnishingIds=$selectedFurnishingIds")
-
         for (item in room.itemManager.items.values) {
-            println("item.furnishing.itemName=${item.furnishing.itemName}")
             if (selectedFurnishingIds.contains(item.furnishing.itemName)) {
-                println("checkState=$checkState, item.extraData=${item.extraData}, roomItem.extraData=${roomItem.extraData}")
                 if (!checkState || item.extraData == roomItem.extraData) {
                     result.add(item)
                 }

@@ -32,7 +32,8 @@ class HabboResponse(
     val headerId: Int,
     val outgoing: Outgoing?,
     val keepCopy: Boolean = false,
-    val outgoingR63A: OutgoingR63A? = null
+    val outgoingR63A: OutgoingR63A? = null,
+    val r63ANewEncoding: Boolean = false,
 ) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
@@ -43,7 +44,7 @@ class HabboResponse(
     fun writeUTF(s: String, breakChar: Int = 2) {
         val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
         debugString.append("{s:\"$debugStr\"}")
-        if (outgoingR63A != null) {
+        if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeBytes(s)
             byteBufOutputStream.writeByte(breakChar)
         } else {
@@ -54,7 +55,7 @@ class HabboResponse(
     fun writeUTFWithoutBreak(s: String) {
         val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
         debugString.append("{s:\"$debugStr\"}")
-        if (outgoingR63A != null) {
+        if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeBytes(s)
         }
     }
@@ -66,7 +67,7 @@ class HabboResponse(
 
     fun writeInt(i: Int) {
         debugString.append("{i:$i}")
-        if (outgoingR63A != null) {
+        if (outgoingR63A != null && !r63ANewEncoding) {
             HabboVl64.encodeBytes(i)?.let {
                 byteBufOutputStream.write(it)
             }
@@ -87,7 +88,7 @@ class HabboResponse(
 
     fun writeBoolean(b: Boolean) {
         debugString.append("{b:$b}")
-        if (outgoingR63A != null) {
+        if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeByte((if (b) 73 else 72))
         } else {
             byteBufOutputStream.writeBoolean(b)

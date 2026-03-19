@@ -209,9 +209,16 @@ class ItemManager {
     }
 
     // todo: see if I can improve it
-    fun writeExtradata(habboResponse: HabboResponse, extraData: String, furnishing: Furnishing, limitedItemData: LimitedItemData?, magicRemove: Boolean = false) {
+    fun writeExtradata(
+        habboResponse: HabboResponse,
+        extraData: String,
+        furnishing: Furnishing,
+        limitedItemData: LimitedItemData?,
+        magicRemove: Boolean = false,
+        r63A: Boolean = false
+    ) {
         habboResponse.apply {
-            if (limitedItemData != null) {
+            if (!r63A && limitedItemData != null) {
                 writeInt(1)
                 writeInt(256)
                 writeUTF(extraData)
@@ -228,7 +235,7 @@ class ItemManager {
                     "landscape" -> writeInt(4)
                 }
 
-                writeInt(0)
+                if (!r63A) writeInt(0)
                 writeUTF(extraData)
 
                 return
@@ -284,7 +291,7 @@ class ItemManager {
                 }
                 else -> {
                     writeInt(0)
-                    writeInt(0)
+                    if (!r63A) writeInt(0)
                     writeUTF(extraData)
                 }
             }

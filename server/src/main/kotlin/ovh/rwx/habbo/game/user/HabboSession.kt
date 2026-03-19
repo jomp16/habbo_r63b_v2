@@ -60,6 +60,8 @@ import javax.script.ScriptEngineManager
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     lateinit var release: String
+    val releaseInitialized get() = this::release.isInitialized
+    var r63ANewEncoding: Boolean = false
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
         private set
@@ -101,6 +103,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var ping: Long = 0
     val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
+    var cryptoToken: String = ""
 
     fun sendAnyResponse(outgoing: Any, vararg args: Any?) {
         when (outgoing) {

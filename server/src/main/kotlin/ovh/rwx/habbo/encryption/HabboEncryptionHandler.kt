@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -39,7 +39,8 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
 
     init {
         if (!HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
-            dhParameterSpec = diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
+            dhParameterSpec =
+                diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
 
             serverKeyPair = KeyPairGenerator.getInstance("DH", "BC").run {
                 initialize(dhParameterSpec)
@@ -54,15 +55,27 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
     }
 
     fun generateDiffieHellmanParameterSpec(): DHParameterSpec = when {
-        HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys -> diffieHellmanEncryption.getDHParameterSpec(HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize)
+        HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys -> diffieHellmanEncryption.getDHParameterSpec(
+            HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.keySize
+        )
+
         else -> dhParameterSpec!!
     }
 
-    fun calculateDiffieHellmanSharedKey(diffieHellmanParams: DHParameterSpec, publicKey: String): Pair<BigInteger, BigInteger> {
+    fun calculateDiffieHellmanSharedKey(
+        diffieHellmanParams: DHParameterSpec,
+        publicKey: String
+    ): Pair<BigInteger, BigInteger> {
         val serverKeyPair1: KeyPair
         val serverKeyAgree1: KeyAgreement
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
-            generatePublic(DHPublicKeySpec(BigInteger(rsaEncryption.verify(Hex.decode(publicKey)).toString(Charsets.UTF_8)), diffieHellmanParams.p, diffieHellmanParams.g))
+            generatePublic(
+                DHPublicKeySpec(
+                    BigInteger(
+                        rsaEncryption.verify(Hex.decode(publicKey)).toString(Charsets.UTF_8)
+                    ), diffieHellmanParams.p, diffieHellmanParams.g
+                )
+            )
         }
 
         if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {

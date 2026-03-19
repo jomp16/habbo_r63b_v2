@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,11 +21,14 @@ package ovh.rwx.habbo.communication.outgoing.handshake
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeUniqueIDResponse {
     @Response(Outgoing.UNIQUE_ID)
+    @ResponseR63A(OutgoingR63A.UNIQUE_ID)
     fun response(habboResponse: HabboResponse, uniqueID: String) {
         habboResponse.apply {
             writeUTF(uniqueID)

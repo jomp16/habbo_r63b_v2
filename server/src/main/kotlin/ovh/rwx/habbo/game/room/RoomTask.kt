@@ -198,16 +198,13 @@ class RoomTask : Runnable {
                 room.rollerCounter.set(0)
                 items.filter { it.furnishing.interactionType == InteractionType.ROLLER }
                     .forEach {
-                        it.furnishing.interactor?.onCycle(
-                            room,
-                            it
-                        )
-                    } // Ignora o RoomItem e chama o interactor direto!
+                        it.furnishing.interactor?.onCycle(room, it)
+                    }
             }
-
-            items.filter { it.furnishing.interactionType != InteractionType.ROLLER }
-                .forEach { it.onCycle() }
         }
+
+        items.filter { it.furnishing.interactionType != InteractionType.ROLLER }
+            .forEach { it.onCycle() }
     }
 
     private fun processUsers(room: Room) {

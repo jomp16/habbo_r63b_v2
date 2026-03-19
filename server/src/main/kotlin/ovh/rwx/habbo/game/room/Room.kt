@@ -162,11 +162,11 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(userManager.users.size)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
-            writeBoolean(roomData.tradeState == 1)
-            writeBoolean(roomData.tradeState == 1)
+            writeInt(roomData.tradeState) // srchSpecPrm
+            writeBoolean(roomData.tradeState == 1) // allowTrading
             writeInt(roomData.score)
             writeInt(roomData.category)
-            writeUTF("")
+            writeUTF("") // eventCreationTime
 
             writeInt(roomData.tags.size)
             roomData.tags.forEach { writeUTF(it) }

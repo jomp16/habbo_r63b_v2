@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,11 +33,12 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     lateinit var incoming: Incoming
     lateinit var incomingR63A: IncomingR63A
     lateinit var methodName: String
+    var r63ANewEncoding: Boolean = false
 
     fun readUTF(): String {
         if (byteBuf.readableBytes() < 2) return ""
 
-        return if (this::incomingR63A.isInitialized) {
+        return if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
             val bytes = ByteArray(2)
 
             byteBufInputStream.read(bytes)
@@ -57,7 +58,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
     fun readInt(): Int {
-        if (this::incomingR63A.isInitialized) {
+        if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
             return if (byteBuf.readableBytes() < 1) 0 else {
                 byteBufInputStream.mark(0)
 
@@ -71,7 +72,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
 
                 byteBufInputStream.skipBytes(tmp[1])
 
-                return tmp[0]
+                tmp[0]
             }
         } else {
             return if (byteBuf.readableBytes() < 4) 0 else byteBufInputStream.readInt()
@@ -79,7 +80,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     }
 
     fun readBoolean(): Boolean {
-        return if (this::incomingR63A.isInitialized) {
+        return if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
             byteBuf.readableBytes() >= 1 && byteBufInputStream.readByte() == 65.toByte()
         } else {
             byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()

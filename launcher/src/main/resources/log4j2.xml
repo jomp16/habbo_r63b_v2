@@ -26,7 +26,7 @@
         </Console>
     </Appenders>
     <loggers>
-        <Root level="all">
+        <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
 
@@ -40,7 +40,7 @@
         <Logger name="io.undertow" level="error"/>
         <Logger name="org.xnio" level="error"/>
         <Logger name="org.jboss" level="error"/>
-        <Logger name="org.springframework" level="error"/>
+        <Logger name="org.springframework" level="error" additivity="false"/>
         <Logger name="org.mariadb" level="error"/>
     </loggers>
 </Configuration>

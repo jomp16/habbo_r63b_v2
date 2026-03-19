@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -29,15 +31,13 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserWhisperHandler {
     @Handler(Incoming.ROOM_USER_WHISPER)
-//    @HandlerR63A(IncomingR63A.ROOM_USER_WHISPER)
+    @HandlerR63A(IncomingR63A.ROOM_USER_WHISPER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val raw = habboRequest.readUTF()
-        val bubble = RoomChatMessageBubbles.fromType(habboRequest.readInt())
-        val targetName = raw.substringBefore(' ')
-        var message = raw.substring(targetName.length + 1)
+        if (habboSession.currentRoom == null) return
 
-        if (message.isEmpty()) return
-        if (message.length > 100) message = message.take(100)
+        val isR63A = habboSession.release == "R63A"
+
+        val (targetName, message, bubble) = parse(habboRequest, isR63A) ?: return
 
         if (habboSession.userInformation.username == targetName) return
         val targetRoomUser = habboSession.currentRoom!!.userManager.users.values.filter { it.habboSession != null }
@@ -46,5 +46,19 @@ class RoomUserWhisperHandler {
 
         habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
         targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
+    }
+
+    private fun parse(habboRequest: HabboRequest, isR63A: Boolean): Triple<String, String, RoomChatMessageBubbles>? {
+        var raw = habboRequest.readUTF().trim()
+
+        if (raw.isBlank()) return null
+        if (raw.length > Byte.MAX_VALUE) raw = raw.substring(0, Byte.MAX_VALUE.toInt())
+        val bubble =
+            if (isR63A) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
+
+        val targetName = raw.substringBefore(' ')
+        val message = raw.substring(targetName.length + 1)
+
+        return Triple(targetName, message, bubble)
     }
 }

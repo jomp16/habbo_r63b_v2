@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,17 +28,11 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserHomeRoomResponse {
     @Response(Outgoing.HOME_ROOM)
+    @ResponseR63A(OutgoingR63A.HOME_ROOM)
     fun response(habboResponse: HabboResponse, roomId: Int, autoJoinRoom: Boolean) {
         habboResponse.apply {
             writeInt(roomId)
             writeInt(if (autoJoinRoom) roomId else 0) // auto join room
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.HOME_ROOM)
-    fun responseR63A(habboResponse: HabboResponse, roomId: Int) {
-        habboResponse.apply {
-            writeInt(roomId)
         }
     }
 }

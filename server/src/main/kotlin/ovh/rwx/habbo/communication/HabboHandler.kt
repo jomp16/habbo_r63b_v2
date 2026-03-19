@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -95,16 +95,16 @@ class HabboHandler {
         if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
             releases.forEach { release ->
                 val inHeaders = incomingHeaders.filter { it.release == release }
-                    .filter { Incoming.values().map { incoming -> incoming.name }.contains(it.name) }
+                    .filter { Incoming.entries.map { incoming -> incoming.name }.contains(it.name) }
                 val outHeaders = outgoingHeaders.filter { it.release == release }
-                    .filter { Outgoing.values().map { outgoing -> outgoing.name }.contains(it.name) }
+                    .filter { Outgoing.entries.map { outgoing -> outgoing.name }.contains(it.name) }
 
                 incomingNames[release] = inHeaders.map { it.header to Incoming.valueOf(it.name) }
                 outgoingNames[release] = outHeaders.map { it.header to Outgoing.valueOf(it.name) }
             }
             val exceptedIncomingHeaders: List<Incoming> =
-                Incoming.values().toMutableList().minus(Incoming.RELEASE_CHECK)
-            val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.values().toMutableList()
+                Incoming.entries.toMutableList().minus(Incoming.RELEASE_CHECK)
+            val exceptedOutgoingHeaders: List<Outgoing> = Outgoing.entries.toMutableList()
 
             if (isMissingIncomingHeaders(incomingNames.entries, exceptedIncomingHeaders) || isMissingOutgoingHeaders(
                     outgoingNames.entries,
@@ -129,15 +129,16 @@ class HabboHandler {
 
         if (incomingNamesR63A.isEmpty() && outgoingNamesR63A.isEmpty()) {
             val inHeaders =
-                incomingHeadersR63A.filter { IncomingR63A.values().map { incoming -> incoming.name }.contains(it.name) }
+                incomingHeadersR63A.filter { IncomingR63A.entries.map { incoming -> incoming.name }.contains(it.name) }
             val outHeaders =
-                outgoingHeadersR63A.filter { OutgoingR63A.values().map { outgoing -> outgoing.name }.contains(it.name) }
+                outgoingHeadersR63A.filter { OutgoingR63A.entries.map { outgoing -> outgoing.name }.contains(it.name) }
 
             incomingNamesR63A["R63A"] = inHeaders.map { it.header to IncomingR63A.valueOf(it.name) }
             outgoingNamesR63A["R63A"] = outHeaders.map { it.header to OutgoingR63A.valueOf(it.name) }
 
-            val exceptedIncomingHeaders: List<IncomingR63A> = IncomingR63A.values().toMutableList()
-            val exceptedOutgoingHeaders: List<OutgoingR63A> = OutgoingR63A.values().toMutableList()
+            val exceptedIncomingHeaders: List<IncomingR63A> =
+                IncomingR63A.entries.toMutableList().minus(IncomingR63A.RELEASE_CHECK)
+            val exceptedOutgoingHeaders: List<OutgoingR63A> = OutgoingR63A.entries.toMutableList()
 
             if (isMissingIncomingR63AHeaders(
                     incomingNamesR63A.entries,
@@ -221,7 +222,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second }.toSet())
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing incoming headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -240,7 +241,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second }.toSet())
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing outgoing headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -259,7 +260,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second }.toSet())
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing incoming headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -278,7 +279,7 @@ class HabboHandler {
         var missing = false
 
         availableHeadersEntries.forEach {
-            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second })
+            val missingHeaders = exceptedHeaders.minus(it.value.map { pair -> pair.second }.toSet())
 
             if (missingHeaders.isNotEmpty()) {
                 log.error("Missing outgoing headers for release={}, headers={}", it.key, missingHeaders.joinToString())
@@ -347,7 +348,8 @@ class HabboHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboRequest.use {
             val incomingEnum: IncomingR63A? =
-                incomingNamesR63A[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
+                if (habboRequest.headerId == 4000) IncomingR63A.RELEASE_CHECK
+                else incomingNamesR63A[habboSession.release]?.find { pair -> pair.first == habboRequest.headerId }?.second
 
             if (incomingEnum != null && messageHandlersR63A.containsKey(incomingEnum)) {
                 val pair = messageHandlersR63A[incomingEnum] ?: return@use
@@ -362,6 +364,7 @@ class HabboHandler {
 
                 try {
                     habboRequest.incomingR63A = incomingEnum
+                    habboRequest.r63ANewEncoding = habboSession.r63ANewEncoding
 
                     habboMethodInfo.methodHandle.invokeWithArguments(clazz, habboSession, habboRequest)
                 } catch (e: Exception) {
@@ -455,7 +458,8 @@ class HabboHandler {
 
             val (clazz, methodHandle) = pair
 
-            val habboResponse = HabboResponse(headerId, null, outgoingR63A = outgoing)
+            val habboResponse =
+                HabboResponse(headerId, null, outgoingR63A = outgoing, r63ANewEncoding = habboSession.r63ANewEncoding)
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

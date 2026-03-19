@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,8 +31,8 @@ class InventoryItemsResponse {
     @Response(Outgoing.INVENTORY_ITEMS)
     fun response(habboResponse: HabboResponse, items: Collection<UserItem>) {
         habboResponse.apply {
-            writeInt(1)
-            writeInt(0) // inventory updated?
+            writeInt(1) // totalFragments
+            writeInt(0) // fragmentNo
             writeInt(items.size)
 
             items.forEach { habboResponse.serialize(it) }
@@ -43,9 +43,9 @@ class InventoryItemsResponse {
     fun responseR63A(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
         // ["logError(Error in update receiver \"com.sulake.bootstrap::CoreCommunicationManager\": Unknown inventory item category: \"IIM\")"]
         habboResponse.apply {
-            writeUTF(type) // S = floor, I = wall
-            writeBoolean(true)
-            writeBoolean(false) // inventory updated?
+            writeUTF(type) // S = floor, I = wall - categoryType
+            writeInt(1) // totalFragments
+            writeInt(0) // fragmentNo
             writeInt(items.size)
 
             items.forEach { habboResponse.serialize(it) }

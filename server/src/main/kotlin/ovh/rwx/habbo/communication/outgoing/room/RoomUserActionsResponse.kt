@@ -46,7 +46,7 @@ class RoomUserActionsResponse {
             writeInt(virtualId)
             writeInt(id)
 
-            if (habboResponse.outgoing == Outgoing.ROOM_USER_EFFECT) writeInt(0)
+            if (habboResponse.outgoingR63A == OutgoingR63A.ROOM_USER_EFFECT) writeInt(0)
         }
     }
 }

@@ -58,7 +58,7 @@ class AchievementListResponse {
             writeInt(groupedAchievements.size)
 
             groupedAchievements.forEach { achievementGroupEntry ->
-                val userAchievement = achievementUsers.find { it.group == achievementGroupEntry }
+                val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
 
                 val totalLevels = achievementGroupEntry.key.totalLevels
                 val isMaxLevel = (userAchievement?.level ?: 0) >= totalLevels
@@ -67,12 +67,11 @@ class AchievementListResponse {
                 targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
                 val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
                     ?: achievementGroupEntry.value.lastOrNull()
-                    ?: return@forEach
-
+                    ?: return // Se não tiver NENHUMA conquista no grupo, aborta esse loop (não envia nada desse grupo)
                 val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
-                    achievementGroupEntry.key.name + targetLevel
+                    achievementGroupEntry.key.name + targetLevel // Padrão (ACH_Login1)
                 } else {
-                    achievementGroupEntry.key.name
+                    achievementGroupEntry.key.name // Estático (ACH_VipParties2_Entry)
                 }
 
                 writeInt(achievementGroupEntry.key.id)
