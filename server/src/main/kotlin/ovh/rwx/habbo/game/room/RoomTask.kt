@@ -184,7 +184,7 @@ class RoomTask : Runnable {
                 ownerSession,
                 room.roomData.ownerId,
                 "ACH_RoomDecoHosting",
-                guestCount,
+                1,
                 accumulate = true
             )
         }
