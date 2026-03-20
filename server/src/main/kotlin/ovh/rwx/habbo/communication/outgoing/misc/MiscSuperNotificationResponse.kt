@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,12 +26,19 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscSuperNotificationResponse {
     @Response(Outgoing.MISC_SUPER_NOTIFICATION)
-    fun response(habboResponse: HabboResponse, type: MiscSuperNotificationKeys, strings: Array<String>) {
+    fun response(habboResponse: HabboResponse, type: MiscSuperNotificationKeys, parameters: Map<String, String>) {
         habboResponse.apply {
             writeUTF(type.key)
-            writeInt(strings.size / 2)
+            writeInt(parameters.size)
 
-            strings.forEach { writeUTF(it) }
+            // Escreve a quantidade de pares de parâmetros
+            writeInt(parameters.size)
+
+            // Escreve cada par (Chave, Valor)
+            parameters.forEach { (key, value) ->
+                writeUTF(key)
+                writeUTF(value)
+            }
         }
     }
 

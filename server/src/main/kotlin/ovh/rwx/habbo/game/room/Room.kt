@@ -38,6 +38,7 @@ import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
@@ -55,6 +56,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val roomTimer = AtomicInteger()
     val hostingCounter = AtomicInteger()
     private var initialized: Boolean = false
+
+    val rolledItemsThisTick = CopyOnWriteArraySet<Int>()
+    val rolledUsersThisTick = CopyOnWriteArraySet<Int>()
     // endregion
 
     // region Sub-Managers & Helpers

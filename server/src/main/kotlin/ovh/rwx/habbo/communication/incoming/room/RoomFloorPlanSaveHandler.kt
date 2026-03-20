@@ -104,7 +104,10 @@ class RoomFloorPlanSaveHandler {
             }
 
             if (errors.isNotEmpty()) {
-                habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR, "errors", errors.joinToString("<br />"))
+                habboSession.sendSuperNotification(
+                    MiscSuperNotificationResponse.MiscSuperNotificationKeys.FLOOR_PLAN_EDITOR_ERROR,
+                    mapOf("errors" to errors.joinToString("<br />"))
+                )
                 return
             }
 

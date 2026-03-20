@@ -17,34 +17,25 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.navigator
+package ovh.rwx.habbo.communication.incoming.messenger.steam
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.messenger.stream.MessengerFriendStream
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class NavigatorPopularRoomsHandler {
-    @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_ROOMS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val categoryId = habboRequest.readUTF().toIntOrNull() ?: -1
 
-        val rooms =
-            if (categoryId == -1) HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
-                .sortedBy { it.userManager.users.size }.take(8)
-            else HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() && it.roomData.category == categoryId }
-                .sortedBy { it.userManager.users.size }.take(8)
+class MessengerLoadUserStreamHandler {
+    @HandlerR63A(IncomingR63A.MESSENGER_LOAD_USER_STREAM)
+    fun handleR63A(habboSession: HabboSession, request: HabboRequest) {
+        request.readInt()
 
-        habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
-            categoryId,
-            1,
-            "",
-            rooms,
-            false
-        )
+        val userEvents = mutableListOf<MessengerFriendStream>()
+        // TODO: Buscar eventos filtrando apenas por account_id = targetUserId
+
+        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_FRIEND_STREAM, userEvents)
     }
 }

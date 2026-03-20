@@ -17,19 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-UPDATE
-    `users_preferences`
-SET `volume`                = :volume,
-    `prefer_old_chat`       = :prefer_old_chat,
-    `ignore_room_invite`    = :ignore_room_invite,
-    `disable_camera_follow` = :disable_camera_follow,
-    `navigator_x`           = :navigator_x,
-    `navigator_y`           = :navigator_y,
-    `navigator_width`       = :navigator_width,
-    `navigator_height`      = :navigator_height,
-    `hide_in_room`          = :hide_in_room,
-    `block_new_friends`     = :block_new_friends,
-    `chat_color`            = :chat_color,
-    `friend_bar_open`       = :friend_bar_open,
-    `friend_stream_enabled` = :friend_stream_enabled
-WHERE `id` = :id
+package ovh.rwx.habbo.game.user.messenger.stream
+
+enum class StreamLinkTarget(val id: Int) {
+    NONE(0),             // Sem link/botão
+    FRIEND_PROFILE(1),   // Abre o perfil de um amigo (usa friendId)
+    ROOM(2),             // Vai para um quarto (usa roomId)
+    ACHIEVEMENTS(3),     // Abre a lista de conquistas
+    MOTTO_CHANGER(4),    // Abre o editor de missão (para o próprio usuário)
+    FRIEND_FOLLOW(5),    // Segue o amigo até o quarto (usa friendId)
+    URL_LINK(6);
+
+    companion object {
+        fun fromId(id: Int): StreamLinkTarget = entries.find { it.id == id } ?: NONE
+    }
+}

@@ -196,6 +196,10 @@ class RoomTask : Runnable {
         if (isMajorTick) {
             if (room.rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
                 room.rollerCounter.set(0)
+
+                room.rolledItemsThisTick.clear()
+                room.rolledUsersThisTick.clear()
+
                 items.filter { it.furnishing.interactionType == InteractionType.ROLLER }
                     .forEach {
                         it.furnishing.interactor?.onCycle(room, it)

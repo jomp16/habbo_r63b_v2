@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,25 +26,27 @@ import ovh.rwx.habbo.kotlin.insertWithIntGeneratedKey
 object UserPreferencesDao {
     fun getUserPreferences(userId: Int): UserPreferences {
         val userPreferences = HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/users/preferences/select_user_preferences.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
+            select(
+                javaClass.classLoader.getResource("sql/users/preferences/select_user_preferences.sql").readText(),
+                mapOf(
+                    "user_id" to userId
+                )
             ) {
                 UserPreferences(
-                        it.int("id"),
-                        it.string("volume"),
-                        it.boolean("prefer_old_chat"),
-                        it.boolean("ignore_room_invite"),
-                        it.boolean("disable_camera_follow"),
-                        it.int("navigator_x"),
-                        it.int("navigator_y"),
-                        it.int("navigator_width"),
-                        it.int("navigator_height"),
-                        it.boolean("hide_in_room"),
-                        it.boolean("block_new_friends"),
-                        it.int("chat_color"),
-                        it.boolean("friend_bar_open")
+                    it.int("id"),
+                    it.string("volume"),
+                    it.boolean("prefer_old_chat"),
+                    it.boolean("ignore_room_invite"),
+                    it.boolean("disable_camera_follow"),
+                    it.int("navigator_x"),
+                    it.int("navigator_y"),
+                    it.int("navigator_width"),
+                    it.int("navigator_height"),
+                    it.boolean("hide_in_room"),
+                    it.boolean("block_new_friends"),
+                    it.int("chat_color"),
+                    it.boolean("friend_bar_open"),
+                    it.boolean("friend_stream_enabled")
                 )
             }.firstOrNull()
         }
@@ -52,10 +54,11 @@ object UserPreferencesDao {
         if (userPreferences == null) {
             // no users preferences, create it
             HabboServer.database {
-                insertWithIntGeneratedKey(javaClass.classLoader.getResource("sql/users/preferences/insert_user_preferences.sql").readText(),
-                        mapOf(
-                                "id" to userId
-                        )
+                insertWithIntGeneratedKey(
+                    javaClass.classLoader.getResource("sql/users/preferences/insert_user_preferences.sql").readText(),
+                    mapOf(
+                        "id" to userId
+                    )
                 )
             }
             // Now fetch it again, doing a one recursive call, and returns this
@@ -67,22 +70,24 @@ object UserPreferencesDao {
 
     fun savePreferences(userPreferences: UserPreferences) {
         HabboServer.database {
-            update(javaClass.classLoader.getResource("sql/users/preferences/update_user_preferences.sql").readText(),
-                    mapOf(
-                            "volume" to userPreferences.volume,
-                            "prefer_old_chat" to userPreferences.preferOldChat,
-                            "ignore_room_invite" to userPreferences.ignoreRoomInvite,
-                            "disable_camera_follow" to userPreferences.disableCameraFollow,
-                            "navigator_x" to userPreferences.navigatorX,
-                            "navigator_y" to userPreferences.navigatorY,
-                            "navigator_width" to userPreferences.navigatorWidth,
-                            "navigator_height" to userPreferences.navigatorHeight,
-                            "hide_in_room" to userPreferences.hideInRoom,
-                            "block_new_friends" to userPreferences.blockNewFriends,
-                            "chat_color" to userPreferences.chatColor,
-                            "friend_bar_open" to userPreferences.friendBarOpen,
-                            "id" to userPreferences.id
-                    )
+            update(
+                javaClass.classLoader.getResource("sql/users/preferences/update_user_preferences.sql").readText(),
+                mapOf(
+                    "volume" to userPreferences.volume,
+                    "prefer_old_chat" to userPreferences.preferOldChat,
+                    "ignore_room_invite" to userPreferences.ignoreRoomInvite,
+                    "disable_camera_follow" to userPreferences.disableCameraFollow,
+                    "navigator_x" to userPreferences.navigatorX,
+                    "navigator_y" to userPreferences.navigatorY,
+                    "navigator_width" to userPreferences.navigatorWidth,
+                    "navigator_height" to userPreferences.navigatorHeight,
+                    "hide_in_room" to userPreferences.hideInRoom,
+                    "block_new_friends" to userPreferences.blockNewFriends,
+                    "chat_color" to userPreferences.chatColor,
+                    "friend_bar_open" to userPreferences.friendBarOpen,
+                    "friend_stream_enabled" to userPreferences.friendStreamEnabled,
+                    "id" to userPreferences.id
+                )
             )
         }
     }

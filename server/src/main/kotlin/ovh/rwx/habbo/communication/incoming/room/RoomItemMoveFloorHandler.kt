@@ -53,8 +53,7 @@ class RoomItemMoveFloorHandler {
             if (roomItem.position.vector2 != newPosition) {
                 habboSession.sendSuperNotification(
                     MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
-                    "message",
-                    $$"${room.error.cant_set_item}"
+                    mapOf("message" to $$"${room.error.cant_set_item}")
                 )
             }
 

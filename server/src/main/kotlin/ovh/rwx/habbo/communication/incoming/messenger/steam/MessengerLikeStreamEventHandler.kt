@@ -17,19 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-UPDATE
-    `users_preferences`
-SET `volume`                = :volume,
-    `prefer_old_chat`       = :prefer_old_chat,
-    `ignore_room_invite`    = :ignore_room_invite,
-    `disable_camera_follow` = :disable_camera_follow,
-    `navigator_x`           = :navigator_x,
-    `navigator_y`           = :navigator_y,
-    `navigator_width`       = :navigator_width,
-    `navigator_height`      = :navigator_height,
-    `hide_in_room`          = :hide_in_room,
-    `block_new_friends`     = :block_new_friends,
-    `chat_color`            = :chat_color,
-    `friend_bar_open`       = :friend_bar_open,
-    `friend_stream_enabled` = :friend_stream_enabled
-WHERE `id` = :id
+package ovh.rwx.habbo.communication.incoming.messenger.steam
+
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.game.user.HabboSession
+
+@Suppress("unused", "UNUSED_PARAMETER")
+
+class MessengerLikeStreamEventHandler {
+    @HandlerR63A(IncomingR63A.MESSENGER_LIKE_STREAM_EVENT)
+    fun handleR63A(habboSession: HabboSession, request: HabboRequest) {
+        request.readInt()
+        request.readInt()
+
+        // TODO: Incrementar likes na tabela de stream e verificar se o user já curtiu
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,17 +20,18 @@
 package ovh.rwx.habbo.game.user.information
 
 class UserPreferences(
-        var id: Int,
-        var volume: String,
-        var preferOldChat: Boolean,
-        var ignoreRoomInvite: Boolean,
-        var disableCameraFollow: Boolean,
-        var navigatorX: Int,
-        var navigatorY: Int,
-        var navigatorWidth: Int,
-        var navigatorHeight: Int,
-        var hideInRoom: Boolean,
-        var blockNewFriends: Boolean,
-        var chatColor: Int,
-        var friendBarOpen: Boolean
+    var id: Int,
+    var volume: String,
+    var preferOldChat: Boolean,
+    var ignoreRoomInvite: Boolean,
+    var disableCameraFollow: Boolean,
+    var navigatorX: Int,
+    var navigatorY: Int,
+    var navigatorWidth: Int,
+    var navigatorHeight: Int,
+    var hideInRoom: Boolean,
+    var blockNewFriends: Boolean,
+    var chatColor: Int,
+    var friendBarOpen: Boolean,
+    var friendStreamEnabled: Boolean,
 )

@@ -66,7 +66,7 @@ class HandshakeSecretKeyHandler {
                 val serverPublicKeyStr = sharedKeyPair.first.toString(10)
                 habboSession.sendHabboResponse(OutgoingR63A.SECRET_KEY, serverPublicKeyStr)
             }
-        } catch (e: NumberFormatException) {
+        } catch (e: Exception) {
             habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
         }
     }

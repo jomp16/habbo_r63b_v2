@@ -25,38 +25,33 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import java.time.LocalDateTime
+import ovh.rwx.habbo.game.user.information.UserInformation
+import ovh.rwx.habbo.game.user.information.UserPreferences
+import ovh.rwx.habbo.game.user.information.UserStats
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserObjectResponse {
     @Response(Outgoing.USER_OBJECT)
     fun response(
         habboResponse: HabboResponse,
-        id: Int,
-        username: String,
-        figure: String,
-        gender: String,
-        realName: String,
-        motto: String,
-        respect: Int,
-        dailyRespectPoints: Int,
-        dailyPetRespectPoints: Int,
-        lastOnline: LocalDateTime,
+        userInformation: UserInformation,
+        userStats: UserStats,
+        userPreferences: UserPreferences,
         canChangeName: Boolean
     ) {
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(username)
-            writeUTF(figure)
-            writeUTF(gender)
-            writeUTF(motto)
-            writeUTF(realName)
+            writeInt(userInformation.id)
+            writeUTF(userInformation.username)
+            writeUTF(userInformation.figure)
+            writeUTF(userInformation.gender)
+            writeUTF(userInformation.motto)
+            writeUTF(userInformation.realname)
             writeBoolean(false)
-            writeInt(respect)
-            writeInt(dailyRespectPoints)
-            writeInt(dailyPetRespectPoints)
+            writeInt(userStats.respect)
+            writeInt(userStats.dailyRespectPoints)
+            writeInt(userStats.dailyPetRespectPoints)
             writeBoolean(true) // Friends stream active
-            writeUTF(lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
+            writeUTF(userStats.lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
             writeBoolean(canChangeName)
             writeBoolean(false)
         }
@@ -65,28 +60,22 @@ class UserObjectResponse {
     @ResponseR63A(OutgoingR63A.USER_OBJECT)
     fun responseR63A(
         habboResponse: HabboResponse,
-        id: Int,
-        username: String,
-        figure: String,
-        gender: String,
-        realName: String,
-        motto: String,
-        respect: Int,
-        dailyRespectPoints: Int,
-        dailyPetRespectPoints: Int
+        userInformation: UserInformation,
+        userStats: UserStats,
+        userPreferences: UserPreferences,
     ) {
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(username)
-            writeUTF(figure)
-            writeUTF(gender)
-            writeUTF(motto)
-            writeUTF(realName)
-            writeBoolean(false)
-            writeInt(respect)
-            writeInt(dailyRespectPoints)
-            writeInt(dailyPetRespectPoints)
-            writeBoolean(true) // Friends stream active
+            writeInt(userInformation.id)
+            writeUTF(userInformation.username)
+            writeUTF(userInformation.figure)
+            writeUTF(userInformation.gender)
+            writeUTF(userInformation.motto)
+            writeUTF(userInformation.realname)
+            writeInt(0) // directMail
+            writeInt(userStats.respect)
+            writeInt(userStats.dailyRespectPoints)
+            writeInt(userStats.dailyPetRespectPoints)
+            writeBoolean(userPreferences.friendStreamEnabled)
         }
     }
 }

@@ -43,20 +43,30 @@ class RollerItemInteractor : ItemInteractor() {
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {
             // 1. Moving players (Processamento individual pois geralmente há apenas 1)
-            room.roomGamemap.getUsersFromVector2(roomItem.position.vector2).filter { !it.walking }.forEach {
-                val oldPos = it.currentVector3.copy()
+            room.roomGamemap.getUsersFromVector2(roomItem.position.vector2)
+                // Ignora quem está andando OU quem já foi empurrado por um roller neste exato tick
+                .filter { !it.walking && !room.rolledUsersThisTick.contains(it.virtualID) }
+                .forEach {
+                    val oldPos = it.currentVector3.copy()
 
-                if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
-                    val userSlide = ObjectSlide.createUserSlide(oldPos, frontVector3, roomItem.id, it.virtualID)
-                    room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, userSlide)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, userSlide)
-                    reCycle = false
+                    if (it.moveTo(frontVector2, rollerId = roomItem.id)) {
+                        room.rolledUsersThisTick.add(it.virtualID) // Registra o usuário
+
+                        val userSlide = ObjectSlide.createUserSlide(oldPos, frontVector3, roomItem.id, it.virtualID)
+                        room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, userSlide)
+                        room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, userSlide)
+                        reCycle = false
+                    }
                 }
-            }
 
             // 2. Moving items (Agrupamento da pilha)
             room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
-                .filter { it.id != roomItem.id && it.position.z > roomItem.position.z }
+                // Ignora o próprio roller, o que está abaixo dele, OU itens que já foram empurrados
+                .filter {
+                    it.id != roomItem.id && it.position.z > roomItem.position.z && !room.rolledItemsThisTick.contains(
+                        it.id
+                    )
+                }
                 .let { itemsAtPos ->
                     val roomItems = if (itemsAtPos.size > 10) itemsAtPos.take(10) else itemsAtPos
                     val slideItems = mutableListOf<SlideItem>()
@@ -66,6 +76,8 @@ class RollerItemInteractor : ItemInteractor() {
 
                         // Chamamos o setFloorItem com sendSlide = false para evitar pacotes duplicados
                         if (room.itemManager.setFloorItem(itemToMove, frontVector2, itemToMove.rotation, null)) {
+                            room.rolledItemsThisTick.add(itemToMove.id) // Registra o item
+
                             // Adicionamos à lista para o pacote único
                             slideItems.add(SlideItem(itemToMove.id, zSrc, itemToMove.position.z))
                             reCycle = false

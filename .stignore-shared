@@ -1,0 +1,4 @@
+(?d)build/
+(?d)out/
+(?d).gradle/
+camera_data/assets_renderer_v2/

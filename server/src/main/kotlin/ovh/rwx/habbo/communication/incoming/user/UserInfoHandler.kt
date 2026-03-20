@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,35 +32,30 @@ import ovh.rwx.habbo.game.user.HabboSession
 class UserInfoHandler {
     @Handler(Incoming.INFO_RETRIEVE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.USER_OBJECT,
-                habboSession.userInformation.id,
-                habboSession.userInformation.username,
-                habboSession.userInformation.figure,
-                habboSession.userInformation.gender,
-                habboSession.userInformation.realname,
-                habboSession.userInformation.motto,
-                habboSession.userStats.respect,
-                habboSession.userStats.dailyRespectPoints,
-                habboSession.userStats.dailyPetRespectPoints,
-                habboSession.userStats.lastOnline,
-                false // todo can change name
+        habboSession.sendHabboResponse(
+            Outgoing.USER_OBJECT,
+            habboSession.userInformation,
+            habboSession.userStats,
+            habboSession.userPreferences,
+            false, // todo can change name
         )
 
-        habboSession.sendHabboResponse(Outgoing.USER_PERKS,
-                arrayOf(
-                        Triple("CITIZEN", "", true),
-                        Triple("CALL_ON_HELPERS", "", true),
-                        Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
-                        Triple("USE_GUIDE_TOOL", "", true),
-                        Triple("BUILDER_AT_WORK", "", false),
-                        Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", true),
-                        Triple("TRADE", "", true),
-                        Triple("HABBO_CLUB_OFFER_BETA", "", true),
-                        Triple("JUDGE_CHAT_REVIEWS", "", true),
-                        Triple("MOUSE_ZOOM", "", true),
-                        Triple("VOTE_IN_COMPETITIONS", "", true),
-                        Triple("CAMERA", "", true)
-                )
+        habboSession.sendHabboResponse(
+            Outgoing.USER_PERKS,
+            arrayOf(
+                Triple("CITIZEN", "", true),
+                Triple("CALL_ON_HELPERS", "", true),
+                Triple("NAVIGATOR_PHASE_TWO_2014", "", true),
+                Triple("USE_GUIDE_TOOL", "", true),
+                Triple("BUILDER_AT_WORK", "", false),
+                Triple("NAVIGATOR_ROOM_THUMBNAIL_CAMERA", "", true),
+                Triple("TRADE", "", true),
+                Triple("HABBO_CLUB_OFFER_BETA", "", true),
+                Triple("JUDGE_CHAT_REVIEWS", "", true),
+                Triple("MOUSE_ZOOM", "", true),
+                Triple("VOTE_IN_COMPETITIONS", "", true),
+                Triple("CAMERA", "", true)
+            )
         )
     }
 
@@ -68,15 +63,9 @@ class UserInfoHandler {
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(
             OutgoingR63A.USER_OBJECT,
-            habboSession.userInformation.id,
-            habboSession.userInformation.username,
-            habboSession.userInformation.figure,
-            habboSession.userInformation.gender,
-            habboSession.userInformation.realname,
-            habboSession.userInformation.motto,
-            habboSession.userStats.respect,
-            habboSession.userStats.dailyRespectPoints,
-            habboSession.userStats.dailyPetRespectPoints
+            habboSession.userInformation,
+            habboSession.userStats,
+            habboSession.userPreferences,
         )
     }
 }

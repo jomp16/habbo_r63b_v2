@@ -17,37 +17,33 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.communication.outgoing.misc
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUserActionsResponse {
-    @Response(
-        Outgoing.ROOM_USER_ACTION,
-        Outgoing.ROOM_USER_DANCE,
-        Outgoing.ROOM_USER_HANDITEM,
-        Outgoing.ROOM_USER_TYPING,
-        Outgoing.ROOM_USER_EFFECT
-    )
-    @ResponseR63A(
-        OutgoingR63A.ROOM_USER_DANCE,
-        OutgoingR63A.ROOM_USER_HANDITEM,
-        OutgoingR63A.ROOM_USER_TYPING,
-        OutgoingR63A.ROOM_USER_EFFECT,
-        OutgoingR63A.ROOM_USER_WAVE,
-    )
-    fun response(habboResponse: HabboResponse, virtualId: Int, id: Int) {
+class MiscUserNotificationResponse {
+    @ResponseR63A(OutgoingR63A.MISC_USER_NOTIFICATION)
+    fun responseR63A(
+        habboResponse: HabboResponse,
+        title: String,
+        message: String,
+        parameters: Map<String, String>,
+    ) {
         habboResponse.apply {
-            writeInt(virtualId)
-            writeInt(id)
+            writeUTF(title)
+            writeUTF(message)
 
-            if (habboResponse.outgoing == Outgoing.ROOM_USER_EFFECT) writeInt(0)
-            else if (habboResponse.outgoingR63A == OutgoingR63A.ROOM_USER_EFFECT) writeInt(0)
+            // Escreve a quantidade de pares de parâmetros
+            writeInt(parameters.size)
+
+            // Escreve cada par (Chave, Valor)
+            parameters.forEach { (key, value) ->
+                writeUTF(key)
+                writeUTF(value)
+            }
         }
     }
 }

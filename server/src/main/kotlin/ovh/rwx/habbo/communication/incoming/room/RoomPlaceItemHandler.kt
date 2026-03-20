@@ -42,8 +42,8 @@ class RoomPlaceItemHandler {
         // postit = [0][0][0]2[0][16]:w=4,7 l=11,11 l
         if (!habboSession.currentRoom?.userManager?.hasRights(habboSession)!!) {
             habboSession.sendSuperNotification(
-                MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR, "message",
-                $$"${room.error.cant_set_not_owner}"
+                MiscSuperNotificationResponse.MiscSuperNotificationKeys.FURNITURE_PLACEMENT_ERROR,
+                mapOf("message" to $$"${room.error.cant_set_not_owner}")
             )
 
             return

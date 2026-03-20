@@ -159,14 +159,15 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
     }
 
-    fun sendSuperNotification(type: MiscSuperNotificationResponse.MiscSuperNotificationKeys, vararg strings: String) {
-        if (strings.size % 2 != 0) {
-            log.warn("Tried to send a super notification with an odd length of array!")
+    fun sendSuperNotification(
+        type: MiscSuperNotificationResponse.MiscSuperNotificationKeys,
+        parameters: Map<String, String> = emptyMap()
+    ) {
+        sendHabboResponse(Outgoing.MISC_SUPER_NOTIFICATION, type, parameters)
+    }
 
-            return
-        }
-
-        sendHabboResponse(Outgoing.MISC_SUPER_NOTIFICATION, type, strings)
+    fun sendUserNotification(title: String, message: String, parameters: Map<String, String> = emptyMap()) {
+        sendHabboResponse(OutgoingR63A.MISC_USER_NOTIFICATION, title, message, parameters)
     }
 
     fun hasPermission(permission: String) =
