@@ -156,7 +156,7 @@ class TimerItemInteractor : ItemInteractor() {
         val game = room.gameManager.getGameForItem(roomItem)
 
         when (action) {
-            WiredEffectControlClock.Action.START, WiredEffectControlClock.Action.RESTART -> {
+            WiredEffectControlClock.Action.START -> {
                 if (!state.running) {
                     state.running = true
                     roomItem.requestCycles(1)
@@ -184,6 +184,19 @@ class TimerItemInteractor : ItemInteractor() {
                 state.timeHalfSeconds = resetSeconds * 2
                 roomItem.extraData = resetSeconds.toString()
                 roomItem.update(updateDb = false, updateClient = true)
+            }
+
+            WiredEffectControlClock.Action.RESTART -> {
+                if (!state.running) {
+                    val resetSeconds = game?.configuredTime ?: 0
+                    state.timeHalfSeconds = resetSeconds * 2
+                    roomItem.extraData = resetSeconds.toString()
+                    roomItem.update(updateDb = false, updateClient = true)
+
+                    state.running = true
+                    roomItem.requestCycles(1)
+                    game?.start()
+                }
             }
         }
     }
