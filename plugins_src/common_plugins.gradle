@@ -17,62 +17,45 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.apache.tools.ant.filters.ReplaceTokens
-
 def mDestinationDirectory = file("$rootDir/plugins")
+def libDirName = "lib/$project.name"
+
+// 1. Cria uma FileCollection nativa e preguiçosa (lazy)
+// Evita o uso de Java Streams e não resolve as dependências antes da hora.
+def pluginLibs = configurations.runtimeClasspath
+        .minus(project(":server").configurations.runtimeClasspath)
+        .filter { !it.name.contains("server") }
 
 processResources {
-    filesMatching("**/*.properties") {
-        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
+    filesMatching(["**/*.properties", "**/*.json", "**/*.yml", "**/*.yaml"]) {
+        expand(project_name: project.name, version: project.version.toString())
     }
-    filesMatching("**/*.json") {
-        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
-    }
-    filesMatching("**/*.yml") {
-        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
-    }
-    filesMatching("**/*.yaml") {
-        filter ReplaceTokens, tokens: [project_name: project.name, version: project.version.toString()]
-    }
-}
-
-task cleanLibsDir {
-    doLast {
-        new File(mDestinationDirectory, jar.archiveFile.get().asFile.name).delete()
-        new File(mDestinationDirectory, "lib/$project.name").deleteDir()
-    }
-}
-
-clean {
-    dependsOn cleanLibsDir
 }
 
 dependencies {
     compileOnly project(":server")
 }
 
+// 2. Simplificando a limpeza usando a task 'clean' padrão
+clean {
+    delete jar.archiveFile
+    delete file("$mDestinationDirectory/$libDirName")
+}
+
 tasks.register('copyLibs', Copy) {
-    dependsOn cleanLibsDir
-    dependsOn project.configurations.runtimeClasspath
-
-    def libs = (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
-        !it.name.contains("server")
-    }.collect { it }
-
-    def path = new File(mDestinationDirectory, "lib/$project.name")
-
-    from libs
-    into path.absolutePath
+    from pluginLibs
+    into file("$mDestinationDirectory/$libDirName")
 }
 
 jar {
     destinationDirectory.set(mDestinationDirectory)
-
     dependsOn copyLibs
 
+    // 3. Usa provider { ... } para garantir que o Class-Path só seja
+    // calculado no momento exato de montar o JAR, otimizando o build.
     manifest {
-        attributes 'Class-Path': (project.configurations.runtimeClasspath.files - project(":server").configurations.runtimeClasspath.files).stream().filter {
-            !it.name.contains("server")
-        }.collect { "lib/$project.name/$it.name" }.join(' ')
+        attributes 'Class-Path': provider {
+            pluginLibs.collect { "$libDirName/${it.name}" }.join(' ')
+        }
     }
 }
