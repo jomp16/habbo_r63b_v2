@@ -21,25 +21,26 @@ package ovh.rwx.habbo.communication.incoming.wired
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredSaveHandler {
     @Handler(Incoming.WIRED_SAVE_TRIGGER, Incoming.WIRED_SAVE_EFFECT, Incoming.WIRED_SAVE_CONDITION)
+    @HandlerR63A(IncomingR63A.WIRED_SAVE_TRIGGER, IncomingR63A.WIRED_SAVE_EFFECT, IncomingR63A.WIRED_SAVE_CONDITION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
-        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(
-                roomItem,
-                habboRequest
-            )
-        ) habboSession.sendHabboResponse(
-            Outgoing.WIRED_SAVED
-        )
+        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(roomItem, habboRequest)) {
+            if (habboSession.release != "R63A") {
+                habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
+            }
+        }
     }
 
     @Handler(
@@ -51,11 +52,8 @@ class WiredSaveHandler {
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
-        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(
-                roomItem,
-                habboRequest,
-                true
-            )
-        ) habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
+        if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(roomItem, habboRequest, habboAir = true)) {
+            habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
+        }
     }
 }

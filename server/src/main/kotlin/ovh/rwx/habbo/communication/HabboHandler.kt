@@ -416,7 +416,11 @@ class HabboHandler {
 
             val (clazz, methodHandle) = pair
 
-            val habboResponse = HabboResponse(headerId, outgoing)
+            val habboResponse = HabboResponse(
+                headerId = headerId,
+                outgoing = outgoing,
+                habboVersion = habboSession.habboVersion
+            )
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)
@@ -458,8 +462,13 @@ class HabboHandler {
 
             val (clazz, methodHandle) = pair
 
-            val habboResponse =
-                HabboResponse(headerId, null, outgoingR63A = outgoing, r63ANewEncoding = habboSession.r63ANewEncoding)
+            val habboResponse = HabboResponse(
+                headerId = headerId,
+                outgoing = null,
+                outgoingR63A = outgoing,
+                r63ANewEncoding = habboSession.r63ANewEncoding,
+                habboVersion = habboSession.habboVersion
+            )
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

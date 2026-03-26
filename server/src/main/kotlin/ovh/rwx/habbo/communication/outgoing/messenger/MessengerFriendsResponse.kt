@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.messenger.MessengerFriend
@@ -57,6 +58,11 @@ class MessengerFriendsResponse {
             writeInt(messengerFriends.size)
 
             messengerFriends.forEach { serialize(it) }
+
+            if (isVersionBefore(2011, 2, 22)) {
+                writeInt(0) // Pager status?
+                writeInt(0) // Extra padding?
+            }
         }
     }
 }

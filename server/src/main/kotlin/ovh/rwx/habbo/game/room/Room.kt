@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.group.GroupDao
@@ -175,13 +176,15 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(roomData.tags.size)
             roomData.tags.forEach { writeUTF(it) }
 
-            // room icon defaults
-            writeInt(1)
-            writeInt(0)
-            writeInt(0)
+            writeInt(1) // bg
+            writeInt(0) // fg
+            writeInt(0) // count (0 significa que o loop não roda, mantendo a compatibilidade)
 
             writeBoolean(roomData.allowPets)
-            writeBoolean(roomData.allowPetsEat)
+
+            if (isVersionAtLeast(2011, 4, 18)) {
+                writeBoolean(roomData.allowPetsEat)
+            }
         }
     }
     // endregion

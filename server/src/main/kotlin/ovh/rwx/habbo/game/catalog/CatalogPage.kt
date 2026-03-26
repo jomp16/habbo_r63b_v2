@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 
 data class CatalogPage(
     val id: Int,
@@ -101,6 +103,10 @@ data class CatalogPage(
             )
             else writeUTF(StringUtils.stripAccents(name))
 
+            if (isVersionBefore(2011, 3, 25)) {
+                writeBoolean(false) // Campo 'Disabled' (§_-tJ§)
+            }
+
             // CASO ESPECIAL: Se eu sou a página ROOT (-1), eu busco os NETOS
             if (id == -1) {
                 val level1Nodes = HabboServer.habboGame.catalogManager.catalogPages.filter {
@@ -162,8 +168,10 @@ data class CatalogPage(
                 }
             }
 
-            if (id == -1 || id == -2) {
-                writeBoolean(false) // newAdditionsAvailable -> link to catalog.page.latest_added
+            if (isVersionAtLeast(2011, 6, 13)) {
+                if (id == -1 || id == -2) {
+                    writeBoolean(false) // newAdditionsAvailable -> link to catalog.page.latest_added
+                }
             }
         }
     }

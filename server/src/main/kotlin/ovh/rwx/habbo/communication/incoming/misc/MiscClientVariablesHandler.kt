@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.incoming.misc
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -31,10 +32,12 @@ class MiscClientVariablesHandler {
     @Handler(Incoming.MISC_CLIENT_VARIABLES, requiredAuth = false)
     @HandlerR63A(IncomingR63A.MISC_CLIENT_VARIABLES, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // In PRODUCTION-201912102204-233022976, the structure changed to int - string - string
-        // I don't know which client version changed, so I commented it
+        val unknown = habboRequest.readInt()
+        val gordonUrl = habboRequest.readUTF()
+        val externalVariablesUrl = habboRequest.readUTF()
 
-        // val gordonUrl = habboRequest.readUTF()
-        // val externalVariablesUrl = habboRequest.readUTF()
+        if (gordonUrl != "app:/") {
+            habboSession.habboVersion = HabboVersion.parse(gordonUrl)
+        }
     }
 }

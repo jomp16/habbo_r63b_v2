@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -38,13 +38,18 @@ class InventoryItemsHandler {
 
     @HandlerR63A(IncomingR63A.INVENTORY_ITEMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
-            OutgoingR63A.INVENTORY_ITEMS,
-            "S",
-            habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.FLOOR })
-        habboSession.sendHabboResponse(
-            OutgoingR63A.INVENTORY_ITEMS,
-            "I",
-            habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.WALL })
+        // Nessa versão, é enviado floor e wall separados.
+        if (habboSession.habboVersion.isVersionAtLeast(2011, 2, 25)) {
+            habboSession.sendHabboResponse(
+                OutgoingR63A.INVENTORY_ITEMS,
+                "S",
+                habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.FLOOR })
+            habboSession.sendHabboResponse(
+                OutgoingR63A.INVENTORY_ITEMS,
+                "I",
+                habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.WALL })
+        } else {
+            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_ITEMS, "", habboSession.habboInventory.items.values)
+        }
     }
 }

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.achievement
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
@@ -65,9 +66,11 @@ class AchievementListResponse {
 
                 var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
                 targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
+
                 val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
                     ?: achievementGroupEntry.value.lastOrNull()
-                    ?: return // Se não tiver NENHUMA conquista no grupo, aborta esse loop (não envia nada desse grupo)
+                    ?: return@forEach // Evita crash se o grupo estiver vazio
+
                 val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
                     achievementGroupEntry.key.name + targetLevel // Padrão (ACH_Login1)
                 } else {
@@ -81,11 +84,17 @@ class AchievementListResponse {
                 writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
                 writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
                 writeInt(userAchievement?.progress ?: 0) // currentPoints
-                writeBoolean(isMaxLevel) // finalLevel
-                writeUTF(achievementGroupEntry.key.category.category)
-                writeInt(totalLevels) // levelCount
+
+                if (isVersionAtLeast(2011, 5, 6)) {
+                    writeBoolean(isMaxLevel) // finalLevel
+                    writeUTF(achievementGroupEntry.key.category.category)
+                    writeInt(totalLevels) // levelCount
+                }
             }
-            writeUTF("") // defaultCategory
+
+            if (isVersionAtLeast(2011, 6, 16)) {
+                writeUTF("") // defaultCategory
+            }
         }
     }
 

@@ -87,6 +87,7 @@ class MessengerChatHandler {
                                 sendResponse(result)
                             }
                         }
+
                         "unload" -> {
                             val result =
                                 if (HabboServer.pluginManager.removePluginJarByName(pluginName)) "Done!" else "Failed"
@@ -100,10 +101,15 @@ class MessengerChatHandler {
                     HabboServer.serverScheduledExecutor.schedule({ sendResponse("Done!") }, 1, TimeUnit.SECONDS)
                 }
 
+                message == "habbo_version" -> {
+                    sendResponse(habboSession.habboVersion.toString())
+                }
+
                 message.startsWith("h:") -> {
                     val args1 = message.split("(?<!\\\\),".toRegex())
                     val header = args1[0].substring(2).toInt()
-                    val habboResponse = HabboResponse(header, null)
+                    val habboResponse =
+                        HabboResponse(headerId = header, habboVersion = habboSession.habboVersion)
 
                     habboResponse.apply {
                         args1.drop(1).forEach {
@@ -171,7 +177,15 @@ class MessengerChatHandler {
         }
 
         if (userId < 0) {
-            if (userId == -1) habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, userId, message, 0, habboSession.userInformation.id, habboSession.userInformation.username, habboSession.userInformation.figure)
+            if (userId == -1) habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_CHAT,
+                userId,
+                message,
+                0,
+                habboSession.userInformation.id,
+                habboSession.userInformation.username,
+                habboSession.userInformation.figure
+            )
         } else {
             val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
 

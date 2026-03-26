@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.item.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
@@ -68,6 +69,9 @@ data class UserItem(
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id)
+            if (isVersionBefore(2011, 2, 25)) {
+                writeInt(0) // useless?
+            }
             writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
             writeInt(id)
             writeInt(furnishing.spriteId)

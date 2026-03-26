@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.badge.Badge
@@ -37,7 +38,9 @@ class InventoryBadgesResponse {
             writeInt(badges.size)
 
             badges.forEach {
-                writeInt(1)
+                if (isVersionAtLeast(2011, 5, 23)) {
+                    writeInt(1)
+                }
                 writeUTF(it.code)
             }
 

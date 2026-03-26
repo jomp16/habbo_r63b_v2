@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.information.UserInformation
@@ -65,17 +66,38 @@ class UserObjectResponse {
         userPreferences: UserPreferences,
     ) {
         habboResponse.apply {
-            writeInt(userInformation.id)
+            // 1. O Identificador (O divisor de águas é 30/08/2011)
+            if (isVersionAtLeast(2011, 8, 30)) {
+                writeInt(userInformation.id)
+            } else {
+                writeUTF(userInformation.id.toString())
+            }
+
+            // 2. Bloco de Dados Base (Sempre presente)
             writeUTF(userInformation.username)
             writeUTF(userInformation.figure)
             writeUTF(userInformation.gender)
             writeUTF(userInformation.motto)
             writeUTF(userInformation.realname)
-            writeInt(0) // directMail
-            writeInt(userStats.respect)
-            writeInt(userStats.dailyRespectPoints)
-            writeInt(userStats.dailyPetRespectPoints)
-            writeBoolean(userPreferences.friendStreamEnabled)
+
+            // 3. Diferenciação de Cauda (Estrutura Antiga vs Nova)
+            if (isVersionAtLeast(2011, 7, 21)) {
+                // Estrutura enxuta das builds de 2011 final
+                writeBoolean(true) // flag de stream/permissão
+                writeInt(userStats.respect)
+                writeInt(userStats.dailyRespectPoints)
+                writeInt(userStats.dailyPetRespectPoints)
+                writeBoolean(userPreferences.friendStreamEnabled)
+            } else {
+                // Estrutura "Poluída" de 2010 até Junho de 2011
+                writeInt(0)  // directMail
+                writeUTF("") // O slot extra que o script detectou como readString()
+                writeInt(0)  // Slot extra 1
+                writeInt(0)  // Slot extra 2
+                writeInt(userStats.respect)
+                writeInt(userStats.dailyRespectPoints)
+                writeInt(userStats.dailyPetRespectPoints)
+            }
         }
     }
 }

@@ -17,17 +17,27 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.encryption
+package ovh.rwx.habbo.encryption.wedgie
 
-import org.bouncycastle.crypto.engines.RC4Engine
-import org.bouncycastle.crypto.params.KeyParameter
+import ovh.rwx.habbo.encryption.IHabboEncryption
+import ovh.rwx.habbo.encryption.WedgieRC4
+import kotlin.math.abs
 
-class RC4Encryption(key: ByteArray) : IHabboEncryption {
-    private val rc4Engine = RC4Engine().apply { init(true, KeyParameter(key)) }
+class HabboRandom(private var seed: Int, private val modulus: Int = 65536) {
+    fun nextInt(): Int {
+        // Usamos Long para simular o 'Number' do AS3 e evitar o overflow do Int32
+        val calc = abs((19979L * seed.toLong()) + 5L)
 
-    override fun parse(data: ByteArray): ByteArray {
-        val out = ByteArray(data.size)
-        rc4Engine.processBytes(data, 0, data.size, out, 0)
-        return out
+        seed = (calc % modulus.toLong()).toInt()
+
+        return seed
     }
+}
+
+class WedgieWrapper(
+    val inner: WedgieRC4,
+    val outer: WedgieRC4,
+    val rng: HabboRandom
+) : IHabboEncryption {
+    override fun parse(data: ByteArray): ByteArray = data // Não usado diretamente
 }

@@ -26,6 +26,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
@@ -36,7 +37,7 @@ import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
-import ovh.rwx.habbo.encryption.RC4Encryption
+import ovh.rwx.habbo.encryption.IHabboEncryption
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomState
@@ -61,6 +62,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     lateinit var release: String
     val releaseInitialized get() = this::release.isInitialized
+    var habboVersion: HabboVersion = HabboVersion(LocalDateTime.now(), 63)
     var r63ANewEncoding: Boolean = false
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
@@ -97,7 +99,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         get() = targetTeleportId != -1
     val authenticated: Boolean
         get() = ::userInformation.isInitialized && userInformation.id > 0 && ::userStats.isInitialized && userStats.id > 0 && ::userPreferences.isInitialized && userPreferences.id > 0
-    var rc4Encryption: RC4Encryption? = null
+    var rc4Encryption: IHabboEncryption? = null
     var uniqueID: String = ""
     var osInformation: String = ""
     var ping: Long = 0

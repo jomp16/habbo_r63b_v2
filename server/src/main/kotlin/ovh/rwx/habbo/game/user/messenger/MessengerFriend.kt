@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.user.messenger
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -51,15 +52,10 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                     writeUTF(it.motto)
                     writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
                     writeUTF(it.realname)
-
-                    if (habboResponse.outgoingR63A == null) {
-                        writeBoolean(true) // allows offline messaging
-                        writeBoolean(false) // useless
-                        writeBoolean(false) // uses phone
-                        writeShort(relationship.type) // relationship type
-                    } else {
-                        writeUTF("") // facebookId
-                    }
+                    writeBoolean(true) // allows offline messaging
+                    writeBoolean(false) // useless
+                    writeBoolean(false) // uses phone
+                    writeShort(relationship.type) // relationship type
                 }
             } else {
                 // todo: group, this is a stub
@@ -72,22 +68,34 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                 writeUTF("")
                 writeUTF("")
                 writeUTF("")
-
-                if (habboResponse.outgoingR63A == null) {
-                    writeBoolean(true) // allows offline messaging
-                    writeBoolean(false) // useless
-                    writeBoolean(false) // uses phone
-                    writeShort(0) // relationship type
-                } else {
-                    writeUTF("") // facebookId
-                }
+                writeBoolean(true) // allows offline messaging
+                writeBoolean(false) // useless
+                writeBoolean(false) // uses phone
+                writeShort(0) // relationship type
             }
         }
     }
 
-    @Suppress("DuplicatedCode")
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, params)
+        habboResponse.apply {
+            userInformation?.let {
+                writeInt(it.id)
+                writeUTF(it.username)
+                writeInt(if (it.gender == "M") 0 else 1)
+                writeBoolean(online)
+                writeBoolean(online && habboSession?.currentRoom != null)
+                writeUTF(it.figure)
+                writeInt(0) // category
+                writeUTF(it.motto)
+                writeUTF(if (online) "" else "Último login...") // formatar data
+                writeUTF(it.realname)
+
+                // Só envia o Facebook ID (11º campo) se for build de Maio de 2011 em diante
+                if (isVersionAtLeast(2011, 5, 9)) {
+                    writeUTF("") // facebookId
+                }
+            }
+        }
     }
 
     fun serializeHabboResponseSearch(habboResponse: HabboResponse) {

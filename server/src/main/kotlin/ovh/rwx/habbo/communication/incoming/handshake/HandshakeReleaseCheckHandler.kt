@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -40,6 +41,8 @@ class HandshakeReleaseCheckHandler {
 
             habboSession.channel.disconnect()
         }
+
+        habboSession.habboVersion = HabboVersion.parse(habboSession.release)
     }
 
     @HandlerR63A(IncomingR63A.RELEASE_CHECK, requiredAuth = false)

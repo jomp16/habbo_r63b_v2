@@ -64,16 +64,20 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
 
     fun calculateDiffieHellmanSharedKey(
         diffieHellmanParams: DHParameterSpec,
-        publicKey: String
+        publicKey: String,
+        ignoreSign: Boolean = false,
+        disableRsa: Boolean = false,
     ): Pair<BigInteger, BigInteger> {
         val serverKeyPair1: KeyPair
         val serverKeyAgree1: KeyAgreement
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
             generatePublic(
                 DHPublicKeySpec(
-                    BigInteger(
+                    if (disableRsa) BigInteger(publicKey) else BigInteger(
                         rsaEncryption.verify(Hex.decode(publicKey)).toString(Charsets.UTF_8)
-                    ), diffieHellmanParams.p, diffieHellmanParams.g
+                    ),
+                    diffieHellmanParams.p,
+                    diffieHellmanParams.g
                 )
             )
         }
@@ -95,7 +99,11 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
 
         serverKeyAgree1.doPhase(clientPublicKey, true)
 
-        return (serverKeyPair1.public as DHPublicKey).y to BigInteger(serverKeyAgree1.generateSecret())
+        return if (ignoreSign) {
+            (serverKeyPair1.public as DHPublicKey).y to BigInteger(1, serverKeyAgree1.generateSecret())
+        } else {
+            (serverKeyPair1.public as DHPublicKey).y to BigInteger(serverKeyAgree1.generateSecret())
+        }
     }
 
     fun getRsaStringEncrypted(bytes: ByteArray): String = Hex.toHexString(rsaEncryption.sign(bytes))

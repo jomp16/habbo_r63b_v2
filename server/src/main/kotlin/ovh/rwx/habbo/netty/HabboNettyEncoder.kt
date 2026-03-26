@@ -38,34 +38,49 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun encode(ctx: ChannelHandlerContext, msg: HabboResponse, out: ByteBuf) {
-        val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-        val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+        try {
+            val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+            val username =
+                if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-        if (log.isDebugEnabled) {
-            val outgoing: String = if (habboSession.release != "R63A") {
-                HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second?.name ?: "null"
-            } else {
-                HabboServer.habboHandler.outgoingNamesR63A[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
-                    ?: "null"
+            if (log.isDebugEnabled) {
+                val outgoing: String = if (habboSession.release != "R63A") {
+                    HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
+                        ?: "null"
+                } else {
+                    HabboServer.habboHandler.outgoingNamesR63A[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
+                        ?: "null"
+                }
+
+                log.trace(
+                    "({}) - SENT --> [{}][{}] -- {}",
+                    username,
+                    msg.headerId.toString().padEnd(4),
+                    (outgoing).padEnd(HabboServer.habboHandler.largestNameSize),
+                    msg.toString()
+                )
             }
-            
-            log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(4), (outgoing).padEnd(HabboServer.habboHandler.largestNameSize), msg.toString())
-        }
-        val byteBuf = msg.byteBuf
 
-        out.apply {
-            if (habboSession.release != "R63A" || habboSession.r63ANewEncoding) {
-                writeInt(byteBuf.writerIndex() + 2)
-                writeShort(msg.headerId)
-                writeBytes(byteBuf)
+            val byteBuf = msg.byteBuf
+
+            out.apply {
+                if (habboSession.release != "R63A" || habboSession.r63ANewEncoding) {
+                    writeInt(byteBuf.writerIndex() + 2)
+                    writeShort(msg.headerId)
+                    writeBytes(byteBuf)
+                } else {
+                    writeBytes(HabboBase64.encodeBytes(msg.headerId))
+                    writeBytes(byteBuf)
+                    writeByte(1)
+                }
+            }
+        } finally {
+            // Guaranteed to run, preventing the memory leak
+            if (!msg.keepCopy) {
+                msg.close()
             } else {
-                writeBytes(HabboBase64.encodeBytes(msg.headerId))
-                writeBytes(byteBuf)
-                writeByte(1)
+                ReferenceCountUtil.release(msg.byteBuf)
             }
         }
-
-        if (!msg.keepCopy) msg.close()
-        else ReferenceCountUtil.release(byteBuf)
     }
 }

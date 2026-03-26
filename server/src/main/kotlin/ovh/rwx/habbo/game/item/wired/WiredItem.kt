@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
@@ -331,7 +332,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 }
             }
 
-            if (!habboAir) {
+            if (!habboAir && response.isVersionAtLeast(2011, 2, 22)) {
                 response.writeInt(0) // stuffTypeSelectionCode
             }
         }

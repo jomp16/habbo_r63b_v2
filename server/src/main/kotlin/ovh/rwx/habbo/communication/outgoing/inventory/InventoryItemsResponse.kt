@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.user.UserItem
@@ -43,9 +44,13 @@ class InventoryItemsResponse {
     fun responseR63A(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
         // ["logError(Error in update receiver \"com.sulake.bootstrap::CoreCommunicationManager\": Unknown inventory item category: \"IIM\")"]
         habboResponse.apply {
-            writeUTF(type) // S = floor, I = wall - categoryType
-            writeInt(1) // totalFragments
-            writeInt(0) // fragmentNo
+            // Na build 201102252317, os fragments entraram oficialmente no cliente!
+            if (isVersionAtLeast(2011, 2, 25)) {
+                writeUTF(type) // S = floor, I = wall - categoryType
+                writeInt(1) // totalFragments
+                writeInt(0) // fragmentNo
+            }
+
             writeInt(items.size)
 
             items.forEach { habboResponse.serialize(it) }

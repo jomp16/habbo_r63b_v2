@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.WiredData
@@ -34,8 +35,9 @@ class WiredEffectDialogResponse {
     @ResponseR63A(OutgoingR63A.WIRED_EFFECT_DIALOG)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            // todo: add support to all teh effects
-            writeBoolean(false)
+            if (isVersionAtLeast(2011, 2, 22)) {
+                writeBoolean(false)
+            }
 
             parseWired(roomItem, wiredData)
         }

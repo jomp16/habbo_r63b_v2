@@ -30,10 +30,11 @@ import ovh.rwx.habbo.encryption.decoder.HabboVl64
 @Suppress("unused")
 class HabboResponse(
     val headerId: Int,
-    val outgoing: Outgoing?,
+    val outgoing: Outgoing? = null,
     val keepCopy: Boolean = false,
     val outgoingR63A: OutgoingR63A? = null,
     val r63ANewEncoding: Boolean = false,
+    val habboVersion: HabboVersion,
 ) : AutoCloseable {
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
@@ -51,7 +52,7 @@ class HabboResponse(
             byteBufOutputStream.writeUTF(s)
         }
     }
-    
+
     fun writeUTFWithoutBreak(s: String) {
         val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
         debugString.append("{s:\"$debugStr\"}")

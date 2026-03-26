@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
@@ -113,7 +114,10 @@ data class CatalogItem(
 
             writeInt(amount) // productCount
             writeInt(-1) // expiration
-            writeInt(if (clubOnly) 1 else 0) // clubLevel
+
+            if (isVersionAtLeast(2011, 4, 1)) {
+                writeInt(if (clubOnly) 1 else 0) // clubLevel
+            }
         }
     }
 

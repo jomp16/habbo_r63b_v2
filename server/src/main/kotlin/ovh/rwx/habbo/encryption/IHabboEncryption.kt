@@ -19,15 +19,6 @@
 
 package ovh.rwx.habbo.encryption
 
-import org.bouncycastle.crypto.engines.RC4Engine
-import org.bouncycastle.crypto.params.KeyParameter
-
-class RC4Encryption(key: ByteArray) : IHabboEncryption {
-    private val rc4Engine = RC4Engine().apply { init(true, KeyParameter(key)) }
-
-    override fun parse(data: ByteArray): ByteArray {
-        val out = ByteArray(data.size)
-        rc4Engine.processBytes(data, 0, data.size, out, 0)
-        return out
-    }
+interface IHabboEncryption {
+    fun parse(data: ByteArray): ByteArray
 }

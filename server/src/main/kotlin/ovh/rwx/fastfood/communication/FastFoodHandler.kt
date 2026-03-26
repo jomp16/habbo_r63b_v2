@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -28,9 +28,11 @@ import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.HabboVersion
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
+import java.time.LocalDateTime
 
 class FastFoodHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -99,7 +101,11 @@ class FastFoodHandler {
     fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
         if (fastFoodMessageResponses.containsKey(ffOutgoing)) {
             val (clazz, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
-            val habboResponse = HabboResponse(ffOutgoing.headerId, null)
+            val habboResponse = HabboResponse(
+                headerId = ffOutgoing.headerId,
+                outgoing = null,
+                habboVersion = HabboVersion(LocalDateTime.now(), 63)
+            )
 
             try {
                 methodHandle.invokeWithArguments(clazz, habboResponse, *args)

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.item.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
@@ -139,6 +140,8 @@ data class RoomItem(
                     magicRemove,
                     r63A = true
                 )
+
+                writeInt(-1) // seems this is related to rentals (time in seconds)
             } else {
                 writeUTF(id.toString())
                 writeInt(furnishing.spriteId)
@@ -146,11 +149,18 @@ data class RoomItem(
                 writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
             }
 
-            if (furnishing.type == ItemType.FLOOR) {
-                writeInt(-1) // seems this is related to rentals (time in seconds)
+            if (isVersionAtLeast(2011, 5, 12)) {
+                writeBoolean(furnishing.interactionModesCount > 1)
             }
 
-            writeBoolean(furnishing.interactionModesCount > 1)
+            // 2. O ExtraParam dos itens de Piso (CRÍTICO para não sumir itens!)
+            if (furnishing.type == ItemType.FLOOR) {
+                // Se o sprite for negativo, o Flash SEMPRE espera uma String no final
+                // nas builds de 2010 e 2011 (conforme o STATIC detectado)
+                if (furnishing.spriteId < 0) {
+                    writeUTF("")
+                }
+            }
         }
     }
 
