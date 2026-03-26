@@ -22,9 +22,10 @@ def libDirName = "lib/$project.name"
 
 // 1. Cria uma FileCollection nativa e preguiçosa (lazy)
 // Evita o uso de Java Streams e não resolve as dependências antes da hora.
+// Filtra apenas o JAR do projeto :server, não dependências que contenham "server" no nome
 def pluginLibs = configurations.runtimeClasspath
         .minus(project(":server").configurations.runtimeClasspath)
-        .filter { !it.name.contains("server") }
+        .filter { !it.name.startsWith("server-") }
 
 processResources {
     filesMatching(["**/*.properties", "**/*.json", "**/*.yml", "**/*.yaml"]) {
