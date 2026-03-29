@@ -17,21 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.achievement
+package ovh.rwx.habbo.game.room.navigator
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.achievement.Achievement
-import ovh.rwx.habbo.game.achievement.AchievementUser
+enum class NavigatorGuestRoomsMode(val mode: Int) {
+    POPULAR(1),
+    HIGHEST_SCORE(2),
+    FRIENDS_ROOM(3),
+    FRIENDS_IN_ROOMS(4),
+    MY_ROOMS(5),
+    MY_FAVORITES(6),
+    MY_VISITED_ROOMS(7),
+    SEARCH(9);
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class AchievementUnlockedResponse {
-    @Response(Outgoing.ACHIEVEMENT_UNLOCKED)
-    @ResponseR63A(OutgoingR63A.ACHIEVEMENT_UNLOCKED)
-    fun response(habboResponse: HabboResponse, achievementUser: AchievementUser, achievement: Achievement) {
-        achievementUser.serializeUnlocked(habboResponse)
+    companion object {
+        fun fromInt(mode: Int): NavigatorGuestRoomsMode = entries.find { it.mode == mode } ?: POPULAR
     }
 }

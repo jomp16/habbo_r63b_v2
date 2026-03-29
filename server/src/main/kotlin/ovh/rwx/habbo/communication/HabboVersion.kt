@@ -81,6 +81,16 @@ data class HabboVersion(
 
         return clientDate.isBefore(targetDate)
     }
+
+    /**
+     * Retorna true se a versão do cliente atual for EXATAMENTE a data informada.
+     * Útil para pacotes "rebeldes" que mudaram e reverteram em builds específicas.
+     */
+    fun isExactVersion(year: Int, month: Int, day: Int): Boolean {
+        val targetDate = LocalDate.of(year, month, day)
+        return buildDate.toLocalDate().isEqual(targetDate)
+    }
+
 }
 
 fun HabboResponse.isVersionAtLeast(year: Int, month: Int, day: Int): Boolean {
@@ -90,4 +100,8 @@ fun HabboResponse.isVersionAtLeast(year: Int, month: Int, day: Int): Boolean {
 
 fun HabboResponse.isVersionBefore(year: Int, month: Int, day: Int): Boolean {
     return habboVersion.isVersionBefore(year, month, day)
+}
+
+fun HabboResponse.isExactVersion(year: Int, month: Int, day: Int): Boolean {
+    return habboVersion.isExactVersion(year, month, day)
 }

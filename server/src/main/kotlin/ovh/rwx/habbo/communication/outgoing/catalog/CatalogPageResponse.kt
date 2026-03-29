@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.catalog.CatalogPage
@@ -325,7 +326,9 @@ class CatalogPageResponse {
 
             catalogPage.catalogItems.forEach { serialize(it) }
 
-            writeInt(chosenOfferId) // offerId, what it is used on?
+            if (isVersionAtLeast(2010, 11, 12)) {
+                writeInt(chosenOfferId)
+            }
         }
     }
 

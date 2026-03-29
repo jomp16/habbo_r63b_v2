@@ -170,17 +170,27 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(roomData.tradeState) // srchSpecPrm
             writeBoolean(roomData.tradeState == 1) // allowTrading
             writeInt(roomData.score)
-            writeInt(roomData.category)
-            writeUTF("") // eventCreationTime
+
+            // Revelação R37: Categoria e Tempo de Evento entraram em Agosto de 2009!
+            if (isVersionAtLeast(2009, 8, 21)) {
+                writeInt(roomData.category)
+                writeUTF("") // eventCreationTime
+            }
 
             writeInt(roomData.tags.size)
             roomData.tags.forEach { writeUTF(it) }
 
+            // A Classe de Miniaturas (Ícones de Quarto antigos do Shockwave)
+            // Isso existe em todas as versões (O LOOP de Int/Int dentro do trace)
+            // Mandar '0' no bg_count aborta a classe lindamente.
             writeInt(1) // bg
             writeInt(0) // fg
-            writeInt(0) // count (0 significa que o loop não roda, mantendo a compatibilidade)
+            writeInt(0) // count
 
-            writeBoolean(roomData.allowPets)
+            // Revelação R40: Animais foram liberados nos quartos em Nov/2009
+            if (isVersionAtLeast(2009, 11, 13)) {
+                writeBoolean(roomData.allowPets)
+            }
 
             if (isVersionAtLeast(2011, 4, 18)) {
                 writeBoolean(roomData.allowPetsEat)

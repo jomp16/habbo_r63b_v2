@@ -52,7 +52,7 @@ class UserActivityPointsResponse {
 
 enum class ActivityPointType(val code: Int) {
     PIXELS(0),
-    SEASHELLS(1),
+    SNOWFLAKES(1),
     HEARTS(2),
     GIFT_POINTS(3),
     SHELLS(4),

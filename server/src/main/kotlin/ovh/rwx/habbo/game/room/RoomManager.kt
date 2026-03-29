@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -63,5 +63,60 @@ class RoomManager {
         rooms[roomId] = room
 
         return room
+    }
+
+    /**
+     * Busca os quartos ativos mais populares, opcionalmente por categoria.
+     */
+    fun getPopularRooms(categoryId: Int = -1, limit: Int = 40): List<Room> {
+        return rooms.values
+            .filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
+            .filter { categoryId == -1 || it.roomData.category == categoryId }
+            .sortedByDescending { it.userManager.users.size }
+            .take(limit)
+    }
+
+    /**
+     * Motor de busca global (por nome, dono, descrição ou tags).
+     */
+    fun searchRooms(searchTerm: String, limit: Int = 50): List<Room> {
+        if (searchTerm.isBlank()) return emptyList()
+
+        return rooms.values.filter { room ->
+            val data = room.roomData
+
+            // Regra R63B: Quartos públicos não costumam aparecer na busca global
+            if (data.roomType == RoomType.PUBLIC) return@filter false
+
+            when {
+                // Busca por Prefixo exato
+                searchTerm.startsWith("owner:") ->
+                    data.ownerName.equals(searchTerm.substring(6), ignoreCase = true)
+
+                searchTerm.startsWith("tag:") ->
+                    data.tags.any { it.equals(searchTerm.substring(4), ignoreCase = true) }
+
+                searchTerm.startsWith("roomname:") ->
+                    data.name.equals(searchTerm.substring(9), ignoreCase = true)
+
+                // Busca Global via Regex (Contém)
+                else -> {
+                    val regex = "(?i:.*${Regex.escape(searchTerm)}.*)".toRegex()
+                    data.ownerName.matches(regex) ||
+                            data.name.matches(regex) ||
+                            data.description.matches(regex) ||
+                            data.tags.any { it.matches(regex) }
+                }
+            }
+        }
+            .sortedByDescending { it.userManager.users.size }
+            .take(limit)
+    }
+
+    /**
+     * Retorna os quartos de um usuário específico.
+     */
+    fun getRoomsByOwner(ownerId: Int): List<Room> {
+        return rooms.values.filter { it.roomData.ownerId == ownerId }
     }
 }

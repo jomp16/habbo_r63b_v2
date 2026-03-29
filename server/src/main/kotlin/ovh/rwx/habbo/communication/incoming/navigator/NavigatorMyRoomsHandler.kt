@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,23 +19,29 @@
 
 package ovh.rwx.habbo.communication.incoming.navigator
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
+import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorMyRoomsHandler {
     @HandlerR63A(IncomingR63A.NAVIGATOR_MY_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val myRooms = HabboServer.habboGame.roomManager.getRoomsByOwner(habboSession.userInformation.id)
+
         habboSession.sendHabboResponse(
             OutgoingR63A.NAVIGATOR_LIST_ROOMS,
-            0,
-            5,
-            "",
-            habboSession.rooms,
-            false
+            NavigatorListPayload(
+                rooms = myRooms,
+                mode = NavigatorGuestRoomsMode.MY_ROOMS,
+                categoryId = 0,
+                query = ""
+            )
         )
     }
 }

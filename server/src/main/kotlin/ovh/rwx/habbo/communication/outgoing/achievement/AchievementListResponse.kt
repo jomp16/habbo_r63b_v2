@@ -25,8 +25,8 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.achievement.Achievement
+import ovh.rwx.habbo.game.achievement.AchievementCategory
 import ovh.rwx.habbo.game.achievement.AchievementGroup
 import ovh.rwx.habbo.game.achievement.AchievementUser
 
@@ -41,8 +41,11 @@ class AchievementListResponse {
         habboResponse.apply {
             writeInt(groupedAchievements.size)
 
-            groupedAchievements.forEach { achievementGroup ->
-                commonStuff(habboResponse, achievementUsers, achievementGroup)
+            groupedAchievements.forEach { achievementGroupEntry ->
+                val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
+                    ?: AchievementUser(0, 0, achievementGroupEntry.key.id, 0, 0)
+
+                serialize(userAchievement, false)
             }
 
             writeUTF("") // defaultCategory
@@ -56,42 +59,18 @@ class AchievementListResponse {
         groupedAchievements: Map<AchievementGroup, List<Achievement>>
     ) {
         habboResponse.apply {
-            writeInt(groupedAchievements.size)
+            val filteredGroupedAchievements =
+                groupedAchievements.filterKeys { it.category != AchievementCategory.EMPTY }
+            writeInt(filteredGroupedAchievements.size)
 
-            groupedAchievements.forEach { achievementGroupEntry ->
+            filteredGroupedAchievements.forEach { achievementGroupEntry ->
                 val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
+                    ?: AchievementUser(0, 0, achievementGroupEntry.key.id, 0, 0)
 
-                val totalLevels = achievementGroupEntry.key.totalLevels
-                val isMaxLevel = (userAchievement?.level ?: 0) >= totalLevels
-
-                var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-                targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-
-                val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
-                    ?: achievementGroupEntry.value.lastOrNull()
-                    ?: return@forEach // Evita crash se o grupo estiver vazio
-
-                val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
-                    achievementGroupEntry.key.name + targetLevel // Padrão (ACH_Login1)
-                } else {
-                    achievementGroupEntry.key.name // Estático (ACH_VipParties2_Entry)
-                }
-
-                writeInt(achievementGroupEntry.key.id)
-                writeInt(targetLevel)
-                writeUTF(badgeCode)
-                writeInt(targetAchievement.progressRequirement) // scoreLimit
-                writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
-                writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
-                writeInt(userAchievement?.progress ?: 0) // currentPoints
-
-                if (isVersionAtLeast(2011, 5, 6)) {
-                    writeBoolean(isMaxLevel) // finalLevel
-                    writeUTF(achievementGroupEntry.key.category.category)
-                    writeInt(totalLevels) // levelCount
-                }
+                serialize(userAchievement)
             }
 
+            // O trace mostrou que essa string no final só entrou em Junho de 2011!
             if (isVersionAtLeast(2011, 6, 16)) {
                 writeUTF("") // defaultCategory
             }
@@ -108,53 +87,13 @@ class AchievementListResponse {
             writeInt(groupedAchievements.size)
 
             groupedAchievements.forEach { achievementGroupEntry ->
-                commonStuff(habboResponse, achievementUsers, achievementGroupEntry)
-                writeShort(0) // state
+                val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
+                    ?: AchievementUser(0, 0, achievementGroupEntry.key.id, 0, 0)
+
+                serialize(userAchievement, true)
             }
 
             writeUTF("") // defaultCategory
         }
-    }
-
-    private fun HabboResponse.commonStuff(
-        habboResponse: HabboResponse,
-        achievementUsers: List<AchievementUser>,
-        achievementGroupEntry: Map.Entry<AchievementGroup, List<Achievement>>
-    ) {
-        val userAchievement = achievementUsers.find { it.group == achievementGroupEntry.key }
-
-        val totalLevels = achievementGroupEntry.key.totalLevels
-        val isMaxLevel = (userAchievement?.level ?: 0) >= totalLevels
-
-        var targetLevel = (userAchievement?.level?.plus(1)) ?: 1
-        targetLevel = (if (targetLevel > totalLevels) totalLevels else targetLevel)
-        val targetAchievement = achievementGroupEntry.value.find { it.level == targetLevel }
-            ?: achievementGroupEntry.value.lastOrNull()
-            ?: return // Se não tiver NENHUMA conquista no grupo, aborta esse loop (não envia nada desse grupo)
-        val badgeCode = if (achievementGroupEntry.key.badgeAppendLevel) {
-            achievementGroupEntry.key.name + targetLevel // Padrão (ACH_Login1)
-        } else {
-            achievementGroupEntry.key.name // Estático (ACH_VipParties2_Entry)
-        }
-        // Se for nível 1, começa do 0. Se for nível 2, começa onde o nível 1 terminou.
-        val scoreAtStart = if (targetLevel == 1) 0 else {
-            // Pega o achievement do nível anterior para saber onde ele terminava
-            achievementGroupEntry.value.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
-        }
-        val displayMethod = if (isMaxLevel && totalLevels == 1) 1 else 0
-
-        writeInt(achievementGroupEntry.key.id)
-        writeInt(targetLevel)
-        writeUTF(badgeCode) // Envia o código corrigido
-        writeInt(scoreAtStart) // <--- Corrigido (Envia 0 para lvl 1, 20 para lvl 2, etc)
-        writeInt(targetAchievement.progressRequirement)
-        writeInt(targetAchievement.rewardActivityPoints)
-        writeInt(ActivityPointType.PIXELS.code) // type of reward
-        writeInt(userAchievement?.progress ?: 0)
-        writeBoolean(isMaxLevel) // is 100% complete
-        writeUTF(achievementGroupEntry.key.category.category)
-        writeUTF("") // subCategory
-        writeInt(totalLevels)
-        writeInt(displayMethod) // displayMethod
     }
 }

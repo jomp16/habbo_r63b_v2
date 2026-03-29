@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.item.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.Furnishing
@@ -89,7 +90,11 @@ data class UserItem(
             writeBoolean(furnishing.allowRecycle)
             writeBoolean(furnishing.allowTrade)
             writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
-            writeBoolean(furnishing.allowMarketplaceSell)
+
+            if (isVersionAtLeast(2009, 12, 11)) {
+                writeBoolean(furnishing.allowMarketplaceSell)
+            }
+
             writeInt(-1) // milliseconds to expire rental
 
             if (furnishing.type == ItemType.FLOOR) {

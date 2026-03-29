@@ -27,7 +27,8 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.room.RoomType
+import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
+import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -43,36 +44,17 @@ class NavigatorSearchHandler {
     @HandlerR63A(IncomingR63A.NAVIGATOR_SEARCH)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val searchTerm = habboRequest.readUTF()
-
-        val rooms = HabboServer.habboGame.roomManager.rooms.values
-            .filter { room ->
-                if (room.roomData.roomType == RoomType.PRIVATE) {
-                    if (searchTerm.startsWith("owner:")) {
-                        return@filter room.roomData.ownerName == searchTerm.substring(6)
-                    }
-
-                    val regex = "(?i:$searchTerm.*)".toRegex()
-
-                    if (room.roomData.ownerName.matches(regex)) return@filter true
-                    if (room.roomData.name.matches(regex)) return@filter true
-                    if (room.roomData.description.matches(regex)) return@filter true
-
-                    for (tag in room.roomData.tags) {
-                        if (tag.matches(regex)) return@filter true
-                    }
-                }
-                false
-            }
-            .sortedBy { it.userManager.users.size }
-            .take(50)
+        val rooms = HabboServer.habboGame.roomManager.searchRooms(searchTerm)
 
         habboSession.sendHabboResponse(
             OutgoingR63A.NAVIGATOR_LIST_ROOMS,
-            1, // category
-            9, // mode
-            searchTerm, // search term
-            rooms,
-            false // showEvents
+            NavigatorListPayload(
+                rooms = rooms,
+                mode = NavigatorGuestRoomsMode.SEARCH,
+                query = searchTerm,
+                categoryId = -1,
+                forceDisplay = 1
+            )
         )
     }
 }

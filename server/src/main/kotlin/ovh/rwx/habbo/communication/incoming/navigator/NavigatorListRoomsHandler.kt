@@ -19,29 +19,32 @@
 
 package ovh.rwx.habbo.communication.incoming.navigator
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class NavigatorPopularRoomsHandler {
-    @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_ROOMS)
+class NavigatorListRoomsHandler {
+    @HandlerR63A(IncomingR63A.NAVIGATOR_LIST_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val categoryId = habboRequest.readUTF().toIntOrNull() ?: -1
-        val popularRooms = HabboServer.habboGame.roomManager.getPopularRooms(categoryId)
+        val forceDisplay = habboRequest.readInt()
+        val mode = NavigatorGuestRoomsMode.fromInt(habboRequest.readInt())
+
+        val rooms: List<Room> = when (mode) {
+            NavigatorGuestRoomsMode.MY_ROOMS -> habboSession.rooms
+            else -> emptyList()
+        }
 
         habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
-            NavigatorListPayload(
-                rooms = popularRooms,
-                mode = NavigatorGuestRoomsMode.POPULAR,
-                categoryId = categoryId,
-                forceDisplay = if (categoryId == -1) 1 else 2
+            OutgoingR63A.NAVIGATOR_LIST_ROOMS, NavigatorListPayload(
+                forceDisplay = forceDisplay,
+                mode = mode,
+                rooms = rooms,
             )
         )
     }

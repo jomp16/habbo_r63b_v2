@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
@@ -49,8 +50,15 @@ class RoomInfoResponse {
 
             serialize(room, true, isLoading)
 
-            writeBoolean(checkEntry)
-            writeBoolean(false) // staff picked
+            // Revelação R37: O checkEntry (forward) entrou em Agosto de 2009!
+            if (isVersionAtLeast(2009, 8, 21)) {
+                writeBoolean(checkEntry)
+            }
+
+            // Revelação R63: O staff picked (recomendado) entrou em Dezembro de 2010!
+            if (isVersionAtLeast(2010, 12, 3)) {
+                writeBoolean(false) // staff picked
+            }
         }
     }
 

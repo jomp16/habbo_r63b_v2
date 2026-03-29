@@ -19,10 +19,7 @@
 
 package ovh.rwx.habbo.communication.outgoing.messenger
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.isVersionBefore
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.messenger.MessengerFriend
@@ -46,7 +43,11 @@ class MessengerFriendsResponse {
             writeInt(maxFriends) // Max friends normal
             writeInt(300)
             writeInt(maxFriendsHC) // Max friends HC
-            writeInt(maxFriendsHC) // Max friends VIP
+
+            if (isVersionAtLeast(2010, 4, 7)) {
+                writeInt(maxFriendsHC) // Max friends VIP
+            }
+
             writeInt(0) // category count
             // category structure:
             // int - id

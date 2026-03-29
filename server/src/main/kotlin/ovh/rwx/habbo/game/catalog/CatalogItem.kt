@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
@@ -100,7 +101,15 @@ data class CatalogItem(
             writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
             writeInt(costCredits) // priceInCredits
             writeInt(if (costVip > 0) costVip else costPixels) // priceInActivityPoints
-            writeInt(if (costVip > 0) ActivityPointType.SHELLS.code else ActivityPointType.PIXELS.code) // activityPointType
+
+            if (isVersionAtLeast(2010, 12, 3)) {
+                // Se for muito antigo (Dez 2010), evitamos mandar Shells para não dar o erro #1009 do ícone nulo
+                if (isVersionBefore(2011, 2, 1)) {
+                    writeInt(if (costVip > 0) ActivityPointType.SNOWFLAKES.code else ActivityPointType.PIXELS.code)
+                } else {
+                    writeInt(if (costVip > 0) ActivityPointType.SHELLS.code else ActivityPointType.PIXELS.code)
+                }
+            }
 
             // serializeItem R63A
             writeInt(1) // items count
@@ -115,7 +124,7 @@ data class CatalogItem(
             writeInt(amount) // productCount
             writeInt(-1) // expiration
 
-            if (isVersionAtLeast(2011, 4, 1)) {
+            if (isVersionAtLeast(2011, 6, 1)) {
                 writeInt(if (clubOnly) 1 else 0) // clubLevel
             }
         }

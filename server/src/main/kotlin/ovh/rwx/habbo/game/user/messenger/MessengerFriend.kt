@@ -88,7 +88,10 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
                 writeInt(0) // category
                 writeUTF(it.motto)
                 writeUTF(if (online) "" else "Último login...") // formatar data
-                writeUTF(it.realname)
+
+                if (isVersionAtLeast(2009, 11, 13)) {
+                    writeUTF(it.realname)
+                }
 
                 // Só envia o Facebook ID (11º campo) se for build de Maio de 2011 em diante
                 if (isVersionAtLeast(2011, 5, 9)) {

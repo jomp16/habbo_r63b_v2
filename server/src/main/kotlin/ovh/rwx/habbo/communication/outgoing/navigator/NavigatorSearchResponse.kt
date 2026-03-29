@@ -26,34 +26,16 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.navigator.NavigatorEventCategory
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.user.HabboSession
-import java.util.Locale.getDefault
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchResponse {
-    // todo: rewrite it to be more generic enough
     @Response(Outgoing.NAVIGATOR_SEARCH)
     fun response(habboResponse: HabboResponse, habboSession: HabboSession, category: String, searchTerm: String) {
-        val rooms: MutableList<Room> = mutableListOf()
-
-        if (!searchTerm.isBlank()) {
-            rooms += HabboServer.habboGame.roomManager.rooms.values.filter {
-                when {
-                    it.roomData.roomType == RoomType.PUBLIC -> false
-                    searchTerm.startsWith("owner:") -> it.roomData.ownerName == searchTerm.substring(6)
-                    searchTerm.startsWith("tag:") -> it.roomData.tags.any { s ->
-                        s == searchTerm.substring(4)
-                    }
-                    searchTerm.startsWith("roomname:") -> it.roomData.name == searchTerm.substring(9)
-                    it.roomData.ownerName.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    it.roomData.name.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    it.roomData.description.matches("(?i:.*$searchTerm.*)".toRegex()) -> true
-                    else -> it.roomData.tags.any { s ->
-                        s.lowercase(getDefault()).matches("(?i:.*$searchTerm.*)".toRegex())
-                    }
-                }
-            }.sortedByDescending { it.userManager.users.size }
+        val rooms = if (searchTerm.isNotBlank()) {
+            HabboServer.habboGame.roomManager.searchRooms(searchTerm)
+        } else {
+            emptyList()
         }
 
         habboResponse.apply {

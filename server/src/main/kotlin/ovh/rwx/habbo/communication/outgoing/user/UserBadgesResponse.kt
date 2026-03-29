@@ -34,7 +34,11 @@ class UserBadgesResponse {
         habboResponse.apply {
             val equippedBadges = badges.filter { it.slot > 0 }.sortedBy { it.slot }
             // todo: make sure if it's always user id or use virtualID when if in room
-            writeInt(id)
+            if (habboResponse.habboVersion.majorVersion <= 38) {
+                writeUTF(id.toString())
+            } else {
+                writeInt(id)
+            }
             writeInt(equippedBadges.size)
 
             equippedBadges.forEach {

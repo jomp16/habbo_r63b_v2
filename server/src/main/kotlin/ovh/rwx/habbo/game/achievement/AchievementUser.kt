@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.achievement
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 
 data class AchievementUser(
@@ -36,8 +37,11 @@ data class AchievementUser(
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return
 
+        val totalLevels = group.totalLevels
+        val isMaxLevel = level >= totalLevels
+
         var targetLevel = level + 1
-        if (targetLevel > group.totalLevels) targetLevel = group.totalLevels
+        targetLevel = if (targetLevel > totalLevels) totalLevels else targetLevel
 
         val targetAchievement = levels.find { it.level == targetLevel } ?: levels.lastOrNull() ?: return
 
@@ -45,6 +49,8 @@ data class AchievementUser(
         val scoreAtStart = if (targetLevel == 1) 0 else {
             levels.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
         }
+
+        val displayMethod = if (isMaxLevel && totalLevels == 1) 1 else 0
 
         habboResponse.apply {
             writeInt(group.id) // achievementId
@@ -55,11 +61,11 @@ data class AchievementUser(
             writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
             writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
             writeInt(progress) // currentPoints
-            writeBoolean(level >= group.totalLevels) // finalLevel
+            writeBoolean(isMaxLevel) // finalLevel
             writeUTF(group.category.category) // category
             writeUTF("") // subCategory
-            writeInt(group.totalLevels) // levelCount
-            writeInt(0) // displayMethod
+            writeInt(totalLevels) // levelCount
+            writeInt(displayMethod) // displayMethod
             writeShort(0) // state
         }
     }
@@ -67,8 +73,11 @@ data class AchievementUser(
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return
 
+        val totalLevels = group.totalLevels
+        val isMaxLevel = level >= totalLevels
+
         var targetLevel = level + 1
-        if (targetLevel > group.totalLevels) targetLevel = group.totalLevels
+        targetLevel = if (targetLevel > totalLevels) totalLevels else targetLevel
 
         val targetAchievement = levels.find { it.level == targetLevel } ?: levels.lastOrNull() ?: return
 
@@ -78,16 +87,48 @@ data class AchievementUser(
         }
 
         habboResponse.apply {
-            writeInt(group.id) // achievementId
-            writeInt(targetLevel) // level
-            writeUTF(badgeCode) // badgeId
-            writeInt(scoreAtStart) // scoreAtStartOfLevel
-            writeInt(targetAchievement.progressRequirement) // scoreLimit
-            writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
-            writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
-            writeBoolean(level >= group.totalLevels) // finalLevel
+            writeInt(group.id)
+            writeInt(targetLevel)
+            writeUTF(badgeCode)
+            writeInt(targetAchievement.progressRequirement)
+            writeInt(targetAchievement.rewardActivityPoints)
+            writeInt(ActivityPointType.PIXELS.code)
+            writeInt(progress)
+
+            if (isVersionAtLeast(2011, 5, 6)) {
+                writeBoolean(isMaxLevel)
+                writeUTF(group.category.category)
+                writeInt(totalLevels)
+            }
+        }
+    }
+
+    fun serializeUnlocked(habboResponse: HabboResponse) {
+        val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return
+        val currentAchievement = levels.find { it.level == level } ?: levels.lastOrNull() ?: return
+
+        habboResponse.apply {
+            writeInt(group.id) // type (Achievement ID)
+            writeInt(level)    // level alcançado
+            writeInt(currentAchievement.id) // badgeId interno (Geralmente 1337)
+
+            val badgeCode = if (group.badgeAppendLevel) "${group.name}$level" else group.name
+            writeUTF(badgeCode) // ACH_Name1
+
+            writeInt(currentAchievement.rewardActivityPoints) // points reward
+            writeInt(currentAchievement.rewardActivityPoints) // levelRewardPoints
+            writeInt(ActivityPointType.PIXELS.code)           // currency type (0 = Pixels)
+            writeInt(currentAchievement.rewardAchievementPoints) // bonusPoints / Score
+            writeInt(group.id) // achievementID do DB
+
+            val prevBadge = if (level > 1 && group.badgeAppendLevel) {
+                "${group.name}${level - 1}"
+            } else {
+                ""
+            }
+            writeUTF(prevBadge) // removedBadgeCode (Para a UI substituir o ícone)
             writeUTF(group.category.category) // category
-            writeInt(group.totalLevels) // levelCount
+            writeBoolean(true) // showDialogToUser (Alerta na tela)
         }
     }
 }
