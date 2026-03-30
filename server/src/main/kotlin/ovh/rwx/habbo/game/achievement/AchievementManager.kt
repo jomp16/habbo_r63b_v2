@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.util.ActivityPointType
 import java.util.concurrent.ConcurrentHashMap
 
 class AchievementManager {
@@ -128,7 +129,11 @@ class AchievementManager {
                 habboSession.userStats.achievementScore += nextLevelData.rewardAchievementPoints
 
                 if (nextLevelData.rewardActivityPoints > 0) {
-                    habboSession.userInformation.pixels += nextLevelData.rewardActivityPoints
+                    habboSession.userInformation.activityPointsCurrencies.merge(
+                        ActivityPointType.PIXELS,
+                        nextLevelData.rewardActivityPoints,
+                        Int::plus
+                    )
                 }
             } else {
                 break
@@ -152,8 +157,7 @@ class AchievementManager {
             if (habboSession.release == "R63A") {
                 habboSession.sendHabboResponse(
                     OutgoingR63A.ACTIVITY_POINTS_BALANCE,
-                    habboSession.userInformation.pixels,
-                    0
+                    habboSession.userInformation.activityPointsCurrencies
                 )
                 habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
                 habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
@@ -165,7 +169,10 @@ class AchievementManager {
                     groupedAchievements
                 )
             } else {
-                habboSession.sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, habboSession.userInformation.pixels, 0)
+                habboSession.sendHabboResponse(
+                    Outgoing.ACTIVITY_POINTS_BALANCE,
+                    habboSession.userInformation.activityPointsCurrencies
+                )
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
                 habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)

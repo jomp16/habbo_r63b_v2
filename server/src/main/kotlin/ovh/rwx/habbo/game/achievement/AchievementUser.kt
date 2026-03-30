@@ -23,7 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
-import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
+import ovh.rwx.habbo.util.ActivityPointType
 
 data class AchievementUser(
     val id: Int,
@@ -90,10 +90,16 @@ data class AchievementUser(
             writeInt(group.id)
             writeInt(targetLevel)
             writeUTF(badgeCode)
-            writeInt(targetAchievement.progressRequirement)
-            writeInt(targetAchievement.rewardActivityPoints)
-            writeInt(ActivityPointType.PIXELS.code)
-            writeInt(progress)
+
+            if (isVersionAtLeast(2010, 11, 12)) {
+                writeInt(targetAchievement.progressRequirement)
+                writeInt(targetAchievement.rewardActivityPoints)
+                writeInt(ActivityPointType.PIXELS.code)
+            }
+
+            if (isVersionAtLeast(2010, 11, 19)) {
+                writeInt(progress)
+            }
 
             if (isVersionAtLeast(2011, 5, 6)) {
                 writeBoolean(isMaxLevel)

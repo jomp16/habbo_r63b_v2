@@ -50,6 +50,7 @@ import ovh.rwx.habbo.game.user.inventory.HabboInventory
 import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -388,19 +389,29 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 update = true
             }
 
+            val currentPixels = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
             if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && HabboServer.habboConfig.rewardConfig.pixels > 0
-                && userInformation.pixels < Int.MAX_VALUE
+                && currentPixels < Int.MAX_VALUE
             ) {
-                userInformation.pixels += HabboServer.habboConfig.rewardConfig.pixels
+                userInformation.activityPointsCurrencies.merge(
+                    ActivityPointType.PIXELS,
+                    HabboServer.habboConfig.rewardConfig.pixels,
+                    Int::plus
+                )
 
                 update = true
             }
 
+            val currentVipPoints = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
             if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax < 0
                 && HabboServer.habboConfig.rewardConfig.vipPoints > 0
-                && userInformation.vipPoints < Int.MAX_VALUE
+                && currentVipPoints < Int.MAX_VALUE
             ) {
-                userInformation.vipPoints += HabboServer.habboConfig.rewardConfig.vipPoints
+                userInformation.activityPointsCurrencies.merge(
+                    ActivityPointType.DIAMONDS,
+                    HabboServer.habboConfig.rewardConfig.vipPoints,
+                    Int::plus
+                )
 
                 update = true
             }
@@ -456,23 +467,42 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun updateAllCurrencies() {
+        // === CREDITS ===
         if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
-        if (userInformation.pixels < 0) userInformation.pixels = Int.MAX_VALUE
-        if (userInformation.vip && userInformation.vipPoints < 0) userInformation.vipPoints = Int.MAX_VALUE
+        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) {
+            userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
+        }
 
-        if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) userInformation.credits =
-            HabboServer.habboConfig.rewardConfig.creditsMax
-        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && userInformation.pixels > HabboServer.habboConfig.rewardConfig.pixelsMax) userInformation.pixels =
-            HabboServer.habboConfig.rewardConfig.pixelsMax
-        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && userInformation.vipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) userInformation.vipPoints =
-            HabboServer.habboConfig.rewardConfig.vipPointsMax
+        // === PIXELS / DUCKETS ===
+        var currentPixels = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
 
+        if (currentPixels < 0) currentPixels = Int.MAX_VALUE
+        if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && currentPixels > HabboServer.habboConfig.rewardConfig.pixelsMax) {
+            currentPixels = HabboServer.habboConfig.rewardConfig.pixelsMax
+        }
+
+        // Atualiza o Map com o valor validado
+        userInformation.activityPointsCurrencies[ActivityPointType.PIXELS] = currentPixels
+
+        // === VIP POINTS / DIAMANTES ===
+        var currentVipPoints = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
+
+        if (userInformation.vip) {
+            if (currentVipPoints < 0) currentVipPoints = Int.MAX_VALUE
+            if (HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && currentVipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) {
+                currentVipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
+            }
+            // Atualiza o Map com o valor validado
+            userInformation.activityPointsCurrencies[ActivityPointType.DIAMONDS] = currentVipPoints
+        }
+
+        // === ENVIAR PACOTES ===
         if (release != "R63A") {
             sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
-            sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
+            sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
         } else {
             sendHabboResponse(OutgoingR63A.CREDITS_BALANCE, userInformation.credits)
-            sendHabboResponse(OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.pixels, userInformation.vipPoints)
+            sendHabboResponse(OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
         }
     }
 

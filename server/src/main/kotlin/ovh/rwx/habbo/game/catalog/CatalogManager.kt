@@ -26,7 +26,6 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
-import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
@@ -34,6 +33,7 @@ import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.subscription.ClubType
+import ovh.rwx.habbo.util.ActivityPointType
 
 class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -58,7 +58,7 @@ class CatalogManager {
             "",
             "root",
             0,
-            visible = true,
+            visible = false,
             enabled = true,
             minRank = 1,
             clubOnly = false,
@@ -82,7 +82,7 @@ class CatalogManager {
             "",
             "root",
             0,
-            visible = true,
+            visible = false,
             enabled = true,
             minRank = 1,
             clubOnly = false,
@@ -125,16 +125,14 @@ class CatalogManager {
             return
         }
 
-        if (habboSession.userInformation.credits < clubOffer.credits ||
-            (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
-            else habboSession.userInformation.vipPoints < clubOffer.points)
-        ) return
+        val pointType = if (clubOffer.pointsType == 0) ActivityPointType.PIXELS else ActivityPointType.DIAMONDS
+        val currentPoints = habboSession.userInformation.activityPointsCurrencies.getOrDefault(pointType, 0)
+
+        if (habboSession.userInformation.credits < clubOffer.credits || currentPoints < clubOffer.points) return
 
         habboSession.userInformation.credits -= clubOffer.credits
-
-        when (clubOffer.pointsType) {
-            0 -> habboSession.userInformation.pixels -= clubOffer.points
-            else -> habboSession.userInformation.vipPoints -= clubOffer.points
+        if (clubOffer.points > 0) {
+            habboSession.userInformation.activityPointsCurrencies.merge(pointType, -clubOffer.points, Int::plus)
         }
 
         habboSession.habboSubscription.addOrExtendHabboClub(clubOffer.months)
@@ -156,16 +154,14 @@ class CatalogManager {
             return
         }
 
-        if (habboSession.userInformation.credits < clubOffer.credits ||
-            (if (clubOffer.pointsType == 0) habboSession.userInformation.pixels < clubOffer.points
-            else habboSession.userInformation.vipPoints < clubOffer.points)
-        ) return
+        val pointType = if (clubOffer.pointsType == 0) ActivityPointType.PIXELS else ActivityPointType.DIAMONDS
+        val currentPoints = habboSession.userInformation.activityPointsCurrencies.getOrDefault(pointType, 0)
+
+        if (habboSession.userInformation.credits < clubOffer.credits || currentPoints < clubOffer.points) return
 
         habboSession.userInformation.credits -= clubOffer.credits
-
-        when (clubOffer.pointsType) {
-            0 -> habboSession.userInformation.pixels -= clubOffer.points
-            else -> habboSession.userInformation.vipPoints -= clubOffer.points
+        if (clubOffer.points > 0) {
+            habboSession.userInformation.activityPointsCurrencies.merge(pointType, -clubOffer.points, Int::plus)
         }
 
         // Ao extender, usar o maior itemsLimit entre atual e novo
@@ -196,29 +192,34 @@ class CatalogManager {
         }
         val totalAmountToPurchase = amount - totalFreeAmount(amount)
 
+        val currentPixels =
+            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
+        val currentVipPoints =
+            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
+
         val notEnoughCredits =
             catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
         val notEnoughPixels =
-            catalogItem.costPixels > 0 && habboSession.userInformation.pixels < catalogItem.costPixels * totalAmountToPurchase
+            catalogItem.costPixels > 0 && currentPixels < catalogItem.costPixels * totalAmountToPurchase
         val notEnoughVipPoints =
-            catalogItem.costVip > 0 && habboSession.userInformation.vipPoints < catalogItem.costVip * totalAmountToPurchase
-        if (notEnoughCredits
-            || notEnoughPixels
-            || notEnoughVipPoints
-        ) {
+            catalogItem.costVip > 0 && currentVipPoints < catalogItem.costVip * totalAmountToPurchase
+
+        if (notEnoughCredits || notEnoughPixels || notEnoughVipPoints) {
+            val missingPointType = if (notEnoughVipPoints) ActivityPointType.DIAMONDS else ActivityPointType.PIXELS
+
             if (habboSession.release != "R63A")
                 habboSession.sendHabboResponse(
                     Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
                     notEnoughCredits,
                     notEnoughPixels || notEnoughVipPoints,
-                    ActivityPointType.PIXELS
+                    missingPointType
                 )
             else
                 habboSession.sendHabboResponse(
                     OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
                     notEnoughCredits,
                     notEnoughPixels || notEnoughVipPoints,
-                    ActivityPointType.PIXELS
+                    missingPointType
                 )
 
             return
@@ -290,9 +291,23 @@ class CatalogManager {
         else
             habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PURCHASE_OK, catalogItem, userItems)
 
-        if (catalogItem.costCredits > 0) habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
-        if (catalogItem.costPixels > 0) habboSession.userInformation.pixels -= catalogItem.costPixels * totalAmountToPurchase
-        if (catalogItem.costVip > 0) habboSession.userInformation.vipPoints -= catalogItem.costVip * totalAmountToPurchase
+        if (catalogItem.costCredits > 0) {
+            habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
+        }
+        if (catalogItem.costPixels > 0) {
+            habboSession.userInformation.activityPointsCurrencies.merge(
+                ActivityPointType.PIXELS,
+                -(catalogItem.costPixels * totalAmountToPurchase),
+                Int::plus
+            )
+        }
+        if (catalogItem.costVip > 0) {
+            habboSession.userInformation.activityPointsCurrencies.merge(
+                ActivityPointType.DIAMONDS,
+                -(catalogItem.costVip * totalAmountToPurchase),
+                Int::plus
+            )
+        }
 
         // Achievements de LTD
         if (catalogItem.limited) {
@@ -329,8 +344,12 @@ class CatalogManager {
         // todo
         if (voucherCode == "full" && habboSession.hasPermission("acc_catalog_voucher_full")) {
             habboSession.userInformation.credits = Int.MAX_VALUE
-            habboSession.userInformation.pixels = Int.MAX_VALUE
-            if (habboSession.userInformation.vip) habboSession.userInformation.vipPoints = Int.MAX_VALUE
+
+            // Injetamos as moedas diretamente no Map do usuário!
+            habboSession.userInformation.activityPointsCurrencies[ActivityPointType.PIXELS] = Int.MAX_VALUE
+            if (habboSession.userInformation.vip) {
+                habboSession.userInformation.activityPointsCurrencies[ActivityPointType.DIAMONDS] = Int.MAX_VALUE
+            }
 
             habboSession.updateAllCurrencies()
 

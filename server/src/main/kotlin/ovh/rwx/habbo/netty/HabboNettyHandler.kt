@@ -94,7 +94,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                     ctx.close()
                 } else if (evt.state() == IdleState.WRITER_IDLE && habboSession.release != "R63A" && (habboSession.authenticated || !habboSession.handshaking)) {
-                    log.info("Didn't send any message to user $username, pinging it.")
+                    log.trace("Didn't send any message to user $username, pinging it.")
 
                     habboSession.ping = System.nanoTime()
                     habboSession.sendHabboResponse(Outgoing.MISC_PING)

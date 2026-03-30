@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,25 +25,26 @@ import ovh.rwx.habbo.BuildConfig
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserInformation
 import ovh.rwx.habbo.kotlin.localDateTime
+import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 
 object UserInformationDao {
     private val userInformationsList: MutableMap<Int, UserInformation> = LinkedHashMap()
-    val serverConsoleUserInformation: UserInformation = UserInformation(Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
-            "SERVER SCRIPTING CONSOLE", // name
-            "", // email, empty
-            LocalDateTime.of(2015, 1, 1, 0, 0),
-            "${BuildConfig.NAME} scripting console.", // realname
-            7, // rank
-            0, // credits
-            0, // pixels
-            0, // vip points
-            HabboServer.habboConfig.serverConsoleFigure, // figure
-            "M", // gender
-            "Version: ${BuildConfig.VERSION}", // motto
-            0, // homeroom
-            false, // vip
-            ""
+    val serverConsoleUserInformation: UserInformation = UserInformation(
+        Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
+        "SERVER SCRIPTING CONSOLE", // name
+        "", // email, empty
+        LocalDateTime.of(2015, 1, 1, 0, 0),
+        "${BuildConfig.NAME} scripting console.", // realname
+        7, // rank
+        0, // credits
+        HabboServer.habboConfig.serverConsoleFigure, // figure
+        "M", // gender
+        "Version: ${BuildConfig.VERSION}", // motto
+        0, // homeroom
+        false, // vip
+        "",
+        mutableMapOf()
     )
 
     fun getUserInformationById(userId: Int): UserInformation? {
@@ -146,14 +147,23 @@ object UserInformationDao {
                     "online" to online,
                     "ip_last" to ip,
                     "credits" to userInformation.credits,
-                    "pixels" to userInformation.pixels,
-                    "vip_points" to userInformation.vipPoints,
                     "figure" to userInformation.figure,
                     "gender" to userInformation.gender,
                     "motto" to userInformation.motto,
                     "home_room" to userInformation.homeRoom,
-                            "id" to userInformation.id
+                    "id" to userInformation.id
+                )
+            )
+
+            batchUpdate(
+                javaClass.classLoader.getResource("sql/users/information/update_user_currencies.sql")!!.readText(),
+                userInformation.activityPointsCurrencies.map {
+                    mapOf(
+                        "user_id" to userInformation.id,
+                        "type" to it.key.code,
+                        "points" to it.value
                     )
+                }
             )
         }
     }
@@ -171,7 +181,27 @@ object UserInformationDao {
         }
     }
 
-    private fun getUserInformation(row: Row): UserInformation = UserInformation(
+    private fun getUserInformation(row: Row): UserInformation {
+        val currenciesStr = row.string("currencies_str")
+        val currenciesMap = mutableMapOf<ActivityPointType, Int>()
+
+        if (currenciesStr.isNotEmpty()) {
+            currenciesStr.split(";").forEach { pair ->
+                val parts = pair.split(":")
+                if (parts.size == 2) {
+                    val typeInt = parts[0].toIntOrNull() ?: return@forEach
+                    val points = parts[1].toIntOrNull() ?: 0
+
+                    val typeEnum = ActivityPointType.fromType(typeInt)
+
+                    if (typeEnum != null) {
+                        currenciesMap[typeEnum] = points
+                    }
+                }
+            }
+        }
+
+        return UserInformation(
             row.int("id"),
             row.string("username"),
             row.string("email"),
@@ -179,13 +209,13 @@ object UserInformationDao {
             row.string("realname"),
             row.int("rank"),
             row.int("credits"),
-            row.int("pixels"),
-            row.int("vip_points"),
             row.string("figure"),
             row.string("gender"),
             row.string("motto"),
             row.int("home_room"),
             row.boolean("vip"),
-            row.string("password")
-    )
+            row.string("password"),
+            currenciesMap,
+        )
+    }
 }

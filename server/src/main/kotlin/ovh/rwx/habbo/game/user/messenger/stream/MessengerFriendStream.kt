@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.user.messenger.stream
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 
 /**
  * Representa uma entrada no "Friend Stream" (Mural de Atualizações) do Messenger.
@@ -76,11 +77,16 @@ data class MessengerFriendStream(
             writeUTF(accountId)
             writeUTF(userName)
             writeUTF(userGender)
-            writeUTF(imageFilePath) // Look ou caminho do asset (badge/icon)
+            if (isVersionAtLeast(2011, 7, 6)) {
+                writeUTF(imageFilePath) // Look ou caminho do asset (badge/icon)
+            }
             writeInt(minutesAgo)
             writeInt(linkTargetType.id)
-            writeInt(likesCount)
-            writeBoolean(canLike)
+
+            if (isVersionAtLeast(2011, 8, 5)) {
+                writeInt(likesCount)
+                writeBoolean(canLike)
+            }
 
             // Processamento do ExtraData conforme o actionId/type
             when (type) {

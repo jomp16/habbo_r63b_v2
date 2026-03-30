@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,18 +17,22 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.room
+package ovh.rwx.habbo.util
 
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.user.HabboSession
+enum class ActivityPointType(val code: Int) {
+    PIXELS(0),
+    SNOWFLAKES(1),
+    HEARTS(2),
+    GIFT_POINTS(3),
+    SHELLS(4),
+    DIAMONDS(5),
+    SEASHELLS_2(101),
+    NUTS(102),
+    STARS(103),
+    CLOUDS(104),
+    DIAMONDS_2(105);
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomGetAdvertisementHandler {
-    @HandlerR63A(IncomingR63A.ROOM_GET_ADVERTISEMENT)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_SEND_ADVERTISEMENT, "", "")
+    companion object {
+        fun fromType(code: Int) = entries.find { it.code == code }
     }
 }

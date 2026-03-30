@@ -24,42 +24,21 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.util.ActivityPointType
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserActivityPointsResponse {
     @Response(Outgoing.ACTIVITY_POINTS_BALANCE)
-    fun response(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
-        habboResponse.apply {
-            writeInt(2)
-            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
-            writeInt(pixels)
-            writeInt(ActivityPointType.DIAMONDS.code) // diamonds
-            writeInt(vipPoints)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ACTIVITY_POINTS_BALANCE)
-    fun responseR63A(habboResponse: HabboResponse, pixels: Int, vipPoints: Int) {
+    fun response(habboResponse: HabboResponse, currencies: Map<ActivityPointType, Int>) {
         habboResponse.apply {
-            writeInt(2)
-            writeInt(ActivityPointType.PIXELS.code) // pixels / duckets
-            writeInt(pixels)
-            writeInt(ActivityPointType.SHELLS.code) // SHELLS
-            writeInt(vipPoints)
+            writeInt(currencies.size)
+
+            currencies.forEach { (type, amount) ->
+                writeInt(type.code)
+                writeInt(amount)
+            }
         }
     }
 }
 
-enum class ActivityPointType(val code: Int) {
-    PIXELS(0),
-    SNOWFLAKES(1),
-    HEARTS(2),
-    GIFT_POINTS(3),
-    SHELLS(4),
-    DIAMONDS(5),
-    SEASHELLS_2(101),
-    NUTS(102),
-    STARS(103),
-    CLOUDS(104),
-    DIAMONDS_2(105),
-}

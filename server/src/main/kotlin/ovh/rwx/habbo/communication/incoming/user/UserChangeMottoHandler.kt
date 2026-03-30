@@ -22,13 +22,17 @@ package ovh.rwx.habbo.communication.incoming.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserChangeMottoHandler {
     @Handler(Incoming.USER_CHANGE_MOTTO)
+    @HandlerR63A(IncomingR63A.USER_CHANGE_MOTTO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         var motto = habboRequest.readUTF()
@@ -43,5 +47,13 @@ class UserChangeMottoHandler {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Motto", 1, accumulate = true)
 
         habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, habboSession.userInformation.figure, habboSession.userInformation.gender, habboSession.userInformation.motto, habboSession.userStats.achievementScore)
+        habboSession.currentRoom?.sendHabboResponse(
+            OutgoingR63A.USER_UPDATE,
+            habboSession.roomUser!!.virtualID,
+            habboSession.userInformation.figure,
+            habboSession.userInformation.gender,
+            habboSession.userInformation.motto,
+            habboSession.userStats.achievementScore
+        )
     }
 }

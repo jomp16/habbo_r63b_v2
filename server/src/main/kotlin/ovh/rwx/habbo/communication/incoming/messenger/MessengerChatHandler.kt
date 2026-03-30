@@ -117,9 +117,9 @@ class MessengerChatHandler {
                             val param = it.substring(2)
 
                             when (type) {
-                                "u" -> writeUTF(param.replace("\\,", ","))
+                                "s" -> writeUTF(param.replace("\\,", ","))
                                 "i" -> writeInt(param.toInt())
-                                "s" -> writeShort(param.toInt())
+                                "sh" -> writeShort(param.toInt())
                                 "b" -> writeBoolean(param.toBoolean())
                                 "d" -> writeDouble(param.toDouble())
                                 "v" -> writeByte(param.toInt())

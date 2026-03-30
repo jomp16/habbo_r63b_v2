@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,8 +24,8 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomSendAdvertisementResponse {
-    @ResponseR63A(OutgoingR63A.ROOM_SEND_ADVERTISEMENT)
+class RoomIntersitialResponse {
+    @ResponseR63A(OutgoingR63A.ROOM_INTERSITIAL)
     fun responseR63A(habboResponse: HabboResponse, image: String, url: String) {
         habboResponse.apply {
             writeUTF(image)

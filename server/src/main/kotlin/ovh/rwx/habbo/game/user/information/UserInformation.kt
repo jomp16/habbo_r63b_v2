@@ -26,24 +26,24 @@ import ovh.rwx.habbo.database.wardrobe.WardrobeDao
 import ovh.rwx.habbo.game.achievement.AchievementUser
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
+import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 
 data class UserInformation(
-        val id: Int,
-        val username: String,
-        val email: String,
-        val accountCreated: LocalDateTime,
-        val realname: String,
-        var rank: Int,
-        var credits: Int,
-        var pixels: Int,
-        var vipPoints: Int,
-        var figure: String,
-        var gender: String,
-        var motto: String,
-        var homeRoom: Int,
-        var vip: Boolean,
-        val password: String
+    val id: Int,
+    val username: String,
+    val email: String,
+    val accountCreated: LocalDateTime,
+    val realname: String,
+    var rank: Int,
+    var credits: Int,
+    var figure: String,
+    var gender: String,
+    var motto: String,
+    var homeRoom: Int,
+    var vip: Boolean,
+    val password: String,
+    val activityPointsCurrencies: MutableMap<ActivityPointType, Int>
 ) {
     // todo
     val ambassador: Boolean

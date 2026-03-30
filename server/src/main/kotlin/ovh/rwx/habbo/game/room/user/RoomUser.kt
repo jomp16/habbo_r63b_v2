@@ -23,7 +23,6 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
-import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
@@ -546,12 +545,7 @@ class RoomUser(
                 writeInt(it.userInformation.id)
                 writeUTF(it.userInformation.username)
                 writeUTF(it.userInformation.motto)
-                if (isVersionBefore(2009, 6, 17)) {
-                    // todo - figure
-                    writeUTF("hr-100.hd-180-7.ch-215-66.lg-270-79.sh-305-62.ha-1002-70.wa-2007")
-                } else {
-                    writeUTF(it.userInformation.figure)
-                }
+                writeUTF(it.userInformation.figure)
                 writeInt(virtualID)
                 writeInt(currentVector3.x)
                 writeInt(currentVector3.y)

@@ -24,9 +24,9 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
-import ovh.rwx.habbo.communication.outgoing.user.ActivityPointType
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
+import ovh.rwx.habbo.util.ActivityPointType
 import java.util.concurrent.atomic.AtomicInteger
 
 data class CatalogItem(

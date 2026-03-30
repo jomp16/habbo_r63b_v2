@@ -17,10 +17,6 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-SELECT u.*,
-       COALESCE(GROUP_CONCAT(CONCAT(uc.type, ':', uc.points) SEPARATOR ';'), '') AS currencies_str
-FROM users u
-         LEFT JOIN users_currencies uc ON u.id = uc.user_id
-WHERE u.email = :email
-GROUP BY u.id
-LIMIT 1;
+INSERT INTO users_currencies (user_id, type, points)
+VALUES (:user_id, :type, :points)
+ON DUPLICATE KEY UPDATE points = VALUES(points);

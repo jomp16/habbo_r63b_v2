@@ -17,29 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.incoming.room
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogPurchaseNotEnoughBalanceErrorResponse {
-    @Response(Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE)
-    @ResponseR63A(OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE)
-    fun response(
-        habboResponse: HabboResponse,
-        notEnoughCredits: Boolean,
-        notEnoughPixels: Boolean,
-        activityPointType: ActivityPointType
-    ) {
-        habboResponse.apply {
-            writeInt(if (notEnoughCredits) 1 else 0)
-            writeInt(if (notEnoughPixels) 1 else 0)
-            writeInt(activityPointType.code)
-        }
+class RoomIntersitialHandler {
+    @HandlerR63A(IncomingR63A.ROOM_INTERSITIAL)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(OutgoingR63A.ROOM_INTERSITIAL, "", "")
     }
 }

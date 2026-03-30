@@ -32,6 +32,7 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.util.ActivityPointType
 import java.awt.Color
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -207,7 +208,10 @@ class CameraManager {
         val photoFurnishing = HabboServer.habboGame.itemManager.furnishings["external_image_wallitem_poster_small"]
             ?: return false
 
-        if (habboSession.userInformation.credits < HabboServer.habboConfig.cameraConfig.prices.credits || habboSession.userInformation.pixels < HabboServer.habboConfig.cameraConfig.prices.pixels) {
+        if (habboSession.userInformation.credits < HabboServer.habboConfig.cameraConfig.prices.credits || habboSession.userInformation.activityPointsCurrencies.getOrPut(
+                ActivityPointType.PIXELS, { 0 }
+            ) < HabboServer.habboConfig.cameraConfig.prices.pixels
+        ) {
             Files.delete(previewPicturePath)
             Files.delete(previewJsonPath)
 
@@ -218,7 +222,11 @@ class CameraManager {
         if (Files.notExists(purchasedPicturePath.parent)) Files.createDirectory(purchasedPicturePath.parent)
 
         habboSession.userInformation.credits -= HabboServer.habboConfig.cameraConfig.prices.credits
-        habboSession.userInformation.pixels -= HabboServer.habboConfig.cameraConfig.prices.pixels
+        habboSession.userInformation.activityPointsCurrencies.merge(
+            ActivityPointType.PIXELS,
+            -HabboServer.habboConfig.cameraConfig.prices.pixels,
+            Int::plus
+        )
 
         Files.move(previewPicturePath, purchasedPicturePath)
         Files.delete(previewJsonPath)
