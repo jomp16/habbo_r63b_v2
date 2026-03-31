@@ -104,7 +104,8 @@ class ItemManager {
 
             wiredItemInteractor.interactionType.forEach {
                 @Suppress("UNCHECKED_CAST")
-                wiredItems[it] = (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
+                wiredItems[it] =
+                    (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
             }
         }
 
@@ -130,23 +131,24 @@ class ItemManager {
             }
 
             HabboServer.database {
-                batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql").readText().trim(),
-                        missingItems.map {
-                            mapOf(
-                                    "item_name" to it,
-                                    "type" to if (!furniXMLInfos[it]!!.wallFurni) "s" else "i",
-                                    "stack_height" to "1",
-                                    "can_stack" to true,
-                                    "allow_recycle" to true,
-                                    "allow_trade" to true,
-                                    "allow_marketplace_sell" to true,
-                                    "allow_gift" to true,
-                                    "allow_inventory_stack" to true,
-                                    "interaction_type" to "default",
-                                    "interaction_modes_count" to 1,
-                                    "vending_ids" to "0"
-                            )
-                        }
+                batchInsertAndGetGeneratedKeys(
+                    javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql").readText().trim(),
+                    missingItems.map {
+                        mapOf(
+                            "item_name" to it,
+                            "type" to if (!furniXMLInfos[it]!!.wallFurni) "s" else "i",
+                            "stack_height" to "1",
+                            "can_stack" to true,
+                            "allow_recycle" to true,
+                            "allow_trade" to true,
+                            "allow_marketplace_sell" to true,
+                            "allow_gift" to true,
+                            "allow_inventory_stack" to true,
+                            "interaction_type" to "default",
+                            "interaction_modes_count" to 1,
+                            "vending_ids" to "0"
+                        )
+                    }
                 )
             }
 
@@ -194,7 +196,8 @@ class ItemManager {
         userItem.buildersClub
     )
 
-    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? = wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
+    fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? =
+        wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
 
     fun getWiredDefaultData(interactionType: InteractionType): WiredData? {
         return try {
@@ -215,10 +218,10 @@ class ItemManager {
         furnishing: Furnishing,
         limitedItemData: LimitedItemData?,
         magicRemove: Boolean = false,
-        r63A: Boolean = false
+        inventory: Boolean = false,
     ) {
         habboResponse.apply {
-            if (!r63A && limitedItemData != null) {
+            if (!inventory && limitedItemData != null) {
                 writeInt(1)
                 writeInt(256)
                 writeUTF(extraData)
@@ -229,13 +232,15 @@ class ItemManager {
             }
 
             if (furnishing.itemName == "wallpaper" || furnishing.itemName == "floor" || furnishing.itemName == "landscape") {
-                when (furnishing.itemName) {
-                    "wallpaper" -> writeInt(2)
-                    "floor" -> writeInt(3)
-                    "landscape" -> writeInt(4)
+                if (!inventory) {
+                    when (furnishing.itemName) {
+                        "wallpaper" -> writeInt(2)
+                        "floor" -> writeInt(3)
+                        "landscape" -> writeInt(4)
+                    }
                 }
 
-                if (!r63A) writeInt(0)
+                writeInt(0)
                 writeUTF(extraData)
 
                 return
@@ -245,7 +250,7 @@ class ItemManager {
                 InteractionType.BADGE_DISPLAY -> {
                     val splitData = extraData.split(7.toChar())
 
-                    writeInt(0)
+                    if (!inventory) writeInt(0)
                     writeInt(2)
                     writeInt(4)
                     writeUTF("0")
@@ -253,10 +258,11 @@ class ItemManager {
                     writeUTF(splitData[1]) // owner
                     writeUTF(splitData[2]) // date
                 }
+
                 InteractionType.MANNEQUIN -> {
                     val splitData = extraData.split(7.toChar())
 
-                    writeInt(0)
+                    if (!inventory) writeInt(0)
                     writeInt(1)
                     writeInt(3)
                     writeUTF("GENDER")
@@ -266,10 +272,16 @@ class ItemManager {
                     writeUTF("OUTFIT_NAME")
                     writeUTF(splitData[2])
                 }
+
                 InteractionType.GIFT -> {
                     val split = extraData.split(7.toChar())
 
-                    writeInt(split[2].toInt() * 1000 + split[3].toInt())
+                    if (!inventory) {
+                        // O state do presente é calculado apenas no quarto
+                        val state = if (split.size > 3) (split[2].toIntOrNull() ?: 0) * 1000 + (split[3].toIntOrNull()
+                            ?: 0) else 0
+                        writeInt(state)
+                    }
                     writeInt(1)
                     writeInt(if (split[4].toBoolean()) 6 else 4)
                     writeUTF("EXTRA_PARAM")
@@ -289,9 +301,10 @@ class ItemManager {
                     writeUTF("state")
                     writeUTF(if (magicRemove) "1" else "0")
                 }
+
                 else -> {
+                    if (!inventory) writeInt(0)
                     writeInt(0)
-                    if (!r63A) writeInt(0)
                     writeUTF(extraData)
                 }
             }
@@ -307,9 +320,15 @@ class ItemManager {
             InteractionType.BADGE_DISPLAY -> {
                 if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
 
-                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}"
+                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${
+                    LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)
+                }"
             }
-            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)}${9.toChar()}${extraData.trim()}"
+
+            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${
+                LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)
+            }${9.toChar()}${extraData.trim()}"
+
             else -> ""
         }
     }

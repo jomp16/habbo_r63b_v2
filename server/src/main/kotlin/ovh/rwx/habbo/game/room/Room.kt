@@ -35,6 +35,7 @@ import ovh.rwx.habbo.game.room.managers.RoomItemManager
 import ovh.rwx.habbo.game.room.managers.RoomNetworkDispatcher
 import ovh.rwx.habbo.game.room.managers.RoomUserManager
 import ovh.rwx.habbo.game.room.model.RoomModel
+import ovh.rwx.habbo.game.room.trading.TradeManager
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
@@ -47,6 +48,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val networkDispatcher = RoomNetworkDispatcher(this)
     val userManager = RoomUserManager(this)
     val itemManager = RoomItemManager(this)
+    val tradeManager = TradeManager(this)
     // endregion
 
     // region Counters & State

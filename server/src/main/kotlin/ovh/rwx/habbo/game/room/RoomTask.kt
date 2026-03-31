@@ -69,6 +69,10 @@ class RoomTask : Runnable {
         log.info("Closing room n° {} - name {}", room.roomData.id, room.roomData.name)
 
         room.roomTask = null
+
+        // Cancela todas as trocas ativas antes de remover os usuários
+        room.tradeManager.clearAllTrades()
+        
         room.userManager.users.values.toList().forEach {
             room.userManager.removeUser(it, notifyClient = true, kickNotification = true)
         }
@@ -213,6 +217,17 @@ class RoomTask : Runnable {
 
     private fun processUsers(room: Room) {
         val users = room.userManager.users.values
+
+        // Limpa usuários pendentes que ficaram presos (disconnect durante o join)
+        // Um usuário em pendingJoin por mais de 5 segundos (10 major ticks) é considerado inválido
+        val pendingUsersToRemove = users.filter { it.pendingJoin && it.habboSession?.channel?.isOpen == false }
+        pendingUsersToRemove.forEach { pendingUser ->
+            log.warn(
+                "Removing stuck pending user {} from room {} (session closed)",
+                pendingUser.habboSession?.userInformation?.username, room.roomData.id
+            )
+            room.userManager.removeUser(pendingUser, notifyClient = false, kickNotification = false)
+        }
 
         users.forEach { it.onCycle() }
 

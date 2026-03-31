@@ -31,7 +31,12 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 
 class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
-        if (room.userManager.users.containsValue(roomUser)) return
+        // Verifica se o usuário ainda está no mapa de users
+        // Se pendingJoin for false, significa que o join já foi completado
+        if (!room.userManager.users.containsValue(roomUser)) return
+
+        // Se pendingJoin for false, o join já foi completado (não deve acontecer)
+        if (!roomUser.pendingJoin) return
 
         roomUser.habboSession?.let { habboSession ->
             habboSession.roomUser = roomUser
@@ -279,5 +284,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             room.emptyCounter.set(0)
             room.roomTimer.set(0)
         }
+
+        // Join completado com sucesso - marca o usuário como ativo
+        roomUser.pendingJoin = false
     }
 }

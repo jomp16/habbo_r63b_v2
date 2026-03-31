@@ -138,7 +138,7 @@ data class RoomItem(
                     furnishing,
                     limitedItemData,
                     magicRemove,
-                    r63A = true
+                    inventory = true
                 )
 
                 writeInt(-1) // seems this is related to rentals (time in seconds)

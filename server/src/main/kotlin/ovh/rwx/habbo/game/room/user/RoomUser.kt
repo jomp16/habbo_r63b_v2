@@ -55,6 +55,13 @@ class RoomUser(
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
 
+    /**
+     * Indica se o usuário está em processo de entrada na room.
+     * É definido como true quando o RoomUser é criado e false após o join ser completado.
+     * Usado para detectar e limpar usuários que disconnectaram durante o join.
+     */
+    var pendingJoin: Boolean = true
+
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0
     var objectiveItem: RoomItem? = null

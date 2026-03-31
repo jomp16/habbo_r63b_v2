@@ -49,5 +49,20 @@ fun Session.batchInsertWithIntGeneratedKey(
 
 fun Session.batchInsertAndGetGeneratedKeys(@Language("SQL") sql: String, parametersList: List<Map<String, Any?>>, options: StatementOptions = defaultOptions): List<Int> = batchInsertWithIntGeneratedKey(sql, parametersList, options).map { it.second }
 
+/**
+ * Executa múltiplos updates em batch.
+ * Retorna uma lista com o número de linhas afetadas por cada update.
+ */
+fun batchUpdate(
+    session: Session,
+    @Language("SQL") sql: String,
+    parametersList: List<Map<String, Any?>>,
+    options: StatementOptions = StatementOptions()
+): List<Int> {
+    return parametersList.map { params ->
+        session.update(sql, params, options)
+    }
+}
+
 fun Row.localDateTime(name: String): LocalDateTime = timestampOrNull(name)?.toLocalDateTime()!!
 fun Row.localDateTimeNullable(name: String): LocalDateTime? = timestampOrNull(name)?.toLocalDateTime()

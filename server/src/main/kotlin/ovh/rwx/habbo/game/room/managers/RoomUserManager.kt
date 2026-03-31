@@ -84,11 +84,20 @@ class RoomUserManager(private val room: Room) {
                 room.roomModel.doorDir,
                 room.roomModel.doorDir
             )
+
+        // Adiciona o usuário imediatamente ao mapa para permitir remoção em caso de disconnect
+        // O estado pendingJoin=true indica que o join ainda não foi completado
+        users[virtualId] = newUser
+
+        // Enfileira a tarefa de join que vai completar a inicialização e definir pendingJoin=false
         room.roomTask?.addTask(room, UserJoinRoomTask(newUser))
     }
 
     fun removeUser(roomUser: RoomUser?, notifyClient: Boolean, kickNotification: Boolean) {
         if (roomUser == null) return
+
+        // Cancela qualquer troca ativa do usuário antes de remover
+        room.tradeManager.onUserDisconnect(roomUser)
 
         roomUser.habboSession?.let { session ->
             handleUserDisconnectionMessages(session, notifyClient, kickNotification)
@@ -99,14 +108,21 @@ class RoomUserManager(private val room: Room) {
             }
         }
 
-        room.roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
+        // Remove do gamemap (se o usuário já foi adicionado)
+        // Usuários em pendingJoin podem ainda não estar no gamemap
+        if (!roomUser.pendingJoin || roomUser.currentVector3.vector2 != room.roomModel.doorVector3) {
+            room.roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
+        }
         roomUser.nextStepVector?.let { room.roomGamemap.removeRoomUser(roomUser, it.vector2) }
 
         users.remove(roomUser.virtualID)
 
-        room.gameManager.onUserLeaveRoom(roomUser)
-
-        room.roomTask?.addTask(room, UserPartRoomTask(roomUser))
+        // Só envia UserPartRoomTask se o usuário já tinha completado o join
+        // Usuários em pendingJoin nunca foram oficialmente adicionados ao room cycle
+        if (!roomUser.pendingJoin) {
+            room.gameManager.onUserLeaveRoom(roomUser)
+            room.roomTask?.addTask(room, UserPartRoomTask(roomUser))
+        }
     }
 
     private fun handleUserDisconnectionMessages(

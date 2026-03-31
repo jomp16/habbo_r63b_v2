@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
 import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
+import ovh.rwx.habbo.kotlin.batchUpdate
 import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.toIntList
 import ovh.rwx.habbo.util.Vector3
@@ -545,6 +546,76 @@ object ItemDao {
             }
 
             else -> {}
+        }
+    }
+
+    /**
+     * Transfere itens entre dois usuários em uma transação atômica.
+     * 
+     * GARANTIAS DE SEGURANÇA:
+     * - Todos os itens são transferidos ou nenhum é (atomicidade via transação SQL)
+     * - Valida que o usuário atual é o dono do item antes de transferir
+     * - Previne race conditions através de transação SQL
+     *
+     * @param user1Id ID do usuário 1
+     * @param user2Id ID do usuário 2
+     * @param user1Items IDs dos itens que user1 está dando (vão para user2)
+     * @param user2Items IDs dos itens que user2 está dando (vão para user1)
+     * @throws Exception se algum item não for encontrado ou não pertencer ao usuário
+     */
+    fun transferTradeItems(
+        user1Id: Int,
+        user2Id: Int,
+        user1Items: List<Int>,
+        user2Items: List<Int>
+    ) {
+        if (user1Items.isEmpty() && user2Items.isEmpty()) return
+
+        HabboServer.database {
+            // Prepara os parâmetros para batchUpdate
+            // Cada item terá seu próprio UPDATE com validação de proprietário
+            val allUpdates = mutableListOf<Map<String, Any>>()
+
+            // Adiciona atualizações para itens do user1 (vão para user2)
+            user1Items.forEach { itemId ->
+                allUpdates.add(
+                    mapOf(
+                        "new_user_id" to user2Id,
+                        "item_id" to itemId,
+                        "old_user_id" to user1Id
+                    )
+                )
+            }
+
+            // Adiciona atualizações para itens do user2 (vão para user1)
+            user2Items.forEach { itemId ->
+                allUpdates.add(
+                    mapOf(
+                        "new_user_id" to user1Id,
+                        "item_id" to itemId,
+                        "old_user_id" to user2Id
+                    )
+                )
+            }
+
+            if (allUpdates.isEmpty()) return@database
+
+            // Executa todas as atualizações em batch
+            // A query valida que o item pertence ao usuário antes de atualizar
+            val updateSql = javaClass.classLoader
+                .getResource("sql/items/trade/transfer_trade_items.sql")
+                ?.readText()!!
+
+            val rowsAffectedList = batchUpdate(this, updateSql, allUpdates)
+            val totalRowsAffected = rowsAffectedList.sum()
+
+            // Verifica se todos os itens foram atualizados
+            if (totalRowsAffected != allUpdates.size) {
+                throw IllegalStateException(
+                    "Esperado atualizar ${allUpdates.size} itens, mas apenas $totalRowsAffected foram afetados. " +
+                            "Possível tentativa de exploit ou item não encontrado."
+                )
+            }
         }
     }
 }

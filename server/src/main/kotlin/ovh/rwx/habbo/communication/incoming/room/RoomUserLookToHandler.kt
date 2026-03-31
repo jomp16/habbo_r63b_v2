@@ -33,6 +33,9 @@ class RoomUserLookToHandler {
     @HandlerR63A(IncomingR63A.ROOM_LOOK_TO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
+
+        habboSession.roomUser?.idle = false
+
         val x = habboRequest.readInt()
         val y = habboRequest.readInt()
 
