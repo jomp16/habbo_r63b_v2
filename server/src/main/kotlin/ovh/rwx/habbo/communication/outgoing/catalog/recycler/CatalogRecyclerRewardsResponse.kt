@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,12 +17,14 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.outgoing.catalog.recycler
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogRecyclerRewardsResponse {
@@ -40,8 +42,30 @@ class CatalogRecyclerRewardsResponse {
                     HabboServer.habboGame.itemManager.furnishings[s]?.let { furnishing ->
                         writeUTF(furnishing.itemName)
                         writeInt(1) // enabled
-                        writeUTF(furnishing.type.type)
-                        writeInt(furnishing.spriteId)
+                        writeUTF(furnishing.type.type) // productItemType
+                        writeInt(furnishing.spriteId) // productItemTypeId
+                    }
+                }
+            }
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.CATALOG_RECYCLER_REWARDS)
+    fun responseR63A(habboResponse: HabboResponse, recyclerRewards: Map<Int, List<String>>) {
+        habboResponse.apply {
+            writeInt(recyclerRewards.size) // levels
+            recyclerRewards.entries.sortedByDescending { it.key }.forEach { entry ->
+                writeInt(entry.key) // level
+                writeInt(
+                    HabboServer.habboConfig.recyclerConfig.odds[entry.key]
+                        ?: error("Can't find the odds!")
+                ) // odds
+                writeInt(entry.value.size)
+
+                entry.value.forEach { s ->
+                    HabboServer.habboGame.itemManager.furnishings[s]?.let { furnishing ->
+                        writeUTF(furnishing.type.type) // productItemType
+                        writeInt(furnishing.spriteId) // productItemTypeId
                     }
                 }
             }

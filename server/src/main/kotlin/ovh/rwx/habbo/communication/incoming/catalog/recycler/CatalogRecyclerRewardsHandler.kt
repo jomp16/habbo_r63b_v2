@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,24 +17,33 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.catalog
+package ovh.rwx.habbo.communication.incoming.catalog.recycler
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.catalog.CatalogOpenRecyclerResultResponse
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogOpenRecyclerHandler {
-    @Handler(Incoming.CATALOG_OPEN_RECYCLER)
+class CatalogRecyclerRewardsHandler {
+    @Handler(Incoming.CATALOG_RECYCLER_REWARDS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // todo: add recycler closed with timeout
-        val result = if (HabboServer.habboConfig.recyclerConfig.open) CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_OPEN
-        else CatalogOpenRecyclerResultResponse.CatalogOpenRecyclerResult.RECYCLER_CLOSED
+        habboSession.sendHabboResponse(
+            Outgoing.CATALOG_RECYCLER_REWARDS,
+            HabboServer.habboGame.catalogManager.recyclerRewards
+        )
+    }
 
-        habboSession.sendHabboResponse(Outgoing.CATALOG_OPEN_RECYCLER_RESULT, result, 0)
+    @HandlerR63A(IncomingR63A.CATALOG_RECYCLER_REWARDS)
+    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendHabboResponse(
+            OutgoingR63A.CATALOG_RECYCLER_REWARDS,
+            HabboServer.habboGame.catalogManager.recyclerRewards
+        )
     }
 }

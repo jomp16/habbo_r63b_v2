@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,13 +21,22 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.Furnishing
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomItemOpenGiftResultResponse {
     @Response(Outgoing.ROOM_ITEM_OPEN_GIFT_RESULT)
-    fun response(habboResponse: HabboResponse, itemId: Int, extraData: String, furnishing: Furnishing, itemIsInRoom: Boolean) {
+    fun response(
+        habboResponse: HabboResponse,
+        itemId: Int,
+        extraData: String,
+        furnishing: Furnishing,
+        itemIsInRoom: Boolean
+    ) {
         habboResponse.apply {
             writeUTF(furnishing.type.type)
             writeInt(furnishing.spriteId)
@@ -36,6 +45,20 @@ class RoomItemOpenGiftResultResponse {
             writeUTF(furnishing.type.type)
             writeBoolean(itemIsInRoom)
             writeUTF(extraData)
+        }
+    }
+
+    @ResponseR63A(OutgoingR63A.ROOM_ITEM_OPEN_GIFT_RESULT)
+    fun responseR63A(
+        habboResponse: HabboResponse,
+        furnishing: Furnishing,
+    ) {
+        habboResponse.apply {
+            writeUTF(furnishing.type.type)
+            writeInt(furnishing.spriteId)
+            if (isVersionAtLeast(2011, 3, 30)) {
+                writeUTF(furnishing.itemName)
+            }
         }
     }
 }

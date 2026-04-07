@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,25 +17,28 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.outgoing.catalog.recycler
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class CatalogOpenRecyclerResultResponse {
-    @Response(Outgoing.CATALOG_OPEN_RECYCLER_RESULT)
-    fun response(habboResponse: HabboResponse, recyclerResultResponse: CatalogOpenRecyclerResult, timeInSeconds: Int) {
+class CatalogRecyclerStatusResponse {
+    @Response(Outgoing.CATALOG_RECYCLER_STATUS)
+    @ResponseR63A(OutgoingR63A.CATALOG_RECYCLER_STATUS)
+    fun response(habboResponse: HabboResponse, recyclerResultResponse: CatalogRecyclerStatus, timeInSeconds: Int) {
         habboResponse.apply {
             writeInt(recyclerResultResponse.code)
             writeInt(timeInSeconds)
         }
     }
 
-    enum class CatalogOpenRecyclerResult(val code: Int) {
-        RECYCLER_OPEN(1),
-        RECYCLER_CLOSED(2),
-        RECYCLER_CLOSED_WITH_TIME(3)
+    enum class CatalogRecyclerStatus(val code: Int) {
+        OPEN(1),
+        CLOSED(2),
+        CLOSED_WITH_TIME(3)
     }
 }

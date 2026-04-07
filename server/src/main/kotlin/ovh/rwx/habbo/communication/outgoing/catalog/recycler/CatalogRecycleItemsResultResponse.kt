@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,15 +17,18 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.catalog
+package ovh.rwx.habbo.communication.outgoing.catalog.recycler
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogRecycleItemsResultResponse {
     @Response(Outgoing.CATALOG_RECYCLE_ITEMS_RESULT)
+    @ResponseR63A(OutgoingR63A.CATALOG_RECYCLE_ITEMS_RESULT)
     fun response(habboResponse: HabboResponse, catalogRecycleItemsResult: CatalogRecycleItemsResult, itemId: Int) {
         habboResponse.apply {
             writeInt(catalogRecycleItemsResult.code)
