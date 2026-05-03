@@ -135,7 +135,7 @@ class UserChatTask(
 
         if (Direction.rotationDistance(listener.bodyRotation, targetRotation) <= 1) {
             listener.headRotation = targetRotation
-            listener.headResetCycle = 4 // 2 segundos (4 ciclos de 500ms)
+            listener.headResetTick = 4 // 2 segundos (4 ciclos de 500ms)
             listener.updateNeeded = true
         }
     }

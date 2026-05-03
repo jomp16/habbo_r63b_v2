@@ -113,7 +113,7 @@ class RoomTask : Runnable {
 
     private fun processRoomSafe(room: Room, isMajorTick: Boolean) {
         try {
-            processRoomCycle(room, isMajorTick)
+            processRoomTick(room, isMajorTick)
 
             if (room.errorsCounter.get() > 0) {
                 room.errorsCounter.set(0)
@@ -124,7 +124,7 @@ class RoomTask : Runnable {
     }
 
     // --- ETAPAS DO CICLO ---
-    private fun processRoomCycle(room: Room, isMajorTick: Boolean) {
+    private fun processRoomTick(room: Room, isMajorTick: Boolean) {
         // Tarefas de fila e Wireds rodam RÁPIDO (50ms)
         processQueuedTasks(room, isMajorTick)
         processWiredsAndGames(room, isMajorTick)
@@ -206,13 +206,13 @@ class RoomTask : Runnable {
 
                 items.filter { it.furnishing.interactionType == InteractionType.ROLLER }
                     .forEach {
-                        it.furnishing.interactor?.onCycle(room, it)
+                        it.furnishing.interactor?.processTick(room, it)
                     }
             }
         }
 
         items.filter { it.furnishing.interactionType != InteractionType.ROLLER }
-            .forEach { it.onCycle() }
+            .forEach { it.processTick() }
     }
 
     private fun processUsers(room: Room) {
@@ -229,7 +229,7 @@ class RoomTask : Runnable {
             room.userManager.removeUser(pendingUser, notifyClient = false, kickNotification = false)
         }
 
-        users.forEach { it.onCycle() }
+        users.forEach { it.processTick() }
 
         val usersNeedingUpdate = users.filter { it.updateNeeded }
         if (usersNeedingUpdate.isNotEmpty()) {

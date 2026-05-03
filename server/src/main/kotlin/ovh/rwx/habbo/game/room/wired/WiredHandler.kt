@@ -138,7 +138,7 @@ class WiredHandler(val room: Room) {
 
         wiredItem.roomItem.extraData = "1"
         wiredItem.roomItem.update(updateDb = false, updateClient = true)
-        wiredItem.roomItem.requestCycles(1)
+        wiredItem.roomItem.requestTicks(1)
     }
 
     fun resetTimers() {

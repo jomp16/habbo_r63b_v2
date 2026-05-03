@@ -56,7 +56,7 @@ class DiceItemInteractor : ItemInteractor() {
                 } else {
                     roomItem.extraData = "-1"
                     roomItem.update(updateDb = false, updateClient = true)
-                    roomItem.requestCycles(4)
+                    roomItem.requestTicks(4)
                 }
             }
         } else {
@@ -69,8 +69,8 @@ class DiceItemInteractor : ItemInteractor() {
         )
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         roomItem.extraData = (1..6).random().toString()
 

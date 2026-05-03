@@ -51,7 +51,7 @@ class HabboWheelItemInteractor : ItemInteractor() {
         if (roomItem.extraData != "-1") {
             roomItem.extraData = "-1"
             roomItem.update(updateDb = false, updateClient = true)
-            roomItem.requestCycles(6)
+            roomItem.requestTicks(6)
         }
 
         if (roomUser != null) room.itemManager.wiredHandler.triggerWired(
@@ -61,8 +61,8 @@ class HabboWheelItemInteractor : ItemInteractor() {
         )
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         roomItem.extraData = (1..10).random().toString()
 

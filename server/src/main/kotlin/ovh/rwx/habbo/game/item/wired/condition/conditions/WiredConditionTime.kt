@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,7 +31,7 @@ import ovh.rwx.habbo.game.room.Room
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_TIME_MORE_THAN, InteractionType.WIRED_CONDITION_TIME_LESS_THAN)
 class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, roomItem) {
-    private var targetCycles: Int = 21
+    private var targetTicks: Int = 21
     private val isLessThan = roomItem.furnishing.interactionType == InteractionType.WIRED_CONDITION_TIME_LESS_THAN
 
     init {
@@ -43,17 +43,17 @@ class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, 
 
     override fun setData() {
         roomItem.wiredData?.let {
-            targetCycles = it.options.getOrElse(0) { targetCycles }
+            targetTicks = it.options.getOrElse(0) { targetTicks }
         }
     }
 
     override fun onCondition(wiredContext: WiredContext): Boolean {
-        val currentCycles = room.roomTimer.get()
+        val currentTick = room.roomTimer.get()
 
         return if (isLessThan) {
-            currentCycles < targetCycles
+            currentTick < targetTicks
         } else {
-            currentCycles > targetCycles
+            currentTick > targetTicks
         }
     }
 

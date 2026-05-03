@@ -68,7 +68,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
             roomItem.extraData = "1"
             roomItem.update(updateDb = false, updateClient = true)
-            roomItem.requestCycles(2)
+            roomItem.requestTicks(2)
         }
 
         room.itemManager.wiredHandler.triggerWired(
@@ -77,8 +77,8 @@ class TeleportItemInteractor : ItemInteractor() {
         )
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
         val outgoingUser = roomItem.interactingUsers[1]
         val incomingUser = roomItem.interactingUsers[2]
         var extraData = "0"
@@ -139,14 +139,14 @@ class TeleportItemInteractor : ItemInteractor() {
                             if (targetRoomItem.extraData != "2") {
                                 targetRoomItem.extraData = "2"
                                 targetRoomItem.update(updateDb = false, updateClient = true)
-                                targetRoomItem.requestCycles(2)
+                                targetRoomItem.requestTicks(2)
                             }
 
                             targetRoomItem.interactingUsers[2] = outgoingUser
                             roomItem.interactingUsers.remove(1)
                         }
 
-                        roomItem.requestCycles(1)
+                        roomItem.requestTicks(1)
                     }
 
                     else -> {
@@ -156,7 +156,7 @@ class TeleportItemInteractor : ItemInteractor() {
                         outgoingUser.walkingBlocked = false
 
                         roomItem.interactingUsers.remove(1)
-                        roomItem.requestCycles(2)
+                        roomItem.requestTicks(2)
                     }
                 }
             }
@@ -173,7 +173,7 @@ class TeleportItemInteractor : ItemInteractor() {
                 incomingUser.walkingBlocked = false
 
                 roomItem.interactingUsers.remove(2)
-                roomItem.requestCycles(1)
+                roomItem.requestTicks(1)
             }
         }
 

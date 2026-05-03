@@ -55,7 +55,7 @@ class WiredItemInteractor : ItemInteractor() {
 
         roomItem.extraData = "1"
         roomItem.update(updateDb = false, updateClient = true)
-        roomItem.requestCycles(1)
+        roomItem.requestTicks(1)
 
         roomUser?.habboSession?.let { habboSession ->
             val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
@@ -95,8 +95,8 @@ class WiredItemInteractor : ItemInteractor() {
         }
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         if (roomItem.extraData == "1") {
             roomItem.extraData = "0"

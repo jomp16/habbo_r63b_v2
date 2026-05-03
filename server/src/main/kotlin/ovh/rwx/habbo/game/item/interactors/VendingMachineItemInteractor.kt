@@ -47,7 +47,7 @@ class VendingMachineItemInteractor : ItemInteractor() {
 
         roomUser.vendingMachine(roomItem.furnishing.vendingIds[(roomItem.furnishing.vendingIds.indices).random()])
 
-        roomItem.requestCycles(2)
+        roomItem.requestTicks(2)
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerStateChanged::class, roomUser,
@@ -55,8 +55,8 @@ class VendingMachineItemInteractor : ItemInteractor() {
         )
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         roomItem.extraData = "0"
         roomItem.update(updateDb = false, updateClient = true)

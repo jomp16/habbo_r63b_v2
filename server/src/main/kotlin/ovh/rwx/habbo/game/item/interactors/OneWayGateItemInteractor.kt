@@ -45,8 +45,8 @@ class OneWayGateItemInteractor : ItemInteractor() {
         roomItem.interactingUsers.clear()
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         if (roomItem.interactingUsers.containsKey(1)) {
             roomItem.interactingUsers.remove(1)?.let {
@@ -80,7 +80,7 @@ class OneWayGateItemInteractor : ItemInteractor() {
             roomUser.walkingBlocked = true
             roomUser.moveTo(roomItem.getBehindPosition(), ignoreBlocking = true)
 
-            roomItem.requestCycles(3)
+            roomItem.requestTicks(3)
         }
 
         room.itemManager.wiredHandler.triggerWired(

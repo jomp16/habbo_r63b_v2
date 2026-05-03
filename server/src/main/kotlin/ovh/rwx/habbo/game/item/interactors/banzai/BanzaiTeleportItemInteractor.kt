@@ -35,8 +35,8 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         roomItem.extraData = "0"
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
 
         if (roomItem.extraData == "1") {
             roomItem.extraData = "0"
@@ -60,7 +60,7 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         // Activate source teleport effect for 2 cycles
         roomItem.extraData = "1"
         roomItem.update(updateDb = false, updateClient = true)
-        roomItem.requestCycles(2)
+        roomItem.requestTicks(2)
 
         // Start teleportation task after 1 cycle
         room.roomTask?.addTask(room, BanzaiTeleportTask(roomUser, roomItem, targetTeleport))

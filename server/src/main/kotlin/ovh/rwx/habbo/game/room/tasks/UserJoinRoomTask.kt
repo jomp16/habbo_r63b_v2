@@ -55,7 +55,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                         teleportItem.interactingUsers[2] = roomUser
                         teleportItem.extraData = "2"
                         teleportItem.update(updateDb = false, updateClient = true)
-                        teleportItem.requestCycles(2)
+                        teleportItem.requestTicks(2)
                     }
 
                     habboSession.targetTeleportId = 0

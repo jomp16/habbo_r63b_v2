@@ -85,8 +85,8 @@ data class RoomItem(
             furnishing.width,
             furnishing.length
         )
-    private var cycles: Int = 0
-    private var currentCycles: Int = 0
+    private var ticks: Int = 0
+    private var currentTick: Int = 0
     val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
 
     @Suppress("DuplicatedCode")
@@ -205,26 +205,26 @@ data class RoomItem(
         }
     }
 
-    fun requestCycles(cycles1: Int) {
-        if (currentCycles == 0 || cycles1 == 0) {
+    fun requestTicks(ticks1: Int) {
+        if (currentTick == 0 || ticks1 == 0) {
             // Multiplicamos por 10 porque passaremos a contabilizar a cada 50ms (1 ciclo = 500ms = 10 ticks)
-            cycles = cycles1 * 10
-            currentCycles = 0
+            ticks = ticks1 * 10
+            currentTick = 0
         }
     }
 
-    fun onCycle() {
+    fun processTick() {
         // Se o item solicitou um tempo de espera (ex: porta fechar após 2 ciclos)
-        if (cycles > 0) {
-            if (++currentCycles >= cycles) {
+        if (ticks > 0) {
+            if (++currentTick >= ticks) {
 
                 // IMPORTANTE: Zeramos os ciclos ANTES de chamar o interactor.
-                // Isso permite que o interactor chame requestCycles() novamente
+                // Isso permite que o interactor chame requestTicks() novamente
                 // se quiser criar um looping contínuo.
-                cycles = 0
-                currentCycles = 0
+                ticks = 0
+                currentTick = 0
 
-                furnishing.interactor?.onCycle(room, this)
+                furnishing.interactor?.processTick(room, this)
             }
         }
     }

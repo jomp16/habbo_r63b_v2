@@ -34,12 +34,12 @@ import ovh.rwx.habbo.util.Vector3
 class RollerItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.ROLLER)
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
-        super.onCycle(room, roomItem)
+    override fun processTick(room: Room, roomItem: RoomItem) {
+        super.processTick(room, roomItem)
         val frontVector2 = roomItem.getFrontPosition()
         val frontHeight = room.roomGamemap.getAbsoluteHeight(frontVector2)
         val frontVector3 = Vector3(frontVector2, frontHeight)
-        var reCycle = true
+        var reTick = true
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {
             // 1. Moving players (Processamento individual pois geralmente há apenas 1)
@@ -55,7 +55,7 @@ class RollerItemInteractor : ItemInteractor() {
                         val userSlide = ObjectSlide.createUserSlide(oldPos, frontVector3, roomItem.id, it.virtualID)
                         room.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, userSlide)
                         room.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, userSlide)
-                        reCycle = false
+                        reTick = false
                     }
                 }
 
@@ -80,7 +80,7 @@ class RollerItemInteractor : ItemInteractor() {
 
                             // Adicionamos à lista para o pacote único
                             slideItems.add(SlideItem(itemToMove.id, zSrc, itemToMove.position.z))
-                            reCycle = false
+                            reTick = false
                         }
                     }
 
@@ -98,6 +98,6 @@ class RollerItemInteractor : ItemInteractor() {
                 }
         }
 
-        if (reCycle) roomItem.requestCycles(HabboServer.habboConfig.timerConfig.roller)
+        if (reTick) roomItem.requestTicks(HabboServer.habboConfig.timerConfig.roller)
     }
 }

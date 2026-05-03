@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,6 +27,6 @@ class UserVendingMachineTask(private val roomUser: RoomUser, private val handIte
     override fun executeTask(room: Room) {
         roomUser.walkingBlocked = true
         roomUser.handleVendingId = handItem
-        roomUser.requestCycles(2)
+        roomUser.requestTicks(2)
     }
 }

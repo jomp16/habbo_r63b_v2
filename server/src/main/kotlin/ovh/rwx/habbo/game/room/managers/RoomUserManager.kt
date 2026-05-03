@@ -118,7 +118,7 @@ class RoomUserManager(private val room: Room) {
         users.remove(roomUser.virtualID)
 
         // Só envia UserPartRoomTask se o usuário já tinha completado o join
-        // Usuários em pendingJoin nunca foram oficialmente adicionados ao room cycle
+        // Usuários em pendingJoin nunca foram oficialmente adicionados ao room tick
         if (!roomUser.pendingJoin) {
             room.gameManager.onUserLeaveRoom(roomUser)
             room.roomTask?.addTask(room, UserPartRoomTask(roomUser))

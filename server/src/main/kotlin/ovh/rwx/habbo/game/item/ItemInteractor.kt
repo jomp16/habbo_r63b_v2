@@ -35,7 +35,7 @@ abstract class ItemInteractor {
     open fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
     }
 
-    open fun onCycle(room: Room, roomItem: RoomItem) {
+    open fun processTick(room: Room, roomItem: RoomItem) {
     }
 
     open fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {

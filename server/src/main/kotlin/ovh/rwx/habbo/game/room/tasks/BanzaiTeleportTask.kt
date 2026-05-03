@@ -37,9 +37,9 @@ class BanzaiTeleportTask(
     private val counter = AtomicInteger(0)
 
     override fun executeTask(room: Room) {
-        val currentCycle = counter.incrementAndGet()
+        val currentTick = counter.incrementAndGet()
 
-        when (currentCycle) {
+        when (currentTick) {
             1 -> {
                 // Activate target teleport effect
                 targetItem.extraData = "1"
@@ -51,7 +51,7 @@ class BanzaiTeleportTask(
                     FurniTriggerData(sourceItem)
                 )
 
-                // Re-schedule for next cycle to teleport user
+                // Re-schedule for next tick to teleport user
                 room.roomTask?.addTask(room, this)
             }
 
@@ -73,8 +73,8 @@ class BanzaiTeleportTask(
                     )
                 }
 
-                // Reset target effect after 2 cycles
-                targetItem.requestCycles(2)
+                // Reset target effect after 2 ticks
+                targetItem.requestTicks(2)
             }
         }
     }

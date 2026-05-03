@@ -75,11 +75,11 @@ class RoomUser(
         get() = objectiveVector2 != null || ignoreBlocking && overrideBlocking && !walkingBlocked
 
     private var idleCount: Int = 0
-    private var cycles: Int = 0
-    private var currentCycles: Int = 0
-    private var handItemCycle: Int = 0
-    private var handItemCurrentCycles: Int = 0
-    internal var headResetCycle: Int = 0
+    private var ticks: Int = 0
+    private var currentTick: Int = 0
+    private var handItemTicks: Int = 0
+    private var handItemCurrentTick: Int = 0
+    internal var headResetTick: Int = 0
 
     var walkingBlocked: Boolean = false
     var frozen: Boolean = false
@@ -189,7 +189,7 @@ class RoomUser(
         )
     }
 
-    fun onCycle() {
+    fun processTick() {
         processExpiredStatuses()
 
         // 1. Processa teleporte agendado no tick anterior (Dá tempo do cliente ver o piso aceso)
@@ -244,17 +244,17 @@ class RoomUser(
 
     private fun processTimers() {
         // Ciclo do item na mão (bebida/comida)
-        if (handItemCycle > 0 && ++handItemCurrentCycles >= handItemCycle) {
+        if (handItemTicks > 0 && ++handItemCurrentTick >= handItemTicks) {
             if (handItem > 0) {
-                handItemCurrentCycles = 0
-                handItemCycle = 0
+                handItemCurrentTick = 0
+                handItemTicks = 0
 
                 carryHandItem(0)
             }
         }
 
         // Reseta a rotação da cabeça se o usuário parou
-        if (headResetCycle > 0 && --headResetCycle == 0) {
+        if (headResetTick > 0 && --headResetTick == 0) {
             if (!walking && !idle) {
                 headRotation = bodyRotation
                 updateNeeded = true
@@ -267,9 +267,9 @@ class RoomUser(
         }
 
         // Ciclos de ações agendadas (ex: máquina de vendas)
-        if (cycles > 0 && ++currentCycles >= cycles) {
+        if (ticks > 0 && ++currentTick >= ticks) {
             if (handleVendingId > 0) {
-                handItemCycle = 240
+                handItemTicks = 240
 
                 carryHandItem(handleVendingId)
 
@@ -278,8 +278,8 @@ class RoomUser(
 
             walkingBlocked = false
 
-            cycles = 0
-            currentCycles = 0
+            ticks = 0
+            currentTick = 0
         }
     }
 
@@ -468,10 +468,10 @@ class RoomUser(
         room.roomTask?.addTask(room, UserHandItemTask(this, handItem))
     }
 
-    fun requestCycles(cycles1: Int) {
-        if (currentCycles == 0 || cycles1 == 0) {
-            cycles = cycles1
-            currentCycles = 0
+    fun requestTicks(ticks1: Int) {
+        if (currentTick == 0 || ticks1 == 0) {
+            ticks = ticks1
+            currentTick = 0
         }
     }
 

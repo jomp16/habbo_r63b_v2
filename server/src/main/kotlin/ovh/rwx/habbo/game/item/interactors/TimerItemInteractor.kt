@@ -84,7 +84,7 @@ class TimerItemInteractor : ItemInteractor() {
                     state.timeHalfSeconds = currentSecs * 2
                     state.tickCounter = 0
 
-                    roomItem.requestCycles(1)
+                    roomItem.requestTicks(1)
                     room.gameManager.getGameForItem(roomItem)?.start()
                 } else {
                     room.gameManager.getGameForItem(roomItem)?.pause()
@@ -113,7 +113,7 @@ class TimerItemInteractor : ItemInteractor() {
         }
     }
 
-    override fun onCycle(room: Room, roomItem: RoomItem) {
+    override fun processTick(room: Room, roomItem: RoomItem) {
         val state = itemStates[roomItem.id] ?: return
         if (!state.running) return
 
@@ -147,7 +147,7 @@ class TimerItemInteractor : ItemInteractor() {
         }
 
         // Mantém o item "acordado" para o próximo Major Tick
-        roomItem.requestCycles(1)
+        roomItem.requestTicks(1)
     }
 
     // Método exposto para receber comandos do WiredEffectControlClock
@@ -159,7 +159,7 @@ class TimerItemInteractor : ItemInteractor() {
             WiredEffectControlClock.Action.START -> {
                 if (!state.running) {
                     state.running = true
-                    roomItem.requestCycles(1)
+                    roomItem.requestTicks(1)
                     game?.start()
                 }
             }
@@ -194,7 +194,7 @@ class TimerItemInteractor : ItemInteractor() {
                     roomItem.update(updateDb = false, updateClient = true)
 
                     state.running = true
-                    roomItem.requestCycles(1)
+                    roomItem.requestTicks(1)
                     game?.start()
                 }
             }
