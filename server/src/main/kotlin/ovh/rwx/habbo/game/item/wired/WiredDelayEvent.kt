@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,12 +20,12 @@
 package ovh.rwx.habbo.game.item.wired
 
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import java.util.concurrent.atomic.AtomicInteger
 
 data class WiredDelayEvent(
         val wiredEffect: WiredEffect,
-        val roomUser: RoomUser?,
+        val roomEntity: RoomEntity?,
         val delay: Int,
         val wiredContext: WiredContext,
         val counter: AtomicInteger = AtomicInteger(0),

@@ -56,9 +56,9 @@ class WiredEffectSetAltitude(room: Room, roomItem: RoomItem) : WiredEffect(room,
             val currentTiles = item.affectedTiles
 
             currentTiles.forEach { vector2 ->
-                room.roomGamemap.getUsersFromVector2(vector2).forEach { roomUser ->
-                    item.onUserWalksOff(roomUser, true)
-                    roomUser.removeUserStatuses()
+                room.roomGamemap.getEntitiesFromVector2(vector2).forEach { roomUser ->
+                    item.onEntityWalksOff(roomUser, true)
+                    roomUser.removeEntityStatuses()
                     roomUser.currentVector3 = Vector3(vector2, room.roomGamemap.getAbsoluteHeight(vector2))
                     roomUser.updateNeeded = true
                 }

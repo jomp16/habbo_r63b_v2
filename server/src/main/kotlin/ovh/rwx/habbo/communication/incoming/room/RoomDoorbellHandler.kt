@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -73,28 +74,28 @@ class RoomDoorbellHandler {
             }
 
             habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
-                it.habboSession?.let { requestHabboSession ->
-                    val isR63ARights = requestHabboSession.release == "R63A"
+                (it as? RoomUser)?.habboSession?.let { rightsHabboSession ->
+                    val isR63ARights = rightsHabboSession.release == "R63A"
                     val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
                         Outgoing.ROOM_DOORBELL_ACCEPT,
-                        requestHabboSession.release
+                        rightsHabboSession.release
                     )
 
                     when {
                         isR63ARights -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 OutgoingR63A.ROOM_DOORBELL_ACCEPT,
                                 habboSession.userInformation.username
                             )
                         }
                         methodName == "response" -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 Outgoing.ROOM_DOORBELL_ACCEPT,
                                 habboSession.userInformation.username
                             )
                         }
                         methodName == "responseWithRoomId" -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 Outgoing.ROOM_DOORBELL_ACCEPT,
                                 habboSession.currentRoom!!.roomData.id,
                                 habboSession.userInformation.username
@@ -126,28 +127,28 @@ class RoomDoorbellHandler {
             }
 
             habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
-                it.habboSession?.let { requestHabboSession ->
-                    val isR63ARights = requestHabboSession.release == "R63A"
+                (it as? RoomUser)?.habboSession?.let { rightsHabboSession ->
+                    val isR63ARights = rightsHabboSession.release == "R63A"
                     val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
                         Outgoing.ROOM_DOORBELL_DENIED,
-                        requestHabboSession.release
+                        rightsHabboSession.release
                     )
 
                     when {
                         isR63ARights -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 OutgoingR63A.ROOM_DOORBELL_DENIED,
                                 habboSession.userInformation.username
                             )
                         }
                         methodName == "response" -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 Outgoing.ROOM_DOORBELL_DENIED,
                                 habboSession.userInformation.username
                             )
                         }
                         methodName == "responseWithRoomId" -> {
-                            requestHabboSession.sendHabboResponse(
+                            rightsHabboSession.sendHabboResponse(
                                 Outgoing.ROOM_DOORBELL_DENIED,
                                 habboSession.currentRoom!!.roomData.id,
                                 habboSession.userInformation.username

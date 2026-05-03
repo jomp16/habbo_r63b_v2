@@ -31,6 +31,7 @@ import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.wired.WiredHandler
 import ovh.rwx.habbo.util.Vector2
@@ -103,9 +104,9 @@ class RoomItemManager(private val room: Room) {
 
             // Atualiza usuários que estavam pisando no item velho
             roomItem.affectedTiles.forEach { tile ->
-                room.roomGamemap.getUsersFromVector2(tile).forEach { user ->
-                    roomItem.onUserWalksOff(user, true)
-                    if (tile !in newAffectedTiles) user.removeUserStatuses()
+                room.roomGamemap.getEntitiesFromVector2(tile).forEach { user ->
+                    roomItem.onEntityWalksOff(user, true)
+                    if (tile !in newAffectedTiles) user.removeEntityStatuses()
                     updateUserHeight(user, tile)
                 }
             }
@@ -131,9 +132,9 @@ class RoomItemManager(private val room: Room) {
 
         // Atualiza usuários que já estavam naquele tile (ex: colocar cadeira embaixo de alguém)
         roomItem.affectedTiles.forEach { tile ->
-            room.roomGamemap.getUsersFromVector2(tile).forEach { user ->
-                roomItem.onUserWalksOn(user, true)
-                user.addUserStatuses(roomItem)
+            room.roomGamemap.getEntitiesFromVector2(tile).forEach { user ->
+                roomItem.onEntityWalksOn(user, true)
+                user.addEntityStatuses(roomItem)
                 updateUserHeight(user, tile)
             }
         }
@@ -170,9 +171,9 @@ class RoomItemManager(private val room: Room) {
 
             // Atualiza usuários que caíram do item removido
             roomItem.affectedTiles.forEach { tile ->
-                room.roomGamemap.getUsersFromVector2(tile).forEach { user ->
-                    roomItem.onUserWalksOff(user, true)
-                    user.removeUserStatuses()
+                room.roomGamemap.getEntitiesFromVector2(tile).forEach { user ->
+                    roomItem.onEntityWalksOff(user, true)
+                    user.removeEntityStatuses()
                     updateUserHeight(user, tile)
                 }
             }
@@ -227,7 +228,7 @@ class RoomItemManager(private val room: Room) {
         }
     }
 
-    private fun updateUserHeight(user: RoomUser, tile: Vector2) {
+    private fun updateUserHeight(user: RoomEntity, tile: Vector2) {
         user.currentVector3 = Vector3(tile, room.roomGamemap.getAbsoluteHeight(tile))
         user.updateNeeded = true
     }
@@ -248,9 +249,12 @@ class RoomItemManager(private val room: Room) {
         room.networkDispatcher.sendResponseModern(Outgoing.ROOM_UPDATE_FURNI_STACK, room, affectedTiles)
         val validKeys = room.roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys
 
-        room.userManager.usersWithRights.filter { it.habboSession?.release != "R63A" }.forEach { user ->
-            user.habboSession?.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, validKeys)
-        }
+        room.userManager.usersWithRights
+            .filterIsInstance<RoomUser>()
+            .filter { it.habboSession.release != "R63A" }
+            .forEach { user ->
+                user.habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, validKeys)
+            }
     }
 
     // --- SALVAMENTO EM LOTE ---

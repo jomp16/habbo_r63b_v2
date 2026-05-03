@@ -43,7 +43,7 @@ class RollerItemInteractor : ItemInteractor() {
 
         if (!room.roomGamemap.isBlocked(frontVector2)) {
             // 1. Moving players (Processamento individual pois geralmente há apenas 1)
-            room.roomGamemap.getUsersFromVector2(roomItem.position.vector2)
+            room.roomGamemap.getEntitiesFromVector2(roomItem.position.vector2)
                 // Ignora quem está andando OU quem já foi empurrado por um roller neste exato tick
                 .filter { !it.walking && !room.rolledUsersThisTick.contains(it.virtualID) }
                 .forEach {

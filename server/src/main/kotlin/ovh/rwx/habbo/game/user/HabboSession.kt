@@ -510,7 +510,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (!bypassAuth && room == currentRoom) return
         val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
-        currentRoom?.userManager?.removeUser(roomUser, notifyClient = false, kickNotification = false)
+        currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
         if (room.itemManager.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
             if (release != "R63A") {
@@ -523,9 +523,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             return
         }
 
-        if (room.roomTask == null) HabboServer.habboGame.roomManager.roomTaskManager.addRoomToTask(room)
+        if (!room.running) HabboServer.habboGame.roomManager.roomTaskManager.addRoom(room)
 
-        if (room.userManager.users.size >= room.roomData.usersMax && !room.userManager.hasRights(
+        if (room.userManager.entities.values.filterIsInstance<RoomUser>().size >= room.roomData.usersMax && !room.userManager.hasRights(
                 this,
                 true
             ) && !hasPermission("acc_enter_full_room")
@@ -583,7 +583,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                     currentRoom = room
 
                     roomUsersWithRights.forEach {
-                        it.habboSession?.let { habboSession ->
+                        (it as? RoomUser)?.habboSession?.let { habboSession ->
                             if (habboSession.release != "R63A") {
                                 habboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL, userInformation.username)
                             } else {
@@ -619,7 +619,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     override fun close() {
         if (authenticated) {
-            currentRoom?.userManager?.removeUser(roomUser, notifyClient = false, kickNotification = false)
+            currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
             userStats.lastOnlineDatabase = LocalDateTime.now()
 

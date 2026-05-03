@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,14 +25,14 @@ import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.WiredDelayTask
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 abstract class WiredEffect(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
-    fun handle(wiredContext: WiredContext, roomUser: RoomUser?) {
+    fun handle(wiredContext: WiredContext, roomEntity: RoomEntity?) {
         val delay = roomItem.wiredData?.delay ?: 0
 
         if (delay > 0) {
-            room.roomTask?.addTask(room, WiredDelayTask(WiredDelayEvent(this, roomUser, delay, wiredContext)))
+            room.addTask(WiredDelayTask(WiredDelayEvent(this, roomEntity, delay, wiredContext)))
             return
         }
 

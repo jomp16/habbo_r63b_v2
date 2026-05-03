@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,25 +22,30 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserStatusesResponse {
     @Response(Outgoing.ROOM_USERS_STATUSES)
     @ResponseR63A(OutgoingR63A.ROOM_USERS_STATUSES)
-    fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
+    fun response(habboResponse: HabboResponse, roomEntities: Collection<RoomEntity>) {
         habboResponse.apply {
-            writeInt(roomUsers.size)
+            writeInt(roomEntities.size)
 
-            roomUsers.forEach {
+            roomEntities.forEach {
                 writeInt(it.virtualID)
                 writeInt(it.currentVector3.x)
                 writeInt(it.currentVector3.y)
                 writeUTF(it.currentVector3.z.toString())
                 writeInt(it.headRotation)
                 writeInt(it.bodyRotation)
+                // todo: check when new version added this new integer on WIN63-202604081729-823620372 - jumpingPower
+                if (isVersionAtLeast(2026, 4, 8)) {
+                    writeInt(0)
+                }
                 val stringBuilder = StringBuilder("/")
 
                 it.statusMap.entries.filter { mutableEntry -> mutableEntry.key.isNotBlank() }.forEach { mutableEntry ->

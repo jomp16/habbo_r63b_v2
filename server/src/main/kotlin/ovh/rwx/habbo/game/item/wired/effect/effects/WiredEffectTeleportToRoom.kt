@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
@@ -58,10 +59,9 @@ class WiredEffectTeleportToRoom(room: Room, roomItem: RoomItem) : WiredEffect(ro
         val targets = wiredContext.getEffectiveUsers(this)
 
         targets.forEach { user ->
-            if (user.habboSession == null) return@forEach
+            if ((user as? RoomUser)?.habboSession == null) return@forEach
 
-            val targetRoom = HabboServer.habboGame.roomManager.rooms[targetRoomId]
-            if (targetRoom == null) return@forEach
+            val targetRoom = HabboServer.habboGame.roomManager.rooms[targetRoomId] ?: return@forEach
 
             val targetPos = Vector2(targetX, targetY)
 
@@ -71,7 +71,7 @@ class WiredEffectTeleportToRoom(room: Room, roomItem: RoomItem) : WiredEffect(ro
 
                 user.stopWalking()
 
-                targetRoom.roomGamemap.updateRoomUserMovement(
+                targetRoom.roomGamemap.updateRoomEntityMovement(
                     user,
                     user.currentVector3.vector2,
                     targetPos
@@ -82,7 +82,7 @@ class WiredEffectTeleportToRoom(room: Room, roomItem: RoomItem) : WiredEffect(ro
                 user.bodyRotation = 0
                 user.currentVector3 = position
 
-                targetRoom.userManager.users[user.virtualID] = user
+                targetRoom.userManager.entities[user.virtualID] = user
 
                 // todo
                 /*user.habboSession.sendHabboResponse(

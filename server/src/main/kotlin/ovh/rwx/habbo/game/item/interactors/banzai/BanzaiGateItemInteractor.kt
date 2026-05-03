@@ -23,19 +23,19 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
-class BanzaiGateItemInteractor() : ItemInteractor() {
-    override val interactionType = InteractionType.values().filter { it.name.startsWith("BATTLE_BANZAI_GATE") }
+class BanzaiGateItemInteractor : ItemInteractor() {
+    override val interactionType = InteractionType.entries.filter { it.name.startsWith("BATTLE_BANZAI_GATE") }
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOn(room, roomUser, roomItem)
-        room.gameManager.onUserWalksOn(roomUser, roomItem)
+    override fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
+        super.onUserWalksOn(room, roomEntity, roomItem)
+        room.gameManager.onUserWalksOn(roomEntity, roomItem)
     }
 
-    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOff(room, roomUser, roomItem)
-        room.gameManager.onUserWalkOff(roomUser, roomItem)
+    override fun onUserWalksOff(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
+        super.onUserWalksOff(room, roomEntity, roomItem)
+        room.gameManager.onUserWalkOff(roomEntity, roomItem)
     }
 }

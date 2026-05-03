@@ -61,6 +61,8 @@ object CatalogDao {
     }
 
     fun getCatalogItems(): List<CatalogItem> = HabboServer.database {
+        val jacksonObjectMapper = jacksonObjectMapper()
+
         select("SELECT * FROM `catalog_items`") {
             CatalogItem(
                 it.int("id"),
@@ -77,7 +79,8 @@ object CatalogDao {
                 it.boolean("club_only"),
                 AtomicInteger(it.int("limited_sells")),
                 it.int("limited_stack"),
-                it.boolean("offer_active")
+                it.boolean("offer_active"),
+                jacksonObjectMapper.readValue(it.string("extra_data"))
             )
         }
     }

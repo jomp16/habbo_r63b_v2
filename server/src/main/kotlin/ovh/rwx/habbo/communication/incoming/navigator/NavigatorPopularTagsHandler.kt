@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RoomType
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -35,16 +36,18 @@ class NavigatorPopularTagsHandler {
 
         HabboServer.habboGame.roomManager.rooms.values
             .filter { room ->
-                !room.userManager.users.isEmpty() && room.roomData.roomType === RoomType.PRIVATE
+                !room.userManager.entities.values.filterIsInstance<RoomUser>()
+                    .isEmpty() && room.roomData.roomType === RoomType.PRIVATE
             }
-            .sortedBy { room -> room.userManager.users.size }
+            .sortedBy { room -> room.userManager.entities.values.filterIsInstance<RoomUser>().size }
             .take(50)
             .forEach { room ->
                 for (tag in room.roomData.tags) {
                     if (popularTags.containsKey(tag)) {
-                        popularTags[tag] = popularTags[tag]!! + room.userManager.users.size
+                        popularTags[tag] =
+                            popularTags[tag]!! + room.userManager.entities.values.filterIsInstance<RoomUser>().size
                     } else {
-                        popularTags[tag] = room.userManager.users.size
+                        popularTags[tag] = room.userManager.entities.values.filterIsInstance<RoomUser>().size
                     }
                 }
             }

@@ -70,3 +70,6 @@ analytics:
 game:
   banzai:
     strict: true
+pets:
+  name_min_length: 2
+  name_max_length: 15

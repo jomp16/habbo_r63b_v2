@@ -21,15 +21,16 @@ package ovh.rwx.habbo.game.item.wired
 
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 data class WiredContext(
     // Itens e Usuários selecionados (Alvos definidos por Selectors)
     val targetFurnis: MutableList<RoomItem> = mutableListOf(),
-    val targetUsers: MutableList<RoomUser> = mutableListOf(),
+    val targetUsers: MutableList<RoomEntity> = mutableListOf(),
 
     // Quem ou o que disparou a pilha
-    val triggererUser: RoomUser?,
+    val triggererUser: RoomEntity?,
     var sourceItem: RoomItem? = null,
     val trigger: WiredTrigger<*>,
 
@@ -80,7 +81,7 @@ data class WiredContext(
      * Resolve quais usuários devem ser afetados pelo Wired, com base na Fonte de Origem
      * escolhida pelo jogador.
      */
-    fun getEffectiveUsers(wiredItem: WiredItem): List<RoomUser> {
+    fun getEffectiveUsers(wiredItem: WiredItem): List<RoomEntity> {
         val wiredData = wiredItem.roomItem.wiredData ?: return emptyList()
 
         // Pega a primeira fonte configurada, ou o padrão do Wired caso não exista
@@ -99,15 +100,15 @@ data class WiredContext(
 
             WiredUserSource.ALL_ROOM_USERS -> {
                 // "Todos os usuários no quarto" (Fonte 900)
-                wiredItem.room.userManager.users.values.toList()
+                wiredItem.room.userManager.entities.values.filterIsInstance<RoomUser>().toList()
             }
 
             WiredUserSource.USER_BY_NAME -> {
                 // "Use o Habbo especificado pelo nome" (Fonte 101)
                 // Lê a string do wiredData e busca na lista de usuários do quarto
                 val username = wiredData.message
-                val target = wiredItem.room.userManager.users.values.find {
-                    it.habboSession?.userInformation?.username.equals(username, ignoreCase = true)
+                val target = wiredItem.room.userManager.entities.values.filterIsInstance<RoomUser>().find {
+                    it.habboSession.userInformation.username.equals(username, ignoreCase = true)
                 }
                 target?.let { listOf(it) } ?: emptyList()
             }

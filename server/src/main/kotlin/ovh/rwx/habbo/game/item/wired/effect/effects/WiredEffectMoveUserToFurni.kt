@@ -73,7 +73,7 @@ class WiredEffectMoveUserToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
                 WalkMode.STOP -> targetUser.stopWalking()
             }
 
-            room.roomGamemap.updateRoomUserMovement(
+            room.roomGamemap.updateRoomEntityMovement(
                 targetUser,
                 targetUser.currentVector3.vector2,
                 newPos
@@ -83,9 +83,9 @@ class WiredEffectMoveUserToFurni(room: Room, roomItem: RoomItem) : WiredEffect(r
             targetUser.headRotation = targetFurni.rotation
             targetUser.bodyRotation = targetFurni.rotation
             targetUser.currentVector3 = position
-            targetUser.addUserStatuses(targetFurni)
+            targetUser.addEntityStatuses(targetFurni)
 
-            targetFurni.onUserWalksOn(targetUser, true)
+            targetFurni.onEntityWalksOn(targetUser, true)
         }
     }
 

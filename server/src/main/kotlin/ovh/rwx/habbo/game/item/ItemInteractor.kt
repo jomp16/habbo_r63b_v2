@@ -21,26 +21,26 @@ package ovh.rwx.habbo.game.item
 
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 abstract class ItemInteractor {
     abstract val interactionType: List<InteractionType>
 
-    open fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
+    open fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
     }
 
-    open fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
+    open fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
     }
 
-    open fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+    open fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
     }
 
     open fun processTick(room: Room, roomItem: RoomItem) {
     }
 
-    open fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+    open fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
     }
 
-    open fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+    open fun onUserWalksOff(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
     }
 }

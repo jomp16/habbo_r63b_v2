@@ -33,7 +33,7 @@ class NavigatorHotelViewHandler {
     @HandlerR63A(IncomingR63A.GO_TO_HOTEL_VIEW)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) habboSession.sendHabboResponse(Outgoing.ROOM_EXIT)
-        else habboSession.currentRoom?.userManager?.removeUser(
+        else habboSession.currentRoom?.userManager?.removeEntity(
             habboSession.roomUser,
             notifyClient = true,
             kickNotification = false

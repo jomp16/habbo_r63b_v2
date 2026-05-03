@@ -33,12 +33,12 @@ class RoomCommandsListener : PluginListener() {
     fun closeRoom(room: Room, roomUser: RoomUser, args: List<String>) {
         if (!room.userManager.hasRights(roomUser.habboSession, true)) return
 
-        HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+        HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(room)
     }
 
     @Command(["coords"])
     fun coords(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("X: ${roomUser.currentVector3.x}\n\nY: ${roomUser.currentVector3.y}\n\nZ: ${roomUser.currentVector3.z}\n\nHead rotation: ${roomUser.headRotation}\n\nBody rotation: ${roomUser.bodyRotation}")
+        roomUser.habboSession.sendNotification("X: ${roomUser.currentVector3.x}\n\nY: ${roomUser.currentVector3.y}\n\nZ: ${roomUser.currentVector3.z}\n\nHead rotation: ${roomUser.headRotation}\n\nBody rotation: ${roomUser.bodyRotation}")
     }
 
     @Command(["pickall"])
@@ -46,7 +46,7 @@ class RoomCommandsListener : PluginListener() {
         if (room.userManager.hasRights(roomUser.habboSession, true)) {
             val roomItemsRemoved = room.itemManager.items.values.toList()
                 .filter { roomItem -> roomItem.furnishing.interactionType != InteractionType.POST_IT }
-                .filter { it.userId == roomUser.habboSession?.userInformation?.id }
+                .filter { it.userId == roomUser.habboSession.userInformation.id }
                 .filter { roomItem -> room.itemManager.removeItem(roomUser, roomItem) }
 
             ItemDao.addRoomItemInventory(roomItemsRemoved)
@@ -61,7 +61,7 @@ class RoomCommandsListener : PluginListener() {
                 .filter { roomItem -> roomItem.buildersClub }
                 .filter { roomItem -> room.itemManager.removeItem(roomUser, roomItem) }
 
-            roomUser.habboSession?.habboSubscription?.decrementBuildersItemsUsed(room, roomItemsRemoved.size)
+            roomUser.habboSession.habboSubscription.decrementBuildersItemsUsed(room, roomItemsRemoved.size)
         }
     }
 

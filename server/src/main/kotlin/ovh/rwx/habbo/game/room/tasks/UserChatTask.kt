@@ -24,10 +24,13 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.wired.trigger.SayTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
+import ovh.rwx.habbo.game.pet.PetTrick
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
+import ovh.rwx.habbo.game.room.user.RoomEntity
+import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.containsAny
@@ -74,7 +77,7 @@ class UserChatTask(
             if (shouldHide) return
 
             // Se o wired não esconde, ele vira um sussurro privado por padrão em muitas builds
-            roomUser.habboSession?.let {
+            roomUser.habboSession.let {
                 sendResponse(
                     it,
                     RoomChatType.WHISPER,
@@ -89,7 +92,9 @@ class UserChatTask(
 
         broadcastMessage(room, filterMessage, speechEmotion)
 
-        if (type != RoomChatType.WHISPER && roomUser.habboSession != null) {
+        // Pet command detection: check if message matches "<petName> <trickCommand>"
+        if (type != RoomChatType.WHISPER) {
+            processPetCommands(room, filterMessage)
             HabboServer.habboGame.achievementManager.progress(roomUser.habboSession, "ACH_Tutorial3", 1, false)
         }
     }
@@ -122,8 +127,9 @@ class UserChatTask(
         }
     }
 
-    private fun turnHeadTowardsSpeaker(listener: RoomUser, speaker: RoomUser) {
-        if (listener == speaker || listener.walking || listener.idle || listener.kicked) return
+    private fun turnHeadTowardsSpeaker(listener: RoomEntity, speaker: RoomUser) {
+        val listenerUser = listener as? RoomUser ?: return
+        if (listener == speaker || listener.walking || listenerUser.idle || listener.kicked) return
         if (listener.statusMap.containsKey("sit") || listener.statusMap.containsKey("lay")) return
 
         val targetRotation = Direction.calculate(
@@ -134,17 +140,17 @@ class UserChatTask(
         )
 
         if (Direction.rotationDistance(listener.bodyRotation, targetRotation) <= 1) {
-            listener.headRotation = targetRotation
-            listener.headResetTick = 4 // 2 segundos (4 ciclos de 500ms)
-            listener.updateNeeded = true
+            listenerUser.headRotation = targetRotation
+            listenerUser.headResetTick = 4 // 2 segundos (4 ciclos de 500ms)
+            listenerUser.updateNeeded = true
         }
     }
 
     private fun broadcastMessage(room: Room, filterMessage: String, speechEmotion: Int) {
         if (type == RoomChatType.WHISPER) {
-            roomUser.habboSession?.let { sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble) }
+            sendResponse(roomUser.habboSession, type, virtualID, filterMessage, speechEmotion, bubble)
         } else {
-            room.userManager.users.values.forEach { targetUser ->
+            room.userManager.entities.values.forEach { targetUser ->
                 // Adicionado check para não enviar para quem foi desconectado/kicked no meio do loop
                 if (targetUser.kicked) return@forEach
 
@@ -159,12 +165,28 @@ class UserChatTask(
                 }
 
                 if (canHear) {
-                    targetUser.habboSession?.let {
+                    (targetUser as? RoomUser)?.habboSession?.let {
                         sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble)
                     }
                     turnHeadTowardsSpeaker(targetUser, roomUser)
                 }
             }
+        }
+    }
+
+    private fun processPetCommands(room: Room, message: String) {
+        val ownerId = roomUser.habboSession.userInformation.id
+
+        room.userManager.entities.values.filterIsInstance<RoomPet>().forEach { pet ->
+            if (pet.petData.userId != ownerId) return@forEach
+
+            val prefix = pet.petData.name + " "
+            if (!message.startsWith(prefix, ignoreCase = true)) return@forEach
+
+            val command = message.substring(prefix.length).trim()
+            val trick = PetTrick.fromCommand(command) ?: return@forEach
+
+            pet.ai.handleCommand(trick).forEach(pet::executeAction)
         }
     }
 }

@@ -34,6 +34,7 @@ import ovh.rwx.habbo.game.landing.LandingManager
 import ovh.rwx.habbo.game.moderation.ModerationManager
 import ovh.rwx.habbo.game.navigator.NavigatorManager
 import ovh.rwx.habbo.game.permission.PermissionManager
+import ovh.rwx.habbo.game.pet.PetManager
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
 import java.util.concurrent.TimeUnit
@@ -54,6 +55,7 @@ class HabboGame {
     val cameraManager: CameraManager = CameraManager()
     val achievementManager: AchievementManager = AchievementManager()
     val antiMutantManager: AntiMutantManager = AntiMutantManager()
+    val petManager: PetManager = PetManager()
 
     init {
         HabboServer.applicationScope.launch { landingManager.load() }
@@ -65,6 +67,7 @@ class HabboGame {
         HabboServer.applicationScope.launch { groupManager.load() }
         HabboServer.applicationScope.launch { achievementManager.load() }
         HabboServer.applicationScope.launch { antiMutantManager.load() }
+        HabboServer.applicationScope.launch { petManager.load() }
 
         // 1. Guardamos a referência do Job do RoomManager
         val roomJob = HabboServer.applicationScope.launch { roomManager.load() }
@@ -93,7 +96,7 @@ class HabboGame {
         }, 0, 1, TimeUnit.MINUTES)
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            roomManager.rooms.values.filter { it.roomTask != null }.forEach(Room::saveRoom)
+            roomManager.rooms.values.filter { it.running }.forEach(Room::saveRoom)
 
             HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
                 .forEach { HabboServer.applicationScope.launch { it.saveAllQueuedStuffs() } }

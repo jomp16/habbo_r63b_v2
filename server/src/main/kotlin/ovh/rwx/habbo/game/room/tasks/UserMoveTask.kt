@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,11 +22,12 @@ package ovh.rwx.habbo.game.room.tasks
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 import ovh.rwx.habbo.util.Vector2
 
 class UserMoveTask(
-        private val roomUser: RoomUser,
+    private val roomEntity: RoomEntity,
         private val objectiveVector2: Vector2,
         private val rotation: Int,
         private val actingItem: RoomItem?,
@@ -34,13 +35,13 @@ class UserMoveTask(
         private val rollerId: Int
 ) : IRoomTask {
     override fun executeTask(room: Room) {
-        roomUser.idle = false
+        (roomEntity as? RoomHumanoid)?.idle = false
 
-        roomUser.path = mutableListOf()
-        roomUser.ignoreBlocking = ignoreBlocking
-        roomUser.rollerId = rollerId
-        roomUser.objectiveVector2 = objectiveVector2
-        roomUser.objectiveRotation = rotation
-        roomUser.objectiveItem = actingItem
+        roomEntity.path = mutableListOf()
+        roomEntity.ignoreBlocking = ignoreBlocking
+        roomEntity.rollerId = rollerId
+        roomEntity.objectiveVector2 = objectiveVector2
+        roomEntity.objectiveRotation = rotation
+        roomEntity.objectiveItem = actingItem
     }
 }

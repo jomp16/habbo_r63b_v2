@@ -23,6 +23,7 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class ModerationRoomInfoResponse {
@@ -30,9 +31,11 @@ class ModerationRoomInfoResponse {
     fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
             writeInt(room.roomData.id)
-            writeInt(room.userManager.users.size)
-            writeBoolean(room.userManager.users.values.filter { it.habboSession != null }
-                .any { room.roomData.ownerId == it.habboSession!!.userInformation.id })
+            writeInt(room.userManager.entities.values.filterIsInstance<RoomUser>().size)
+            writeBoolean(
+                room.userManager.entities.values
+                    .filterIsInstance<RoomUser>()
+                    .any { room.roomData.ownerId == it.habboSession.userInformation.id })
             writeInt(room.roomData.ownerId)
             writeUTF(room.roomData.ownerName)
             writeBoolean(true) // room data, always true because I have the info

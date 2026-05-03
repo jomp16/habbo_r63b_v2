@@ -29,6 +29,7 @@ import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorRes
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
+import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
@@ -338,6 +339,77 @@ class CatalogManager {
             // and save new limited sell to database
             CatalogDao.updateLimitedSells(catalogItem)
         }
+    }
+
+    fun purchasePet(habboSession: HabboSession, catalogItem: CatalogItem, extraData: String) {
+        val parts = extraData.split("\n")
+        if (parts.size != 3) return
+
+        val petName = parts[0]
+        val petRace = parts[1].toIntOrNull() ?: return
+        val petColor = parts[2]
+
+        val config = HabboServer.habboConfig.petConfig
+        if (petName.length < config.nameMinLength || petName.length > config.nameMaxLength) return
+        if (!petName.matches(Regex("^[a-zA-Z0-9 ]+$"))) return
+
+        // Extract pet type from item name: "a0 pet0" → 0
+        val petType = HabboServer.habboGame.petManager.extractPetType(catalogItem.catalogName) ?: return
+
+        // Deduct currency
+        if (catalogItem.costCredits > 0) {
+            if (habboSession.userInformation.credits < catalogItem.costCredits) {
+                habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+                return
+            }
+            habboSession.userInformation.credits -= catalogItem.costCredits
+        }
+
+        val currentPixels =
+            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
+        if (catalogItem.costPixels > 0) {
+            if (currentPixels < catalogItem.costPixels) {
+                habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+                return
+            }
+            habboSession.userInformation.activityPointsCurrencies.merge(
+                ActivityPointType.PIXELS,
+                -catalogItem.costPixels,
+                Int::plus
+            )
+        }
+
+        val currentVip =
+            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
+        if (catalogItem.costVip > 0) {
+            if (currentVip < catalogItem.costVip) {
+                habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+                return
+            }
+            habboSession.userInformation.activityPointsCurrencies.merge(
+                ActivityPointType.DIAMONDS,
+                -catalogItem.costVip,
+                Int::plus
+            )
+        }
+
+        val petId = PetDao.insertPet(habboSession.userInformation.id, petName, petType, petRace, petColor)
+        val petData = PetDao.getPetById(petId) ?: return
+
+        habboSession.habboInventory.addPet(petData, openInventory = true)
+
+        // todo: give 1 free pet food
+
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PURCHASE_OK, catalogItem, emptyList<Any>())
+        } else {
+            // category 3 = PET for unseen items
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 3, listOf(petId))
+            habboSession.sendHabboResponse(Outgoing.PET_BOUGHT_NOTIFICATION, petData, false)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, catalogItem, emptyList<Any>())
+        }
+
+        habboSession.updateAllCurrencies()
     }
 
     fun redeemVoucher(habboSession: HabboSession, voucherCode: String) {

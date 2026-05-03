@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -40,8 +41,9 @@ class RoomUserWhisperHandler {
         val (targetName, message, bubble) = parse(habboRequest, isR63A) ?: return
 
         if (habboSession.userInformation.username == targetName) return
-        val targetRoomUser = habboSession.currentRoom!!.userManager.users.values.filter { it.habboSession != null }
-            .find { it.habboSession!!.userInformation.username == targetName }
+        val targetRoomUser = habboSession.currentRoom!!.userManager.entities.values
+            .filterIsInstance<RoomUser>()
+            .find { it.habboSession.userInformation.username == targetName }
                 ?: return
 
         habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)

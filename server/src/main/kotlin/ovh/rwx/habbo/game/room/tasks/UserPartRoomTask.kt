@@ -25,17 +25,17 @@ import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerLeaveRoom
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 class UserPartRoomTask(
-    private val roomUser: RoomUser
+    private val roomEntity: RoomEntity
 ) : IRoomTask {
     override fun executeTask(room: Room) {
         // todo: item handling
         // todo: trade
-        room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomUser.virtualID)
-        room.sendHabboResponse(OutgoingR63A.ROOM_USER_REMOVE, roomUser.virtualID)
+        room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomEntity.virtualID)
+        room.sendHabboResponse(OutgoingR63A.ROOM_USER_REMOVE, roomEntity.virtualID)
 
-        room.itemManager.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomUser, RoomEventTriggerData)
+        room.itemManager.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomEntity, RoomEventTriggerData)
     }
 }

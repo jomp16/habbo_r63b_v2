@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.game.item.wired.trigger.UserTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerClickUser
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -35,7 +36,7 @@ class RoomUserClickedUserHandler {
 
         val roomUserId = habboRequest.readInt()
 
-        val clickedRoomUser = currentRoom.userManager.users[roomUserId] ?: return
+        val clickedRoomUser = currentRoom.userManager.entities[roomUserId] as? RoomUser ?: return
 
         currentRoom.itemManager.wiredHandler.triggerWired(
             WiredTriggerClickUser::class,

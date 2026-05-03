@@ -24,51 +24,30 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.pet.PetData
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryPetsResponse {
     @Response(Outgoing.INVENTORY_PETS)
-    fun response(habboResponse: HabboResponse, pets: List<Nothing>) {
+    fun response(habboResponse: HabboResponse, pets: List<PetData>) {
         habboResponse.apply {
-            writeInt(1)
-            writeInt(1)
+            writeInt(1) // page total
+            writeInt(1) // page index
             writeInt(pets.size)
 
-            @Suppress("ForEachParameterNotUsed")
-            pets.forEach {
-                // Todo: when adding support to pets, rewrite this part
-                writeInt(0) // id
-                writeUTF("") // name
-                // start - PetFigureData
-                writeInt(0) // type
-                writeInt(0) // pallete id
-                writeUTF("") // color
-                writeInt(0) // ?
-                writeInt(0) // qtd figureString
-                // start - figureString
-//                writeInt(0)
-//                writeInt(0)
-//                writeInt(0)
-                // end - qtd figureString
-                // end - PetFigureData
-                writeInt(0) // level
+            pets.forEach { pet ->
+                serialize(pet)
             }
         }
     }
 
     @ResponseR63A(OutgoingR63A.INVENTORY_PETS)
-    fun responseR63A(habboResponse: HabboResponse, pets: List<Nothing>) {
+    fun responseR63A(habboResponse: HabboResponse, pets: List<PetData>) {
         habboResponse.apply {
             writeInt(pets.size)
 
-            @Suppress("ForEachParameterNotUsed")
-            pets.forEach {
-                // Todo: when adding support to pets, rewrite this part
-//                writeInt(0) // id
-//                writeUTF("") // name
-//                writeInt(0) // type
-//                writeInt(0) // breed
-//                writeUTF("") // color
+            pets.forEach { pet ->
+                serialize(pet)
             }
         }
     }

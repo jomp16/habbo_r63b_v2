@@ -23,19 +23,23 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 class RoomNetworkDispatcher(private val room: Room) {
     fun sendResponse(habboResponse: HabboResponse) {
-        room.userManager.users.values.forEach { it.habboSession?.sendHabboResponse(habboResponse) }
+        room.userManager.entities.values.filterIsInstance<RoomUser>()
+            .forEach { it.habboSession.sendHabboResponse(habboResponse) }
     }
 
     fun sendResponseModern(outgoing: Outgoing, vararg args: Any?) {
-        room.userManager.users.values.filter { it.habboSession?.release != "R63A" }
-            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        room.userManager.entities.values.filterIsInstance<RoomUser>().map { it.habboSession }
+            .filter { it.release != "R63A" }
+            .forEach { it.sendHabboResponse(outgoing, *args) }
     }
 
     fun sendResponseR63A(outgoing: OutgoingR63A, vararg args: Any?) {
-        room.userManager.users.values.filter { it.habboSession?.release == "R63A" }
-            .forEach { it.habboSession?.sendHabboResponse(outgoing, *args) }
+        room.userManager.entities.values.filterIsInstance<RoomUser>().map { it.habboSession }
+            .filter { it.release == "R63A" }
+            .forEach { it.sendHabboResponse(outgoing, *args) }
     }
 }

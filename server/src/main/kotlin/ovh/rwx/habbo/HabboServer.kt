@@ -267,7 +267,7 @@ object HabboServer : AutoCloseable {
             // Start room
             log.debug("Closing all loaded rooms...")
             habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
-                habboGame.roomManager.roomTaskManager.removeRoomFromTask(it)
+                habboGame.roomManager.roomTaskManager.removeRoom(it)
             }
             log.debug("Done!")
             // End room

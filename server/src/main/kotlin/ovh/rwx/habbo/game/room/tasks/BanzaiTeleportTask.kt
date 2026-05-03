@@ -52,7 +52,7 @@ class BanzaiTeleportTask(
                 )
 
                 // Re-schedule for next tick to teleport user
-                room.roomTask?.addTask(room, this)
+                room.addTask(this)
             }
 
             2 -> {

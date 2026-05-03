@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_LEAVE_ROOM)
 class WiredTriggerLeaveRoom(room: Room, roomItem: RoomItem) : WiredTrigger<RoomEventTriggerData>(room, roomItem) {
@@ -47,7 +48,8 @@ class WiredTriggerLeaveRoom(room: Room, roomItem: RoomItem) : WiredTrigger<RoomE
         if (roomItem.wiredData == null) return false
 
         val user = wiredContext.triggererUser
-        val triggered = username.isBlank() || (user != null && username == user.habboSession!!.userInformation.username)
+        val triggered =
+            username.isBlank() || (user != null && username == (user as? RoomUser)?.habboSession?.userInformation?.username)
 
         return triggered
     }

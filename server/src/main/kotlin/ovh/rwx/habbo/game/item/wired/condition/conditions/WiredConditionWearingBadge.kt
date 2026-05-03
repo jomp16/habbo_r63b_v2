@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_WEARING_BADGE, InteractionType.WIRED_CONDITION_NOT_WEARING_BADGE)
@@ -62,7 +63,8 @@ class WiredConditionWearingBadge(room: Room, roomItem: RoomItem) : WiredConditio
 
         // Condição: TODOS os usuários selecionados precisam estar com o emblema
         val hasBadge = targetUsers.all { user ->
-            val equippedBadges = user.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
+            val equippedBadges =
+                (user as? RoomUser)?.habboSession?.habboBadge?.badges?.values?.filter { it.slot > 0 } ?: emptyList()
             equippedBadges.any { it.code == badgeCode }
         }
 

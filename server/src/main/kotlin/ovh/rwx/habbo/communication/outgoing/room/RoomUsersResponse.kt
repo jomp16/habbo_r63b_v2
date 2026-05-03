@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,17 +24,17 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUsersResponse {
     @Response(Outgoing.ROOM_USERS)
     @ResponseR63A(OutgoingR63A.ROOM_USERS)
-    fun response(habboResponse: HabboResponse, roomUsers: Collection<RoomUser>) {
+    fun response(habboResponse: HabboResponse, roomEntities: Collection<RoomEntity>) {
         habboResponse.apply {
-            writeInt(roomUsers.size)
+            writeInt(roomEntities.size)
 
-            roomUsers.forEach { serialize(it) }
+            roomEntities.forEach { serialize(it) }
         }
     }
 }

@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelectorType
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.util.Vector2
 
 @Suppress("unused")
@@ -61,20 +61,20 @@ class WiredSelectorUsersArea(room: Room, roomItem: RoomItem) : WiredSelector(roo
             currentSelection = mySelectedUsers,
             isFilter = roomItem.wiredData?.filter ?: false,
             isInverse = roomItem.wiredData?.inverse ?: false,
-            allPossibleTargets = { room.userManager.users.values }
+            allPossibleTargets = { room.userManager.entities.values }
         )
     }
 
-    private fun getUsersFromArea(): List<RoomUser> {
+    private fun getUsersFromArea(): List<RoomEntity> {
         val endX = areaX + areaWidth
         val endY = areaY + areaLength
 
-        val users = mutableSetOf<RoomUser>()
+        val users = mutableSetOf<RoomEntity>()
 
         for (x in areaX until endX) {
             for (y in areaY until endY) {
                 val vector2 = Vector2(x, y)
-                val usersOnTile = room.roomGamemap.getUsersFromVector2(vector2)
+                val usersOnTile = room.roomGamemap.getEntitiesFromVector2(vector2)
                 users.addAll(usersOnTile)
             }
         }

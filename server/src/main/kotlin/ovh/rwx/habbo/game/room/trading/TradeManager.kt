@@ -70,7 +70,7 @@ class TradeManager(private val room: Room) {
         val existingTradeForTarget = userTradeMap[target.virtualID]
 
         if (existingTradeForInitiator != null) {
-            initiator.habboSession?.let { session ->
+            initiator.habboSession.let { session ->
                 if (session.release == "R63A") {
                     session.sendHabboResponse(OutgoingR63A.TRADING_ALREADY_OPEN)
                 } else {
@@ -85,14 +85,14 @@ class TradeManager(private val room: Room) {
         }
 
         if (existingTradeForTarget != null) {
-            initiator.habboSession?.let { session ->
+            initiator.habboSession.let { session ->
                 if (session.release == "R63A") {
                     session.sendHabboResponse(OutgoingR63A.TRADING_ALREADY_OPEN)
                 } else {
                     session.sendAnyResponse(
                         Outgoing.TRADING_OPEN_FAILED,
                         TradingOpenFailedResponse.TradingOpenFailedStatus.TARGET_ALREADY_TRADING,
-                        target.habboSession?.userInformation?.username ?: ""
+                        target.habboSession.userInformation.username
                     )
                 }
             }
@@ -172,15 +172,15 @@ class TradeManager(private val room: Room) {
      * Envia evento TradingOpenEvent para ambos os usuários.
      */
     private fun sendTradingOpenEvent(trade: Trade, initiator: RoomUser, target: RoomUser) {
-        val initiatorId = initiator.habboSession?.userInformation?.id ?: -1
-        val targetId = target.habboSession?.userInformation?.id ?: -1
+        val initiatorId = initiator.habboSession.userInformation.id
+        val targetId = target.habboSession.userInformation.id
 
         // Verifica se ambos podem trocar (não tem mute, ban, etc.)
         val initiatorCanTrade = canTrade(initiator)
         val targetCanTrade = canTrade(target)
 
         // Envia para o iniciante
-        if (initiator.habboSession?.release == "R63A") {
+        if (initiator.habboSession.release == "R63A") {
             initiator.habboSession.sendHabboResponse(
                 OutgoingR63A.TRADING_OPEN,
                 initiatorId,
@@ -189,7 +189,7 @@ class TradeManager(private val room: Room) {
                 if (targetCanTrade) 1 else 0
             )
         } else {
-            initiator.habboSession?.sendHabboResponse(
+            initiator.habboSession.sendHabboResponse(
                 Outgoing.TRADING_OPEN,
                 initiatorId,
                 if (initiatorCanTrade) 1 else 0,
@@ -199,7 +199,7 @@ class TradeManager(private val room: Room) {
         }
 
         // Envia para o alvo
-        if (target.habboSession?.release == "R63A") {
+        if (target.habboSession.release == "R63A") {
             target.habboSession.sendHabboResponse(
                 OutgoingR63A.TRADING_OPEN,
                 initiatorId,
@@ -208,7 +208,7 @@ class TradeManager(private val room: Room) {
                 if (targetCanTrade) 1 else 0
             )
         } else {
-            target.habboSession?.sendHabboResponse(
+            target.habboSession.sendHabboResponse(
                 Outgoing.TRADING_OPEN,
                 initiatorId,
                 if (initiatorCanTrade) 1 else 0,
@@ -219,7 +219,7 @@ class TradeManager(private val room: Room) {
 
         // Se algum não puder trocar, envia evento de erro
         if (!initiatorCanTrade) {
-            initiator.habboSession?.let { session ->
+            initiator.habboSession.let { session ->
                 if (session.release == "R63A") {
                     session.sendHabboResponse(OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
                 } else {
@@ -228,7 +228,7 @@ class TradeManager(private val room: Room) {
             }
         }
         if (!targetCanTrade) {
-            initiator.habboSession?.let { session ->
+            initiator.habboSession.let { session ->
                 if (session.release == "R63A") {
                     session.sendHabboResponse(OutgoingR63A.TRADING_OTHER_NOT_ALLOWED)
                 } else {
@@ -248,7 +248,7 @@ class TradeManager(private val room: Room) {
         // - Usuário não está ban
         // - Usuário tem inventário carregado
 
-        val session = roomUser.habboSession ?: return false
+        val session = roomUser.habboSession
 
         return session.authenticated &&
                 session.habboInventory.items.isNotEmpty()

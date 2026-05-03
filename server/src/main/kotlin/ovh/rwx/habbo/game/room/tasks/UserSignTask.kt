@@ -23,17 +23,17 @@ import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 
-class UserSignTask(private val roomUser: RoomUser, private val sign: Int) : IRoomTask {
+class UserSignTask(private val roomHumanoid: RoomHumanoid, private val sign: Int) : IRoomTask {
     override fun executeTask(room: Room) {
-        roomUser.idle = false
+        roomHumanoid.idle = false
         // 500 millis
-        roomUser.addStatus("sign", sign.toString(), 500)
+        roomHumanoid.addStatus("sign", sign.toString(), 500)
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
-            roomUser,
+            roomHumanoid,
             UserActionTriggerData(
                 WiredTriggerUserPerformsAction.WiredUserAction.SIGN,
                 signId = sign

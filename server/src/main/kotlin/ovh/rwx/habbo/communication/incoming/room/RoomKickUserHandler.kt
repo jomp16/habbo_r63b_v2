@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -40,11 +41,11 @@ class RoomKickUserHandler {
         val userId = habboRequest.readInt()
 
         val roomUser =
-            habboSession.currentRoom?.userManager?.users?.values?.find { it.habboSession?.userInformation?.id == userId }
+            habboSession.currentRoom?.userManager?.entities?.values?.find { (it as? RoomUser)?.habboSession?.userInformation?.id == userId }
                 ?: return
 
         if (roomUser.room != habboSession.currentRoom || roomUser.room.userManager.hasRights(
-                roomUser.habboSession,
+                roomUser,
                 true
             )
         ) return

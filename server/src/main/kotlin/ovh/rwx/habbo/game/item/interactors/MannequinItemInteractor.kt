@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import java.util.*
 
@@ -31,10 +32,10 @@ import java.util.*
 class MannequinItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.MANNEQUIN)
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
-        if (roomUser?.habboSession == null) return
+        val roomUser = roomEntity as? RoomUser ?: return
         val mannequinDataArray = roomItem.extraData.split(7.toChar())
         val mannequinFigureArray = mannequinDataArray[1].split('.').toTypedArray()
         val userFigureArray = roomUser.habboSession.userInformation.figure.split('.')

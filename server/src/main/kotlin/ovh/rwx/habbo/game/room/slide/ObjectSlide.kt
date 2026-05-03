@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.item.wired.WiredFurniMove
 import ovh.rwx.habbo.game.item.wired.WiredMoveEntry
 import ovh.rwx.habbo.game.item.wired.WiredUserMove
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector3
 
 data class ObjectSlide(
@@ -109,8 +110,8 @@ enum class SlideType(val value: Int) {
 fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
     if (movements.isEmpty()) return
 
-    this.userManager.users.values.forEach { user ->
-        val habboSession = user.habboSession ?: return@forEach
+    this.userManager.entities.values.forEach { entity ->
+        val habboSession = (entity as? RoomUser)?.habboSession ?: return@forEach
 
         val responseMethod = if (habboSession.release == "R63A") "DISABLED" else
             HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.WIRED_MOVEMENT, habboSession.release)
@@ -162,11 +163,11 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
                         }
 
                         // O legado precisa do pacote UserUpdate para girar a cabeça/corpo no lugar
-                        val roomUser = this.userManager.users[move.userIndex]
-                        if (roomUser != null && (roomUser.bodyRotation != move.bodyDirection || roomUser.headRotation != move.headDirection)) {
-                            roomUser.bodyRotation = move.bodyDirection
-                            roomUser.headRotation = move.headDirection
-                            roomUser.updateNeeded = true
+                        val roomEntity = this.userManager.entities[move.userIndex]
+                        if (roomEntity != null && (roomEntity.bodyRotation != move.bodyDirection || roomEntity.headRotation != move.headDirection)) {
+                            roomEntity.bodyRotation = move.bodyDirection
+                            roomEntity.headRotation = move.headDirection
+                            roomEntity.updateNeeded = true
                         }
                     }
 

@@ -24,14 +24,15 @@ import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.BanzaiTeleportTask
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 class BanzaiTeleportItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.BATTLE_BANZAI_TELEPORT)
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
         roomItem.extraData = "0"
     }
 
@@ -44,8 +45,10 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         }
     }
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        super.onUserWalksOn(room, roomUser, roomItem)
+    override fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
+        super.onUserWalksOn(room, roomEntity, roomItem)
+
+        val roomUser = roomEntity as? RoomUser ?: return
 
         // Find all other banzai teleports in the room
         val teleports = room.itemManager.floorItems.values.filter {
@@ -63,6 +66,6 @@ class BanzaiTeleportItemInteractor : ItemInteractor() {
         roomItem.requestTicks(2)
 
         // Start teleportation task after 1 cycle
-        room.roomTask?.addTask(room, BanzaiTeleportTask(roomUser, roomItem, targetTeleport))
+        room.addTask(BanzaiTeleportTask(roomUser, roomItem, targetTeleport))
     }
 }

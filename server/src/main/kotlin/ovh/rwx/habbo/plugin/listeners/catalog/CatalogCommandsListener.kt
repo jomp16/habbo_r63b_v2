@@ -40,13 +40,13 @@ class CatalogCommandsListener : PluginListener() {
                 it.sendHabboResponse(OutgoingR63A.CATALOG_UPDATE)
         }
 
-        roomUser.habboSession!!.sendNotification("Catalog reloaded!")
+        roomUser.habboSession.sendNotification("Catalog reloaded!")
     }
 
     @Command(["update_items", "reload_items"], permissionName = "cmd_update_items")
     fun updateItems(room: Room, roomUser: RoomUser, args: List<String>) {
         HabboServer.habboGame.itemManager.load()
 
-        roomUser.habboSession!!.sendNotification("Items reloaded!")
+        roomUser.habboSession.sendNotification("Items reloaded!")
     }
 }

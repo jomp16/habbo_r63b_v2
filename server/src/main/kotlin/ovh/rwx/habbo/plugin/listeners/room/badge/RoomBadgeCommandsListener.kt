@@ -49,7 +49,6 @@ class RoomBadgeCommandsListener : PluginListener() {
             return
         }
 
-        if (roomUser.habboSession == null) return
         val badgeCode = args[1].uppercase(Locale.getDefault())
         val username = if (args.size >= 3) args[2] else null
 
@@ -98,7 +97,6 @@ class RoomBadgeCommandsListener : PluginListener() {
             return
         }
 
-        if (roomUser.habboSession == null) return
         val badgeCode = args[1].uppercase(Locale.getDefault())
         val username = if (args.size >= 3) args[2] else null
 

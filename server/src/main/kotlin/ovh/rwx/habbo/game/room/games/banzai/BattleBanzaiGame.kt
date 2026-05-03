@@ -39,11 +39,13 @@ import ovh.rwx.habbo.game.room.slide.ObjectSlide
 import ovh.rwx.habbo.game.room.slide.SlideItem
 import ovh.rwx.habbo.game.room.tasks.BattleBanzaiTilesFlickerTask
 import ovh.rwx.habbo.game.room.tasks.UserAction
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 class BattleBanzaiGame(room: Room) : RoomGame(room) {
     private val userTeams = mutableMapOf<Int, GameTeam>()
@@ -131,9 +133,10 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
             // Jogadores acenam e ganham achievements
             userTeams.forEach { (userId, team) ->
-                room.userManager.users.values.find { it.habboSession?.userInformation?.id == userId }?.let { roomUser ->
+                room.userManager.entities.values.filterIsInstance<RoomUser>()
+                    .find { it.habboSession.userInformation.id == userId }?.let { entity ->
                     // ACH_BattleBallPlayer: jogar Battle Banzai
-                    roomUser.habboSession?.let {
+                    entity.habboSession.let {
                         HabboServer.habboGame.achievementManager.progress(
                             it,
                             "ACH_BattleBallPlayer",
@@ -143,10 +146,10 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
                     }
 
                     if (team == winningTeam) {
-                        roomUser.action(UserAction.WAVE)
+                        entity.action(UserAction.WAVE)
 
                         // ACH_BattleBallWinner: ganhar pontos vencedores
-                        roomUser.habboSession?.let {
+                        entity.habboSession.let {
                             val teamScore = teamScores[winningTeam] ?: 0
                             HabboServer.habboGame.achievementManager.progress(
                                 it,
@@ -168,7 +171,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
                 }
 
             if (winningTiles.isNotEmpty()) {
-                room.roomTask?.addTask(room, BattleBanzaiTilesFlickerTask(winningTiles, winningTeam.color))
+                room.addTask(BattleBanzaiTilesFlickerTask(winningTiles, winningTeam.color))
             }
         }
 
@@ -181,7 +184,8 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         room.itemManager.wiredHandler.triggerWired(WiredTriggerGameEnds::class, null, EmptyTriggerData)
     }
 
-    override fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {
+    override fun onUserWalksOn(roomEntity: RoomEntity, roomItem: RoomItem) {
+        val roomUser = roomEntity as? RoomUser ?: return
         when (roomItem.furnishing.interactionType) {
             InteractionType.BATTLE_BANZAI_GATE_RED, InteractionType.BATTLE_BANZAI_GATE_GREEN,
             InteractionType.BATTLE_BANZAI_GATE_BLUE, InteractionType.BATTLE_BANZAI_GATE_YELLOW -> handleGateEntry(
@@ -251,8 +255,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         }
     }
 
-    override fun joinTeam(gameTeam: GameTeam, roomUser: RoomUser) {
-        val userId = roomUser.habboSession?.userInformation?.id ?: return
+    override fun joinTeam(gameTeam: GameTeam, roomEntity: RoomEntity) {
+        val roomUser = roomEntity as? RoomUser ?: return
+        val userId = roomUser.habboSession.userInformation.id
 
         val currentTeam = userTeams[userId]
 
@@ -279,8 +284,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         }
     }
 
-    override fun leaveTeam(gameTeam: GameTeam, roomUser: RoomUser) {
-        val userId = roomUser.habboSession?.userInformation?.id ?: return
+    override fun leaveTeam(gameTeam: GameTeam, roomEntity: RoomEntity) {
+        val roomUser = roomEntity as? RoomUser ?: return
+        val userId = roomUser.habboSession.userInformation.id
         val currentTeam = userTeams[userId]
 
         if (currentTeam != null) {
@@ -293,7 +299,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
     private fun handleGateEntry(roomUser: RoomUser, gate: RoomItem) {
         val gameTeam = getTeamColor(gate.furnishing.interactionType) ?: return
-        val userId = roomUser.habboSession?.userInformation?.id ?: return
+        val userId = roomUser.habboSession.userInformation.id
 
         val currentTeam = userTeams[userId]
 
@@ -333,8 +339,9 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
             }
     }
 
-    override fun onUserLeaveRoom(roomUser: RoomUser) {
-        val userId = roomUser.habboSession?.userInformation?.id ?: return
+    override fun onEntityLeaveRoom(roomEntity: RoomEntity) {
+        val roomUser = roomEntity as? RoomUser ?: return
+        val userId = roomUser.habboSession.userInformation.id
 
         // Remove do time
         userTeams.remove(userId)
@@ -356,7 +363,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
     private fun handleTileWalk(roomUser: RoomUser, tile: RoomItem) {
         if (!running) return
 
-        val userId = roomUser.habboSession?.userInformation?.id ?: return
+        val userId = roomUser.habboSession.userInformation.id
         val userTeam = userTeams[userId] ?: return
 
         if (tile.extraData.isEmpty()) {
@@ -438,7 +445,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
 
         addScore(gameTeam, totalLockedCount - 1) // Score do flood fill apenas
 
-        roomUser.habboSession?.let { session ->
+        roomUser.habboSession.let { session ->
             HabboServer.habboGame.achievementManager.progress(
                 session,
                 "ACH_BattleBallTilesLocked",
@@ -545,7 +552,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         puckJobs[puck.id]?.cancel()
         puckJobs.remove(puck.id)
 
-        val userId = kicker.habboSession?.userInformation?.id ?: return
+        val userId = kicker.habboSession.userInformation.id
         val team = userTeams[userId]
 
         // Direção do chute é a direção que o usuário está olhando
@@ -645,7 +652,7 @@ class BattleBanzaiGame(room: Room) : RoomGame(room) {
         }
 
         val job = HabboServer.applicationScope.launch {
-            delay(delay)
+            delay(delay.milliseconds)
             // Se chegamos aqui, o job não foi cancelado, então podemos prosseguir
             kickPuck(puck, kicker, direction, gameTeam, totalSteps, nextStep)
         }

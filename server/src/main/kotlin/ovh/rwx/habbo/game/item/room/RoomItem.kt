@@ -31,7 +31,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
@@ -87,7 +87,7 @@ data class RoomItem(
         )
     private var ticks: Int = 0
     private var currentTick: Int = 0
-    val interactingUsers: MutableMap<Int, RoomUser> by lazy { HashMap<Int, RoomUser>() }
+    val interactingUsers: MutableMap<Int, RoomEntity> by lazy { HashMap<Int, RoomEntity>() }
 
     @Suppress("DuplicatedCode")
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -229,22 +229,22 @@ data class RoomItem(
         }
     }
 
-    fun onUserWalksOn(roomUser: RoomUser, handleInteractor: Boolean) {
-        if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomUser, this)
+    fun onEntityWalksOn(roomEntity: RoomEntity, handleInteractor: Boolean) {
+        if (handleInteractor) furnishing.interactor?.onUserWalksOn(room, roomEntity, this)
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerWalksOnFurni::class,
-            roomUser,
+            roomEntity,
             FurniTriggerData(this)
         )
     }
 
-    fun onUserWalksOff(roomUser: RoomUser, handleInteractor: Boolean) {
-        if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomUser, this)
+    fun onEntityWalksOff(roomEntity: RoomEntity, handleInteractor: Boolean) {
+        if (handleInteractor) furnishing.interactor?.onUserWalksOff(room, roomEntity, this)
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerWalksOffFurni::class,
-            roomUser,
+            roomEntity,
             FurniTriggerData(this)
         )
     }
@@ -253,9 +253,9 @@ data class RoomItem(
         var closeable = true
 
         affectedTiles.forEach {
-            val roomUsers = room.roomGamemap.getUsersFromVector2(it)
+            val roomEntities = room.roomGamemap.getEntitiesFromVector2(it)
 
-            if (closeable) closeable = roomUsers.isEmpty()
+            if (closeable) closeable = roomEntities.isEmpty()
         }
 
         return closeable

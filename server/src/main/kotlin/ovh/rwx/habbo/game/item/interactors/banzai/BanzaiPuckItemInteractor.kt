@@ -23,13 +23,13 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
 class BanzaiPuckItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.BATTLE_BANZAI_PUCK)
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
-        room.gameManager.onUserWalksOn(roomUser, roomItem)
+    override fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
+        room.gameManager.onUserWalksOn(roomEntity, roomItem)
     }
 }

@@ -44,7 +44,8 @@ data class CatalogItem(
     val clubOnly: Boolean,
     val limitedSells: AtomicInteger,
     val limitedTotal: Int,
-    val offerActive: Boolean
+    val offerActive: Boolean,
+    val extraData: Map<String, Any>
 ) : IHabboResponseSerialize {
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
@@ -91,7 +92,7 @@ data class CatalogItem(
             writeInt(if (clubOnly) 1 else 0) // clubLevel
             writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
             writeBoolean(false) // isPet ?
-            writeUTF("") // previewImage
+            writeUTF(extraData.getOrDefault("preview_image", "") as String) // previewImage
         }
     }
 

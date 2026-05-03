@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,12 +21,12 @@ package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 
-class UserHandItemTask(private val roomUser: RoomUser, private val handItem: Int) : IRoomTask {
+class UserHandItemTask(private val roomHumanoid: RoomHumanoid, private val handItem: Int) : IRoomTask {
     override fun executeTask(room: Room) {
-        roomUser.idle = false
-        roomUser.danceId = 0
-        roomUser.handItem = handItem
+        roomHumanoid.idle = false
+        roomHumanoid.danceId = 0
+        roomHumanoid.handItem = handItem
     }
 }

@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_GIVE_SCORE)
@@ -50,7 +51,7 @@ class WiredEffectGiveScore(room: Room, roomItem: RoomItem) : WiredEffect(room, r
         val targets = wiredContext.getEffectiveUsers(this)
 
         targets.forEach { user ->
-            user.habboSession?.let { session ->
+            (user as? RoomUser)?.habboSession?.let { session ->
                 // todo
                 /*val userStats = HabboServer.habboGame.userManager.getUserStats(session.userInformation.id)
                 userStats?.let {

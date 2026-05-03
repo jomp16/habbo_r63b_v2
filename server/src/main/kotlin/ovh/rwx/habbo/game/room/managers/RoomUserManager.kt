@@ -25,20 +25,26 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
+import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.game.pet.PetData
 import ovh.rwx.habbo.game.room.RightData
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.UserJoinRoomTask
 import ovh.rwx.habbo.game.room.tasks.UserPartRoomTask
+import ovh.rwx.habbo.game.room.user.RoomEntity
+import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.util.Vector3
 
 class RoomUserManager(private val room: Room) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(room.roomData.id)) }
-    val users: MutableMap<Int, RoomUser> by lazy { HashMap() }
-    val usersWithRights: Set<RoomUser> get() = users.values.filter { hasRights(it.habboSession, false) }.toSet()
+    val entities: MutableMap<Int, RoomEntity> by lazy { HashMap() }
+    val usersWithRights: Set<RoomEntity>
+        get() = entities.values.filterIsInstance<RoomUser>().filter { hasRights(it) }.toSet()
 
     fun hasRights(
         habboSession: HabboSession?,
@@ -66,14 +72,26 @@ class RoomUserManager(private val room: Room) {
         return rights.any { it.userId == userId }
     }
 
+    fun hasRights(
+        roomEntity: RoomEntity?,
+        ownerRight: Boolean = false,
+        ignorePermissionAnyRoomOwner: Boolean = false
+    ): Boolean {
+        if (roomEntity == null) return false
+        val roomUser = roomEntity as? RoomUser ?: return false
+        return hasRights(roomUser.habboSession, ownerRight, ignorePermissionAnyRoomOwner)
+    }
+
     fun addUser(habboSession: HabboSession) {
-        if (room.roomTask == null || users.values.any { it.habboSession == habboSession }) return
+        if (!room.running || entities.values.filterIsInstance<RoomUser>()
+                .any { it.habboSession == habboSession }
+        ) return
 
         var virtualId: Int
 
         do {
             virtualId = (1..Int.MAX_VALUE).random()
-        } while (users.containsKey(virtualId))
+        } while (entities.containsKey(virtualId))
 
         val newUser =
             RoomUser(
@@ -87,41 +105,75 @@ class RoomUserManager(private val room: Room) {
 
         // Adiciona o usuário imediatamente ao mapa para permitir remoção em caso de disconnect
         // O estado pendingJoin=true indica que o join ainda não foi completado
-        users[virtualId] = newUser
+        entities[virtualId] = newUser
 
         // Enfileira a tarefa de join que vai completar a inicialização e definir pendingJoin=false
-        room.roomTask?.addTask(room, UserJoinRoomTask(newUser))
+        room.addTask(UserJoinRoomTask(newUser))
     }
 
-    fun removeUser(roomUser: RoomUser?, notifyClient: Boolean, kickNotification: Boolean) {
-        if (roomUser == null) return
+    fun loadPets() {
+        PetDao.getPetsByRoomId(room.roomData.id).forEach { addPet(it) }
+    }
 
-        // Cancela qualquer troca ativa do usuário antes de remover
-        room.tradeManager.onUserDisconnect(roomUser)
+    fun addPet(petData: PetData) {
+        var virtualId: Int
 
-        roomUser.habboSession?.let { session ->
-            handleUserDisconnectionMessages(session, notifyClient, kickNotification)
-            if (session.currentRoom == room) {
-                session.roomUser = null
-                session.currentRoom = null
-                session.habboMessenger.notifyFriends()
+        do {
+            virtualId = (1..Int.MAX_VALUE).random()
+        } while (entities.containsKey(virtualId))
+
+        val roomPet = RoomPet(
+            petData,
+            room,
+            virtualId,
+            Vector3(petData.x, petData.y, petData.z),
+            petData.rot,
+            petData.rot
+        )
+
+        roomPet.pendingJoin = false
+
+        entities[virtualId] = roomPet
+        room.roomGamemap.addRoomEntity(roomPet, roomPet.currentVector3.vector2)
+
+        // Broadcast to all users
+        room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomPet))
+        room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomPet))
+        room.sendHabboResponse(OutgoingR63A.ROOM_USERS, listOf(roomPet))
+        room.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomPet))
+    }
+
+    fun removeEntity(roomEntity: RoomEntity?, notifyClient: Boolean, kickNotification: Boolean) {
+        if (roomEntity == null) return
+
+        if (roomEntity is RoomUser) {
+            // Cancela qualquer troca ativa do usuário antes de remover
+            room.tradeManager.onUserDisconnect(roomEntity)
+
+            roomEntity.habboSession.let { session ->
+                handleUserDisconnectionMessages(session, notifyClient, kickNotification)
+                if (session.currentRoom == room) {
+                    session.roomUser = null
+                    session.currentRoom = null
+                    session.habboMessenger.notifyFriends()
+                }
             }
         }
 
         // Remove do gamemap (se o usuário já foi adicionado)
         // Usuários em pendingJoin podem ainda não estar no gamemap
-        if (!roomUser.pendingJoin || roomUser.currentVector3.vector2 != room.roomModel.doorVector3) {
-            room.roomGamemap.removeRoomUser(roomUser, roomUser.currentVector3.vector2)
+        if (!roomEntity.pendingJoin || roomEntity.currentVector3.vector2 != room.roomModel.doorVector3) {
+            room.roomGamemap.removeRoomEntity(roomEntity, roomEntity.currentVector3.vector2)
         }
-        roomUser.nextStepVector?.let { room.roomGamemap.removeRoomUser(roomUser, it.vector2) }
+        roomEntity.nextStepVector?.let { room.roomGamemap.removeRoomEntity(roomEntity, it.vector2) }
 
-        users.remove(roomUser.virtualID)
+        entities.remove(roomEntity.virtualID)
 
         // Só envia UserPartRoomTask se o usuário já tinha completado o join
         // Usuários em pendingJoin nunca foram oficialmente adicionados ao room tick
-        if (!roomUser.pendingJoin) {
-            room.gameManager.onUserLeaveRoom(roomUser)
-            room.roomTask?.addTask(room, UserPartRoomTask(roomUser))
+        if (!roomEntity.pendingJoin) {
+            room.gameManager.onEntityLeaveRoom(roomEntity)
+            room.addTask(UserPartRoomTask(roomEntity))
         }
     }
 
@@ -145,7 +197,7 @@ class RoomUserManager(private val room: Room) {
 
     fun updateGroupInfo() {
         room.group?.let { g ->
-            users.values.mapNotNull { it.habboSession }.forEach { session ->
+            entities.values.filterIsInstance<RoomUser>().map { it.habboSession }.forEach { session ->
                 session.sendHabboResponse(
                     Outgoing.GROUP_INFO,
                     session.userInformation.id,
@@ -160,10 +212,10 @@ class RoomUserManager(private val room: Room) {
     fun updateGroupRights() {
         val currentGroup = room.group ?: return
 
-        users.values.mapNotNull { it.habboSession }
-            .filter { it.userInformation.id != currentGroup.groupData.ownerId }
-            .forEach { session ->
-                val roomUser = users.values.find { it.habboSession == session } ?: return@forEach
+        entities.values.filterIsInstance<RoomUser>()
+            .filter { it.habboSession.userInformation.id != currentGroup.groupData.ownerId }
+            .forEach { roomUser ->
+                val session = roomUser.habboSession
                 val methodName =
                     HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, session.release)
 

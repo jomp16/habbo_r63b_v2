@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector3
 
@@ -33,38 +34,38 @@ import ovh.rwx.habbo.util.Vector3
 class TeleportItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.TELEPORT)
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
 
         HabboServer.habboGame.itemManager.roomTeleportLinks[roomItem.id] = room.roomData.id
     }
 
-    override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onRemove(room, roomUser, roomItem)
+    override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onRemove(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
 
         HabboServer.habboGame.itemManager.roomTeleportLinks.remove(roomItem.id)
     }
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
-        if (roomUser == null) return
+        if (roomEntity == null) return
 
-        if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation, roomItem.position.z)) {
-            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
+        if (!roomItem.isTouching(roomEntity.currentVector3, roomEntity.bodyRotation, roomItem.position.z)) {
+            roomEntity.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
 
             return
         }
 
         if (roomItem.extraData == "0" && roomItem.interactingUsers.isEmpty()) {
-            roomItem.interactingUsers[1] = roomUser
+            roomItem.interactingUsers[1] = roomEntity
 
-            roomUser.walkingBlocked = true
-            roomUser.moveTo(roomItem.position.vector2, ignoreBlocking = true)
+            roomEntity.walkingBlocked = true
+            roomEntity.moveTo(roomItem.position.vector2, ignoreBlocking = true)
 
             roomItem.extraData = "1"
             roomItem.update(updateDb = false, updateClient = true)
@@ -72,15 +73,15 @@ class TeleportItemInteractor : ItemInteractor() {
         }
 
         room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class, roomUser,
+            WiredTriggerStateChanged::class, roomEntity,
             StateTriggerData(roomItem)
         )
     }
 
     override fun processTick(room: Room, roomItem: RoomItem) {
         super.processTick(room, roomItem)
-        val outgoingUser = roomItem.interactingUsers[1]
-        val incomingUser = roomItem.interactingUsers[2]
+        val outgoingUser = roomItem.interactingUsers[1] as? RoomUser
+        val incomingUser = roomItem.interactingUsers[2] as? RoomUser
         var extraData = "0"
 
         if (outgoingUser?.habboSession != null) {
@@ -125,7 +126,7 @@ class TeleportItemInteractor : ItemInteractor() {
                                 room.roomGamemap.getAbsoluteHeight(targetRoomItem.position.vector2)
                             )
 
-                            room.roomGamemap.updateRoomUserMovement(
+                            room.roomGamemap.updateRoomEntityMovement(
                                 outgoingUser,
                                 outgoingUser.currentVector3.vector2,
                                 newVector3.vector2

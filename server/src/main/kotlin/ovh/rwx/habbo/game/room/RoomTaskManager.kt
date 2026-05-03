@@ -19,63 +19,18 @@
 
 package ovh.rwx.habbo.game.room
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import ovh.rwx.habbo.HabboServer
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 
 class RoomTaskManager {
-    private val taskJobs: MutableMap<RoomTask, Job> = ConcurrentHashMap()
-    val rooms: MutableSet<Room> = HashSet()
+    val rooms: MutableSet<Room> = CopyOnWriteArraySet()
 
-    // O novo "pulso" global do Habbo (50ms = 20 TPS)
-    private val baseTickRateMs = 50L
-
-    fun addRoomToTask(room: Room) {
+    fun addRoom(room: Room) {
         if (!rooms.add(room)) return
-
-        val tmpTasks = taskJobs.keys.filter { it.rooms.size < HabboServer.habboConfig.roomTaskConfig.maxRoomPerThread }
-        val roomTask = if (tmpTasks.isNotEmpty()) tmpTasks.random() else RoomTask()
-
-        // Se a RoomTask é nova e não tem um loop rodando, nós o iniciamos
-        if (!taskJobs.containsKey(roomTask)) {
-            taskJobs[roomTask] = startTaskLoop(roomTask)
-        }
-
-        roomTask.addRoom(room)
+        room.startLoop()
     }
 
-    fun removeRoomFromTask(room: Room) {
+    fun removeRoom(room: Room) {
         if (!rooms.remove(room)) return
-
-        taskJobs.keys.filter { it.rooms.contains(room) }.forEach { roomTask ->
-            roomTask.removeRoom(room)
-
-            // Otimização: Se a task ficar vazia, matamos o loop (Coroutine) para poupar CPU
-            if (roomTask.rooms.isEmpty()) {
-                taskJobs.remove(roomTask)?.cancel()
-            }
-        }
-    }
-
-    private fun startTaskLoop(roomTask: RoomTask): Job {
-        return HabboServer.applicationScope.launch {
-            while (isActive) {
-                val startTime = System.currentTimeMillis()
-
-                // Executa a lógica da sala
-                roomTask.run()
-
-                // Game Loop com Delta Time Constante:
-                // Calcula quanto tempo a execução demorou e subtrai dos 50ms.
-                // Isso evita que o tempo de execução se acumule e atrase o servidor.
-                val executionTime = System.currentTimeMillis() - startTime
-                val sleepTime = (baseTickRateMs - executionTime).coerceAtLeast(1L)
-
-                delay(sleepTime)
-            }
-        }
+        room.stopLoop()
     }
 }

@@ -25,30 +25,30 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
 class DiceItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.DICE)
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
 
         roomItem.extraData = "-1"
     }
 
-    override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onRemove(room, roomUser, roomItem)
+    override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onRemove(room, roomEntity, roomItem)
 
         roomItem.extraData = "-1"
     }
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
-        if (!hasRights || roomUser == null) return
+        if (!hasRights || roomEntity == null) return
 
-        if (roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation, roomItem.position.z)) {
+        if (roomItem.isTouching(roomEntity.currentVector3, roomEntity.bodyRotation, roomItem.position.z)) {
             if (roomItem.extraData != "-1") {
                 if (request == -1) {
                     roomItem.extraData = "0"
@@ -60,11 +60,11 @@ class DiceItemInteractor : ItemInteractor() {
                 }
             }
         } else {
-            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), -1, false, roomItem)
+            roomEntity.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), -1, false, roomItem)
         }
 
         room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class, roomUser,
+            WiredTriggerStateChanged::class, roomEntity,
             StateTriggerData(roomItem)
         )
     }

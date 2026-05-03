@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.room.model.RoomModel
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -70,9 +71,9 @@ class RoomManager {
      */
     fun getPopularRooms(categoryId: Int = -1, limit: Int = 40): List<Room> {
         return rooms.values
-            .filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
+            .filter { it.running && it.userManager.entities.values.filterIsInstance<RoomUser>().isNotEmpty() }
             .filter { categoryId == -1 || it.roomData.category == categoryId }
-            .sortedByDescending { it.userManager.users.size }
+            .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }
             .take(limit)
     }
 
@@ -109,7 +110,7 @@ class RoomManager {
                 }
             }
         }
-            .sortedByDescending { it.userManager.users.size }
+            .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }
             .take(limit)
     }
 

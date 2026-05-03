@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector2
 import kotlin.math.abs
@@ -53,12 +54,12 @@ class WiredEffectFlee(room: Room, roomItem: RoomItem) : WiredEffect(room, roomIt
         }
     }
 
-    private fun findClosestUserInLine(item: RoomItem): RoomUser? {
+    private fun findClosestUserInLine(item: RoomItem): RoomEntity? {
         val itemPos = item.position.vector2
-        var closestUser: RoomUser? = null
+        var closestUser: RoomEntity? = null
         var minDistance = Int.MAX_VALUE
 
-        room.userManager.users.values.forEach { user ->
+        room.userManager.entities.values.filterIsInstance<RoomUser>().forEach { user ->
             val userPos = user.currentVector3.vector2
             if (userPos.x == itemPos.x || userPos.y == itemPos.y) {
                 val distance = abs(userPos.x - itemPos.x) + abs(userPos.y - itemPos.y)
@@ -72,7 +73,7 @@ class WiredEffectFlee(room: Room, roomItem: RoomItem) : WiredEffect(room, roomIt
         return closestUser
     }
 
-    private fun moveAwayFromUser(wiredContext: WiredContext, item: RoomItem, user: RoomUser) {
+    private fun moveAwayFromUser(wiredContext: WiredContext, item: RoomItem, user: RoomEntity) {
         val itemPos = item.position.vector2
         val userPos = user.currentVector3.vector2
 

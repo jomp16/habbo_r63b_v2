@@ -53,7 +53,7 @@ class WiredConditionHasAvatars(room: Room, roomItem: RoomItem) : WiredCondition(
         val hasAvatars = targetFurnis.all { item ->
             item.affectedTiles.any { tile ->
                 // OTIMIZAÇÃO: Usar o GameMap é muito mais rápido do que iterar todos os usuários do quarto (roomUsers.values.any)
-                room.roomGamemap.getUsersFromVector2(tile).isNotEmpty()
+                room.roomGamemap.getEntitiesFromVector2(tile).isNotEmpty()
             }
         }
 

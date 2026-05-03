@@ -22,20 +22,22 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
-import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.util.Vector3
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomItemOpenGiftHandler {
     @Handler(Incoming.ROOM_ITEM_OPEN_GIFT)
+    @HandlerR63A(IncomingR63A.ROOM_ITEM_OPEN_GIFT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val giftItemId = habboRequest.readInt()
@@ -57,33 +59,46 @@ class RoomItemOpenGiftHandler {
 
     private fun openBox(habboSession: HabboSession, giftRoomItem: RoomItem) {
         val giftData = ItemDao.getGiftData(giftRoomItem.id) ?: return
-        // replace current gift item to the gifted item
-        habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, giftRoomItem)
         val shouldAddToRoom = giftData.furnishing.type == ItemType.FLOOR && giftData.amount == 1
 
+        // Remove o item presente da room
+        habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, giftRoomItem)
+
+        // Deleta o registro do presente do banco
+        ItemDao.deleteItems(listOf(giftRoomItem.id))
+        ItemDao.deleteGiftData(giftData.id)
+
+        var openedRoomItemId = 0
+
         if (shouldAddToRoom) {
-            val roomItem = RoomItem(
-                giftRoomItem.id,
-                giftRoomItem.userId,
-                giftRoomItem.roomId,
-                giftData.itemName,
+            // Cria um NOVO item com NOVO ID no banco e na room
+            val itemPurchaseDatas = listOf(
+                ItemPurchaseData(
+                    giftData.furnishing,
                 giftData.extradata,
-                Vector3(0, 0, 0.toDouble()),
-                0,
-                "",
                 giftData.limited,
                 buildersClub = false
+                )
             )
 
+            val newUserItems = ItemDao.addItems(habboSession.userInformation.id, itemPurchaseDatas)
+            val newItem = newUserItems.firstOrNull() ?: return
+
+            val roomItem = HabboServer.habboGame.itemManager.getRoomItemFromUserItem(
+                habboSession.currentRoom!!.roomData.id,
+                newItem
+            )
+            
             habboSession.currentRoom!!.itemManager.setFloorItem(
                 roomItem,
                 giftRoomItem.position.vector2,
                 giftRoomItem.rotation,
                 habboSession.roomUser
             )
-        } else if (giftData.furnishing.interactionType == InteractionType.TELEPORT) {
-            // todo: add custom item types here, like teleports, dimmers, etc
-            // either gift isn't a floor item, or amount > 1
+
+            openedRoomItemId = roomItem.id
+        } else {
+            // Adiciona itens ao inventário do usuário
             val itemPurchaseDatas = mutableListOf<ItemPurchaseData>()
 
             repeat(giftData.amount) {
@@ -98,9 +113,17 @@ class RoomItemOpenGiftHandler {
             habboSession.habboInventory.addItems(ItemDao.addItems(habboSession.userInformation.id, itemPurchaseDatas))
         }
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_ITEM_OPEN_GIFT_RESULT, giftRoomItem.id, giftRoomItem.extraData, giftRoomItem.furnishing, shouldAddToRoom)
-
-        ItemDao.deleteItems(listOf(giftRoomItem.id)) // remove gift item forever
-        ItemDao.deleteGiftData(giftData.id)
+        // Envia resposta para o cliente
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.ROOM_ITEM_OPEN_GIFT_RESULT, giftData.furnishing)
+        } else {
+            habboSession.sendHabboResponse(
+                Outgoing.ROOM_ITEM_OPEN_GIFT_RESULT,
+                openedRoomItemId,
+                giftData.extradata,
+                giftData.furnishing,
+                shouldAddToRoom
+            )
+        }
     }
 }

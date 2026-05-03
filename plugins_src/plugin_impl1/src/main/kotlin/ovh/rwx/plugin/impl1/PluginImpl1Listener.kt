@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,26 +32,26 @@ class PluginImpl1Listener : PluginListener() {
 
     @Command(["hello_world1"])
     fun handleHelloWorld1(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("Hello World 1!")
+        roomUser.habboSession.sendNotification("Hello World 1!")
     }
 
     @Command(["hello_world2"], rank = 7)
     fun handleHelloWorld2(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("Hello World 2 with rank 7!")
+        roomUser.habboSession.sendNotification("Hello World 2 with rank 7!")
     }
 
     @Command(["hello_world3"], rank = 7, permissionName = "acc_mod_tools")
     fun handleHelloWorld3(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("Hello World 2 with rank 7 and acc_mod_tools!")
+        roomUser.habboSession.sendNotification("Hello World 2 with rank 7 and acc_mod_tools!")
     }
 
     @Command(["hello_world4"], rank = Int.MAX_VALUE, permissionName = "acc_mod_tools")
     fun handleHelloWorld4(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("Hello World 2 with rank ${Int.MAX_VALUE} and acc_mod_tools!")
+        roomUser.habboSession.sendNotification("Hello World 2 with rank ${Int.MAX_VALUE} and acc_mod_tools!")
     }
 
     @Command(["hello_world5"], permissionName = "acc_mod_tools")
     fun handleHelloWorld5(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification("Hello World 2 with acc_mod_tools!")
+        roomUser.habboSession.sendNotification("Hello World 2 with acc_mod_tools!")
     }
 }

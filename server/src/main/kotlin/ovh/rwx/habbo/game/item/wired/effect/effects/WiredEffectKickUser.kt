@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_KICK_USER)
@@ -42,10 +43,10 @@ class WiredEffectKickUser(room: Room, roomItem: RoomItem) : WiredEffect(room, ro
         val targets = wiredContext.getEffectiveUsers(this)
 
         targets.forEach { user ->
-            room.userManager.removeUser(user, notifyClient = true, kickNotification = true)
+            room.userManager.removeEntity(user, notifyClient = true, kickNotification = true)
 
             roomItem.wiredData?.message?.let { message ->
-                user.habboSession?.sendNotification(message)
+                (user as? RoomUser)?.habboSession?.sendNotification(message)
             }
         }
     }

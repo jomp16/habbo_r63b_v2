@@ -27,18 +27,19 @@ import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomType
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
     override fun executeTask(room: Room) {
         // Verifica se o usuário ainda está no mapa de users
         // Se pendingJoin for false, significa que o join já foi completado
-        if (!room.userManager.users.containsValue(roomUser)) return
+        if (!room.userManager.entities.containsValue(roomUser)) return
 
         // Se pendingJoin for false, o join já foi completado (não deve acontecer)
         if (!roomUser.pendingJoin) return
 
-        roomUser.habboSession?.let { habboSession ->
+        roomUser.habboSession.let { habboSession ->
             habboSession.roomUser = roomUser
 
             val methodName =
@@ -110,23 +111,28 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 )
                 // todo: events
 
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.userManager.users.values)
-                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.userManager.users.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.userManager.entities.values)
+                habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.userManager.entities.values)
 
                 habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.itemManager.floorItems.values)
                 habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.itemManager.wallItems.values)
 
-                room.userManager.users.values.forEach {
-                    if (it.idle) habboSession.sendHabboResponse(Outgoing.ROOM_USER_IDLE, it.virtualID, true)
-                    if (it.danceId > 0) habboSession.sendHabboResponse(
+                room.userManager.entities.values.forEach {
+                    val roomUser = it as? RoomHumanoid
+                    if (roomUser?.idle == true) habboSession.sendHabboResponse(
+                        Outgoing.ROOM_USER_IDLE,
+                        it.virtualID,
+                        true
+                    )
+                    if (roomUser != null && roomUser.danceId > 0) habboSession.sendHabboResponse(
                         Outgoing.ROOM_USER_DANCE,
                         it.virtualID,
-                        it.danceId
+                        roomUser.danceId
                     )
-                    if (it.handItem > 0) habboSession.sendHabboResponse(
+                    if (roomUser != null && roomUser.handItem > 0) habboSession.sendHabboResponse(
                         Outgoing.ROOM_USER_HANDITEM,
                         it.virtualID,
-                        it.handItem
+                        roomUser.handItem
                     )
                     it.effect?.let { effect ->
                         habboSession.sendHabboResponse(
@@ -183,21 +189,26 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 )
                 // todo: events
 
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.userManager.users.values)
-                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.userManager.users.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.userManager.entities.values)
+                habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.userManager.entities.values)
                 habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, true, false)
 
-                room.userManager.users.values.forEach {
-                    if (it.idle) habboSession.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, it.virtualID, true)
-                    if (it.danceId > 0) habboSession.sendHabboResponse(
+                room.userManager.entities.values.forEach {
+                    val roomUser = it as? RoomHumanoid
+                    if (roomUser?.idle == true) habboSession.sendHabboResponse(
+                        OutgoingR63A.ROOM_USER_IDLE,
+                        it.virtualID,
+                        true
+                    )
+                    if (roomUser != null && roomUser.danceId > 0) habboSession.sendHabboResponse(
                         OutgoingR63A.ROOM_USER_DANCE,
                         it.virtualID,
-                        it.danceId
+                        roomUser.danceId
                     )
-                    if (it.handItem > 0) habboSession.sendHabboResponse(
+                    if (roomUser != null && roomUser.handItem > 0) habboSession.sendHabboResponse(
                         OutgoingR63A.ROOM_USER_HANDITEM,
                         it.virtualID,
-                        it.handItem
+                        roomUser.handItem
                     )
                     it.effect?.let { effect ->
                         habboSession.sendHabboResponse(
@@ -261,11 +272,11 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             }
         }
 
-        room.userManager.users[roomUser.virtualID] = roomUser
-        room.roomGamemap.addRoomUser(roomUser, roomUser.currentVector3.vector2)
+        room.userManager.entities[roomUser.virtualID] = roomUser
+        room.roomGamemap.addRoomEntity(roomUser, roomUser.currentVector3.vector2)
 
         // todo: add support to bots
-        roomUser.habboSession?.let {
+        roomUser.habboSession.let {
             room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
             room.sendHabboResponse(
                 Outgoing.USER_UPDATE,

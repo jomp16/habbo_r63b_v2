@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.navigator.NavigatorEventCategory
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -54,7 +55,12 @@ class NavigatorSearchResponse {
         else serializeSearchResultList(category, true, habboResponse, habboSession)
     }
 
-    private fun serializeSearchResultList(category: String, direct: Boolean, habboResponse: HabboResponse, habboSession: HabboSession) {
+    private fun serializeSearchResultList(
+        category: String,
+        direct: Boolean,
+        habboResponse: HabboResponse,
+        habboSession: HabboSession
+    ) {
         habboResponse.apply {
             val staticId: String = category
 
@@ -75,6 +81,7 @@ class NavigatorSearchResponse {
                         serializeRoomCategories(it, direct, habboResponse)
                     }
                 }
+
                 "myworld_view" -> {
                     serializeSearchResultList("my", false, habboResponse, habboSession)
                     serializeSearchResultList("favorites", false, habboResponse, habboSession)
@@ -82,6 +89,7 @@ class NavigatorSearchResponse {
                     serializeSearchResultList("friends_rooms", false, habboResponse, habboSession)
                     serializeSearchResultList("history_freq", false, habboResponse, habboSession)
                 }
+
                 "roomads_view" -> {
                     serializeSearchResultList("top_promotions", false, habboResponse, habboSession)
 
@@ -89,10 +97,12 @@ class NavigatorSearchResponse {
                         serializeEvents(it, direct, habboResponse)
                     }
                 }
+
                 "official_view" -> {
                     serializeSearchResultList("official", false, habboResponse, habboSession)
                     serializeSearchResultList("recommended", false, habboResponse, habboSession)
                 }
+
                 "my" -> {
                     val rooms: MutableList<Room> = mutableListOf()
 
@@ -105,14 +115,16 @@ class NavigatorSearchResponse {
                     writeInt(rooms.size)
                     rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
-                "popular" -> {
-                    HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
-                        .sortedBy { it.userManager.users.size }.take(8).let {
-                                writeInt(it.size)
 
-                                it.forEach { room -> habboResponse.serialize(room, false, false) }
-                            }
+                "popular" -> {
+                    HabboServer.habboGame.roomManager.rooms.values.filter { it.running && it.userManager.entities.isNotEmpty() }
+                        .sortedBy { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
+                            writeInt(it.size)
+
+                            it.forEach { room -> habboResponse.serialize(room, false, false) }
+                        }
                 }
+
                 "favorites" -> {
                     val rooms: MutableList<Room> = mutableListOf()
 
@@ -125,6 +137,7 @@ class NavigatorSearchResponse {
                     writeInt(rooms.size)
                     rooms.sortedByDescending { it.roomData.id }.forEach { serialize(it, false, false) }
                 }
+
                 else -> writeInt(0)
             }
         }
@@ -149,7 +162,11 @@ class NavigatorSearchResponse {
         }
     }
 
-    private fun serializeRoomCategories(navigatorRoomCategory: NavigatorRoomCategory, direct: Boolean, habboResponse: HabboResponse) {
+    private fun serializeRoomCategories(
+        navigatorRoomCategory: NavigatorRoomCategory,
+        direct: Boolean,
+        habboResponse: HabboResponse
+    ) {
         habboResponse.apply {
             writeUTF("")
             writeUTF(navigatorRoomCategory.caption)
@@ -157,17 +174,21 @@ class NavigatorSearchResponse {
             writeBoolean(true)
             writeInt(0)
 
-            HabboServer.habboGame.roomManager.rooms.values.filter { it.roomTask != null && it.userManager.users.isNotEmpty() }
-                    .filter { it.roomData.category == navigatorRoomCategory.id }
-                .sortedBy { it.userManager.users.size }.take(8).let {
-                        writeInt(it.size)
+            HabboServer.habboGame.roomManager.rooms.values.filter { it.running && it.userManager.entities.isNotEmpty() }
+                .filter { it.roomData.category == navigatorRoomCategory.id }
+                .sortedBy { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
+                    writeInt(it.size)
 
-                        it.forEach { room -> habboResponse.serialize(room, false, false) }
-                    }
+                    it.forEach { room -> habboResponse.serialize(room, false, false) }
+                }
         }
     }
 
-    private fun serializeEvents(navigatorEventCategory: NavigatorEventCategory, direct: Boolean, habboResponse: HabboResponse) {
+    private fun serializeEvents(
+        navigatorEventCategory: NavigatorEventCategory,
+        direct: Boolean,
+        habboResponse: HabboResponse
+    ) {
         habboResponse.apply {
             writeUTF("")
             writeUTF(navigatorEventCategory.caption)

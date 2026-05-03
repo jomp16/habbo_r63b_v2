@@ -62,7 +62,9 @@ data class HabboConfig(
         @param:JsonProperty("analytics", required = true)
         val analyticsConfig: AnalyticsConfig,
         @param:JsonProperty("game", required = true)
-        val gameConfig: GameConfig
+        val gameConfig: GameConfig,
+        @param:JsonProperty("pets")
+        val petConfig: PetConfig = PetConfig()
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)

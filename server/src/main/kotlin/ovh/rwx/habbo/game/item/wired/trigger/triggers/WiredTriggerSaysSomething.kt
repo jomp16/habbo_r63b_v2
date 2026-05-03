@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.SayTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
 class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger<SayTriggerData>(room, roomItem) {
@@ -53,7 +54,11 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger<S
 
     override fun onTrigger(wiredContext: WiredContext, data: SayTriggerData): Boolean {
         if (wiredContext.triggererUser == null) return false
-        if (onlyOwner && !room.userManager.hasRights(wiredContext.triggererUser.habboSession, true)) return false
+        if (onlyOwner && !room.userManager.hasRights(
+                (wiredContext.triggererUser as? RoomUser)?.habboSession,
+                true
+            )
+        ) return false
 
         return when (triggerType) {
             ChatTriggerType.CONTAINS -> message.isNotEmpty() && data.text.contains(message, ignoreCase = true)

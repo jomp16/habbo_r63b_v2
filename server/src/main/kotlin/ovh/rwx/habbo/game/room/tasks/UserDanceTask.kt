@@ -23,17 +23,17 @@ import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 
-class UserDanceTask(private val roomUser: RoomUser, private val danceId: Int) : IRoomTask {
+class UserDanceTask(private val roomHumanoid: RoomHumanoid, private val danceId: Int) : IRoomTask {
     override fun executeTask(room: Room) {
-        roomUser.idle = false
-        roomUser.handItem = 0
-        roomUser.danceId = danceId
+        roomHumanoid.idle = false
+        roomHumanoid.handItem = 0
+        roomHumanoid.danceId = danceId
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
-            roomUser,
+            roomHumanoid,
             UserActionTriggerData(WiredTriggerUserPerformsAction.WiredUserAction.DANCE, danceId = danceId),
         )
     }

@@ -197,7 +197,7 @@ class WiredEffectMoveToDirection(room: Room, roomItem: RoomItem) : WiredEffect(r
         // 3. Verificação de Colisão com Usuários (Se o Wired não estiver configurado para "Atravessar")
         if (blockUserMovement) {
             // OTIMIZAÇÃO: Usar o lookup do gamemap é O(1), enquanto values.any é O(n)
-            val usersOnTile = room.roomGamemap.getUsersFromVector2(position)
+            val usersOnTile = room.roomGamemap.getEntitiesFromVector2(position)
             if (usersOnTile.isNotEmpty()) {
                 return true
             }

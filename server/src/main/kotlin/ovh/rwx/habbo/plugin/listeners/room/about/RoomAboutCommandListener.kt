@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,8 @@ import java.time.ZoneId
 class RoomAboutCommandListener : PluginListener() {
     @Command(["about", "info", "online", "server"])
     fun about(room: Room, roomUser: RoomUser, args: List<String>) {
-        roomUser.habboSession?.sendNotification(NotificationType.MOTD_ALERT,
+        roomUser.habboSession.sendNotification(
+            NotificationType.MOTD_ALERT,
                 BuildConfig.NAME +
                         "\n\n" +
                         "Version: ${BuildConfig.VERSION}" +

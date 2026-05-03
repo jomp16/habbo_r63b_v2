@@ -21,12 +21,12 @@ package ovh.rwx.habbo.game.room.tasks
 
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 
-class UserVendingMachineTask(private val roomUser: RoomUser, private val handItem: Int) : IRoomTask {
+class UserVendingMachineTask(private val roomHumanoid: RoomHumanoid, private val handItem: Int) : IRoomTask {
     override fun executeTask(room: Room) {
-        roomUser.walkingBlocked = true
-        roomUser.handleVendingId = handItem
-        roomUser.requestTicks(2)
+        roomHumanoid.walkingBlocked = true
+        roomHumanoid.handleVendingId = handItem
+        roomHumanoid.requestTicks(2)
     }
 }

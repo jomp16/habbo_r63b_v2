@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -33,11 +33,12 @@ class InventoryPetsHandler {
     @Handler(Incoming.INVENTORY_PETS)
     @HandlerR63A(IncomingR63A.INVENTORY_PETS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // Todo: when adding support to pets, rewrite this part
+        val pets = habboSession.habboInventory.pets.values.toList()
+
         if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_PETS, emptyList<Nothing>())
+            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_PETS, pets)
         } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_PETS, emptyList<Nothing>())
+            habboSession.sendHabboResponse(Outgoing.INVENTORY_PETS, pets)
         }
     }
 }

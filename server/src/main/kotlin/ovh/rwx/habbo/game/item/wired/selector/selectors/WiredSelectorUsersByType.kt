@@ -27,6 +27,9 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelectorType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomBot
+import ovh.rwx.habbo.game.room.user.RoomEntity
+import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
@@ -54,22 +57,15 @@ class WiredSelectorUsersByType(room: Room, roomItem: RoomItem) : WiredSelector(r
             currentSelection = mySelectedUsers,
             isFilter = roomItem.wiredData?.filter ?: false,
             isInverse = roomItem.wiredData?.inverse ?: false,
-            allPossibleTargets = { room.userManager.users.values }
+            allPossibleTargets = { room.userManager.entities.values }
         )
     }
 
-    private fun getUsersByType(): List<RoomUser> {
+    private fun getUsersByType(): List<RoomEntity> {
         return when (userType) {
-            UserType.HABBO -> room.userManager.users.values.filter { it.habboSession != null }
-            UserType.PET -> {
-                // TODO: implementar mascotes/pets
-                emptyList()
-            }
-
-            UserType.BOT -> {
-                // TODO: implementar bots
-                emptyList()
-            }
+            UserType.HABBO -> room.userManager.entities.values.filterIsInstance<RoomUser>()
+            UserType.PET -> room.userManager.entities.values.filterIsInstance<RoomPet>()
+            UserType.BOT -> room.userManager.entities.values.filterIsInstance<RoomBot>()
         }
     }
 

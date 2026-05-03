@@ -32,6 +32,6 @@ class WiredDelayTask(private val wiredDelayEvent: WiredDelayEvent) : IRoomTask {
             return
         }
 
-        room.roomTask?.addTask(room, this)
+        room.addTask(this)
     }
 }

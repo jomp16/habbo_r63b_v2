@@ -48,8 +48,6 @@ class RoomItemCommandsListener : PluginListener() {
             return
         }
 
-        if (roomUser.habboSession == null) return
-
         val itemName = args[1]
         val username = if (args.size >= 3) args[2] else null
         val furnishing = HabboServer.habboGame.itemManager.furnishings[itemName]

@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.room.trading.TradeStartResult
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused")
@@ -40,7 +41,7 @@ class TradingOpenHandler {
             return
         }
 
-        val targetUser = room.userManager.users[userId] ?: return
+        val targetUser = room.userManager.entities[userId] as? RoomUser ?: return
 
         val result = room.tradeManager.startTrade(roomUser, targetUser)
 

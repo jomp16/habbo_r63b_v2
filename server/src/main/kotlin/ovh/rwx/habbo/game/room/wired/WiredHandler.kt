@@ -34,7 +34,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.slide.flushWiredMovements
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -60,7 +60,7 @@ class WiredHandler(val room: Room) {
      */
     fun <T : WiredTriggerData> triggerWired(
         triggerClass: KClass<out WiredTrigger<T>>,
-        roomUser: RoomUser?,
+        roomUser: RoomEntity?,
         data: T
     ): List<WiredTrigger<T>> {
         val triggeredWireds = mutableListOf<WiredTrigger<T>>()

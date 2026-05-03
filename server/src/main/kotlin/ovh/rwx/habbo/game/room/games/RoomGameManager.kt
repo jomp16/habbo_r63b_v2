@@ -22,7 +22,7 @@ package ovh.rwx.habbo.game.room.games
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.banzai.BattleBanzaiGame
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 class RoomGameManager(val room: Room) {
     val games = mutableMapOf<RoomGameType, RoomGame>()
@@ -42,20 +42,20 @@ class RoomGameManager(val room: Room) {
         games[gameType] = roomGame
     }
 
-    fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {
-        getGameForItem(roomItem)?.onUserWalksOn(roomUser, roomItem)
+    fun onUserWalksOn(roomEntity: RoomEntity, roomItem: RoomItem) {
+        getGameForItem(roomItem)?.onUserWalksOn(roomEntity, roomItem)
     }
 
-    fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem) {
-        getGameForItem(roomItem)?.onUserWalkOff(roomUser, roomItem)
+    fun onUserWalkOff(roomEntity: RoomEntity, roomItem: RoomItem) {
+        getGameForItem(roomItem)?.onUserWalkOff(roomEntity, roomItem)
     }
 
-    fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int = 0) {
-        getGameForItem(roomItem)?.handleInteraction(roomUser, roomItem, state)
+    fun handleInteraction(roomEntity: RoomEntity, roomItem: RoomItem, state: Int = 0) {
+        getGameForItem(roomItem)?.handleInteraction(roomEntity, roomItem, state)
     }
 
-    fun onUserLeaveRoom(roomUser: RoomUser) {
-        games.values.forEach { it.onUserLeaveRoom(roomUser) }
+    fun onEntityLeaveRoom(roomEntity: RoomEntity) {
+        games.values.forEach { it.onEntityLeaveRoom(roomEntity) }
     }
 
     fun getGameForItem(roomItem: RoomItem): RoomGame? {

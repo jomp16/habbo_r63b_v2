@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
+import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_SHOW_MESSAGE)
@@ -57,18 +58,21 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
         if (!message.isBlank()) {
             val bubble = RoomChatMessageBubbles.fromType(style)
             when (visibility) {
-                MessageVisibility.USER_ONLY -> wiredContext.triggererUser?.chat(
-                    wiredContext.triggererUser.virtualID,
-                    message,
-                    bubble,
-                    RoomChatType.WHISPER,
-                    true
-                )
+                MessageVisibility.USER_ONLY -> (wiredContext.triggererUser as? RoomUser)?.let { roomUser ->
+                    roomUser.chat(
+                        roomUser.virtualID,
+                        message,
+                        bubble,
+                        RoomChatType.WHISPER,
+                        true
+                    )
+                }
 
                 MessageVisibility.ALL_USERS -> {
                     // Pegamos o triggerer (ou um bot/dono) para falar UMA VEZ para a sala
                     // Não fazemos loop aqui, pois o Task já faz o loop de broadcast!
-                    val speaker = wiredContext.triggererUser ?: room.userManager.users.values.firstOrNull()
+                    val speaker = (wiredContext.triggererUser as? RoomUser)
+                        ?: room.userManager.entities.values.filterIsInstance<RoomUser>().firstOrNull()
 
                     speaker?.chat(
                         speaker.virtualID,

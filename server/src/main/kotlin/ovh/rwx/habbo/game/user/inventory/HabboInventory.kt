@@ -22,17 +22,21 @@ package ovh.rwx.habbo.game.user.inventory
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.pet.PetData
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
 
 class HabboInventory(private val habboSession: HabboSession) {
     val items: MutableMap<Int, UserItem> = ConcurrentHashMap()
+    val pets: MutableMap<Int, PetData> = ConcurrentHashMap()
     private var initialized: Boolean = false
 
     fun load() {
         if (!initialized) {
             items.putAll(ItemDao.getUserItems(habboSession.userInformation.id))
+            pets.putAll(PetDao.getPetsByUserId(habboSession.userInformation.id).associateBy { it.id })
 
             initialized = true
         }
@@ -51,6 +55,16 @@ class HabboInventory(private val habboSession: HabboSession) {
         }
     }
 
+    fun addPet(petData: PetData, openInventory: Boolean = false) {
+        pets[petData.id] = petData
+
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.PET_ADDED_TO_INVENTORY, petData, openInventory)
+        } else {
+            habboSession.sendHabboResponse(Outgoing.PET_ADDED_TO_INVENTORY, petData, openInventory)
+        }
+    }
+
     fun removeItems(itemIds: List<Int>, delete: Boolean = false) {
         if (!items.keys.any { itemId -> itemIds.any { it == itemId } }) return
 
@@ -66,5 +80,17 @@ class HabboInventory(private val habboSession: HabboSession) {
         }
 
         if (delete) ItemDao.deleteItems(itemIds)
+    }
+
+    fun removePet(petId: Int): PetData? {
+        val petData = pets.remove(petId) ?: return null
+
+        if (habboSession.release == "R63A") {
+            habboSession.sendHabboResponse(OutgoingR63A.PET_REMOVED_FROM_INVENTORY, petData)
+        } else {
+            habboSession.sendHabboResponse(Outgoing.PET_REMOVED_FROM_INVENTORY, petData)
+        }
+
+        return petData
     }
 }

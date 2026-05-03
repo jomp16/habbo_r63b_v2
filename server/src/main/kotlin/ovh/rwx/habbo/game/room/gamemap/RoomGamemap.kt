@@ -24,7 +24,7 @@ import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.model.SquareState
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.pathfinding.core.Grid
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
@@ -36,7 +36,7 @@ class RoomGamemap(private val room: Room) {
     val blockedItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
     val cannotStackItem: Array<BooleanArray> = Array(room.roomModel.mapSizeX) { BooleanArray(room.roomModel.mapSizeY) }
 
-    private val roomUserMap: MutableMap<Vector2, MutableSet<RoomUser>> = ConcurrentHashMap()
+    private val roomEntityMap: MutableMap<Vector2, MutableSet<RoomEntity>> = ConcurrentHashMap()
     val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
 
     val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY) { _, x, y, overrideBlocking ->
@@ -55,7 +55,7 @@ class RoomGamemap(private val room: Room) {
         if (blockedItem[vector2.x][vector2.y]) return true
 
         if (!ignoreUsers && !room.roomData.allowWalkThrough) {
-            val usersOnTile = roomUserMap[vector2]
+            val usersOnTile = roomEntityMap[vector2]
             return !usersOnTile.isNullOrEmpty()
         }
 
@@ -64,24 +64,24 @@ class RoomGamemap(private val room: Room) {
 
     fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = abs(x1 - x2) + abs(y1 - y2)
 
-    fun addRoomUser(roomUser: RoomUser, vector2: Vector2) {
-        roomUserMap.getOrPut(vector2) { CopyOnWriteArraySet() }.add(roomUser)
+    fun addRoomEntity(roomEntity: RoomEntity, vector2: Vector2) {
+        roomEntityMap.getOrPut(vector2) { CopyOnWriteArraySet() }.add(roomEntity)
     }
 
-    fun removeRoomUser(roomUser: RoomUser, vector2: Vector2) {
-        val usersOnTile = roomUserMap[vector2]
+    fun removeRoomEntity(roomEntity: RoomEntity, vector2: Vector2) {
+        val usersOnTile = roomEntityMap[vector2]
         if (usersOnTile != null) {
-            usersOnTile.remove(roomUser)
+            usersOnTile.remove(roomEntity)
             // Evita o vazamento de memória removendo a chave se o Set ficar vazio
             if (usersOnTile.isEmpty()) {
-                roomUserMap.remove(vector2)
+                roomEntityMap.remove(vector2)
             }
         }
     }
 
-    fun updateRoomUserMovement(roomUser: RoomUser, oldVector2: Vector2, newVector2: Vector2) {
-        removeRoomUser(roomUser, oldVector2)
-        addRoomUser(roomUser, newVector2)
+    fun updateRoomEntityMovement(roomEntity: RoomEntity, oldVector2: Vector2, newVector2: Vector2) {
+        removeRoomEntity(roomEntity, oldVector2)
+        addRoomEntity(roomEntity, newVector2)
     }
 
     fun addRoomItem(roomItem: RoomItem) {
@@ -182,11 +182,11 @@ class RoomGamemap(private val room: Room) {
         getHighestItem(vector2)?.let { setRoomItem(vector2, it) }
     }
 
-    fun getUsersFromVector2(vector2: Vector2): Set<RoomUser> = roomUserMap[vector2] ?: emptySet()
+    fun getEntitiesFromVector2(vector2: Vector2): Set<RoomEntity> = roomEntityMap[vector2] ?: emptySet()
 
     fun getItemsFromVector2(vector2: Vector2): Set<RoomItem> = roomItemMap[vector2] ?: emptySet()
 
-    fun clearUsers() {
-        roomUserMap.clear()
+    fun clearEntities() {
+        roomEntityMap.clear()
     }
 }

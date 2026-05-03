@@ -25,7 +25,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomHumanoid
 
 enum class UserAction(val action: Int) {
     NONE(0),
@@ -50,24 +50,24 @@ enum class UserAction(val action: Int) {
     }
 }
 
-class UserActionTask(private val roomUser: RoomUser, private val action: UserAction) : IRoomTask {
+class UserActionTask(private val roomHumanoid: RoomHumanoid, private val action: UserAction) : IRoomTask {
     override fun executeTask(room: Room) {
         if (action == UserAction.IDLE) {
-            roomUser.idle = true
+            roomHumanoid.idle = true
 
             return
         }
 
-        roomUser.idle = false
-        roomUser.handItem = 0
-        roomUser.danceId = 0
+        roomHumanoid.idle = false
+        roomHumanoid.handItem = 0
+        roomHumanoid.danceId = 0
 
-        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomUser.virtualID, action.action)
+        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomHumanoid.virtualID, action.action)
 
         // Now for R63A
         when (action) {
             UserAction.WAVE -> {
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_WAVE, roomUser.virtualID, action.action)
+                room.sendHabboResponse(OutgoingR63A.ROOM_USER_WAVE, roomHumanoid.virtualID, action.action)
             }
 
             else -> {}
@@ -75,7 +75,7 @@ class UserActionTask(private val roomUser: RoomUser, private val action: UserAct
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,
-            roomUser,
+            roomHumanoid,
             UserActionTriggerData(WiredTriggerUserPerformsAction.WiredUserAction.fromUserAction(action))
         )
     }

@@ -68,8 +68,8 @@ class Trade(
     private var user2Confirmed = false
 
     // IDs dos usuários
-    val user1Id: Int get() = user1.habboSession?.userInformation?.id ?: -1
-    val user2Id: Int get() = user2.habboSession?.userInformation?.id ?: -1
+    val user1Id: Int get() = user1.habboSession.userInformation.id
+    val user2Id: Int get() = user2.habboSession.userInformation.id
 
     val user1VirtualId: Int get() = user1.virtualID
     val user2VirtualId: Int get() = user2.virtualID
@@ -118,8 +118,8 @@ class Trade(
         }
 
         // Verifica se o usuário realmente possui o item
-        val inventory = roomUser.habboSession?.habboInventory?.items
-        if (inventory == null || !inventory.containsKey(item.id)) {
+        val inventory = roomUser.habboSession.habboInventory.items
+        if (!inventory.containsKey(item.id)) {
             return@withLock AddItemResult.ItemNotOwned
         }
 
@@ -233,7 +233,7 @@ class Trade(
         }
 
         // Envia evento de aceite para ambos (mostra quem aceitou)
-        sendAcceptEvent(roomUser.habboSession?.userInformation?.id ?: 0, true)
+        sendAcceptEvent(roomUser.habboSession.userInformation.id, true)
 
         return@withLock true
     }
@@ -262,7 +262,7 @@ class Trade(
         }
 
         // Envia evento de aceite atualizado (accepted=false)
-        sendAcceptEvent(roomUser.habboSession?.userInformation?.id ?: 0, false)
+        sendAcceptEvent(roomUser.habboSession.userInformation.id, false)
 
         return@withLock true
     }
@@ -288,7 +288,7 @@ class Trade(
         }
 
         // Envia TRADING_ACCEPT para ambos (mostra que este usuário confirmou)
-        sendAcceptEvent(roomUser.habboSession?.userInformation?.id ?: 0, true)
+        sendAcceptEvent(roomUser.habboSession.userInformation.id, true)
 
         // Verifica se ambos confirmaram
         val bothConfirmed = user1Confirmed && user2Confirmed
@@ -391,7 +391,7 @@ class Trade(
         }
 
         // Envia TRADING_ACCEPT(false) para ambos, mostrando que o aceite foi resetado
-        sendAcceptEvent(modifierUser.habboSession?.userInformation?.id ?: 0, false)
+        sendAcceptEvent(modifierUser.habboSession.userInformation.id, false)
     }
 
     /**
@@ -417,7 +417,7 @@ class Trade(
 
             // Atualiza inventários em memória e envia pacotes de update
             // User1 recebe os itens do User2 e remove os itens enviados
-            user1.habboSession?.let { session ->
+            user1.habboSession.let { session ->
                 val receivedItems = allUser2Items.map { it.copy(userId = user1Id) }
                 session.habboInventory.addItems(receivedItems)
                 // Remove os itens que foram enviados (envia pacote de remoção)
@@ -425,7 +425,7 @@ class Trade(
             }
 
             // User2 recebe os itens do User1 e remove os itens enviados
-            user2.habboSession?.let { session ->
+            user2.habboSession.let { session ->
                 val receivedItems = allUser1Items.map { it.copy(userId = user2Id) }
                 session.habboInventory.addItems(receivedItems)
                 // Remove os itens que foram enviados (envia pacote de remoção)
@@ -442,7 +442,7 @@ class Trade(
     private fun sendItemListToBoth() {
         val (items1, items2) = getAllItems()
 
-        user1.habboSession?.let { session ->
+        user1.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(
                     OutgoingR63A.TRADING_ITEM_LIST,
@@ -457,7 +457,7 @@ class Trade(
                 )
             }
         }
-        user2.habboSession?.let { session ->
+        user2.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(
                     OutgoingR63A.TRADING_ITEM_LIST,
@@ -476,7 +476,7 @@ class Trade(
 
     private fun sendAcceptEvent(userId: Int, accepted: Boolean) {
         // Envia para user1
-        user1.habboSession?.let { session ->
+        user1.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_ACCEPT, userId, accepted)
             } else {
@@ -485,7 +485,7 @@ class Trade(
         }
 
         // Envia para user2
-        user2.habboSession?.let { session ->
+        user2.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_ACCEPT, userId, accepted)
             } else {
@@ -495,14 +495,14 @@ class Trade(
     }
 
     private fun sendConfirmationEvent() {
-        user1.habboSession?.let { session ->
+        user1.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_CONFIRMATION)
             } else {
                 session.sendHabboResponse(Outgoing.TRADING_CONFIRMATION)
             }
         }
-        user2.habboSession?.let { session ->
+        user2.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_CONFIRMATION)
             } else {
@@ -512,14 +512,14 @@ class Trade(
     }
 
     private fun sendCompletedEvent() {
-        user1.habboSession?.let { session ->
+        user1.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_COMPLETED)
             } else {
                 session.sendHabboResponse(Outgoing.TRADING_COMPLETED)
             }
         }
-        user2.habboSession?.let { session ->
+        user2.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_COMPLETED)
             } else {
@@ -529,14 +529,14 @@ class Trade(
     }
 
     private fun sendCloseEvent() {
-        user1.habboSession?.let { session ->
+        user1.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_CLOSE, user1Id)
             } else {
                 session.sendHabboResponse(Outgoing.TRADING_CLOSE, user1Id)
             }
         }
-        user2.habboSession?.let { session ->
+        user2.habboSession.let { session ->
             if (session.release == "R63A") {
                 session.sendHabboResponse(OutgoingR63A.TRADING_CLOSE, user2Id)
             } else {

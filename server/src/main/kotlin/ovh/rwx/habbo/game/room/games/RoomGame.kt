@@ -22,7 +22,7 @@ package ovh.rwx.habbo.game.room.games
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 abstract class RoomGame(val room: Room) {
     var running: Boolean = false
@@ -44,21 +44,21 @@ abstract class RoomGame(val room: Room) {
 
     abstract fun stop()
 
-    open fun onUserWalksOn(roomUser: RoomUser, roomItem: RoomItem) {}
+    open fun onUserWalksOn(roomEntity: RoomEntity, roomItem: RoomItem) {}
 
-    open fun onUserWalkOff(roomUser: RoomUser, roomItem: RoomItem) {}
+    open fun onUserWalkOff(roomEntity: RoomEntity, roomItem: RoomItem) {}
 
-    open fun handleInteraction(roomUser: RoomUser, roomItem: RoomItem, state: Int = 0) {}
+    open fun handleInteraction(roomEntity: RoomEntity, roomItem: RoomItem, state: Int = 0) {}
 
     open fun tick() {}
 
-    open fun onUserLeaveRoom(roomUser: RoomUser) {}
+    open fun onEntityLeaveRoom(roomEntity: RoomEntity) {}
 
     open fun addScore(gameTeam: GameTeam, points: Int) {}
 
     open fun getTeamColor(interactionType: InteractionType): GameTeam? = null
 
-    open fun joinTeam(gameTeam: GameTeam, roomUser: RoomUser) {}
+    open fun joinTeam(gameTeam: GameTeam, roomEntity: RoomEntity) {}
 
-    open fun leaveTeam(gameTeam: GameTeam, roomUser: RoomUser) {}
+    open fun leaveTeam(gameTeam: GameTeam, roomEntity: RoomEntity) {}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,23 +23,23 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
 class PressurePadItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.PRESSURE_PAD)
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
         roomItem.extraData = "0"
     }
 
-    override fun onUserWalksOn(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+    override fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
         roomItem.extraData = "1"
         roomItem.update(updateDb = false, updateClient = true)
     }
 
-    override fun onUserWalksOff(room: Room, roomUser: RoomUser, roomItem: RoomItem) {
+    override fun onUserWalksOff(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
         roomItem.extraData = "0"
         roomItem.update(updateDb = false, updateClient = true)
     }

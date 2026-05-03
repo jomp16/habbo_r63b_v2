@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
@@ -36,20 +37,20 @@ class WiredItemInteractor : ItemInteractor() {
 
     override val interactionType = InteractionType.entries.filter { it.name.startsWith("WIRED") }
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
     }
 
-    override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onRemove(room, roomUser, roomItem)
+    override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onRemove(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
     }
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
         if (!hasRights || roomItem.wiredData == null) return
 
@@ -57,7 +58,7 @@ class WiredItemInteractor : ItemInteractor() {
         roomItem.update(updateDb = false, updateClient = true)
         roomItem.requestTicks(1)
 
-        roomUser?.habboSession?.let { habboSession ->
+        (roomEntity as? RoomUser)?.habboSession?.let { habboSession ->
             val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
 
             if (wiredInstance != null) {

@@ -25,21 +25,21 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
 class OneWayGateItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.ONE_WAY_GATE)
 
-    override fun onPlace(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onPlace(room, roomUser, roomItem)
+    override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onPlace(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
         roomItem.interactingUsers.clear()
     }
 
-    override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
-        super.onRemove(room, roomUser, roomItem)
+    override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
+        super.onRemove(room, roomEntity, roomItem)
 
         roomItem.extraData = "0"
         roomItem.interactingUsers.clear()
@@ -58,13 +58,13 @@ class OneWayGateItemInteractor : ItemInteractor() {
         }
     }
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
-        if (roomUser == null) return
+        if (roomEntity == null) return
 
-        if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation, roomItem.position.z)) {
-            roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
+        if (!roomItem.isTouching(roomEntity.currentVector3, roomEntity.bodyRotation, roomItem.position.z)) {
+            roomEntity.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
 
             return
         }
@@ -73,18 +73,18 @@ class OneWayGateItemInteractor : ItemInteractor() {
         if (room.roomGamemap.isBlocked(behindVector2)) return
 
         if (roomItem.interactingUsers.isEmpty()) {
-            roomItem.interactingUsers[1] = roomUser
+            roomItem.interactingUsers[1] = roomEntity
             roomItem.extraData = "1"
             roomItem.update(updateDb = false, updateClient = true)
 
-            roomUser.walkingBlocked = true
-            roomUser.moveTo(roomItem.getBehindPosition(), ignoreBlocking = true)
+            roomEntity.walkingBlocked = true
+            roomEntity.moveTo(roomItem.getBehindPosition(), ignoreBlocking = true)
 
             roomItem.requestTicks(3)
         }
 
         room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class, roomUser,
+            WiredTriggerStateChanged::class, roomEntity,
             StateTriggerData(roomItem)
         )
     }

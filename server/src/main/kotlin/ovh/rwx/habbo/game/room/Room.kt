@@ -19,6 +19,11 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
@@ -26,8 +31,16 @@ import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.group.GroupDao
+import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.group.Group
+import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyShort
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.games.RoomGameManager
 import ovh.rwx.habbo.game.room.games.RoomGameType
@@ -36,14 +49,21 @@ import ovh.rwx.habbo.game.room.managers.RoomNetworkDispatcher
 import ovh.rwx.habbo.game.room.managers.RoomUserManager
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.trading.TradeManager
+import ovh.rwx.habbo.game.room.user.RoomPet
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     // region Managers
     val networkDispatcher = RoomNetworkDispatcher(this)
     val userManager = RoomUserManager(this)
@@ -51,8 +71,16 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val tradeManager = TradeManager(this)
     // endregion
 
+    // region Game Loop
+    private var loopJob: Job? = null
+    private var tickCounter = 0
+    private val highFrequencyQueue = ConcurrentLinkedQueue<IRoomTask>()
+    private val majorTickQueue = ConcurrentLinkedQueue<IRoomTask>()
+
+    val running: Boolean get() = loopJob?.isActive == true
+    // endregion
+
     // region Counters & State
-    var roomTask: RoomTask? = null
     val rollerCounter = AtomicInteger()
     val emptyCounter = AtomicInteger()
     val errorsCounter = AtomicInteger()
@@ -74,7 +102,6 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
     val loadedGroups: MutableSet<Group> by lazy { HashSet() }
-    // endregion
 
     // region Initialization
     fun initialize() {
@@ -89,7 +116,204 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         group?.let { loadedGroups.add(it) }
+
+        if (roomData.allowPets) {
+            userManager.loadPets()
+        }
+
         initialized = true
+    }
+    // endregion
+
+    // region Task API
+    fun addTask(task: IRoomTask) {
+        if (task.highFrequency) {
+            highFrequencyQueue.offer(task)
+        } else {
+            majorTickQueue.offer(task)
+        }
+    }
+    // endregion
+
+    // region Game Loop
+    fun startLoop() {
+        if (running) return
+
+        log.info("Loading room n° {} - name {}", roomData.id, roomData.name)
+
+        resetCounters()
+        initialize()
+        roomGamemap.clearEntities()
+
+        loopJob = HabboServer.applicationScope.launch {
+            while (isActive) {
+                val startTime = System.currentTimeMillis()
+
+                try {
+                    tickCounter = (tickCounter + 1) % 10
+                    val isMajorTick = tickCounter == 0
+
+                    processRoomTick(isMajorTick)
+
+                    if (errorsCounter.get() > 0) errorsCounter.set(0)
+                } catch (e: Exception) {
+                    handleException(e)
+                }
+
+                val elapsed = System.currentTimeMillis() - startTime
+                delay((50L - elapsed).coerceAtLeast(1L).milliseconds)
+            }
+        }
+    }
+
+    fun stopLoop() {
+        if (!running) return
+
+        log.info("Closing room n° {} - name {}", roomData.id, roomData.name)
+
+        tradeManager.clearAllTrades()
+
+        userManager.entities.values.toList().forEach {
+            userManager.removeEntity(it, notifyClient = true, kickNotification = true)
+        }
+
+        loopJob?.cancel()
+        loopJob = null
+
+        highFrequencyQueue.clear()
+        majorTickQueue.clear()
+        resetCounters()
+        roomGamemap.clearEntities()
+        saveRoom()
+    }
+
+    private fun resetCounters() {
+        emptyCounter.set(0)
+        errorsCounter.set(0)
+        rollerCounter.set(0)
+        roomTimer.set(0)
+    }
+    // endregion
+
+    // region Tick Processing
+    private fun processRoomTick(isMajorTick: Boolean) {
+        // High-frequency tasks run every tick (50ms)
+        drainQueue(highFrequencyQueue)
+
+        // Major tick tasks run every 10th tick (500ms)
+        if (isMajorTick) drainQueue(majorTickQueue)
+
+        processWiredsAndGames(isMajorTick)
+        processItems(isMajorTick)
+
+        if (isMajorTick) {
+            roomTimer.incrementAndGet()
+            processHostingAchievement()
+            processEntities()
+            checkEmptyRoomUnload()
+        }
+    }
+
+    private fun drainQueue(queue: ConcurrentLinkedQueue<IRoomTask>) {
+        var task = queue.poll()
+        while (task != null) {
+            task.executeTask(this)
+            task = queue.poll()
+        }
+    }
+
+    private fun processWiredsAndGames(isMajorTick: Boolean) {
+        itemManager.wiredHandler.triggerWired(WiredTriggerPeriodically::class, null, PeriodicTriggerData)
+        itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyShort::class, null, PeriodicTriggerData)
+        itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, PeriodicTriggerData)
+        itemManager.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, EmptyTriggerData)
+
+        if (isMajorTick) gameManager.tick()
+    }
+
+    private fun processHostingAchievement() {
+        if (hostingCounter.incrementAndGet() < 120) return
+
+        hostingCounter.set(0)
+
+        val guestCount = userManager.entities.values.filterIsInstance<RoomUser>().count {
+            it.habboSession.userInformation.id != roomData.ownerId
+        }
+
+        if (guestCount > 0) {
+            val ownerSession = HabboServer.habboSessionManager.getHabboSessionById(roomData.ownerId)
+            HabboServer.habboGame.achievementManager.progress(
+                ownerSession, roomData.ownerId, "ACH_RoomDecoHosting", 1, accumulate = true
+            )
+        }
+    }
+
+    private fun processItems(isMajorTick: Boolean) {
+        val items = itemManager.items.values
+
+        if (isMajorTick) {
+            if (rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
+                rollerCounter.set(0)
+                rolledItemsThisTick.clear()
+                rolledUsersThisTick.clear()
+
+                items.filter { it.furnishing.interactionType == InteractionType.ROLLER }
+                    .forEach { it.furnishing.interactor?.processTick(this, it) }
+            }
+        }
+
+        items.filter { it.furnishing.interactionType != InteractionType.ROLLER }
+            .forEach { it.processTick() }
+    }
+
+    private fun processEntities() {
+        val entities = userManager.entities.values
+
+        // Clean stuck pending users
+        val pendingToRemove =
+            entities.filter { it.pendingJoin && (it as? RoomUser)?.habboSession?.channel?.isOpen == false }
+        pendingToRemove.forEach { pending ->
+            log.warn(
+                "Removing stuck pending user {} from room {} (session closed)",
+                (pending as? RoomUser)?.habboSession?.userInformation?.username, roomData.id
+            )
+            userManager.removeEntity(pending, notifyClient = false, kickNotification = false)
+        }
+
+        entities.forEach { it.processTick() }
+
+        val needingUpdate = entities.filter { it.updateNeeded }
+        if (needingUpdate.isNotEmpty()) {
+            sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, needingUpdate)
+            sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, needingUpdate)
+            needingUpdate.forEach { it.updateNeeded = false }
+        }
+    }
+
+    private fun checkEmptyRoomUnload() {
+        if (userManager.entities.values.filterIsInstance<RoomUser>().isNotEmpty()) {
+            emptyCounter.set(0)
+            return
+        }
+
+        val emptySeconds = TimeUnit.MILLISECONDS.toSeconds(emptyCounter.incrementAndGet() * 500L)
+
+        if (emptySeconds >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
+            HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(this)
+        }
+    }
+
+    private fun handleException(e: Exception) {
+        log.error("An exception happened on room n° ${roomData.id}. Cause: {}", e.message, e)
+
+        if (errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
+            log.error(
+                "Forcing close of room n° {} since it crashed over {} times!",
+                roomData.id,
+                HabboServer.habboConfig.roomTaskConfig.errorThreshold
+            )
+            HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(this)
+        }
     }
     // endregion
 
@@ -114,14 +338,18 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     fun updateGroupRights() {
         userManager.updateGroupRights()
     }
-    // endregion
 
     fun saveRoom() {
         RoomDao.updateRoomData(roomData)
         group?.let { GroupDao.updateGroupData(it.groupData) }
         itemManager.savePendingItems()
+
+        // Save pet positions
+        userManager.entities.values.filterIsInstance<RoomPet>().forEach { roomPet ->
+            roomPet.syncPosition()
+            PetDao.savePet(roomPet.petData)
+        }
     }
-    // endregion
 
     // region Serialization
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -133,7 +361,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeInt(roomData.ownerId)
             writeUTF(roomData.ownerName)
             writeInt(roomData.state.state)
-            writeInt(userManager.users.size)
+            writeInt(userManager.entities.values.filterIsInstance<RoomUser>().size)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
             writeInt(roomData.tradeState)
@@ -166,7 +394,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             writeUTF(roomData.name)
             writeUTF(roomData.ownerName)
             writeInt(roomData.state.state)
-            writeInt(userManager.users.size)
+            writeInt(userManager.entities.values.filterIsInstance<RoomUser>().size)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
             writeInt(roomData.tradeState) // srchSpecPrm

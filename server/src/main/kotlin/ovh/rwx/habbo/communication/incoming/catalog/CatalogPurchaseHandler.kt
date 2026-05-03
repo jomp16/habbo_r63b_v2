@@ -73,7 +73,13 @@ class CatalogPurchaseHandler {
         if (amount < 1 || amount > 1 && catalogItem.limited) amount = 1
         else if (amount > 100) amount = 100
 
-        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount)
+        val isPetPage = catalogPage?.pageLayout?.startsWith("pets") == true
+
+        if (isPetPage) {
+            HabboServer.habboGame.catalogManager.purchasePet(habboSession, catalogItem, extraData)
+        } else {
+            HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount)
+        }
     }
 
     @HandlerR63A(IncomingR63A.CATALOG_PURCHASE)
@@ -112,6 +118,12 @@ class CatalogPurchaseHandler {
             return
         }
 
-        HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount = 1)
+        val isPetPage = catalogPage?.pageLayout?.startsWith("pets") == true
+
+        if (isPetPage) {
+            HabboServer.habboGame.catalogManager.purchasePet(habboSession, catalogItem, extraData)
+        } else {
+            HabboServer.habboGame.catalogManager.purchase(habboSession, catalogItem, extraData, amount = 1)
+        }
     }
 }

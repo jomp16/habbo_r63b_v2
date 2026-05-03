@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.TimerTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerClockCounter
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.RoomGameClockAdjustMode
-import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import java.util.concurrent.ConcurrentHashMap
 
 class TimerItemInteractor : ItemInteractor() {
@@ -58,12 +58,12 @@ class TimerItemInteractor : ItemInteractor() {
         }
     }
 
-    override fun onRemove(room: Room, roomUser: RoomUser?, roomItem: RoomItem) {
+    override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
         // ESSENCIAL: Previne fugas de memória (memory leaks) limpando o estado quando o item é recolhido
         itemStates.remove(roomItem.id)
     }
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
         if (!hasRights) return
 
         val state = getState(roomItem)

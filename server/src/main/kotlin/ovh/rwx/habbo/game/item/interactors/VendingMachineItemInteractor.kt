@@ -25,16 +25,17 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 @Suppress("unused")
 class VendingMachineItemInteractor : ItemInteractor() {
     override val interactionType = listOf(InteractionType.VENDING_MACHINE)
 
-    override fun onTrigger(room: Room, roomUser: RoomUser?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
-        super.onTrigger(room, roomUser, roomItem, hasRights, request)
+    override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
+        super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
-        if (roomUser == null) return
+        val roomUser = roomEntity as? RoomUser ?: return
 
         if (!roomItem.isTouching(roomUser.currentVector3, roomUser.bodyRotation)) {
             roomUser.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
@@ -50,7 +51,7 @@ class VendingMachineItemInteractor : ItemInteractor() {
         roomItem.requestTicks(2)
 
         room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class, roomUser,
+            WiredTriggerStateChanged::class, roomEntity,
             StateTriggerData(roomItem)
         )
     }

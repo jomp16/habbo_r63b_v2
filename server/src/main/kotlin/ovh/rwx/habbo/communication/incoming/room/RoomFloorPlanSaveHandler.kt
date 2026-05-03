@@ -29,6 +29,7 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.model.RoomModel
+import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector3
 
@@ -130,15 +131,15 @@ class RoomFloorPlanSaveHandler {
             room.roomData.floorThick = floorThickness
             room.roomData.wallThick = wallThickness
 
-            val roomUsers = room.userManager.users.values.toList()
+            val roomUsers = room.userManager.entities.values.filterIsInstance<RoomUser>().toList()
 
-            HabboServer.habboGame.roomManager.roomTaskManager.removeRoomFromTask(room)
+            HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(room)
 
             room.roomGamemap = RoomGamemap(room)
 
             roomUsers.map {
                 HabboServer.applicationScope.async {
-                    it.habboSession?.sendHabboResponse(
+                    it.habboSession.sendHabboResponse(
                         Outgoing.ROOM_FORWARD,
                         room.roomData.id
                     )

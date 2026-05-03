@@ -48,7 +48,7 @@ class BattleBanzaiTilesFlickerTask(
 
         if (count < 9) {
             // Agenda próxima execução (500ms = 1 tick)
-            room.roomTask?.addTask(room, this)
+            room.addTask(this)
         } else {
             // Após 9 ciclos, reseta os tiles para o estado final locked
             tiles.forEach { tile ->
