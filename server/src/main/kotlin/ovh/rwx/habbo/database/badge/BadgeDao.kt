@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -40,7 +40,33 @@ object BadgeDao {
         }
     }
 
-    fun removeBadge(id: Int) {
+    fun getAllBadges(): Map<Int, Map<String, Badge>> {
+        return HabboServer.database {
+            select(
+                javaClass.classLoader.getResource("sql/badges/select_all_badges.sql").readText(),
+                mapOf()
+            ) {
+                it.int("user_id") to Badge(
+                    it.int("id"),
+                    it.string("code"),
+                    it.int("slot")
+                )
+            }.groupBy({ it.first }, { it.second }).mapValues { it.value.associateBy { badge -> badge.code } }
+        }
+    }
+
+    fun getOwnerCounts(): Map<String, Int> {
+        return HabboServer.database {
+            select(
+                javaClass.classLoader.getResource("sql/badges/select_badge_owner_counts.sql").readText(),
+                mapOf()
+            ) {
+                it.string("code") to it.int("owner_count")
+            }.toMap()
+        }
+    }
+
+    fun removeBadge(userId: Int, id: Int, code: String) {
         HabboServer.database {
             update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
                     mapOf(
@@ -48,6 +74,8 @@ object BadgeDao {
                     )
             )
         }
+
+        HabboServer.habboGame.badgeManager.removeBadge(userId, code)
     }
 
     fun addBadge(userId: Int, code: String, slot: Int): Badge = HabboServer.database {
@@ -60,6 +88,8 @@ object BadgeDao {
         )
 
         Badge(id, code, slot)
+    }.also { badge ->
+        HabboServer.habboGame.badgeManager.addBadge(userId, badge)
     }
 
     fun saveBadges(badges: Collection<Badge>) {

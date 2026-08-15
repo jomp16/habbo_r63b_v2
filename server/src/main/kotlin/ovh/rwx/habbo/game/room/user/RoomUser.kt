@@ -82,6 +82,10 @@ class RoomUser(
             writeUTF("")
             writeInt(habboSession.userStats.achievementScore)
             writeBoolean(habboSession.habboSubscription.hasBuildersClub) // is member of builder club
+
+            if (isVersionAtLeast(2026, 8, 6)) {
+                writeInt(0) // todo: badgesRank
+            }
         }
     }
 

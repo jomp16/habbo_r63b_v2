@@ -68,6 +68,6 @@ class HabboBadge(private val habboSession: HabboSession) {
             habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
         }
 
-        BadgeDao.removeBadge(badge.id)
+        BadgeDao.removeBadge(habboSession.userInformation.id, badge.id, badge.code)
     }
 }

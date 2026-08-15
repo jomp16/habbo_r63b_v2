@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.outgoing.inventory
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
@@ -56,14 +57,18 @@ class InventoryBadgesResponse {
     @Response(Outgoing.INVENTORY_BADGES)
     fun simplifiedInventoryBadgeResponse(habboResponse: HabboResponse, badges: Collection<Badge>) {
         habboResponse.apply {
-            writeInt(1) // ???
-            writeInt(0) // ???
+            writeInt(1) // totalFragments
+            writeInt(0) // fragmentNo
 
             writeInt(badges.size)
 
             badges.forEach {
-                writeInt(1)
+                writeInt(it.id)
                 writeUTF(it.code)
+                if (isVersionAtLeast(2026, 8, 6)) {
+                    writeInt(HabboServer.habboGame.badgeManager.getOwnerCount(it.code)) // ownerCount
+                    writeInt(0) // todo: badgeRarityId
+                }
             }
         }
     }

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.information.UserInformation
 import ovh.rwx.habbo.game.user.information.UserStats
@@ -82,6 +83,18 @@ class UserProfileResponse {
             writeInt(0) // starGemCount
             writeBoolean(false) // Sem getter, boolean desconhecido
             writeBoolean(false) // Sem getter, boolean desconhecido
+
+            if (habboResponse.isVersionAtLeast(2026, 8, 6)) {
+                val totalBadges = HabboServer.habboGame.badgeManager.getBadgeCount(userInformation.id)
+                val achievementLevel = HabboServer.habboGame.achievementManager.userAchievements[userInformation.id]
+                    ?.sumOf { it.level } ?: 0
+
+                writeInt(totalBadges) // totalBadges
+                writeInt(achievementLevel) // achievementLevel
+                writeInt(0) // TODO: badgeRarityCounts.size (lista vazia)
+                // badgeRarityCounts.forEach { writeByte(rarityId); writeInt(count) }
+                writeInt(0) // TODO: totalBadgesRank
+            }
         }
     }
 }

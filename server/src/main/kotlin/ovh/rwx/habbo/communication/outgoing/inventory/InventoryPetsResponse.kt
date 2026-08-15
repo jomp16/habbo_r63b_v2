@@ -31,8 +31,8 @@ class InventoryPetsResponse {
     @Response(Outgoing.INVENTORY_PETS)
     fun response(habboResponse: HabboResponse, pets: List<PetData>) {
         habboResponse.apply {
-            writeInt(1) // page total
-            writeInt(1) // page index
+            writeInt(1) // totalFragments
+            writeInt(0) // fragmentNo
             writeInt(pets.size)
 
             pets.forEach { pet ->

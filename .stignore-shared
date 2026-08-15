@@ -1,4 +1,19 @@
 (?d)build/
 (?d)out/
 (?d).gradle/
+
 camera_data/assets_renderer_v2/
+
+// ---- Lixo de SO / editores ----
+.DS_Store
+Thumbs.db
+*.tmp
+*~
+
+// ---- Arquivos internos do próprio Syncthing ----
+.stfolder
+.stversions
+
+// Arquivos de conflito do Syncthing (remove se quiser preservar as cópias
+// "perdedoras" como backup de divergências em arquivos de código).
+*.sync-conflict-*

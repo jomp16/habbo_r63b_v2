@@ -19,9 +19,11 @@
 
 package ovh.rwx.habbo.communication.outgoing.user
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.badge.Badge
@@ -44,6 +46,18 @@ class UserBadgesResponse {
             equippedBadges.forEach {
                 writeInt(it.slot)
                 writeUTF(it.code)
+                if (habboResponse.isVersionAtLeast(2026, 8, 6)) {
+                    writeInt(HabboServer.habboGame.badgeManager.getOwnerCount(it.code)) // ownerCount
+                    // badgeRarityId -> rarity (classe AS3 com.sulake.habbo.communication.enum):
+                    //   0 = COMMON    -> badge.rarity.common    (Comum)
+                    //   1 = UNCOMMON  -> badge.rarity.uncommon  (Incomum - só com flag de config)
+                    //   2 = RARE      -> badge.rarity.rare      (Raro)
+                    //   3 = VERY_RARE -> badge.rarity.epic      (Épico)
+                    //   4 = MYTHICAL  -> badge.rarity.mythical  (Místico)
+                    //   5 = LEGENDARY -> badge.rarity.legendary (Lendário)
+                    //   6 = UNIQUE    -> badge.rarity.unique    (Único)
+                    writeInt(0) // todo: badgeRarityId
+                }
             }
         }
     }

@@ -116,7 +116,11 @@ class RoomBadgeCommandsListener : PluginListener() {
             if (userId != null) {
                 val badges = BadgeDao.getBadges(userId)
 
-                if (badges.any { it.value.code == badgeCode }) BadgeDao.removeBadge(badges.values.find { it.code == badgeCode }!!.id)
+                if (badges.any { it.value.code == badgeCode }) BadgeDao.removeBadge(
+                    userId,
+                    badges.values.find { it.code == badgeCode }!!.id,
+                    badgeCode
+                )
 
                 return
             }

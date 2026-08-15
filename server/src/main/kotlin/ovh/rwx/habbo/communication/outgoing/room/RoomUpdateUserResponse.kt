@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -29,13 +30,32 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 class RoomUpdateUserResponse {
     @Response(Outgoing.USER_UPDATE)
     @ResponseR63A(OutgoingR63A.USER_UPDATE)
-    fun response(habboResponse: HabboResponse, virtualId: Int, figure: String, gender: String, motto: String, achievementScore: Int) {
+    fun response(
+        habboResponse: HabboResponse,
+        virtualId: Int,
+        figure: String,
+        gender: String,
+        motto: String,
+        achievementScore: Int
+    ) {
         habboResponse.apply {
             writeInt(virtualId)
             writeUTF(figure)
             writeUTF(gender)
             writeUTF(motto)
             writeInt(achievementScore)
+
+            if (isVersionAtLeast(2026, 8, 6)) {
+                writeUTF("") // 1. string ignorada (provável swim figure) - TODO
+                val items = emptyList<Triple<Int, Int, Int>>() // 2. TODO: usar lista real
+                writeInt(items.size)
+                items.forEach { (a, b, c) -> // 3. 3 ints por item - ignorados pelo cliente
+                    writeInt(a)
+                    writeInt(b)
+                    writeInt(c)
+                }
+                writeInt(0) // 4. badgesRank - TODO
+            }
         }
     }
 }

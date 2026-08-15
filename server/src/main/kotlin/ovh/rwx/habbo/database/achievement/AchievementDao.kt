@@ -78,6 +78,23 @@ object AchievementDao {
         }
     }
 
+    fun loadAllUserAchievements(): Map<Int, List<AchievementUser>> {
+        return HabboServer.database {
+            select(
+                javaClass.getResource("/sql/achievement/select_all_user_achievements.sql").readText(),
+                mapOf()
+            ) {
+                AchievementUser(
+                    it.int("id"),
+                    it.int("user_id"),
+                    it.int("achievement_group_id"),
+                    it.int("level"),
+                    it.int("progress")
+                )
+            }.groupBy { it.userId }
+        }
+    }
+
     fun saveUserAchievements(achievementUsers: Collection<AchievementUser>) {
         if (achievementUsers.isEmpty()) return
 

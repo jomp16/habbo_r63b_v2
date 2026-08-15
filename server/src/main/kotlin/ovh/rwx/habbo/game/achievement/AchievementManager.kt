@@ -33,6 +33,7 @@ class AchievementManager {
     val achievementGroups: MutableMap<String, AchievementGroup> = mutableMapOf()
     private val achievements: MutableList<Achievement> = mutableListOf()
     private val saveQueue: MutableSet<AchievementUser> = ConcurrentHashMap.newKeySet()
+    val userAchievements: MutableMap<Int, List<AchievementUser>> = ConcurrentHashMap()
     val achievementLevels: Map<Int, List<Achievement>>
         get() = achievements.filter { it.enabled }.groupBy { it.groupId }
     val groupedAchievements: Map<AchievementGroup, List<Achievement>>
@@ -43,12 +44,15 @@ class AchievementManager {
 
         achievementGroups.clear()
         achievements.clear()
+        userAchievements.clear()
 
         achievementGroups += AchievementDao.loadAchievementGroups()
         achievements += AchievementDao.loadAchievements()
+        userAchievements.putAll(AchievementDao.loadAllUserAchievements())
 
         log.info("Loaded {} achievement groups!", achievementGroups.size)
         log.info("Loaded {} achievements!", achievements.size)
+        log.info("Loaded achievements for {} users!", userAchievements.size)
     }
 
     fun progress(
@@ -70,6 +74,8 @@ class AchievementManager {
             userData = AchievementDao.insertUserAchievement(userId, group.id, 0, 0)
             achievementUsers.add(userData)
         }
+
+        syncUserAchievement(userId, userData)
 
         val levels = achievementLevels[group.id] ?: return
         if (userData.level >= levels.size) return
@@ -94,6 +100,14 @@ class AchievementManager {
     // Sobrecarga para manter compatibilidade
     fun progress(habboSession: HabboSession, achievementName: String, amount: Int, accumulate: Boolean = true) {
         progress(habboSession, habboSession.userInformation.id, achievementName, amount, accumulate)
+    }
+
+    private fun syncUserAchievement(userId: Int, achievementUser: AchievementUser) {
+        val userList = userAchievements[userId]
+        val newList = userList?.filterNot { it.id == achievementUser.id }?.plus(achievementUser)
+            ?: listOf(achievementUser)
+
+        userAchievements[userId] = newList
     }
 
     fun saveQueuedAchievements() {

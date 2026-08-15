@@ -97,6 +97,9 @@ data class PetData(
 //                writeInt(0)
             // end - qtd figureString
             writeInt(level)
+            if (habboResponse.isVersionAtLeast(2026, 8, 6)) {
+                writeInt(0) // todo: rarityLevel
+            }
         }
     }
 

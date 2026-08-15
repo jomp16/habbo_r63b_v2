@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.incoming
 enum class Incoming {
     ACHIEVEMENT_LIST,
     AVATAR_EFFECT,
+    BADGE_LEADERBOARD,
     BADGE_POINTS_LIMIT,
     BUILDERS_PLACE_ROOM_ITEM,
     BUILDERS_PLACE_WALL_ITEM,
@@ -254,6 +255,7 @@ enum class Incoming {
     USER_BADGES,
     USER_CHANGE_FIGURE,
     USER_CHANGE_MOTTO,
+    USER_DISCONNECT,
     USER_GET_DAILY_TASKS,
     USER_GET_NFT_CHAT_STYLES,
     USER_GET_NFT_CREDITS,
