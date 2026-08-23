@@ -35,7 +35,6 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
     private val diffieHellmanEncryption: DiffieHellmanEncryption = DiffieHellmanEncryption()
     private var dhParameterSpec: DHParameterSpec? = null
     private var serverKeyPair: KeyPair? = null
-    private var serverKeyAgree: KeyAgreement? = null
 
     init {
         if (!HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
@@ -46,10 +45,6 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
                 initialize(dhParameterSpec)
 
                 genKeyPair()
-            }
-
-            serverKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
-                init(serverKeyPair!!.private)
             }
         }
     }
@@ -68,41 +63,49 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         ignoreSign: Boolean = false,
         disableRsa: Boolean = false,
     ): Pair<BigInteger, BigInteger> {
-        val serverKeyPair1: KeyPair
-        val serverKeyAgree1: KeyAgreement
+        val clientPublicKeyValue = if (disableRsa) {
+            BigInteger(publicKey)
+        } else {
+            val verifiedBytes = rsaEncryption.verify(Hex.decode(publicKey))
+            if (verifiedBytes.isEmpty()) {
+                throw IllegalArgumentException("Invalid RSA payload from client")
+            }
+            BigInteger(verifiedBytes.toString(Charsets.UTF_8))
+        }
+
         val clientPublicKey = KeyFactory.getInstance("DH", "BC").run {
             generatePublic(
                 DHPublicKeySpec(
-                    if (disableRsa) BigInteger(publicKey) else BigInteger(
-                        rsaEncryption.verify(Hex.decode(publicKey)).toString(Charsets.UTF_8)
-                    ),
+                    clientPublicKeyValue,
                     diffieHellmanParams.p,
                     diffieHellmanParams.g
                 )
             )
         }
 
-        if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
-            serverKeyPair1 = KeyPairGenerator.getInstance("DH", "BC").run {
-                initialize(diffieHellmanParams)
+        val serverKeyPair1: KeyPair =
+            if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
+                KeyPairGenerator.getInstance("DH", "BC").run {
+                    initialize(diffieHellmanParams)
 
-                genKeyPair()
+                    genKeyPair()
+                }
+            } else {
+                serverKeyPair!!
             }
 
-            serverKeyAgree1 = KeyAgreement.getInstance("DH", "BC").apply {
-                init(serverKeyPair1.private)
-            }
-        } else {
-            serverKeyPair1 = serverKeyPair!!
-            serverKeyAgree1 = serverKeyAgree!!
+        // KeyAgreement is stateful and NOT thread-safe; instantiate a fresh one
+        // per handshake. KeyPair / DHParameterSpec are immutable and safe to cache.
+        val localKeyAgree = KeyAgreement.getInstance("DH", "BC").apply {
+            init(serverKeyPair1.private)
         }
 
-        serverKeyAgree1.doPhase(clientPublicKey, true)
+        localKeyAgree.doPhase(clientPublicKey, true)
 
         return if (ignoreSign) {
-            (serverKeyPair1.public as DHPublicKey).y to BigInteger(1, serverKeyAgree1.generateSecret())
+            (serverKeyPair1.public as DHPublicKey).y to BigInteger(1, localKeyAgree.generateSecret())
         } else {
-            (serverKeyPair1.public as DHPublicKey).y to BigInteger(serverKeyAgree1.generateSecret())
+            (serverKeyPair1.public as DHPublicKey).y to BigInteger(localKeyAgree.generateSecret())
         }
     }
 

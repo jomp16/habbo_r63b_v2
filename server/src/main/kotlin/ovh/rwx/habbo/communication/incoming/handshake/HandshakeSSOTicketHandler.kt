@@ -64,7 +64,10 @@ class HandshakeSSOTicketHandler {
             habboSession.userInformation.homeRoom,
             HabboServer.habboConfig.autoJoinRoom
         )
-        habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
+        if (!habboSession.isBot) habboSession.sendHabboResponse(
+            Outgoing.USER_CLOTHINGS,
+            habboSession.userInformation.clothings
+        )
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
         habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
         habboSession.sendHabboResponse(
@@ -81,7 +84,10 @@ class HandshakeSSOTicketHandler {
             habboSession.userStats.firstLoginOfDay
         )
         habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_SUBSCRIPTION_STATUS, habboSession.habboSubscription)
+        if (!habboSession.isBot) habboSession.sendHabboResponse(
+            Outgoing.BUILDERS_SUBSCRIPTION_STATUS,
+            habboSession.habboSubscription
+        )
         habboSession.sendHabboResponse(
             Outgoing.CAMPAIGN_CALENDAR,
             "easter21",
@@ -155,7 +161,10 @@ class HandshakeSSOTicketHandler {
             habboSession.userInformation.homeRoom,
             HabboServer.habboConfig.autoJoinRoom
         )
-        habboSession.sendHabboResponse(Outgoing.USER_CLOTHINGS, habboSession.userInformation.clothings)
+        if (!habboSession.isBot) habboSession.sendHabboResponse(
+            Outgoing.USER_CLOTHINGS,
+            habboSession.userInformation.clothings
+        )
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
         habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
         habboSession.sendHabboResponse(
@@ -172,7 +181,10 @@ class HandshakeSSOTicketHandler {
             habboSession.userStats.firstLoginOfDay
         )
         habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
-        habboSession.sendHabboResponse(Outgoing.BUILDERS_SUBSCRIPTION_STATUS, habboSession.habboSubscription)
+        if (!habboSession.isBot) habboSession.sendHabboResponse(
+            Outgoing.BUILDERS_SUBSCRIPTION_STATUS,
+            habboSession.habboSubscription
+        )
         habboSession.sendHabboResponse(
             Outgoing.CAMPAIGN_CALENDAR,
             "easter21",
@@ -195,6 +207,8 @@ class HandshakeSSOTicketHandler {
 
     private fun commonStuff(habboSession: HabboSession) {
         habboSession.handshaking = false
+
+        if (habboSession.isBot) return
 
         if (HabboServer.habboConfig.analyticsConfig.uniqueId && !UserUniqueIdDao.containsUniqueIdForUser(
                 habboSession.userInformation.id,

@@ -73,3 +73,6 @@ game:
 pets:
   name_min_length: 2
   name_max_length: 15
+stress_test: false
+bot_ticket_prefix: "bot-"
+debug: false

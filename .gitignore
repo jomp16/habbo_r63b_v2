@@ -31,3 +31,6 @@ log4j2.private.xml
 
 .kiro/
 .kotlin/
+.opencode/
+
+*.log

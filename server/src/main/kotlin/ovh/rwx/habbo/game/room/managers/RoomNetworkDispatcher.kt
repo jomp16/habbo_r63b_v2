@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.managers
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
@@ -32,14 +33,67 @@ class RoomNetworkDispatcher(private val room: Room) {
     }
 
     fun sendResponseModern(outgoing: Outgoing, vararg args: Any?) {
-        room.userManager.entities.values.filterIsInstance<RoomUser>().map { it.habboSession }
+        val sessions = room.userManager.entities.values
+            .filterIsInstance<RoomUser>()
+            .map { it.habboSession }
             .filter { it.release != "R63A" }
-            .forEach { it.sendHabboResponse(outgoing, *args) }
+
+        if (sessions.isEmpty()) return
+
+        // Agrupa por versão para suportar clientes mistos sem quebrar o Header ID
+        val groupedSessions = sessions.groupBy { it.release }
+
+        for ((_, releaseSessions) in groupedSessions) {
+            val prototypeSession = releaseSessions.first()
+
+            // 1. Serializa a lógica pesada (mapas, strings, iterações) APENAS UMA VEZ
+            val prototypeResponse =
+                HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) ?: continue
+
+            // 2. Extrai o payload binário puro
+            val readableBytes = prototypeResponse.byteBuf.readableBytes()
+            val payload = ByteArray(readableBytes)
+            prototypeResponse.byteBuf.getBytes(prototypeResponse.byteBuf.readerIndex(), payload)
+            prototypeResponse.close() // Libera a memória do Netty do protótipo
+
+            // 3. Clona o pacote levemente para todos da mesma versão (O(N) ao invés de O(N²))
+            for (session in releaseSessions) {
+                val clonedResponse = HabboResponse(
+                    prototypeResponse.headerId,
+                    outgoing = outgoing,
+                    habboVersion = session.habboVersion
+                )
+                clonedResponse.byteBuf.writeBytes(payload)
+                session.sendHabboResponse(clonedResponse)
+            }
+        }
     }
 
     fun sendResponseR63A(outgoing: OutgoingR63A, vararg args: Any?) {
-        room.userManager.entities.values.filterIsInstance<RoomUser>().map { it.habboSession }
+        val sessions = room.userManager.entities.values
+            .filterIsInstance<RoomUser>()
+            .map { it.habboSession }
             .filter { it.release == "R63A" }
-            .forEach { it.sendHabboResponse(outgoing, *args) }
+
+        if (sessions.isEmpty()) return
+
+        val prototypeSession = sessions.first()
+        val prototypeResponse = HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) ?: return
+
+        val readableBytes = prototypeResponse.byteBuf.readableBytes()
+        val payload = ByteArray(readableBytes)
+        prototypeResponse.byteBuf.getBytes(prototypeResponse.byteBuf.readerIndex(), payload)
+        prototypeResponse.close()
+
+        for (session in sessions) {
+            val clonedResponse = HabboResponse(
+                prototypeResponse.headerId,
+                outgoingR63A = outgoing,
+                r63ANewEncoding = prototypeResponse.r63ANewEncoding,
+                habboVersion = session.habboVersion
+            )
+            clonedResponse.byteBuf.writeBytes(payload)
+            session.sendHabboResponse(clonedResponse)
+        }
     }
 }

@@ -1,6 +1,7 @@
 (?d)build/
 (?d)out/
 (?d).gradle/
+ (?d).kiro/
 
 camera_data/assets_renderer_v2/
 

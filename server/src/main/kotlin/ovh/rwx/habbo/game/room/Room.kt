@@ -49,6 +49,7 @@ import ovh.rwx.habbo.game.room.managers.RoomNetworkDispatcher
 import ovh.rwx.habbo.game.room.managers.RoomUserManager
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.trading.TradeManager
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.pathfinding.IFinder
@@ -63,6 +64,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val stressLog = LoggerFactory.getLogger("ovh.rwx.habbo.stress")
 
     // region Managers
     val networkDispatcher = RoomNetworkDispatcher(this)
@@ -101,7 +103,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
 
     val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
-    val loadedGroups: MutableSet<Group> by lazy { HashSet() }
+    val loadedGroups: MutableSet<Group> by lazy { CopyOnWriteArraySet() }
 
     // region Initialization
     fun initialize() {
@@ -145,13 +147,25 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         initialize()
         roomGamemap.clearEntities()
 
+        val stressTest = HabboServer.habboConfig.stressTest
+        // Stress-test ring buffers (only allocated when stressTest == true)
+        val tickProcessingBuffer = if (stressTest) LongArray(200) else LongArray(0)
+        val majorTickIntervalBuffer = if (stressTest) LongArray(20) else LongArray(0)
+        var stressTickIdx = 0
+        var stressMajorIdx = 0
+        var stressTickCount = 0
+        var stressMajorCount = 0
+        var stressLogCounter = 0
+        var lastMajorTickNano = 0L
+
         loopJob = HabboServer.applicationScope.launch {
             while (isActive) {
-                val startTime = System.currentTimeMillis()
+                val startNano = System.nanoTime()
+                var isMajorTick = false
 
                 try {
                     tickCounter = (tickCounter + 1) % 10
-                    val isMajorTick = tickCounter == 0
+                    isMajorTick = tickCounter == 0
 
                     processRoomTick(isMajorTick)
 
@@ -160,8 +174,50 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     handleException(e)
                 }
 
-                val elapsed = System.currentTimeMillis() - startTime
-                delay((50L - elapsed).coerceAtLeast(1L).milliseconds)
+                val elapsedNanos = System.nanoTime() - startNano
+                val elapsedMs = elapsedNanos / 1_000_000
+
+                if (stressTest) {
+                    tickProcessingBuffer[stressTickIdx] = elapsedMs
+                    stressTickIdx = (stressTickIdx + 1) % tickProcessingBuffer.size
+                    stressTickCount++
+                    stressLogCounter++
+
+                    if (isMajorTick) {
+                        val nowNano = System.nanoTime()
+                        if (lastMajorTickNano > 0) {
+                            val interval = (nowNano - lastMajorTickNano) / 1_000_000
+                            majorTickIntervalBuffer[stressMajorIdx] = interval
+                            stressMajorIdx = (stressMajorIdx + 1) % majorTickIntervalBuffer.size
+                            stressMajorCount++
+                        }
+                        lastMajorTickNano = nowNano
+                    }
+
+                    // Log rolling summary every ~10 seconds (200 ticks * 50ms)
+                    if (stressLogCounter >= 200) {
+                        stressLogCounter = 0
+                        val procCount = minOf(stressTickCount, tickProcessingBuffer.size)
+                        val (procAvg, procP95, procMax) = computeStats(tickProcessingBuffer, procCount)
+
+                        val majCount = minOf(stressMajorCount, majorTickIntervalBuffer.size)
+                        var majInfo = "n/a"
+                        if (majCount >= 2) {
+                            val (majAvg, majP95, majMax) = computeStats(majorTickIntervalBuffer, majCount)
+                            val drift = majAvg - 500.0
+                            majInfo = "avg=%.1fms p95=%dms max=%dms drift=%.1fms".format(majAvg, majP95, majMax, drift)
+                        }
+
+                        val procInfo = "avg=%.1fms p95=%dms max=%dms".format(procAvg, procP95, procMax)
+
+                        stressLog.info(
+                            "[stress-test] room={} ticks={} proc: {} | major-interval: {}",
+                            roomData.id, procCount, procInfo, majInfo
+                        )
+                    }
+                }
+
+                delay((50L - elapsedMs).coerceAtLeast(1L).milliseconds)
             }
         }
     }
@@ -192,6 +248,17 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         errorsCounter.set(0)
         rollerCounter.set(0)
         roomTimer.set(0)
+    }
+
+    private fun computeStats(buffer: LongArray, count: Int): Triple<Double, Long, Long> {
+        val times = LongArray(count)
+        for (i in 0 until count) times[i] = buffer[i]
+        val sorted = times.sorted()
+        return Triple(
+            sorted.average(),
+            sorted[(count * 0.95).toInt().coerceIn(0, count - 1)],
+            sorted.last(),
+        )
     }
     // endregion
 
@@ -251,38 +318,46 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     private fun processItems(isMajorTick: Boolean) {
         val items = itemManager.items.values
 
-        if (isMajorTick) {
-            if (rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller) {
-                rollerCounter.set(0)
-                rolledItemsThisTick.clear()
-                rolledUsersThisTick.clear()
-
-                items.filter { it.furnishing.interactionType == InteractionType.ROLLER }
-                    .forEach { it.furnishing.interactor?.processTick(this, it) }
-            }
+        val isRollerTick = isMajorTick &&
+                rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller
+        if (isRollerTick) {
+            rollerCounter.set(0)
+            rolledItemsThisTick.clear()
+            rolledUsersThisTick.clear()
         }
 
-        items.filter { it.furnishing.interactionType != InteractionType.ROLLER }
-            .forEach { it.processTick() }
+        for (item in items) {
+            if (item.furnishing.interactionType == InteractionType.ROLLER) {
+                if (isRollerTick) item.furnishing.interactor?.processTick(this, item)
+            } else {
+                item.processTick()
+            }
+        }
     }
 
     private fun processEntities() {
         val entities = userManager.entities.values
+        val needingUpdate = ArrayList<RoomEntity>(entities.size)
 
-        // Clean stuck pending users
-        val pendingToRemove =
-            entities.filter { it.pendingJoin && (it as? RoomUser)?.habboSession?.channel?.isOpen == false }
-        pendingToRemove.forEach { pending ->
-            log.warn(
-                "Removing stuck pending user {} from room {} (session closed)",
-                (pending as? RoomUser)?.habboSession?.userInformation?.username, roomData.id
-            )
-            userManager.removeEntity(pending, notifyClient = false, kickNotification = false)
+        for (entity in entities) {
+            // Limpeza de qualquer entidade com sessão fechada (fantasma)
+            if (entity is RoomUser && (!entity.habboSession.channel.isActive || !entity.habboSession.channel.isOpen)) {
+                log.warn(
+                    "Limpando usuário fantasma {} (id={}) da sala {}",
+                    entity.habboSession.userInformation.username, entity.virtualID, roomData.id
+                )
+                userManager.removeEntity(entity, notifyClient = false, kickNotification = false)
+                continue
+            }
+
+            entity.processTick()
+
+            if (entity.updateNeeded) {
+                needingUpdate.add(entity)
+                entity.updateNeeded = false
+            }
         }
 
-        entities.forEach { it.processTick() }
-
-        val needingUpdate = entities.filter { it.updateNeeded }
         if (needingUpdate.isNotEmpty()) {
             sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, needingUpdate)
             sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, needingUpdate)

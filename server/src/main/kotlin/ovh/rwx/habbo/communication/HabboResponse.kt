@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboVl64
@@ -43,8 +44,10 @@ class HabboResponse(
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
     fun writeUTF(s: String, breakChar: Int = 2) {
-        val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
-        debugString.append("{s:\"$debugStr\"}")
+        if (HabboServer.habboConfig.debug) {
+            val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
+            debugString.append("{s:\"$debugStr\"}")
+        }
         if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeBytes(s)
             byteBufOutputStream.writeByte(breakChar)
@@ -54,20 +57,26 @@ class HabboResponse(
     }
 
     fun writeUTFWithoutBreak(s: String) {
-        val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
-        debugString.append("{s:\"$debugStr\"}")
+        if (HabboServer.habboConfig.debug) {
+            val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
+            debugString.append("{s:\"$debugStr\"}")
+        }
         if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeBytes(s)
         }
     }
 
     fun writeShort(i: Int) {
-        debugString.append("{sh:\"$i\"}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{sh:\"$i\"}")
+        }
         byteBufOutputStream.writeShort(i)
     }
 
     fun writeInt(i: Int) {
-        debugString.append("{i:$i}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{i:$i}")
+        }
         if (outgoingR63A != null && !r63ANewEncoding) {
             HabboVl64.encodeBytes(i)?.let {
                 byteBufOutputStream.write(it)
@@ -78,17 +87,23 @@ class HabboResponse(
     }
 
     fun writeDouble(d: Double) {
-        debugString.append("{dl:$d}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{dl:$d}")
+        }
         byteBufOutputStream.writeDouble(d)
     }
 
     fun writeFloat(d: Float) {
-        debugString.append("{f:$d}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{f:$d}")
+        }
         byteBufOutputStream.writeFloat(d)
     }
 
     fun writeBoolean(b: Boolean) {
-        debugString.append("{b:$b}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{b:$b}")
+        }
         if (outgoingR63A != null && !r63ANewEncoding) {
             byteBufOutputStream.writeByte((if (b) 73 else 72))
         } else {
@@ -97,7 +112,9 @@ class HabboResponse(
     }
 
     fun writeByte(b: Int) {
-        debugString.append("{by:$b}")
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{by:$b}")
+        }
         byteBufOutputStream.writeByte(b)
     }
 

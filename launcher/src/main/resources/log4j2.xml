@@ -24,6 +24,11 @@
             <PatternLayout
                     pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss:SSS} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
         </Console>
+
+        <!-- Plain-text stress-test metrics file (truncated on each start) -->
+        <File name="StressTestFile" fileName="stress-test.log" append="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} [%-5level] %msg%n"/>
+        </File>
     </Appenders>
     <loggers>
         <Root level="info">
@@ -31,6 +36,16 @@
         </Root>
 
         <Logger name="ovh.rwx" level="trace"/>
+
+        <!-- Stress-test metrics -> file only (not console), avoids IDE truncation -->
+        <Logger name="ovh.rwx.habbo.stress" level="off" additivity="false">
+            <AppenderRef ref="StressTestFile"/>
+        </Logger>
+
+        <!-- Suppress per-packet incoming/outgoing TRACE flood on the console -->
+        <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>-->
+        <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>-->
+
         <Logger name="ovh.rwx.habbo.camera" level="debug"/>
         <Logger name="com.github.andrewoma.kwery" level="error"/>
         <Logger name="io.netty" level="error"/>

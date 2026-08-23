@@ -62,6 +62,9 @@ class AchievementManager {
         amount: Int,
         accumulate: Boolean = true
     ) {
+        if (habboSession?.isBot == true) return
+        if (userId >= 2_000_000_000) return
+
         val group = achievementGroups[achievementName] ?: return
 
         // Busca achievement do usuário (do banco se sessão offline)
@@ -99,6 +102,7 @@ class AchievementManager {
 
     // Sobrecarga para manter compatibilidade
     fun progress(habboSession: HabboSession, achievementName: String, amount: Int, accumulate: Boolean = true) {
+        if (habboSession.isBot) return
         progress(habboSession, habboSession.userInformation.id, achievementName, amount, accumulate)
     }
 

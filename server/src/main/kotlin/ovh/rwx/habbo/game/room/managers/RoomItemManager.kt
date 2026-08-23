@@ -43,7 +43,7 @@ class RoomItemManager(private val room: Room) {
     val wallItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.FLOOR }
 
-    val itemsToSave: MutableSet<RoomItem> = HashSet()
+    val itemsToSave: MutableSet<RoomItem> = ConcurrentHashMap.newKeySet()
     val wiredHandler: WiredHandler by lazy { WiredHandler(room) }
     var roomDimmer: RoomDimmer? = null
 

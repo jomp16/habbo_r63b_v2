@@ -80,6 +80,8 @@ abstract class RoomEntity(
 
     protected var lastEffect: RoomUserEffect? = null
 
+    private var blockedTicks: Int = 0
+
     // --- Abstract / open hooks for subclasses ---
 
     protected abstract fun onEffectChanged(effectId: Int)
@@ -199,15 +201,24 @@ abstract class RoomEntity(
             return
         }
 
-        var step = path.removeAt(0)
+        // Olhamos o passo sem removê-lo
+        var step = path.first()
         var stepVector2 = Vector2(step.x, step.y)
 
+        // Se bloqueado, não recalculamos o A* de forma ansiosa
         if (room.roomGamemap.isBlocked(
                 stepVector2,
                 ignoreUsers = ignoreBlocking,
                 overrideBlocking = overrideBlocking
             )
         ) {
+            blockedTicks++
+            // Tolera 2 ticks de espera caso alguém ou um item se mova do caminho
+            if (blockedTicks < 2) {
+                return
+            }
+
+            // Excedeu o timeout de tolerância: recálcula a rota a partir do ponto em que parou
             calculatePath()
 
             if (path.isEmpty()) {
@@ -215,9 +226,12 @@ abstract class RoomEntity(
                 return
             }
 
-            step = path.removeAt(0)
+            step = path.first()
             stepVector2 = Vector2(step.x, step.y)
         }
+
+        blockedTicks = 0
+        path.removeAt(0) // Comita a remoção do passo do stack
 
         if (!ignoreBlocking && !overrideBlocking) {
             val currentHeight = room.roomGamemap.getAbsoluteHeight(currentVector3.x, currentVector3.y)
@@ -315,6 +329,7 @@ abstract class RoomEntity(
 
     fun stopWalking() {
         path.clear()
+        blockedTicks = 0 // Resetamos na parada
         nextStepVector = null
         objectiveVector2 = null
         ignoreBlocking = false

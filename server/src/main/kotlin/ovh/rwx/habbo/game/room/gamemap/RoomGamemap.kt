@@ -29,7 +29,6 @@ import ovh.rwx.habbo.pathfinding.core.Grid
 import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.abs
 
 class RoomGamemap(private val room: Room) {
@@ -65,7 +64,7 @@ class RoomGamemap(private val room: Room) {
     fun tileDistance(x1: Int, y1: Int, x2: Int, y2: Int) = abs(x1 - x2) + abs(y1 - y2)
 
     fun addRoomEntity(roomEntity: RoomEntity, vector2: Vector2) {
-        roomEntityMap.getOrPut(vector2) { CopyOnWriteArraySet() }.add(roomEntity)
+        roomEntityMap.getOrPut(vector2) { ConcurrentHashMap.newKeySet() }.add(roomEntity)
     }
 
     fun removeRoomEntity(roomEntity: RoomEntity, vector2: Vector2) {
@@ -93,7 +92,7 @@ class RoomGamemap(private val room: Room) {
     private fun setRoomItem(vector2: Vector2, roomItem: RoomItem) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
-        val itemsOnTile = roomItemMap.getOrPut(vector2) { CopyOnWriteArraySet() }
+        val itemsOnTile = roomItemMap.getOrPut(vector2) { ConcurrentHashMap.newKeySet() }
         if (!itemsOnTile.add(roomItem)) return // Se já contém, encerra.
 
         val x = vector2.x

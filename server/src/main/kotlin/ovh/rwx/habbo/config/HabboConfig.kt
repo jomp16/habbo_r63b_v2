@@ -64,7 +64,13 @@ data class HabboConfig(
         @param:JsonProperty("game", required = true)
         val gameConfig: GameConfig,
         @param:JsonProperty("pets")
-        val petConfig: PetConfig = PetConfig()
+        val petConfig: PetConfig = PetConfig(),
+        @param:JsonProperty("stress_test")
+        val stressTest: Boolean = false,
+        @param:JsonProperty("bot_ticket_prefix")
+        val botTicketPrefix: String = "bot-",
+        @param:JsonProperty("debug")
+        val debug: Boolean = false,
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)

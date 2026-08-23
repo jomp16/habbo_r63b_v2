@@ -35,7 +35,14 @@ class HabboSubscription(private val habboSession: HabboSession) {
     var habboClubSubscription: Subscription? = null
         private set
     val buildersClubSubscription: Subscription by lazy {
-        SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.BUILDERS_CLUB)!!
+        if (habboSession.isBot) {
+            // Bot: in-memory trial subscription (zero DB access). The real
+            // getSubscription() would UPSERT a row in `users_subscriptions`,
+            // which fails the FK constraint because bots have no `users` row.
+            Subscription(0, habboSession.userInformation.id, ClubType.BUILDERS_CLUB, null, null, 0, 0)
+        } else {
+            SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.BUILDERS_CLUB)!!
+        }
     }
 
     val validUserSubscription: Boolean
@@ -50,6 +57,8 @@ class HabboSubscription(private val habboSession: HabboSession) {
     private var initialized: Boolean = false
 
     internal fun load() {
+        if (habboSession.isBot) return
+
         if (!initialized) {
             habboClubSubscription =
                 SubscriptionDao.getSubscription(habboSession.userInformation.id, ClubType.HABBO_CLUB)

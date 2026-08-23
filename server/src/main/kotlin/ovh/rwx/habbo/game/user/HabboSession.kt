@@ -107,6 +107,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
     var cryptoToken: String = ""
+    var isBot: Boolean = false
 
     fun sendAnyResponse(outgoing: Any, vararg args: Any?) {
         when (outgoing) {
@@ -137,7 +138,15 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        habboResponse?.let { channel.writeAndFlush(it) }
+        habboResponse?.let {
+            if (channel.isActive) {
+                channel.writeAndFlush(it)
+            } else {
+                // Channel already closed/disconnecting: release the pooled
+                // ByteBuf ourselves, otherwise it leaks (the encoder never runs).
+                it.close()
+            }
+        }
     }
 
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
@@ -181,6 +190,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         else HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
 
     internal fun authenticate(ssoTicket: String): Boolean {
+        val botPrefix = HabboServer.habboConfig.botTicketPrefix
+        if (botPrefix.isNotBlank() && ssoTicket.startsWith(botPrefix)) {
+            return authenticateBot(ssoTicket)
+        }
+
         val ip = channel.ip()
         val userInformation1 = UserInformationDao.getUserInformationByAuthTicket(ssoTicket) ?: return false
 
@@ -375,6 +389,86 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         return true
     }
 
+    private fun authenticateBot(ssoTicket: String): Boolean {
+        val botPrefix = HabboServer.habboConfig.botTicketPrefix
+        val suffix = ssoTicket.removePrefix(botPrefix).toIntOrNull() ?: return false
+        val botId = 2_000_000_000 + suffix
+        val botUsername = "Bot_$suffix"
+        val now = LocalDateTime.now()
+
+        if (HabboServer.habboSessionManager.containsHabboSessionById(botId)) {
+            return false
+        }
+
+        userInformation = UserInformation(
+            id = botId,
+            username = botUsername,
+            email = "",
+            accountCreated = now,
+            realname = "",
+            rank = 1,
+            credits = 0,
+            figure = HabboServer.habboConfig.serverConsoleFigure,
+            gender = "M",
+            motto = "",
+            homeRoom = 0,
+            vip = false,
+            password = "",
+            activityPointsCurrencies = mutableMapOf()
+        )
+
+        userStats = UserStats(
+            id = botId,
+            lastOnline = now,
+            lastOnlineDatabase = now,
+            onlineSeconds = 0L,
+            roomVisits = 0,
+            respect = 0,
+            giftsGiven = 0,
+            giftsReceived = 0,
+            dailyRespectPoints = 0,
+            dailyPetRespectPoints = 0,
+            dailyCompetitionVotes = 0,
+            achievementScore = 0,
+            questId = 0,
+            questProgress = 0,
+            favoriteGroupId = 0,
+            ticketsAnswered = 0,
+            marketplaceTickets = 0,
+            creditsLastUpdate = now,
+            respectLastUpdate = now
+        )
+
+        userPreferences = UserPreferences(
+            id = botId,
+            volume = "100;100;100",
+            preferOldChat = false,
+            ignoreRoomInvite = false,
+            disableCameraFollow = false,
+            navigatorX = 0,
+            navigatorY = 0,
+            navigatorWidth = 0,
+            navigatorHeight = 0,
+            hideInRoom = false,
+            blockNewFriends = false,
+            chatColor = 0,
+            friendBarOpen = false,
+            friendStreamEnabled = false
+        )
+
+        favoritesRooms = mutableListOf()
+
+        habboMessenger = HabboMessenger(this@HabboSession)
+        habboSubscription = HabboSubscription(this@HabboSession)
+        habboBadge = HabboBadge(this@HabboSession)
+        habboInventory = HabboInventory(this@HabboSession)
+
+        isBot = true
+        handshaking = false
+
+        return true
+    }
+
     internal fun rewardUser() {
         val localDateTime =
             userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
@@ -425,6 +519,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     internal fun processPeriodicAchievements() {
+        if (isBot) return
+
         // ACH_AllTimeHotelPresence: tempo total online em minutos
         val totalMinutes = (userStats.totalOnlineSeconds / 60).toInt()
 
@@ -621,16 +717,18 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (authenticated) {
             currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
-            userStats.lastOnlineDatabase = LocalDateTime.now()
+            if (!isBot) {
+                userStats.lastOnlineDatabase = LocalDateTime.now()
 
-            BadgeDao.saveBadges(habboBadge.badges.values)
-            UserInformationDao.saveInformation(userInformation, false, channel.ip())
-            UserPreferencesDao.savePreferences(userPreferences)
-            UserStatsDao.saveStats(userStats)
+                BadgeDao.saveBadges(habboBadge.badges.values)
+                UserInformationDao.saveInformation(userInformation, false, channel.ip())
+                UserPreferencesDao.savePreferences(userPreferences)
+                UserStatsDao.saveStats(userStats)
 
-            saveAllQueuedStuffs()
+                saveAllQueuedStuffs()
 
-            habboMessenger.notifyFriends()
+                habboMessenger.notifyFriends()
+            }
         }
     }
 

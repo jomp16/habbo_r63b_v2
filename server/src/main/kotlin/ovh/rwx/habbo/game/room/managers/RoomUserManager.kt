@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.managers
 
+import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -37,12 +38,13 @@ import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector3
+import java.util.concurrent.ConcurrentHashMap
 
 class RoomUserManager(private val room: Room) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(room.roomData.id)) }
-    val entities: MutableMap<Int, RoomEntity> by lazy { HashMap() }
+    val entities: MutableMap<Int, RoomEntity> by lazy { ConcurrentHashMap() }
     val usersWithRights: Set<RoomEntity>
         get() = entities.values.filterIsInstance<RoomUser>().filter { hasRights(it) }.toSet()
 
@@ -146,25 +148,25 @@ class RoomUserManager(private val room: Room) {
     fun removeEntity(roomEntity: RoomEntity?, notifyClient: Boolean, kickNotification: Boolean) {
         if (roomEntity == null) return
 
+        val existed = entities.remove(roomEntity.virtualID) != null
+        if (!existed && !roomEntity.pendingJoin) return
+
         if (roomEntity is RoomUser) {
             // Cancela qualquer troca ativa do usuário antes de remover
             room.tradeManager.onUserDisconnect(roomEntity)
-
-            roomEntity.habboSession.let { session ->
-                handleUserDisconnectionMessages(session, notifyClient, kickNotification)
-                if (session.currentRoom == room) {
-                    session.roomUser = null
-                    session.currentRoom = null
+            val session = roomEntity.habboSession
+            handleUserDisconnectionMessages(session, notifyClient, kickNotification)
+            if (session.currentRoom == room) {
+                session.roomUser = null
+                session.currentRoom = null
+                HabboServer.applicationScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                     session.habboMessenger.notifyFriends()
                 }
             }
         }
 
         // Remove do gamemap (se o usuário já foi adicionado)
-        // Usuários em pendingJoin podem ainda não estar no gamemap
-        if (!roomEntity.pendingJoin || roomEntity.currentVector3.vector2 != room.roomModel.doorVector3) {
-            room.roomGamemap.removeRoomEntity(roomEntity, roomEntity.currentVector3.vector2)
-        }
+        room.roomGamemap.removeRoomEntity(roomEntity, roomEntity.currentVector3.vector2)
         roomEntity.nextStepVector?.let { room.roomGamemap.removeRoomEntity(roomEntity, it.vector2) }
 
         entities.remove(roomEntity.virtualID)
