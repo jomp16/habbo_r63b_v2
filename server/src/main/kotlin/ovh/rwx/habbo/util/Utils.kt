@@ -25,7 +25,7 @@ import ovh.rwx.habbo.HabboServer
 import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.net.URL
+import java.net.URI
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import kotlin.math.ln
@@ -92,7 +92,9 @@ object Utils {
     }
 
     fun getIpInfo(ipOrDomain: String): IpInfo {
-        val url = URL("$ipInfoApiURL/$ipOrDomain?access_key=${HabboServer.habboConfig.analyticsConfig.ipConfig.apiKey}&hostname=1")
+        val url =
+            URI.create("$ipInfoApiURL/$ipOrDomain?access_key=${HabboServer.habboConfig.analyticsConfig.ipConfig.apiKey}&hostname=1")
+                .toURL()
 
         url.openStream().use {
             return jacksonObjectMapper().readValue(it)

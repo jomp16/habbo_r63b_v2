@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -77,13 +77,13 @@ class RoomCommandsManagerListener : PluginListener() {
         if (commands.isEmpty()) roomUserChatEvent.roomUser.chat(roomUserChatEvent.roomUser.virtualID, roomUserChatEvent.message, roomUserChatEvent.bubble, roomUserChatEvent.type, true)
 
         commands.forEach {
-            if (it.permissionName.isNotEmpty() && !roomUserChatEvent.roomUser.habboSession!!.hasPermission(it.permissionName)) {
+            if (it.permissionName.isNotEmpty() && !roomUserChatEvent.roomUser.habboSession.hasPermission(it.permissionName)) {
                 roomUserChatEvent.roomUser.habboSession.sendNotification("You have no permission to run this command!")
 
                 return@forEach
             }
 
-            if (roomUserChatEvent.roomUser.habboSession!!.userInformation.rank < it.rank) {
+            if (roomUserChatEvent.roomUser.habboSession.userInformation.rank < it.rank) {
                 roomUserChatEvent.roomUser.habboSession.sendNotification("You have a rank less than the required!")
 
                 return@forEach

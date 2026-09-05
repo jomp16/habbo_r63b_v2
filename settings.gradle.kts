@@ -17,8 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ":launcher", ":plugin_manager", ":plugin_impl1", ":plugin_webapp", ":pathfinding", ":habbo_imaging", ":server", ":camera"
+pluginManagement {
+    includeBuild("build-logic")
+}
 
-project(':plugin_impl1').projectDir = new File("plugins_src/plugin_impl1")
-project(":plugin_webapp").projectDir = new File("plugins_src/plugin_webapp")
-project(":camera").projectDir = new File("camera_renderer/camera")
+include(
+    ":launcher",
+    ":plugin_manager",
+    ":plugin_impl1",
+    ":plugin_webapp",
+    ":pathfinding",
+    ":habbo_imaging",
+    ":server",
+    ":camera"
+)
+
+project(":plugin_impl1").projectDir = file("plugins_src/plugin_impl1")
+project(":plugin_webapp").projectDir = file("plugins_src/plugin_webapp")
+project(":camera").projectDir = file("camera_renderer")

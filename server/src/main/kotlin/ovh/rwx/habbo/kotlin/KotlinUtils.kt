@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.kotlin
 
-import java.net.URL
+import java.net.URI
 import java.net.URLConnection
 import java.time.LocalDateTime
 
@@ -30,7 +30,7 @@ inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline inne
 fun array2dOfShort(sizeOuter: Int, sizeInner: Int) = Array(sizeOuter) { ShortArray(sizeInner) }
 
 fun urlUserAgent(url: String, userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"): URLConnection {
-    val urlConnection = URL(url).openConnection()
+    val urlConnection = URI.create(url).toURL().openConnection()
     urlConnection.setRequestProperty("User-Agent", userAgent)
 
     return urlConnection
