@@ -38,6 +38,7 @@ import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.encryption.IHabboEncryption
+import ovh.rwx.habbo.game.habbicon.HabboHabbicon
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomState
@@ -79,6 +80,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var habboMessenger: HabboMessenger
         private set
     lateinit var habboInventory: HabboInventory
+        private set
+    lateinit var habboHabbicon: HabboHabbicon
         private set
     val rooms: List<Room>
         get() = HabboServer.habboGame.roomManager.rooms.values.filter {
@@ -221,11 +224,27 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         habboSubscription = HabboSubscription(this@HabboSession)
         habboBadge = HabboBadge(this@HabboSession)
         habboInventory = HabboInventory(this@HabboSession)
+        habboHabbicon = HabboHabbicon(this@HabboSession)
 
         CoroutineScope(HabboServer.cachedExecutorDispatcher).launch {
             launch { habboSubscription.load() }
             launch { habboBadge.load() }
             launch { habboMessenger.load() }
+            launch {
+                habboHabbicon.load()
+                if (release != "R63A") {
+                    sendHabboResponse(
+                        Outgoing.USER_HABBICONS,
+                        habboHabbicon.getUserHabbiconList(),
+                        habboHabbicon.recentHabbiconIds
+                    )
+                    sendHabboResponse(
+                        Outgoing.HABBICON_SHOP_DATA,
+                        HabboServer.habboGame.habbiconManager.collections.values.toList(),
+                        habboHabbicon.userHabbicons
+                    )
+                }
+            }
             launch {
                 habboInventory.load()
 
@@ -462,6 +481,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         habboSubscription = HabboSubscription(this@HabboSession)
         habboBadge = HabboBadge(this@HabboSession)
         habboInventory = HabboInventory(this@HabboSession)
+        habboHabbicon = HabboHabbicon(this@HabboSession)
 
         isBot = true
         handshaking = false

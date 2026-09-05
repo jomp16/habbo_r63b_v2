@@ -135,6 +135,11 @@ data class AchievementUser(
             writeUTF(prevBadge) // removedBadgeCode (Para a UI substituir o ícone)
             writeUTF(group.category.category) // category
             writeBoolean(true) // showDialogToUser (Alerta na tela)
+
+            if (isVersionAtLeast(2026, 8, 6)) {
+                writeInt(HabboServer.habboGame.badgeManager.getOwnerCount(badgeCode)) // ownerCount
+                writeInt(0) // todo: badgeRarityId
+            }
         }
     }
 }

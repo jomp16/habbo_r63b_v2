@@ -30,6 +30,7 @@ import ovh.rwx.habbo.game.badge.BadgeManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.group.GroupManager
+import ovh.rwx.habbo.game.habbicon.HabbiconManager
 import ovh.rwx.habbo.game.item.ItemManager
 import ovh.rwx.habbo.game.landing.LandingManager
 import ovh.rwx.habbo.game.moderation.ModerationManager
@@ -58,6 +59,7 @@ class HabboGame {
     val antiMutantManager: AntiMutantManager = AntiMutantManager()
     val petManager: PetManager = PetManager()
     val badgeManager: BadgeManager = BadgeManager()
+    val habbiconManager: HabbiconManager = HabbiconManager()
 
     init {
         HabboServer.applicationScope.launch { landingManager.load() }
@@ -71,6 +73,7 @@ class HabboGame {
         HabboServer.applicationScope.launch { antiMutantManager.load() }
         HabboServer.applicationScope.launch { petManager.load() }
         HabboServer.applicationScope.launch { badgeManager.load() }
+        HabboServer.applicationScope.launch { habbiconManager.load() }
 
         // 1. Guardamos a referência do Job do RoomManager
         val roomJob = HabboServer.applicationScope.launch { roomManager.load() }

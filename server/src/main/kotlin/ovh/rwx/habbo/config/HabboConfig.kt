@@ -25,52 +25,54 @@ import java.io.File
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class HabboConfig(
-        @param:JsonProperty("port", required = true)
-        val port: Int,
-        @param:JsonProperty("ws_port", required = true)
-        val wsPort: Int,
-        @param:JsonProperty("web_port", required = true)
-        val webPort: Int,
-        @param:JsonProperty("database", required = true)
-        val databaseConfig: DatabaseConfig,
-        @param:JsonProperty("encryption", required = true)
-        val encryptionConfig: EncryptionConfig,
-        @param:JsonProperty("furnidata_xml", required = true)
-        val furnidataXml: String,
-        @param:JsonProperty("figuredata_xml", required = true)
-        val figuredataXml: String,
-        @param:JsonProperty("reward", required = true)
-        val rewardConfig: RewardConfig,
-        @param:JsonProperty("auto_join_room", required = true)
-        val autoJoinRoom: Boolean,
-        @param:JsonProperty("timer", required = true)
-        val timerConfig: TimerConfig,
-        @param:JsonProperty("room_task", required = true)
-        val roomTaskConfig: RoomTaskConfig,
-        @param:JsonProperty("camera", required = true)
-        val cameraConfig: CameraConfig,
-        @param:JsonProperty("catalog", required = true)
-        val catalogConfig: CatalogConfig,
-        @param:JsonProperty("recycler", required = true)
-        val recyclerConfig: RecyclerConfig,
-        @param:JsonProperty("motd_enabled", required = true)
-        val motdEnabled: Boolean,
-        @param:JsonProperty("motd_file_path", required = true)
-        private val motdFilePath: String,
-        @param:JsonProperty("server_console_figure", required = true)
-        val serverConsoleFigure: String,
-        @param:JsonProperty("analytics", required = true)
-        val analyticsConfig: AnalyticsConfig,
-        @param:JsonProperty("game", required = true)
-        val gameConfig: GameConfig,
-        @param:JsonProperty("pets")
-        val petConfig: PetConfig = PetConfig(),
-        @param:JsonProperty("stress_test")
-        val stressTest: Boolean = false,
-        @param:JsonProperty("bot_ticket_prefix")
-        val botTicketPrefix: String = "bot-",
-        @param:JsonProperty("debug")
-        val debug: Boolean = false,
+    @param:JsonProperty("port", required = true)
+    val port: Int,
+    @param:JsonProperty("ws_port", required = true)
+    val wsPort: Int,
+    @param:JsonProperty("web_port", required = true)
+    val webPort: Int,
+    @param:JsonProperty("database", required = true)
+    val databaseConfig: DatabaseConfig,
+    @param:JsonProperty("encryption", required = true)
+    val encryptionConfig: EncryptionConfig,
+    @param:JsonProperty("furnidata_xml", required = true)
+    val furnidataXml: String,
+    @param:JsonProperty("figuredata_xml", required = true)
+    val figuredataXml: String,
+    @param:JsonProperty("external_variables_txt", required = true)
+    val externalVariablesTxt: String,
+    @param:JsonProperty("reward", required = true)
+    val rewardConfig: RewardConfig,
+    @param:JsonProperty("auto_join_room", required = true)
+    val autoJoinRoom: Boolean,
+    @param:JsonProperty("timer", required = true)
+    val timerConfig: TimerConfig,
+    @param:JsonProperty("room_task", required = true)
+    val roomTaskConfig: RoomTaskConfig,
+    @param:JsonProperty("camera", required = true)
+    val cameraConfig: CameraConfig,
+    @param:JsonProperty("catalog", required = true)
+    val catalogConfig: CatalogConfig,
+    @param:JsonProperty("recycler", required = true)
+    val recyclerConfig: RecyclerConfig,
+    @param:JsonProperty("motd_enabled", required = true)
+    val motdEnabled: Boolean,
+    @param:JsonProperty("motd_file_path", required = true)
+    private val motdFilePath: String,
+    @param:JsonProperty("server_console_figure", required = true)
+    val serverConsoleFigure: String,
+    @param:JsonProperty("analytics", required = true)
+    val analyticsConfig: AnalyticsConfig,
+    @param:JsonProperty("game", required = true)
+    val gameConfig: GameConfig,
+    @param:JsonProperty("pets")
+    val petConfig: PetConfig = PetConfig(),
+    @param:JsonProperty("stress_test")
+    val stressTest: Boolean = false,
+    @param:JsonProperty("bot_ticket_prefix")
+    val botTicketPrefix: String = "bot-",
+    @param:JsonProperty("debug")
+    val debug: Boolean = false,
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)
@@ -81,4 +83,3 @@ data class HabboConfig(
         }
     }
 }
-

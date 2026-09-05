@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.habbicon.HabbiconChatContent
 import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -43,15 +44,25 @@ class MessengerChatResponse {
     fun responseHabboAir(
         habboResponse: HabboResponse,
         id: Int,
-        message: String,
+        message: Any,
         diffTimestamp: Int,
         userId: Int,
         username: String,
         figure: String
     ) {
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(message)
+            writeInt(userId)
+            when (message) {
+                is HabbiconChatContent -> {
+                    writeInt(1)
+                    writeInt(message.habbiconId)
+                }
+
+                else -> {
+                    writeInt(0)
+                    writeUTF(message.toString())
+                }
+            }
             writeInt(diffTimestamp)
             writeUTF(UUID.randomUUID().toString()) // messageId
             writeInt(0) // confirmationId
