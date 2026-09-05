@@ -62,12 +62,17 @@ import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
+import java.net.UnixDomainSocketAddress
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.security.Security
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.system.exitProcess
+import java.nio.channels.SocketChannel as UnixSocketChannel
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -92,6 +97,9 @@ object HabboServer : AutoCloseable {
     val serverScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
     val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
+    private val tuiSocketPath = Path.of(System.getProperty("habbo.tui.socket") ?: "/tmp/habbo-r63b.sock")
+    private var controlSocket: UnixSocketChannel? = null
+    private var controlWriter: java.io.BufferedWriter? = null
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val reflections: Reflections
@@ -163,6 +171,7 @@ object HabboServer : AutoCloseable {
 
     fun start() {
         try {
+            startControlServer()
             val stringEncoder = StringEncoder(Charsets.UTF_8)
             val habboNettyEncoder = HabboNettyEncoder()
             val habboNettyHandler = HabboNettyHandler()
@@ -257,12 +266,68 @@ object HabboServer : AutoCloseable {
         }
     }
 
+    private fun startControlServer() {
+        Thread({
+            while (controlSocket == null) {
+                try {
+                    val socket = UnixSocketChannel.open(java.net.StandardProtocolFamily.UNIX)
+                    socket.connect(UnixDomainSocketAddress.of(tuiSocketPath))
+                    controlSocket = socket
+                    controlWriter =
+                        Channels.newWriter(socket, StandardCharsets.UTF_8.newEncoder(), -1).buffered()
+                    controlWriter?.append("HELLO\tCONTROL\n")?.flush()
+                    handleControlClient(socket)
+                } catch (e: Exception) {
+                    Thread.sleep(250)
+                }
+            }
+        }, "tui-control-acceptor").apply { isDaemon = true }.start()
+
+        serverScheduledExecutor.scheduleWithFixedDelay(
+            { broadcastControlStats() },
+            0,
+            1,
+            java.util.concurrent.TimeUnit.SECONDS
+        )
+    }
+
+    private fun handleControlClient(socket: UnixSocketChannel) {
+        Thread({
+            socket.use { client ->
+                val reader = Channels.newReader(client, StandardCharsets.UTF_8.newDecoder(), -1).buffered()
+                reader.lineSequence().forEach { command ->
+                    if (command.startsWith("CMD\t")) {
+                        controlWriter?.append(commandResult(command.removePrefix("CMD\t")))?.append('\n')?.flush()
+                    }
+                }
+            }
+            controlSocket = null
+        }, "tui-control-client").apply { isDaemon = true }.start()
+    }
+
+    private fun broadcastControlStats() {
+        val stats = controlStatsLine()
+        controlWriter?.append(stats)?.append('\n')?.flush()
+    }
+
+    private fun controlStatsLine(): String {
+        val sessions = habboSessionManager.habboSessions.values
+        return "STATS\tusers=${sessions.count { it.authenticated && !it.handshaking }}\trooms_loaded=${habboGame.roomManager.rooms.values.count { it.running }}"
+    }
+
+    private fun commandResult(command: String): String {
+        val name = command.trim()
+        return "RESULT\t$command\t${if (name.isBlank()) "Comando inválido" else "Comando ainda não implementado: $name"}"
+    }
+
     inline fun <R> database(crossinline task: Session.() -> R): R = databaseFactory.use { session ->
         session.task()
     }
 
     override fun close() {
         if (started) {
+            controlWriter?.close()
+            controlSocket?.close()
             log.info("Shutting down ${BuildConfig.NAME} server...")
             // Start room
             log.debug("Closing all loaded rooms...")

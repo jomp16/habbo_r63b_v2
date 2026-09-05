@@ -17,12 +17,9 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.ajoberstar.grgit.Grgit
-
 plugins {
     id("habbo.kotlin-conventions")
     alias(libs.plugins.buildconfig)
-    alias(libs.plugins.grgit)
 }
 
 dependencies {
@@ -52,13 +49,25 @@ dependencies {
 buildConfig {
     packageName("ovh.rwx.habbo")
 
-    val repo = Grgit.open(mapOf("currentDir" to rootProject.projectDir))
+    val gitCommitFull = providers.provider {
+        providers.exec {
+            commandLine("git", "-C", rootProject.projectDir.absolutePath, "rev-parse", "HEAD")
+        }.standardOutput.asText.get().trim()
+    }
+    val gitCommitShort = providers.provider {
+        providers.exec {
+            commandLine("git", "-C", rootProject.projectDir.absolutePath, "rev-parse", "--short", "HEAD")
+        }.standardOutput.asText.get().trim()
+    }
 
     buildConfigField("NAME", "Habbo R63B v2")
     buildConfigField("VERSION", version.toString())
-    buildConfigField("GIT_COMMIT_SHORT", repo.head().abbreviatedId)
-    buildConfigField("GIT_COMMIT_FULL", repo.head().id)
-    buildConfigField("java.time.Instant", "BUILD_INSTANT", "Instant.ofEpochMilli(${System.currentTimeMillis()}L)")
+    buildConfigField("GIT_COMMIT_SHORT", gitCommitShort)
+    buildConfigField("GIT_COMMIT_FULL", gitCommitFull)
+    buildConfigField(
+        "java.time.Instant",
+        "BUILD_INSTANT",
+        provider { "Instant.ofEpochMilli(${System.currentTimeMillis()}L)" })
 
     useKotlinOutput { internalVisibility = false }
 }

@@ -20,6 +20,10 @@
 <!--suppress XmlUnboundNsPrefix -->
 <Configuration shutdownHook="disable" status="WARN">
     <Appenders>
+        <!-- The TUI owns the terminal. The appender sends plain text over its Unix socket. -->
+        <!--<UnixSocket name="TuiLog" path="${sys:habbo.tui.socket:-/tmp/habbo-r63b.sock}"
+                    pattern="%d{dd/MM/yyyy HH:mm:ss:SSS}"/>-->
+
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
                     pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss:SSS} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
@@ -32,6 +36,7 @@
     </Appenders>
     <loggers>
         <Root level="info">
+            <!--            <AppenderRef ref="TuiLog"/>-->
             <AppenderRef ref="Console"/>
         </Root>
 

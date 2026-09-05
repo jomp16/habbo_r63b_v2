@@ -33,9 +33,7 @@ val pluginLibs = configurations.named("runtimeClasspath").map { pluginRuntimeCla
 }
 
 tasks.named<ProcessResources>("processResources") {
-    filesMatching(listOf("**/*.properties", "**/*.json", "**/*.yml", "**/*.yaml")) {
-        expand(mapOf("project_name" to pluginProjectName, "version" to pluginVersion))
-    }
+    eachFile(ExpandPluginResources(mapOf("project_name" to pluginProjectName, "version" to pluginVersion)))
 }
 
 dependencies {
