@@ -38,7 +38,6 @@ dependencies {
     implementation(libs.log4j.slf4j)
     implementation(libs.log4j.slf4j2)
 
-    implementation(libs.javax.mail)
 
     implementation(libs.jackson.kotlin)
     implementation(libs.jackson.yaml)
