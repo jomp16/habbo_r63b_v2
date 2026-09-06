@@ -33,8 +33,9 @@ class ChestStartAddingHandler {
         val chestManager = HabboServer.habboGame.chestManager
         val chest = chestManager.getChest(room, habboRequest.readInt()) ?: return
 
-        // Inicia a Wired Trade de depósito: o client abre a sub-página
-        // wired_trading do inventário ao receber WIRED_TRADE_INITIATE
+        // Inicia a transação Wired Trade (WIRED_TRADE_INITIATE) enviando o TradeRequirementType
+        // correspondente ao tipo do baú (COINS_ONLY ou FURNI_ONLY).
+        // O client abre a sub-página wired_trading do inventário com os filtros adequados.
         chestManager.startDeposit(habboSession, room, chest)
     }
 }

@@ -23,11 +23,22 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+/**
+ * Payload estruturado para notificar alteração de status/favorito de um Habbicon do usuário (USER_HABBICON_STATUS_CHANGED).
+ *
+ * @param habbiconId ID do Habbicon cujo status mudou.
+ * @param state Novo estado (ex: UserHabbicon.STATE_OWNED, UserHabbicon.STATE_FAVORITE).
+ */
+data class HabbiconStatusData(
+    val habbiconId: Int,
+    val state: Int,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class HabbiconStatusResponse {
     @Response(Outgoing.USER_HABBICON_STATUS_CHANGED)
-    fun response(habboResponse: HabboResponse, habbiconId: Int, state: Int) {
-        habboResponse.writeInt(habbiconId)
-        habboResponse.writeInt(state)
+    fun response(habboResponse: HabboResponse, data: HabbiconStatusData) {
+        habboResponse.writeInt(data.habbiconId)
+        habboResponse.writeInt(data.state)
     }
 }

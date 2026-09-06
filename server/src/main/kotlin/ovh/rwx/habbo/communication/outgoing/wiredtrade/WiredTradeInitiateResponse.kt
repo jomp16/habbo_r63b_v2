@@ -22,28 +22,44 @@ package ovh.rwx.habbo.communication.outgoing.wiredtrade
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.chest.TradeRequirementType
+
+/**
+ * Payload estruturado para inicialização de transação Wired Trade (WIRED_TRADE_INITIATE).
+ *
+ * @param requirementType Tipo de exigência da troca ([TradeRequirementType]).
+ * @param timeoutSeconds Duração do timer da transação em segundos.
+ * @param youGetText Texto informativo de recompensa / o que você recebe.
+ * @param layoutType Tipo de layout da janela no client.
+ * @param showRequirementsImmediate Se exibe os requisitos imediatamente na abertura.
+ * @param overridePreviousTrade Se sobrescreve qualquer transação anterior em andamento.
+ */
+data class WiredTradeInitiateData(
+    val requirementType: TradeRequirementType,
+    val timeoutSeconds: Int,
+    val youGetText: String = "",
+    val layoutType: String = "",
+    val showRequirementsImmediate: Boolean = false,
+    val overridePreviousTrade: Boolean = false,
+)
 
 /**
  * Espelho de _SafeStr_3382 (_-E2U), parser de FurnitureTradeRequirements.../TradeRequirement.
  *
  * Wire: type:I, youGetText:S, layoutType:S, [se type == 4: rules], 
  * showRequirementsImmediate:B, overridePreviousTrade:B, timeoutSeconds:I.
- *
- * Para o depósito manual no baú usamos type 0 (sem rules) — o client abre a
- * sub-página wired_trading do inventário ao receber este pacote
- * (WiredTradingModel.onWiredTradeInitiate -> toggleInventorySubPage("wired_trading")).
  */
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredTradeInitiateResponse {
     @Response(Outgoing.WIRED_TRADE_INITIATE)
-    fun response(habboResponse: HabboResponse, timeoutSeconds: Int) {
+    fun response(habboResponse: HabboResponse, data: WiredTradeInitiateData) {
         habboResponse.apply {
-            writeInt(0) // requirement type (0 = sem rules)
-            writeUTF("")
-            writeUTF("")
-            writeBoolean(false) // showRequirementsImmediate
-            writeBoolean(false) // overridePreviousTrade
-            writeInt(timeoutSeconds)
+            writeInt(data.requirementType.id)
+            writeUTF(data.youGetText)
+            writeUTF(data.layoutType)
+            writeBoolean(data.showRequirementsImmediate)
+            writeBoolean(data.overridePreviousTrade)
+            writeInt(data.timeoutSeconds)
         }
     }
 }

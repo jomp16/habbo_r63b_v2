@@ -21,31 +21,17 @@ package ovh.rwx.habbo.game.item.logic
 
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
-import ovh.rwx.habbo.game.item.LimitedItemData
-import ovh.rwx.habbo.game.item.stuff.PostItData
-import ovh.rwx.habbo.game.item.stuff.StuffData
 import ovh.rwx.habbo.game.user.HabboSession
 
-class PostItFurnitureLogic : FurnitureLogic() {
-    override val interactionTypes: List<InteractionType> = listOf(InteractionType.POST_IT)
-
-    override fun parseStuffData(
-        extraData: String,
-        furnishing: Furnishing,
-        limitedItemData: LimitedItemData?,
-        magicRemove: Boolean
-    ): StuffData =
-        PostItData.parse(extraData).toStuffData()
+class VendingMachineFurnitureLogic : FurnitureLogic() {
+    override val interactionTypes: List<InteractionType> = listOf(InteractionType.VENDING_MACHINE)
 
     override fun correctCatalogExtraData(
         habboSession: HabboSession,
         extraData: String,
         furnishing: Furnishing
-    ): String =
-        PostItData(color = PostItData.DEFAULT_COLOR, text = "").toExtraData()
+    ): String = "0"
 
-    override fun sanitizeForDatabase(extraData: String): String {
-        if (extraData.isBlank()) return extraData
-        return PostItData.parse(extraData).toExtraData()
-    }
+    // Máquina só fica ativa ("1") durante a animação de entrega da bebida. No banco, sempre "0".
+    override fun sanitizeForDatabase(extraData: String): String = "0"
 }

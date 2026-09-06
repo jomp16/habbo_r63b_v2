@@ -25,24 +25,32 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.chest.ChestEntry
 import ovh.rwx.habbo.game.chest.serializeChestStorage
 
+/**
+ * Payload estruturado para notificar atualização incremental dos conteúdos do baú (CHEST_ITEMS_UPDATED).
+ *
+ * @param chestItemId ID do item do baú no quarto.
+ * @param removedIds IDs de itens retirados do baú.
+ * @param addedEntries Itens recém-adicionados ao baú.
+ */
+data class ChestItemsUpdatedData(
+    val chestItemId: Int,
+    val removedIds: List<Int> = emptyList(),
+    val addedEntries: List<ChestEntry> = emptyList(),
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class ChestItemsUpdatedResponse {
     @Response(Outgoing.CHEST_ITEMS_UPDATED)
-    fun response(
-        habboResponse: HabboResponse,
-        chestItemId: Int,
-        removedIds: List<Int>,
-        addedEntries: List<ChestEntry>
-    ) {
+    fun response(habboResponse: HabboResponse, data: ChestItemsUpdatedData) {
         habboResponse.apply {
-            writeInt(chestItemId)
-            writeInt(removedIds.size)
+            writeInt(data.chestItemId)
+            writeInt(data.removedIds.size)
 
-            removedIds.forEach { writeInt(it) }
+            data.removedIds.forEach { writeInt(it) }
 
-            writeInt(addedEntries.size)
+            writeInt(data.addedEntries.size)
 
-            addedEntries.forEach { entry -> entry.serializeChestStorage(this) }
+            data.addedEntries.forEach { entry -> entry.serializeChestStorage(this) }
         }
     }
 }

@@ -47,4 +47,9 @@ class MannequinFurnitureLogic : FurnitureLogic() {
             figure = "ch-215-92.lg-3202-1322-73",
             outfitName = "Mannequin",
         ).toExtraData()
+
+    override fun sanitizeForDatabase(extraData: String): String {
+        if (extraData.isBlank()) return extraData
+        return MannequinData.parse(extraData).toExtraData()
+    }
 }

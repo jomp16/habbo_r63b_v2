@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.chest.ChestTransactionLogListData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -40,12 +41,14 @@ class ChestGetTransactionLogsHandler {
 
         habboSession.sendHabboResponse(
             Outgoing.CHEST_TRANSACTION_LOG_LIST,
-            0,
-            chestItemId.toLong(),
-            total,
-            page,
-            pageSize,
-            logs
+            ChestTransactionLogListData(
+                logListType = 0,
+                logListId = chestItemId.toLong(),
+                totalLogs = total,
+                currentPage = page,
+                pageSize = pageSize,
+                logs = logs,
+            ),
         )
     }
 }

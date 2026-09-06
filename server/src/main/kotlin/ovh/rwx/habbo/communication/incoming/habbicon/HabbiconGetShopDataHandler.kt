@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -32,8 +33,10 @@ class HabbiconGetShopDataHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(
             Outgoing.HABBICON_SHOP_DATA,
-            HabboServer.habboGame.habbiconManager.collections.values.toList(),
-            habboSession.habboHabbicon.userHabbicons
+            HabbiconShopData(
+                collections = HabboServer.habboGame.habbiconManager.collections.values.toList(),
+                userHabbicons = habboSession.habboHabbicon.userHabbicons,
+            ),
         )
     }
 }

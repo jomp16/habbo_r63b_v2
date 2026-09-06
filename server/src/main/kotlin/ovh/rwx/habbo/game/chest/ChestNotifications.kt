@@ -77,3 +77,25 @@ enum class WiredTradeFailureType(val id: Int) {
         fun fromId(id: Int): WiredTradeFailureType? = entries.firstOrNull { it.id == id }
     }
 }
+
+/**
+ * IDs do erro de negociação Wired (WIRED_TRADE_TRANSACTION_NOTIFICATION).
+ * O client renderiza o texto a partir de wired_transactions.notification.trade_error.<id>.
+ */
+enum class WiredTradeErrorType(val id: Int) {
+    INVALID_ITEM(0),
+    TOO_MANY_ITEMS(1),
+    TOO_MANY_ITEM_TYPES(2),
+    TOO_MANY_CREDITS(3),
+    TRADE_REQUIREMENTS_MET(4),
+    EXCEEDS_OFFERING_REQUIREMENTS(5),
+    NO_FUNDS(6),
+    TOO_MANY_ITEMS_WIRED(7),
+    TOO_MANY_CREDITS_WIRED(8),
+    EXCEEDS_CHEST_CAPACITY(9),
+    CHEST_NOT_FOUND(10);
+
+    companion object {
+        fun fromId(id: Int): WiredTradeErrorType? = entries.firstOrNull { it.id == id }
+    }
+}

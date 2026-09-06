@@ -26,7 +26,13 @@ import ovh.rwx.habbo.game.item.user.UserItem
 
 enum class ChestType {
     FURNI,
-    COINS,
+    COINS;
+
+    val tradeRequirementType: TradeRequirementType
+        get() = when (this) {
+            COINS -> TradeRequirementType.COINS_ONLY
+            FURNI -> TradeRequirementType.FURNI_ONLY
+        }
 }
 
 data class ChestData(

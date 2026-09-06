@@ -37,6 +37,8 @@ import ovh.rwx.habbo.game.user.HabboSession
  * O client recebe o StuffData.MapStuffData (formatKey 1) e expõe:
  *  - state                -> estado visual (ímpar = aberto, exibindo previews)
  *  - is_wired_enabled     -> furniture_chest_is_wired_enabled
+ *  - state_control_mode   -> "0" (normal), "1" (sempre aberto), "2" (sempre fechado), "3" (wired)
+ *  - is_locked            -> "1" se trancado
  *  - visuals              -> furniture_furni_chest_shown_asset_names ("isWallItem,typeId[,legacyPosterId];...")
  *  - chest_name           -> nome do baú no infostand
  *  - contents_count       -> indicador de itens no inventário/infostand
@@ -59,6 +61,9 @@ class ChestFurnitureLogic : FurnitureLogic() {
     ): String =
         formatChestExtraData(defaultChestValues())
 
+    override fun sanitizeForDatabase(extraData: String): String =
+        Companion.sanitizeForDatabase(extraData)
+
     companion object {
         const val KEY_IS_WIRED_ENABLED = "is_wired_enabled"
         const val KEY_VISUALS = "visuals"
@@ -68,6 +73,8 @@ class ChestFurnitureLogic : FurnitureLogic() {
         const val KEY_CONTENTS_COINS = "contents_coins"
         const val KEY_EVERYONE_CAN_OPEN = "everyone_can_open"
         const val KEY_EVERYONE_CAN_DONATE = "everyone_can_donate"
+        const val KEY_AUTO_LOCK = "auto_lock"
+        const val KEY_IS_LOCKED = "is_locked"
         const val KEY_STATE_CONTROL_MODE = "state_control_mode"
         const val KEY_PREVIEW_MODE = "preview_mode"
         const val KEY_PREVIEW_AMOUNT = "preview_amount"
@@ -97,6 +104,11 @@ class ChestFurnitureLogic : FurnitureLogic() {
             KEY_NOTIFICATION_SOMEONE_WITHDRAWS to "0",
             KEY_NOTIFICATION_CHEST_EMPTY to "0",
             KEY_NOTIFICATION_WIRED_TRANSACTION to "0",
+            KEY_AUTO_LOCK to "0",
+            KEY_IS_LOCKED to "0",
+            KEY_VISUALS to "",
+            KEY_CONTENTS_COUNT to "0",
+            KEY_CONTENTS_COINS to "0",
         )
 
         private val jsonMapper = jacksonObjectMapper()
@@ -111,5 +123,23 @@ class ChestFurnitureLogic : FurnitureLogic() {
 
         fun formatChestExtraData(values: Map<String, String>): String =
             jsonMapper.writeValueAsString(values)
+
+        /**
+         * Higieniza o extraData para persistência no banco de dados.
+         * Garante que baús com stateMode != 1 ("sempre aberto") sejam sempre salvos como fechados (state="0")
+         * e sem previews visuais efêmeros.
+         */
+        fun sanitizeForDatabase(extraData: String): String {
+            if (extraData.isBlank()) return extraData
+
+            val map = parseChestExtraData(extraData)
+            val stateMode = map[KEY_STATE_CONTROL_MODE]?.toIntOrNull() ?: 0
+            if (stateMode != 1) {
+                map[StuffData.KEY_STATE] = "0"
+                map[KEY_VISUALS] = ""
+            }
+
+            return formatChestExtraData(map)
+        }
     }
 }

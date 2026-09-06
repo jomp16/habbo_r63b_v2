@@ -29,6 +29,8 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
+import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
 import ovh.rwx.habbo.database.user.UserIPDao
 import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -201,13 +203,17 @@ class HandshakeSSOTicketHandler {
         )
         habboSession.sendHabboResponse(
             Outgoing.USER_HABBICONS,
-            habboSession.habboHabbicon.getUserHabbiconList(),
-            habboSession.habboHabbicon.recentHabbiconIds
+            UserHabbiconsData(
+                userHabbicons = habboSession.habboHabbicon.getUserHabbiconList(),
+                recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
+            ),
         )
         habboSession.sendHabboResponse(
             Outgoing.HABBICON_SHOP_DATA,
-            HabboServer.habboGame.habbiconManager.collections.values.toList(),
-            habboSession.habboHabbicon.userHabbicons
+            HabbiconShopData(
+                collections = HabboServer.habboGame.habbiconManager.collections.values.toList(),
+                userHabbicons = habboSession.habboHabbicon.userHabbicons,
+            ),
         )
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)

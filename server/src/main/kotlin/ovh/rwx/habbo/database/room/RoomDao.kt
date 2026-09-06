@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -158,6 +158,9 @@ object RoomDao {
         HabboServer.database {
             batchUpdate("UPDATE `items` SET `room_id` = :room_id, `x` = :x, `y` = :y, `z` = :z, `rot` = :rot, `wall_pos` = :wall_pos, `extra_data` = :extra_data WHERE `id` = :id",
                     roomItemsToSave.map {
+                        val extraDataToSave = HabboServer.habboGame.itemManager
+                            .getFurnitureLogic(it.furnishing)
+                            .sanitizeForDatabase(it.extraData)
                         mapOf(
                                 "room_id" to roomId,
                                 "x" to it.position.x,
@@ -165,7 +168,7 @@ object RoomDao {
                                 "z" to it.position.z,
                                 "rot" to it.rotation,
                                 "wall_pos" to it.wallPosition,
-                                "extra_data" to it.extraData,
+                            "extra_data" to extraDataToSave,
                                 "id" to it.id
                         )
                     }

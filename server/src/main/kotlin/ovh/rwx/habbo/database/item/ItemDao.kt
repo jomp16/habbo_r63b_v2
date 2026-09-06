@@ -253,8 +253,12 @@ object ItemDao {
             batchUpdate(
                 javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
                 roomItemsToRemove.map {
+                    val extraData = HabboServer.habboGame.itemManager
+                        .getFurnitureLogic(it.furnishing)
+                        .sanitizeForDatabase(it.extraData)
                     mapOf(
                         "room_id" to null,
+                        "extra_data" to extraData,
                         "id" to it.id
                     )
                 }
@@ -358,10 +362,17 @@ object ItemDao {
         itemPurchaseDatas: List<ItemPurchaseData>,
         ignoreSpecialHandling: Boolean = false
     ): List<UserItem> {
+        val sanitizedPurchaseDatas = itemPurchaseDatas.map { data ->
+            val sanitizedExtraData = HabboServer.habboGame.itemManager
+                .getFurnitureLogic(data.furnishing)
+                .sanitizeForDatabase(data.extraData)
+            if (sanitizedExtraData != data.extraData) data.copy(extraData = sanitizedExtraData) else data
+        }
+
         val itemIds = HabboServer.database {
             batchInsertAndGetGeneratedKeys(
                 javaClass.classLoader.getResource("sql/items/item/insert_item.sql").readText(),
-                itemPurchaseDatas.map { itemPurchaseData ->
+                sanitizedPurchaseDatas.map { itemPurchaseData ->
                     mapOf(
                         "user_id" to userId,
                         "item_name" to itemPurchaseData.furnishing.itemName,
@@ -377,10 +388,10 @@ object ItemDao {
             UserItem(
                 id,
                 userId,
-                itemPurchaseDatas[i].furnishing.itemName,
-                itemPurchaseDatas[i].extraData,
-                itemPurchaseDatas[i].limited,
-                itemPurchaseDatas[i].buildersClub
+                sanitizedPurchaseDatas[i].furnishing.itemName,
+                sanitizedPurchaseDatas[i].extraData,
+                sanitizedPurchaseDatas[i].limited,
+                sanitizedPurchaseDatas[i].buildersClub
             )
         }
 
@@ -481,7 +492,9 @@ object ItemDao {
                         it.id,
                         it.userId,
                         it.itemName,
-                        it.extraData,
+                        HabboServer.habboGame.itemManager
+                            .getFurnitureLogic(it.furnishing)
+                            .sanitizeForDatabase(it.extraData),
                         it.limited,
                         it.buildersClub
                     )
@@ -526,7 +539,7 @@ object ItemDao {
                             buildersClub = false
                         )
                     ),
-                    ignoreSpecialHandling = true,
+                    ignoreSpecialHandling = true
                 ).first()
 
                 HabboServer.database {

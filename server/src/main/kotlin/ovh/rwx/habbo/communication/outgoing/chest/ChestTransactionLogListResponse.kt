@@ -26,29 +26,40 @@ import ovh.rwx.habbo.database.chest.ChestDao
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/**
+ * Payload estruturado para a listagem paginada de logs de transação do baú (CHEST_TRANSACTION_LOG_LIST).
+ *
+ * @param logListType Tipo de visualização (0 = sala/todos, 1 = baú específico).
+ * @param logListId ID associado ao filtro (ex: chestItemId ou roomId).
+ * @param totalLogs Contagem total de logs existentes no banco.
+ * @param currentPage Número da página atual (0-based).
+ * @param pageSize Quantidade pedida por página (ex: 25).
+ * @param logs Lista de registros de log a enviar nesta página.
+ */
+data class ChestTransactionLogListData(
+    val logListType: Int,
+    val logListId: Long,
+    val totalLogs: Int,
+    val currentPage: Int,
+    val pageSize: Int,
+    val logs: List<ChestDao.ChestLog>,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class ChestTransactionLogListResponse {
     @Response(Outgoing.CHEST_TRANSACTION_LOG_LIST)
-    fun response(
-        habboResponse: HabboResponse,
-        logListType: Int,
-        logListId: Long,
-        totalLogs: Int,
-        currentPage: Int,
-        pageSize: Int,
-        logs: List<ChestDao.ChestLog>
-    ) {
+    fun response(habboResponse: HabboResponse, data: ChestTransactionLogListData) {
         habboResponse.apply {
-            writeInt(logListType)
-            writeLong(logListId)
-            writeInt(totalLogs)
-            writeInt(currentPage)
+            writeInt(data.logListType)
+            writeLong(data.logListId)
+            writeInt(data.totalLogs)
+            writeInt(data.currentPage)
             // amount DEVE ecoar o pageSize pedido pelo client (TransactionConfig.PAGE_SIZE = 25):
             // onLogList só exibe se amount == PAGE_SIZE (e != TRANSACTIONS_PREVIEW_AMOUNT = 10)
-            writeInt(pageSize)
-            writeInt(logs.size)
+            writeInt(data.pageSize)
+            writeInt(data.logs.size)
 
-            logs.forEach { log -> serializeTransactionInfo(this, log) }
+            data.logs.forEach { log -> serializeTransactionInfo(this, log) }
         }
     }
 

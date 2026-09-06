@@ -24,10 +24,21 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.habbicon.Habbicon
 
+/**
+ * Payload estruturado com informações detalhadas de um Habbicon (HABBICON_INFO).
+ *
+ * @param habbicon Instância da definição do Habbicon.
+ * @param state Estado do usuário para este Habbicon (0 = não possui, 1 = possui, 2 = favorito).
+ */
+data class HabbiconInfoData(
+    val habbicon: Habbicon,
+    val state: Int = 0,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class HabbiconInfoResponse {
     @Response(Outgoing.HABBICON_INFO)
-    fun response(habboResponse: HabboResponse, habbicon: Habbicon, state: Int) {
-        habboResponse.serialize(habbicon, state)
+    fun response(habboResponse: HabboResponse, data: HabbiconInfoData) {
+        habboResponse.serialize(data.habbicon, data.state)
     }
 }

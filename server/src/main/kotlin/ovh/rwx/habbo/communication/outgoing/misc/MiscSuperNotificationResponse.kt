@@ -74,6 +74,10 @@ class MiscSuperNotificationResponse {
         RECEIVED_GIFT("received.gift"),
         RECEIVED_BADGE("received.badge"),
         FIGURESET_REDEEMED("figureset.redeemed.success"),
-        FIGURESET_OWNED_ALREADY("figureset.already.redeemed")
+        FIGURESET_OWNED_ALREADY("figureset.already.redeemed"),
+        WIRED_CHESTS_DONATION("wired_chests.donation"),
+        WIRED_CHESTS_SOMEONE_WITHDRAWS("wired_chests.someone_withdraws"),
+        WIRED_CHESTS_CHEST_FULL("wired_chests.chest_full"),
+        WIRED_CHESTS_CHEST_EMPTY("wired_chests.chest_empty");
     }
 }

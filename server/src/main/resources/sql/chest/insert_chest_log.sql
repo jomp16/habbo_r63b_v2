@@ -19,6 +19,6 @@
 
 INSERT INTO `chest_logs`
 (`chest_item_id`, `room_id`, `user_id`, `username`, `withdraw_furni_count`, `deposit_furni_count`,
- `withdraw_coins_count`, `deposit_coins_count`)
+ `withdraw_coins_count`, `deposit_coins_count`, `items_data`)
 VALUES (:chest_item_id, :room_id, :user_id, :username, :withdraw_furni_count, :deposit_furni_count,
-        :withdraw_coins_count, :deposit_coins_count)
+        :withdraw_coins_count, :deposit_coins_count, :items_data)

@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.database.chest
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.andrewoma.kwery.core.Row
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.chest.ChestData
@@ -28,7 +30,21 @@ import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import ovh.rwx.habbo.kotlin.localDateTime
 import java.time.LocalDateTime
 
+data class ChestLogItemEntry(
+    val isWallItem: Boolean,
+    val typeId: Int,
+    val legacyPosterId: String = "",
+    val count: Int,
+)
+
+data class ChestLogItemsData(
+    val deposited: List<ChestLogItemEntry> = emptyList(),
+    val withdrawn: List<ChestLogItemEntry> = emptyList(),
+)
+
 object ChestDao {
+    private val jsonMapper = jacksonObjectMapper()
+
     private fun sql(name: String): String =
         javaClass.classLoader.getResource("sql/chest/$name.sql").readText()
 
@@ -162,7 +178,10 @@ object ChestDao {
         depositFurniCount: Int,
         withdrawCoinsCount: Int,
         depositCoinsCount: Int,
+        itemsData: ChestLogItemsData? = null,
     ): Int = HabboServer.database {
+        val itemsDataJson = itemsData?.let { jsonMapper.writeValueAsString(it) }
+
         insertAndGetGeneratedKey(
             sql("insert_chest_log"),
             mapOf(
@@ -174,6 +193,7 @@ object ChestDao {
                 "deposit_furni_count" to depositFurniCount,
                 "withdraw_coins_count" to withdrawCoinsCount,
                 "deposit_coins_count" to depositCoinsCount,
+                "items_data" to itemsDataJson,
             )
         )
     }
@@ -188,6 +208,7 @@ object ChestDao {
         val depositFurniCount: Int,
         val withdrawCoinsCount: Int,
         val depositCoinsCount: Int,
+        val itemsData: ChestLogItemsData? = null,
         val createdAt: LocalDateTime,
     )
 
@@ -208,16 +229,24 @@ object ChestDao {
         ) { mapLog(it) }.firstOrNull()
     }
 
-    private fun mapLog(it: Row): ChestLog = ChestLog(
-        id = it.int("id"),
-        chestItemId = it.int("chest_item_id"),
-        roomId = it.intOrNull("room_id") ?: 0,
-        userId = it.int("user_id"),
-        username = it.string("username"),
-        withdrawFurniCount = it.int("withdraw_furni_count"),
-        depositFurniCount = it.int("deposit_furni_count"),
-        withdrawCoinsCount = it.int("withdraw_coins_count"),
-        depositCoinsCount = it.int("deposit_coins_count"),
-        createdAt = it.localDateTime("created_at"),
-    )
+    private fun mapLog(it: Row): ChestLog {
+        val itemsDataJson = it.stringOrNull("items_data")
+        val itemsData = itemsDataJson?.let { json ->
+            runCatching { jsonMapper.readValue<ChestLogItemsData>(json) }.getOrNull()
+        }
+
+        return ChestLog(
+            id = it.int("id"),
+            chestItemId = it.int("chest_item_id"),
+            roomId = it.intOrNull("room_id") ?: 0,
+            userId = it.int("user_id"),
+            username = it.string("username"),
+            withdrawFurniCount = it.int("withdraw_furni_count"),
+            depositFurniCount = it.int("deposit_furni_count"),
+            withdrawCoinsCount = it.int("withdraw_coins_count"),
+            depositCoinsCount = it.int("deposit_coins_count"),
+            itemsData = itemsData,
+            createdAt = it.localDateTime("created_at"),
+        )
+    }
 }

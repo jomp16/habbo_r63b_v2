@@ -25,12 +25,12 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.chest.WiredTransactionNotification
 
 /**
- * Espelho de _SafeStr_2838 (_-G2b): notificação transacional wired
- * (wired_transactions.notification.success.<id> no client).
+ * WiredTransactionSuccessMessageEvent (server -> client).
+ * O client exibe popup wired_transactions.notification.success.<id> com ícone chests_icon_successful.
  */
 @Suppress("unused", "UNUSED_PARAMETER")
-class WiredTransactionNotificationResponse {
-    @Response(Outgoing.WIRED_TRANSACTION_NOTIFICATION)
+class WiredTransactionSuccessResponse {
+    @Response(Outgoing.WIRED_TRANSACTION_SUCCESS)
     fun response(habboResponse: HabboResponse, notification: WiredTransactionNotification) {
         habboResponse.writeInt(notification.id)
     }

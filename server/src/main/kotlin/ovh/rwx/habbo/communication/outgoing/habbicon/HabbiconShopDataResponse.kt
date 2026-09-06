@@ -25,29 +25,36 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.habbicon.HabbiconCollection
 import ovh.rwx.habbo.game.habbicon.UserHabbicon
 
+/**
+ * Payload estruturado para exibição da loja/catálogo de coleções de Habbicons (HABBICON_SHOP_DATA).
+ *
+ * @param collections Coleções de Habbicons disponíveis na loja.
+ * @param userHabbicons Mapa dos Habbicons que o usuário já possui (habbiconId -> UserHabbicon).
+ */
+data class HabbiconShopData(
+    val collections: List<HabbiconCollection>,
+    val userHabbicons: Map<Int, UserHabbicon>,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class HabbiconShopDataResponse {
     @Response(Outgoing.HABBICON_SHOP_DATA)
-    fun response(
-        habboResponse: HabboResponse,
-        collections: List<HabbiconCollection>,
-        userHabbicons: Map<Int, UserHabbicon>
-    ) {
-        habboResponse.writeInt(collections.size)
-        collections.forEach { collection ->
+    fun response(habboResponse: HabboResponse, data: HabbiconShopData) {
+        habboResponse.writeInt(data.collections.size)
+        data.collections.forEach { collection ->
             habboResponse.writeInt(collection.id)
             habboResponse.writeUTF(collection.name)
             val items = collection.habbicons.filter { it.id != collection.rewardHabbiconId && it.enabled }
-            val completed = items.isNotEmpty() && items.all { userHabbicons.containsKey(it.id) }
+            val completed = items.isNotEmpty() && items.all { data.userHabbicons.containsKey(it.id) }
             habboResponse.writeBoolean(completed)
             habboResponse.writeInt(collection.rewardHabbiconId ?: 0)
-            habboResponse.writeInt(collection.rewardHabbiconId?.let { userHabbicons[it]?.state } ?: 0)
+            habboResponse.writeInt(collection.rewardHabbiconId?.let { data.userHabbicons[it]?.state } ?: 0)
             habboResponse.writeInt(collection.priceCredits)
             habboResponse.writeInt(collection.priceActivityPoints)
             habboResponse.writeInt(collection.activityPointType)
             habboResponse.writeInt(items.size)
             items.forEach { habbicon ->
-                habboResponse.serialize(habbicon, userHabbicons[habbicon.id]?.state ?: 0)
+                habboResponse.serialize(habbicon, data.userHabbicons[habbicon.id]?.state ?: 0)
             }
         }
     }

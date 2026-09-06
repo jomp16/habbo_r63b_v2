@@ -25,23 +25,32 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.chest.ChestEntry
 import ovh.rwx.habbo.game.chest.serializeChestStorage
 
+/**
+ * Payload estruturado para envio de fragmento/chunk de itens do baú (CHEST_ITEMS_CHUNK).
+ *
+ * @param chestItemId ID do item do baú no quarto.
+ * @param totalFragments Total de fragmentos da lista inteira.
+ * @param fragmentNo Índice do fragmento atual (0-based).
+ * @param entries Lista de itens contidos neste fragmento.
+ */
+data class ChestItemsChunkData(
+    val chestItemId: Int,
+    val totalFragments: Int,
+    val fragmentNo: Int,
+    val entries: List<ChestEntry>,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class ChestItemsChunkResponse {
     @Response(Outgoing.CHEST_ITEMS_CHUNK)
-    fun response(
-        habboResponse: HabboResponse,
-        chestItemId: Int,
-        totalFragments: Int,
-        fragmentNo: Int,
-        entries: List<ChestEntry>
-    ) {
+    fun response(habboResponse: HabboResponse, data: ChestItemsChunkData) {
         habboResponse.apply {
-            writeInt(chestItemId)
-            writeInt(totalFragments)
-            writeInt(fragmentNo)
-            writeInt(entries.size)
+            writeInt(data.chestItemId)
+            writeInt(data.totalFragments)
+            writeInt(data.fragmentNo)
+            writeInt(data.entries.size)
 
-            entries.forEach { entry -> entry.serializeChestStorage(this) }
+            data.entries.forEach { entry -> entry.serializeChestStorage(this) }
         }
     }
 }

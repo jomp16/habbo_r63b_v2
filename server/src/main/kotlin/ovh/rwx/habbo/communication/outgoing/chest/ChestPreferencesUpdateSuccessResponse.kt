@@ -23,13 +23,24 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+/**
+ * Payload estruturado para confirmação de salvamento de preferências do baú (CHEST_PREFERENCES_UPDATE_SUCCESS).
+ *
+ * @param chestItemId ID do item do baú no quarto.
+ * @param isNotificationPreferences True se a aba atualizada foi a de notificações; false se configurações gerais.
+ */
+data class ChestPreferencesUpdateSuccessData(
+    val chestItemId: Int,
+    val isNotificationPreferences: Boolean = false,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class ChestPreferencesUpdateSuccessResponse {
     @Response(Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS)
-    fun response(habboResponse: HabboResponse, chestItemId: Int, isNotificationPreferences: Boolean) {
+    fun response(habboResponse: HabboResponse, data: ChestPreferencesUpdateSuccessData) {
         habboResponse.apply {
-            writeInt(chestItemId)
-            writeBoolean(isNotificationPreferences)
+            writeInt(data.chestItemId)
+            writeBoolean(data.isNotificationPreferences)
         }
     }
 }

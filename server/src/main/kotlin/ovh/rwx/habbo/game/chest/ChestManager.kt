@@ -23,9 +23,16 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.chest.*
+import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
+import ovh.rwx.habbo.communication.outgoing.wiredtrade.WiredTradeInitiateData
+import ovh.rwx.habbo.communication.outgoing.wiredtrade.WiredTradeItemsUpdateData
 import ovh.rwx.habbo.database.chest.ChestDao
+import ovh.rwx.habbo.database.chest.ChestLogItemEntry
+import ovh.rwx.habbo.database.chest.ChestLogItemsData
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.logic.ChestFurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.stuff.StuffData
@@ -76,7 +83,13 @@ class ChestManager {
             isDonation = chest.userId != habboSession.userInformation.id,
         )
 
-        habboSession.sendHabboResponse(Outgoing.WIRED_TRADE_INITIATE, DEPOSIT_TIMEOUT_SECONDS)
+        habboSession.sendHabboResponse(
+            Outgoing.WIRED_TRADE_INITIATE,
+            WiredTradeInitiateData(
+                requirementType = chest.type.tradeRequirementType,
+                timeoutSeconds = DEPOSIT_TIMEOUT_SECONDS,
+            ),
+        )
     }
 
     fun cancelDeposit(habboSession: HabboSession) {
@@ -148,16 +161,35 @@ class ChestManager {
 
     fun sendContents(habboSession: HabboSession, room: Room, chest: ChestData) {
         if (chest.type == ChestType.COINS) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_COINS, chest.itemId, chest.coins, false)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_COINS,
+                ChestCoinsData(chestItemId = chest.itemId, coins = chest.coins, isUpdate = false)
+            )
         } else {
             val entries = chest.entries.toList()
             val chunks = entries.chunked(CHUNK_SIZE)
 
             if (chunks.isEmpty()) {
-                habboSession.sendHabboResponse(Outgoing.CHEST_ITEMS_CHUNK, chest.itemId, 1, 0, emptyList<ChestEntry>())
+                habboSession.sendHabboResponse(
+                    Outgoing.CHEST_ITEMS_CHUNK,
+                    ChestItemsChunkData(
+                        chestItemId = chest.itemId,
+                        totalFragments = 1,
+                        fragmentNo = 0,
+                        entries = emptyList()
+                    )
+                )
             } else {
                 chunks.forEachIndexed { index, chunk ->
-                    habboSession.sendHabboResponse(Outgoing.CHEST_ITEMS_CHUNK, chest.itemId, chunks.size, index, chunk)
+                    habboSession.sendHabboResponse(
+                        Outgoing.CHEST_ITEMS_CHUNK,
+                        ChestItemsChunkData(
+                            chestItemId = chest.itemId,
+                            totalFragments = chunks.size,
+                            fragmentNo = index,
+                            entries = chunk
+                        )
+                    )
                 }
             }
         }
@@ -183,7 +215,14 @@ class ChestManager {
 
         val chest = getChest(room, trade.chestItemId) ?: run {
             trades.remove(habboSession.userInformation.id)
-
+            habboSession.sendHabboResponse(
+                Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION,
+                WiredTradeErrorType.CHEST_NOT_FOUND
+            )
+            habboSession.sendHabboResponse(
+                Outgoing.WIRED_TRADE_CANCELLED,
+                WiredTradeFailureType.CHEST_NOT_IN_ROOM
+            )
             return
         }
 
@@ -195,13 +234,37 @@ class ChestManager {
             val remainingCapacity = (chest.capacity - chest.usedCount).coerceAtLeast(0)
 
             normalizedIds.forEach { itemId ->
-                if (trade.selectedItemIds.size >= remainingCapacity) return@forEach
+                if (trade.selectedItemIds.size >= remainingCapacity) {
+                    habboSession.sendHabboResponse(
+                        Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION,
+                        WiredTradeErrorType.EXCEEDS_CHEST_CAPACITY
+                    )
+                    return@forEach
+                }
 
-                val userItem = habboSession.habboInventory.items[itemId] ?: return@forEach
+                val userItem = habboSession.habboInventory.items[itemId] ?: run {
+                    habboSession.sendHabboResponse(
+                        Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION,
+                        WiredTradeErrorType.INVALID_ITEM
+                    )
+                    return@forEach
+                }
 
                 // Baú de créditos só aceita Habbo Câmbios; baú não aninha baú
-                if (chest.type == ChestType.COINS && getCreditFurniValue(userItem.itemName) == null) return@forEach
-                if (chest.type == ChestType.FURNI && userItem.furnishing.interactionType == InteractionType.CHEST) return@forEach
+                if (chest.type == ChestType.COINS && getCreditFurniValue(userItem.itemName) == null) {
+                    habboSession.sendHabboResponse(
+                        Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION,
+                        WiredTradeErrorType.INVALID_ITEM
+                    )
+                    return@forEach
+                }
+                if (chest.type == ChestType.FURNI && userItem.furnishing.interactionType == InteractionType.CHEST) {
+                    habboSession.sendHabboResponse(
+                        Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION,
+                        WiredTradeErrorType.INVALID_ITEM
+                    )
+                    return@forEach
+                }
 
                 trade.selectedItemIds += itemId
             }
@@ -221,11 +284,13 @@ class ChestManager {
 
         habboSession.sendHabboResponse(
             Outgoing.WIRED_TRADE_ITEMS_UPDATE,
-            habboSession,
-            chest,
-            selectedItems,
-            coinValue,
-            selectedItems.isNotEmpty(),
+            WiredTradeItemsUpdateData(
+                ownUserId = habboSession.userInformation.id,
+                chest = chest,
+                ownItems = selectedItems,
+                ownCredits = coinValue,
+                canAccept = selectedItems.isNotEmpty(),
+            ),
         )
     }
 
@@ -245,9 +310,7 @@ class ChestManager {
         }
 
         val chest = getChest(room, trade.chestItemId) ?: run {
-            trades.remove(habboSession.userInformation.id)
-            habboSession.sendHabboResponse(Outgoing.WIRED_TRADE_CANCELLED, WiredTradeFailureType.USER_CANCELLED)
-
+            cancelDepositWithNotification(habboSession, WiredTradeFailureType.CHEST_NOT_IN_ROOM)
             return
         }
 
@@ -255,14 +318,14 @@ class ChestManager {
         trades.remove(habboSession.userInformation.id)
 
         if (userItems.isEmpty()) {
-            habboSession.sendHabboResponse(Outgoing.WIRED_TRADE_CANCELLED, WiredTradeFailureType.USER_CANCELLED)
-
+            cancelDepositWithNotification(habboSession, WiredTradeFailureType.EMPTY_TRANSACTION)
             return
         }
 
         val isDonation = chest.userId != habboSession.userInformation.id
         var depositFurniCount = 0
         var depositCoinsCount = 0
+        val depositedLogItems = mutableListOf<ChestLogItemEntry>()
 
         if (chest.type == ChestType.COINS) {
             // Baú de créditos: Habbo Câmbios viram créditos no depósito
@@ -280,7 +343,8 @@ class ChestManager {
             chest.coins += depositCoinsCount
             ChestDao.updateChest(chest)
         } else {
-            val accepted = userItems.takeWhile { !chest.isFull() }
+            val remainingCapacity = (chest.capacity - chest.usedCount).coerceAtLeast(0)
+            val accepted = userItems.take(remainingCapacity)
 
             if (accepted.isNotEmpty()) {
                 val itemIds = accepted.map { it.id }
@@ -293,6 +357,20 @@ class ChestManager {
                 habboSession.habboInventory.removeItems(itemIds)
 
                 depositFurniCount = itemIds.size
+
+                accepted.groupBy { item ->
+                    val furnishing = item.furnishing
+                    val isWall = furnishing.type == ItemType.WALL
+                    val poster = if (item.itemName.contains("poster")) item.extraData else ""
+                    Triple(isWall, furnishing.spriteId, poster)
+                }.forEach { (key, group) ->
+                    depositedLogItems += ChestLogItemEntry(
+                        isWallItem = key.first,
+                        typeId = key.second,
+                        legacyPosterId = key.third,
+                        count = group.size,
+                    )
+                }
             }
         }
 
@@ -302,12 +380,13 @@ class ChestManager {
             habboSession,
             depositFurniCount = depositFurniCount,
             depositCoinsCount = depositCoinsCount,
+            itemsData = if (depositedLogItems.isNotEmpty()) ChestLogItemsData(deposited = depositedLogItems) else null,
         )
 
         if (depositFurniCount > 0 || depositCoinsCount > 0) {
             // Feedback transacional para quem depositou (success.0 = "Depósito do baú realizado")
             habboSession.sendHabboResponse(
-                Outgoing.WIRED_TRANSACTION_NOTIFICATION,
+                Outgoing.WIRED_TRANSACTION_SUCCESS,
                 WiredTransactionNotification.CHEST_DEPOSITED
             )
 
@@ -315,12 +394,20 @@ class ChestManager {
                 notifyDonation(chest, habboSession.userInformation.username)
                 notifyOwnerTransaction(chest)
             }
+        } else {
+            habboSession.sendHabboResponse(
+                Outgoing.WIRED_TRANSACTION_FAIL,
+                if (chest.isFull()) WiredTradeFailureType.CHEST_FULL else WiredTradeFailureType.CHEST_CAPACITY_EXCEEDED
+            )
         }
 
         updateChestExtraData(room, chest)
 
         if (chest.type == ChestType.COINS) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_COINS, chest.itemId, chest.coins, true)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_COINS,
+                ChestCoinsData(chestItemId = chest.itemId, coins = chest.coins, isUpdate = true)
+            )
         } else {
             sendContentsUpdated(
                 room,
@@ -352,9 +439,8 @@ class ChestManager {
         if (!chest.notifyTransaction) return
 
         HabboServer.habboSessionManager.getHabboSessionById(chest.userId)
-            ?.sendHabboResponse(Outgoing.WIRED_TRANSACTION_NOTIFICATION, WiredTransactionNotification.CHEST_DEPOSITED)
+            ?.sendHabboResponse(Outgoing.WIRED_TRANSACTION_SUCCESS, WiredTransactionNotification.CHEST_DEPOSITED)
     }
-
 
     fun withdrawItems(
         habboSession: HabboSession,
@@ -369,7 +455,7 @@ class ChestManager {
         val matched = chest.entries
             .filter { entry ->
                 val furnishing = entry.item.furnishing
-                (furnishing.type == ovh.rwx.habbo.game.item.ItemType.WALL) == isWallItem && furnishing.spriteId == typeId
+                (furnishing.type == ItemType.WALL) == isWallItem && furnishing.spriteId == typeId
             }
             .take(amount.coerceIn(0, chest.entries.size))
 
@@ -410,7 +496,27 @@ class ChestManager {
             HabboServer.habboSessionManager.getHabboSessionById(previousOwnerId)?.habboInventory?.removeItems(itemIds)
         }
 
-        logTransaction(room, chest, habboSession, withdrawFurniCount = itemIds.size)
+        val withdrawnLogItems = entries.groupBy { entry ->
+            val furnishing = entry.item.furnishing
+            val isWall = furnishing.type == ItemType.WALL
+            val poster = if (entry.item.itemName.contains("poster")) entry.item.extraData else ""
+            Triple(isWall, furnishing.spriteId, poster)
+        }.map { (key, group) ->
+            ChestLogItemEntry(
+                isWallItem = key.first,
+                typeId = key.second,
+                legacyPosterId = key.third,
+                count = group.size,
+            )
+        }
+
+        logTransaction(
+            room,
+            chest,
+            habboSession,
+            withdrawFurniCount = itemIds.size,
+            itemsData = if (withdrawnLogItems.isNotEmpty()) ChestLogItemsData(withdrawn = withdrawnLogItems) else null,
+        )
 
         if (previousOwnerId != habboSession.userInformation.id) notifyWithdraw(
             chest,
@@ -419,7 +525,7 @@ class ChestManager {
 
         // Feedback transacional para quem retirou (success.1 = "Conteúdos retirados do baú com sucesso")
         habboSession.sendHabboResponse(
-            Outgoing.WIRED_TRANSACTION_NOTIFICATION,
+            Outgoing.WIRED_TRANSACTION_SUCCESS,
             WiredTransactionNotification.CHEST_WITHDRAWN
         )
 
@@ -449,7 +555,10 @@ class ChestManager {
         )
 
         updateChestExtraData(room, chest)
-        habboSession.sendHabboResponse(Outgoing.CHEST_COINS, chest.itemId, chest.coins, true)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_COINS,
+            ChestCoinsData(chestItemId = chest.itemId, coins = chest.coins, isUpdate = true)
+        )
         sendCurrencyBalances(habboSession)
     }
 
@@ -490,7 +599,10 @@ class ChestManager {
         ChestDao.updateChest(chest)
         updateChestExtraData(room, chest)
 
-        habboSession.sendHabboResponse(Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS, chest.itemId, false)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS,
+            ChestPreferencesUpdateSuccessData(chestItemId = chest.itemId, isNotificationPreferences = false)
+        )
     }
 
     fun setPreferences(
@@ -518,7 +630,10 @@ class ChestManager {
         ChestDao.updateChest(chest)
         updateChestExtraData(room, chest)
 
-        habboSession.sendHabboResponse(Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS, chest.itemId, false)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS,
+            ChestPreferencesUpdateSuccessData(chestItemId = chest.itemId, isNotificationPreferences = false)
+        )
     }
 
     fun setNotificationPreferences(
@@ -543,26 +658,38 @@ class ChestManager {
 
         ChestDao.updateChest(chest)
 
-        habboSession.sendHabboResponse(Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS, chest.itemId, true)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_PREFERENCES_UPDATE_SUCCESS,
+            ChestPreferencesUpdateSuccessData(chestItemId = chest.itemId, isNotificationPreferences = true)
+        )
     }
 
     fun upgrade(habboSession: HabboSession, room: Room, chest: ChestData, currencyType: Int) {
         val roomItem = getRoomItem(room, chest.itemId)
 
         if (roomItem == null) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 4)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.CANNOT_UPGRADE)
+            )
 
             return
         }
 
         if (chest.isStarter) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 10)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.NOT_OWNER)
+            )
 
             return
         }
 
         if (chest.userId != habboSession.userInformation.id) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 7)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.CHEST_LOCKED)
+            )
 
             return
         }
@@ -570,7 +697,10 @@ class ChestManager {
         val maxCap = maxCapacity(chest)
 
         if (chest.capacity >= maxCap) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 2)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.NOT_ENOUGH_CREDITS)
+            )
 
             return
         }
@@ -583,7 +713,10 @@ class ChestManager {
             val balance = habboSession.userInformation.activityPointsCurrencies.getOrDefault(activityPointType, 0)
 
             if (balance < cost) {
-                habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 6)
+                habboSession.sendHabboResponse(
+                    Outgoing.CHEST_UPGRADE_RESULT,
+                    ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.MAX_CAPACITY_REACHED)
+                )
 
                 return
             }
@@ -591,7 +724,10 @@ class ChestManager {
             habboSession.userInformation.activityPointsCurrencies.merge(activityPointType, -cost, Int::plus)
         } else {
             if (habboSession.userInformation.credits < cost) {
-                habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 5)
+                habboSession.sendHabboResponse(
+                    Outgoing.CHEST_UPGRADE_RESULT,
+                    ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.INSUFFICIENT_VIP)
+                )
 
                 return
             }
@@ -607,24 +743,36 @@ class ChestManager {
         updateChestExtraData(room, chest)
         sendCurrencyBalances(habboSession)
 
-        habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 0)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_UPGRADE_RESULT,
+            ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.SUCCESS)
+        )
     }
 
     fun upgradeWired(habboSession: HabboSession, room: Room, chest: ChestData) {
         if (chest.isStarter) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 10)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.NOT_OWNER)
+            )
 
             return
         }
 
         if (chest.userId != habboSession.userInformation.id) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 7)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.CHEST_LOCKED)
+            )
 
             return
         }
 
         if (chest.isWired) {
-            habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 0)
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.SUCCESS)
+            )
 
             return
         }
@@ -635,7 +783,10 @@ class ChestManager {
         ChestDao.updateChest(chest)
         updateChestExtraData(room, chest)
 
-        habboSession.sendHabboResponse(Outgoing.CHEST_UPGRADE_RESULT, chest.itemId, 0)
+        habboSession.sendHabboResponse(
+            Outgoing.CHEST_UPGRADE_RESULT,
+            ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.SUCCESS)
+        )
     }
 
     fun closeChest(habboSession: HabboSession, room: Room, chest: ChestData) {
@@ -644,7 +795,10 @@ class ChestManager {
     }
 
     /**
-     * Auto-lock: baús do usuário que saiu com auto_lock ativo são trancados.
+     * Auto-lock e fechamento: quando o usuário sai do quarto:
+     * - Cancela depósitos pendentes do usuário
+     * - Auto-lock: baús do usuário que saiu com auto_lock ativo são trancados
+     * - Se o dono saiu, fecha o baú (se não for modo "sempre aberto")
      */
     fun onUserLeaveRoom(room: Room, habboSession: HabboSession) {
         cancelDeposit(habboSession)
@@ -656,29 +810,73 @@ class ChestManager {
             .forEach { roomItem ->
                 val chest = chests[roomItem.id] ?: return@forEach
 
-                if (chest.userId == userId && chest.autoLock && !chest.locked) {
-                    chest.locked = true
-                    ChestDao.updateChest(chest)
+                if (chest.userId == userId) {
+                    var updated = false
+                    if (chest.autoLock && !chest.locked) {
+                        chest.locked = true
+                        ChestDao.updateChest(chest)
+                        updated = true
+                    }
 
-                    updateChestExtraData(room, chest)
+                    if (chest.stateMode != 1) {
+                        setState(room, chest, open = false)
+                    } else if (updated) {
+                        updateChestExtraData(room, chest)
+                    }
                 }
             }
     }
 
     /**
-     * Unload do quarto (Room.stopLoop): encerra qualquer Wired Trade de depósito
-     * pendente apontando para os baús do quarto. O estado "aberto" é efêmero —
-     * o banco sempre tem o baú fechado, nada a persistir aqui.
+     * Unload do quarto (Room.stopLoop):
+     * - Encerra trades de depósito pendentes apontando para os baús do quarto.
+     * - Executa o fluxo de auto-lock para qualquer baú do quarto com autoLock ativo que esteja destrancado.
+     * - Garante que todo baú que não seja "sempre aberto" (stateMode 1) seja fechado antes do saveRoom().
+     * - Enfileira os baús alterados para o savePendingItems persistir no banco.
      */
     fun onRoomUnload(room: Room) {
-        val chestIds = room.itemManager.items.values
+        val chestRoomItems = room.itemManager.items.values
             .filter { it.furnishing.interactionType == InteractionType.CHEST }
-            .map { it.id }
-            .toSet()
 
-        if (chestIds.isEmpty()) return
+        if (chestRoomItems.isEmpty()) return
 
+        val chestIds = chestRoomItems.map { it.id }.toSet()
         trades.entries.removeIf { it.value.chestItemId in chestIds }
+
+        chestRoomItems.forEach { roomItem ->
+            val chest = chests[roomItem.id] ?: ChestDao.getChest(roomItem.id) ?: return@forEach
+
+            var needsSave = false
+
+            // Auto-lock ao descarregar o quarto
+            if (chest.autoLock && !chest.locked) {
+                chest.locked = true
+                ChestDao.updateChest(chest)
+                needsSave = true
+            }
+
+            // Fecha o baú se não for modo sempre aberto
+            if (chest.stateMode != 1) {
+                val values = ChestFurnitureLogic.parseChestExtraData(roomItem.extraData)
+                if (values[StuffData.KEY_STATE] != "0" || !values[ChestFurnitureLogic.KEY_VISUALS].isNullOrEmpty()) {
+                    values[StuffData.KEY_STATE] = "0"
+                    values[ChestFurnitureLogic.KEY_VISUALS] = ""
+                    needsSave = true
+                }
+                applyChestValues(values, chest)
+                roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
+            } else if (needsSave) {
+                val values = ChestFurnitureLogic.parseChestExtraData(roomItem.extraData)
+                applyChestValues(values, chest)
+                roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
+            }
+
+            if (needsSave) {
+                room.itemManager.addItemToSave(roomItem)
+            }
+
+            chests.remove(roomItem.id)
+        }
     }
 
     // ------------------------------------------------------------------
@@ -739,6 +937,7 @@ class ChestManager {
         depositFurniCount: Int = 0,
         withdrawCoinsCount: Int = 0,
         depositCoinsCount: Int = 0,
+        itemsData: ChestLogItemsData? = null,
     ) {
         runCatching {
             ChestDao.insertChestLog(
@@ -750,6 +949,7 @@ class ChestManager {
                 depositFurniCount = depositFurniCount,
                 withdrawCoinsCount = withdrawCoinsCount,
                 depositCoinsCount = depositCoinsCount,
+                itemsData = itemsData,
             )
         }.onFailure { log.warn("Failed to insert chest log for chest {}", chest.itemId, it) }
     }
@@ -780,7 +980,8 @@ class ChestManager {
         applyChestValues(values, chest)
 
         roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
-        roomItem.update(updateDb = false, updateClient = true)
+        // Quando fecha, salva no banco (state=0); quando abre, é efêmero no client
+        roomItem.update(updateDb = !shouldOpen, updateClient = true)
     }
 
     private fun updateChestExtraData(room: Room, chest: ChestData, commitClient: Boolean = true) {
@@ -790,20 +991,18 @@ class ChestManager {
 
         applyChestValues(values, chest)
 
-        // Persistência: SEMPRE fechado no banco (o estado aberto é efêmero)
-        values[StuffData.KEY_STATE] = "0"
-        values[ChestFurnitureLogic.KEY_VISUALS] = ""
-        roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
-
-        if (commitClient) roomItem.update(updateDb = true, updateClient = false)
-
-        if (isOpen && commitClient) {
-            // Reabre client-side com os dados atualizados (sem persistir aberto)
+        // Se estiver aberto e puder permanecer aberto, mantém os previews visuais no client
+        if (isOpen && chest.stateMode != 2 && !chest.locked) {
             values[StuffData.KEY_STATE] = "1"
             values[ChestFurnitureLogic.KEY_VISUALS] = getPreviewVisuals(chest)
-            roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
-            roomItem.update(updateDb = false, updateClient = true)
+        } else {
+            values[StuffData.KEY_STATE] = if (chest.stateMode == 1) "1" else "0"
+            values[ChestFurnitureLogic.KEY_VISUALS] = if (chest.stateMode == 1) getPreviewVisuals(chest) else ""
         }
+
+        roomItem.extraData = ChestFurnitureLogic.formatChestExtraData(values)
+        // RoomDao.saveItems sempre sanitiza chests para state=0 no banco (a menos que stateMode=1)
+        if (commitClient) roomItem.update(updateDb = true, updateClient = true)
     }
 
     private fun applyChestValues(values: LinkedHashMap<String, String>, chest: ChestData) {
@@ -849,7 +1048,7 @@ class ChestManager {
             if (selected.size >= amount) break
 
             val furnishing = entry.item.furnishing
-            val typeKey = (furnishing.type == ovh.rwx.habbo.game.item.ItemType.WALL) to furnishing.spriteId
+            val typeKey = (furnishing.type == ItemType.WALL) to furnishing.spriteId
 
             if (distinctTypes) {
                 if (!seenTypes.add(typeKey)) continue
@@ -860,7 +1059,7 @@ class ChestManager {
 
         return selected.joinToString(ChestFurnitureLogic.VISUALS_ITEM_SEPARATOR) { entry ->
             val furnishing = entry.item.furnishing
-            val isWallItem = furnishing.type == ovh.rwx.habbo.game.item.ItemType.WALL
+            val isWallItem = furnishing.type == ItemType.WALL
             val legacyPosterId = if (entry.item.itemName.contains("poster")) entry.item.extraData else ""
 
             itemTypeToString(isWallItem, furnishing.spriteId, legacyPosterId)
@@ -877,45 +1076,50 @@ class ChestManager {
             .filterIsInstance<RoomUser>()
             .map { it.habboSession }
             .forEach { session ->
-                session.sendHabboResponse(Outgoing.CHEST_ITEMS_UPDATED, chest.itemId, removedIds, addedEntries)
+                session.sendHabboResponse(
+                    Outgoing.CHEST_ITEMS_UPDATED,
+                    ChestItemsUpdatedData(
+                        chestItemId = chest.itemId,
+                        removedIds = removedIds,
+                        addedEntries = addedEntries,
+                    )
+                )
             }
     }
 
     private fun notifyDonation(chest: ChestData, username: String) {
         if (!chest.notifyDonation) return
 
-        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendNotification(
-            $$"${notification.wired_chests.donation.message}".replace("%user_name%", username)
-                .replace("%chest_name%", chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
+        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendSuperNotification(
+            MiscSuperNotificationResponse.MiscSuperNotificationKeys.WIRED_CHESTS_DONATION,
+            mapOf("user_name" to username, "chest_name" to chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
         )
     }
 
     private fun notifyWithdraw(chest: ChestData, username: String) {
         if (!chest.notifyWithdraw) return
 
-        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendNotification(
-            $$"${notification.wired_chests.someone_withdraws.message}".replace("%user_name%", username)
-                .replace("%chest_name%", chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
+        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendSuperNotification(
+            MiscSuperNotificationResponse.MiscSuperNotificationKeys.WIRED_CHESTS_SOMEONE_WITHDRAWS,
+            mapOf("user_name" to username, "chest_name" to chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
         )
     }
 
     private fun notifyFull(chest: ChestData) {
         if (!chest.notifyFull) return
 
-        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendNotification(
-            $$"${notification.wired_chests.chest_full.message}".replace(
-                "%chest_name%",
-                chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
+        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendSuperNotification(
+            MiscSuperNotificationResponse.MiscSuperNotificationKeys.WIRED_CHESTS_CHEST_FULL,
+            mapOf("chest_name" to chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
         )
     }
 
     private fun notifyEmpty(chest: ChestData) {
         if (!chest.notifyEmpty) return
 
-        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendNotification(
-            $$"${notification.wired_chests.chest_empty.message}".replace(
-                "%chest_name%",
-                chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
+        HabboServer.habboSessionManager.getHabboSessionById(chest.userId)?.sendSuperNotification(
+            MiscSuperNotificationResponse.MiscSuperNotificationKeys.WIRED_CHESTS_CHEST_EMPTY,
+            mapOf("chest_name" to chest.name.ifBlank { $$"${wiredchests.furni_chest}" })
         )
     }
 

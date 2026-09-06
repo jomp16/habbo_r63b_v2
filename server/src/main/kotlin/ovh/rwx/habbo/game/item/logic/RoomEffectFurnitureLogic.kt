@@ -43,4 +43,7 @@ class RoomEffectFurnitureLogic : FurnitureLogic() {
         furnishing: Furnishing
     ): String? =
         if (extraData.isEmpty()) "0" else extraData.trim()
+
+    override fun sanitizeForDatabase(extraData: String): String =
+        extraData.toIntOrNull()?.takeIf { it in 0..32 }?.toString() ?: "0"
 }

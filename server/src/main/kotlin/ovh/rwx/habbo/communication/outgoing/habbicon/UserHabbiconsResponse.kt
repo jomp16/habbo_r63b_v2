@@ -24,16 +24,27 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.habbicon.UserHabbicon
 
+/**
+ * Payload estruturado com a lista de Habbicons pertencentes ao usuário (USER_HABBICONS).
+ *
+ * @param userHabbicons Lista de instâncias [UserHabbicon] do usuário.
+ * @param recentHabbiconIds Lista com os IDs de Habbicons usados recentemente.
+ */
+data class UserHabbiconsData(
+    val userHabbicons: List<UserHabbicon>,
+    val recentHabbiconIds: List<Int> = emptyList(),
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserHabbiconsResponse {
     @Response(Outgoing.USER_HABBICONS)
-    fun response(habboResponse: HabboResponse, userHabbicons: List<UserHabbicon>, recentHabbiconIds: List<Int>) {
-        habboResponse.writeInt(userHabbicons.size)
-        userHabbicons.forEach {
+    fun response(habboResponse: HabboResponse, data: UserHabbiconsData) {
+        habboResponse.writeInt(data.userHabbicons.size)
+        data.userHabbicons.forEach {
             habboResponse.writeInt(it.habbiconId)
             habboResponse.writeInt(it.state)
         }
-        habboResponse.writeInt(recentHabbiconIds.size)
-        recentHabbiconIds.forEach(habboResponse::writeInt)
+        habboResponse.writeInt(data.recentHabbiconIds.size)
+        data.recentHabbiconIds.forEach(habboResponse::writeInt)
     }
 }

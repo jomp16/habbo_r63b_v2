@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconInfoData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,6 +38,9 @@ class HabbiconGetInfoHandler {
         val userHabbicon = habboSession.habboHabbicon.userHabbicons[habbiconId]
         val state = userHabbicon?.state ?: 0
 
-        habboSession.sendHabboResponse(Outgoing.HABBICON_INFO, habbicon, state)
+        habboSession.sendHabboResponse(
+            Outgoing.HABBICON_INFO,
+            HabbiconInfoData(habbicon = habbicon, state = state),
+        )
     }
 }

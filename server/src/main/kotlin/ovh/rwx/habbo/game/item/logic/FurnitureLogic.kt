@@ -55,6 +55,13 @@ abstract class FurnitureLogic {
     open fun correctCatalogExtraData(habboSession: HabboSession, extraData: String, furnishing: Furnishing): String? =
         ""
 
+    /**
+     * Higieniza o extraData antes de persistir no banco de dados.
+     * Converte quaisquer estados efêmeros (animações em andamento, transações abertas,
+     * ocupação temporária, etc.) para o estado estável/inicial de persistência.
+     */
+    open fun sanitizeForDatabase(extraData: String): String = extraData
+
     companion object {
         // Formato interno do servidor para extraData multi-campo no banco.
         // O client nunca o vê: ele recebe o StuffData estruturado do protocolo.

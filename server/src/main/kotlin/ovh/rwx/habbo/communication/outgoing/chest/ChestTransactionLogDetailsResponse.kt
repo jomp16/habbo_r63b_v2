@@ -35,15 +35,32 @@ class ChestTransactionLogDetailsResponse {
             writeInt(1)
             writeInt(log.chestItemId)
 
-            // depositedFurnis (ChestItemType + amount) — detalhamento por tipo
-            // quando houver; sem transações Wired o detalhe individual não existe.
-            writeInt(0)
+            val deposited = log.itemsData?.deposited ?: emptyList()
+            val withdrawn = log.itemsData?.withdrawn ?: emptyList()
 
-            // withdrawnFurnis
-            writeInt(0)
+            // depositedFurnis (ChestItemType + amount)
+            writeInt(deposited.size)
+            deposited.forEach { item ->
+                writeBoolean(item.isWallItem)
+                writeInt(item.typeId)
+                writeUTF(item.legacyPosterId)
+                writeInt(item.count)
+            }
 
-            // isIncompleteData: o client mostra "Mais mobis não listados"
-            writeBoolean(log.depositFurniCount > 0 || log.withdrawFurniCount > 0)
+            // withdrawnFurnis (ChestItemType + amount)
+            writeInt(withdrawn.size)
+            withdrawn.forEach { item ->
+                writeBoolean(item.isWallItem)
+                writeInt(item.typeId)
+                writeUTF(item.legacyPosterId)
+                writeInt(item.count)
+            }
+
+            // isIncompleteData: o client mostra "Mais mobis não listados" caso haja contagem não coberta pelo detalhamento
+            val depositedCount = deposited.sumOf { it.count }
+            val withdrawnCount = withdrawn.sumOf { it.count }
+            val isIncomplete = (log.depositFurniCount > depositedCount) || (log.withdrawFurniCount > withdrawnCount)
+            writeBoolean(isIncomplete)
         }
     }
 }

@@ -17,28 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.habbicon
+package ovh.rwx.habbo.communication.outgoing.wiredtrade
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.chest.WiredTradeErrorType
 
 /**
- * Payload estruturado para notificar a sala sobre a utilização de um Habbicon por um usuário (ROOM_USE_HABBICON).
- *
- * @param roomIndex Índice virtual do usuário dentro do quarto (RoomUser.virtualID).
- * @param habbiconId ID do Habbicon acionado.
+ * WiredTradeTransactionNotificationMessageEvent (server -> client).
+ * O client exibe popup wired_transactions.notification.trade_error com ícone chests_icon_trading_error.
  */
-data class RoomUseHabbiconData(
-    val roomIndex: Int,
-    val habbiconId: Int,
-)
-
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomUseHabbiconResponse {
-    @Response(Outgoing.ROOM_USE_HABBICON)
-    fun response(habboResponse: HabboResponse, data: RoomUseHabbiconData) {
-        habboResponse.writeInt(data.roomIndex)
-        habboResponse.writeInt(data.habbiconId)
+class WiredTradeTransactionNotificationResponse {
+    @Response(Outgoing.WIRED_TRADE_TRANSACTION_NOTIFICATION)
+    fun response(habboResponse: HabboResponse, errorType: WiredTradeErrorType) {
+        habboResponse.writeInt(errorType.id)
     }
 }

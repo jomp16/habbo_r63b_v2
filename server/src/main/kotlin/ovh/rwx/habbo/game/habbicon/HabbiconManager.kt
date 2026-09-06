@@ -25,6 +25,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconStatusData
+import ovh.rwx.habbo.communication.outgoing.habbicon.RoomUseHabbiconData
+import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
@@ -118,7 +121,10 @@ class HabbiconManager {
         val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
 
-        habboSession.sendHabboResponse(Outgoing.USER_HABBICON_STATUS_CHANGED, habbiconId, UserHabbicon.STATE_OWNED)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_HABBICON_STATUS_CHANGED,
+            HabbiconStatusData(habbiconId, UserHabbicon.STATE_OWNED)
+        )
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
         progressCollectedAchievement(habboSession)
 
@@ -161,8 +167,10 @@ class HabbiconManager {
 
         habboSession.sendHabboResponse(
             Outgoing.USER_HABBICONS,
-            habboSession.habboHabbicon.getUserHabbiconList(),
-            habboSession.habboHabbicon.recentHabbiconIds
+            UserHabbiconsData(
+                userHabbicons = habboSession.habboHabbicon.getUserHabbiconList(),
+                recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
+            ),
         )
         newHabbiconIds.forEach { habbiconId ->
             habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
@@ -189,7 +197,10 @@ class HabbiconManager {
         val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, collection.rewardState)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
 
-        habboSession.sendHabboResponse(Outgoing.USER_HABBICON_STATUS_CHANGED, habbiconId, collection.rewardState)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_HABBICON_STATUS_CHANGED,
+            HabbiconStatusData(habbiconId, collection.rewardState)
+        )
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
         progressCollectedAchievement(habboSession)
 
@@ -211,7 +222,10 @@ class HabbiconManager {
         val updatedUserHabbicon = userHabbicon.copy(state = UserHabbicon.STATE_FAVORITE)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = updatedUserHabbicon
 
-        habboSession.sendHabboResponse(Outgoing.USER_HABBICON_STATUS_CHANGED, habbiconId, UserHabbicon.STATE_FAVORITE)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_HABBICON_STATUS_CHANGED,
+            HabbiconStatusData(habbiconId, UserHabbicon.STATE_FAVORITE)
+        )
 
         return true
     }
@@ -224,7 +238,10 @@ class HabbiconManager {
         val updatedUserHabbicon = userHabbicon.copy(state = UserHabbicon.STATE_OWNED)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = updatedUserHabbicon
 
-        habboSession.sendHabboResponse(Outgoing.USER_HABBICON_STATUS_CHANGED, habbiconId, UserHabbicon.STATE_OWNED)
+        habboSession.sendHabboResponse(
+            Outgoing.USER_HABBICON_STATUS_CHANGED,
+            HabbiconStatusData(habbiconId, UserHabbicon.STATE_OWNED)
+        )
 
         return true
     }
@@ -240,7 +257,10 @@ class HabbiconManager {
         val roomUser = habboSession.roomUser
         if (roomUser != null) {
             habboSession.roomUser?.idle = false
-            habboSession.currentRoom?.sendHabboResponse(Outgoing.ROOM_USE_HABBICON, roomUser.virtualID, habbiconId)
+            habboSession.currentRoom?.sendHabboResponse(
+                Outgoing.ROOM_USE_HABBICON,
+                RoomUseHabbiconData(roomUser.virtualID, habbiconId)
+            )
         }
 
         return true

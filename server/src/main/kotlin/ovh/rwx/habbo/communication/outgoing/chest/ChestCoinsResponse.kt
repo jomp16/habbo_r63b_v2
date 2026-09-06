@@ -23,14 +23,27 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+/**
+ * Payload estruturado para envio de saldo de moedas do baú (CHEST_COINS).
+ *
+ * @param chestItemId ID do item do baú no quarto.
+ * @param coins Quantidade atual de moedas no baú.
+ * @param isUpdate Se true, atualiza a UI existente; se false, inicialização de abertura.
+ */
+data class ChestCoinsData(
+    val chestItemId: Int,
+    val coins: Int,
+    val isUpdate: Boolean = false,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class ChestCoinsResponse {
     @Response(Outgoing.CHEST_COINS)
-    fun response(habboResponse: HabboResponse, chestItemId: Int, coins: Int, isUpdate: Boolean) {
+    fun response(habboResponse: HabboResponse, data: ChestCoinsData) {
         habboResponse.apply {
-            writeInt(chestItemId)
-            writeInt(coins)
-            writeBoolean(isUpdate)
+            writeInt(data.chestItemId)
+            writeInt(data.coins)
+            writeBoolean(data.isUpdate)
         }
     }
 }

@@ -26,6 +26,7 @@ SELECT `id`,
        `deposit_furni_count`,
        `withdraw_coins_count`,
        `deposit_coins_count`,
+       `items_data`,
        `created_at`
 FROM `chest_logs`
 WHERE `chest_item_id` = :item_id

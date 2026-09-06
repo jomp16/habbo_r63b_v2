@@ -49,4 +49,9 @@ class TrophyFurnitureLogic : FurnitureLogic() {
             date = HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS.format(LocalDateTime.now()),
             message = extraData.trim(),
         ).toExtraData()
+
+    override fun sanitizeForDatabase(extraData: String): String {
+        if (extraData.isBlank()) return extraData
+        return TrophyData.parse(extraData).toExtraData()
+    }
 }

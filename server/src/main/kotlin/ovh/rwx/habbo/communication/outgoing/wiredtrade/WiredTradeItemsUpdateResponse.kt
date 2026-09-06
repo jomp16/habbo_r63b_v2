@@ -27,7 +27,23 @@ import ovh.rwx.habbo.game.chest.ChestData
 import ovh.rwx.habbo.game.chest.ChestType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.user.UserItem
-import ovh.rwx.habbo.game.user.HabboSession
+
+/**
+ * Payload estruturado para atualização de itens na transação Wired Trade (WIRED_TRADE_ITEMS_UPDATE).
+ *
+ * @param ownUserId ID do usuário que está ofertando os itens (firstUserID).
+ * @param chest Dados do baú alvo da transação (secondUserID = chest.itemId).
+ * @param ownItems Lista de mobis selecionados pelo usuário para depósito.
+ * @param ownCredits Valor agregado em créditos de câmbios selecionados (se baú de moedas).
+ * @param canAccept Flag se o botão aceitar pode ser clicado pelo usuário.
+ */
+data class WiredTradeItemsUpdateData(
+    val ownUserId: Int,
+    val chest: ChestData,
+    val ownItems: List<UserItem>,
+    val ownCredits: Int = 0,
+    val canAccept: Boolean = true,
+)
 
 /**
  * Espelho de _SafeStr_2980 (_-HO): estado da Wired Trade.
@@ -44,31 +60,24 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredTradeItemsUpdateResponse {
     @Response(Outgoing.WIRED_TRADE_ITEMS_UPDATE)
-    fun response(
-        habboResponse: HabboResponse,
-        habboSession: HabboSession,
-        chest: ChestData,
-        ownItems: List<UserItem>,
-        ownCredits: Int,
-        canAccept: Boolean
-    ) {
+    fun response(habboResponse: HabboResponse, data: WiredTradeItemsUpdateData) {
         habboResponse.apply {
             // TradingItems
-            writeInt(habboSession.userInformation.id) // firstUserID = você
+            writeInt(data.ownUserId) // firstUserID = você
 
-            writeInt(ownItems.size)
-            ownItems.forEach { serializeTradingItem(this, it) }
+            writeInt(data.ownItems.size)
+            data.ownItems.forEach { serializeTradingItem(this, it) }
 
-            writeInt(ownItems.size)   // firstUserNumItems
-            writeInt(ownCredits)      // firstUserNumCredits (câmbios no coin chest)
+            writeInt(data.ownItems.size)   // firstUserNumItems
+            writeInt(data.ownCredits)      // firstUserNumCredits (câmbios no coin chest)
 
-            writeInt(chest.itemId) // secondUserID = o baú
+            writeInt(data.chest.itemId) // secondUserID = o baú
 
             writeInt(0)            // second: sem itens na devolução
             writeInt(0)            // secondUserNumItems
-            writeInt(if (chest.type == ChestType.COINS) chest.coins else 0)
+            writeInt(if (data.chest.type == ChestType.COINS) data.chest.coins else 0)
 
-            writeBoolean(canAccept)
+            writeBoolean(data.canAccept)
             writeInt(0)            // extra
         }
     }
