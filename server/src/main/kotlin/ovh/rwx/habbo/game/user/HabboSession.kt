@@ -232,18 +232,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             launch { habboMessenger.load() }
             launch {
                 habboHabbicon.load()
-                if (release != "R63A") {
-                    sendHabboResponse(
-                        Outgoing.USER_HABBICONS,
-                        habboHabbicon.getUserHabbiconList(),
-                        habboHabbicon.recentHabbiconIds
-                    )
-                    sendHabboResponse(
-                        Outgoing.HABBICON_SHOP_DATA,
-                        HabboServer.habboGame.habbiconManager.collections.values.toList(),
-                        habboHabbicon.userHabbicons
-                    )
-                }
             }
             launch {
                 habboInventory.load()

@@ -155,6 +155,8 @@ class RoomUserManager(private val room: Room) {
             // Cancela qualquer troca ativa do usuário antes de remover
             room.tradeManager.onUserDisconnect(roomEntity)
             val session = roomEntity.habboSession
+            // Baús com auto-lock: trancam quando o dono sai do quarto
+            HabboServer.habboGame.chestManager.onUserLeaveRoom(room, session)
             handleUserDisconnectionMessages(session, notifyClient, kickNotification)
             if (session.currentRoom == room) {
                 session.roomUser = null

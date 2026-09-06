@@ -100,6 +100,13 @@ class HabboResponse(
         byteBufOutputStream.writeFloat(d)
     }
 
+    fun writeLong(l: Long) {
+        if (HabboServer.habboConfig.debug) {
+            debugString.append("{l:$l}")
+        }
+        byteBufOutputStream.writeLong(l)
+    }
+
     fun writeBoolean(b: Boolean) {
         if (HabboServer.habboConfig.debug) {
             debugString.append("{b:$b}")

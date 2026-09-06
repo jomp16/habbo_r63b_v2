@@ -199,6 +199,16 @@ class HandshakeSSOTicketHandler {
             HabboServer.habboGame.moderationManager.moderationCategories,
             HabboServer.habboGame.moderationManager.moderationTopics.values
         )
+        habboSession.sendHabboResponse(
+            Outgoing.USER_HABBICONS,
+            habboSession.habboHabbicon.getUserHabbiconList(),
+            habboSession.habboHabbicon.recentHabbiconIds
+        )
+        habboSession.sendHabboResponse(
+            Outgoing.HABBICON_SHOP_DATA,
+            HabboServer.habboGame.habbiconManager.collections.values.toList(),
+            habboSession.habboHabbicon.userHabbicons
+        )
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)
 

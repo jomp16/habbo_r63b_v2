@@ -233,6 +233,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             userManager.removeEntity(it, notifyClient = true, kickNotification = true)
         }
 
+        // Baús: encerra trades de depósito pendentes (estado aberto é efêmero, banco sempre fechado)
+        HabboServer.habboGame.chestManager.onRoomUnload(this)
+
         loopJob?.cancel()
         loopJob = null
 

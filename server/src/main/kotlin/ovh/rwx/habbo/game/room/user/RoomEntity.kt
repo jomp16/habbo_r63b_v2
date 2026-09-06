@@ -182,6 +182,22 @@ abstract class RoomEntity(
         }
     }
 
+    /**
+     * Verifica adjacência.
+     * Para itens interativos (objectiveItem != null), aceita APENAS os 4 lados ortogonais (|dx| + |dy| == 1).
+     * Para cliques livres no mapa, aceita as 8 direções incluindo diagonais.
+     */
+    private fun isAdjacentToObjective(target: Vector2, strictOrthogonal: Boolean = false): Boolean {
+        val dx = kotlin.math.abs(currentVector3.x - target.x)
+        val dy = kotlin.math.abs(currentVector3.y - target.y)
+
+        return if (strictOrthogonal) {
+            (dx + dy) == 1 // Apenas Norte, Sul, Leste, Oeste
+        } else {
+            (dx <= 1 && dy <= 1) && !(dx == 0 && dy == 0) // Inclui quinas/diagonais
+        }
+    }
+
     private fun processWalking() {
         if (frozen) {
             stopWalking()
@@ -192,6 +208,23 @@ abstract class RoomEntity(
         if (objectiveVector2 == currentVector3.vector2) {
             stopWalking()
             return
+        }
+
+        val target = objectiveVector2
+        if (target != null) {
+            // Se há um mobi como objetivo, a parada só é válida se estiver colado de frente/lado (ortogonal)
+            val requiresOrthogonal = objectiveItem != null
+            if (isAdjacentToObjective(target, strictOrthogonal = requiresOrthogonal)) {
+                val isTargetBlocked = room.roomGamemap.isBlocked(
+                    target,
+                    ignoreUsers = ignoreBlocking,
+                    overrideBlocking = overrideBlocking
+                )
+                if (isTargetBlocked) {
+                    stopWalking()
+                    return
+                }
+            }
         }
 
         if (path.isEmpty()) calculatePath()
@@ -331,23 +364,57 @@ abstract class RoomEntity(
         path.clear()
         blockedTicks = 0 // Resetamos na parada
         nextStepVector = null
+
+        val previousObjective = objectiveVector2
+        val itemToTrigger = objectiveItem
+
         objectiveVector2 = null
         ignoreBlocking = false
 
         removeStatus("mv")
 
-        if (objectiveRotation != -1) {
+        // Se tínhamos um objetivo
+        if (previousObjective != null) {
+            val isItem = itemToTrigger != null
+            if (isAdjacentToObjective(previousObjective, strictOrthogonal = isItem)) {
+                var lookDir = Direction.calculate(
+                    currentVector3.x,
+                    currentVector3.y,
+                    previousObjective.x,
+                    previousObjective.y
+                )
+
+                // Garantia extra: se for interação com mobi, força direção par (0, 2, 4, 6)
+                if (isItem && lookDir % 2 != 0) {
+                    val dx = previousObjective.x - currentVector3.x
+                    val dy = previousObjective.y - currentVector3.y
+                    lookDir = if (kotlin.math.abs(dx) >= kotlin.math.abs(dy)) {
+                        if (dx > 0) 2 else 6
+                    } else {
+                        if (dy > 0) 4 else 0
+                    }
+                }
+
+                headRotation = lookDir
+                bodyRotation = lookDir
+            } else if (objectiveRotation != -1) {
+                headRotation = objectiveRotation
+                bodyRotation = objectiveRotation
+                objectiveRotation = -1
+            }
+        } else if (objectiveRotation != -1) {
             headRotation = objectiveRotation
             bodyRotation = objectiveRotation
             objectiveRotation = -1
         }
 
-        objectiveItem?.let { item ->
+        itemToTrigger?.let { item ->
             item.furnishing.interactor?.onTrigger(room, this, item, room.userManager.hasRights(this), 0)
             objectiveItem = null
         }
 
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let { addEntityStatuses(it) }
+        updateNeeded = true
     }
 
     private fun calculatePath() {

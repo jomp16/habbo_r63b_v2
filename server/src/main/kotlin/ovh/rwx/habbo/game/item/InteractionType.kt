@@ -36,6 +36,7 @@ enum class InteractionType(val type: String) {
     BATTLE_BANZAI_TILE("bb_patch"),
     BED("bed"),
     BOTTLE("bottle"),
+    CHEST("chest"),
     DEFAULT("default"),
     DICE("dice"),
     DIMMER("dimmer"),

@@ -27,3 +27,6 @@ FROM `items` `i`
          left join `items_limited` `il` on `i`.`id` = `il`.`item_id`
 WHERE `i`.`room_id` IS NULL
   AND `i`.`user_id` = :user_id
+  AND NOT EXISTS (SELECT 1
+                  FROM `chest_items` `ci`
+                  WHERE `ci`.`item_id` = `i`.`id`)

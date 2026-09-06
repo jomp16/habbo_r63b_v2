@@ -79,6 +79,10 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
         }
     }
 
+    fun readLong(): Long {
+        return if (byteBuf.readableBytes() < 8) 0 else byteBufInputStream.readLong()
+    }
+
     fun readBoolean(): Boolean {
         return if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
             byteBuf.readableBytes() >= 1 && byteBufInputStream.readByte() == 65.toByte()

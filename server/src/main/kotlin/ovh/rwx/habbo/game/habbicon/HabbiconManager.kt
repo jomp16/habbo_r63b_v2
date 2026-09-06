@@ -239,6 +239,7 @@ class HabbiconManager {
 
         val roomUser = habboSession.roomUser
         if (roomUser != null) {
+            habboSession.roomUser?.idle = false
             habboSession.currentRoom?.sendHabboResponse(Outgoing.ROOM_USE_HABBICON, roomUser.virtualID, habbiconId)
         }
 

@@ -262,6 +262,22 @@ object ItemDao {
         }
     }
 
+    fun updateItemsOwner(itemIds: List<Int>, userId: Int) {
+        if (itemIds.isEmpty()) return
+
+        HabboServer.database {
+            batchUpdate(
+                javaClass.classLoader.getResource("sql/items/item/update_item_owner.sql").readText(),
+                itemIds.map {
+                    mapOf(
+                        "user_id" to userId,
+                        "id" to it
+                    )
+                }
+            )
+        }
+    }
+
     fun getRoomDimmer(roomItem: RoomItem): RoomDimmer? {
         if (!roomDimmers.containsKey(roomItem.id)) {
             val roomDimmer = HabboServer.database {

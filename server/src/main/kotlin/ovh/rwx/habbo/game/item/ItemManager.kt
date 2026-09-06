@@ -24,7 +24,10 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
+import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.stuff.LimitedStuffData
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
@@ -53,6 +56,9 @@ class ItemManager {
     val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
     val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
+    private val furniLogic: MutableMap<InteractionType, FurnitureLogic> = mutableMapOf()
+    private val furniLogicByName: MutableMap<String, FurnitureLogic> = mutableMapOf()
+    private val defaultFurnitureLogic: FurnitureLogic = DefaultFurnitureLogic()
     private val wiredItems: MutableMap<InteractionType, Constructor<out WiredItem>> = mutableMapOf()
 
     fun load() {
@@ -61,6 +67,8 @@ class ItemManager {
         oldGiftWrapper.clear()
         newGiftWrapper.clear()
         furniInteractor.clear()
+        furniLogic.clear()
+        furniLogicByName.clear()
         teleportLinks.clear()
         roomTeleportLinks.clear()
         wiredItems.clear()
@@ -95,6 +103,13 @@ class ItemManager {
 
         interactors.map { it.getConstructor().newInstance() }.forEach { interactor ->
             interactor.interactionType.forEach { furniInteractor[it] = interactor }
+        }
+
+        val furnitureLogics = HabboServer.reflections.getSubTypesOf(FurnitureLogic::class.java)
+
+        furnitureLogics.map { it.getConstructor().newInstance() }.forEach { logic ->
+            logic.interactionTypes.forEach { furniLogic[it] = logic }
+            logic.itemNames.forEach { furniLogicByName[it] = logic }
         }
 
         val wiredItemsInteractor = HabboServer.reflections.getTypesAnnotatedWith(WiredItemInteractor::class.java)
@@ -162,6 +177,7 @@ class ItemManager {
         log.info("Loaded {} furnishings!", furnishings.size)
         log.info("Loaded {} teleport links!", teleportLinks.size / 2)
         log.info("Loaded {} item interactors!", furniInteractor.size)
+        log.info("Loaded {} item furniture logics!", furnitureLogics.size)
         log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
     }
 
@@ -211,7 +227,11 @@ class ItemManager {
         }
     }
 
-    // todo: see if I can improve it
+    fun getFurnitureLogic(furnishing: Furnishing): FurnitureLogic =
+        furniLogicByName[furnishing.itemName]
+            ?: furniLogic[furnishing.interactionType]
+            ?: defaultFurnitureLogic
+
     fun writeExtradata(
         habboResponse: HabboResponse,
         extraData: String,
@@ -220,116 +240,19 @@ class ItemManager {
         magicRemove: Boolean = false,
         inventory: Boolean = false,
     ) {
-        habboResponse.apply {
-            if (!inventory && limitedItemData != null) {
-                writeInt(1)
-                writeInt(256)
-                writeUTF(extraData)
-                writeInt(limitedItemData.limitedNumber)
-                writeInt(limitedItemData.limitedTotal)
+        if (!inventory && limitedItemData != null) {
+            LimitedStuffData(extraData, limitedItemData.limitedNumber, limitedItemData.limitedTotal)
+                .write(habboResponse, inventory = false)
 
-                return
-            }
-
-            if (furnishing.itemName == "wallpaper" || furnishing.itemName == "floor" || furnishing.itemName == "landscape") {
-                if (!inventory) {
-                    when (furnishing.itemName) {
-                        "wallpaper" -> writeInt(2)
-                        "floor" -> writeInt(3)
-                        "landscape" -> writeInt(4)
-                    }
-                }
-
-                writeInt(0)
-                writeUTF(extraData)
-
-                return
-            }
-
-            when (furnishing.interactionType) {
-                InteractionType.BADGE_DISPLAY -> {
-                    val splitData = extraData.split(7.toChar())
-
-                    if (!inventory) writeInt(0)
-                    writeInt(2)
-                    writeInt(4)
-                    writeUTF("0")
-                    writeUTF(splitData[0]) // badge name
-                    writeUTF(splitData[1]) // owner
-                    writeUTF(splitData[2]) // date
-                }
-
-                InteractionType.MANNEQUIN -> {
-                    val splitData = extraData.split(7.toChar())
-
-                    if (!inventory) writeInt(0)
-                    writeInt(1)
-                    writeInt(3)
-                    writeUTF("GENDER")
-                    writeUTF(splitData[0])
-                    writeUTF("FIGURE")
-                    writeUTF(splitData[1])
-                    writeUTF("OUTFIT_NAME")
-                    writeUTF(splitData[2])
-                }
-
-                InteractionType.GIFT -> {
-                    val split = extraData.split(7.toChar())
-
-                    if (!inventory) {
-                        // O state do presente é calculado apenas no quarto
-                        val state = if (split.size > 3) (split[2].toIntOrNull() ?: 0) * 1000 + (split[3].toIntOrNull()
-                            ?: 0) else 0
-                        writeInt(state)
-                    }
-                    writeInt(1)
-                    writeInt(if (split[4].toBoolean()) 6 else 4)
-                    writeUTF("EXTRA_PARAM")
-                    writeUTF("")
-                    writeUTF("MESSAGE")
-                    writeUTF(split[1])
-
-                    if (split[4].toBoolean()) {
-                        writeUTF("PURCHASER_NAME")
-                        writeUTF(split[5])
-                        writeUTF("PURCHASER_FIGURE")
-                        writeUTF(split[6])
-                    }
-
-                    writeUTF("PRODUCT_CODE")
-                    writeUTF(split[7])
-                    writeUTF("state")
-                    writeUTF(if (magicRemove) "1" else "0")
-                }
-
-                else -> {
-                    if (!inventory) writeInt(0)
-                    writeInt(0)
-                    writeUTF(extraData)
-                }
-            }
+            return
         }
+
+        getFurnitureLogic(furnishing)
+            .parseStuffData(extraData, furnishing, limitedItemData, magicRemove)
+            .write(habboResponse, inventory)
     }
 
     fun correctExtradataCatalog(habboSession: HabboSession, extraData: String, furnishing: Furnishing): String? {
-        return when (furnishing.interactionType) {
-            InteractionType.POST_IT -> "FFFF33"
-            InteractionType.ROOM_EFFECT -> if (extraData.isEmpty()) "0" else extraData.trim()
-            InteractionType.DIMMER -> "1,1,1,#000000,255"
-            InteractionType.MANNEQUIN -> "m${7.toChar()}ch-215-92.lg-3202-1322-73${7.toChar()}Mannequin"
-            InteractionType.BADGE_DISPLAY -> {
-                if (!habboSession.habboBadge.badges.containsKey(extraData)) return null
-
-                "${extraData.trim()}${7.toChar()}${habboSession.userInformation.username}${7.toChar()}${
-                    LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)
-                }"
-            }
-
-            InteractionType.TROPHY -> "${habboSession.userInformation.username}${9.toChar()}${
-                LocalDateTime.now().format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS)
-            }${9.toChar()}${extraData.trim()}"
-
-            else -> ""
-        }
+        return getFurnitureLogic(furnishing).correctCatalogExtraData(habboSession, extraData, furnishing)
     }
 }

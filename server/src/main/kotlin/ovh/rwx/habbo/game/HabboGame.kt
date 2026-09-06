@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.antimutant.AntiMutantManager
 import ovh.rwx.habbo.game.badge.BadgeManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
+import ovh.rwx.habbo.game.chest.ChestManager
 import ovh.rwx.habbo.game.group.GroupManager
 import ovh.rwx.habbo.game.habbicon.HabbiconManager
 import ovh.rwx.habbo.game.item.ItemManager
@@ -60,6 +61,7 @@ class HabboGame {
     val petManager: PetManager = PetManager()
     val badgeManager: BadgeManager = BadgeManager()
     val habbiconManager: HabbiconManager = HabbiconManager()
+    val chestManager: ChestManager = ChestManager()
 
     init {
         HabboServer.applicationScope.launch { landingManager.load() }
