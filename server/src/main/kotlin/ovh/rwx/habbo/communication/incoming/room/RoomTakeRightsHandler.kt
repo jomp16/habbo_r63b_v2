@@ -22,8 +22,12 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
+import ovh.rwx.habbo.communication.outgoing.room.RoomRightsRemovedData
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -32,16 +36,8 @@ import ovh.rwx.habbo.game.user.information.UserInformation
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomTakeRightsHandler {
     @Handler(Incoming.ROOM_REMOVE_RIGHTS)
+    @HandlerR63A(IncomingR63A.ROOM_REMOVE_RIGHTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        this.parse(habboSession, habboRequest)
-    }
-
-    @Handler(Incoming.ROOM_REMOVE_RIGHTS)
-    fun handleWithRoomId(habboSession: HabboSession, habboRequest: HabboRequest) {
-        this.parse(habboSession, habboRequest)
-    }
-
-    private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
                 true
@@ -55,8 +51,8 @@ class RoomTakeRightsHandler {
             val userId = habboRequest.readInt()
 
             userInformations += HabboServer.habboSessionManager.getHabboSessionById(userId)?.userInformation
-                    ?: UserInformationDao.getUserInformationById(userId)
-                    ?: return@repeat
+                ?: UserInformationDao.getUserInformationById(userId)
+                        ?: return@repeat
         }
 
         val rightsData =
@@ -64,6 +60,7 @@ class RoomTakeRightsHandler {
 
         habboSession.currentRoom!!.userManager.rights.removeAll(rightsData.toSet())
 
+        val roomId = habboSession.currentRoom!!.roomData.id
         rightsData.forEach {
             val habboSession1 = HabboServer.habboSessionManager.getHabboSessionById(it.userId)
 
@@ -72,19 +69,19 @@ class RoomTakeRightsHandler {
                     // Update rights
                     habboSession1.roomUser!!.removeStatus("flatctrl")
 
-                    if (habboRequest.methodName == "handle") {
-                        habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, habboSession.currentRoom!!.roomData.id, 0)
-                    } else if (habboRequest.methodName == "handleWithRoomId") {
-                        habboSession1.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 0)
-                    }
+                    habboSession.sendHabboResponse(
+                        Outgoing.ROOM_RIGHT_LEVEL,
+                        RoomRightLevelData(rightLevel = 0, roomId = roomId)
+                    )
                 }
             }
 
-            if (habboRequest.methodName == "handle") {
-                habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_REMOVED, habboSession.currentRoom!!.roomData.id, it.userId)
-            } else if (habboRequest.methodName == "handleWithRoomId") {
-                habboSession.sendHabboResponse(Outgoing.ROOM_RIGHTS_REMOVED, it.userId)
-            }
+            habboSession.sendHabboResponse(
+                Outgoing.ROOM_RIGHTS_REMOVED, RoomRightsRemovedData(
+                    roomId = roomId,
+                    userId = it.userId,
+                )
+            )
         }
 
         RoomDao.removeRights(rightsData.map { it.userId })

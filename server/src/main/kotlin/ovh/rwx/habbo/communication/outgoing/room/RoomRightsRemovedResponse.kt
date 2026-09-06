@@ -21,26 +21,20 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
-/**
- * Payload estruturado para notificação de ausência de direitos no quarto (ROOM_NO_RIGHTS).
- *
- * @param roomId ID do quarto (introduzido no Flash em 23/05/2018 - PRODUCTION-201805231227-590553814).
- */
-data class RoomNoRightsData(
+data class RoomRightsRemovedData(
     val roomId: Int = 0,
+    val userId: Int = 0,
 )
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomNoRightsResponse {
-    @Response(Outgoing.ROOM_NO_RIGHTS)
-    fun response(habboResponse: HabboResponse, data: RoomNoRightsData = RoomNoRightsData()) {
+class RoomRightsRemovedResponse {
+    @Response(Outgoing.ROOM_RIGHTS_REMOVED)
+    fun response(habboResponse: HabboResponse, data: RoomRightsRemovedData) {
         habboResponse.apply {
-            if (isVersionAtLeast(2018, 5, 23)) {
-                writeInt(data.roomId)
-            }
+            writeInt(data.roomId)
+            writeInt(data.userId)
         }
     }
 }

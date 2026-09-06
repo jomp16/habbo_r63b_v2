@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,24 +22,31 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+
+/**
+ * Payload estruturado para aceitação de campainha do quarto (ROOM_DOORBELL_ACCEPT).
+ *
+ * @param username Nome do usuário que teve a entrada aceita (ou vazio).
+ * @param roomId ID do quarto (introduzido no Flash em 23/05/2018 - PRODUCTION-201805231227-590553814).
+ */
+data class RoomDoorbellAcceptData(
+    val username: String = "",
+    val roomId: Int = 0,
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDoorbellAcceptResponse {
     @Response(Outgoing.ROOM_DOORBELL_ACCEPT)
     @ResponseR63A(OutgoingR63A.ROOM_DOORBELL_ACCEPT)
-    fun response(habboResponse: HabboResponse, username: String) {
+    fun response(habboResponse: HabboResponse, data: RoomDoorbellAcceptData = RoomDoorbellAcceptData()) {
         habboResponse.apply {
-            writeUTF(username)
-        }
-    }
-
-    @Response(Outgoing.ROOM_DOORBELL_ACCEPT)
-    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, username: String) {
-        habboResponse.apply {
-            writeInt(roomId)
-            writeUTF(username)
+            if (isVersionAtLeast(2018, 5, 23)) {
+                writeInt(data.roomId)
+            }
+            writeUTF(data.username)
         }
     }
 }

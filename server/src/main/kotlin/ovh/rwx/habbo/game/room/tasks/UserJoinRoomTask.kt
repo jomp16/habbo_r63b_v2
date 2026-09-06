@@ -24,6 +24,10 @@ import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomNoRightsData
+import ovh.rwx.habbo.communication.outgoing.room.RoomOpenData
+import ovh.rwx.habbo.communication.outgoing.room.RoomOwnerData
+import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
 import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import ovh.rwx.habbo.game.room.IRoomTask
@@ -136,15 +140,8 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         isOwner: Boolean,
         hasRights: Boolean
     ) {
-        val methodName =
-            HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, habboSession.release)
-
         if (habboSession.release != "R63A") {
-            if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_OPEN)
-            else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(
-                Outgoing.ROOM_OPEN,
-                room.roomData.id
-            )
+            habboSession.sendHabboResponse(Outgoing.ROOM_OPEN, RoomOpenData(room.roomData.id))
 //            habboSession.sendHabboResponse(Outgoing.USER_NFT_CHAT_STYLES, room.roomModel.id, room.roomData.id)
             /*habboSession.sendHabboResponse(HabboResponse(1219, null).apply {
                 writeInt(0)
@@ -230,27 +227,19 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
             // Respostas de direitos
             if (hasRights) {
                 if (isOwner) {
-                    if (methodName == "response") {
-                        habboSession.sendHabboResponse(Outgoing.ROOM_OWNER)
-                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 4)
-                    } else if (methodName == "responseWithRoomId") {
-                        habboSession.sendHabboResponse(Outgoing.ROOM_OWNER, room.roomData.id)
-                        habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, room.roomData.id, 4)
-                    }
-                } else {
-                    if (methodName == "response") habboSession.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, 1)
-                    else if (methodName == "responseWithRoomId") habboSession.sendHabboResponse(
+                    habboSession.sendHabboResponse(Outgoing.ROOM_OWNER, RoomOwnerData(room.roomData.id))
+                    habboSession.sendHabboResponse(
                         Outgoing.ROOM_RIGHT_LEVEL,
-                        room.roomData.id,
-                        1
+                        RoomRightLevelData(rightLevel = 4, roomId = room.roomData.id)
+                    )
+                } else {
+                    habboSession.sendHabboResponse(
+                        Outgoing.ROOM_RIGHT_LEVEL,
+                        RoomRightLevelData(rightLevel = 1, roomId = room.roomData.id)
                     )
                 }
             } else {
-                if (methodName == "response") {
-                    habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS)
-                } else if (methodName == "responseWithRoomId") {
-                    habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS, room.roomData.id)
-                }
+                habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS, RoomNoRightsData(room.roomData.id))
             }
         } else {
             habboSession.sendHabboResponse(OutgoingR63A.ROOM_OPEN)
@@ -290,7 +279,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                 room.roomData.wallThick,
                 room.roomData.floorThick
             )
-                // todo: events
+            // todo: events
 
             habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.userManager.entities.values)
             habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.userManager.entities.values)

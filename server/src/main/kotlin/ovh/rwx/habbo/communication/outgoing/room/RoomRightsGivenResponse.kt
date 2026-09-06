@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,14 +23,20 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+data class RoomRightsGivenData(
+    val roomId: Int,
+    val userId: Int,
+    val userName: String,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRightsGivenResponse {
     @Response(Outgoing.ROOM_RIGHTS_GIVEN)
-    fun response(habboResponse: HabboResponse, roomId: Int, userId: Int, username: String) {
+    fun response(habboResponse: HabboResponse, data: RoomRightsGivenData) {
         habboResponse.apply {
-            writeInt(roomId)
-            writeInt(userId)
-            writeUTF(username)
+            writeInt(data.roomId)
+            writeInt(data.userId)
+            writeUTF(data.userName)
         }
     }
 }

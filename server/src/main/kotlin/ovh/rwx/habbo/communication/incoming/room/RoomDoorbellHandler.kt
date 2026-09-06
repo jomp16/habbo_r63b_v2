@@ -27,6 +27,8 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomDoorbellAcceptData
+import ovh.rwx.habbo.communication.outgoing.room.RoomDoorbellDeniedData
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -35,15 +37,6 @@ class RoomDoorbellHandler {
     @Handler(Incoming.ROOM_DOORBELL)
     @HandlerR63A(IncomingR63A.ROOM_DOORBELL)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        this.parse(habboSession, habboRequest)
-    }
-
-    @Handler(Incoming.ROOM_DOORBELL)
-    fun handleWithRoomId(habboSession: HabboSession, habboRequest: HabboRequest) {
-        this.parse(habboSession, habboRequest)
-    }
-
-    private fun parse(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
         val username = habboRequest.readUTF()
         val accept = habboRequest.readBoolean()
@@ -55,52 +48,36 @@ class RoomDoorbellHandler {
 
         if (accept) {
             if (isR63A) {
-                requestHabboSession.sendHabboResponse(OutgoingR63A.ROOM_DOORBELL_ACCEPT, "")
-            } else {
-                val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
-                    Outgoing.ROOM_DOORBELL_ACCEPT,
-                    requestHabboSession.release
+                requestHabboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_DOORBELL_ACCEPT,
+                    RoomDoorbellAcceptData(username = "", roomId = habboSession.currentRoom!!.roomData.id)
                 )
-                if (methodName == "response") {
-                    requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_ACCEPT, "")
-                } else if (methodName == "responseWithRoomId") {
-                    requestHabboSession.sendHabboResponse(
-                        Outgoing.ROOM_DOORBELL_ACCEPT,
-                        habboSession.currentRoom!!.roomData.id,
-                        ""
-                    )
-                    requestHabboSession.enterRoom(habboSession.currentRoom!!, "", true)
-                }
+            } else {
+                requestHabboSession.sendHabboResponse(
+                    Outgoing.ROOM_DOORBELL_ACCEPT,
+                    RoomDoorbellAcceptData(username = "", roomId = habboSession.currentRoom!!.roomData.id)
+                )
+                requestHabboSession.enterRoom(habboSession.currentRoom!!, "", true)
             }
 
             habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
                 (it as? RoomUser)?.habboSession?.let { rightsHabboSession ->
-                    val isR63ARights = rightsHabboSession.release == "R63A"
-                    val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
-                        Outgoing.ROOM_DOORBELL_ACCEPT,
-                        rightsHabboSession.release
-                    )
-
-                    when {
-                        isR63ARights -> {
-                            rightsHabboSession.sendHabboResponse(
-                                OutgoingR63A.ROOM_DOORBELL_ACCEPT,
-                                habboSession.userInformation.username
+                    if (rightsHabboSession.release == "R63A") {
+                        rightsHabboSession.sendHabboResponse(
+                            OutgoingR63A.ROOM_DOORBELL_ACCEPT,
+                            RoomDoorbellAcceptData(
+                                username = habboSession.userInformation.username,
+                                roomId = habboSession.currentRoom!!.roomData.id
                             )
-                        }
-                        methodName == "response" -> {
-                            rightsHabboSession.sendHabboResponse(
-                                Outgoing.ROOM_DOORBELL_ACCEPT,
-                                habboSession.userInformation.username
+                        )
+                    } else {
+                        rightsHabboSession.sendHabboResponse(
+                            Outgoing.ROOM_DOORBELL_ACCEPT,
+                            RoomDoorbellAcceptData(
+                                username = habboSession.userInformation.username,
+                                roomId = habboSession.currentRoom!!.roomData.id
                             )
-                        }
-                        methodName == "responseWithRoomId" -> {
-                            rightsHabboSession.sendHabboResponse(
-                                Outgoing.ROOM_DOORBELL_ACCEPT,
-                                habboSession.currentRoom!!.roomData.id,
-                                habboSession.userInformation.username
-                            )
-                        }
+                        )
                     }
                 }
             }
@@ -108,52 +85,35 @@ class RoomDoorbellHandler {
             requestHabboSession.currentRoom = null
 
             if (isR63A) {
-                requestHabboSession.sendHabboResponse(OutgoingR63A.ROOM_DOORBELL_DENIED, "")
-            } else {
-                val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
-                    Outgoing.ROOM_DOORBELL_ACCEPT,
-                    requestHabboSession.release
+                requestHabboSession.sendHabboResponse(
+                    OutgoingR63A.ROOM_DOORBELL_DENIED,
+                    RoomDoorbellDeniedData(username = "", roomId = habboSession.currentRoom!!.roomData.id)
                 )
-
-                if (methodName == "response") {
-                    requestHabboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
-                } else if (methodName == "responseWithRoomId") {
-                    requestHabboSession.sendHabboResponse(
-                        Outgoing.ROOM_DOORBELL_DENIED,
-                        habboSession.currentRoom!!.roomData.id,
-                        ""
-                    )
-                }
+            } else {
+                requestHabboSession.sendHabboResponse(
+                    Outgoing.ROOM_DOORBELL_DENIED,
+                    RoomDoorbellDeniedData(username = "", roomId = habboSession.currentRoom!!.roomData.id)
+                )
             }
 
             habboSession.currentRoom?.userManager?.usersWithRights?.forEach {
                 (it as? RoomUser)?.habboSession?.let { rightsHabboSession ->
-                    val isR63ARights = rightsHabboSession.release == "R63A"
-                    val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(
-                        Outgoing.ROOM_DOORBELL_DENIED,
-                        rightsHabboSession.release
-                    )
-
-                    when {
-                        isR63ARights -> {
-                            rightsHabboSession.sendHabboResponse(
-                                OutgoingR63A.ROOM_DOORBELL_DENIED,
-                                habboSession.userInformation.username
+                    if (rightsHabboSession.release == "R63A") {
+                        rightsHabboSession.sendHabboResponse(
+                            OutgoingR63A.ROOM_DOORBELL_DENIED,
+                            RoomDoorbellDeniedData(
+                                username = habboSession.userInformation.username,
+                                roomId = habboSession.currentRoom!!.roomData.id
                             )
-                        }
-                        methodName == "response" -> {
-                            rightsHabboSession.sendHabboResponse(
-                                Outgoing.ROOM_DOORBELL_DENIED,
-                                habboSession.userInformation.username
+                        )
+                    } else {
+                        rightsHabboSession.sendHabboResponse(
+                            Outgoing.ROOM_DOORBELL_DENIED,
+                            RoomDoorbellDeniedData(
+                                username = habboSession.userInformation.username,
+                                roomId = habboSession.currentRoom!!.roomData.id
                             )
-                        }
-                        methodName == "responseWithRoomId" -> {
-                            rightsHabboSession.sendHabboResponse(
-                                Outgoing.ROOM_DOORBELL_DENIED,
-                                habboSession.currentRoom!!.roomData.id,
-                                habboSession.userInformation.username
-                            )
-                        }
+                        )
                     }
                 }
             }

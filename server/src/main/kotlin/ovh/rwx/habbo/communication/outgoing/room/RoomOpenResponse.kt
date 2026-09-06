@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,20 +22,28 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+
+/**
+ * Payload estruturado para abertura/preparação do quarto (ROOM_OPEN).
+ *
+ * @param roomId ID do quarto.
+ */
+data class RoomOpenData(
+    val roomId: Int = 0,
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOpenResponse {
     @Response(Outgoing.ROOM_OPEN)
     @ResponseR63A(OutgoingR63A.ROOM_OPEN)
-    fun response(habboResponse: HabboResponse) {
-    }
-
-    @Response(Outgoing.ROOM_OPEN)
-    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomOpenData = RoomOpenData()) {
         habboResponse.apply {
-            writeInt(roomId)
+            if (isVersionAtLeast(2018, 5, 23)) {
+                writeInt(data.roomId)
+            }
         }
     }
 }

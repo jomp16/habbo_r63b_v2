@@ -31,6 +31,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
+import ovh.rwx.habbo.communication.outgoing.room.RoomDoorbellDeniedData
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
@@ -612,7 +613,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun enterRoom(room: Room, password: String = "", bypassAuth: Boolean = false) {
         if (!bypassAuth && room == currentRoom) return
-        val methodName = HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, release)
 
         currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
@@ -671,11 +671,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 val roomUsersWithRights = room.userManager.usersWithRights
 
                 if (roomUsersWithRights.isEmpty()) {
-                    if (methodName == "response") sendHabboResponse(Outgoing.ROOM_DOORBELL_DENIED, "")
-                    else if (methodName == "responseWithRoomId") sendHabboResponse(
+                    sendHabboResponse(
                         Outgoing.ROOM_DOORBELL_DENIED,
-                        room.roomData.id,
-                        ""
+                        RoomDoorbellDeniedData(username = "", roomId = room.roomData.id)
                     )
 
                     if (release != "R63A") {

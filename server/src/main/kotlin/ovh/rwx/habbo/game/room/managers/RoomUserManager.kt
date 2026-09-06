@@ -26,6 +26,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
+import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
 import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.pet.PetData
@@ -220,27 +221,23 @@ class RoomUserManager(private val room: Room) {
             .filter { it.habboSession.userInformation.id != currentGroup.groupData.ownerId }
             .forEach { roomUser ->
                 val session = roomUser.habboSession
-                val methodName =
-                    HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.ROOM_OWNER, session.release)
-
                 val hasPermission = hasRights(session, false)
                 val statusKey = "flatctrl"
 
                 if (hasPermission) {
                     roomUser.addStatus(statusKey, "1")
-                    dispatchRightsResponse(session, methodName, 1)
+                    dispatchRightsResponse(session, 1)
                 } else if (roomUser.statusMap.containsKey(statusKey)) {
                     roomUser.removeStatus(statusKey)
-                    dispatchRightsResponse(session, methodName, 0)
+                    dispatchRightsResponse(session, 0)
                 }
             }
     }
 
-    private fun dispatchRightsResponse(session: HabboSession, methodName: String, level: Int) {
-        when (methodName) {
-            "response" -> session.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, level)
-            "responseWithRoomId" -> session.sendHabboResponse(Outgoing.ROOM_RIGHT_LEVEL, room.roomData.id, level)
-            else -> log.error("Couldn't send response for right level!")
-        }
+    private fun dispatchRightsResponse(session: HabboSession, level: Int) {
+        session.sendHabboResponse(
+            Outgoing.ROOM_RIGHT_LEVEL,
+            RoomRightLevelData(rightLevel = level, roomId = room.roomData.id)
+        )
     }
 }

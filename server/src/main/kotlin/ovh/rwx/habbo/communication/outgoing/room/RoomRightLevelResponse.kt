@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,22 +21,29 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+
+/**
+ * Payload estruturado para envio de nível de direitos no quarto (ROOM_RIGHT_LEVEL).
+ *
+ * @param rightLevel Nível de direito do usuário (ex: 0 = nenhum, 1 = direitos, 4 = dono).
+ * @param roomId ID do quarto.
+ */
+data class RoomRightLevelData(
+    val rightLevel: Int,
+    val roomId: Int = 0,
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRightLevelResponse {
     @Response(Outgoing.ROOM_RIGHT_LEVEL)
-    fun response(habboResponse: HabboResponse, rightLevel: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomRightLevelData) {
         habboResponse.apply {
-            writeInt(rightLevel)
-        }
-    }
-
-    @Response(Outgoing.ROOM_RIGHT_LEVEL)
-    fun responseWithRoomId(habboResponse: HabboResponse, roomId: Int, rightLevel: Int) {
-        habboResponse.apply {
-            writeInt(roomId)
-            writeInt(rightLevel)
+            if (isVersionAtLeast(2018, 5, 23)) {
+                writeInt(data.roomId)
+            }
+            writeInt(data.rightLevel)
         }
     }
 }
