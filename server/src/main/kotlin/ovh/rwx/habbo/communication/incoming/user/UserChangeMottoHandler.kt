@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomUpdateUserData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -46,14 +47,16 @@ class UserChangeMottoHandler {
         // ACH_Motto: mudar estado
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Motto", 1, accumulate = true)
 
-        habboSession.currentRoom?.sendHabboResponse(Outgoing.USER_UPDATE, habboSession.roomUser!!.virtualID, habboSession.userInformation.figure, habboSession.userInformation.gender, habboSession.userInformation.motto, habboSession.userStats.achievementScore)
-        habboSession.currentRoom?.sendHabboResponse(
+        habboSession.currentRoom?.sendResponse(
+            Outgoing.USER_UPDATE,
             OutgoingR63A.USER_UPDATE,
-            habboSession.roomUser!!.virtualID,
-            habboSession.userInformation.figure,
-            habboSession.userInformation.gender,
-            habboSession.userInformation.motto,
-            habboSession.userStats.achievementScore
+            RoomUpdateUserData(
+                virtualId = habboSession.roomUser!!.virtualID,
+                figure = habboSession.userInformation.figure,
+                gender = habboSession.userInformation.gender,
+                motto = habboSession.userInformation.motto,
+                achievementScore = habboSession.userStats.achievementScore
+            )
         )
     }
 }

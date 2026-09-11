@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -32,17 +32,13 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorFlatCategoriesHandler {
     @Handler(Incoming.NAVIGATOR_FLAT_CATEGORIES)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_ROOM_CATEGORIES,
-                HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
-                habboSession.userInformation.rank)
-    }
-    
     @HandlerR63A(IncomingR63A.NAVIGATOR_FLAT_CATEGORIES)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(
+            Outgoing.NAVIGATOR_ROOM_CATEGORIES,
             OutgoingR63A.NAVIGATOR_ROOM_CATEGORIES,
-                HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
-                habboSession.userInformation.rank)
+            HabboServer.habboGame.navigatorManager.navigatorRoomCategories.values,
+            habboSession.userInformation.rank
+        )
     }
 }

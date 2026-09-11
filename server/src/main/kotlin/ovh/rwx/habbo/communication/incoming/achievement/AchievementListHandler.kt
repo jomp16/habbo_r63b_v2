@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.achievement.AchievementListData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -34,18 +35,13 @@ class AchievementListHandler {
     @Handler(Incoming.ACHIEVEMENT_LIST)
     @HandlerR63A(IncomingR63A.ACHIEVEMENT_LIST)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(
-                OutgoingR63A.ACHIEVEMENT_LIST,
+        habboSession.sendResponse(
+            Outgoing.ACHIEVEMENT_LIST,
+            OutgoingR63A.ACHIEVEMENT_LIST,
+            AchievementListData(
                 habboSession.userInformation.achievementUsers,
                 HabboServer.habboGame.achievementManager.groupedAchievements
             )
-        } else {
-            habboSession.sendHabboResponse(
-                Outgoing.ACHIEVEMENT_LIST,
-                habboSession.userInformation.achievementUsers,
-                HabboServer.habboGame.achievementManager.groupedAchievements
-            )
-        }
+        )
     }
 }

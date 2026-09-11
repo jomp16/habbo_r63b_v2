@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,27 +26,25 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.inventory.InventoryBadgesData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryBadgesHandler {
     @Handler(Incoming.INVENTORY_BADGES)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, habboSession.habboBadge.badges.values)
-        habboSession.sendHabboResponse(
-            Outgoing.USER_BADGES,
-            habboSession.userInformation.id,
-            habboSession.habboBadge.badges.values
-        )
-    }
-
     @HandlerR63A(IncomingR63A.INVENTORY_BADGES)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_BADGES, habboSession.habboBadge.badges.values)
-        habboSession.sendHabboResponse(
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_BADGES,
+            OutgoingR63A.INVENTORY_BADGES,
+            InventoryBadgesData(habboSession.habboBadge.badges.values)
+        )
+        habboSession.sendResponse(
+            Outgoing.USER_BADGES,
             OutgoingR63A.USER_BADGES,
             habboSession.userInformation.id,
             habboSession.habboBadge.badges.values
         )
     }
 }
+

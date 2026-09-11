@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomItemPlacedData
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
@@ -89,77 +90,86 @@ data class RoomItem(
     private var currentTick: Int = 0
     val interactingUsers: MutableMap<Int, RoomEntity> by lazy { HashMap<Int, RoomEntity>() }
 
-    @Suppress("DuplicatedCode")
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            if (furnishing.type == ItemType.FLOOR) {
-                writeInt(id)
-                writeInt(furnishing.spriteId)
-                writeInt(position.x)
-                writeInt(position.y)
-                writeInt(rotation)
-                writeUTF(position.z.toString())
-                writeUTF(height.toString())
-
-                HabboServer.habboGame.itemManager.writeExtradata(
-                    habboResponse,
-                    extraData,
-                    furnishing,
-                    limitedItemData,
-                    magicRemove,
-                )
-            } else {
-                writeUTF(id.toString())
-                writeInt(furnishing.spriteId)
-                writeUTF(wallPosition)
-                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
-            }
-
-            writeInt(-1) // seems this is related to rentals (time in seconds)
-            writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
-            writeInt(if (buildersClub) -12345678 else userId)
+        if (furnishing.type == ItemType.FLOOR) {
+            serializeFloorItem(habboResponse)
+        } else {
+            serializeWallItem(habboResponse)
         }
     }
 
-    @Suppress("DuplicatedCode")
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
+        serializeHabboResponse(habboResponse, *params)
+    }
+
+    private fun serializeFloorItem(habboResponse: HabboResponse) {
         habboResponse.apply {
-            if (furnishing.type == ItemType.FLOOR) {
-                writeInt(id)
-                writeInt(furnishing.spriteId)
-                writeInt(position.x)
-                writeInt(position.y)
-                writeInt(rotation)
-                writeUTF(position.z.toString())
+            writeInt(id)
+            writeInt(furnishing.spriteId)
+            writeInt(position.x)
+            writeInt(position.y)
+            writeInt(rotation)
+            writeUTF(position.z.toString())
 
-                HabboServer.habboGame.itemManager.writeExtradata(
-                    habboResponse,
-                    extraData,
-                    furnishing,
-                    limitedItemData,
-                    magicRemove,
-                    inventory = true
-                )
-
-                writeInt(-1) // seems this is related to rentals (time in seconds)
-            } else {
-                writeUTF(id.toString())
-                writeInt(furnishing.spriteId)
-                writeUTF(wallPosition)
-                writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
+            // Altura (sizeZ) adicionada em 01/12/2015 (BUILD 201512012203)
+            if (isVersionAtLeast(2015, 12, 1)) {
+                writeUTF(height.toString())
             }
 
-            if (isVersionAtLeast(2011, 5, 12)) {
+            HabboServer.habboGame.itemManager.writeExtradata(
+                habboResponse,
+                extraData,
+                furnishing,
+                limitedItemData,
+                magicRemove,
+            )
+
+            writeInt(-1) // rentals / expiry
+
+            // Usage Policy virou Int em 13/01/2012; antes era Boolean (desde 12/05/2011)
+            if (isVersionAtLeast(2012, 1, 13)) {
+                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+            } else if (isVersionAtLeast(2011, 5, 12)) {
                 writeBoolean(furnishing.interactionModesCount > 1)
             }
 
-            // 2. O ExtraParam dos itens de Piso (CRÍTICO para não sumir itens!)
-            if (furnishing.type == ItemType.FLOOR) {
-                // Se o sprite for negativo, o Flash SEMPRE espera uma String no final
-                // nas builds de 2010 e 2011 (conforme o STATIC detectado)
-                if (furnishing.spriteId < 0) {
-                    writeUTF("")
-                }
+            // Owner ID presente a partir de 21/09/2011 (RELEASE63-36096)
+            if (isVersionAtLeast(2011, 9, 21)) {
+                writeInt(if (buildersClub) -12345678 else userId)
+            }
+
+            // Se o spriteId for negativo (< 0), o Flash Player em TODAS as versões (de 2010 até WIN63 2026)
+            // espera ler uma String adicional (staticClass / customType) para instanciar o móvel diretamente
+            // pelo nome textual da classe sem consultar o furnidata.xml numérico (usado pela Sulake para
+            // anúncios e itens dinâmicos). Se não enviarmos essa String quando spriteId < 0, o parser do Flash
+            // tenta ler os bytes seguintes como comprimento de string e quebra com EOFError, sumindo com os itens.
+            if (furnishing.spriteId < 0) {
+                writeUTF("") // staticClass (customType)
+            }
+        }
+    }
+
+    private fun serializeWallItem(habboResponse: HabboResponse) {
+        habboResponse.apply {
+            writeUTF(id.toString())
+            writeInt(furnishing.spriteId)
+            writeUTF(wallPosition)
+            writeUTF(if (furnishing.interactionType == InteractionType.POST_IT) extraData.split(' ')[0] else extraData)
+
+            if (isVersionAtLeast(2013, 2, 13)) {
+                writeInt(-1) // secondsToExpiration
+            }
+
+            // Usage Policy (era Boolean em 2011, virou Int em 2012)
+            if (isVersionAtLeast(2012, 1, 13)) {
+                writeInt(if (furnishing.interactionModesCount > 1) 1 else 0)
+            } else if (isVersionAtLeast(2011, 5, 12)) {
+                writeBoolean(furnishing.interactionModesCount > 1)
+            }
+
+            // Owner ID
+            if (isVersionAtLeast(2011, 9, 21)) {
+                writeInt(if (buildersClub) -12345678 else userId)
             }
         }
     }
@@ -168,13 +178,11 @@ data class RoomItem(
         if (updateClient) {
             when (furnishing.type) {
                 ItemType.WALL -> {
-                    room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, this)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_UPDATE, this)
+                    room.sendResponse(Outgoing.ROOM_WALL_ITEM_UPDATE, OutgoingR63A.ROOM_WALL_ITEM_UPDATE, this)
                 }
 
                 else -> {
-                    room.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, this)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_FLOOR_ITEM_UPDATE, this)
+                    room.sendResponse(Outgoing.ROOM_FLOOR_ITEM_UPDATE, OutgoingR63A.ROOM_FLOOR_ITEM_UPDATE, this)
                 }
             }
         }
@@ -188,16 +196,22 @@ data class RoomItem(
             ItemType.FLOOR -> {
                 if (updateDb) room.itemManager.addItemToSave(this)
                 if (updateClient) {
-                    room.sendHabboResponse(Outgoing.ROOM_ITEM_ADDED, this, userName)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ADDED, this)
+                    room.sendResponse(
+                        Outgoing.ROOM_ITEM_ADDED,
+                        OutgoingR63A.ROOM_ITEM_ADDED,
+                        RoomItemPlacedData(this, userName)
+                    )
                 }
             }
 
             ItemType.WALL -> {
                 if (updateDb) room.itemManager.addItemToSave(this)
                 if (updateClient) {
-                    room.sendHabboResponse(Outgoing.ROOM_WALL_ITEM_ADDED, this, userName)
-                    room.sendHabboResponse(OutgoingR63A.ROOM_WALL_ITEM_ADDED, this)
+                    room.sendResponse(
+                        Outgoing.ROOM_WALL_ITEM_ADDED,
+                        OutgoingR63A.ROOM_WALL_ITEM_ADDED,
+                        RoomItemPlacedData(this, userName)
+                    )
                 }
             }
 

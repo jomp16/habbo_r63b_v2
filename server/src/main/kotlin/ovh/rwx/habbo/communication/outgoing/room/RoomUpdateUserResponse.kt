@@ -26,24 +26,37 @@ import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para atualização de usuário no quarto (USER_UPDATE).
+ *
+ * @property virtualId ID virtual do usuário.
+ * @property figure Figura (look) do usuário.
+ * @property gender Gênero do usuário.
+ * @property motto Motto do usuário.
+ * @property achievementScore Pontuação de conquistas.
+ */
+data class RoomUpdateUserData(
+    val virtualId: Int,
+    val figure: String,
+    val gender: String,
+    val motto: String,
+    val achievementScore: Int,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUpdateUserResponse {
     @Response(Outgoing.USER_UPDATE)
     @ResponseR63A(OutgoingR63A.USER_UPDATE)
     fun response(
         habboResponse: HabboResponse,
-        virtualId: Int,
-        figure: String,
-        gender: String,
-        motto: String,
-        achievementScore: Int
+        data: RoomUpdateUserData
     ) {
         habboResponse.apply {
-            writeInt(virtualId)
-            writeUTF(figure)
-            writeUTF(gender)
-            writeUTF(motto)
-            writeInt(achievementScore)
+            writeInt(data.virtualId)
+            writeUTF(data.figure)
+            writeUTF(data.gender)
+            writeUTF(data.motto)
+            writeInt(data.achievementScore)
 
             if (isVersionAtLeast(2026, 8, 6)) {
                 writeUTF("") // 1. string ignorada (provável swim figure) - TODO

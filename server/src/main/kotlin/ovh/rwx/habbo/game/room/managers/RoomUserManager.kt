@@ -140,10 +140,8 @@ class RoomUserManager(private val room: Room) {
         room.roomGamemap.addRoomEntity(roomPet, roomPet.currentVector3.vector2)
 
         // Broadcast to all users
-        room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomPet))
-        room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomPet))
-        room.sendHabboResponse(OutgoingR63A.ROOM_USERS, listOf(roomPet))
-        room.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomPet))
+        room.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, listOf(roomPet))
+        room.sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomPet))
     }
 
     fun removeEntity(roomEntity: RoomEntity?, notifyClient: Boolean, kickNotification: Boolean) {
@@ -187,16 +185,16 @@ class RoomUserManager(private val room: Room) {
         notifyClient: Boolean,
         kickNotification: Boolean
     ) {
-        val isR63A = session.release == "R63A"
-
         if (kickNotification) {
-            val outMsg = if (isR63A) OutgoingR63A.MISC_GENERIC_ERROR else Outgoing.MISC_GENERIC_ERROR
-            session.sendAnyResponse(outMsg, MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED)
+            session.sendResponse(
+                Outgoing.MISC_GENERIC_ERROR,
+                OutgoingR63A.MISC_GENERIC_ERROR,
+                MiscGenericErrorResponse.MiscGenericError.ROOM_KICKED
+            )
         }
 
         if (notifyClient) {
-            val exitMsg = if (isR63A) OutgoingR63A.ROOM_EXIT else Outgoing.ROOM_EXIT
-            session.sendAnyResponse(exitMsg)
+            session.sendResponse(Outgoing.ROOM_EXIT, OutgoingR63A.ROOM_EXIT)
         }
     }
 
@@ -235,8 +233,9 @@ class RoomUserManager(private val room: Room) {
     }
 
     private fun dispatchRightsResponse(session: HabboSession, level: Int) {
-        session.sendHabboResponse(
+        session.sendResponse(
             Outgoing.ROOM_RIGHT_LEVEL,
+            if (level > 0) OutgoingR63A.ROOM_RIGHT else null,
             RoomRightLevelData(rightLevel = level, roomId = room.roomData.id)
         )
     }

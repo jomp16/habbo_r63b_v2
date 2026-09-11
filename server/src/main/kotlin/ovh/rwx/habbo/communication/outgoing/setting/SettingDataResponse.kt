@@ -19,63 +19,53 @@
 
 package ovh.rwx.habbo.communication.outgoing.setting
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+
+data class UserSettingsData(
+    val systemVolume: Int,
+    val furniVolume: Int = 100,
+    val musicVolume: Int = 100,
+    val preferOldChat: Boolean = false,
+    val ignoreRoomInvite: Boolean = false,
+    val disableCameraFollow: Boolean = false,
+    val friendBarOpen: Boolean = false,
+    val chatColor: Int = 0,
+    val unknownR63A: Boolean = false
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class SettingDataResponse {
     @Response(Outgoing.USER_SETTINGS)
-    fun response(habboResponse: HabboResponse, systemVolume: Int, furniVolume: Int, musicVolume: Int,
-                 preferOldChat: Boolean, ignoreRoomInvite: Boolean, disableCameraFollow: Boolean,
-                 friendBarOpen: Boolean, chatColor: Int) {
-        habboResponse.apply {
-            writeInt(systemVolume)
-            writeInt(furniVolume)
-            writeInt(musicVolume)
-            writeBoolean(preferOldChat)
-            writeBoolean(ignoreRoomInvite)
-            writeBoolean(disableCameraFollow)
-            writeInt(if (friendBarOpen) 1 else 0)
-            writeInt(chatColor)
-            writeInt(0)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.USER_SETTINGS)
-    fun responseR63A(habboResponse: HabboResponse, systemVolume: Int, unknown: Boolean) {
+    fun response(habboResponse: HabboResponse, data: UserSettingsData) {
         habboResponse.apply {
-            writeInt(systemVolume)
-            writeBoolean(unknown)
-        }
-    }
+            if (isVersionBefore(2011, 9, 20)) {
+                writeInt(data.systemVolume)
+                writeBoolean(data.unknownR63A)
+            } else {
+                writeInt(data.systemVolume)
+                writeInt(data.furniVolume)
+                writeInt(data.musicVolume)
+                writeBoolean(data.preferOldChat)
+                writeBoolean(data.ignoreRoomInvite)
+                writeBoolean(data.disableCameraFollow)
+                writeInt(if (data.friendBarOpen) 1 else 0)
+                writeInt(data.chatColor)
 
-    @Response(Outgoing.USER_SETTINGS)
-    fun responseHabboAir(
-        habboResponse: HabboResponse, systemVolume: Int, furniVolume: Int, musicVolume: Int,
-        preferOldChat: Boolean, ignoreRoomInvite: Boolean, disableCameraFollow: Boolean,
-        friendBarOpen: Boolean, chatColor: Int
-    ) {
-        habboResponse.apply {
-            writeInt(systemVolume)
-            writeInt(furniVolume)
-            writeInt(musicVolume)
-            writeBoolean(preferOldChat)
-            writeBoolean(ignoreRoomInvite)
-            writeBoolean(disableCameraFollow)
-            writeInt(if (friendBarOpen) 1 else 0)
-            writeInt(chatColor)
-            writeBoolean(false) // wired menu button
-            writeBoolean(false) // wired inspect button
-            writeBoolean(false) // play test mode
-            writeInt(0) // useless
-            writeBoolean(false) // wired whisper disabled
-            writeBoolean(false) // show all notifications
-            writeUTF("illumina") // wiredUiStyle - todo: save this on database
-
-            // the rest is booleans
+                if (isVersionAtLeast(2024, 5, 24)) {
+                    writeBoolean(false) // wired menu button
+                    writeBoolean(false) // wired inspect button
+                    writeBoolean(false) // play test mode
+                    if (isVersionAtLeast(2024, 5, 30)) writeInt(0) // useless
+                    if (isVersionAtLeast(2024, 12, 12)) writeBoolean(false) // wired whisper disabled
+                    if (isVersionAtLeast(2025, 9, 11)) writeBoolean(false) // show all notifications
+                    if (isVersionAtLeast(2026, 2, 9)) writeUTF("illumina") // wiredUiStyle
+                } else {
+                    writeInt(0)
+                }
+            }
         }
     }
 }

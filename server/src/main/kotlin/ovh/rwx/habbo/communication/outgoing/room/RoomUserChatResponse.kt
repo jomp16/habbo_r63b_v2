@@ -26,32 +26,33 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 
+/**
+ * Payload estruturado para mensagens de chat no quarto (ROOM_USER_CHAT, ROOM_USER_SHOUT, ROOM_USER_WHISPER).
+ *
+ * @param virtualId ID virtual da entidade no quarto.
+ * @param message Mensagem falada/gritada/sussurrada.
+ * @param emotion Emoção associada (ex: sorriso, raiva).
+ * @param bubble Balão de chat (aplicável no R63B+).
+ */
+data class RoomUserChatData(
+    val virtualId: Int,
+    val message: String,
+    val emotion: Int = 0,
+    val bubble: RoomChatMessageBubbles = RoomChatMessageBubbles.NORMAL,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserChatResponse {
     @Response(Outgoing.ROOM_USER_CHAT, Outgoing.ROOM_USER_SHOUT, Outgoing.ROOM_USER_WHISPER)
-    fun response(
-        habboResponse: HabboResponse,
-        virtualId: Int,
-        message: String,
-        emoticon: Int,
-        bubble: RoomChatMessageBubbles
-    ) {
-        habboResponse.apply {
-            writeInt(virtualId)
-            writeUTF(message)
-            writeInt(emoticon)
-            writeInt(bubble.type)
-            writeInt(0)
-            writeInt(-1)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_USER_CHAT, OutgoingR63A.ROOM_USER_SHOUT, OutgoingR63A.ROOM_USER_WHISPER)
-    fun responseR63A(habboResponse: HabboResponse, virtualId: Int, message: String, emoticon: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomUserChatData) {
         habboResponse.apply {
-            writeInt(virtualId)
-            writeUTF(message)
-            writeInt(emoticon)
+            writeInt(data.virtualId)
+            writeUTF(data.message)
+            writeInt(data.emotion)
+            if (outgoingR63A == null) {
+                writeInt(data.bubble.type)
+            }
             writeInt(0) // todo: linkRefs / string / string / integer
             writeInt(-1) // trackingId
         }

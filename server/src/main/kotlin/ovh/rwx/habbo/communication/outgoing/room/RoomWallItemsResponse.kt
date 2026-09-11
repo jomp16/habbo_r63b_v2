@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,25 +27,39 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 
+/**
+ * Payload estruturado para itens de parede do quarto (ROOM_WALL_ITEMS).
+ *
+ * @param ownerId ID do proprietário do quarto/grupo.
+ * @param ownerName Nome do proprietário do quarto/grupo.
+ * @param wallItems Coleção de itens de parede presentes no quarto.
+ */
+data class RoomWallItemsData(
+    val ownerId: Int,
+    val ownerName: String,
+    val wallItems: Collection<RoomItem>,
+) {
+    constructor(room: Room, wallItems: Collection<RoomItem>) : this(
+        ownerId = room.roomData.ownerId,
+        ownerName = room.roomData.ownerName,
+        wallItems = wallItems,
+    )
+}
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomWallItemsResponse {
     @Response(Outgoing.ROOM_WALL_ITEMS)
-    fun response(habboResponse: HabboResponse, room: Room, wallItems: Collection<RoomItem>) {
-        habboResponse.apply {
-            // todo: group
-            writeInt(1)
-            writeInt(room.roomData.ownerId)
-            writeUTF(room.roomData.ownerName)
-            writeInt(wallItems.size) // size
-            wallItems.forEach { serialize(it) }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_WALL_ITEMS)
-    fun responseR63A(habboResponse: HabboResponse, room: Room, wallItems: Collection<RoomItem>) {
+    fun response(habboResponse: HabboResponse, data: RoomWallItemsData) {
         habboResponse.apply {
-            writeInt(wallItems.size) // size
-            wallItems.forEach { serialize(it) }
+            if (outgoingR63A == null) {
+                // todo: group
+                writeInt(1)
+                writeInt(data.ownerId)
+                writeUTF(data.ownerName)
+            }
+            writeInt(data.wallItems.size) // size
+            data.wallItems.forEach { serialize(it) }
         }
     }
 }

@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.achievement.AchievementListData
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
@@ -183,8 +184,10 @@ class AchievementManager {
 
                 habboSession.sendHabboResponse(
                     OutgoingR63A.ACHIEVEMENT_LIST,
-                    habboSession.userInformation.achievementUsers,
-                    groupedAchievements
+                    AchievementListData(
+                        habboSession.userInformation.achievementUsers,
+                        groupedAchievements
+                    )
                 )
             } else {
                 habboSession.sendHabboResponse(
@@ -197,8 +200,10 @@ class AchievementManager {
 
                 habboSession.sendHabboResponse(
                     Outgoing.ACHIEVEMENT_LIST,
-                    habboSession.userInformation.achievementUsers,
-                    groupedAchievements
+                    AchievementListData(
+                        habboSession.userInformation.achievementUsers,
+                        groupedAchievements
+                    )
                 )
             }
         } else {

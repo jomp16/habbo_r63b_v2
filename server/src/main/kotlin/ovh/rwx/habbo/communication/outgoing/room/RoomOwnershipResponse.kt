@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,22 +25,30 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para direitos de propriedade do quarto (ROOM_OWNERSHIP).
+ *
+ * @param roomId ID do quarto.
+ * @param isOwner Se o usuário é o dono do quarto.
+ * @param isPrivate Se o quarto é privado (usado no R63A).
+ */
+data class RoomOwnershipData(
+    val roomId: Int,
+    val isOwner: Boolean,
+    val isPrivate: Boolean = true,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOwnershipResponse {
     @Response(Outgoing.ROOM_OWNERSHIP)
-    fun response(habboResponse: HabboResponse, roomId: Int, owner: Boolean) {
-        habboResponse.apply {
-            writeInt(roomId)
-            writeBoolean(owner)
-        }
-    }
-    
     @ResponseR63A(OutgoingR63A.ROOM_OWNERSHIP)
-    fun responseR63A(habboResponse: HabboResponse, flat: Boolean, roomId: Int, owner: Boolean) {
+    fun response(habboResponse: HabboResponse, data: RoomOwnershipData) {
         habboResponse.apply {
-            writeBoolean(flat)
-            writeInt(roomId)
-            writeBoolean(owner)
+            if (outgoingR63A != null) {
+                writeBoolean(data.isPrivate)
+            }
+            writeInt(data.roomId)
+            writeBoolean(data.isOwner)
         }
     }
 }

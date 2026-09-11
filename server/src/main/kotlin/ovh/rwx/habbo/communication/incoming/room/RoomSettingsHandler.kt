@@ -32,25 +32,14 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomSettingsHandler {
     @Handler(Incoming.ROOM_SETTINGS)
+    @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
 
         if (!room.userManager.hasRights(habboSession, true)) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS, room)
-
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial4", 1, false)
-    }
-
-    @HandlerR63A(IncomingR63A.ROOM_SETTINGS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-
-        if (!room.userManager.hasRights(habboSession, true)) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_SETTINGS, room)
+        habboSession.sendResponse(Outgoing.ROOM_SETTINGS, OutgoingR63A.ROOM_SETTINGS, room)
 
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial4", 1, false)
     }

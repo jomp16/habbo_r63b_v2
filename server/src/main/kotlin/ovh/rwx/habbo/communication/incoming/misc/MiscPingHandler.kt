@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,12 +31,12 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPingHandler {
     @Handler(Incoming.MISC_PING)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.MISC_PONG, habboRequest.readInt())
-    }
-
     @HandlerR63A(IncomingR63A.MISC_PING)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.MISC_PONG, habboRequest.readInt())
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(
+            Outgoing.MISC_PONG,
+            OutgoingR63A.MISC_PONG,
+            habboRequest.readInt()
+        )
     }
 }

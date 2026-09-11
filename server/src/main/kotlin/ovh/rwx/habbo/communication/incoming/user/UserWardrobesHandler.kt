@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,17 +31,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserWardrobesHandler {
     @Handler(Incoming.USER_WARDROBES)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
-            Outgoing.USER_WARDROBES,
-            habboSession.habboSubscription.validUserSubscription,
-            habboSession.userInformation.wardrobes
-        )
-    }
-
     @HandlerR63A(IncomingR63A.USER_WARDROBES)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(
+            Outgoing.USER_WARDROBES,
             OutgoingR63A.USER_WARDROBES,
             habboSession.habboSubscription.validUserSubscription,
             habboSession.userInformation.wardrobes

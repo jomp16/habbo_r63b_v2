@@ -362,8 +362,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         if (needingUpdate.isNotEmpty()) {
-            sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, needingUpdate)
-            sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, needingUpdate)
+            sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, needingUpdate)
             needingUpdate.forEach { it.updateNeeded = false }
         }
     }
@@ -406,6 +405,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
         networkDispatcher.sendResponseR63A(outgoing, *args)
+    }
+
+    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
+        networkDispatcher.sendResponse(outgoing, outgoingR63A, *args)
     }
     // endregion
 

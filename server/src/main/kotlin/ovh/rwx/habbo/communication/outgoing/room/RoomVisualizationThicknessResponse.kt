@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,15 +25,28 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para espessura de paredes e chão do quarto (ROOM_VISUALIZATION_THICKNESS).
+ *
+ * @param hideWall Se a parede está oculta.
+ * @param wallThickness Espessura da parede.
+ * @param floorThickness Espessura do chão.
+ */
+data class RoomVisualizationThicknessData(
+    val hideWall: Boolean,
+    val wallThickness: Int,
+    val floorThickness: Int,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomVisualizationThicknessResponse {
     @Response(Outgoing.ROOM_VISUALIZATION_THICKNESS)
     @ResponseR63A(OutgoingR63A.ROOM_VISUALIZATION_THICKNESS)
-    fun response(habboResponse: HabboResponse, hideWall: Boolean, wallThickness: Int, floorThickness: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomVisualizationThicknessData) {
         habboResponse.apply {
-            writeBoolean(hideWall)
-            writeInt(wallThickness)
-            writeInt(floorThickness)
+            writeBoolean(data.hideWall)
+            writeInt(data.wallThickness)
+            writeInt(data.floorThickness)
         }
     }
 }

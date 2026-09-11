@@ -21,7 +21,9 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 data class RoomRightsRemovedData(
     val roomId: Int = 0,
@@ -31,6 +33,7 @@ data class RoomRightsRemovedData(
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomRightsRemovedResponse {
     @Response(Outgoing.ROOM_RIGHTS_REMOVED)
+    @ResponseR63A(OutgoingR63A.ROOM_RIGHTS_REMOVED)
     fun response(habboResponse: HabboResponse, data: RoomRightsRemovedData) {
         habboResponse.apply {
             writeInt(data.roomId)

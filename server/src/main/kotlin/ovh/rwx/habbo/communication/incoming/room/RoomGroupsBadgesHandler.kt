@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,16 +31,14 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomGroupsBadgesHandler {
     @Handler(Incoming.ROOM_GROUP_BADGES)
+    @HandlerR63A(IncomingR63A.ROOM_GROUPS_BADGES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, habboSession.currentRoom!!.loadedGroups)
-    }
-
-    @HandlerR63A(IncomingR63A.ROOM_GROUPS_BADGES)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, habboSession.currentRoom!!.loadedGroups)
+        habboSession.sendResponse(
+            Outgoing.ROOM_GROUP_BADGES,
+            OutgoingR63A.ROOM_GROUPS_BADGES,
+            habboSession.currentRoom!!.loadedGroups
+        )
     }
 }

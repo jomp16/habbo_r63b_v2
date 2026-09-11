@@ -31,6 +31,8 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
+import ovh.rwx.habbo.communication.outgoing.handshake.AuthenticationOkData
+import ovh.rwx.habbo.communication.outgoing.user.UserHomeRoomData
 import ovh.rwx.habbo.database.user.UserIPDao
 import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -58,13 +60,18 @@ class HandshakeSSOTicketHandler {
 
         log.info("{} logged in!", habboSession.userInformation.username)
 
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_OK)
+        habboSession.sendHabboResponse(
+            Outgoing.AUTHENTICATION_OK,
+            AuthenticationOkData(habboSession.userInformation)
+        )
         habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
         habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, false, 0, listOf<Int>())
         habboSession.sendHabboResponse(
             Outgoing.HOME_ROOM,
-            habboSession.userInformation.homeRoom,
-            HabboServer.habboConfig.autoJoinRoom
+            UserHomeRoomData(
+                habboSession.userInformation.homeRoom,
+                HabboServer.habboConfig.autoJoinRoom
+            )
         )
         if (!habboSession.isBot) habboSession.sendHabboResponse(
             Outgoing.USER_CLOTHINGS,
@@ -104,6 +111,23 @@ class HandshakeSSOTicketHandler {
             HabboServer.habboGame.moderationManager.moderationCategories,
             HabboServer.habboGame.moderationManager.moderationTopics.values
         )
+
+        if (habboSession.habboVersion.isVersionAtLeast(2026, 8, 6)) {
+            habboSession.sendHabboResponse(
+                Outgoing.USER_HABBICONS,
+                UserHabbiconsData(
+                    userHabbicons = habboSession.habboHabbicon.getUserHabbiconList(),
+                    recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
+                ),
+            )
+            habboSession.sendHabboResponse(
+                Outgoing.HABBICON_SHOP_DATA,
+                HabbiconShopData(
+                    collections = HabboServer.habboGame.habbiconManager.collections.values.toList(),
+                    userHabbicons = habboSession.habboHabbicon.userHabbicons,
+                ),
+            )
+        }
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)
 
@@ -122,7 +146,10 @@ class HandshakeSSOTicketHandler {
 
         log.info("{} logged in!", habboSession.userInformation.username)
 
-        habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_AUTHENTICATION_OK)
+        habboSession.sendHabboResponse(
+            OutgoingR63A.HANDSHAKE_AUTHENTICATION_OK,
+            AuthenticationOkData(habboSession.userInformation)
+        )
         habboSession.sendHabboResponse(
             OutgoingR63A.USER_RIGHTS,
             if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
@@ -134,89 +161,13 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(OutgoingR63A.ENABLE_TRADING, true)
         habboSession.sendHabboResponse(
             OutgoingR63A.HOME_ROOM,
-            habboSession.userInformation.homeRoom,
-            HabboServer.habboConfig.autoJoinRoom
+            UserHomeRoomData(
+                habboSession.userInformation.homeRoom,
+                HabboServer.habboConfig.autoJoinRoom
+            )
         )
 
         if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(OutgoingR63A.MODERATION_INIT)
-
-        commonStuff(habboSession)
-    }
-
-    @Handler(Incoming.SSO_TICKET, requiredAuth = false)
-    fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.authenticate(habboRequest.readUTF())) {
-            log.info("Unauthenticated user!")
-
-            habboSession.channel.disconnect()
-
-            return
-        }
-
-        log.info("{} logged in!", habboSession.userInformation.username)
-
-        habboSession.sendHabboResponse(Outgoing.AUTHENTICATION_OK, habboSession)
-        habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, false, 0, listOf<Int>())
-        habboSession.sendHabboResponse(
-            Outgoing.HOME_ROOM,
-            habboSession.userInformation.homeRoom,
-            HabboServer.habboConfig.autoJoinRoom
-        )
-        if (!habboSession.isBot) habboSession.sendHabboResponse(
-            Outgoing.USER_CLOTHINGS,
-            habboSession.userInformation.clothings
-        )
-        habboSession.sendHabboResponse(Outgoing.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })
-        habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
-        habboSession.sendHabboResponse(
-            Outgoing.USER_RIGHTS,
-            if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
-            habboSession.userInformation.rank,
-            habboSession.userInformation.ambassador
-        )
-        habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS)
-        habboSession.sendHabboResponse(Outgoing.ENABLE_TRADING, true)
-        habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-        habboSession.sendHabboResponse(
-            Outgoing.AUTHENTICATION_FIRST_LOGIN_OF_DAY,
-            habboSession.userStats.firstLoginOfDay
-        )
-        habboSession.sendHabboResponse(Outgoing.MYSTERY_BOX_CHALLENGE, "", "")
-        if (!habboSession.isBot) habboSession.sendHabboResponse(
-            Outgoing.BUILDERS_SUBSCRIPTION_STATUS,
-            habboSession.habboSubscription
-        )
-        habboSession.sendHabboResponse(
-            Outgoing.CAMPAIGN_CALENDAR,
-            "easter21",
-            "",
-            LocalDate.now().dayOfMonth - 1,
-            LocalDate.now().lengthOfMonth(),
-            intArrayOf(),
-            intArrayOf()
-        )
-        habboSession.sendHabboResponse(
-            Outgoing.MODERATION_TOPICS_INIT,
-            HabboServer.habboGame.moderationManager.moderationCategories,
-            HabboServer.habboGame.moderationManager.moderationTopics.values
-        )
-        habboSession.sendHabboResponse(
-            Outgoing.USER_HABBICONS,
-            UserHabbiconsData(
-                userHabbicons = habboSession.habboHabbicon.getUserHabbiconList(),
-                recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
-            ),
-        )
-        habboSession.sendHabboResponse(
-            Outgoing.HABBICON_SHOP_DATA,
-            HabbiconShopData(
-                collections = HabboServer.habboGame.habbiconManager.collections.values.toList(),
-                userHabbicons = habboSession.habboHabbicon.userHabbicons,
-            ),
-        )
-
-        if (habboSession.hasPermission("acc_mod_tools")) habboSession.sendHabboResponse(Outgoing.MODERATION_INIT)
 
         commonStuff(habboSession)
     }

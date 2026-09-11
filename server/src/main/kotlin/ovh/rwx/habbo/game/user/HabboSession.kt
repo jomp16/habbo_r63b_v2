@@ -141,6 +141,22 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
     }
 
+    /**
+     * Envia a resposta correta de acordo com a release do cliente.
+     * Evita if/else nos handlers quando há dois enum variants para a mesma mensagem lógica ou pacotes exclusivos de uma release.
+     */
+    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
+        if (release == "R63A") {
+            if (outgoingR63A != null) {
+                sendHabboResponse(outgoingR63A, *args)
+            }
+        } else {
+            if (outgoing != null) {
+                sendHabboResponse(outgoing, *args)
+            }
+        }
+    }
+
     fun sendHabboResponse(habboResponse: HabboResponse?) {
         habboResponse?.let {
             if (channel.isActive) {
@@ -712,8 +728,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         userStats.favoriteGroup?.let {
             room.loadedGroups.add(it)
 
-            room.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
-            room.sendHabboResponse(OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
+            room.sendResponse(Outgoing.ROOM_GROUP_BADGES, OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
         }
 
         room.userManager.addUser(this)

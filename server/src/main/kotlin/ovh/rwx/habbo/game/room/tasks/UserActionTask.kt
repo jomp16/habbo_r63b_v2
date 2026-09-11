@@ -62,16 +62,11 @@ class UserActionTask(private val roomHumanoid: RoomHumanoid, private val action:
         roomHumanoid.handItem = 0
         roomHumanoid.danceId = 0
 
-        room.sendHabboResponse(Outgoing.ROOM_USER_ACTION, roomHumanoid.virtualID, action.action)
-
-        // Now for R63A
-        when (action) {
-            UserAction.WAVE -> {
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_WAVE, roomHumanoid.virtualID, action.action)
-            }
-
-            else -> {}
+        val outgoingR63A = when (action) {
+            UserAction.WAVE -> OutgoingR63A.ROOM_USER_WAVE
+            else -> null
         }
+        room.sendResponse(Outgoing.ROOM_USER_ACTION, outgoingR63A, roomHumanoid.virtualID, action.action)
 
         room.itemManager.wiredHandler.triggerWired(
             WiredTriggerUserPerformsAction::class,

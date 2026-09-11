@@ -96,4 +96,13 @@ class RoomNetworkDispatcher(private val room: Room) {
             session.sendHabboResponse(clonedResponse)
         }
     }
+
+    /**
+     * Envia a resposta correta para cada sessão do quarto de acordo com a release do cliente.
+     * Evita if/else nos handlers/tasks de quarto quando há dois enum variants para a mesma mensagem lógica.
+     */
+    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
+        if (outgoing != null) sendResponseModern(outgoing, *args)
+        if (outgoingR63A != null) sendResponseR63A(outgoingR63A, *args)
+    }
 }

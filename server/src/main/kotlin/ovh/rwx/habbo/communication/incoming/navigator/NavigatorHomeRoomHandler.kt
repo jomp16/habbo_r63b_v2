@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,25 +26,22 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.user.UserHomeRoomData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorHomeRoomHandler {
     @Handler(Incoming.NAVIGATOR_HOME_ROOM)
+    @HandlerR63A(IncomingR63A.NAVIGATOR_HOME_ROOM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val homeRoom = habboRequest.readInt()
 
         habboSession.userInformation.homeRoom = homeRoom
 
-        habboSession.sendHabboResponse(Outgoing.HOME_ROOM, homeRoom, true)
-    }
-
-    @HandlerR63A(IncomingR63A.NAVIGATOR_HOME_ROOM)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val homeRoom = habboRequest.readInt()
-
-        habboSession.userInformation.homeRoom = homeRoom
-
-        habboSession.sendHabboResponse(OutgoingR63A.HOME_ROOM, homeRoom)
+        habboSession.sendResponse(
+            Outgoing.HOME_ROOM,
+            OutgoingR63A.HOME_ROOM,
+            UserHomeRoomData(homeRoom, true)
+        )
     }
 }

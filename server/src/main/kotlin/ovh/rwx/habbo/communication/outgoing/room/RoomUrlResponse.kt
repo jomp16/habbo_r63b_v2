@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,12 +23,21 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para URL interna do quarto no R63A (ROOM_URL).
+ *
+ * @param url URL interna do quarto.
+ */
+data class RoomUrlData(
+    val url: String,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUrlResponse {
     @ResponseR63A(OutgoingR63A.ROOM_URL)
-    fun responseR63A(habboResponse: HabboResponse, url: String) {
-        habboResponse.apply { 
-            writeUTF(url)
+    fun responseR63A(habboResponse: HabboResponse, data: RoomUrlData) {
+        habboResponse.apply {
+            writeUTF(data.url)
         }
     }
 }

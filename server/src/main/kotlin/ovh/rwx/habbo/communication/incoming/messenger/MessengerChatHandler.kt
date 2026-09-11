@@ -29,6 +29,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatErrorResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
@@ -165,12 +166,14 @@ class MessengerChatHandler {
             handleServerConsole(habboSession, userId, message) { responseMessage ->
                 habboSession.sendHabboResponse(
                     Outgoing.MESSENGER_CHAT,
-                    userId,
-                    responseMessage,
-                    0,
-                    UserInformationDao.serverConsoleUserInformation.id,
-                    UserInformationDao.serverConsoleUserInformation.username,
-                    UserInformationDao.serverConsoleUserInformation.figure
+                    MessengerChatData(
+                        id = userId,
+                        message = responseMessage,
+                        diffTimestamp = 0,
+                        userId = UserInformationDao.serverConsoleUserInformation.id,
+                        username = UserInformationDao.serverConsoleUserInformation.username,
+                        figure = UserInformationDao.serverConsoleUserInformation.figure,
+                    )
                 )
             }
             return
@@ -179,12 +182,14 @@ class MessengerChatHandler {
         if (userId < 0) {
             if (userId == -1) habboSession.sendHabboResponse(
                 Outgoing.MESSENGER_CHAT,
-                userId,
-                message,
-                0,
-                habboSession.userInformation.id,
-                habboSession.userInformation.username,
-                habboSession.userInformation.figure
+                MessengerChatData(
+                    id = userId,
+                    message = message,
+                    diffTimestamp = 0,
+                    userId = habboSession.userInformation.id,
+                    username = habboSession.userInformation.username,
+                    figure = habboSession.userInformation.figure,
+                )
             )
         } else {
             val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
@@ -198,14 +203,17 @@ class MessengerChatHandler {
 
             friendHabboSession.sendHabboResponse(
                 Outgoing.MESSENGER_CHAT,
-                habboSession.userInformation.id,
-                message,
-                0,
-                UserInformationDao.serverConsoleUserInformation.id,
-                UserInformationDao.serverConsoleUserInformation.username,
-                UserInformationDao.serverConsoleUserInformation.figure
+                MessengerChatData(
+                    id = habboSession.userInformation.id,
+                    message = message,
+                    diffTimestamp = 0,
+                    userId = UserInformationDao.serverConsoleUserInformation.id,
+                    username = UserInformationDao.serverConsoleUserInformation.username,
+                    figure = UserInformationDao.serverConsoleUserInformation.figure,
+                )
             )
         }
+
     }
 
     @HandlerR63A(IncomingR63A.MESSENGER_CHAT)
@@ -232,7 +240,10 @@ class MessengerChatHandler {
 
         if (isServerConsole(userId, habboSession)) {
             handleServerConsole(habboSession, userId, message) { responseMessage ->
-                habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, userId, responseMessage)
+                habboSession.sendHabboResponse(
+                    OutgoingR63A.MESSENGER_CHAT,
+                    MessengerChatData(id = userId, message = responseMessage)
+                )
             }
             return
         }
@@ -240,8 +251,7 @@ class MessengerChatHandler {
         if (userId < 0) {
             if (userId == -1) habboSession.sendHabboResponse(
                 OutgoingR63A.MESSENGER_CHAT,
-                userId,
-                message,
+                MessengerChatData(id = userId, message = message)
             )
         } else {
             val messengerBuddy = habboSession.habboMessenger.friends[userId] ?: return
@@ -255,9 +265,9 @@ class MessengerChatHandler {
 
             friendHabboSession.sendHabboResponse(
                 OutgoingR63A.MESSENGER_CHAT,
-                habboSession.userInformation.id,
-                message,
+                MessengerChatData(id = habboSession.userInformation.id, message = message)
             )
         }
+
     }
 }

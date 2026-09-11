@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseOkData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -35,9 +36,10 @@ class HabbiconBuyHandler {
 
         val success = HabboServer.habboGame.habbiconManager.buyHabbicon(habboSession, habbiconId)
         if (success) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK)
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_OK, CatalogPurchaseOkData())
         } else {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
         }
     }
 }
+

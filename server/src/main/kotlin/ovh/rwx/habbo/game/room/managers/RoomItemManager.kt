@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room.managers
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomFloorItemRemoveData
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
@@ -166,8 +167,11 @@ class RoomItemManager(private val room: Room) {
         roomItem.furnishing.interactor?.onRemove(room, roomUser, roomItem)
 
         if (roomItem.furnishing.type == ItemType.FLOOR) {
-            room.networkDispatcher.sendResponseModern(Outgoing.ROOM_FLOOR_ITEM_REMOVE, roomItem, false, 0)
-            room.networkDispatcher.sendResponseR63A(OutgoingR63A.ROOM_FLOOR_ITEM_REMOVE, roomItem)
+            room.networkDispatcher.sendResponse(
+                Outgoing.ROOM_FLOOR_ITEM_REMOVE,
+                OutgoingR63A.ROOM_FLOOR_ITEM_REMOVE,
+                RoomFloorItemRemoveData(roomItem, expired = false, delay = 0)
+            )
 
             // Atualiza usuários que caíram do item removido
             roomItem.affectedTiles.forEach { tile ->
@@ -179,8 +183,11 @@ class RoomItemManager(private val room: Room) {
             }
             broadcastFloorUpdate(roomItem.affectedTiles.toSet())
         } else {
-            room.networkDispatcher.sendResponseModern(Outgoing.ROOM_WALL_ITEM_REMOVE, roomItem)
-            room.networkDispatcher.sendResponseR63A(OutgoingR63A.ROOM_WALL_ITEM_REMOVE, roomItem)
+            room.networkDispatcher.sendResponse(
+                Outgoing.ROOM_WALL_ITEM_REMOVE,
+                OutgoingR63A.ROOM_WALL_ITEM_REMOVE,
+                roomItem
+            )
         }
 
         return true

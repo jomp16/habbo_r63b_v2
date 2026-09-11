@@ -21,8 +21,10 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 /**
  * Payload estruturado para notificação de ausência de direitos no quarto (ROOM_NO_RIGHTS).
@@ -36,6 +38,7 @@ data class RoomNoRightsData(
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomNoRightsResponse {
     @Response(Outgoing.ROOM_NO_RIGHTS)
+    @ResponseR63A(OutgoingR63A.ROOM_NO_RIGHTS)
     fun response(habboResponse: HabboResponse, data: RoomNoRightsData = RoomNoRightsData()) {
         habboResponse.apply {
             if (isVersionAtLeast(2018, 5, 23)) {

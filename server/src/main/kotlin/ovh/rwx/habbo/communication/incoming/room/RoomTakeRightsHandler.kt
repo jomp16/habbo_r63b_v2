@@ -26,6 +26,8 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomNoRightsData
 import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
 import ovh.rwx.habbo.communication.outgoing.room.RoomRightsRemovedData
 import ovh.rwx.habbo.database.room.RoomDao
@@ -69,15 +71,23 @@ class RoomTakeRightsHandler {
                     // Update rights
                     habboSession1.roomUser!!.removeStatus("flatctrl")
 
-                    habboSession.sendHabboResponse(
+                    habboSession1.sendResponse(
                         Outgoing.ROOM_RIGHT_LEVEL,
+                        null,
                         RoomRightLevelData(rightLevel = 0, roomId = roomId)
+                    )
+                    habboSession1.sendResponse(
+                        Outgoing.ROOM_NO_RIGHTS,
+                        OutgoingR63A.ROOM_NO_RIGHTS,
+                        RoomNoRightsData(roomId = roomId)
                     )
                 }
             }
 
-            habboSession.sendHabboResponse(
-                Outgoing.ROOM_RIGHTS_REMOVED, RoomRightsRemovedData(
+            habboSession.sendResponse(
+                Outgoing.ROOM_RIGHTS_REMOVED,
+                OutgoingR63A.ROOM_RIGHTS_REMOVED,
+                RoomRightsRemovedData(
                     roomId = roomId,
                     userId = it.userId,
                 )

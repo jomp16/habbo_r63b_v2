@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,14 +24,25 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.util.Vector3
 
+/**
+ * Payload estruturado para porta do plano do quarto (FLOOR_PLAN_DOOR).
+ *
+ * @param doorVector3 Vetor com coordenadas da porta.
+ * @param doorDir Direção da porta.
+ */
+data class RoomFloorPlanDoorData(
+    val doorVector3: Vector3,
+    val doorDir: Int,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloorPlanDoorResponse {
     @Response(Outgoing.FLOOR_PLAN_DOOR)
-    fun response(habboResponse: HabboResponse, doorVector3: Vector3, doorDir: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomFloorPlanDoorData) {
         habboResponse.apply {
-            writeInt(doorVector3.x)
-            writeInt(doorVector3.y)
-            writeInt(doorDir)
+            writeInt(data.doorVector3.x)
+            writeInt(data.doorVector3.y)
+            writeInt(data.doorDir)
         }
     }
 }

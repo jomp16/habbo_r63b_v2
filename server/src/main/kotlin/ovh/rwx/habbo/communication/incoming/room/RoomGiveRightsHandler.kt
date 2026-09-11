@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
 import ovh.rwx.habbo.communication.outgoing.room.RoomRightsGivenData
 import ovh.rwx.habbo.database.room.RoomDao
@@ -64,15 +65,18 @@ class RoomGiveRightsHandler {
                 // Update rights
                 habboSession1.roomUser!!.addStatus("flatctrl", "1")
 
-                habboSession.sendHabboResponse(
+                habboSession1.sendResponse(
                     Outgoing.ROOM_RIGHT_LEVEL,
+                    OutgoingR63A.ROOM_RIGHT,
                     RoomRightLevelData(rightLevel = 1, roomId = roomId)
                 )
             }
         }
 
-        habboSession.sendHabboResponse(
-            Outgoing.ROOM_RIGHTS_GIVEN, RoomRightsGivenData(
+        habboSession.sendResponse(
+            Outgoing.ROOM_RIGHTS_GIVEN,
+            OutgoingR63A.ROOM_RIGHTS_GIVEN,
+            RoomRightsGivenData(
                 roomId = roomId,
                 userId = userInformation.id,
                 userName = userInformation.username,

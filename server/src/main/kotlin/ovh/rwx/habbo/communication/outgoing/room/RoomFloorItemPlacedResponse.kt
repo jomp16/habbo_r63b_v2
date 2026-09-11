@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,20 +26,27 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
 
+/**
+ * Payload estruturado para item colocado no quarto (ROOM_ITEM_ADDED / ROOM_WALL_ITEM_ADDED).
+ *
+ * @param roomItem Item adicionado ao quarto.
+ * @param userName Nome do proprietário/usuário que colocou o item (R63B+).
+ */
+data class RoomItemPlacedData(
+    val roomItem: RoomItem,
+    val userName: String = "",
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloorItemPlacedResponse {
     @Response(Outgoing.ROOM_ITEM_ADDED, Outgoing.ROOM_WALL_ITEM_ADDED)
-    fun response(habboResponse: HabboResponse, roomItem: RoomItem, userName: String) {
-        habboResponse.apply {
-            serialize(roomItem)
-            writeUTF(userName)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_ITEM_ADDED, OutgoingR63A.ROOM_WALL_ITEM_ADDED)
-    fun responseR63A(habboResponse: HabboResponse, roomItem: RoomItem) {
+    fun response(habboResponse: HabboResponse, data: RoomItemPlacedData) {
         habboResponse.apply {
-            serialize(roomItem)
+            serialize(data.roomItem)
+            if (outgoingR63A == null) {
+                writeUTF(data.userName)
+            }
         }
     }
 }

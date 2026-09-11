@@ -27,7 +27,7 @@ import ovh.rwx.habbo.game.item.wired.*
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredMovementResponse {
     @Response(Outgoing.WIRED_MOVEMENT)
-    fun responseHabboAir(habboResponse: HabboResponse, movements: List<WiredMoveEntry>) {
+    fun response(habboResponse: HabboResponse, movements: List<WiredMoveEntry>) {
         habboResponse.apply {
             writeInt(movements.size) // Quantidade total de movimentos no pacote
 

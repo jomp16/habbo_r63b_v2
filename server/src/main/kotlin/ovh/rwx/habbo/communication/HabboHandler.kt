@@ -19,7 +19,9 @@
 
 package ovh.rwx.habbo.communication
 
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.reflections8.Reflections
 import org.reflections8.scanners.MethodAnnotationsScanner
 import org.slf4j.Logger
@@ -161,57 +163,119 @@ class HabboHandler {
         val lookup = MethodHandles.lookup()
         val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
-        HabboServer.applicationScope.launch {
-            reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
-                val clazz = getInstance(it.declaringClass)
-                val handler = it.getAnnotation(Handler::class.java)
-                val methodHandle = lookup.unreflect(it)
-                val methodName = it.name
+        runBlocking {
+            val jobHandlers = HabboServer.applicationScope.launch {
+                reflections.getMethodsAnnotatedWith(Handler::class.java).forEach {
+                    val clazz = getInstance(it.declaringClass)
+                    val handler = it.getAnnotation(Handler::class.java)
+                    val methodHandle = lookup.unreflect(it)
+                    val methodName = it.name
 
-                handler.headers.forEach { incoming ->
-                    if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
+                    handler.headers.forEach { incoming ->
+                        if (!messageHandlers.containsKey(incoming)) messageHandlers[incoming] = mutableMapOf()
 
-                    messageHandlers[incoming]!![methodName] =
-                        Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                        messageHandlers[incoming]!![methodName] =
+                            Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                    }
                 }
-            }
-            reflections.getMethodsAnnotatedWith(HandlerR63A::class.java).forEach {
-                val clazz = getInstance(it.declaringClass)
-                val handler = it.getAnnotation(HandlerR63A::class.java)
-                val methodHandle = lookup.unreflect(it)
+                reflections.getMethodsAnnotatedWith(HandlerR63A::class.java).forEach {
+                    val clazz = getInstance(it.declaringClass)
+                    val handler = it.getAnnotation(HandlerR63A::class.java)
+                    val methodHandle = lookup.unreflect(it)
 
-                handler.headers.forEach { incoming ->
-                    messageHandlersR63A[incoming] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                    handler.headers.forEach { incoming ->
+                        messageHandlersR63A[incoming] = Pair(clazz, HabboMethodInfo(handler.requiredAuth, methodHandle))
+                    }
                 }
+                log.info("Loaded {} Habbo request handlers", messageHandlers.size)
+                log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
             }
-            log.info("Loaded {} Habbo request handlers", messageHandlers.size)
-            log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
+
+            val jobResponses = HabboServer.applicationScope.launch {
+                reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
+                    val clazz = getInstance(it.declaringClass)
+                    val response = it.getAnnotation(Response::class.java)
+                    val methodHandle = lookup.unreflect(it)
+                    val methodName = it.name
+
+                    response.headers.forEach { outgoing ->
+                        if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = mutableMapOf()
+
+                        messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
+                    }
+                }
+                reflections.getMethodsAnnotatedWith(ResponseR63A::class.java).forEach {
+                    val clazz = getInstance(it.declaringClass)
+                    val response = it.getAnnotation(ResponseR63A::class.java)
+                    val methodHandle = lookup.unreflect(it)
+
+                    response.headers.forEach { outgoing ->
+                        messageResponsesR63A[outgoing] = Pair(clazz, methodHandle)
+                    }
+                }
+                log.info("Loaded {} Habbo response handlers", messageResponses.size)
+                log.info("Loaded {} Habbo R63A response handlers", messageResponsesR63A.size)
+            }
+
+            joinAll(jobHandlers, jobResponses)
         }
 
-        HabboServer.applicationScope.launch {
-            reflections.getMethodsAnnotatedWith(Response::class.java).forEach {
-                val clazz = getInstance(it.declaringClass)
-                val response = it.getAnnotation(Response::class.java)
-                val methodHandle = lookup.unreflect(it)
-                val methodName = it.name
+        validateOverrideMethods()
+    }
 
-                response.headers.forEach { outgoing ->
-                    if (!messageResponses.containsKey(outgoing)) messageResponses[outgoing] = mutableMapOf()
+    private fun validateOverrideMethods() {
+        var missingOverrides = 0
 
-                    messageResponses[outgoing]!![methodName] = Pair(clazz, methodHandle)
+        incomingHeaders.forEach { headerInfo ->
+            val override = headerInfo.overrideMethod
+            if (!override.isNullOrEmpty() && override != "DISABLED") {
+                val incomingEnum = runCatching { Incoming.valueOf(headerInfo.name) }.getOrNull()
+                if (incomingEnum != null) {
+                    val methods = messageHandlers[incomingEnum]
+                    if (methods == null || !methods.containsKey(override)) {
+                        log.error(
+                            "Override validation error: Release '{}' specifies override_method='{}' for incoming '{}' (header {}), but method does not exist! Registered methods: {}",
+                            headerInfo.release,
+                            override,
+                            headerInfo.name,
+                            headerInfo.header,
+                            methods?.keys?.joinToString() ?: "none"
+                        )
+                        missingOverrides++
+                    }
                 }
             }
-            reflections.getMethodsAnnotatedWith(ResponseR63A::class.java).forEach {
-                val clazz = getInstance(it.declaringClass)
-                val response = it.getAnnotation(ResponseR63A::class.java)
-                val methodHandle = lookup.unreflect(it)
+        }
 
-                response.headers.forEach { outgoing ->
-                    messageResponsesR63A[outgoing] = Pair(clazz, methodHandle)
+        outgoingHeaders.forEach { headerInfo ->
+            val override = headerInfo.overrideMethod
+            if (!override.isNullOrEmpty() && override != "DISABLED") {
+                val outgoingEnum = runCatching { Outgoing.valueOf(headerInfo.name) }.getOrNull()
+                if (outgoingEnum != null) {
+                    val methods = messageResponses[outgoingEnum]
+                    if (methods == null || !methods.containsKey(override)) {
+                        log.error(
+                            "Override validation error: Release '{}' specifies override_method='{}' for outgoing '{}' (header {}), but method does not exist! Registered methods: {}",
+                            headerInfo.release,
+                            override,
+                            headerInfo.name,
+                            headerInfo.header,
+                            methods?.keys?.joinToString() ?: "none"
+                        )
+                        missingOverrides++
+                    }
                 }
             }
-            log.info("Loaded {} Habbo response handlers", messageResponses.size)
-            log.info("Loaded {} Habbo R63A response handlers", messageResponsesR63A.size)
+        }
+
+        if (missingOverrides > 0) {
+            log.error(
+                "Found {} invalid override_method entries configured in releases headers. Fix database or add missing handler/response methods! Exiting!",
+                missingOverrides
+            )
+            exitProcess(1)
+        } else {
+            log.info("All configured override_method entries validated successfully!")
         }
     }
 

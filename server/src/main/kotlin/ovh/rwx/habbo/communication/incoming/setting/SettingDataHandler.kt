@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,35 +26,29 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.setting.UserSettingsData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class SettingDataHandler {
     @Handler(Incoming.USER_SETTINGS)
+    @HandlerR63A(IncomingR63A.USER_SETTINGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val tmp = habboSession.userPreferences.volume.split(',').map(String::toInt)
 
-        habboSession.sendHabboResponse(
+        habboSession.sendResponse(
             Outgoing.USER_SETTINGS,
-            tmp[0],
-            tmp[1],
-            tmp[2],
-            habboSession.userPreferences.preferOldChat,
-            habboSession.userPreferences.ignoreRoomInvite,
-            habboSession.userPreferences.disableCameraFollow,
-            habboSession.userPreferences.friendBarOpen,
-            habboSession.userPreferences.chatColor
-        )
-    }
-
-    @HandlerR63A(IncomingR63A.USER_SETTINGS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val tmp = habboSession.userPreferences.volume.split(',').map(String::toInt)
-
-        habboSession.sendHabboResponse(
             OutgoingR63A.USER_SETTINGS,
-            tmp[0],
-            false
+            UserSettingsData(
+                systemVolume = tmp[0],
+                furniVolume = tmp.getOrElse(1) { 100 },
+                musicVolume = tmp.getOrElse(2) { 100 },
+                preferOldChat = habboSession.userPreferences.preferOldChat,
+                ignoreRoomInvite = habboSession.userPreferences.ignoreRoomInvite,
+                disableCameraFollow = habboSession.userPreferences.disableCameraFollow,
+                friendBarOpen = habboSession.userPreferences.friendBarOpen,
+                chatColor = habboSession.userPreferences.chatColor
+            )
         )
     }
 }

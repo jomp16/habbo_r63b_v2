@@ -22,61 +22,58 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.habbicon.HabbiconChatContent
 import java.util.*
 
+/**
+ * Payload estruturado para mensagens do mensageiro (MESSENGER_CHAT).
+ */
+data class MessengerChatData(
+    val id: Int,
+    val message: Any,
+    val diffTimestamp: Int = 0,
+    val userId: Int = 0,
+    val username: String = "",
+    val figure: String = "",
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatResponse {
     @Response(Outgoing.MESSENGER_CHAT)
-    fun response(habboResponse: HabboResponse, id: Int, message: String, diffTimestamp: Int, userId: Int, username: String, figure: String) {
+    @ResponseR63A(OutgoingR63A.MESSENGER_CHAT)
+    fun response(habboResponse: HabboResponse, data: MessengerChatData) {
         habboResponse.apply {
-            writeInt(id)
-            writeUTF(message)
-            writeInt(diffTimestamp)
+            if (isVersionAtLeast(2023, 11, 21)) {
+                writeInt(data.userId)
+                when (val msg = data.message) {
+                    is HabbiconChatContent -> {
+                        writeInt(1)
+                        writeInt(msg.habbiconId)
+                    }
 
-            if (id < 0) writeUTF("$username/$figure/$id")
-        }
-    }
-
-    @Response(Outgoing.MESSENGER_CHAT)
-    fun responseHabboAir(
-        habboResponse: HabboResponse,
-        id: Int,
-        message: Any,
-        diffTimestamp: Int,
-        userId: Int,
-        username: String,
-        figure: String
-    ) {
-        habboResponse.apply {
-            writeInt(userId)
-            when (message) {
-                is HabbiconChatContent -> {
-                    writeInt(1)
-                    writeInt(message.habbiconId)
+                    else -> {
+                        writeInt(0)
+                        writeUTF(msg.toString())
+                    }
                 }
-
-                else -> {
-                    writeInt(0)
-                    writeUTF(message.toString())
+                writeInt(data.diffTimestamp)
+                writeUTF(UUID.randomUUID().toString()) // messageId
+                writeInt(0) // confirmationId
+                writeInt(data.userId) // senderId
+                writeUTF(data.username) // senderName
+                writeUTF(data.figure) // senderFigure
+            } else {
+                writeInt(data.id)
+                writeUTF(data.message.toString())
+                if (isVersionAtLeast(2011, 10, 20)) {
+                    writeInt(data.diffTimestamp)
+                    if (data.id < 0) writeUTF("${data.username}/${data.figure}/${data.id}")
                 }
             }
-            writeInt(diffTimestamp)
-            writeUTF(UUID.randomUUID().toString()) // messageId
-            writeInt(0) // confirmationId
-            writeInt(userId) // senderId
-            writeUTF(username) // senderName
-            writeUTF(figure) // senderFigure
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.MESSENGER_CHAT)
-    fun responseR63A(habboResponse: HabboResponse, id: Int, message: String) {
-        habboResponse.apply {
-            writeInt(id)
-            writeUTF(message)
         }
     }
 }
+

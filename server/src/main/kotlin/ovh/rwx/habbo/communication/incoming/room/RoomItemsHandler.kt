@@ -22,24 +22,27 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomFloorItemsData
+import ovh.rwx.habbo.communication.outgoing.room.RoomWallItemsData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomItemsHandler {
     @HandlerR63A(IncomingR63A.ROOM_ITEMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null) return
+        val room = habboSession.currentRoom ?: return
 
-        habboSession.sendHabboResponse(
+        habboSession.sendResponse(
+            Outgoing.ROOM_FLOOR_ITEMS,
             OutgoingR63A.ROOM_FLOOR_ITEMS,
-            habboSession.currentRoom!!,
-            habboSession.currentRoom!!.itemManager.floorItems.values
+            RoomFloorItemsData(room, room.itemManager.floorItems.values)
         )
-        habboSession.sendHabboResponse(
+        habboSession.sendResponse(
+            Outgoing.ROOM_WALL_ITEMS,
             OutgoingR63A.ROOM_WALL_ITEMS,
-            habboSession.currentRoom!!,
-            habboSession.currentRoom!!.itemManager.wallItems.values
+            RoomWallItemsData(room, room.itemManager.wallItems.values)
         )
     }
 }

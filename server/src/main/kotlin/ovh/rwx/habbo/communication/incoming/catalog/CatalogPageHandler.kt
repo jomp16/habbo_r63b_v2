@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPageData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -51,20 +52,10 @@ class CatalogPageHandler {
         val category = habboRequest.readUTF()
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            val habboAir = false
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, category, chosenOfferId, habboAir)
-        }
-    }
-
-    @Handler(Incoming.CATALOG_PAGE)
-    fun handleHabboAir(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val chosenOfferId = habboRequest.readInt()
-        val category = habboRequest.readUTF()
-
-        validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            val habboAir = true
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PAGE, it, category, chosenOfferId, habboAir)
+            habboSession.sendHabboResponse(
+                Outgoing.CATALOG_PAGE,
+                CatalogPageData(it, category, chosenOfferId)
+            )
         }
     }
 

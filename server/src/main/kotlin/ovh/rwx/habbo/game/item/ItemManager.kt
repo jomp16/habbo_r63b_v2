@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
 import ovh.rwx.habbo.game.item.logic.FurnitureLogic
@@ -240,6 +241,17 @@ class ItemManager {
         magicRemove: Boolean = false,
         inventory: Boolean = false,
     ) {
+        if (habboResponse.outgoingR63A != null || !habboResponse.isVersionAtLeast(2012, 1, 13)) {
+            if (!inventory) {
+                habboResponse.writeInt(0)
+            }
+            val legacy = getFurnitureLogic(furnishing)
+                .parseStuffData(extraData, furnishing, limitedItemData, magicRemove)
+                .legacyValue
+            habboResponse.writeUTF(legacy)
+            return
+        }
+
         if (!inventory && limitedItemData != null) {
             LimitedStuffData(extraData, limitedItemData.limitedNumber, limitedItemData.limitedTotal)
                 .write(habboResponse, inventory = false)

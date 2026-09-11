@@ -64,7 +64,7 @@ data class CatalogItem(
             writeInt(costPixels) // priceInActivityPoints
             writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else ActivityPointType.PIXELS.code) // activityPointType
 
-            if (habboAir) {
+            if (isVersionAtLeast(2024, 1, 22)) {
                 writeInt(costVip) // priceInSilver
             }
 

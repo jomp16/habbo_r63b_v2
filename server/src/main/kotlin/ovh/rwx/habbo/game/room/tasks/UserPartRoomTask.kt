@@ -33,8 +33,7 @@ class UserPartRoomTask(
     override fun executeTask(room: Room) {
         // todo: item handling
         // todo: trade
-        room.sendHabboResponse(Outgoing.ROOM_USER_REMOVE, roomEntity.virtualID)
-        room.sendHabboResponse(OutgoingR63A.ROOM_USER_REMOVE, roomEntity.virtualID)
+        room.sendResponse(Outgoing.ROOM_USER_REMOVE, OutgoingR63A.ROOM_USER_REMOVE, roomEntity.virtualID)
 
         room.itemManager.wiredHandler.triggerWired(WiredTriggerLeaveRoom::class, roomEntity, RoomEventTriggerData)
     }

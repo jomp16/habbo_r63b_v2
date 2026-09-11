@@ -28,46 +28,45 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.badge.Badge
 
+data class InventoryBadgesData(val badges: Collection<Badge>)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryBadgesResponse {
     @Response(Outgoing.INVENTORY_BADGES)
     @ResponseR63A(OutgoingR63A.INVENTORY_BADGES)
-    fun response(habboResponse: HabboResponse, badges: Collection<Badge>) {
+    fun response(habboResponse: HabboResponse, data: InventoryBadgesData) {
         habboResponse.apply {
-            val equippedBadges = badges.filter { it.slot > 0 }
+            if (isVersionAtLeast(2019, 1, 14)) {
+                writeInt(1) // totalFragments
+                writeInt(0) // fragmentNo
 
-            writeInt(badges.size)
+                writeInt(data.badges.size)
 
-            badges.forEach {
-                if (isVersionAtLeast(2011, 5, 23)) {
-                    writeInt(1)
+                data.badges.forEach {
+                    writeInt(it.id)
+                    writeUTF(it.code)
+                    if (isVersionAtLeast(2026, 6, 1)) {
+                        writeInt(HabboServer.habboGame.badgeManager.getOwnerCount(it.code)) // ownerCount
+                        writeInt(0) // badgeRarityId
+                    }
                 }
-                writeUTF(it.code)
-            }
+            } else {
+                val equippedBadges = data.badges.filter { it.slot > 0 }
 
-            writeInt(equippedBadges.size)
+                writeInt(data.badges.size)
 
-            equippedBadges.forEach {
-                writeInt(it.slot)
-                writeUTF(it.code)
-            }
-        }
-    }
+                data.badges.forEach {
+                    if (isVersionAtLeast(2011, 5, 23)) {
+                        writeInt(1)
+                    }
+                    writeUTF(it.code)
+                }
 
-    @Response(Outgoing.INVENTORY_BADGES)
-    fun simplifiedInventoryBadgeResponse(habboResponse: HabboResponse, badges: Collection<Badge>) {
-        habboResponse.apply {
-            writeInt(1) // totalFragments
-            writeInt(0) // fragmentNo
+                writeInt(equippedBadges.size)
 
-            writeInt(badges.size)
-
-            badges.forEach {
-                writeInt(it.id)
-                writeUTF(it.code)
-                if (isVersionAtLeast(2026, 8, 6)) {
-                    writeInt(HabboServer.habboGame.badgeManager.getOwnerCount(it.code)) // ownerCount
-                    writeInt(0) // todo: badgeRarityId
+                equippedBadges.forEach {
+                    writeInt(it.slot)
+                    writeUTF(it.code)
                 }
             }
         }

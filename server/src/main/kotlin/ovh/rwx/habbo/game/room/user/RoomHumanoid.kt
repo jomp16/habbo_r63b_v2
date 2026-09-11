@@ -50,8 +50,7 @@ abstract class RoomHumanoid(
             } else 0
 
             if (field != newValue) {
-                room.sendHabboResponse(Outgoing.ROOM_USER_IDLE, virtualID, newValue)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_IDLE, virtualID, newValue)
+                room.sendResponse(Outgoing.ROOM_USER_IDLE, OutgoingR63A.ROOM_USER_IDLE, virtualID, newValue)
             }
 
             field = newValue
@@ -61,8 +60,7 @@ abstract class RoomHumanoid(
         set(newValue) {
             if (field != newValue) {
                 val state = if (newValue) 1 else 0
-                room.sendHabboResponse(Outgoing.ROOM_USER_TYPING, virtualID, state)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_TYPING, virtualID, state)
+                room.sendResponse(Outgoing.ROOM_USER_TYPING, OutgoingR63A.ROOM_USER_TYPING, virtualID, state)
             }
 
             field = newValue
@@ -71,8 +69,7 @@ abstract class RoomHumanoid(
     var danceId: Int = 0
         set(newValue) {
             if (field != newValue) {
-                room.sendHabboResponse(Outgoing.ROOM_USER_DANCE, virtualID, newValue)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_DANCE, virtualID, newValue)
+                room.sendResponse(Outgoing.ROOM_USER_DANCE, OutgoingR63A.ROOM_USER_DANCE, virtualID, newValue)
             }
 
             field = newValue
@@ -81,16 +78,14 @@ abstract class RoomHumanoid(
     var handItem: Int = 0
         set(newValue) {
             if (field != newValue) {
-                room.sendHabboResponse(Outgoing.ROOM_USER_HANDITEM, virtualID, newValue)
-                room.sendHabboResponse(OutgoingR63A.ROOM_USER_HANDITEM, virtualID, newValue)
+                room.sendResponse(Outgoing.ROOM_USER_HANDITEM, OutgoingR63A.ROOM_USER_HANDITEM, virtualID, newValue)
             }
 
             field = newValue
         }
 
     override fun onEffectChanged(effectId: Int) {
-        room.sendHabboResponse(Outgoing.ROOM_USER_EFFECT, virtualID, effectId)
-        room.sendHabboResponse(OutgoingR63A.ROOM_USER_EFFECT, virtualID, effectId)
+        room.sendResponse(Outgoing.ROOM_USER_EFFECT, OutgoingR63A.ROOM_USER_EFFECT, virtualID, effectId)
     }
 
     override fun onIdleExpired() {

@@ -77,3 +77,13 @@ tasks.named<Jar>("jar") {
         attributes["Class-Path"] = configurations.runtimeClasspath.get().files.joinToString(" ") { it.name }
     }
 }
+
+val verifyPacketSignatures = tasks.register<VerifyPacketSignaturesTask>("verifyPacketSignatures") {
+    classesDirs.from(tasks.named("compileKotlin"))
+    failOnError.convention(!project.hasProperty("lenientPackets"))
+    dependsOn("compileKotlin")
+}
+
+tasks.named("classes") {
+    dependsOn(verifyPacketSignatures)
+}

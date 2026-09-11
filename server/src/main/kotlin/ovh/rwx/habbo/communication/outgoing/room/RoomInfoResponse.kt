@@ -19,60 +19,43 @@
 
 package ovh.rwx.habbo.communication.outgoing.room
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 
+data class RoomInfoData(
+    val habboSession: HabboSession,
+    val room: Room,
+    val isLoading: Boolean,
+    val checkEntry: Boolean
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomInfoResponse {
     @Response(Outgoing.ROOM_INFO)
-    fun response(habboResponse: HabboResponse, habboSession: HabboSession, room: Room, isLoading: Boolean, checkEntry: Boolean) {
-        habboResponse.apply {
-            commonStuff(habboSession, isLoading, room, checkEntry)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_INFO)
-    fun responseR63A(
-        habboResponse: HabboResponse,
-        habboSession: HabboSession,
-        room: Room,
-        isLoading: Boolean,
-        checkEntry: Boolean
-    ) {
+    fun response(habboResponse: HabboResponse, data: RoomInfoData) {
         habboResponse.apply {
-            writeBoolean(isLoading)
+            if (isVersionBefore(2011, 9, 20)) {
+                writeBoolean(data.isLoading)
 
-            serialize(room, true, isLoading)
+                serialize(data.room, true, data.isLoading)
 
-            // Revelação R37: O checkEntry (forward) entrou em Agosto de 2009!
-            if (isVersionAtLeast(2009, 8, 21)) {
-                writeBoolean(checkEntry)
+                if (isVersionAtLeast(2009, 8, 21)) {
+                    writeBoolean(data.checkEntry)
+                }
+
+                if (isVersionAtLeast(2010, 12, 3)) {
+                    writeBoolean(false) // staff picked
+                }
+            } else {
+                commonStuff(data.habboSession, data.isLoading, data.room, data.checkEntry)
+                if (isVersionAtLeast(2025, 1, 23)) {
+                    writeBoolean(data.isLoading) // openingConnection
+                }
             }
-
-            // Revelação R63: O staff picked (recomendado) entrou em Dezembro de 2010!
-            if (isVersionAtLeast(2010, 12, 3)) {
-                writeBoolean(false) // staff picked
-            }
-        }
-    }
-
-    @Response(Outgoing.ROOM_INFO)
-    fun responseHabboAir(
-        habboResponse: HabboResponse,
-        habboSession: HabboSession,
-        room: Room,
-        isLoading: Boolean,
-        checkEntry: Boolean
-    ) {
-        habboResponse.apply {
-            commonStuff(habboSession, isLoading, room, checkEntry)
-            writeBoolean(isLoading) // openingConnection
         }
     }
 

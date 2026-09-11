@@ -29,16 +29,23 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.catalog.CatalogPage
 import ovh.rwx.habbo.game.user.subscription.ClubType
 
+data class CatalogPageData(
+    val catalogPage: CatalogPage,
+    val category: String = "NORMAL",
+    val chosenOfferId: Int = -1
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageResponse {
     @Response(Outgoing.CATALOG_PAGE)
     fun response(
         habboResponse: HabboResponse,
-        catalogPage: CatalogPage,
-        category: String,
-        chosenOfferId: Int,
-        habboAir: Boolean,
+        data: CatalogPageData
     ) {
+        val catalogPage = data.catalogPage
+        val category = data.category
+        val chosenOfferId = data.chosenOfferId
+
         habboResponse.apply {
             writeInt(catalogPage.id)
 
@@ -102,7 +109,7 @@ class CatalogPageResponse {
                         writeInt(offer.credits)
                         writeInt(offer.points)
                         writeInt(offer.pointsType)
-                        if (habboAir) {
+                        if (isVersionAtLeast(2024, 1, 22)) {
                             writeInt(0) // priceInSilver
                         }
                         writeBoolean(true) // giftable
@@ -259,12 +266,12 @@ class CatalogPageResponse {
 
             writeInt(catalogPage.catalogItems.size)
 
-            catalogPage.catalogItems.forEach { serialize(it, habboAir) }
+            catalogPage.catalogItems.forEach { serialize(it) }
 
             writeInt(chosenOfferId)
             writeBoolean(false)
 
-            if (habboAir) {
+            if (isVersionAtLeast(2021, 4, 9)) {
                 // frontPageItems (optional for HabboAir)
                 if (catalogPage.pageLayout == "frontpage" || catalogPage.pageLayout == "frontpage4") {
                     writeInt(0) // frontPageItems count

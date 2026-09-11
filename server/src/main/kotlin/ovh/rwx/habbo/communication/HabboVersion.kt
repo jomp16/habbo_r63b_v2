@@ -23,10 +23,27 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+enum class HabboPlatform {
+    AIR,
+    FLASH,
+    NITRO,
+    UNKNOWN;
+
+    val isAir: Boolean get() = this == AIR
+    val isFlash: Boolean get() = this == FLASH
+    val isNitro: Boolean get() = this == NITRO
+}
+
 data class HabboVersion(
     val buildDate: LocalDateTime,
-    val majorVersion: Int
+    val majorVersion: Int,
+    val platform: HabboPlatform = HabboPlatform.UNKNOWN,
+    val releaseString: String = ""
 ) : Comparable<HabboVersion> {
+
+    val isAir: Boolean get() = platform.isAir
+    val isFlash: Boolean get() = platform.isFlash
+    val isNitro: Boolean get() = platform.isNitro
 
     override fun compareTo(other: HabboVersion): Int {
         return this.buildDate.compareTo(other.buildDate)
@@ -36,26 +53,31 @@ data class HabboVersion(
         // Busca os 12 dígitos da data (ex: 201108301108)
         private val BUILD_DATE_REGEX = Regex("(20\\d{10})")
 
-        // Busca os dígitos logo após a palavra RELEASE (ex: 63)
-        private val MAJOR_VERSION_REGEX = Regex("RELEASE(\\d+)")
+        // Busca os dígitos da major version após RELEASE, WIN, MAC ou R (ex: RELEASE63, WIN63, MAC63, R63A, RELEASE38)
+        private val MAJOR_VERSION_REGEX = Regex("(?:RELEASE|WIN|MAC|R)(\\d+)", RegexOption.IGNORE_CASE)
 
         // Formato exato do timestamp da Sulake: AnoMesDiaHoraMinuto
         private val FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
 
         fun parse(releaseString: String): HabboVersion {
-            // 1. Extrai a data de build
+            // 1. Identifica a plataforma do cliente (WIN63 e MAC63 representam o cliente Habbo AIR desktop)
+            val platform = when {
+                releaseString.contains("WIN63") || releaseString.contains("MAC63") -> HabboPlatform.AIR
+                releaseString.contains("PRODUCTION") || releaseString.contains("RELEASE") || releaseString.contains("R63") -> HabboPlatform.FLASH
+                releaseString.contains("NITRO") -> HabboPlatform.NITRO
+                else -> HabboPlatform.UNKNOWN
+            }
+
+            // 2. Extrai a data de build (12 dígitos numéricos no formato yyyyMMddHHmm)
             val dateMatch = BUILD_DATE_REGEX.find(releaseString)
-            val dateString = dateMatch?.groupValues?.get(1)
                 ?: throw IllegalArgumentException("Não foi possível encontrar a data de build: $releaseString")
+            val buildDate = LocalDateTime.parse(dateMatch.groupValues[1], FORMATTER)
 
-            // Transforma a string de 12 dígitos em LocalDateTime
-            val buildDate = LocalDateTime.parse(dateString, FORMATTER)
-
-            // 2. Extrai o Major Version
+            // 3. Extrai o Major Version
             val majorMatch = MAJOR_VERSION_REGEX.find(releaseString)
             val majorVersion = majorMatch?.groupValues?.get(1)?.toIntOrNull() ?: 63
 
-            return HabboVersion(buildDate, majorVersion)
+            return HabboVersion(buildDate, majorVersion, platform, releaseString)
         }
     }
 
@@ -93,6 +115,12 @@ data class HabboVersion(
 
 }
 
+val HabboResponse.isAir: Boolean
+    get() = habboVersion.isAir
+
+val HabboResponse.platform: HabboPlatform
+    get() = habboVersion.platform
+
 fun HabboResponse.isVersionAtLeast(year: Int, month: Int, day: Int): Boolean {
     // Se a data do cliente NÃO for antes da data alvo, significa que é igual ou maior
     return habboVersion.isVersionAtLeast(year, month, day)
@@ -105,3 +133,9 @@ fun HabboResponse.isVersionBefore(year: Int, month: Int, day: Int): Boolean {
 fun HabboResponse.isExactVersion(year: Int, month: Int, day: Int): Boolean {
     return habboVersion.isExactVersion(year, month, day)
 }
+
+// Extensão para criar LocalDate rapidamente
+fun date(year: Int, month: Int, day: Int): LocalDate = LocalDate.of(year, month, day)
+
+val HabboResponse.releaseDate: LocalDate
+    get() = habboVersion.buildDate.toLocalDate()

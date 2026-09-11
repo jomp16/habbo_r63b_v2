@@ -32,6 +32,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerFollowFriendHandler {
     @Handler(Incoming.MESSENGER_FOLLOW_FRIEND)
+    @HandlerR63A(IncomingR63A.MESSENGER_FOLLOW_FRIEND)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.habboMessenger.initialized) return
         val friendId = habboRequest.readInt()
@@ -40,39 +41,21 @@ class MessengerFollowFriendHandler {
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(friendId)
 
         friendHabboSession?.currentRoom.let { room ->
-            if (room == null) habboSession.sendHabboResponse(
+            if (room == null) habboSession.sendResponse(
                 Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR,
-                2
-            )
-
-            if (!habboSession.habboMessenger.friends.containsKey(friendId) && !habboSession.hasPermission("acc_can_follow_anybody")) habboSession.sendHabboResponse(
-                Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR,
-                0
-            )
-
-            habboSession.sendHabboResponse(Outgoing.ROOM_FORWARD, room)
-        }
-    }
-
-    @HandlerR63A(IncomingR63A.MESSENGER_FOLLOW_FRIEND)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.habboMessenger.initialized) return
-        val friendId = habboRequest.readInt()
-
-        if (friendId == 0 || friendId == habboSession.userInformation.id) return
-        val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(friendId)
-
-        friendHabboSession?.currentRoom.let { room ->
-            if (room == null) habboSession.sendHabboResponse(
                 OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR,
                 2
             )
 
-            if (!habboSession.habboMessenger.friends.containsKey(friendId) && !habboSession.hasPermission("acc_can_follow_anybody")) habboSession.sendHabboResponse(
-                OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR, 0
-            )
+            if (!habboSession.habboMessenger.friends.containsKey(friendId) && !habboSession.hasPermission("acc_can_follow_anybody")) {
+                habboSession.sendResponse(
+                    Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR,
+                    OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR,
+                    0
+                )
+            }
 
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_FORWARD, room)
+            habboSession.sendResponse(Outgoing.ROOM_FORWARD, OutgoingR63A.ROOM_FORWARD, room)
         }
     }
 }

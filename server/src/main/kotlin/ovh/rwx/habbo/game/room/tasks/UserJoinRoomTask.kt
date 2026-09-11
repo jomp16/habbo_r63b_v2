@@ -24,10 +24,7 @@ import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.communication.outgoing.room.RoomNoRightsData
-import ovh.rwx.habbo.communication.outgoing.room.RoomOpenData
-import ovh.rwx.habbo.communication.outgoing.room.RoomOwnerData
-import ovh.rwx.habbo.communication.outgoing.room.RoomRightLevelData
+import ovh.rwx.habbo.communication.outgoing.room.*
 import ovh.rwx.habbo.game.item.wired.trigger.RoomEventTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerEnterRoom
 import ovh.rwx.habbo.game.room.IRoomTask
@@ -84,18 +81,18 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
         // 4. Broadcast de entrada leve para os usuários presentes na sala
         session.let {
-            room.sendHabboResponse(Outgoing.ROOM_USERS, listOf(roomUser))
-            room.sendHabboResponse(
+            room.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, listOf(roomUser))
+            /*room.sendHabboResponse(
                 Outgoing.USER_UPDATE,
-                roomUser.virtualID,
-                it.userInformation.figure,
-                it.userInformation.gender,
-                it.userInformation.motto,
-                it.userStats.achievementScore
-            )
-            room.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, listOf(roomUser))
-            room.sendHabboResponse(OutgoingR63A.ROOM_USERS, listOf(roomUser))
-            room.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomUser))
+                RoomUpdateUserData(
+                    virtualId = roomUser.virtualID,
+                    figure = it.userInformation.figure,
+                    gender = it.userInformation.gender,
+                    motto = it.userInformation.motto,
+                    achievementScore = it.userStats.achievementScore
+                )
+            )*/
+            room.sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomUser))
         }
 
         // 5. Reset do contador de sala vazia
@@ -140,185 +137,161 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         isOwner: Boolean,
         hasRights: Boolean
     ) {
-        if (habboSession.release != "R63A") {
-            habboSession.sendHabboResponse(Outgoing.ROOM_OPEN, RoomOpenData(room.roomData.id))
-//            habboSession.sendHabboResponse(Outgoing.USER_NFT_CHAT_STYLES, room.roomModel.id, room.roomData.id)
-            /*habboSession.sendHabboResponse(HabboResponse(1219, null).apply {
-                writeInt(0)
-            })*/
-            habboSession.sendHabboResponse(Outgoing.ROOM_GROUP_BADGES, room.loadedGroups)
-            habboSession.sendHabboResponse(Outgoing.ROOM_INITIAL_INFO, room.roomModel.id, room.roomData.id)
-            habboSession.sendHabboResponse(
-                Outgoing.FLOOR_PLAN_DOOR,
-                room.roomModel.doorVector3,
-                room.roomModel.doorDir
-            )
+        habboSession.sendResponse(Outgoing.ROOM_OPEN, OutgoingR63A.ROOM_OPEN, RoomOpenData(room.roomData.id))
+        habboSession.sendResponse(
+            null,
+            OutgoingR63A.ROOM_URL,
+            RoomUrlData("/client/internal/" + room.roomData.id + "/id")
+        )
+        habboSession.sendResponse(Outgoing.ROOM_GROUP_BADGES, OutgoingR63A.ROOM_GROUPS_BADGES, room.loadedGroups)
+        habboSession.sendResponse(
+            Outgoing.ROOM_INITIAL_INFO,
+            OutgoingR63A.ROOM_INITIAL_INFO,
+            RoomInitialInfoData(room.roomModel.id, room.roomData.id)
+        )
+        habboSession.sendResponse(
+            Outgoing.FLOOR_PLAN_DOOR,
+            null,
+            RoomFloorPlanDoorData(room.roomModel.doorVector3, room.roomModel.doorDir)
+        )
 
-            if (room.roomData.wallpaper != "0.0") habboSession.sendHabboResponse(
+        if (room.roomData.wallpaper != "0.0") {
+            habboSession.sendResponse(
                 Outgoing.ROOM_DECORATION,
-                "wallpaper",
-                room.roomData.wallpaper
+                OutgoingR63A.ROOM_DECORATION,
+                RoomDecorationData(
+                    type = "wallpaper",
+                    value = room.roomData.wallpaper
+                )
             )
-            if (room.roomData.floor != "0.0") habboSession.sendHabboResponse(
+        }
+        if (room.roomData.floor != "0.0") {
+            habboSession.sendResponse(
                 Outgoing.ROOM_DECORATION,
-                "floor",
-                room.roomData.floor
+                OutgoingR63A.ROOM_DECORATION,
+                RoomDecorationData(
+                    type = "floor",
+                    value = room.roomData.floor
+                )
             )
-            if (room.roomData.landscape != "0.0") habboSession.sendHabboResponse(
+        }
+        if (room.roomData.landscape != "0.0") {
+            habboSession.sendResponse(
                 Outgoing.ROOM_DECORATION,
-                "landscape",
-                room.roomData.landscape
+                OutgoingR63A.ROOM_DECORATION,
+                RoomDecorationData(
+                    type = "landscape",
+                    value = room.roomData.landscape
+                )
             )
-            habboSession.sendHabboResponse(Outgoing.ROOM_HEIGHTMAP, room)
-            habboSession.sendHabboResponse(Outgoing.ROOM_FLOORMAP, room)
-            habboSession.sendHabboResponse(
-                Outgoing.ROOM_OWNERSHIP,
-                room.roomData.id,
-                isOwner
+        }
+
+        habboSession.sendResponse(Outgoing.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_HEIGHTMAP, room)
+        habboSession.sendResponse(Outgoing.ROOM_FLOORMAP, OutgoingR63A.ROOM_FLOORMAP, room)
+        habboSession.sendResponse(
+            Outgoing.ROOM_OWNERSHIP,
+            OutgoingR63A.ROOM_OWNERSHIP,
+            RoomOwnershipData(
+                roomId = room.roomData.id,
+                isOwner = isOwner,
+                isPrivate = room.roomData.roomType == RoomType.PRIVATE
             )
-            habboSession.sendHabboResponse(
-                Outgoing.ROOM_VISUALIZATION_THICKNESS,
-                room.roomData.hideWall,
-                room.roomData.wallThick,
-                room.roomData.floorThick
+        )
+        habboSession.sendResponse(
+            Outgoing.ROOM_VISUALIZATION_THICKNESS,
+            OutgoingR63A.ROOM_VISUALIZATION_THICKNESS,
+            RoomVisualizationThicknessData(
+                hideWall = room.roomData.hideWall,
+                wallThickness = room.roomData.wallThick,
+                floorThickness = room.roomData.floorThick
             )
-            // todo: events
+        )
+        // todo: events
 
-            habboSession.sendHabboResponse(Outgoing.ROOM_USERS, room.userManager.entities.values)
-            habboSession.sendHabboResponse(Outgoing.ROOM_USERS_STATUSES, room.userManager.entities.values)
+        habboSession.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, room.userManager.entities.values)
+        habboSession.sendResponse(
+            Outgoing.ROOM_USERS_STATUSES,
+            OutgoingR63A.ROOM_USERS_STATUSES,
+            room.userManager.entities.values
+        )
+        habboSession.sendResponse(
+            null,
+            OutgoingR63A.ROOM_INFO,
+            RoomInfoData(habboSession, room, isLoading = true, checkEntry = false)
+        )
 
-            habboSession.sendHabboResponse(Outgoing.ROOM_FLOOR_ITEMS, room, room.itemManager.floorItems.values)
-            habboSession.sendHabboResponse(Outgoing.ROOM_WALL_ITEMS, room, room.itemManager.wallItems.values)
+        habboSession.sendResponse(
+            Outgoing.ROOM_FLOOR_ITEMS,
+            null,
+            RoomFloorItemsData(room, room.itemManager.floorItems.values)
+        )
+        habboSession.sendResponse(
+            Outgoing.ROOM_WALL_ITEMS,
+            null,
+            RoomWallItemsData(room, room.itemManager.wallItems.values)
+        )
 
-            room.userManager.entities.values.forEach {
-                val entityUser = it as? RoomHumanoid
-                if (entityUser?.idle == true) habboSession.sendHabboResponse(
+        room.userManager.entities.values.forEach {
+            val entityUser = it as? RoomHumanoid
+            if (entityUser?.idle == true) {
+                habboSession.sendResponse(
                     Outgoing.ROOM_USER_IDLE,
-                    it.virtualID,
-                    true
-                )
-                if (entityUser != null && entityUser.danceId > 0) habboSession.sendHabboResponse(
-                    Outgoing.ROOM_USER_DANCE,
-                    it.virtualID,
-                    entityUser.danceId
-                )
-                if (entityUser != null && entityUser.handItem > 0) habboSession.sendHabboResponse(
-                    Outgoing.ROOM_USER_HANDITEM,
-                    it.virtualID,
-                    entityUser.handItem
-                )
-                it.effect?.let { effect ->
-                    habboSession.sendHabboResponse(
-                        Outgoing.ROOM_USER_EFFECT,
-                        it.virtualID,
-                        effect.effectId
-                    )
-                }
-            }
-
-            habboSession.sendHabboResponse(Outgoing.WIRED_ENVIRONMENT, false)
-            habboSession.sendHabboResponse(
-                Outgoing.WIRED_PERMISSIONS,
-                hasRights,
-                hasRights
-            )
-            // todo: adicionar permissão wired: canModify / canRead
-
-            // Respostas de direitos
-            if (hasRights) {
-                if (isOwner) {
-                    habboSession.sendHabboResponse(Outgoing.ROOM_OWNER, RoomOwnerData(room.roomData.id))
-                    habboSession.sendHabboResponse(
-                        Outgoing.ROOM_RIGHT_LEVEL,
-                        RoomRightLevelData(rightLevel = 4, roomId = room.roomData.id)
-                    )
-                } else {
-                    habboSession.sendHabboResponse(
-                        Outgoing.ROOM_RIGHT_LEVEL,
-                        RoomRightLevelData(rightLevel = 1, roomId = room.roomData.id)
-                    )
-                }
-            } else {
-                habboSession.sendHabboResponse(Outgoing.ROOM_NO_RIGHTS, RoomNoRightsData(room.roomData.id))
-            }
-        } else {
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_OPEN)
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_URL, "/client/internal/" + room.roomData.id + "/id")
-            habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_INITIAL_INFO,
-                "model_${room.roomModel.id}",
-                room.roomData.id
-            )
-
-            if (room.roomData.wallpaper != "0.0") habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "wallpaper",
-                room.roomData.wallpaper
-            )
-            if (room.roomData.floor != "0.0") habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "floor",
-                room.roomData.floor
-            )
-            if (room.roomData.landscape != "0.0") habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_DECORATION,
-                "landscape",
-                room.roomData.landscape
-            )
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_HEIGHTMAP, room)
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_FLOORMAP, room)
-            habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_OWNERSHIP,
-                room.roomData.roomType == RoomType.PRIVATE,
-                room.roomData.id,
-                isOwner
-            )
-            habboSession.sendHabboResponse(
-                OutgoingR63A.ROOM_VISUALIZATION_THICKNESS,
-                room.roomData.hideWall,
-                room.roomData.wallThick,
-                room.roomData.floorThick
-            )
-            // todo: events
-
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS, room.userManager.entities.values)
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_USERS_STATUSES, room.userManager.entities.values)
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, true, false)
-
-            room.userManager.entities.values.forEach {
-                val entityUser = it as? RoomHumanoid
-                if (entityUser?.idle == true) habboSession.sendHabboResponse(
                     OutgoingR63A.ROOM_USER_IDLE,
                     it.virtualID,
                     true
                 )
-                if (entityUser != null && entityUser.danceId > 0) habboSession.sendHabboResponse(
+            }
+            if (entityUser != null && entityUser.danceId > 0) {
+                habboSession.sendResponse(
+                    Outgoing.ROOM_USER_DANCE,
                     OutgoingR63A.ROOM_USER_DANCE,
                     it.virtualID,
                     entityUser.danceId
                 )
-                if (entityUser != null && entityUser.handItem > 0) habboSession.sendHabboResponse(
+            }
+            if (entityUser != null && entityUser.handItem > 0) {
+                habboSession.sendResponse(
+                    Outgoing.ROOM_USER_HANDITEM,
                     OutgoingR63A.ROOM_USER_HANDITEM,
                     it.virtualID,
                     entityUser.handItem
                 )
-                it.effect?.let { effect ->
-                    habboSession.sendHabboResponse(
-                        OutgoingR63A.ROOM_USER_EFFECT,
-                        it.virtualID,
-                        effect.effectId
-                    )
-                }
             }
+            it.effect?.let { effect ->
+                habboSession.sendResponse(
+                    Outgoing.ROOM_USER_EFFECT,
+                    OutgoingR63A.ROOM_USER_EFFECT,
+                    it.virtualID,
+                    effect.effectId
+                )
+            }
+        }
 
-            if (hasRights) {
-                if (isOwner) {
-                    habboSession.sendHabboResponse(OutgoingR63A.ROOM_OWNER)
-                    habboSession.sendHabboResponse(OutgoingR63A.ROOM_RIGHT)
-                } else {
-                    habboSession.sendHabboResponse(OutgoingR63A.ROOM_RIGHT)
-                }
+        habboSession.sendResponse(Outgoing.WIRED_ENVIRONMENT, null, false)
+        habboSession.sendResponse(
+            Outgoing.WIRED_PERMISSIONS,
+            null,
+            hasRights,
+            hasRights
+        )
+        // todo: adicionar permissão wired: canModify / canRead
+
+        // Respostas de direitos
+        if (hasRights) {
+            if (isOwner) {
+                habboSession.sendResponse(Outgoing.ROOM_OWNER, OutgoingR63A.ROOM_OWNER, RoomOwnerData(room.roomData.id))
             }
+            habboSession.sendResponse(
+                Outgoing.ROOM_RIGHT_LEVEL,
+                OutgoingR63A.ROOM_RIGHT,
+                RoomRightLevelData(rightLevel = if (isOwner) 4 else 1, roomId = room.roomData.id)
+            )
+        } else {
+            habboSession.sendResponse(
+                Outgoing.ROOM_NO_RIGHTS,
+                OutgoingR63A.ROOM_NO_RIGHTS,
+                RoomNoRightsData(room.roomData.id)
+            )
         }
     }
 }

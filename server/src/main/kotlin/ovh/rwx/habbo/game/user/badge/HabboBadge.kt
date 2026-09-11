@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.user.badge
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.inventory.InventoryBadgesData
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
@@ -47,12 +48,18 @@ class HabboBadge(private val habboSession: HabboSession) {
 
         badges[badge.code] = badge
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_BADGES, badges.values)
-            habboSession.sendHabboResponse(OutgoingR63A.USER_BADGES, habboSession.userInformation.id, badges.values)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
-            habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_BADGES,
+            OutgoingR63A.INVENTORY_BADGES,
+            InventoryBadgesData(badges.values)
+        )
+        habboSession.sendResponse(
+            Outgoing.USER_BADGES,
+            OutgoingR63A.USER_BADGES,
+            habboSession.userInformation.id,
+            badges.values
+        )
+        if (habboSession.release != "R63A") {
             habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 4, listOf(badge.id))
         }
     }
@@ -60,13 +67,17 @@ class HabboBadge(private val habboSession: HabboSession) {
     fun removeBadge(badgeCode: String) {
         val badge = badges.remove(badgeCode) ?: return
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_BADGES, badges.values)
-            habboSession.sendHabboResponse(OutgoingR63A.USER_BADGES, habboSession.userInformation.id, badges.values)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_BADGES, badges.values)
-            habboSession.sendHabboResponse(Outgoing.USER_BADGES, habboSession.userInformation.id, badges.values)
-        }
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_BADGES,
+            OutgoingR63A.INVENTORY_BADGES,
+            InventoryBadgesData(badges.values)
+        )
+        habboSession.sendResponse(
+            Outgoing.USER_BADGES,
+            OutgoingR63A.USER_BADGES,
+            habboSession.userInformation.id,
+            badges.values
+        )
 
         BadgeDao.removeBadge(habboSession.userInformation.id, badge.id, badge.code)
     }

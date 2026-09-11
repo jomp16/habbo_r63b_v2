@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room.user
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomUserChatData
 import ovh.rwx.habbo.game.pet.PetAI
 import ovh.rwx.habbo.game.pet.PetAction
 import ovh.rwx.habbo.game.pet.PetData
@@ -59,8 +60,16 @@ class RoomPet(
     }
 
     private fun broadcastPetChat(message: String) {
-        room.sendHabboResponse(Outgoing.ROOM_USER_CHAT, virtualID, message, 0, RoomChatMessageBubbles.NORMAL)
-        room.sendHabboResponse(OutgoingR63A.ROOM_USER_CHAT, virtualID, message, 0)
+        room.sendResponse(
+            Outgoing.ROOM_USER_CHAT,
+            OutgoingR63A.ROOM_USER_CHAT,
+            RoomUserChatData(
+                virtualId = virtualID,
+                message = message,
+                emotion = 0,
+                bubble = RoomChatMessageBubbles.NORMAL
+            )
+        )
     }
 
     private fun addExperience(amount: Int) {

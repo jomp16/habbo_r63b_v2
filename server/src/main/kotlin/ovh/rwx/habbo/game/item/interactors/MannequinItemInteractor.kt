@@ -20,6 +20,9 @@
 package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomUpdateUserData
+import ovh.rwx.habbo.communication.outgoing.user.UserUpdateFigureData
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -62,17 +65,22 @@ class MannequinItemInteractor : ItemInteractor() {
 
         roomUser.habboSession.sendHabboResponse(
             Outgoing.USER_UPDATE_FIGURE,
-            roomUser.habboSession.userInformation.figure,
-            roomUser.habboSession.userInformation.gender
+            UserUpdateFigureData(
+                figure = roomUser.habboSession.userInformation.figure,
+                gender = roomUser.habboSession.userInformation.gender
+            )
         )
 
-        room.sendHabboResponse(
+        room.sendResponse(
             Outgoing.USER_UPDATE,
-            roomUser.virtualID,
-            roomUser.habboSession.userInformation.figure,
-            roomUser.habboSession.userInformation.gender,
-            roomUser.habboSession.userInformation.motto,
-            roomUser.habboSession.userStats.achievementScore
+            OutgoingR63A.USER_UPDATE,
+            RoomUpdateUserData(
+                virtualId = roomUser.virtualID,
+                figure = roomUser.habboSession.userInformation.figure,
+                gender = roomUser.habboSession.userInformation.gender,
+                motto = roomUser.habboSession.userInformation.motto,
+                achievementScore = roomUser.habboSession.userStats.achievementScore
+            )
         )
 
         roomUser.habboSession.habboMessenger.notifyFriends()

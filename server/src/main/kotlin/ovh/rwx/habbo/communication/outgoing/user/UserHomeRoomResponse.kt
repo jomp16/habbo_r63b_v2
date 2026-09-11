@@ -25,14 +25,25 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload para quarto inicial do usuário (HOME_ROOM).
+ *
+ * @param roomId ID do quarto inicial.
+ * @param autoJoinRoom Se deve entrar automaticamente no quarto.
+ */
+data class UserHomeRoomData(
+    val roomId: Int,
+    val autoJoinRoom: Boolean = true,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserHomeRoomResponse {
     @Response(Outgoing.HOME_ROOM)
     @ResponseR63A(OutgoingR63A.HOME_ROOM)
-    fun response(habboResponse: HabboResponse, roomId: Int, autoJoinRoom: Boolean) {
+    fun response(habboResponse: HabboResponse, data: UserHomeRoomData) {
         habboResponse.apply {
-            writeInt(roomId)
-            writeInt(if (autoJoinRoom) roomId else 0) // auto join room
+            writeInt(data.roomId)
+            writeInt(if (data.autoJoinRoom) data.roomId else 0) // auto join room
         }
     }
 }

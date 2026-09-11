@@ -27,6 +27,8 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomUpdateUserData
+import ovh.rwx.habbo.communication.outgoing.user.UserUpdateFigureData
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
 
@@ -53,33 +55,36 @@ class UserChangeFigureHandler {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)
 
         if (habboSession.release == "R63A") {
-            habboSession.currentRoom?.sendHabboResponse(
+            habboSession.sendHabboResponse(
                 OutgoingR63A.USER_UPDATE,
-                -1,
-                figure,
-                gender,
-                habboSession.userInformation.motto,
-                habboSession.userStats.achievementScore
+                RoomUpdateUserData(
+                    virtualId = -1,
+                    figure = figure,
+                    gender = gender,
+                    motto = habboSession.userInformation.motto,
+                    achievementScore = habboSession.userStats.achievementScore
+                )
             )
         } else {
-            habboSession.sendHabboResponse(Outgoing.USER_UPDATE_FIGURE, figure, gender)
+            habboSession.sendHabboResponse(
+                Outgoing.USER_UPDATE_FIGURE,
+                UserUpdateFigureData(
+                    figure = figure,
+                    gender = gender,
+                )
+            )
         }
 
-        habboSession.currentRoom?.sendHabboResponse(
+        habboSession.currentRoom?.sendResponse(
             Outgoing.USER_UPDATE,
-            habboSession.roomUser!!.virtualID,
-            figure,
-            gender,
-            habboSession.userInformation.motto,
-            habboSession.userStats.achievementScore
-        )
-        habboSession.currentRoom?.sendHabboResponse(
             OutgoingR63A.USER_UPDATE,
-            habboSession.roomUser!!.virtualID,
-            figure,
-            gender,
-            habboSession.userInformation.motto,
-            habboSession.userStats.achievementScore
+            RoomUpdateUserData(
+                virtualId = habboSession.roomUser!!.virtualID,
+                figure = figure,
+                gender = gender,
+                motto = habboSession.userInformation.motto,
+                achievementScore = habboSession.userStats.achievementScore
+            )
         )
     }
 }

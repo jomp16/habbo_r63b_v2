@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,25 +27,39 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 
+/**
+ * Payload estruturado para itens de chão do quarto (ROOM_FLOOR_ITEMS).
+ *
+ * @param ownerId ID do proprietário do quarto/grupo.
+ * @param ownerName Nome do proprietário do quarto/grupo.
+ * @param floorItems Coleção de itens de chão presentes no quarto.
+ */
+data class RoomFloorItemsData(
+    val ownerId: Int,
+    val ownerName: String,
+    val floorItems: Collection<RoomItem>,
+) {
+    constructor(room: Room, floorItems: Collection<RoomItem>) : this(
+        ownerId = room.roomData.ownerId,
+        ownerName = room.roomData.ownerName,
+        floorItems = floorItems,
+    )
+}
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloorItemsResponse {
     @Response(Outgoing.ROOM_FLOOR_ITEMS)
-    fun response(habboResponse: HabboResponse, room: Room, floorItems: Collection<RoomItem>) {
-        habboResponse.apply {
-            // todo: group
-            writeInt(1)
-            writeInt(room.roomData.ownerId)
-            writeUTF(room.roomData.ownerName)
-            writeInt(floorItems.size) // size
-            floorItems.forEach { serialize(it) }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.ROOM_FLOOR_ITEMS)
-    fun responseR63A(habboResponse: HabboResponse, room: Room, floorItems: Collection<RoomItem>) {
+    fun response(habboResponse: HabboResponse, data: RoomFloorItemsData) {
         habboResponse.apply {
-            writeInt(floorItems.size) // size
-            floorItems.forEach { serialize(it) }
+            if (outgoingR63A == null) {
+                // todo: group
+                writeInt(1)
+                writeInt(data.ownerId)
+                writeUTF(data.ownerName)
+            }
+            writeInt(data.floorItems.size) // size
+            data.floorItems.forEach { serialize(it) }
         }
     }
 }

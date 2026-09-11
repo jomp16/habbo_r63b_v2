@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isAir
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.information.UserInformation
@@ -55,7 +56,20 @@ class UserProfileResponse {
             writeInt(friends)
             writeBoolean(isFriend)
             writeBoolean(isRequest)
-            writeBoolean(isOnline)
+
+            // onlineStatus — Boolean no Flash/AIR antigo, Byte no AIR >= 2026-05-18
+            if (isAir && isVersionAtLeast(2026, 5, 18)) {
+                writeByte(
+                    when {
+                        // isHidden  -> 2  // online, oculto
+                        isOnline -> 1
+                        else -> 0
+                    }
+                ) // onlineStatus
+            } else {
+                writeBoolean(isOnline)
+            }
+
             writeInt(groups.size)
 
             groups.forEach { group ->
@@ -77,23 +91,29 @@ class UserProfileResponse {
             )
             writeBoolean(showProfile)
 
-            writeBoolean(false) // isHidden
-            writeInt(0) // accountLevel
-            writeInt(0) // Sem getter, integer desconhecido
-            writeInt(0) // starGemCount
-            writeBoolean(false) // Sem getter, boolean desconhecido
-            writeBoolean(false) // Sem getter, boolean desconhecido
+            if (isAir) {
+                // AIR-only desde 2021-03-17 (Flash nunca leu esses campos)
+                if (isVersionAtLeast(2021, 3, 17)) {
+                    writeBoolean(false) // isHidden
+                    writeInt(0) // accountLevel
+                    writeInt(0) // identityLevel
+                    writeInt(0) // starGemCount
+                    writeBoolean(false) // friendRequestsEnabled
+                    writeBoolean(false) // banned
+                }
 
-            if (habboResponse.isVersionAtLeast(2026, 8, 6)) {
-                val totalBadges = HabboServer.habboGame.badgeManager.getBadgeCount(userInformation.id)
-                val achievementLevel = HabboServer.habboGame.achievementManager.userAchievements[userInformation.id]
-                    ?.sumOf { it.level } ?: 0
+                // AIR-only desde 2026-05-18
+                if (isVersionAtLeast(2026, 5, 18)) {
+                    val totalBadges = HabboServer.habboGame.badgeManager.getBadgeCount(userInformation.id)
+                    val achievementLevel = HabboServer.habboGame.achievementManager.userAchievements[userInformation.id]
+                        ?.sumOf { it.level } ?: 0
 
-                writeInt(totalBadges) // totalBadges
-                writeInt(achievementLevel) // achievementLevel
-                writeInt(0) // TODO: badgeRarityCounts.size (lista vazia)
-                // badgeRarityCounts.forEach { writeByte(rarityId); writeInt(count) }
-                writeInt(0) // TODO: totalBadgesRank
+                    writeInt(totalBadges) // totalBadges
+                    writeInt(achievementLevel) // achievementLevel
+                    writeInt(0) // TODO: badgeRarityCounts.size (lista vazia)
+                    // badgeRarityCounts.forEach { writeByte(rarityId); writeInt(count) }
+                    writeInt(0) // TODO: totalBadgesRank
+                }
             }
         }
     }

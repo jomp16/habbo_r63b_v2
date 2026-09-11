@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconStatusData
 import ovh.rwx.habbo.communication.outgoing.habbicon.RoomUseHabbiconData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
@@ -278,12 +279,14 @@ class HabbiconManager {
 
         recipientSession.sendHabboResponse(
             Outgoing.MESSENGER_CHAT,
-            habboSession.userInformation.id,
-            HabbiconChatContent(habbiconId),
-            0,
-            habboSession.userInformation.id,
-            habboSession.userInformation.username,
-            habboSession.userInformation.figure
+            MessengerChatData(
+                id = habboSession.userInformation.id,
+                message = HabbiconChatContent(habbiconId),
+                diffTimestamp = 0,
+                userId = habboSession.userInformation.id,
+                username = habboSession.userInformation.username,
+                figure = habboSession.userInformation.figure
+            )
         )
 
         return true

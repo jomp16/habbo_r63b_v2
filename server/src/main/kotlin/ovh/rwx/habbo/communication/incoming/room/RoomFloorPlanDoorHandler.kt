@@ -23,6 +23,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.room.RoomFloorPlanDoorData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -36,7 +37,11 @@ class RoomFloorPlanDoorHandler {
         ) return
 
         habboSession.currentRoom?.let {
-            habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_DOOR, it.roomModel.doorVector3, it.roomModel.doorDir)
+            habboSession.sendResponse(
+                Outgoing.FLOOR_PLAN_DOOR,
+                null,
+                RoomFloorPlanDoorData(it.roomModel.doorVector3, it.roomModel.doorDir)
+            )
         }
     }
 }

@@ -20,10 +20,7 @@
 package ovh.rwx.habbo.communication.outgoing.wired
 
 import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.WiredData
@@ -35,7 +32,7 @@ class WiredTriggerDialogResponse {
     @ResponseR63A(OutgoingR63A.WIRED_TRIGGER_DIALOG)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            if (isVersionAtLeast(2011, 2, 22)) {
+            if (releaseDate in date(2011, 2, 22)..<date(2023, 6, 30)) {
                 writeBoolean(false)
             }
 
@@ -43,15 +40,8 @@ class WiredTriggerDialogResponse {
         }
     }
 
-    @Response(Outgoing.WIRED_TRIGGER_DIALOG)
-    fun responseHabboAir(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
-        habboResponse.apply {
-            parseWired(roomItem, wiredData, true)
-        }
-    }
-
-    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData, habboAir: Boolean = false) {
+    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData) {
         val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
-        wiredInstance?.writeDialog(this, wiredData, habboAir)
+        wiredInstance?.writeDialog(this, wiredData)
     }
 }

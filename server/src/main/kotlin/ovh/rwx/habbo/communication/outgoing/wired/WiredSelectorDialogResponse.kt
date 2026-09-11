@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -29,14 +29,14 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredSelectorDialogResponse {
     @Response(Outgoing.WIRED_SELECTOR_DIALOG)
-    fun responseHabboAir(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
+    fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            parseWired(roomItem, wiredData, true)
+            parseWired(roomItem, wiredData)
         }
     }
 
-    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData, habboAir: Boolean = false) {
+    private fun HabboResponse.parseWired(roomItem: RoomItem, wiredData: WiredData) {
         val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
-        wiredInstance?.writeDialog(this, wiredData, habboAir)
+        wiredInstance?.writeDialog(this, wiredData)
     }
 }

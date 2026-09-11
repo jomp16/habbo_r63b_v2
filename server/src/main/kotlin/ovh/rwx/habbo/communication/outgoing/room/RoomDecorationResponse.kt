@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,14 +25,25 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para decoração do quarto (ROOM_DECORATION).
+ *
+ * @param type Tipo de decoração (ex: "wallpaper", "floor", "landscape").
+ * @param value Valor da decoração.
+ */
+data class RoomDecorationData(
+    val type: String,
+    val value: String,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDecorationResponse {
     @Response(Outgoing.ROOM_DECORATION)
     @ResponseR63A(OutgoingR63A.ROOM_DECORATION)
-    fun response(habboResponse: HabboResponse, key: String, value: String) {
+    fun response(habboResponse: HabboResponse, data: RoomDecorationData) {
         habboResponse.apply {
-            writeUTF(key)
-            writeUTF(value)
+            writeUTF(data.type)
+            writeUTF(data.value)
         }
     }
 }

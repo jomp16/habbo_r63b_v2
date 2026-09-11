@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -43,8 +44,16 @@ class MessengerInitializeHandler {
         habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 500, 3000)
         habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            habboSession.sendHabboResponse(Outgoing.MESSENGER_CHAT, it.first, it.second, it.third)
+            habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_CHAT,
+                MessengerChatData(
+                    id = it.first,
+                    message = it.second,
+                    diffTimestamp = it.third,
+                )
+            )
         }
+
 
         habboSession.habboMessenger.notifyFriends()
     }
@@ -65,7 +74,14 @@ class MessengerInitializeHandler {
             habboSession.habboMessenger.friends.values
         )
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_CHAT, it.first, it.second)
+            habboSession.sendHabboResponse(
+                OutgoingR63A.MESSENGER_CHAT,
+                MessengerChatData(
+                    id = it.first,
+                    message = it.second,
+                    diffTimestamp = it.third,
+                )
+            )
         }
 
         habboSession.habboMessenger.notifyFriends()

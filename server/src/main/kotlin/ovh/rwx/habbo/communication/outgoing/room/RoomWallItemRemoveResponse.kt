@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -29,19 +30,13 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomWallItemRemoveResponse {
     @Response(Outgoing.ROOM_WALL_ITEM_REMOVE)
+    @ResponseR63A(OutgoingR63A.ROOM_WALL_ITEM_REMOVE)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem) {
         habboResponse.apply {
             writeUTF(roomItem.id.toString())
-            writeInt(roomItem.userId)
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.ROOM_WALL_ITEM_REMOVE)
-    fun responseR63A(habboResponse: HabboResponse, roomItem: RoomItem) {
-        habboResponse.apply {
-            writeUTF(roomItem.id.toString())
-            writeUTF("")
-            writeBoolean(false)
+            if (isVersionAtLeast(2011, 10, 20)) {
+                writeInt(roomItem.userId)
+            }
         }
     }
 }

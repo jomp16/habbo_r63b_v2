@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,16 +31,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomItemAliasesHandler {
     @Handler(Incoming.ROOM_ITEM_ALIASES)
+    @HandlerR63A(IncomingR63A.ROOM_ITEM_ALIASES)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_ITEM_ALIASES)
-    }
-    
-    @HandlerR63A(IncomingR63A.ROOM_ITEM_ALIASES)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_ITEM_ALIASES)
+        habboSession.sendResponse(Outgoing.ROOM_ITEM_ALIASES, OutgoingR63A.ROOM_ITEM_ALIASES)
     }
 }

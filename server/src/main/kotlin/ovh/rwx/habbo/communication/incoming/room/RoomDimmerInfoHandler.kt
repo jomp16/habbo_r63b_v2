@@ -31,6 +31,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomDimmerInfoHandler {
     @Handler(Incoming.ROOM_DIMMER_INFO)
+    @HandlerR63A(IncomingR63A.ROOM_DIMMER_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
                 habboSession,
@@ -38,18 +39,8 @@ class RoomDimmerInfoHandler {
             ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
         ) return
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_DIMMER_INFO, habboSession.currentRoom!!.itemManager.roomDimmer!!)
-    }
-
-    @HandlerR63A(IncomingR63A.ROOM_DIMMER_INFO)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null || !habboSession.currentRoom!!.userManager.hasRights(
-                habboSession,
-                true
-            ) || habboSession.currentRoom!!.itemManager.roomDimmer == null
-        ) return
-
-        habboSession.sendHabboResponse(
+        habboSession.sendResponse(
+            Outgoing.ROOM_DIMMER_INFO,
             OutgoingR63A.ROOM_DIMMER_INFO,
             habboSession.currentRoom!!.itemManager.roomDimmer!!
         )

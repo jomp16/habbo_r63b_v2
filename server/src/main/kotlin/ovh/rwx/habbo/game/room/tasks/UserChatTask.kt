@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.room.tasks
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomUserChatData
 import ovh.rwx.habbo.game.item.wired.trigger.SayTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerSaysSomething
 import ovh.rwx.habbo.game.pet.PetTrick
@@ -110,21 +111,22 @@ class UserChatTask(
         emotion: Int,
         bubble: RoomChatMessageBubbles
     ) {
-        val isR63A = habboSession.release == "R63A"
-
-        val header = when (chatType) {
-            RoomChatType.WHISPER -> if (isR63A) OutgoingR63A.ROOM_USER_WHISPER else Outgoing.ROOM_USER_WHISPER
-            RoomChatType.SHOUT -> if (isR63A) OutgoingR63A.ROOM_USER_SHOUT else Outgoing.ROOM_USER_SHOUT
-            else -> if (isR63A) OutgoingR63A.ROOM_USER_CHAT else Outgoing.ROOM_USER_CHAT
+        val (outgoing, outgoingR63A) = when (chatType) {
+            RoomChatType.WHISPER -> Outgoing.ROOM_USER_WHISPER to OutgoingR63A.ROOM_USER_WHISPER
+            RoomChatType.SHOUT -> Outgoing.ROOM_USER_SHOUT to OutgoingR63A.ROOM_USER_SHOUT
+            else -> Outgoing.ROOM_USER_CHAT to OutgoingR63A.ROOM_USER_CHAT
         }
 
-        if (isR63A) {
-            // R63A: ID Virtual, Mensagem, Emoção (Não suporta Bubble ID)
-            habboSession.sendHabboResponse(header as OutgoingR63A, virtualId, message, emotion)
-        } else {
-            // R63B: ID Virtual, Mensagem, Emoção, ID do Balão
-            habboSession.sendHabboResponse(header as Outgoing, virtualId, message, emotion, bubble)
-        }
+        habboSession.sendResponse(
+            outgoing,
+            outgoingR63A,
+            RoomUserChatData(
+                virtualId = virtualId,
+                message = message,
+                emotion = emotion,
+                bubble = bubble
+            )
+        )
     }
 
     private fun turnHeadTowardsSpeaker(listener: RoomEntity, speaker: RoomUser) {

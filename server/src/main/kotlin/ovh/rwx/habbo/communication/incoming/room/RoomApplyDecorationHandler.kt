@@ -24,6 +24,8 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomDecorationData
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -74,7 +76,11 @@ class RoomApplyDecorationHandler {
             }
         }
 
-        habboSession.currentRoom?.sendHabboResponse(Outgoing.ROOM_DECORATION, key, value)
+        habboSession.currentRoom?.sendResponse(
+            Outgoing.ROOM_DECORATION,
+            OutgoingR63A.ROOM_DECORATION,
+            RoomDecorationData(key, value)
+        )
 
         habboSession.habboInventory.removeItems(listOf(itemId), true)
     }

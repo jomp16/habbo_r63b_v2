@@ -179,7 +179,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
         // Override in subclasses to reload internal variables
     }
 
-    fun writeDialog(habboResponse: HabboResponse, wiredData: WiredData, habboAir: Boolean) {
+    fun writeDialog(
+        habboResponse: HabboResponse,
+        wiredData: WiredData,
+        habboAir: Boolean = habboResponse.isVersionAtLeast(2023, 6, 30)
+    ) {
         habboResponse.apply {
             // Determine if this wired uses items
             if (requiresItems) {

@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomVisualizationThicknessData
 import ovh.rwx.habbo.game.room.RoomState
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -108,12 +109,28 @@ class RoomSaveSettingsHandler {
         if (habboSession.currentRoom == null) {
             habboSession.sendHabboResponse(Outgoing.ROOM_SETTINGS_SAVED, roomId)
             habboSession.sendHabboResponse(Outgoing.ROOM_INFO_UPDATED, roomId)
-            habboSession.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
+            habboSession.sendResponse(
+                Outgoing.ROOM_VISUALIZATION_THICKNESS,
+                OutgoingR63A.ROOM_VISUALIZATION_THICKNESS,
+                RoomVisualizationThicknessData(
+                    room.roomData.hideWall,
+                    room.roomData.wallThick,
+                    room.roomData.floorThick
+                )
+            )
         }
 
         room.sendHabboResponse(Outgoing.ROOM_SETTINGS_SAVED, roomId)
         room.sendHabboResponse(Outgoing.ROOM_INFO_UPDATED, roomId)
-        room.sendHabboResponse(Outgoing.ROOM_VISUALIZATION_THICKNESS, room.roomData.hideWall, room.roomData.wallThick, room.roomData.floorThick)
+        room.sendResponse(
+            Outgoing.ROOM_VISUALIZATION_THICKNESS,
+            OutgoingR63A.ROOM_VISUALIZATION_THICKNESS,
+            RoomVisualizationThicknessData(
+                room.roomData.hideWall,
+                room.roomData.wallThick,
+                room.roomData.floorThick
+            )
+        )
     }
 
     @HandlerR63A(IncomingR63A.ROOM_SAVE_SETTINGS)

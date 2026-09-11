@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -27,11 +27,13 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.room.RoomInfoData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomInfoHandler {
     @Handler(Incoming.ROOM_INFO)
+    @HandlerR63A(IncomingR63A.ROOM_INFO)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
@@ -39,17 +41,10 @@ class RoomInfoHandler {
         val isLoading = habboRequest.readInt() == 1 || habboSession.currentRoom == room
         val checkEntry = habboRequest.readInt() == 1
 
-        habboSession.sendHabboResponse(Outgoing.ROOM_INFO, habboSession, room, isLoading, checkEntry)
-    }
-    
-    @HandlerR63A(IncomingR63A.ROOM_INFO)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val roomId = habboRequest.readInt()
-        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return
-        // todo: allows user to reenter room?
-        val isLoading = habboRequest.readInt() == 1 || habboSession.currentRoom == room
-        val checkEntry = habboRequest.readInt() == 1
-
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_INFO, habboSession, room, isLoading, checkEntry)
+        habboSession.sendResponse(
+            Outgoing.ROOM_INFO,
+            OutgoingR63A.ROOM_INFO,
+            RoomInfoData(habboSession, room, isLoading, checkEntry)
+        )
     }
 }

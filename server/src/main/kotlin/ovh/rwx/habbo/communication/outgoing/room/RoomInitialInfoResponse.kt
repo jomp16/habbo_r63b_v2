@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -25,14 +25,30 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * Payload estruturado para informações iniciais do quarto (ROOM_INITIAL_INFO).
+ *
+ * @param modelName Nome/ID do modelo do quarto.
+ * @param roomId ID do quarto.
+ */
+data class RoomInitialInfoData(
+    val modelName: String,
+    val roomId: Int,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomInitialInfoResponse {
     @Response(Outgoing.ROOM_INITIAL_INFO)
     @ResponseR63A(OutgoingR63A.ROOM_INITIAL_INFO)
-    fun response(habboResponse: HabboResponse, roomModelId: String, roomId: Int) {
+    fun response(habboResponse: HabboResponse, data: RoomInitialInfoData) {
         habboResponse.apply {
-            writeUTF(roomModelId)
-            writeInt(roomId)
+            val modelStr = if (outgoingR63A != null) {
+                if (data.modelName.startsWith("model_")) data.modelName else "model_${data.modelName}"
+            } else {
+                data.modelName
+            }
+            writeUTF(modelStr)
+            writeInt(data.roomId)
         }
     }
 }

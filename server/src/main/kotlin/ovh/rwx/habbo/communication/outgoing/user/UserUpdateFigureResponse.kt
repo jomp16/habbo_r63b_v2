@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,13 +23,18 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+data class UserUpdateFigureData(
+    val figure: String,
+    val gender: String,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserUpdateFigureResponse {
     @Response(Outgoing.USER_UPDATE_FIGURE)
-    fun response(habboResponse: HabboResponse, figure: String, gender: String) {
+    fun response(habboResponse: HabboResponse, data: UserUpdateFigureData) {
         habboResponse.apply {
-            writeUTF(figure)
-            writeUTF(gender)
+            writeUTF(data.figure)
+            writeUTF(data.gender)
         }
     }
 }

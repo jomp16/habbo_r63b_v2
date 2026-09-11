@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,16 +31,14 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRequestsHandler {
     @Handler(Incoming.MESSENGER_REQUESTS)
+    @HandlerR63A(IncomingR63A.MESSENGER_REQUESTS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (!habboSession.habboMessenger.initialized) return
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_REQUESTS, habboSession.habboMessenger.requests.values)
-    }
-
-    @HandlerR63A(IncomingR63A.MESSENGER_REQUESTS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (!habboSession.habboMessenger.initialized) return
-
-        habboSession.sendHabboResponse(OutgoingR63A.MESSENGER_REQUESTS, habboSession.habboMessenger.requests.values)
+        habboSession.sendResponse(
+            Outgoing.MESSENGER_REQUESTS,
+            OutgoingR63A.MESSENGER_REQUESTS,
+            habboSession.habboMessenger.requests.values
+        )
     }
 }
