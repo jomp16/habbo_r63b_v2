@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isAir
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -182,7 +183,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     fun writeDialog(
         habboResponse: HabboResponse,
         wiredData: WiredData,
-        habboAir: Boolean = habboResponse.isVersionAtLeast(2023, 6, 30)
+        habboAir: Boolean = habboResponse.isAir && habboResponse.isVersionAtLeast(2023, 6, 30)
     ) {
         habboResponse.apply {
             // Determine if this wired uses items
@@ -225,7 +226,12 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR")) {
                 writeSelectorDefinitionSpecifics(wiredData.filter, wiredData.inverse)
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
-                writeConditionDefinitionSpecifics(quantifierCode = 0)
+                if (isVersionAtLeast(2024, 5, 6)) {
+                    writeConditionDefinitionSpecifics(quantifierCode = 0)
+                } else {
+                    writeConditionDefinitionSpecifics(quantifierCode = 0)
+                    writeBoolean(false) // isInvert
+                }
             }
 
             if (habboAir) {
@@ -237,7 +243,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 writeBoolean(false) // allowWallFurni
 
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
-                    writeConditionTypeSpecifics(quantifierType = 0, isInvert = false)
+                    if (isVersionAtLeast(2024, 5, 6)) {
+                        writeConditionTypeSpecifics(quantifierType = 0, isInvert = false)
+                    } else {
+                        writeByte(0) // quantifierType lido no final do ctor da subclasse em 2023
+                    }
                 }
 
                 writeWiredContext()

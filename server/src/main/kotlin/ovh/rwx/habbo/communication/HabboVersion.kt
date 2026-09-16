@@ -134,8 +134,9 @@ fun HabboResponse.isExactVersion(year: Int, month: Int, day: Int): Boolean {
     return habboVersion.isExactVersion(year, month, day)
 }
 
-// Extensão para criar LocalDate rapidamente
-fun date(year: Int, month: Int, day: Int): LocalDate = LocalDate.of(year, month, day)
-
-val HabboResponse.releaseDate: LocalDate
-    get() = habboVersion.buildDate.toLocalDate()
+fun HabboResponse.isVersionBetween(
+    startYear: Int, startMonth: Int, startDay: Int,
+    endYear: Int, endMonth: Int, endDay: Int
+): Boolean {
+    return isVersionAtLeast(startYear, startMonth, startDay) && isVersionBefore(endYear, endMonth, endDay)
+}

@@ -20,7 +20,10 @@
 package ovh.rwx.habbo.communication.outgoing.wired
 
 import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.communication.*
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBetween
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.WiredData
@@ -32,7 +35,7 @@ class WiredEffectDialogResponse {
     @ResponseR63A(OutgoingR63A.WIRED_EFFECT_DIALOG)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            if (releaseDate in date(2011, 2, 22)..<date(2023, 6, 30)) {
+            if (isVersionBetween(2011, 2, 22, 2023, 1, 29)) {
                 writeBoolean(false)
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.navigator
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
@@ -29,31 +30,27 @@ import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorRoomCategoriesResponse {
     @Response(Outgoing.NAVIGATOR_ROOM_CATEGORIES)
+    @ResponseR63A(OutgoingR63A.NAVIGATOR_ROOM_CATEGORIES)
     fun response(habboResponse: HabboResponse, roomCategories: Collection<NavigatorRoomCategory>, rank: Int) {
         habboResponse.apply {
             writeInt(roomCategories.size)
 
-            roomCategories.forEach {
-                writeInt(it.id)
-                writeUTF(it.caption)
-                writeBoolean(it.minRank <= rank)
-                writeBoolean(false)
-                writeUTF("NONE")
-                writeUTF("")
-                writeBoolean(false)
-            }
-        }
-    }
-    
-    @ResponseR63A(OutgoingR63A.NAVIGATOR_ROOM_CATEGORIES)
-    fun responseR63A(habboResponse: HabboResponse, roomCategories: Collection<NavigatorRoomCategory>, rank: Int) {
-        habboResponse.apply {
-            writeInt(roomCategories.size)
+            roomCategories.forEach { category ->
+                writeInt(category.id)
+                writeUTF(category.caption)
 
-            roomCategories.forEach {
-                writeInt(it.id)
-                writeUTF(it.caption)
-                writeBoolean(it.minRank <= rank)
+                // `visible` foi introduzido no r46 e revertida no r45 (data de build posterior),
+                // então um gate por data classifica errado clientes r45. majorVersion é o sinal confiável aqui.
+                if (habboVersion.majorVersion >= 46) {
+                    writeBoolean(category.minRank <= rank) // visible
+
+                    if (isVersionAtLeast(2015, 12, 1)) {
+                        writeBoolean(false)   // automatic
+                        writeUTF("NONE")      // automaticCategoryKey
+                        writeUTF("")          // globalCategoryKey
+                        writeBoolean(false)   // staffOnly
+                    }
+                }
             }
         }
     }

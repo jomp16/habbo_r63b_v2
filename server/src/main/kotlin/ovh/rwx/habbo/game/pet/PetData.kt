@@ -21,9 +21,7 @@ package ovh.rwx.habbo.game.pet
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.IHabboResponseSerialize
-import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.database.user.UserInformationDao
 
 data class PetData(
@@ -86,52 +84,47 @@ data class PetData(
         habboResponse.apply {
             writeInt(id)
             writeUTF(name)
-            writeInt(type)
-            writeInt(race)
-            writeUTF(color)
-            writeInt(0) // unknown
-            writeInt(0) // custom part count
-            // start - figureString
-//                writeInt(0)
-//                writeInt(0)
-//                writeInt(0)
-            // end - qtd figureString
-            writeInt(level)
-            if (habboResponse.isVersionAtLeast(2026, 8, 6)) {
+
+            writePetFigureData()
+
+            if (isVersionAtLeast(2012, 4, 30)) {
+                writeInt(level)
+            }
+
+            if (isAir && isVersionAtLeast(2026, 5, 18)) {
                 writeInt(0) // todo: rarityLevel
             }
         }
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            writeInt(id)
-            writeUTF(name)
+        serializeHabboResponse(habboResponse, *params)
+    }
 
-            if (isVersionAtLeast(2011, 9, 14)) {
+    private fun HabboResponse.writePetFigureData() {
+        // Pré-2011: Protocolo legado baseado em string de look
+        if (isVersionBefore(2011, 2, 15)) {
+            writeUTF(look)
+            if (isVersionAtLeast(2009, 11, 13)) {
                 writeInt(type)
-                writeInt(race)
-                writeUTF(color)
-                writeInt(0) // Geralmente 'experience' ou 'nature'
-                writeInt(0) // Custom part count (LOOP start)
-                // Se o count acima for > 0, aqui entraria o loop de Int, Int, Int
-            } else if (isVersionAtLeast(2011, 9, 8)) {
-                // Build 20110908: Um Int a menos antes do loop
-                writeInt(type)
-                writeInt(race)
-                writeUTF(color)
-                writeInt(0) // Este já é o Count do Loop segundo o trace
-                // Se o count acima for > 0, aqui entraria o loop de Int, Int, Int
-            } else if (isVersionAtLeast(2011, 2, 15)) {
-                writeInt(type)
-                writeInt(race)
-                writeUTF(color)
-            } else {
-                writeUTF(look)
-                if (isVersionAtLeast(2009, 11, 13)) {
-                    writeInt(type)
-                }
             }
+            return
+        }
+
+        // Base comum a partir de 2011-02-15
+        writeInt(type)
+        writeInt(race)
+        writeUTF(color)
+
+        // A partir de 2011-09-14 foi adicionado o breedId antes das partes customizadas
+        if (isVersionAtLeast(2011, 9, 14)) {
+            writeInt(0) // todo: breedId
+        }
+
+        // A partir de 2011-09-08 foi introduzido o count de custom parts
+        if (isVersionAtLeast(2011, 9, 8)) {
+            writeInt(0) // custom part count (loop)
+            // Se count > 0: loop de writeInt, writeInt, writeInt
         }
     }
 
