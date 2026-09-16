@@ -33,6 +33,7 @@ import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
 import ovh.rwx.habbo.communication.outgoing.handshake.AuthenticationOkData
 import ovh.rwx.habbo.communication.outgoing.user.UserHomeRoomData
+import ovh.rwx.habbo.communication.outgoing.user.UserLevelRightsData
 import ovh.rwx.habbo.database.user.UserIPDao
 import ovh.rwx.habbo.database.user.UserUniqueIdDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -81,9 +82,11 @@ class HandshakeSSOTicketHandler {
         habboSession.sendHabboResponse(Outgoing.USER_NOOBNESS_LEVEL, 0)
         habboSession.sendHabboResponse(
             Outgoing.USER_RIGHTS,
-            if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
-            habboSession.userInformation.rank,
-            habboSession.userInformation.ambassador
+            UserLevelRightsData(
+                club = if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+                rank = habboSession.userInformation.rank,
+                ambassador = habboSession.userInformation.ambassador
+            )
         )
         habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS)
         habboSession.sendHabboResponse(Outgoing.ENABLE_TRADING, true)
@@ -152,8 +155,11 @@ class HandshakeSSOTicketHandler {
         )
         habboSession.sendHabboResponse(
             OutgoingR63A.USER_RIGHTS,
-            if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
-            habboSession.userInformation.rank
+            UserLevelRightsData(
+                club = if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+                rank = habboSession.userInformation.rank,
+                ambassador = habboSession.userInformation.ambassador
+            )
         )
         habboSession.sendHabboResponse(OutgoingR63A.USER_AVATAR_EFFECTS)
         habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_FAVORITES, habboSession.favoritesRooms.map { it.second })

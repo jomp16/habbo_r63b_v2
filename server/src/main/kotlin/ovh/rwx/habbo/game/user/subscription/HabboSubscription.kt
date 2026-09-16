@@ -23,6 +23,8 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
+import ovh.rwx.habbo.communication.outgoing.subscription.SubscriptionStatusData
+import ovh.rwx.habbo.communication.outgoing.user.UserLevelRightsData
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
@@ -84,9 +86,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     private fun isActive(subscription: Subscription?): Boolean {
-        if (subscription == null || subscription.trial) return false
-
-        return localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription.expire)
+        return !(subscription == null || subscription.trial) && localDateTimeNowWithoutSecondsAndNanos().isBefore(subscription.expire)
     }
 
     fun addOrExtendHabboClub(months: Int) {
@@ -177,38 +177,27 @@ class HabboSubscription(private val habboSession: HabboSession) {
             if (days == 0) days = 1
         }
 
-        if (habboSession.release != "R63A") {
-            habboSession.sendHabboResponse(
-                Outgoing.SUBSCRIPTION_STATUS,
-                CLUB_TYPE,
-                active,
-                days,
-                if (months >= 1) months - 1 else months,
-                elapsedDays,
-                minutes
+        habboSession.sendResponse(
+            Outgoing.SUBSCRIPTION_STATUS,
+            OutgoingR63A.SUBSCRIPTION_STATUS,
+            SubscriptionStatusData(
+                clubType = CLUB_TYPE,
+                active = active,
+                days = days,
+                months = if (months >= 1) months - 1 else months,
+                elapsedDays = elapsedDays,
+                minutes = minutes
             )
-            habboSession.sendHabboResponse(
-                Outgoing.USER_RIGHTS,
-                if (habboSession.userInformation.vip || hasHabboClub) 2 else 0,
-                habboSession.userInformation.rank,
-                habboSession.userInformation.ambassador
+        )
+        habboSession.sendResponse(
+            Outgoing.USER_RIGHTS,
+            OutgoingR63A.USER_RIGHTS,
+            UserLevelRightsData(
+                club = if (habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription) 2 else 0,
+                rank = habboSession.userInformation.rank,
+                ambassador = habboSession.userInformation.ambassador
             )
-        } else {
-            habboSession.sendHabboResponse(
-                OutgoingR63A.SUBSCRIPTION_STATUS,
-                CLUB_TYPE,
-                active,
-                days,
-                if (months >= 1) months - 1 else months,
-                elapsedDays,
-                minutes
-            )
-            habboSession.sendHabboResponse(
-                OutgoingR63A.USER_RIGHTS,
-                if (habboSession.userInformation.vip || hasHabboClub) 2 else 0,
-                habboSession.userInformation.rank
-            )
-        }
+        )
     }
 
     fun updateBuildersClubStatus() {

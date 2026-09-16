@@ -23,71 +23,61 @@ import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+data class SubscriptionStatusData(
+    val clubType: String,
+    val active: Boolean,
+    val days: Int,
+    val months: Int,
+    val elapsedDays: Int,
+    val minutes: Int
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class SubscriptionStatusResponse {
     @Response(Outgoing.SUBSCRIPTION_STATUS)
-    fun response(
-        habboResponse: HabboResponse,
-        clubType: String,
-        active: Boolean,
-        days: Int,
-        months: Int,
-        elapsedDays: Int,
-        minutes: Int
-    ) {
-        habboResponse.apply {
-            writeUTF(clubType)
-            writeInt(days) // days left
-            writeInt(if (active) 1 else 0) // active
-            writeInt(months) // months left
-            writeInt(1) // from request
-            writeBoolean(active)
-            writeBoolean(active)
-            writeInt(elapsedDays) // hc elapsed
-            writeInt(elapsedDays) // vip elapsed
-            writeInt(minutes) // minutes left
-            writeInt(-1) // ???????
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.SUBSCRIPTION_STATUS)
-    fun responseR63A(
-        habboResponse: HabboResponse,
-        clubType: String,
-        active: Boolean,
-        days: Int,
-        months: Int,
-        elapsedDays: Int,
-        minutes: Int
-    ) {
+    fun response(habboResponse: HabboResponse, data: SubscriptionStatusData) {
         habboResponse.apply {
-            writeUTF(clubType) // productName ("habbo_club" ou "habbo_vip")
-            writeInt(days) // daysLeft
-            writeInt(elapsedDays) // pastClubDays (Dias já passados de HC)
-            writeInt(months) // periods (Meses restantes)
-            writeInt(1) // When set to 2, the Habbo club dialogue opens.
+            // 1. Dados Fundamentais (Presente desde a RELEASE34)
+            writeUTF(data.clubType) // productName ("habbo_club" ou "habbo_vip")
+            writeInt(data.days) // daysToPeriodEnd
+            writeInt(if (isVersionBefore(2010, 4, 27) && data.active) 1 else data.elapsedDays) // memberPeriods
+            writeInt(data.months) // periodsSubscribedAhead
+            writeInt(1) // responseType (quando 2, abre a janela de compra do clube)
 
-            if (isVersionAtLeast(2009, 10, 15)) {
-                writeBoolean(active) // hasEverBeenMember
+            // 2. hasEverBeenMember (Adicionado na R39, com rollback na R38)
+            val hasEverBeenMemberSupport = isVersionAtLeast(2009, 10, 15) && habboVersion.majorVersion != 38
+            if (hasEverBeenMemberSupport) {
+                writeBoolean(data.active)
             }
 
-            if (isVersionAtLeast(2010, 4, 7)) {
-                writeBoolean(active) // isVIP
+            // 3. isVIP (Adicionado na R49, com rollback na R48)
+            val isVipSupport = isVersionAtLeast(2010, 4, 7) && habboVersion.majorVersion != 48
+            if (isVipSupport) {
+                writeBoolean(data.active)
             }
 
+            // 4. pastClubDays e pastVipDays (Adicionados na RELEASE50)
             if (isVersionAtLeast(2010, 4, 27)) {
-                writeInt(elapsedDays) // pastClubDays (Dias já passados de HC)
-                writeInt(elapsedDays) // pastVipDays (Dias já passados de VIP)
+                writeInt(data.elapsedDays) // pastClubDays
+                writeInt(data.elapsedDays) // pastVipDays
             }
 
-            if (isVersionAtLeast(2010, 11, 12) && isVersionBefore(2011, 8, 14)) {
+            // 5. Promoção temporária de assinatura (RELEASE62 até meados da R63)
+            if (isVersionBetween(2010, 11, 12, 2011, 8, 14)) {
                 writeBoolean(false) // isShowBasicPromo
                 writeInt(10) // regular price
                 writeInt(9) // price with discount
             }
 
+            // 6. minutesUntilExpiration (Adicionado na build 201108172310 da R63)
             if (isVersionAtLeast(2011, 8, 17)) {
-                writeInt(minutes) // minutes left
+                writeInt(data.minutes)
+            }
+
+            // 7. Campo extra introduzido no PRODUCTION moderno / R63B (201512012203+)
+            if (isVersionAtLeast(2015, 12, 1)) {
+                writeInt(-1) // minutesSinceLastModified / status flag
             }
         }
     }
