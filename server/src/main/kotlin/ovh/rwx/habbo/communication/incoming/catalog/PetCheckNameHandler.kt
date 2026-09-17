@@ -37,14 +37,11 @@ class PetCheckNameHandler {
     @HandlerR63A(IncomingR63A.PET_CHECK_NAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val name = habboRequest.readUTF()
-        // readInt unknown, readInt petType — not needed for validation
+        // petType — not needed for validation
+        @Suppress("UnusedVariable") val type = habboRequest.readInt()
         val result = validateName(name)
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.PET_CHECK_NAME, result, name)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.PET_CHECK_NAME, result, name)
-        }
+        habboSession.sendResponse(Outgoing.PET_CHECK_NAME, OutgoingR63A.PET_CHECK_NAME, result, name)
     }
 
     private fun validateName(name: String): Int {

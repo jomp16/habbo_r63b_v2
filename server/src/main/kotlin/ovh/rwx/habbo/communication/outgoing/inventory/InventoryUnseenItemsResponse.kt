@@ -24,45 +24,60 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.user.UserItem
+
+enum class UnseenItemCategory(val code: Int) {
+    OWNED_FURNI(1),
+    RENTED_FURNI(2),
+    PET(3),
+    BADGE(4),
+    BOT(5),
+    GAMES(6),
+    COLLECTIBLES(7),
+    CURRENCY(8);
+
+    companion object {
+        private val BY_CODE = entries.associateBy { it.code }
+
+        fun fromCode(code: Int): UnseenItemCategory = BY_CODE[code] ?: OWNED_FURNI
+    }
+}
+
+data class UnseenItemsData(
+    val items: Map<UnseenItemCategory, Collection<Int>>
+) {
+    companion object {
+        fun single(category: UnseenItemCategory, ids: Collection<Int>): UnseenItemsData {
+            return if (ids.isEmpty()) {
+                UnseenItemsData(emptyMap())
+            } else {
+                UnseenItemsData(mapOf(category to ids))
+            }
+        }
+
+        fun fromUserItems(userItems: Collection<UserItem>): UnseenItemsData {
+            if (userItems.isEmpty()) return UnseenItemsData(emptyMap())
+
+            // Tanto chão quanto parede notificam a aba principal de mobis (OWNED_FURNI)
+            return UnseenItemsData(mapOf(UnseenItemCategory.OWNED_FURNI to userItems.map { it.id }))
+        }
+    }
+}
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryUnseenItemsResponse {
     @Response(Outgoing.INVENTORY_UNSEEN_ITEMS)
-    fun response(habboResponse: HabboResponse, execute: Boolean, type: Int, ids: Collection<Int>) {
+    @ResponseR63A(OutgoingR63A.INVENTORY_UNSEEN_ITEMS)
+    fun response(habboResponse: HabboResponse, data: UnseenItemsData) {
         habboResponse.apply {
-            if (!execute) {
-                writeInt(0)
+            writeInt(data.items.size)
 
-                return
-            }
-
-            writeInt(1)
-            writeInt(type)
-            writeInt(ids.size)
-
-            ids.forEach { writeInt(it) }
-        }
-    }
-
-    @ResponseR63A(OutgoingR63A.INVENTORY_NEW_OBJECTS)
-    fun responseR63A(habboResponse: HabboResponse, userItems: Collection<UserItem>) {
-        habboResponse.apply {
-            writeInt(2)
-
-            writeInt(1) // floor items
-            userItems.filter { it.furnishing.type == ItemType.FLOOR }.let { floorItems ->
-                writeInt(floorItems.size)
-
-                floorItems.map { it.id }.forEach { writeInt(it) }
-            }
-
-            writeInt(2) // wall items
-            userItems.filter { it.furnishing.type == ItemType.WALL }.let { wallItems ->
-                writeInt(wallItems.size)
-
-                wallItems.map { it.id }.forEach { writeInt(it) }
+            data.items.forEach { (category, itemIds) ->
+                writeInt(category.code)
+                writeInt(itemIds.size)
+                itemIds.forEach { id ->
+                    writeInt(id)
+                }
             }
         }
     }

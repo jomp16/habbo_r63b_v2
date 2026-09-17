@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.user.inventory
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.game.item.user.UserItem
@@ -45,11 +46,15 @@ class HabboInventory(private val habboSession: HabboSession) {
     fun addItems(userItems: List<UserItem>) {
         items += userItems.associateBy { it.id }
 
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData.fromUserItems(userItems)
+        )
+
         if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_NEW_OBJECTS, userItems)
             habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE)
         } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 1, userItems.map { it.id })
 //            habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
             habboSession.sendHabboResponse(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE, userItems)
         }
@@ -58,11 +63,12 @@ class HabboInventory(private val habboSession: HabboSession) {
     fun addPet(petData: PetData, openInventory: Boolean = false) {
         pets[petData.id] = petData
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.PET_ADDED_TO_INVENTORY, petData, openInventory)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.PET_ADDED_TO_INVENTORY, petData, openInventory)
-        }
+        habboSession.sendResponse(
+            Outgoing.PET_ADDED_TO_INVENTORY,
+            OutgoingR63A.PET_ADDED_TO_INVENTORY,
+            petData,
+            openInventory
+        )
     }
 
     fun removeItems(itemIds: List<Int>, delete: Boolean = false) {
@@ -85,11 +91,7 @@ class HabboInventory(private val habboSession: HabboSession) {
     fun removePet(petId: Int): PetData? {
         val petData = pets.remove(petId) ?: return null
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.PET_REMOVED_FROM_INVENTORY, petData)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.PET_REMOVED_FROM_INVENTORY, petData)
-        }
+        habboSession.sendResponse(Outgoing.PET_REMOVED_FROM_INVENTORY, OutgoingR63A.PET_REMOVED_FROM_INVENTORY, petData)
 
         return petData
     }

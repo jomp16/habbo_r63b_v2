@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.communication.incoming.catalog
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -27,26 +26,18 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.communication.outgoing.catalog.CatalogGiftWrappingConfigurationData
+import ovh.rwx.habbo.communication.outgoing.catalog.CatalogMarketplaceConfigurationData
 import ovh.rwx.habbo.game.user.HabboSession
 
-@Suppress("unused")
-class CatalogGiftWrappingConfigurationHandler {
-    @Handler(Incoming.CATALOG_GIFT_WRAPPING)
-    @HandlerR63A(IncomingR63A.CATALOG_GIFT_WRAPPING)
+@Suppress("unused", "UNUSED_PARAMETER")
+class CatalogMarketplaceConfigurationHandler {
+    @Handler(Incoming.CATALOG_MARKETPLACE_CONFIGURATION)
+    @HandlerR63A(IncomingR63A.CATALOG_MARKETPLACE_CONFIGURATION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendResponse(
-            Outgoing.CATALOG_GIFT_WRAPPING,
-            OutgoingR63A.CATALOG_GIFT_WRAPPING,
-            CatalogGiftWrappingConfigurationData(
-                enabled = true,
-                cost = 1,
-                newWrapperCount = HabboServer.habboGame.itemManager.newGiftWrapper.size,
-                newWrapper = HabboServer.habboGame.itemManager.newGiftWrapper.map { it.spriteId },
-                ribbons = listOf(8, 11),
-                oldWrapperCount = HabboServer.habboGame.itemManager.oldGiftWrapper.size,
-                oldWrapper = HabboServer.habboGame.itemManager.oldGiftWrapper.map { it.spriteId }
-            )
+            Outgoing.CATALOG_MARKETPLACE_CONFIGURATION,
+            OutgoingR63A.CATALOG_MARKETPLACE_CONFIGURATION,
+            CatalogMarketplaceConfigurationData()
         )
     }
 }

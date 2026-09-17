@@ -126,7 +126,6 @@ class HabbiconManager {
             Outgoing.USER_HABBICON_STATUS_CHANGED,
             HabbiconStatusData(habbiconId, UserHabbicon.STATE_OWNED)
         )
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
         progressCollectedAchievement(habboSession)
 
         return true
@@ -173,9 +172,6 @@ class HabbiconManager {
                 recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
             ),
         )
-        newHabbiconIds.forEach { habbiconId ->
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
-        }
 
         return true
     }
@@ -202,7 +198,6 @@ class HabbiconManager {
             Outgoing.USER_HABBICON_STATUS_CHANGED,
             HabbiconStatusData(habbiconId, collection.rewardState)
         )
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 8, listOf(habbiconId))
         progressCollectedAchievement(habboSession)
 
         HabboServer.habboGame.achievementManager.progress(

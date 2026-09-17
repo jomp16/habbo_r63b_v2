@@ -27,6 +27,8 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseOkData
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemCategory
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
@@ -402,11 +404,12 @@ class CatalogManager {
 
         // todo: give 1 free pet food
 
-        if (habboSession.release != "R63A") {
-            // category 3 = PET for unseen items
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 3, listOf(petId))
-            habboSession.sendHabboResponse(Outgoing.PET_BOUGHT_NOTIFICATION, petData, false)
-        }
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData.single(UnseenItemCategory.PET, listOf(petId))
+        )
+        habboSession.sendResponse(Outgoing.PET_BOUGHT_NOTIFICATION, null, petData, false)
         habboSession.sendResponse(
             Outgoing.CATALOG_PURCHASE_OK,
             OutgoingR63A.CATALOG_PURCHASE_OK,

@@ -26,28 +26,26 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.catalog.CatalogIndexData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogIndexHandler {
     @Handler(Incoming.CATALOG_INDEX)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val mode = habboRequest.readUTF()
-
-        habboSession.sendHabboResponse(
-            Outgoing.CATALOG_INDEX,
-            mode,
-            habboSession.userInformation.rank,
-            habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription
-        )
-    }
-
     @HandlerR63A(IncomingR63A.CATALOG_INDEX)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        var type = habboRequest.readUTF()
+
+        if (type.isEmpty()) type = "NORMAL"
+
+        habboSession.sendResponse(
+            Outgoing.CATALOG_INDEX,
             OutgoingR63A.CATALOG_INDEX,
-            habboSession.userInformation.rank,
-            habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription
+            CatalogIndexData(
+                type = type,
+                rank = habboSession.userInformation.rank,
+                club = habboSession.userInformation.vip || habboSession.habboSubscription.validUserSubscription
+            )
         )
     }
 }

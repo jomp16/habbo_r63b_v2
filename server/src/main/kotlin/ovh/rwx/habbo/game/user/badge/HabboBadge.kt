@@ -22,6 +22,8 @@ package ovh.rwx.habbo.game.user.badge
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.inventory.InventoryBadgesData
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemCategory
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
@@ -59,9 +61,13 @@ class HabboBadge(private val habboSession: HabboSession) {
             habboSession.userInformation.id,
             badges.values
         )
-        if (habboSession.release != "R63A") {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, true, 4, listOf(badge.id))
-        }
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData.single(
+                UnseenItemCategory.BADGE, listOf(badge.id)
+            )
+        )
     }
 
     fun removeBadge(badgeCode: String) {

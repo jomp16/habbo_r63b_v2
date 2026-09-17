@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,25 +20,16 @@
 package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class CatalogConfigurationResponse {
-    @Response(Outgoing.CATALOG_CONFIGURATION)
-    fun response(habboResponse: HabboResponse) {
+@Suppress("unused")
+class CatalogIsOfferGiftableResponse {
+    @ResponseR63A(OutgoingR63A.CATALOG_IS_OFFER_GIFTABLE)
+    fun response(habboResponse: HabboResponse, offerId: Int, giftable: Boolean) {
         habboResponse.apply {
-            writeBoolean(true) // isEnabled
-            writeInt(1) // commission
-            writeInt(0) // tokenBatchPrice
-            writeInt(0) // tokenBatchSize
-            writeInt(1) // offerMinPrice
-            writeInt(25000) // offerMaxPrice
-            writeInt(48) // expirationHours
-            writeInt(7) // averagePricePeriod
-            writeInt(0) // sellingFeePercentage
-            writeInt(0) // revenueLimit
-            writeInt(0) // halfTaxLimit
+            writeInt(offerId)
+            writeBoolean(giftable)
         }
     }
 }

@@ -32,6 +32,7 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
 import ovh.rwx.habbo.communication.outgoing.handshake.AuthenticationOkData
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.communication.outgoing.user.UserHomeRoomData
 import ovh.rwx.habbo.communication.outgoing.user.UserLevelRightsData
 import ovh.rwx.habbo.database.user.UserIPDao
@@ -66,7 +67,11 @@ class HandshakeSSOTicketHandler {
             AuthenticationOkData(habboSession.userInformation)
         )
         habboSession.sendHabboResponse(Outgoing.AVATAR_EFFECTS)
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_UNSEEN_ITEMS, false, 0, listOf<Int>())
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData(emptyMap())
+        )
         habboSession.sendHabboResponse(
             Outgoing.HOME_ROOM,
             UserHomeRoomData(

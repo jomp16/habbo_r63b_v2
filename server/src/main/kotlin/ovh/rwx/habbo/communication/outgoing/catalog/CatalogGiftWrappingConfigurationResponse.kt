@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,33 +19,45 @@
 
 package ovh.rwx.habbo.communication.outgoing.catalog
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+
+data class CatalogGiftWrappingConfigurationData(
+    val enabled: Boolean,
+    val cost: Int,
+    val newWrapperCount: Int,
+    val newWrapper: List<Int>,
+    val ribbons: List<Int>,
+    val oldWrapperCount: Int,
+    val oldWrapper: List<Int>
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogGiftWrappingConfigurationResponse {
     @Response(Outgoing.CATALOG_GIFT_WRAPPING)
-    fun response(habboResponse: HabboResponse) {
+    @ResponseR63A(OutgoingR63A.CATALOG_GIFT_WRAPPING)
+    fun response(habboResponse: HabboResponse, data: CatalogGiftWrappingConfigurationData) {
         habboResponse.apply {
-            writeBoolean(true) // enabled modern gifts
-            writeInt(1) // cost
-            writeInt(HabboServer.habboGame.itemManager.newGiftWrapper.size)
+            writeBoolean(data.enabled) // isWrappingEnabled
+            writeInt(data.cost) // wrappingPrice
 
-            HabboServer.habboGame.itemManager.newGiftWrapper.forEach { writeInt(it.spriteId) }
+            writeInt(data.newWrapperCount)
+            data.newWrapper.forEach { writeInt(it) }
 
-            writeInt(8)
-
+            writeInt(8) // boxTypes count
             repeat(8) { writeInt(it) }
 
-            writeInt(11)
-
+            writeInt(11) // ribbonTypes count
             repeat(11) { writeInt(it) }
 
-            writeInt(HabboServer.habboGame.itemManager.oldGiftWrapper.size)
-
-            HabboServer.habboGame.itemManager.oldGiftWrapper.forEach { writeInt(it.spriteId) }
+            if (isVersionAtLeast(2011, 11, 3)) {
+                writeInt(data.oldWrapperCount)
+                data.oldWrapper.forEach { writeInt(it) }
+            }
         }
     }
 }
