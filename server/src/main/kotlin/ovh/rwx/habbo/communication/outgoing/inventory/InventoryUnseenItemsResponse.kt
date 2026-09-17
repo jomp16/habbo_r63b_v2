@@ -34,7 +34,7 @@ enum class UnseenItemCategory(val code: Int) {
     BOT(5),
     GAMES(6),
     COLLECTIBLES(7),
-    CURRENCY(8);
+    HABBICON(8);
 
     companion object {
         private val BY_CODE = entries.associateBy { it.code }

@@ -25,9 +25,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconStatusData
 import ovh.rwx.habbo.communication.outgoing.habbicon.RoomUseHabbiconData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemCategory
+import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -126,6 +129,11 @@ class HabbiconManager {
             Outgoing.USER_HABBICON_STATUS_CHANGED,
             HabbiconStatusData(habbiconId, UserHabbicon.STATE_OWNED)
         )
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData.single(UnseenItemCategory.HABBICON, listOf(habbiconId))
+        )
         progressCollectedAchievement(habboSession)
 
         return true
@@ -172,6 +180,13 @@ class HabbiconManager {
                 recentHabbiconIds = habboSession.habboHabbicon.recentHabbiconIds,
             ),
         )
+        if (newHabbiconIds.isNotEmpty()) {
+            habboSession.sendResponse(
+                Outgoing.INVENTORY_UNSEEN_ITEMS,
+                OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+                UnseenItemsData.single(UnseenItemCategory.HABBICON, newHabbiconIds)
+            )
+        }
 
         return true
     }
@@ -197,6 +212,11 @@ class HabbiconManager {
         habboSession.sendHabboResponse(
             Outgoing.USER_HABBICON_STATUS_CHANGED,
             HabbiconStatusData(habbiconId, collection.rewardState)
+        )
+        habboSession.sendResponse(
+            Outgoing.INVENTORY_UNSEEN_ITEMS,
+            OutgoingR63A.INVENTORY_UNSEEN_ITEMS,
+            UnseenItemsData.single(UnseenItemCategory.HABBICON, listOf(habbiconId))
         )
         progressCollectedAchievement(habboSession)
 
