@@ -22,6 +22,8 @@ package ovh.rwx.habbo.game.habbicon
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -203,15 +205,19 @@ class HabbiconManager {
         val collectionHabbicons = collection.habbicons.filter { it.id != collection.rewardHabbiconId && it.enabled }
         val ownedCount = collectionHabbicons.count { userHabbicons.containsKey(it.id) }
 
-        if (ownedCount < collectionHabbicons.size) return false
+        val targetState = if (collection.rewardState in listOf(UserHabbicon.STATE_OWNED, UserHabbicon.STATE_FAVORITE)) {
+            collection.rewardState
+        } else {
+            UserHabbicon.STATE_OWNED
+        }
 
-        val id = HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, collection.rewardState)
-        val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, collection.rewardState)
+        val id = HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, targetState)
+        val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, targetState)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
 
         habboSession.sendHabboResponse(
             Outgoing.USER_HABBICON_STATUS_CHANGED,
-            HabbiconStatusData(habbiconId, collection.rewardState)
+            HabbiconStatusData(habbiconId, targetState)
         )
         habboSession.sendResponse(
             Outgoing.INVENTORY_UNSEEN_ITEMS,
@@ -266,10 +272,6 @@ class HabbiconManager {
         val userHabbicon = habboSession.habboHabbicon.userHabbicons[habbiconId] ?: return false
         if (userHabbicon.state != UserHabbicon.STATE_OWNED && userHabbicon.state != UserHabbicon.STATE_FAVORITE) return false
 
-        recordRecentUse(habboSession, habbiconId)
-
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_HabbiconUsed", 1, accumulate = true)
-
         val roomUser = habboSession.roomUser
         if (roomUser != null) {
             habboSession.roomUser?.idle = false
@@ -277,6 +279,17 @@ class HabbiconManager {
                 Outgoing.ROOM_USE_HABBICON,
                 RoomUseHabbiconData(roomUser.virtualID, habbiconId)
             )
+
+            HabboServer.applicationScope.launch(Dispatchers.IO) {
+                recordRecentUse(habboSession, habbiconId)
+
+                HabboServer.habboGame.achievementManager.progress(
+                    habboSession,
+                    "ACH_HabbiconUsed",
+                    1,
+                    accumulate = true
+                )
+            }
         }
 
         return true
@@ -289,9 +302,6 @@ class HabbiconManager {
         if (!habboSession.habboMessenger.friends.containsKey(recipientId)) return false
         val recipientSession = HabboServer.habboSessionManager.getHabboSessionById(recipientId) ?: return false
 
-        recordRecentUse(habboSession, habbiconId)
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_HabbiconUsed", 1, accumulate = true)
-
         recipientSession.sendHabboResponse(
             Outgoing.MESSENGER_CHAT,
             MessengerChatData(
@@ -303,6 +313,12 @@ class HabbiconManager {
                 figure = habboSession.userInformation.figure
             )
         )
+
+        HabboServer.applicationScope.launch(Dispatchers.IO) {
+            recordRecentUse(habboSession, habbiconId)
+
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_HabbiconUsed", 1, accumulate = true)
+        }
 
         return true
     }

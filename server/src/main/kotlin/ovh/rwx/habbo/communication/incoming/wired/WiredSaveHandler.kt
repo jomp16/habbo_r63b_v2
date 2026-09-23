@@ -39,15 +39,22 @@ class WiredSaveHandler {
         val itemId = habboRequest.readInt()
         val roomItem = habboSession.currentRoom!!.itemManager.items[itemId] ?: return
 
-        val isModernWired = habboSession.habboVersion.isVersionAtLeast(2023, 6, 30)
         if (habboSession.currentRoom!!.itemManager.wiredHandler.saveWired(
                 roomItem,
                 habboRequest,
-                habboAir = isModernWired
+                habboSession
             )
         ) {
             if (habboSession.release != "R63A") {
                 habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
+                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_") ||
+                    roomItem.furnishing.interactionType.name.contains("TEXT_CONNECTOR")
+                ) {
+                    habboSession.currentRoom!!.networkDispatcher.sendResponseModern(
+                        Outgoing.WIRED_ALL_VARIABLES_HASH,
+                        habboSession.currentRoom!!
+                    )
+                }
             }
         }
     }

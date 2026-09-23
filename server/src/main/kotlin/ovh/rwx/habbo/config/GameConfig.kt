@@ -19,10 +19,33 @@
 
 package ovh.rwx.habbo.config
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class GameConfig(
-    val banzai: BanzaiConfig
+    val banzai: BanzaiConfig,
+    val snowwar: SnowWarConfig = SnowWarConfig()
 )
 
 data class BanzaiConfig(
     val strict: Boolean
+)
+
+data class SnowWarConfig(
+    val enabled: Boolean = true,
+    @param:JsonProperty("min_players")
+    val minPlayers: Int = 10,
+    @param:JsonProperty("max_players")
+    val maxPlayers: Int = 10,
+    @param:JsonProperty("countdown_seconds")
+    val countdownSeconds: Int = 10,
+    @param:JsonProperty("stage_starting_seconds")
+    val stageStartingSeconds: Int = 5,
+    @param:JsonProperty("game_duration_seconds")
+    val gameDurationSeconds: Int = 120,
+    @param:JsonProperty("free_games_daily_regular")
+    val freeGamesDailyRegular: Int = 3,
+    @param:JsonProperty("free_games_daily_hc")
+    val freeGamesDailyHc: Int = 30,
+    @param:JsonProperty("forced_arena_id")
+    val forcedArenaId: Int = 0
 )

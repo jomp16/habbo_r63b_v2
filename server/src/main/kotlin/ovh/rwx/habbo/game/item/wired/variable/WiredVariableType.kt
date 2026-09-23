@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,26 +20,17 @@
 package ovh.rwx.habbo.game.item.wired.variable
 
 enum class WiredVariableType(val code: Int) {
-    CONDITION_EVALUATION(0), // has custom UI
-    UNKNOWN_1(1), // has custom UI
-    UNKNOWN_2(2), // has custom UI
-    UNKNOWN_3(3), // has custom UI
-    UNKNOWN_4(4), // has custom UI
-    UNKNOWN_5(5), // has custom UI
-    NO_MOVE_ANIMATION(6), // has custom UI
-    UNKNOWN_7(7), // has custom UI
-    CARRY_USERS(8),
-    ANIMATION_TIME(9),
-    FURNI_SELECTOR_FILTER(10),
-    USER_SELECTOR_FILTER(11),
-    FURNI_VARIABLE_FILTER(12),
-    USER_VARIABLE_FILTER(13),
-    USERNAME_PLACEHOLDER(14),
-    VARIABLE_PLACEHOLDER(15),
-    VARIABLE_CAPTURER(16),
-    EXECUTE_IN_ORDER(17),
-    VARIABLE_TEXT_CONVERTER(1000),
-    VARIABLE_LEVEL_UP(1001),
-    VARIABLE_TIME_UTIL(1002),
-    GLOBAL_PLACEHOLDER(2000)
+    USER_DEFINED(0),
+    INTERNAL(1),
+    TEXT(2),
+    NUMBER(3);
+
+    companion object {
+        val CUSTOM = USER_DEFINED
+        val SYSTEM = INTERNAL
+        val STRING = TEXT
+        val INTEGER = NUMBER
+
+        fun fromCode(code: Int): WiredVariableType? = entries.firstOrNull { it.code == code }
+    }
 }

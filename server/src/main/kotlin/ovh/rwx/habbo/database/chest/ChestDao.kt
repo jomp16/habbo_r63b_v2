@@ -222,6 +222,19 @@ object ChestDao {
         total to logs
     }
 
+    fun getRoomLogs(roomId: Int, limit: Int, page: Int): Pair<Int, List<ChestLog>> = HabboServer.database {
+        val total = select(
+            "SELECT COUNT(*) AS `total` FROM `chest_logs` WHERE `room_id` = :room_id",
+            mapOf("room_id" to roomId)
+        ) { it.int("total") }.firstOrNull() ?: 0
+        val logs = select(
+            "SELECT * FROM `chest_logs` WHERE `room_id` = :room_id ORDER BY `id` DESC LIMIT :limit OFFSET :offset",
+            mapOf("room_id" to roomId, "limit" to limit, "offset" to ((page - 1).coerceAtLeast(0) * limit))
+        ) { mapLog(it) }
+
+        total to logs
+    }
+
     fun getChestLog(logId: Long): ChestLog? = HabboServer.database {
         select(
             "SELECT * FROM `chest_logs` WHERE `id` = :log_id LIMIT 1",

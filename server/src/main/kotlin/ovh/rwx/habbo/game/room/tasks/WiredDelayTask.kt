@@ -22,12 +22,18 @@ package ovh.rwx.habbo.game.room.tasks
 import ovh.rwx.habbo.game.item.wired.WiredDelayEvent
 import ovh.rwx.habbo.game.room.IRoomTask
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.slide.flushWiredMovements
 
 class WiredDelayTask(private val wiredDelayEvent: WiredDelayEvent) : IRoomTask {
     override fun executeTask(room: Room) {
         if (wiredDelayEvent.counter.incrementAndGet() >= wiredDelayEvent.delay) {
             room.itemManager.wiredHandler.lightWired(wiredDelayEvent.wiredEffect)
             wiredDelayEvent.wiredEffect.onEffect(wiredDelayEvent.wiredContext)
+
+            if (wiredDelayEvent.wiredContext.batchedMovements.isNotEmpty()) {
+                room.flushWiredMovements(wiredDelayEvent.wiredContext.batchedMovements)
+                wiredDelayEvent.wiredContext.batchedMovements.clear()
+            }
 
             return
         }

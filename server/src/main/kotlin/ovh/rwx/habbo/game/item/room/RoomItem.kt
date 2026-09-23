@@ -29,9 +29,11 @@ import ovh.rwx.habbo.communication.outgoing.room.RoomItemPlacedData
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerBotReachesFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOffFurni
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerWalksOnFurni
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomBot
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.util.Direction
 import ovh.rwx.habbo.util.Vector2
@@ -251,6 +253,14 @@ data class RoomItem(
             roomEntity,
             FurniTriggerData(this)
         )
+
+        if (roomEntity is RoomBot) {
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerBotReachesFurni::class,
+                roomEntity,
+                FurniTriggerData(this)
+            )
+        }
     }
 
     fun onEntityWalksOff(roomEntity: RoomEntity, handleInteractor: Boolean) {
@@ -333,5 +343,15 @@ data class RoomItem(
             else -> if (rotation == 2 || rotation == 6) vector3.x == (if (rotation == 6) position.x + 1 else position.x - 1) && vector3.y >= position.y && vector3.y < position.y + furnishing.width
             else vector3.y == (if (rotation == 0) position.y + 1 else position.y - 1) && vector3.x >= position.x && vector3.x < position.x + furnishing.length
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is RoomItem) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
     }
 }

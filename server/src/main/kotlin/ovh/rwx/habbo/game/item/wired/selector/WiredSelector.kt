@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.util.Vector2
 
 abstract class WiredSelector(room: Room, roomItem: RoomItem) : WiredItem(room, roomItem) {
     abstract fun onSelect(context: WiredContext)
@@ -59,6 +60,81 @@ abstract class WiredSelector(room: Room, roomItem: RoomItem) : WiredItem(room, r
             } else {
                 contextTargets.removeAll(currentSelection.toSet())
             }
+        }
+    }
+
+    fun getNeighborhoodOffsets(options: List<Int>, radius: Int = 10): List<Vector2> {
+        if (options.size < 4) {
+            val list = mutableListOf<Vector2>()
+            for (dx in -1..1) {
+                for (dy in -1..1) {
+                    list.add(Vector2(dx, dy))
+                }
+            }
+            return list
+        }
+
+        val spiralParams = options.subList(3, options.size)
+        val bitmask = mutableListOf<Boolean>()
+        for (intVal in spiralParams) {
+            for (b in 0 until 32) {
+                bitmask.add((intVal and (1 shl b)) != 0)
+            }
+        }
+
+        val side = radius * 2 + 1
+        val totalTiles = side * side
+        val activeOffsets = mutableListOf<Vector2>()
+        var rank = 0
+        var cx = 0
+        var cy = 0
+        var stepSize = 1
+        val directions = listOf(Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0), Vector2(0, 1))
+        var dirIdx = 0
+
+        while (rank < totalTiles) {
+            for (sideRepeat in 0 until 2) {
+                for (step in 0 until stepSize) {
+                    if (rank < bitmask.size && bitmask[rank]) {
+                        activeOffsets.add(Vector2(cx, cy))
+                    }
+                    val dir = directions[dirIdx]
+                    cx += dir.x
+                    cy += dir.y
+                    rank++
+                    if (rank >= totalTiles) break
+                }
+                if (rank >= totalTiles) break
+                dirIdx = (dirIdx + 1) % 4
+            }
+            stepSize++
+        }
+        return activeOffsets
+    }
+
+    fun compareVariableValue(varValue: Any?, operator: Int, refValue: Double): Boolean {
+        if (varValue == null) return false
+        val num = (varValue as? Number)?.toDouble()
+            ?: varValue.toString().toDoubleOrNull()
+
+        if (num != null) {
+            return when (operator) {
+                0 -> num < refValue
+                1 -> Math.abs(num - refValue) < 0.0001
+                2 -> num > refValue
+                3 -> num <= refValue
+                4 -> Math.abs(num - refValue) >= 0.0001
+                5 -> num >= refValue
+                else -> false
+            }
+        }
+
+        val str = varValue.toString()
+        val refStr = if (refValue % 1.0 == 0.0) refValue.toLong().toString() else refValue.toString()
+        return when (operator) {
+            1 -> str.equals(refStr, ignoreCase = true)
+            4 -> !str.equals(refStr, ignoreCase = true)
+            else -> false
         }
     }
 }

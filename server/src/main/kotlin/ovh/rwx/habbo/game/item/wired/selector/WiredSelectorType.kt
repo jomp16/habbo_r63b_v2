@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -26,7 +26,7 @@ enum class WiredSelectorType(val code: Int) {
     USERS_IN_TEAM(3), // has custom UI
     FURNI_ON_FURNI(4), // has custom UI
     FURNI_FROM_SIGNAL(5),
-    UNKNOWN_6(6), // has custom UI
+    FURNI_IN_NEIGHBORHOOD(6), // has custom UI
     FURNI_IN_AREA(7), // has custom UI
     USERS_ON_FURNI(8),
     USERS_PERFORMING_ACTION(9), // has custom UI
@@ -37,7 +37,7 @@ enum class WiredSelectorType(val code: Int) {
     USERS_WITH_HANDITEM(14), // has custom UI
     USERS_IN_GROUP(15), // has custom UI
     FURNI_WITH_ALTITUDE(16), // has custom UI
-    UNKNOWN_17(17), // has custom UI
+    FURNI_WITH_VARIABLE(17), // has custom UI
     USERS_WITH_VARIABLE(18), // has custom UI
     REMOTE_SELECTOR(19) // has custom UI
 }

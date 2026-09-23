@@ -35,5 +35,6 @@ data class WiredData(
     // --- NOVOS CAMPOS AIR / INPUT SOURCES ---
     var furniSources: List<WiredFurniSource> = emptyList(),
     var userSources: List<WiredUserSource> = emptyList(),
-    var stuffIds2: List<Int> = emptyList()     // Lista secundária de itens selecionados
+    var stuffIds2: List<Int> = emptyList(),     // Lista secundária de itens selecionados
+    var variableIds: List<String> = emptyList() // IDs das variáveis associadas ao Wired
 )

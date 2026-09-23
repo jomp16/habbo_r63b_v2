@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
@@ -40,9 +41,14 @@ class WiredTriggerWalksOnFurni(room: Room, roomItem: RoomItem) : WiredTrigger<Fu
 
     override fun onTrigger(wiredContext: WiredContext, data: FurniTriggerData): Boolean {
         val walkedItem = data.roomItem
-
         val items = wiredContext.getEffectiveFurnis(this)
-        val triggered = items.contains(walkedItem)
+        val matchByType = roomItem.wiredData?.furniSources?.contains(WiredFurniSource.TRIGGERING_ITEM) == true
+        val triggered = if (matchByType) {
+            val targetSprites = items.map { it.furnishing.spriteId }.toSet()
+            walkedItem.furnishing.spriteId in targetSprites
+        } else {
+            items.contains(walkedItem)
+        }
 
         if (triggered) {
             wiredContext.sourceItem = walkedItem

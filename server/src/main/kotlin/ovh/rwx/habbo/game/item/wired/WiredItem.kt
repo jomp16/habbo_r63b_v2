@@ -21,14 +21,16 @@ package ovh.rwx.habbo.game.item.wired
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.isAir
-import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.*
+import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
+import ovh.rwx.habbo.game.item.wired.variable.*
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.user.HabboSession
 
 abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -61,6 +63,18 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     open val defaultFurniSource: WiredFurniSource
         get() = if (requiresItems) WiredFurniSource.SELECTED_ITEMS else WiredFurniSource.TRIGGERING_ITEM
 
+    open val allowedFurniSourceGroups: List<List<WiredFurniSource>>
+        get() = if (allowedFurniSources.isNotEmpty()) listOf(allowedFurniSources) else emptyList()
+
+    open val defaultFurniSourceGroups: List<WiredFurniSource>
+        get() = if (allowedFurniSourceGroups.isNotEmpty()) {
+            if (defaultFurniSource in (allowedFurniSourceGroups.firstOrNull() ?: emptyList())) {
+                listOf(defaultFurniSource)
+            } else {
+                listOf(allowedFurniSourceGroups.first().first())
+            }
+        } else emptyList()
+
     open val allowedUserSources: List<WiredUserSource>
         get() = if (requiresUsers) {
             listOf(
@@ -72,9 +86,29 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             emptyList() // Se for false, esconde o menu de opções de usuário no client
         }
 
+    open val stuffTypeSelectionEnabled: Boolean
+        get() = requiresItems
+
+    open fun getStuffTypeSelectionCode(wiredData: WiredData): Int {
+        return if (wiredData.furniSources.contains(WiredFurniSource.TRIGGERING_ITEM)) 1 else 0
+    }
+
     open val defaultUserSource: WiredUserSource = WiredUserSource.TRIGGERING_USER
 
-    fun saveWired(habboRequest: HabboRequest, habboAir: Boolean): Boolean {
+    open val allowedUserSourceGroups: List<List<WiredUserSource>>
+        get() = if (allowedUserSources.isNotEmpty()) listOf(allowedUserSources) else emptyList()
+
+    open val defaultUserSourceGroups: List<WiredUserSource>
+        get() = if (allowedUserSourceGroups.isNotEmpty()) {
+            if (defaultUserSource in (allowedUserSourceGroups.firstOrNull() ?: emptyList())) {
+                listOf(defaultUserSource)
+            } else {
+                listOf(allowedUserSourceGroups.first().first())
+            }
+        } else emptyList()
+
+    fun saveWired(habboRequest: HabboRequest, habboSession: HabboSession): Boolean {
+        val habboAir = habboSession.habboVersion.isAir && habboSession.habboVersion.isVersionAtLeast(2023, 4, 14)
         roomItem.wiredData?.let {
             // param2: intParams
             val intParamsCount = habboRequest.readInt()
@@ -93,7 +127,9 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 val itemId = habboRequest.readInt()
                 if (room.itemManager.items.containsKey(itemId)) {
                     val roomItem1 = room.itemManager.items[itemId] ?: return@repeat
-                    if (!roomItem1.furnishing.interactionType.name.startsWith("WIRED")) {
+                    val isWiredLogic = roomItem1.furnishing.interactionType.name.startsWith("WIRED_") &&
+                            roomItem1.furnishing.interactionType != InteractionType.WIRED_ANTENNA
+                    if (!isWiredLogic) {
                         roomItemsIds += itemId
                     }
                 }
@@ -136,34 +172,50 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 }
                 it.userSources = userSources
 
-                // param3: resolveVariableIds() - TODO: implement variableIds
-                val variableIdsCount = habboRequest.readInt()
-                if (variableIdsCount > 0) {
-                    log.info("[WIRED] TODO: variableIdsCount: {}", variableIdsCount)
+                // param3: resolveVariableIds()
+                if (habboSession.habboVersion.isVersionAtLeast(2023, 6, 30)) {
+                    val variableIdsCount = habboRequest.readInt()
+                    val variableIds = mutableListOf<String>()
                     repeat(variableIdsCount) { _ ->
-                        @Suppress("UNUSED_VARIABLE")
-                        val variableId = habboRequest.readUTF() // CORRIGIDO: O AS3 envia uma String aqui!
+                        variableIds += if (habboSession.habboVersion.isVersionBefore(2024, 12, 12)) {
+                            habboRequest.readInt().toString()
+                        } else {
+                            habboRequest.readUTF()
+                        }
                     }
+                    it.variableIds = variableIds
                 }
 
                 // param6: getStuffIds2() (Mobis secundários)
-                val stuffIds2Count = habboRequest.readInt()
-                val roomItemsIds2 = mutableListOf<Int>()
-                repeat(stuffIds2Count) { _ ->
-                    val itemId = habboRequest.readInt()
-                    if (room.itemManager.items.containsKey(itemId)) {
-                        val roomItem2 = room.itemManager.items[itemId] ?: return@repeat
-                        if (!roomItem2.furnishing.interactionType.name.startsWith("WIRED")) {
-                            roomItemsIds2 += itemId
+                if (habboSession.habboVersion.isVersionAtLeast(2025, 5, 6)) {
+                    val stuffIds2Count = habboRequest.readInt()
+                    val roomItemsIds2 = mutableListOf<Int>()
+                    repeat(stuffIds2Count) { _ ->
+                        val itemId = habboRequest.readInt()
+                        if (room.itemManager.items.containsKey(itemId)) {
+                            val roomItem2 = room.itemManager.items[itemId] ?: return@repeat
+                            val isWiredLogic2 = roomItem2.furnishing.interactionType.name.startsWith("WIRED_") &&
+                                    roomItem2.furnishing.interactionType != InteractionType.WIRED_ANTENNA
+                            if (!isWiredLogic2) {
+                                roomItemsIds2 += itemId
+                            }
                         }
                     }
+                    it.stuffIds2 = roomItemsIds2
                 }
-                it.stuffIds2 = roomItemsIds2
 
             } else {
                 // Delay apenas para effects na versão antiga
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
                     it.delay = habboRequest.readInt()
+                }
+
+                // stuffTypeSelectionCode (Flash clássico)
+                val stuffTypeSelectionCode = habboRequest.readInt()
+                if (stuffTypeSelectionCode == 1) {
+                    it.furniSources = listOf(WiredFurniSource.TRIGGERING_ITEM)
+                } else {
+                    it.furniSources = listOf(WiredFurniSource.SELECTED_ITEMS)
                 }
             }
 
@@ -182,10 +234,14 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
     fun writeDialog(
         habboResponse: HabboResponse,
-        wiredData: WiredData,
-        habboAir: Boolean = habboResponse.isAir && habboResponse.isVersionAtLeast(2023, 6, 30)
+        wiredData: WiredData
     ) {
+        val habboAir = habboResponse.isAir && habboResponse.isVersionAtLeast(2023, 4, 14)
         habboResponse.apply {
+            if (!habboAir && isVersionBetween(2011, 2, 22, 2023, 4, 14)) {
+                writeBoolean(stuffTypeSelectionEnabled)
+            }
+
             // Determine if this wired uses items
             if (requiresItems) {
                 writeItems(wiredData, habboAir)
@@ -203,18 +259,33 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 else -> 0
             }
 
-            writeSettings(this, wiredData.message, wiredData.options, settingsCount, habboAir)
+            writeSettings(
+                wiredData.message,
+                wiredData.options,
+                settingsCount,
+                habboAir,
+                getStuffTypeSelectionCode(wiredData)
+            )
 
             if (habboAir) {
-                writeListOfIds(emptyList()) // todo: variable ids
+                if (isVersionAtLeast(2023, 6, 30)) {
+                    writeInt(wiredData.variableIds.size)
+                    wiredData.variableIds.forEach {
+                        if (isVersionBefore(2024, 12, 12)) {
+                            writeInt(it.toIntOrNull() ?: 0)
+                        } else {
+                            writeUTF(it)
+                        }
+                    }
+                }
                 // furniSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
                 val fSources =
-                    wiredData.furniSources.ifEmpty { listOf(this@WiredItem.defaultFurniSource) }.map { it.code }
+                    wiredData.furniSources.ifEmpty { this@WiredItem.defaultFurniSourceGroups }.map { it.code }
                 writeListOfIds(fSources)
 
                 // userSourceTypes: Pega do DB. Se estiver vazio (novo), usa o default definido no WiredItem
                 val uSources =
-                    wiredData.userSources.ifEmpty { listOf(this@WiredItem.defaultUserSource) }.map { it.code }
+                    wiredData.userSources.ifEmpty { this@WiredItem.defaultUserSourceGroups }.map { it.code }
                 writeListOfIds(uSources)
             }
 
@@ -235,9 +306,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             }
 
             if (habboAir) {
-                // A aba "Avançado" só deve aparecer se o Wired tiver mais de 1 opção de fonte de Mobi ou de Usuário!
-                val hasAdvancedMode =
-                    this@WiredItem.allowedFurniSources.size > 1 || this@WiredItem.allowedUserSources.size > 1
+                // A aba "Avançado" só deve aparecer se o Wired tiver opções de fonte configuradas
+                val hasAdvancedMode = this@WiredItem.allowedFurniSourceGroups.sumOf { it.size } > 1 ||
+                        this@WiredItem.allowedUserSourceGroups.sumOf { it.size } > 1 ||
+                        this@WiredItem.allowedFurniSourceGroups.size > 1 ||
+                        this@WiredItem.allowedUserSourceGroups.size > 1
                 writeBoolean(hasAdvancedMode)
                 writeInputSourcesConf(this@WiredItem)
                 writeBoolean(false) // allowWallFurni
@@ -250,8 +323,12 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                     }
                 }
 
-                writeWiredContext()
-                writeDefaultIntParams()
+                if (isVersionAtLeast(2024, 5, 6)) {
+                    writeWiredContext(buildWiredContextBlocks(roomItem.room, wiredData, roomItem, this@WiredItem))
+                }
+                if (isVersionAtLeast(2025, 5, 6)) {
+                    writeDefaultIntParams()
+                }
             } else {
                 // Legacy format - conflictingActions
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER")) {
@@ -268,27 +345,23 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             writeInt(0) // selectable items
             writeInt(0) // items
 
-            if (habboAir) {
-                writeInt(0) // todo: stuffIds2
+            if (habboAir && isVersionAtLeast(2025, 5, 6)) {
+                writeInt(0) // stuffIds2
             }
         }
 
         fun HabboResponse.writeItems(wiredData: WiredData, habboAir: Boolean) {
             writeInt(20) // selectable items
-            if (wiredData.items.isEmpty()) {
-                writeInt(0)
-            } else {
-                wiredData.items.let { roomItems ->
-                    writeInt(roomItems.size) // how many selected items
-                    roomItems.forEach { writeInt(it) } // items
-                }
+            writeInt(wiredData.items.size)
+
+            wiredData.items.forEach {
+                writeInt(it)
             }
 
-            if (habboAir) {
-                // stuffIds2 (Lista secundária)
-                wiredData.stuffIds2.let { stuffIds2 ->
-                    writeInt(stuffIds2.size)
-                    stuffIds2.forEach { writeInt(it) }
+            if (habboAir && isVersionAtLeast(2025, 5, 6)) {
+                writeInt(wiredData.stuffIds2.size)
+                wiredData.stuffIds2.forEach {
+                    writeInt(it)
                 }
             }
         }
@@ -319,226 +392,177 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             writeInt(0)
         }
 
-        fun HabboResponse.writeEmptySettings(habboAir: Boolean = false) {
-            writeUTF("") // no text box
-            writeInt(0) // no options
-
-            if (!habboAir) {
-                writeInt(0) // ??? - algo sobre requiresFurni
-            }
-        }
-
-        fun writeSettings(
-            response: HabboResponse,
-            textBox: String,
-            settings: List<Int>,
-            exceptedSettingsSize: Int,
-            habboAir: Boolean
+        fun HabboResponse.writeSettings(
+            text: String,
+            options: List<Int>,
+            settingsCount: Int,
+            habboAir: Boolean,
+            selectionCode: Int = 0
         ) {
-            response.writeUTF(textBox)
-            response.writeInt(exceptedSettingsSize)
-
-            if (exceptedSettingsSize > 0) {
-                if (settings.size != exceptedSettingsSize) {
-                    repeat((0 until exceptedSettingsSize).count()) { response.writeInt(0) }
-                } else {
-                    settings.forEach { response.writeInt(it) }
+            writeUTF(text)
+            writeInt(settingsCount)
+            if (options.isNotEmpty()) {
+                options.forEach {
+                    writeInt(it)
                 }
             }
-
-            if (!habboAir && response.isVersionAtLeast(2011, 2, 22)) {
-                response.writeInt(0) // stuffTypeSelectionCode
+            if (!habboAir) {
+                writeInt(selectionCode) // stuffTypeSelectionCode no Flash clássico
             }
         }
 
-        fun HabboResponse.writeListOfIds(listOfIds: List<Int>) {
-            writeInt(listOfIds.size) // amountFurniSelections
-            listOfIds.forEach {
+        fun HabboResponse.writeListOfIds(list: List<Int>) {
+            writeInt(list.size)
+            list.forEach {
                 writeInt(it)
             }
         }
 
         /**
          * Constrói dinamicamente os menus dropdown de origem do Wired baseado
-         * nas permissões definidas na subclasse (allowedFurniSources / allowedUserSources).
+         * nas permissões definidas na subclasse (allowedFurniSourceGroups / allowedUserSourceGroups).
          */
         fun HabboResponse.writeInputSourcesConf(wiredItem: WiredItem) {
-            val furniCodes = wiredItem.allowedFurniSources.map { it.code }
-            val userCodes = wiredItem.allowedUserSources.map { it.code }
+            val furniGroups = wiredItem.allowedFurniSourceGroups
+            val userGroups = wiredItem.allowedUserSourceGroups
+            val defaultFurni = wiredItem.defaultFurniSourceGroups
+            val defaultUser = wiredItem.defaultUserSourceGroups
 
-            // 1. _SafeStr_6921 (getAllowedFurniSources)
-            // O cliente aceita múltiplas listas, mas 99% dos Wireds usam apenas 1 lista principal.
-            // todo: corrigir acima, o wired mover mobi para mobi tem 2 furni source.
-            writeInt(if (furniCodes.isNotEmpty()) 1 else 0) // Quantidade de grupos de seleção
-            if (furniCodes.isNotEmpty()) {
-                writeInt(furniCodes.size) // Quantidade de opções neste grupo
-                furniCodes.forEach { writeInt(it) }
+            // 1. _SafeStr_7491 (getAllowedFurniSources)
+            writeInt(furniGroups.size)
+            furniGroups.forEach { group ->
+                writeInt(group.size)
+                group.forEach { writeInt(it.code) }
             }
 
-            // 2. _SafeStr_6922 (getAllowedUserSources)
-            writeInt(if (userCodes.isNotEmpty()) 1 else 0)
-            if (userCodes.isNotEmpty()) {
-                writeInt(userCodes.size)
-                userCodes.forEach { writeInt(it) }
+            // 2. _SafeStr_7492 (getAllowedUserSources)
+            writeInt(userGroups.size)
+            userGroups.forEach { group ->
+                writeInt(group.size)
+                group.forEach { writeInt(it.code) }
             }
 
-            // 3. _SafeStr_6923 (defaultFurniSources)
-            // Se o Wired suportar mobis, enviamos o padrão definido pela classe
-            if (furniCodes.isNotEmpty()) {
-                writeInt(1)
-                writeInt(wiredItem.defaultFurniSource.code)
-            } else {
-                writeInt(0)
-            }
+            // 3. _SafeStr_7493 (defaultFurniSources)
+            writeInt(defaultFurni.size)
+            defaultFurni.forEach { writeInt(it.code) }
 
-            // 4. _SafeStr_6924 (defaultUserSources)
-            // Se o Wired suportar usuários, enviamos o padrão definido pela classe
-            if (userCodes.isNotEmpty()) {
-                writeInt(1)
-                writeInt(wiredItem.defaultUserSource.code)
-            } else {
-                writeInt(0)
-            }
+            // 4. _SafeStr_7494 (defaultUserSources)
+            writeInt(defaultUser.size)
+            defaultUser.forEach { writeInt(it.code) }
         }
 
-        fun HabboResponse.writeWiredContext() {
-            // TODO: needs implementing
-            // var _loc4_:int = param1.readInteger();
-            //         _loc3_ = 0;
-            //         while(_loc3_ < _loc4_)
-            //         {
-            //            _loc2_ = param1.readInteger();
-            //            switch(_loc2_)
-            //            {
-            //               case _SafeCls_4319._SafeStr_9768: // 0
-            //                  _SafeStr_9214 = new AllVariablesInRoom(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9747: // 1
-            //                  _SafeStr_8790 = new VariableInfoAndHolders(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9756: // 2
-            //                  _SafeStr_9338 = new VariableInfoAndHolders(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9861: // 3
-            //                  _SafeStr_9178 = new VariableInfoAndValue(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9816: // 4
-            //                  _SafeStr_8575 = new SharedVariableList(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9748: // 5
-            //                  _SafeStr_9560 = VariableList.createFromMessage(param1);
-            //                  break;
-            //               case _SafeCls_4319._SafeStr_9728: // 6
-            //                  _SafeStr_8295 = new SharedGlobalPlaceholderList(param1);
-            //            }
-            //            _loc3_++;
-            //         }
-            writeInt(0) // TODO: needs implementing
-            // start VariableInfoAndHolders
-            //  public function VariableInfoAndHolders(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_5460 = new WiredVariable(param1);
-            //         _SafeStr_8148 = new Vector.<ObjectIdAndValuePair>();
-            //         var _loc2_:int = param1.readInteger();
-            //         var _loc3_:int = 0;
-            //         while(0 < _loc2_)
-            //         {
-            //            _SafeStr_8148.push(new ObjectIdAndValuePair(param1));
-            //            _loc3_++;
-            //         }
-            //      }
-            // public function WiredVariable(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         variableId = param1.readString();
-            //         variableType = param1.readInteger();
-            //         _variableName = param1.readString();
-            //         availabilityType = param1.readInteger();
-            //         variableTarget = param1.readInteger();
-            //         alwaysAvailable = param1.readBoolean();
-            //         canCreateAndDelete = param1.readBoolean();
-            //         hasValue = param1.readBoolean();
-            //         canWriteValue = param1.readBoolean();
-            //         canInterceptChanges = param1.readBoolean();
-            //         isInvisible = param1.readBoolean();
-            //         canReadCreationTime = param1.readBoolean();
-            //         canReadLastUpdateTime = param1.readBoolean();
-            //         var hasTextConnector:Boolean = param1.readBoolean(); // always send false, it seems to be useless
-            //         if(hasTextConnector)
-            //         {
-            //            _SafeStr_7578 = new _SafeCls_89();
-            //            var _loc3_:int = param1.readInteger();
-            //            var _loc4_:int = 0;
-            //         }
-            //      }
-            // public function ObjectIdAndValuePair(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_4689 = param1.readInteger();
-            //         _value = param1.readInteger();
-            //      }
-            // end VariableInfoAndHolders
-            // public function VariableInfoAndValue(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_5460 = new WiredVariable(param1);
-            //         _value = param1.readInteger();
-            //      }
-            //       public function SharedVariableList(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         var _loc2_:int = param1.readInteger();
-            //         var _loc4_:int = 0;
-            //         while(0 < _loc2_)
-            //         {
-            //            var _loc3_:SharedVariable = new SharedVariable(param1);
-            //            _SafeStr_7924.push(null);
-            //            _SafeStr_7043.push(null.wiredVariable);
-            //            _loc4_++;
-            //         }
-            //      }
-            //       public function SharedVariable(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_6493 = param1.readInteger();
-            //         _roomName = param1.readString();
-            //         _SafeStr_8232 = new WiredVariable(param1);
-            //      }
-            // public static function createFromMessage(param1:IMessageDataWrapper) : VariableList
-            //      {
-            //         var _loc5_:int = 0;
-            //         var _loc4_:WiredVariable = null;
-            //         var _loc2_:Array = [];
-            //         var _loc3_:int = param1.readInteger();
-            //         _loc5_ = 0;
-            //         while(_loc5_ < _loc3_)
-            //         {
-            //            _loc4_ = new WiredVariable(param1);
-            //            _loc2_.push(_loc4_);
-            //            _loc5_++;
-            //         }
-            //         return new VariableList(_loc2_);
-            //      }
-            // public function SharedGlobalPlaceholderList(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_8176 = new Vector.<SharedGlobalPlaceholder>();
-            //         var _loc2_:int = param1.readInteger();
-            //         var _loc3_:int = 0;
-            //         while(0 < _loc2_)
-            //         {
-            //            _SafeStr_8176.push(new SharedGlobalPlaceholder(param1));
-            //            _loc3_++;
-            //         }
-            //      }
-            // public function SharedGlobalPlaceholder(param1:IMessageDataWrapper)
-            //      {
-            //         super();
-            //         _SafeStr_6493 = param1.readInteger();
-            //         _roomName = param1.readString();
-            //         _placeholderName = param1.readString();
-            //      }
+        fun buildWiredContextBlocks(
+            room: Room,
+            wiredData: WiredData,
+            roomItem: RoomItem? = null,
+            wiredItem: WiredItem? = null
+        ): List<WiredContextBlock> {
+            val blocks = mutableListOf<WiredContextBlock>()
+            // Bloco 0: Hash de todas as variáveis da sala (obrigatório para sincronização do client)
+            blocks.add(WiredContextBlock.AllVariablesInRoom(room.wiredVariableManager.getAllVariablesHash()))
+
+            for (varId in wiredData.variableIds) {
+                val def = room.wiredVariableManager.getDefinition(varId) ?: continue
+                when {
+                    def.variableTarget == WiredVariableTarget.FURNI ||
+                            def.availabilityType == VariableAvailabilityType.PERSISTENT_FURNI ||
+                            def.availabilityType == VariableAvailabilityType.TEMPORARY_FURNI -> {
+                        val holders = if (wiredData.items.isNotEmpty()) {
+                            wiredData.items.map { itemId ->
+                                val v =
+                                    room.wiredVariableManager.getVariableValue(varId, itemId, VariableOwnerType.FURNI)
+                                val intVal = (v?.value as? Number)?.toInt() ?: (v?.value as? String)?.toIntOrNull() ?: 0
+                                ObjectIdAndValuePair(itemId, intVal)
+                            }
+                        } else {
+                            room.itemManager.items.keys.mapNotNull { itemId ->
+                                val v =
+                                    room.wiredVariableManager.getVariableValue(varId, itemId, VariableOwnerType.FURNI)
+                                if (v != null) {
+                                    val intVal =
+                                        (v.value as? Number)?.toInt() ?: (v.value as? String)?.toIntOrNull() ?: 0
+                                    ObjectIdAndValuePair(itemId, intVal)
+                                } else null
+                            }
+                        }
+                        blocks.add(WiredContextBlock.FurniVariableInfoAndHolders(def, holders))
+                    }
+
+                    def.variableTarget == WiredVariableTarget.USER ||
+                            def.availabilityType == VariableAvailabilityType.PERSISTENT_USER ||
+                            def.availabilityType == VariableAvailabilityType.TEMPORARY_USER -> {
+                        val holders =
+                            room.userManager.entities.values.filterIsInstance<RoomUser>().mapNotNull { roomUser ->
+                                val userId = roomUser.habboSession.userInformation.id
+                                val v =
+                                    room.wiredVariableManager.getVariableValue(varId, userId, VariableOwnerType.USER)
+                                if (v != null) {
+                                    val intVal =
+                                        (v.value as? Number)?.toInt() ?: (v.value as? String)?.toIntOrNull() ?: 0
+                                    ObjectIdAndValuePair(userId, intVal)
+                                } else null
+                            }
+                        blocks.add(WiredContextBlock.UserVariableInfoAndHolders(def, holders))
+                    }
+
+                    else -> {
+                        val v =
+                            room.wiredVariableManager.getVariableValue(varId, room.roomData.id, VariableOwnerType.ROOM)
+                        val intVal = (v?.value as? Number)?.toInt() ?: (v?.value as? String)?.toIntOrNull() ?: 0
+                        blocks.add(WiredContextBlock.GlobalVariableInfoAndValue(def, intVal))
+                    }
+                }
+            }
+
+            val interactionType = roomItem?.furnishing?.interactionType
+            val itemName = roomItem?.furnishing?.itemName ?: ""
+            val interactionName = interactionType?.name ?: ""
+            val itemCode = wiredItem?.code()
+
+            // Bloco 4: SharedVariableList
+            // Emitido quando o item for Addon/Variável de referência cruzada ou se houver variáveis compartilhadas de outros quartos do mesmo dono
+            val isReferenceVariable = itemCode == 4 ||
+                    interactionType == InteractionType.WIRED_VARIABLE_REFERENCE ||
+                    interactionName.contains("VARIABLE_REFERENCE") ||
+                    interactionName.contains("VAR_REFERENCE") ||
+                    itemName == "wf_var_reference"
+
+            val sharedVariables = room.wiredVariableManager.getSharedVariablesForOwner()
+            if (isReferenceVariable || sharedVariables.isNotEmpty()) {
+                blocks.add(WiredContextBlock.SharedVariableList(sharedVariables))
+            }
+
+            // Bloco 5: VariableList
+            // Emitido quando o item for Addon de utilitário de tempo (VARIABLE_TIME_UTIL / 1002) ou manipulador de subvariáveis/tempo
+            val isTimeUtil = itemCode == WiredAddonType.VARIABLE_TIME_UTIL.code ||
+                    itemCode == 1002 ||
+                    interactionType == InteractionType.WIRED_EXTRA_VARIABLE_TIME_UTIL ||
+                    interactionName.contains("VARIABLE_TIME_UTIL") ||
+                    interactionName.contains("VAR_TIME_UTIL") ||
+                    itemName == "wf_xtra_var_time_util"
+
+            if (isTimeUtil) {
+                blocks.add(WiredContextBlock.VariableList(room.wiredVariableManager.getDefinitions()))
+            }
+
+            // Bloco 6: SharedGlobalPlaceholderList
+            // Emitido quando o item for Addon de placeholder global (GLOBAL_PLACEHOLDER / 2000)
+            val isGlobalPlaceholder = itemCode == WiredAddonType.GLOBAL_PLACEHOLDER.code ||
+                    itemCode == 2000 ||
+                    interactionName.contains("GLOBAL_PLACEHOLDER") ||
+                    itemName.contains("global_placeholder")
+
+            if (isGlobalPlaceholder) {
+                val sharedPlaceholders = room.wiredVariableManager.getSharedGlobalPlaceholdersForOwner()
+                blocks.add(WiredContextBlock.SharedGlobalPlaceholderList(sharedPlaceholders))
+            }
+
+            return blocks
+        }
+
+        fun HabboResponse.writeWiredContext(blocks: List<WiredContextBlock>) {
+            writeInt(blocks.size)
+            blocks.forEach { serialize(it) }
         }
 
         fun HabboResponse.writeDefaultIntParams() {

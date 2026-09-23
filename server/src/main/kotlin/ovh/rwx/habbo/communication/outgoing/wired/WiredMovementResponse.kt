@@ -46,6 +46,12 @@ class WiredMovementResponse {
                         writeInt(move.animationTime)
                         writeInt(move.bodyDirection)
                         writeInt(move.headDirection)
+                        if (move.jumpPower != null) {
+                            writeBoolean(true)
+                            writeInt(move.jumpPower)
+                        } else {
+                            writeBoolean(false)
+                        }
                     }
 
                     is WiredFurniMove -> {
@@ -59,6 +65,18 @@ class WiredMovementResponse {
                         writeInt(move.furniId)
                         writeInt(move.animationTime)
                         writeInt(move.rotation)
+                        if (move.overshootingDistance != null) {
+                            writeBoolean(true)
+                            writeInt(move.overshootingDistance)
+                        } else {
+                            writeBoolean(false)
+                        }
+                        if (move.curveStrength != null) {
+                            writeBoolean(true)
+                            writeInt(move.curveStrength)
+                        } else {
+                            writeBoolean(false)
+                        }
                     }
 
                     is WiredWallItemMove -> {

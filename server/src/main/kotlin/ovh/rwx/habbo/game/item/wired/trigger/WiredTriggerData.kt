@@ -20,8 +20,10 @@
 package ovh.rwx.habbo.game.item.wired.trigger
 
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.games.GameTeam
+import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 
 /**
@@ -104,6 +106,26 @@ data class TileTriggerData(
 data class TimerTriggerData(
     val furniId: Int,
     val time: Int
+) : WiredTriggerData()
+
+/**
+ * Dados para trigger de variável alterada
+ */
+data class VariableTriggerData(
+    val variableId: String,
+    val oldValue: Any? = null,
+    val newValue: Any? = null
+) : WiredTriggerData()
+
+/**
+ * Dados para trigger de sinal recebido
+ */
+data class SignalTriggerData(
+    val antennaId: Int = 0,
+    val signal: Int = 0,
+    val signalUsers: List<RoomEntity> = emptyList(),
+    val signalFurnis: List<RoomItem> = emptyList(),
+    val context: WiredContext? = null
 ) : WiredTriggerData()
 
 data object EmptyTriggerData : WiredTriggerData()

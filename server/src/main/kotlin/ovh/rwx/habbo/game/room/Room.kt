@@ -37,10 +37,7 @@ import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
-import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyShort
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.*
 import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.games.RoomGameManager
 import ovh.rwx.habbo.game.room.games.RoomGameType
@@ -52,6 +49,10 @@ import ovh.rwx.habbo.game.room.trading.TradeManager
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.room.wired.WiredErrorLogger
+import ovh.rwx.habbo.game.room.wired.WiredPerformanceMonitor
+import ovh.rwx.habbo.game.room.wired.WiredRoomSettings
+import ovh.rwx.habbo.game.room.wired.WiredVariableManager
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
@@ -71,6 +72,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val userManager = RoomUserManager(this)
     val itemManager = RoomItemManager(this)
     val tradeManager = TradeManager(this)
+    val wiredVariableManager = WiredVariableManager(this)
+    val wiredPerformanceMonitor = WiredPerformanceMonitor(this)
+    val wiredErrorLogger = WiredErrorLogger(this)
+    var wiredRoomSettings = WiredRoomSettings()
     // endregion
 
     // region Game Loop
@@ -88,7 +93,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val errorsCounter = AtomicInteger()
     val roomTimer = AtomicInteger()
     val hostingCounter = AtomicInteger()
-    private var initialized: Boolean = false
+    var initialized: Boolean = false
+        private set
 
     val rolledItemsThisTick = CopyOnWriteArraySet<Int>()
     val rolledUsersThisTick = CopyOnWriteArraySet<Int>()
@@ -112,6 +118,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         itemManager.loadItems()
         roomGamemap = RoomGamemap(this)
         itemManager.triggerItems()
+        wiredVariableManager.loadPersistentVariables()
 
         if (itemManager.items.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
             gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
@@ -244,6 +251,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         resetCounters()
         roomGamemap.clearEntities()
         saveRoom()
+        wiredErrorLogger.dispose()
     }
 
     private fun resetCounters() {
@@ -285,10 +293,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     }
 
     private fun drainQueue(queue: ConcurrentLinkedQueue<IRoomTask>) {
-        var task = queue.poll()
-        while (task != null) {
+        val count = queue.size
+        repeat(count) {
+            val task = queue.poll() ?: return
             task.executeTask(this)
-            task = queue.poll()
         }
     }
 
@@ -297,6 +305,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyShort::class, null, PeriodicTriggerData)
         itemManager.wiredHandler.triggerWired(WiredTriggerPeriodicallyLong::class, null, PeriodicTriggerData)
         itemManager.wiredHandler.triggerWired(WiredTriggerAtGivenTime::class, null, EmptyTriggerData)
+        itemManager.wiredHandler.triggerWired(WiredTriggerAtTimeLong::class, null, EmptyTriggerData)
 
         if (isMajorTick) gameManager.tick()
     }
@@ -424,6 +433,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         RoomDao.updateRoomData(roomData)
         group?.let { GroupDao.updateGroupData(it.groupData) }
         itemManager.savePendingItems()
+        wiredVariableManager.savePersistentVariables()
 
         // Save pet positions
         userManager.entities.values.filterIsInstance<RoomPet>().forEach { roomPet ->

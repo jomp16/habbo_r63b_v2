@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomEntity
 
@@ -59,14 +60,18 @@ class DiceItemInteractor : ItemInteractor() {
                     roomItem.requestTicks(4)
                 }
             }
-        } else {
-            roomEntity.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), -1, false, roomItem)
-        }
 
-        room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class, roomEntity,
-            StateTriggerData(roomItem)
-        )
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerStateChanged::class, roomEntity,
+                StateTriggerData(roomItem)
+            )
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerStuffState::class, roomEntity,
+                StateTriggerData(roomItem)
+            )
+        } else {
+            roomEntity.moveTo(roomItem.getFrontPosition(), roomItem.getFrontRotation(), actingItem = roomItem)
+        }
     }
 
     override fun processTick(room: Room, roomItem: RoomItem) {

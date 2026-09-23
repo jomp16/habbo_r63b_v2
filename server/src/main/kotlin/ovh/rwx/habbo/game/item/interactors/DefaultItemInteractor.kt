@@ -21,12 +21,15 @@ package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
+import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
+import kotlin.math.abs
 
 @Suppress("unused")
 class DefaultItemInteractor : ItemInteractor() {
@@ -36,6 +39,18 @@ class DefaultItemInteractor : ItemInteractor() {
         super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
         if (!hasRights) return
+
+        if (roomEntity != null && roomItem.furnishing.type == ItemType.FLOOR) {
+            val userPos = roomEntity.currentVector3.vector2
+            val isNear = roomItem.affectedTiles.any { tile ->
+                abs(tile.x - userPos.x) <= 1 && abs(tile.y - userPos.y) <= 1
+            }
+            if (!isNear) {
+                roomEntity.moveTo(roomItem.position.vector2, actingItem = roomItem)
+                return
+            }
+        }
+
         val modes = roomItem.furnishing.interactionModesCount - 1
         var currentMode = roomItem.extraData.toIntOrNull() ?: 0
         if (modes <= 0) return
@@ -55,8 +70,15 @@ class DefaultItemInteractor : ItemInteractor() {
 
         roomItem.update(updateDb = true, updateClient = true)
 
-        if (roomEntity != null) room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class,
+        if (roomEntity != null) {
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerStateChanged::class,
+                roomEntity,
+                StateTriggerData(roomItem)
+            )
+        }
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStuffState::class,
             roomEntity,
             StateTriggerData(roomItem)
         )

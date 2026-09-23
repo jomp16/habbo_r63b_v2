@@ -19,13 +19,10 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.item.wired.WiredContext
-import ovh.rwx.habbo.game.item.wired.WiredFurniMove
-import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.*
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
@@ -39,6 +36,25 @@ class WiredEffectFurniToUser(room: Room, roomItem: RoomItem) : WiredEffect(room,
 
     override fun code() = WiredEffectType.MOVE_FURNI_TO_USER.code
     override val requiresItems = true
+    override val requiresUsers = true
+
+    override val allowedFurniSources = listOf(
+        WiredFurniSource.SELECTED_ITEMS,
+        WiredFurniSource.SELECTOR_ITEMS,
+        WiredFurniSource.SIGNAL_ITEMS,
+        WiredFurniSource.TRIGGERING_ITEM,
+        WiredFurniSource.ALL_ROOM_ITEMS
+    )
+    override val defaultFurniSource = WiredFurniSource.SELECTED_ITEMS
+
+    override val allowedUserSources = listOf(
+        WiredUserSource.TRIGGERING_USER,
+        WiredUserSource.SELECTOR_USERS,
+        WiredUserSource.SIGNAL_USERS,
+        WiredUserSource.USER_BY_NAME,
+        WiredUserSource.ALL_ROOM_USERS
+    )
+    override val defaultUserSource = WiredUserSource.TRIGGERING_USER
 
     override fun onEffect(wiredContext: WiredContext) {
         val furnis = wiredContext.getEffectiveFurnis(this)
@@ -46,44 +62,26 @@ class WiredEffectFurniToUser(room: Room, roomItem: RoomItem) : WiredEffect(room,
 
         if (furnis.isEmpty() || targets.isEmpty()) return
 
-        val item = furnis.random()
-        val targetUser = targets.random()
-        val userPos = targetUser.currentVector3.vector2
+        targets.forEach { targetUser ->
+            val userPos = targetUser.currentVector3.vector2
 
-        val width = item.furnishing.width
-        val length = item.furnishing.length
+            furnis.forEach { item ->
+                val oldPos = item.position.copy()
 
-        val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
-            userPos.x,
-            userPos.y,
-            item.rotation,
-            width,
-            length
-        )
-
-        val freeTiles = affectedTiles.filter { tile ->
-            !room.roomGamemap.isBlocked(tile, ignoreUsers = true) &&
-                    !room.roomGamemap.cannotStackItem[tile.x][tile.y]
-        }
-
-        if (freeTiles.isNotEmpty()) {
-            val oldPos = item.position.copy() // Salva posição original
-            val newPos = freeTiles.random()
-
-            if (room.itemManager.setFloorItem(item, newPos, item.rotation, null)) {
-                // Adiciona ao acumulador do ciclo
-                wiredContext.batchedMovements.add(
-                    WiredFurniMove(
-                        furniId = item.id,
-                        sourceX = oldPos.x,
-                        sourceY = oldPos.y,
-                        sourceZ = oldPos.z,
-                        targetX = item.position.x,
-                        targetY = item.position.y,
-                        targetZ = item.position.z,
-                        rotation = item.rotation
+                if (room.itemManager.setFloorItem(item, userPos, item.rotation, null)) {
+                    wiredContext.batchedMovements.add(
+                        WiredFurniMove(
+                            furniId = item.id,
+                            sourceX = oldPos.x,
+                            sourceY = oldPos.y,
+                            sourceZ = oldPos.z,
+                            targetX = item.position.x,
+                            targetY = item.position.y,
+                            targetZ = item.position.z,
+                            rotation = item.rotation
+                        )
                     )
-                )
+                }
             }
         }
     }

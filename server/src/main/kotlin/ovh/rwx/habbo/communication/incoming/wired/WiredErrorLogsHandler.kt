@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class WiredErrorLogsHandler {
     @Handler(Incoming.WIRED_ERROR_LOGS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.WIRED_ERROR_LOGS)
+        val room = habboSession.currentRoom ?: return
+        habboSession.sendHabboResponse(Outgoing.WIRED_ERROR_LOGS, room)
     }
 }

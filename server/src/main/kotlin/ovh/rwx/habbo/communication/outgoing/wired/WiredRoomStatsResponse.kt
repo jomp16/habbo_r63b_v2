@@ -22,25 +22,30 @@ package ovh.rwx.habbo.communication.outgoing.wired
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.wired.WiredVariableManager
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredRoomStatsResponse {
     @Response(Outgoing.WIRED_ROOM_STATS)
-    fun response(habboResponse: HabboResponse, room: ovh.rwx.habbo.game.room.Room) {
+    fun response(habboResponse: HabboResponse, room: Room) {
+        val monitor = room.wiredPerformanceMonitor
+        val variableManager = room.wiredVariableManager
+
         habboResponse.apply {
-            writeDouble(0.0) // executionCost
-            writeDouble(0.0) // executionCostCap
-            writeBoolean(false) // isHeavy
+            writeDouble(monitor.getExecutionCost())
+            writeDouble(monitor.getExecutionCostCap())
+            writeBoolean(monitor.isHeavy())
             writeInt(room.itemManager.floorItems.size) // floorItemCount
-            writeInt(0) // floorItemCap
+            writeInt(2500) // floorItemCap
             writeInt(room.itemManager.wallItems.size) // wallItemCount
-            writeInt(0) // wallItemCap
-            writeInt(0) // permanentFurniVariables
-            writeInt(0) // maxPermanentFurniVariables
-            writeInt(0) // permanentUserVariables
-            writeInt(0) // maxPermanentUserVariables
-            writeInt(0) // permanentGlobalVariables
-            writeInt(0) // maxPermanentGlobalVariables
+            writeInt(500) // wallItemCap
+            writeInt(variableManager.getPermanentFurniVariablesCount())
+            writeInt(WiredVariableManager.MAX_PERMANENT_FURNI_VARIABLES)
+            writeInt(variableManager.getPermanentUserVariablesCount())
+            writeInt(WiredVariableManager.MAX_PERMANENT_USER_VARIABLES)
+            writeInt(variableManager.getPermanentGlobalVariablesCount())
+            writeInt(WiredVariableManager.MAX_PERMANENT_GLOBAL_VARIABLES)
         }
     }
 }

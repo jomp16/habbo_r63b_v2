@@ -71,6 +71,16 @@ analytics:
 game:
   banzai:
     strict: true
+  snowwar:
+    enabled: true
+    min_players: 10
+    max_players: 10
+    countdown_seconds: 10
+    stage_starting_seconds: 5
+    game_duration_seconds: 120
+    free_games_daily_regular: 3
+    free_games_daily_hc: 30
+    forced_arena_id: 0 # 0 = random, 8 = Arctic Island, 9 = Dragon Cave, 10 = Lost Forest, 11 = Fight Night, 12 = Bobba Lake
 pets:
   name_min_length: 2
   name_max_length: 15

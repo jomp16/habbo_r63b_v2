@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class WiredAllVariablesHashHandler {
     @Handler(Incoming.WIRED_ALL_VARIABLES_HASH)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.WIRED_ALL_VARIABLES_HASH)
+        val room = habboSession.currentRoom ?: return
+        habboSession.sendHabboResponse(Outgoing.WIRED_ALL_VARIABLES_HASH, room)
     }
 }

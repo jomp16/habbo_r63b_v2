@@ -23,12 +23,12 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+import ovh.rwx.habbo.game.room.Room
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredAllVariablesHashResponse {
     @Response(Outgoing.WIRED_ALL_VARIABLES_HASH)
-    fun response(habboResponse: HabboResponse) {
-        // TODO: Implementar quando refazer wired 2.0
-        // Retorna hash de todas as variáveis do quarto
-        habboResponse.writeInt(0) // allVariablesHash
+    fun response(habboResponse: HabboResponse, room: Room) {
+        habboResponse.writeInt(room.wiredVariableManager.getAllVariablesHash())
     }
 }

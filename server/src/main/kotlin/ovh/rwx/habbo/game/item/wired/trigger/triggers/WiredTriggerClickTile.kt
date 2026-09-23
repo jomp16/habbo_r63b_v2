@@ -31,7 +31,7 @@ import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_TILE)
 class WiredTriggerClickTile(room: Room, roomItem: RoomItem) : WiredTrigger<TileTriggerData>(room, roomItem) {
-    override fun code() = WiredTriggerType.UNKNOWN_21.code
+    override fun code() = WiredTriggerType.AVATAR_CLICKS_TILE.code
 
     override fun onTrigger(wiredContext: WiredContext, data: TileTriggerData): Boolean {
         // O tile foi clicado nas coordenadas específicas

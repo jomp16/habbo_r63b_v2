@@ -26,6 +26,8 @@ import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
+import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState
 import ovh.rwx.habbo.game.room.Room
 
 @Suppress("unused")
@@ -41,7 +43,28 @@ class WiredEffectToggleState(room: Room, roomItem: RoomItem) : WiredEffect(room,
     override fun onEffect(wiredContext: WiredContext) {
         val targets = wiredContext.getEffectiveFurnis(this)
         targets.forEach { item ->
-            item.furnishing.interactor?.onTrigger(item.room, null, item, true, 0)
+            val interactor = item.furnishing.interactor
+            if (interactor != null) {
+                interactor.onTrigger(item.room, null, item, true, 0)
+                item.room.itemManager.wiredHandler.triggerWired(
+                    WiredTriggerStuffState::class,
+                    wiredContext.triggererUser,
+                    StateTriggerData(item)
+                )
+            } else {
+                val modes = item.furnishing.interactionModesCount - 1
+                if (modes > 0) {
+                    var currentMode = item.extraData.toIntOrNull() ?: 0
+                    if (++currentMode > modes) currentMode = 0
+                    item.extraData = currentMode.toString()
+                    item.update(updateDb = true, updateClient = true)
+                    item.room.itemManager.wiredHandler.triggerWired(
+                        WiredTriggerStuffState::class,
+                        wiredContext.triggererUser,
+                        StateTriggerData(item)
+                    )
+                }
+            }
         }
     }
 

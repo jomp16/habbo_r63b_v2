@@ -20,14 +20,17 @@
 package ovh.rwx.habbo.game.item.wired.trigger.triggers
 
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import kotlin.math.abs
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_STATE_CHANGED)
 class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger<StateTriggerData>(room, roomItem) {
@@ -35,21 +38,33 @@ class WiredTriggerStateChanged(room: Room, roomItem: RoomItem) : WiredTrigger<St
         setData()
     }
 
-    override fun code() = WiredTriggerType.STATE_CHANGE.code
+    override fun code() = WiredTriggerType.USE_STUFF.code
     override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: StateTriggerData): Boolean {
         val changedItem = data.roomItem
+        if (changedItem.id == roomItem.id) return false
 
         val items = wiredContext.getEffectiveFurnis(this)
-
-        // Verifica se o item que mudou está na lista de monitoramento deste Wired
-        val triggered = items.contains(changedItem)
+        val matchByType = roomItem.wiredData?.furniSources?.contains(WiredFurniSource.TRIGGERING_ITEM) == true
+        val triggered = if (matchByType) {
+            val targetSprites = items.map { it.furnishing.spriteId }.toSet()
+            changedItem.furnishing.spriteId in targetSprites
+        } else {
+            items.contains(changedItem)
+        }
 
         if (triggered) {
-            // todo: Verifica se o usuário ativador está próximo do mobi
-            if (wiredContext.triggererUser != null) {
-
+            // Verifica se o usuário ativador está próximo do mobi
+            val triggerer = wiredContext.triggererUser
+            if (triggerer != null && changedItem.furnishing.type == ItemType.FLOOR) {
+                val userPos = triggerer.currentVector3.vector2
+                val isNear = changedItem.affectedTiles.any { tile ->
+                    abs(tile.x - userPos.x) <= 1 && abs(tile.y - userPos.y) <= 1
+                }
+                if (!isNear) {
+                    return false
+                }
             }
 
             // Define a fonte de origem para os efeitos (Fonte 0)

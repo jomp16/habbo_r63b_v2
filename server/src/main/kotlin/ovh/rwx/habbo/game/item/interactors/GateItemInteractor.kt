@@ -21,11 +21,14 @@ package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
+import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStateChanged
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomEntity
+import kotlin.math.abs
 
 @Suppress("unused")
 class GateItemInteractor : ItemInteractor() {
@@ -36,6 +39,17 @@ class GateItemInteractor : ItemInteractor() {
 
         if (!hasRights) return
 
+        if (roomEntity != null && roomItem.furnishing.type == ItemType.FLOOR) {
+            val userPos = roomEntity.currentVector3.vector2
+            val isNear = roomItem.affectedTiles.any { tile ->
+                abs(tile.x - userPos.x) <= 1 && abs(tile.y - userPos.y) <= 1
+            }
+            if (!isNear) {
+                roomEntity.moveTo(roomItem.position.vector2, actingItem = roomItem)
+                return
+            }
+        }
+
         if (roomItem.canClose()) {
             roomItem.affectedTiles.forEach { room.roomGamemap.blockedItem[it.x][it.y] = roomItem.extraData != "0" }
 
@@ -44,8 +58,15 @@ class GateItemInteractor : ItemInteractor() {
             roomItem.update(updateDb = true, updateClient = true)
         }
 
-        if (roomEntity != null) room.itemManager.wiredHandler.triggerWired(
-            WiredTriggerStateChanged::class,
+        if (roomEntity != null) {
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerStateChanged::class,
+                roomEntity,
+                StateTriggerData(roomItem)
+            )
+        }
+        room.itemManager.wiredHandler.triggerWired(
+            WiredTriggerStuffState::class,
             roomEntity,
             StateTriggerData(roomItem)
         )

@@ -28,5 +28,6 @@ SET `delay`         = :delay,
     `is_inverse`    = :is_inverse,
     `furni_sources` = :furni_sources,
     `user_sources`  = :user_sources,
-    `stuff_ids2`    = :stuff_ids2
+    `stuff_ids2`   = :stuff_ids2,
+    `variable_ids` = :variable_ids
 WHERE `id` = :id

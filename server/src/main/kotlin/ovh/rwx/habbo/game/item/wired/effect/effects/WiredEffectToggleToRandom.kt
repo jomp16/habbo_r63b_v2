@@ -50,6 +50,11 @@ class WiredEffectToggleToRandom(room: Room, roomItem: RoomItem) : WiredEffect(ro
                 }
                 item.extraData = newState.toString()
                 item.update(updateDb = true, updateClient = true)
+                room.itemManager.wiredHandler.triggerWired(
+                    ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState::class,
+                    wiredContext.triggererUser,
+                    ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData(item)
+                )
             }
         }
     }

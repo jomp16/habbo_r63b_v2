@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -35,7 +35,10 @@ class RoomUpdateFurniStackResponse {
             affectedTiles.forEach {
                 writeByte(it.x)
                 writeByte(it.y)
-                writeShort((room.roomGamemap.getAbsoluteHeight(it.x, it.y) * 256).toInt())
+                val height = room.roomGamemap.getAbsoluteHeight(it.x, it.y)
+                val isBlocked = room.roomGamemap.cannotStackItem[it.x][it.y]
+                val encodedHeight = (height * 256).toInt() or (if (isBlocked) 0x4000 else 0)
+                writeShort(encodedHeight)
             }
         }
     }

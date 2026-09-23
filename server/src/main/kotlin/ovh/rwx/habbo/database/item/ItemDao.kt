@@ -205,7 +205,9 @@ object ItemDao {
                             .mapNotNull { code -> WiredFurniSource.fromCode(code) },
                         userSources = it.string("user_sources").toIntList()
                             .mapNotNull { code -> WiredUserSource.fromCode(code) },
-                        stuffIds2 = it.string("stuff_ids2").toIntList()
+                        stuffIds2 = it.string("stuff_ids2").toIntList(),
+                        variableIds = it.stringOrNull("variable_ids")?.split(",")?.filter { s -> s.isNotEmpty() }
+                            ?: emptyList()
                     )
                 }.firstOrNull()
             }
@@ -350,6 +352,7 @@ object ItemDao {
                         "furni_sources" to it.furniSources.map { source -> source.code }.joinToString(","),
                         "user_sources" to it.userSources.map { source -> source.code }.joinToString(","),
                         "stuff_ids2" to it.stuffIds2.joinToString(","),
+                        "variable_ids" to it.variableIds.joinToString(","),
                         "id" to it.id
                     )
                 }

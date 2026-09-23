@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
@@ -37,6 +38,15 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
     private var message: String = ""
     private var visibility: MessageVisibility = MessageVisibility.USER_ONLY
     private var style: Int = RoomChatMessageBubbles.WIRED.type // notification style
+
+    override val requiresUsers = true
+    override val allowedUserSources = listOf(
+        WiredUserSource.TRIGGERING_USER,
+        WiredUserSource.SELECTOR_USERS,
+        WiredUserSource.SIGNAL_USERS,
+        WiredUserSource.ALL_ROOM_USERS
+    )
+    override val defaultUserSource = WiredUserSource.TRIGGERING_USER
 
     init {
         setData()
@@ -55,33 +65,22 @@ class WiredEffectShowMessage(room: Room, roomItem: RoomItem) : WiredEffect(room,
     }
 
     override fun onEffect(wiredContext: WiredContext) {
-        if (!message.isBlank()) {
+        val formatted = wiredContext.formatPlaceholders(message)
+        if (formatted.isNotBlank()) {
             val bubble = RoomChatMessageBubbles.fromType(style)
-            when (visibility) {
-                MessageVisibility.USER_ONLY -> (wiredContext.triggererUser as? RoomUser)?.let { roomUser ->
-                    roomUser.chat(
-                        roomUser.virtualID,
-                        message,
-                        bubble,
-                        RoomChatType.WHISPER,
-                        true
-                    )
-                }
+            val targetUsers = when (visibility) {
+                MessageVisibility.USER_ONLY -> wiredContext.getEffectiveUsers(this).filterIsInstance<RoomUser>()
+                MessageVisibility.ALL_USERS -> room.userManager.entities.values.filterIsInstance<RoomUser>().toList()
+            }
 
-                MessageVisibility.ALL_USERS -> {
-                    // Pegamos o triggerer (ou um bot/dono) para falar UMA VEZ para a sala
-                    // Não fazemos loop aqui, pois o Task já faz o loop de broadcast!
-                    val speaker = (wiredContext.triggererUser as? RoomUser)
-                        ?: room.userManager.entities.values.filterIsInstance<RoomUser>().firstOrNull()
-
-                    speaker?.chat(
-                        speaker.virtualID,
-                        message,
-                        bubble,
-                        RoomChatType.WHISPER,
-                        true
-                    )
-                }
+            targetUsers.forEach { roomUser ->
+                roomUser.chat(
+                    roomUser.virtualID,
+                    formatted,
+                    bubble,
+                    RoomChatType.WHISPER,
+                    true
+                )
             }
         }
     }

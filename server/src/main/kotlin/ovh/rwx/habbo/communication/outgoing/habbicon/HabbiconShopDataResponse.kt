@@ -46,9 +46,16 @@ class HabbiconShopDataResponse {
             habboResponse.writeUTF(collection.name)
             val items = collection.habbicons.filter { it.id != collection.rewardHabbiconId && it.enabled }
             val completed = items.isNotEmpty() && items.all { data.userHabbicons.containsKey(it.id) }
+            val rewardHabbiconId = collection.rewardHabbiconId ?: 0
+            val rewardState = if (rewardHabbiconId > 0) {
+                data.userHabbicons[rewardHabbiconId]?.state
+                    ?: if (completed) UserHabbicon.STATE_CLAIMABLE else UserHabbicon.STATE_LOCKED
+            } else {
+                UserHabbicon.STATE_LOCKED
+            }
             habboResponse.writeBoolean(completed)
-            habboResponse.writeInt(collection.rewardHabbiconId ?: 0)
-            habboResponse.writeInt(collection.rewardHabbiconId?.let { data.userHabbicons[it]?.state } ?: 0)
+            habboResponse.writeInt(rewardHabbiconId)
+            habboResponse.writeInt(rewardState)
             habboResponse.writeInt(collection.priceCredits)
             habboResponse.writeInt(collection.priceActivityPoints)
             habboResponse.writeInt(collection.activityPointType)

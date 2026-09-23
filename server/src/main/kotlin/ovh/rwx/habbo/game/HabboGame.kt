@@ -40,6 +40,7 @@ import ovh.rwx.habbo.game.permission.PermissionManager
 import ovh.rwx.habbo.game.pet.PetManager
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
+import ovh.rwx.habbo.game.snowwar.SnowWarManager
 import java.util.concurrent.TimeUnit
 
 class HabboGame {
@@ -62,6 +63,7 @@ class HabboGame {
     val badgeManager: BadgeManager = BadgeManager()
     val habbiconManager: HabbiconManager = HabbiconManager()
     val chestManager: ChestManager = ChestManager()
+    val snowWarManager: SnowWarManager = SnowWarManager()
 
     init {
         HabboServer.applicationScope.launch { landingManager.load() }
@@ -76,6 +78,7 @@ class HabboGame {
         HabboServer.applicationScope.launch { petManager.load() }
         HabboServer.applicationScope.launch { badgeManager.load() }
         HabboServer.applicationScope.launch { habbiconManager.load() }
+        HabboServer.applicationScope.launch { snowWarManager.load() }
 
         // 1. Guardamos a referência do Job do RoomManager
         val roomJob = HabboServer.applicationScope.launch { roomManager.load() }

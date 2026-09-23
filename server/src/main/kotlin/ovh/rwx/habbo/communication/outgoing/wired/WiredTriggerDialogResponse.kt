@@ -23,7 +23,6 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.isVersionBetween
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.WiredData
@@ -35,10 +34,6 @@ class WiredTriggerDialogResponse {
     @ResponseR63A(OutgoingR63A.WIRED_TRIGGER_DIALOG)
     fun response(habboResponse: HabboResponse, roomItem: RoomItem, wiredData: WiredData) {
         habboResponse.apply {
-            if (isVersionBetween(2011, 2, 22, 2023, 4, 14)) {
-                writeBoolean(false)
-            }
-
             parseWired(roomItem, wiredData)
         }
     }

@@ -22,46 +22,41 @@ package ovh.rwx.habbo.communication.outgoing.wired
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.room.Room
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredAllVariablesDiffsResponse {
     @Response(Outgoing.WIRED_ALL_VARIABLES_DIFFS)
-    fun response(habboResponse: HabboResponse) {
-        // TODO: Implementar quando refazer wired 2.0
-        // Estrutura do pacote:
-        // - allVariablesHash (Int): Hash de todas as variáveis
-        // - isLastChunk (Boolean): Se é o último chunk de dados
-        // - removedVariablesCount (Int): Quantidade de variáveis removidas
-        //   - removedVariables (String[]): Array com IDs das variáveis removidas
-        // - addedOrUpdatedCount (Int): Quantidade de variáveis adicionadas/atualizadas
-        //   Para cada variável:
-        //   - variableIdHash (Int): Hash do ID da variável
-        //   - WiredVariable:
-        //     - variableId (String): ID da variável
-        //     - variableType (Int): Tipo da variável
-        //     - variableName (String): Nome da variável
-        //     - availabilityType (Int): Tipo de disponibilidade
-        //     - variableTarget (Int): Target da variável
-        //     - alwaysAvailable (Boolean): Se está sempre disponível
-        //     - canCreateAndDelete (Boolean): Se pode criar e deletar
-        //     - hasValue (Boolean): Se tem valor
-        //     - canWriteValue (Boolean): Se pode escrever valor
-        //     - canInterceptChanges (Boolean): Se pode interceptar mudanças
-        //     - isInvisible (Boolean): Se é invisível
-        //     - canReadCreationTime (Boolean): Se pode ler tempo de criação
-        //     - canReadLastUpdateTime (Boolean): Se pode ler tempo de última atualização
-        //     - hasTextConnector (Boolean): Se tem conector de texto
-        //       Se hasTextConnector = true:
-        //       - textConnectorCount (Int): Quantidade de conectores
-        //         Para cada conector:
-        //         - connectorId (Int): ID do conector
-        //         - connectorValue (String): Valor do conector
+    fun response(habboResponse: HabboResponse, room: Room, clientHashes: Map<String, Int> = emptyMap()) {
+        val manager = room.wiredVariableManager
+        val allVariablesHash = manager.getAllVariablesHash()
+        val currentDefinitions = manager.getDefinitions()
+        val currentDefMap = currentDefinitions.associateBy { it.variableId }
+
+        // Variáveis que o cliente tem no cache mas não existem mais no quarto
+        val removedVariables = clientHashes.keys.filter { it !in currentDefMap }
+
+        // Variáveis novas ou cujo hash mudou em relação ao que o cliente tem
+        val addedOrUpdated = currentDefinitions.filter { def ->
+            val clientHash = clientHashes[def.variableId]
+            val serverVarHash = manager.getVariableIdHash(def.variableId)
+            clientHash == null || clientHash != serverVarHash
+        }
 
         habboResponse.apply {
-            writeInt(0) // allVariablesHash
+            writeInt(allVariablesHash)
             writeBoolean(true) // isLastChunk
-            writeInt(0) // removedVariablesCount (empty array)
-            writeInt(0) // addedOrUpdatedCount (empty array)
+
+            // Removed variables
+            writeInt(removedVariables.size)
+            removedVariables.forEach { writeUTF(it) }
+
+            // Added or updated variables
+            writeInt(addedOrUpdated.size)
+            addedOrUpdated.forEach { def ->
+                writeInt(manager.getVariableIdHash(def.variableId))
+                serialize(def)
+            }
         }
     }
 }

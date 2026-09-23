@@ -84,6 +84,7 @@ class RoomGamemap(private val room: Room) {
     }
 
     fun addRoomItem(roomItem: RoomItem) {
+        if (roomItem.furnishing.type != ItemType.FLOOR) return
         roomItem.affectedTiles.forEach {
             setRoomItem(it, roomItem)
         }
@@ -93,18 +94,9 @@ class RoomGamemap(private val room: Room) {
         if (roomItem.furnishing.type != ItemType.FLOOR) return
 
         val itemsOnTile = roomItemMap.getOrPut(vector2) { ConcurrentHashMap.newKeySet() }
-        if (!itemsOnTile.add(roomItem)) return // Se já contém, encerra.
-
-        val x = vector2.x
-        val y = vector2.y
-
-        if (!cannotStackItem[x][y]) {
-            cannotStackItem[x][y] = !roomItem.furnishing.canStack
-        }
-
-        if (!blockedItem[x][y]) {
-            blockedItem[x][y] = isItemBlockingPath(roomItem, x, y)
-        }
+        itemsOnTile.removeIf { it.id == roomItem.id }
+        itemsOnTile.add(roomItem)
+        recomputeTile(vector2)
     }
 
     private fun isItemBlockingPath(item: RoomItem, x: Int, y: Int): Boolean {
@@ -121,6 +113,7 @@ class RoomGamemap(private val room: Room) {
     fun getAbsoluteHeight(vector2: Vector2) = getAbsoluteHeight(vector2.x, vector2.y)
 
     fun getAbsoluteHeight(x: Int, y: Int): Double {
+        if (!grid.isInside(x, y)) return 0.0
         val floorHeight = room.roomModel.floorHeight[x][y].toDouble()
         val itemsOnTile = roomItemMap[Vector2(x, y)]
 
@@ -128,7 +121,7 @@ class RoomGamemap(private val room: Room) {
             return Utils.round(floorHeight, 2)
         }
 
-        var highestStack = 0.0
+        var highestStack = floorHeight
         var deduction = 0.0
 
         itemsOnTile.forEach {
@@ -143,10 +136,8 @@ class RoomGamemap(private val room: Room) {
             }
         }
 
-        var stackHeight = highestStack - floorHeight - deduction
-        if (stackHeight < 0) stackHeight = 0.0
-
-        return Utils.round(floorHeight + stackHeight, 2)
+        val finalHeight = (highestStack - deduction).coerceAtLeast(floorHeight)
+        return Utils.round(finalHeight, 2)
     }
 
     fun getHighestItem(vector2: Vector2): RoomItem? {
@@ -164,21 +155,39 @@ class RoomGamemap(private val room: Room) {
         roomItem.affectedTiles.forEach {
             unsetRoomItem(it, roomItem)
         }
+
+        // Limpeza de segurança em todos os tiles
+        roomItemMap.values.forEach { set ->
+            set.removeIf { it.id == roomItem.id }
+        }
+        roomItemMap.entries.removeIf { it.value.isEmpty() }
     }
 
     private fun unsetRoomItem(vector2: Vector2, roomItem: RoomItem) {
         val itemsOnTile = roomItemMap[vector2] ?: return
-        if (!itemsOnTile.remove(roomItem)) return
+        itemsOnTile.removeIf { it.id == roomItem.id }
+        if (itemsOnTile.isEmpty()) {
+            roomItemMap.remove(vector2)
+        }
+        recomputeTile(vector2)
+    }
 
+    fun recomputeTile(vector2: Vector2) {
         val x = vector2.x
         val y = vector2.y
+        if (!grid.isInside(x, y)) return
 
-        // Ao remover um item, resetamos os bloqueios do tile temporariamente
-        cannotStackItem[x][y] = false
-        blockedItem[x][y] = false
+        val itemsOnTile = roomItemMap[vector2]
+        if (itemsOnTile.isNullOrEmpty()) {
+            cannotStackItem[x][y] = false
+            blockedItem[x][y] = false
+            return
+        }
 
-        // Reavalia o item mais alto restante para aplicar as regras de bloqueio dele
-        getHighestItem(vector2)?.let { setRoomItem(vector2, it) }
+        val highestItem = getHighestItem(vector2)
+        cannotStackItem[x][y] =
+            if (highestItem != null) !highestItem.furnishing.canStack else itemsOnTile.any { !it.furnishing.canStack }
+        blockedItem[x][y] = itemsOnTile.any { isItemBlockingPath(it, x, y) }
     }
 
     fun getEntitiesFromVector2(vector2: Vector2): Set<RoomEntity> = roomEntityMap[vector2] ?: emptySet()

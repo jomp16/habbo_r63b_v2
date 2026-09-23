@@ -103,6 +103,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
         // 6. Join concluído no ciclo de vida da sala
         roomUser.pendingJoin = false
+        room.wiredVariableManager.onUserEnter(session.userInformation.id)
 
         // 7. Disparo dos Wireds locais
         room.itemManager.wiredHandler.triggerWired(WiredTriggerEnterRoom::class, roomUser, RoomEventTriggerData)

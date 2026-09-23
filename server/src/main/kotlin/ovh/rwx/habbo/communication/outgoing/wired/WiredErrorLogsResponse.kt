@@ -23,17 +23,24 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
+import ovh.rwx.habbo.game.room.Room
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class WiredErrorLogsResponse {
     @Response(Outgoing.WIRED_ERROR_LOGS)
-    fun response(habboResponse: HabboResponse) {
-        // TODO: Implementar quando refazer wired 2.0
-        // Array de erros, cada erro contém:
-        // - errorId (Int): ID do erro
-        // - errorName (String): Nome do erro
-        // - category (String): Categoria do erro
-        // - throwCount (Int): Quantidade de vezes que o erro ocorreu
-        // - msSinceLastOccurrence (Long): Milissegundos desde a última ocorrência
-        habboResponse.writeInt(0) // empty errors array
+    fun response(habboResponse: HabboResponse, room: Room) {
+        val errors = room.wiredErrorLogger.getErrors()
+        val now = System.currentTimeMillis()
+
+        habboResponse.apply {
+            writeInt(errors.size)
+            errors.forEach { err ->
+                writeInt(err.errorId)
+                writeUTF(err.errorName)
+                writeUTF(err.category)
+                writeInt(err.throwCount)
+                writeLong(now - err.lastOccurrence)
+            }
+        }
     }
 }

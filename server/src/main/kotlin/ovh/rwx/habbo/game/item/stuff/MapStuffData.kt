@@ -21,17 +21,13 @@ package ovh.rwx.habbo.game.item.stuff
 
 import ovh.rwx.habbo.communication.HabboResponse
 
-class MapStuffData(private val values: LinkedHashMap<String, String>, roomExtra: Int = 0) :
+class MapStuffData(private val values: Map<String, String>, roomExtra: Int = 0) :
     StuffData(FORMAT_KEY_MAP, roomExtra) {
     override val legacyValue: String = values[KEY_STATE] ?: ""
 
     operator fun get(key: String): String = values[key] ?: ""
 
     fun getValue(key: String): String = values[key] ?: ""
-
-    fun setValue(key: String, value: String) {
-        values[key] = value
-    }
 
     override fun writePayload(habboResponse: HabboResponse) {
         habboResponse.writeInt(values.size)

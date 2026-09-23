@@ -30,8 +30,10 @@ import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.wired.variable.WiredVariableItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.dimmer.RoomDimmer
+import ovh.rwx.habbo.game.room.model.SquareState
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.wired.WiredHandler
@@ -65,6 +67,7 @@ class RoomItemManager(private val room: Room) {
             if (item.furnishing.interactionType.name.startsWith("WIRED_")) {
                 HabboServer.habboGame.itemManager.getWiredInstance(room, item)?.let { wired ->
                     wiredHandler.addWiredItem(item.position.vector2, wired)
+                    wired.setData()
                 }
             }
         }
@@ -96,7 +99,8 @@ class RoomItemManager(private val room: Room) {
 
         // 1. Desmonta o item da posição antiga (se estiver movendo)
         if (!isNewItem) {
-            tilesToUpdate.addAll(roomItem.affectedTiles)
+            val oldAffectedTiles = roomItem.affectedTiles
+            tilesToUpdate.addAll(oldAffectedTiles)
             room.roomGamemap.removeRoomItem(roomItem)
 
             if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
@@ -104,7 +108,7 @@ class RoomItemManager(private val room: Room) {
             }
 
             // Atualiza usuários que estavam pisando no item velho
-            roomItem.affectedTiles.forEach { tile ->
+            oldAffectedTiles.forEach { tile ->
                 room.roomGamemap.getEntitiesFromVector2(tile).forEach { user ->
                     roomItem.onEntityWalksOff(user, true)
                     if (tile !in newAffectedTiles) user.removeEntityStatuses()
@@ -113,11 +117,18 @@ class RoomItemManager(private val room: Room) {
             }
         }
 
-        // 2. Atualiza coordenadas físicas do item
+        // 2. Atualiza coordenadas físicas do item com Z máximo entre todos os tiles afetados
+        val targetZ = if (overrideZ != -1.0) {
+            overrideZ
+        } else {
+            newAffectedTiles.maxOfOrNull { room.roomGamemap.getAbsoluteHeight(it) }
+                ?: room.roomGamemap.getAbsoluteHeight(position.x, position.y)
+        }
+
         roomItem.position = Vector3(
             position.x,
             position.y,
-            if (overrideZ != -1.0) overrideZ else room.roomGamemap.getAbsoluteHeight(position.x, position.y)
+            targetZ
         )
         roomItem.rotation = rotation
 
@@ -128,6 +139,7 @@ class RoomItemManager(private val room: Room) {
         if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
             HabboServer.habboGame.itemManager.getWiredInstance(room, roomItem)?.let {
                 wiredHandler.addWiredItem(position, it)
+                it.setData()
             }
         }
 
@@ -151,13 +163,31 @@ class RoomItemManager(private val room: Room) {
     fun removeItem(roomUser: RoomUser?, roomItem: RoomItem): Boolean {
         if (items.remove(roomItem.id) == null) return false
 
+        val affectedTiles = roomItem.affectedTiles
         room.roomGamemap.removeRoomItem(roomItem)
         itemsToSave.remove(roomItem)
 
         if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
             ItemDao.saveWireds(listOf(roomItem))
             wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
+            if (roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_")) {
+                room.wiredVariableManager.deleteVariable(roomItem.id.toString())
+                room.networkDispatcher.sendResponseModern(Outgoing.WIRED_ALL_VARIABLES_HASH, room)
+            } else if (roomItem.furnishing.interactionType == InteractionType.WIRED_EXTRA_VARIABLE_TEXT_CONNECTOR) {
+                val itemsOnTile = room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
+                itemsOnTile.forEach { item ->
+                    if (item.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_")) {
+                        (HabboServer.habboGame.itemManager.getWiredInstance(
+                            room,
+                            item
+                        ) as? WiredVariableItem)?.registerToManager()
+                    }
+                }
+                room.networkDispatcher.sendResponseModern(Outgoing.WIRED_ALL_VARIABLES_HASH, room)
+            }
         }
+
+        room.wiredVariableManager.cleanupFurni(roomItem.id)
 
         if (roomItem.furnishing.interactionType == InteractionType.DIMMER) {
             roomDimmer?.let { ItemDao.saveDimmer(it) }
@@ -174,14 +204,14 @@ class RoomItemManager(private val room: Room) {
             )
 
             // Atualiza usuários que caíram do item removido
-            roomItem.affectedTiles.forEach { tile ->
+            affectedTiles.forEach { tile ->
                 room.roomGamemap.getEntitiesFromVector2(tile).forEach { user ->
                     roomItem.onEntityWalksOff(user, true)
                     user.removeEntityStatuses()
                     updateUserHeight(user, tile)
                 }
             }
-            broadcastFloorUpdate(roomItem.affectedTiles.toSet())
+            broadcastFloorUpdate(affectedTiles.toSet())
         } else {
             room.networkDispatcher.sendResponse(
                 Outgoing.ROOM_WALL_ITEM_REMOVE,
@@ -226,12 +256,22 @@ class RoomItemManager(private val room: Room) {
         return true
     }
 
-    // --- UTILITÁRIOS INTERNOS ---
+
     private fun canPlaceItemAt(newAffectedTiles: List<Vector2>, roomItem: RoomItem): Boolean {
-        return newAffectedTiles.none { tile ->
-            room.roomGamemap.isBlocked(tile, ignoreUsers = true) &&
-                    room.roomGamemap.cannotStackItem[tile.x][tile.y] &&
-                    room.roomGamemap.getItemsFromVector2(tile).none { it.id == roomItem.id }
+        return newAffectedTiles.all { tile ->
+            if (!room.roomGamemap.grid.isInside(tile.x, tile.y)) return@all false
+            if (tile == room.roomModel.doorVector3.vector2) return@all false
+            if (room.roomModel.squareStates[tile.x][tile.y] == SquareState.CLOSED) return@all false
+
+            val itemsOnTile = room.roomGamemap.getItemsFromVector2(tile).filter { it.id != roomItem.id }
+            if (itemsOnTile.isNotEmpty()) {
+                val highestItem = itemsOnTile.maxWithOrNull(compareBy<RoomItem> { it.totalHeight }.thenBy { it.id })
+                if (highestItem != null && !highestItem.furnishing.canStack) {
+                    return@all false
+                }
+            }
+
+            true
         }
     }
 
@@ -252,6 +292,8 @@ class RoomItemManager(private val room: Room) {
 
     private fun broadcastFloorUpdate(affectedTiles: Set<Vector2>) {
         if (affectedTiles.isEmpty()) return
+
+        affectedTiles.forEach { room.roomGamemap.recomputeTile(it) }
 
         room.networkDispatcher.sendResponseModern(Outgoing.ROOM_UPDATE_FURNI_STACK, room, affectedTiles)
         val validKeys = room.roomGamemap.roomItemMap.filterValues { it.isNotEmpty() }.keys

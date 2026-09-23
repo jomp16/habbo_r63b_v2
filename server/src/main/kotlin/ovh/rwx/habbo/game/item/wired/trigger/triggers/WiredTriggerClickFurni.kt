@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
+import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
@@ -31,12 +32,33 @@ import ovh.rwx.habbo.game.room.Room
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_FURNI)
 class WiredTriggerClickFurni(room: Room, roomItem: RoomItem) : WiredTrigger<FurniTriggerData>(room, roomItem) {
+    init {
+        setData()
+    }
+
     override fun code() = WiredTriggerType.AVATAR_CLICKS_FURNI.code
+    override val requiresItems = true
 
     override fun onTrigger(wiredContext: WiredContext, data: FurniTriggerData): Boolean {
-        wiredContext.targetFurnis += data.roomItem
+        val clickedItem = data.roomItem
+        // todo: verificar se deve replicar o comportamento do Habbo ou ignorar a mim mesmo.
+        // if (clickedItem.id == roomItem.id) return false
 
-        return true
+        val items = wiredContext.getEffectiveFurnis(this)
+        val matchByType = roomItem.wiredData?.furniSources?.contains(WiredFurniSource.TRIGGERING_ITEM) == true
+        val triggered = if (matchByType) {
+            val targetSprites = items.map { it.furnishing.spriteId }.toSet()
+            clickedItem.furnishing.spriteId in targetSprites
+        } else {
+            items.isEmpty() || items.contains(clickedItem)
+        }
+
+        if (triggered) {
+            wiredContext.sourceItem = clickedItem
+            wiredContext.targetFurnis += clickedItem
+        }
+
+        return triggered
     }
 
     companion object {

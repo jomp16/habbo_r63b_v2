@@ -40,8 +40,10 @@ enum class WiredTriggerType(val code: Int) {
     AVATAR_CLICKS_FURNI(18),
     PERIODIC_SHORT(19), // has custom UI
     STATE_CHANGE(20), // has custom UI
-    UNKNOWN_21(21),
+    AVATAR_CLICKS_TILE(21),
     VARIABLE_UPDATE(22), // has custom UI
     AVATAR_LEAVES_ROOM(23),
-    USER_CLICKS_USER(24)
+    USER_CLICKS_USER(24),
+    TRANSACTION_COMPLETED(25),
+    TRANSACTION_FAILED(26)
 }

@@ -160,7 +160,9 @@ class ItemManager {
                             "allow_marketplace_sell" to true,
                             "allow_gift" to true,
                             "allow_inventory_stack" to true,
-                            "interaction_type" to "default",
+                            "interaction_type" to (InteractionType.fromString(it).let { t ->
+                                if (t != InteractionType.NOT_FOUND && t != InteractionType.DEFAULT) t.type else "default"
+                            }),
                             "interaction_modes_count" to 1,
                             "vending_ids" to "0"
                         )

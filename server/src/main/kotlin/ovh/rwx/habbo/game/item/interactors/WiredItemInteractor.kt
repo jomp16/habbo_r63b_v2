@@ -52,11 +52,14 @@ class WiredItemInteractor : ItemInteractor() {
     override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
         super.onTrigger(room, roomEntity, roomItem, hasRights, request)
 
+        if (roomItem.furnishing.interactionType == InteractionType.WIRED_ANTENNA) {
+            room.itemManager.wiredHandler.lightItem(roomItem)
+            return
+        }
+
         if (!hasRights || roomItem.wiredData == null) return
 
-        roomItem.extraData = "1"
-        roomItem.update(updateDb = false, updateClient = true)
-        roomItem.requestTicks(1)
+        room.itemManager.wiredHandler.lightItem(roomItem)
 
         (roomEntity as? RoomUser)?.habboSession?.let { habboSession ->
             val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)

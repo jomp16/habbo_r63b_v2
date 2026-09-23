@@ -135,6 +135,11 @@ class WiredEffectMatchToScreenshot(room: Room, roomItem: RoomItem) : WiredEffect
             if (needsStateChange) {
                 item.extraData = snapshot.extraData
                 item.update(updateDb = true, updateClient = true)
+                room.itemManager.wiredHandler.triggerWired(
+                    ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerStuffState::class,
+                    wiredContext.triggererUser,
+                    ovh.rwx.habbo.game.item.wired.trigger.StateTriggerData(item)
+                )
             }
         }
     }

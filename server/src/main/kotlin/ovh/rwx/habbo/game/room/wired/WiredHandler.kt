@@ -24,17 +24,25 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.item.wired.WiredMoveEntry
+import ovh.rwx.habbo.game.item.wired.addon.WiredAddon
+import ovh.rwx.habbo.game.item.wired.addon.addons.WiredAddonExecuteInOrder
+import ovh.rwx.habbo.game.item.wired.addon.addons.WiredAddonOrEval
+import ovh.rwx.habbo.game.item.wired.addon.addons.WiredAddonRandom
+import ovh.rwx.habbo.game.item.wired.addon.addons.WiredAddonUnseen
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
+import ovh.rwx.habbo.game.item.wired.trigger.SignalTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtGivenTime
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerAtTimeLong
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodically
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerPeriodicallyLong
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.slide.flushWiredMovements
 import ovh.rwx.habbo.game.room.user.RoomEntity
+import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -53,22 +61,35 @@ class WiredHandler(val room: Room) {
     /**
      * O fluxo Wired 2.0 deve ser:
      * 1. Seletores (Definição de alvos no Contexto)
-     * 2. Trigger (Ativação)
-     * 3. Ordenação por Z (Base para o topo)
-     * 4. Condições (Filtros e Validações)
-     * 5. Efeitos (Ações nos alvos)
+     * 2. Addons (Modificadores globais/locais e limites)
+     * 3. Trigger (Ativação)
+     * 4. Condições (Filtros e Validações - AND padrão, ou OR com WiredAddonOrEval)
+     * 5. Efeitos (Ações nos alvos, com suporte a Random/Unseen/Order)
      */
     fun <T : WiredTriggerData> triggerWired(
         triggerClass: KClass<out WiredTrigger<T>>,
         roomUser: RoomEntity?,
-        data: T
+        data: T,
+        parentContext: WiredContext? = (data as? SignalTriggerData)?.context
     ): List<WiredTrigger<T>> {
         val triggeredWireds = mutableListOf<WiredTrigger<T>>()
         val batchedMovements: MutableList<WiredMoveEntry> = mutableListOf()
 
+        if (parentContext != null && parentContext.executionDepth >= 25) {
+            room.wiredErrorLogger.logError(
+                "RECURSION_LIMIT",
+                "EXECUTION",
+                Exception("Wired execution depth limit exceeded (25)")
+            )
+            return emptyList()
+        }
+
         // 1. Cast the class once
         @Suppress("UNCHECKED_CAST")
         val targetClass = triggerClass.java as Class<WiredTrigger<T>>
+
+        val startTime = System.currentTimeMillis()
+        var executionCost = 0.0
 
         wiredStack.values.forEach { wiredStackMap ->
             // Filtramos todos os triggers do tipo solicitado nesta pilha
@@ -79,66 +100,125 @@ class WiredHandler(val room: Room) {
             triggersInStack.forEach { trigger ->
                 val wiredContext = WiredContext(
                     triggererUser = roomUser,
-                    trigger = trigger
+                    trigger = trigger,
+                    executionDepth = (parentContext?.executionDepth ?: 0) + 1
                 )
+
+                if (parentContext != null) {
+                    wiredContext.variables.putAll(parentContext.variables)
+                    wiredContext.placeholders.putAll(parentContext.placeholders)
+                }
 
                 // Pegamos a pilha inteira ORDENADA pelo Z para respeitar a lógica visual
                 val sortedStack = wiredStackMap.values.sortedBy { it.roomItem.position.z }
 
-                // PROCESSAMOS OS SELETORES PRIMEIRO!
-                // Eles preenchem o context.targetFurnis e context.targetUsers
-                sortedStack.filterIsInstance<WiredSelector>().forEach { selector ->
-                    selector.onSelect(wiredContext)
-                }
+                // Custo base por componentes
+                executionCost += 1.0 // Trigger base cost
+                executionCost += sortedStack.filterIsInstance<WiredSelector>().size * 2.0
+                executionCost += sortedStack.filterIsInstance<WiredAddon>().size * 1.5
+                executionCost += sortedStack.filterIsInstance<WiredCondition>().size * 2.0
+                executionCost += sortedStack.filterIsInstance<WiredEffect>().size * 3.0
 
-                // AGORA avaliamos o Trigger!
-                if (trigger.onTrigger(wiredContext, data)) {
-                    triggeredWireds.add(trigger)
-                    lightWired(trigger)
-
-                    // Acendemos os seletores que participaram da ativação
-                    sortedStack.filterIsInstance<WiredSelector>().forEach { lightWired(it) }
-
-                    // 3. Processamos as Condições (Validam se a pilha prossegue)
-                    // No 2.0, usamos 'all' porque todas precisam ser verdadeiras
-                    val conditionsPassed = sortedStack.filterIsInstance<WiredCondition>().all { condition ->
-                        condition.onCondition(wiredContext).also { passed ->
-                            if (passed) lightWired(condition)
-                        }
+                try {
+                    // 1. PROCESSAMOS OS SELETORES PRIMEIRO!
+                    // Eles preenchem o context.targetFurnis e context.targetUsers
+                    sortedStack.filterIsInstance<WiredSelector>().forEach { selector ->
+                        selector.onSelect(wiredContext)
                     }
 
-                    // Se as condições passarem, executamos os efeitos
-                    if (conditionsPassed) {
-                        // Processamos os Efeitos (Ações finais)
-                        sortedStack.filterIsInstance<WiredEffect>()
-                            .takeWhile { !wiredContext.cancelled }
-                            .forEach { effect ->
-                                lightWired(effect)
+                    // 2. PROCESSAMOS OS ADDONS (Limites de execução, placeholders, filtros, etc.)
+                    sortedStack.filterIsInstance<WiredAddon>().forEach { addon ->
+                        addon.onAddon(wiredContext)
+                    }
 
-                                effect.handle(wiredContext, roomUser)
+                    if (wiredContext.cancelled) return@forEach
+
+                    // 3. AGORA avaliamos o Trigger!
+                    if (trigger.onTrigger(wiredContext, data)) {
+                        triggeredWireds.add(trigger)
+                        lightWired(trigger)
+
+                        // Acendemos os seletores e addons que participaram da ativação
+                        sortedStack.filterIsInstance<WiredSelector>().forEach { lightWired(it) }
+                        sortedStack.filterIsInstance<WiredAddon>().forEach { lightWired(it) }
+
+                        // 4. Processamos as Condições (Validam se a pilha prossegue)
+                        val hasOrEval = sortedStack.any { it is WiredAddonOrEval }
+                        val conditions = sortedStack.filterIsInstance<WiredCondition>()
+                        val conditionsPassed = conditions.isEmpty() || if (hasOrEval) {
+                            conditions.any { condition ->
+                                condition.onCondition(wiredContext).also { passed ->
+                                    if (passed) lightWired(condition)
+                                }
+                            }
+                        } else {
+                            conditions.all { condition ->
+                                condition.onCondition(wiredContext).also { passed ->
+                                    if (passed) lightWired(condition)
+                                }
+                            }
+                        }
+
+                        // Se as condições passarem, executamos os efeitos
+                        if (conditionsPassed) {
+                            val allEffects = sortedStack.filterIsInstance<WiredEffect>()
+                            val randomAddon = sortedStack.filterIsInstance<WiredAddonRandom>().firstOrNull()
+                            val unseenAddon = sortedStack.filterIsInstance<WiredAddonUnseen>().firstOrNull()
+                            val orderAddon = sortedStack.filterIsInstance<WiredAddonExecuteInOrder>().firstOrNull()
+
+                            val effectsToExecute = when {
+                                randomAddon != null -> randomAddon.selectEffects(allEffects)
+                                unseenAddon != null -> unseenAddon.selectEffect(allEffects)?.let { listOf(it) }
+                                    ?: emptyList()
+
+                                orderAddon != null -> orderAddon.selectEffect(allEffects)?.let { listOf(it) }
+                                    ?: emptyList()
+
+                                else -> allEffects
                             }
 
-                        // NOVO: Faz o flush dos movimentos após todos os efeitos rodarem
-                        if (wiredContext.batchedMovements.isNotEmpty()) {
-                            batchedMovements += wiredContext.batchedMovements
-                            wiredContext.batchedMovements.clear() // Limpa para evitar reenvio
+                            // Processamos os Efeitos (Ações finais)
+                            effectsToExecute
+                                .takeWhile { !wiredContext.cancelled }
+                                .forEach { effect ->
+                                    if ((effect.roomItem.wiredData?.delay ?: 0) <= 0) {
+                                        lightWired(effect)
+                                    }
+
+                                    effect.handle(wiredContext, roomUser)
+                                }
+
+                            // Faz o flush dos movimentos após todos os efeitos rodarem
+                            if (wiredContext.batchedMovements.isNotEmpty()) {
+                                batchedMovements += wiredContext.batchedMovements
+                                wiredContext.batchedMovements.clear() // Limpa para evitar reenvio
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    room.wiredErrorLogger.logError(e.javaClass.simpleName, "EXECUTION", e)
                 }
             }
         }
+
+        val duration = System.currentTimeMillis() - startTime
+        room.wiredPerformanceMonitor.recordExecution(executionCost, duration)
 
         room.flushWiredMovements(batchedMovements)
 
         return triggeredWireds
     }
 
-    fun lightWired(wiredItem: WiredItem) {
-        if (wiredItem.roomItem.extraData == "1") return
+    fun lightItem(roomItem: RoomItem) {
+        if (roomItem.extraData == "1") return
 
-        wiredItem.roomItem.extraData = "1"
-        wiredItem.roomItem.update(updateDb = false, updateClient = true)
-        wiredItem.roomItem.requestTicks(1)
+        roomItem.extraData = "1"
+        roomItem.update(updateDb = false, updateClient = true)
+        roomItem.requestTicks(1)
+    }
+
+    fun lightWired(wiredItem: WiredItem) {
+        lightItem(wiredItem.roomItem)
     }
 
     fun resetTimers() {
@@ -148,6 +228,7 @@ class WiredHandler(val room: Room) {
                     is WiredTriggerPeriodically -> wiredItem.resetTriggered()
                     is WiredTriggerPeriodicallyLong -> wiredItem.resetTriggered()
                     is WiredTriggerAtGivenTime -> wiredItem.resetTriggered()
+                    is WiredTriggerAtTimeLong -> wiredItem.resetTriggered()
                 }
             }
         }
@@ -163,11 +244,11 @@ class WiredHandler(val room: Room) {
             .forEach { it.resetTriggered() }
     }
 
-    fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest, habboAir: Boolean = false): Boolean {
+    fun saveWired(roomItem: RoomItem, habboRequest: HabboRequest, habboSession: HabboSession): Boolean {
         val vector2 = roomItem.position.vector2
         val wiredItem = wiredStack[vector2]?.get(roomItem.id) ?: return false
 
-        if (wiredItem.saveWired(habboRequest, habboAir)) {
+        if (wiredItem.saveWired(habboRequest, habboSession)) {
             roomItem.update(updateDb = true, updateClient = false)
 
             return true

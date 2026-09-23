@@ -29,6 +29,16 @@ import ovh.rwx.habbo.game.user.HabboSession
 class WiredAllVariablesDiffsHandler {
     @Handler(Incoming.WIRED_ALL_VARIABLES_DIFFS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.WIRED_ALL_VARIABLES_DIFFS)
+        val room = habboSession.currentRoom ?: return
+
+        val count = habboRequest.readInt()
+        val clientHashes = mutableMapOf<String, Int>()
+        repeat(count) {
+            val variableId = habboRequest.readUTF()
+            val hash = habboRequest.readInt()
+            clientHashes[variableId] = hash
+        }
+
+        habboSession.sendHabboResponse(Outgoing.WIRED_ALL_VARIABLES_DIFFS, room, clientHashes)
     }
 }

@@ -36,6 +36,9 @@ import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.logic.ChestFurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.stuff.StuffData
+import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerTransactionComplete
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerTransactionFail
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
@@ -99,6 +102,11 @@ class ChestManager {
     fun cancelDepositWithNotification(habboSession: HabboSession, failureTypeId: WiredTradeFailureType) {
         trades.remove(habboSession.userInformation.id)
         habboSession.sendHabboResponse(Outgoing.WIRED_TRADE_CANCELLED, failureTypeId)
+        habboSession.roomUser?.room?.itemManager?.wiredHandler?.triggerWired(
+            WiredTriggerTransactionFail::class,
+            habboSession.roomUser,
+            EmptyTriggerData
+        )
     }
 
     fun getOrCreateChest(roomItem: RoomItem): ChestData? {
@@ -390,6 +398,12 @@ class ChestManager {
                 WiredTransactionNotification.CHEST_DEPOSITED
             )
 
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerTransactionComplete::class,
+                habboSession.roomUser,
+                EmptyTriggerData
+            )
+
             if (isDonation) {
                 notifyDonation(chest, habboSession.userInformation.username)
                 notifyOwnerTransaction(chest)
@@ -398,6 +412,12 @@ class ChestManager {
             habboSession.sendHabboResponse(
                 Outgoing.WIRED_TRANSACTION_FAIL,
                 if (chest.isFull()) WiredTradeFailureType.CHEST_FULL else WiredTradeFailureType.CHEST_CAPACITY_EXCEEDED
+            )
+
+            room.itemManager.wiredHandler.triggerWired(
+                WiredTriggerTransactionFail::class,
+                habboSession.roomUser,
+                EmptyTriggerData
             )
         }
 

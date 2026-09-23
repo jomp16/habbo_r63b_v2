@@ -24,6 +24,8 @@ import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.trigger.UserActionTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.UserTriggerData
+import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerBotReachesAvatar
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerUserPerformsAction
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.UserMoveTask
@@ -170,6 +172,25 @@ abstract class RoomEntity(
         if (oldItem != newItem) {
             oldItem?.onEntityWalksOff(this, true)
             newItem?.onEntityWalksOn(this, true)
+        }
+
+        val entitiesOnTile = room.roomGamemap.getEntitiesFromVector2(currentVector3.vector2)
+        if (this is RoomBot) {
+            entitiesOnTile.filterIsInstance<RoomUser>().forEach { user ->
+                room.itemManager.wiredHandler.triggerWired(
+                    WiredTriggerBotReachesAvatar::class,
+                    user,
+                    UserTriggerData(user)
+                )
+            }
+        } else if (this is RoomUser) {
+            entitiesOnTile.filterIsInstance<RoomBot>().forEach { bot ->
+                room.itemManager.wiredHandler.triggerWired(
+                    WiredTriggerBotReachesAvatar::class,
+                    this,
+                    UserTriggerData(this)
+                )
+            }
         }
 
         onMovementStepCommitted()
@@ -408,9 +429,9 @@ abstract class RoomEntity(
             objectiveRotation = -1
         }
 
+        objectiveItem = null
         itemToTrigger?.let { item ->
             item.furnishing.interactor?.onTrigger(room, this, item, room.userManager.hasRights(this), 0)
-            objectiveItem = null
         }
 
         room.roomGamemap.getHighestItem(currentVector3.vector2)?.let { addEntityStatuses(it) }

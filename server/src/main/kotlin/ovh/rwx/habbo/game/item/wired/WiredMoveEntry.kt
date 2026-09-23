@@ -33,6 +33,7 @@ data class WiredUserMove(
     val animationTime: Int,
     val bodyDirection: Int,
     val headDirection: Int,
+    val jumpPower: Int? = null
 ) : WiredMoveEntry
 
 data class WiredFurniMove(
@@ -44,7 +45,9 @@ data class WiredFurniMove(
     val targetY: Int,
     val targetZ: Double,
     val animationTime: Int = 500,
-    val rotation: Int
+    val rotation: Int,
+    val overshootingDistance: Int? = null,
+    val curveStrength: Int? = null
 ) : WiredMoveEntry
 
 data class WiredWallItemMove(

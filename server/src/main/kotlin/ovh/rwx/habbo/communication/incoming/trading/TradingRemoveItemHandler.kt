@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.trading
 
+import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -29,7 +30,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class TradingRemoveItemHandler {
     @Handler(Incoming.TRADING_REMOVE_ITEM)
     @HandlerR63A(IncomingR63A.TRADING_REMOVE_ITEM)
-    fun handle(habboSession: HabboSession, habboRequest: ovh.rwx.habbo.communication.HabboRequest) {
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val room = habboSession.currentRoom ?: return
         val roomUser = habboSession.roomUser ?: return
 

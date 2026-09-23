@@ -156,6 +156,7 @@ class RoomUserManager(private val room: Room) {
             val session = roomEntity.habboSession
             // Baús com auto-lock: trancam quando o dono sai do quarto
             HabboServer.habboGame.chestManager.onUserLeaveRoom(room, session)
+            room.wiredVariableManager.onUserLeave(session.userInformation.id)
             handleUserDisconnectionMessages(session, notifyClient, kickNotification)
             if (session.currentRoom == room) {
                 session.roomUser = null

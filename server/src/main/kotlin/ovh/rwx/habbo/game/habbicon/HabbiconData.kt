@@ -69,6 +69,8 @@ data class UserHabbicon(
     val state: Int
 ) {
     companion object {
+        const val STATE_LOCKED = 0
+        const val STATE_CLAIMABLE = 1
         const val STATE_OWNED = 2
         const val STATE_FAVORITE = 3
     }
