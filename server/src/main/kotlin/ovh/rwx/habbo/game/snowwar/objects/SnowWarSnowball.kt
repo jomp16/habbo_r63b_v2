@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.snowwar.objects
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.snowwar.SnowWarUser
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameObjectType
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarTrajectory
 import ovh.rwx.habbo.game.snowwar.utils.SnowWarMath
 import kotlin.math.min
 
@@ -70,21 +71,22 @@ class SnowWarSnowball(
 
     private fun calculateHeight(ttl: Int): Int {
         var distanceFromPeak = ttl - parabolaOffset
-        val heightMultiplier = when (trajectory) {
-            SnowWarMath.TRAJECTORY_QUICK -> {
+        val trajectoryEnum = SnowWarTrajectory.fromId(trajectory)
+        val heightMultiplier = when (trajectoryEnum) {
+            SnowWarTrajectory.QUICK -> {
                 if (ttl > 3) {
                     distanceFromPeak = 3 - parabolaOffset
                 }
                 10
             }
 
-            SnowWarMath.TRAJECTORY_SHORT_LOB -> 25
+            SnowWarTrajectory.SHORT_LOB -> 25
             else -> 50
         }
 
         val calculated =
             3000 + heightMultiplier * ((parabolaOffset * parabolaOffset) - (distanceFromPeak * distanceFromPeak))
-        return if (trajectory == SnowWarMath.TRAJECTORY_QUICK) min(calculated, 3000) else calculated
+        return if (trajectoryEnum == SnowWarTrajectory.QUICK) min(calculated, 3000) else calculated
     }
 
     fun calculateFrameMovement() {
@@ -100,16 +102,21 @@ class SnowWarSnowball(
     }
 
     fun hasFloorCollision(heightMapRows: List<String>): Boolean {
+        // AS3 testCollisionWithGround:
+        // if (location3D.z < 1) return true;
+        // var tile = getTileAt(tileX, tileY);
+        // if (tile) return location3D.z < tile.height;
+        // return false; (holes 'x' have no tile, so flying balls pass over them)
         if (height < 1) return true
         val tileX = SnowWarMath.worldToTile(locH)
         val tileY = SnowWarMath.worldToTile(locV)
 
         if (tileY !in heightMapRows.indices || tileX !in heightMapRows[tileY].indices) {
-            return true
+            return false
         }
 
         val ch = heightMapRows[tileY][tileX]
-        if (ch == 'x') return true
+        if (ch == 'x' || ch == 'X') return false
         val tileHeight = if (ch.isDigit()) (ch - '0') * 3200 else (10 + (ch - 'a')) * 3200
         return height < tileHeight
     }

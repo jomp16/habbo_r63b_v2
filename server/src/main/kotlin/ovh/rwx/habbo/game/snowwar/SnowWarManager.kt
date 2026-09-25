@@ -162,6 +162,10 @@ class SnowWarManager {
         return lobbies.values.lastOrNull { it.users.containsKey(session.userInformation.id) }
     }
 
+    fun getGameForPlayer(session: HabboSession): SnowWarGame? {
+        return getLobbyForPlayer(session)?.activeGame
+    }
+
     fun removeLobby(gameId: Int) {
         val removed = lobbies.remove(gameId)
         if (removed != null) {

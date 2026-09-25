@@ -30,7 +30,7 @@ class Game2RequestFullStatusUpdateHandler {
     @Handler(Incoming.GAME_2_REQUEST_FULL_STATUS_UPDATE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val turnNumber = habboRequest.readInt()
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.onFullStatusRequest(habboSession, turnNumber)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        game?.onFullStatusRequest(habboSession, turnNumber)
     }
 }

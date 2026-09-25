@@ -35,7 +35,7 @@ class Game2ThrowSnowballAtPositionHandler {
         val turnNumber = habboRequest.readInt()
         val subTurn = habboRequest.readInt()
 
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.onThrowSnowballAtPosition(habboSession, targetX, targetY, trajectory, turnNumber, subTurn)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        game?.onThrowSnowballAtPosition(habboSession, targetX, targetY, trajectory, turnNumber, subTurn)
     }
 }

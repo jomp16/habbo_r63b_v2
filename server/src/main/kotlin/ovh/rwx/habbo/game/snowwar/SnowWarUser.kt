@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.snowwar
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarActivityState
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameObjectType
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarTeam
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarUserSerializeMode
@@ -60,12 +61,13 @@ class SnowWarUser(
     var snowBallCount: Int = 0
     var isBot: Int = 0
     var activityTimer: Int = 0
-    var activityState: Int = 0 // 0=NORMAL, 1=MAKING_SNOWBALL, 2=STUNNED, 3=INVINCIBLE
+    var activityState: SnowWarActivityState = SnowWarActivityState.NORMAL
     var nextTileX: Int = -1
     var nextTileY: Int = -1
     var moveTargetX: Int = 0
     var moveTargetY: Int = 0
-    var pickupTimer: Int = SnowWarMath.CREATING_TIMER
+    var pickupTimer: Int = SnowWarMath.MACHINE_PICKUP_INTERVAL
+    var throwTimer: Int = 0 // AS3 _SafeStr_8227: SNOWBALL_THROW_INTERVAL=5; prevents burst throws
 
     val score = AtomicInteger(0)
     val hits = AtomicInteger(0)
@@ -76,37 +78,83 @@ class SnowWarUser(
     var isLoaded: Boolean = false
 
     val isWalking: Boolean
-        get() = (currentLocationX != moveTargetX || currentLocationY != moveTargetY) && (activityState == 0 || activityState == 3)
+        get() = (currentLocationX != moveTargetX || currentLocationY != moveTargetY) &&
+                (activityState == SnowWarActivityState.NORMAL || activityState == SnowWarActivityState.INVINCIBLE)
 
     override fun isAlive(): Boolean = true
 
-    fun canMove(): Boolean = activityState == 0 || activityState == 3 // NORMAL or INVINCIBLE
+    fun canMove(): Boolean =
+        activityState == SnowWarActivityState.NORMAL || activityState == SnowWarActivityState.INVINCIBLE
 
-    fun isImmune(): Boolean = activityState == 2 || activityState == 3 // STUNNED or INVINCIBLE
+    fun canMakeSnowballs(): Boolean =
+        canMove() && snowBallCount < SnowWarMath.MAX_SNOWBALLS
 
-    fun setupSpawn(index: Int, arena: SnowWarArenaData? = null) {
-        val isTeam1 = team == SnowWarTeam.BLUE
-        val spawns = if (arena != null) {
-            if (isTeam1) arena.blueSpawns else arena.redSpawns
-        } else {
-            emptyList()
+    fun changeMoveTarget(newTargetX: Int, newTargetY: Int) {
+        // AS3 HumanGameObject.changeMoveTarget:
+        // if (_SafeStr_8225 == 1) { _SafeStr_8225 = 0; _SafeStr_8224 = 0; }
+        // if (_SafeStr_8225 == 0 || _SafeStr_8225 == 3) { moveTarget.change2DLocation(x, y); }
+        if (activityState == SnowWarActivityState.MAKING_SNOWBALL) {
+            activityState = SnowWarActivityState.NORMAL
+            activityTimer = 0
         }
-        val spawn = if (spawns.isNotEmpty()) {
-            spawns[index % spawns.size]
-        } else {
-            if (isTeam1) 22 to 9 else 30 to 43
+        if (canMove()) {
+            moveTargetX = newTargetX
+            moveTargetY = newTargetY
         }
+    }
 
-        val startTileX = spawn.first
-        val startTileY = spawn.second
-        val bodyDir = if (isTeam1) 2 else 6
+    fun startMakingSnowball() {
+        // AS3 HumanGameObject.startMakingSnowball:
+        // if (canMakeSnowballs()) { _SafeStr_8225 = 1; _SafeStr_8224 = 20; stopMovement(); }
+        if (canMakeSnowballs()) {
+            activityState = SnowWarActivityState.MAKING_SNOWBALL
+            activityTimer = SnowWarMath.CREATING_TIMER
+            stopWalking()
+        }
+    }
+
+    fun throwSnowball(targetX: Int, targetY: Int): Boolean {
+        // AS3 HumanGameObject.throwSnowball:
+        if (snowBallCount < 1) return false
+        stopWalking()
+        val angle360 = SnowWarMath.getAngleFromComponents(targetX - currentLocationX, targetY - currentLocationY)
+        bodyDirection = SnowWarMath.direction360To8(angle360)
+        snowBallCount--
+        throwTimer = SnowWarMath.SNOWBALL_THROW_INTERVAL
+        throws.incrementAndGet()
+        return true
+    }
+
+    fun isImmune(): Boolean =
+        activityState == SnowWarActivityState.STUNNED || activityState == SnowWarActivityState.INVINCIBLE
+
+    fun setupSpawn(
+        index: Int,
+        spawnTile: Pair<Int, Int>,
+        arenaWidth: Int = 50,
+        arenaHeight: Int = 50
+    ) {
+        val startTileX = spawnTile.first
+        val startTileY = spawnTile.second
+
+        val startWorldX = SnowWarMath.tileToWorld(startTileX)
+        val startWorldY = SnowWarMath.tileToWorld(startTileY)
+
+        val centerWorldX = SnowWarMath.tileToWorld(arenaWidth / 2)
+        val centerWorldY = SnowWarMath.tileToWorld(arenaHeight / 2)
+
+        val angle360 = SnowWarMath.getAngleFromComponents(
+            centerWorldX - startWorldX,
+            centerWorldY - startWorldY
+        )
+        val bodyDir = SnowWarMath.direction360To8(angle360)
 
         val field = SnowWarGameObject::class.java.getDeclaredField("objectId")
         field.isAccessible = true
         field.setInt(this, index + 1)
 
-        currentLocationX = SnowWarMath.tileToWorld(startTileX)
-        currentLocationY = SnowWarMath.tileToWorld(startTileY)
+        currentLocationX = startWorldX
+        currentLocationY = startWorldY
         currentTileX = startTileX
         currentTileY = startTileY
         bodyDirection = bodyDir
@@ -116,12 +164,13 @@ class SnowWarUser(
         snowBallCount = SnowWarMath.MAX_SNOWBALLS
         isBot = 0
         activityTimer = 0
-        activityState = 0
+        activityState = SnowWarActivityState.NORMAL
         nextTileX = -1
         nextTileY = -1
         moveTargetX = currentLocationX
         moveTargetY = currentLocationY
-        pickupTimer = SnowWarMath.CREATING_TIMER
+        pickupTimer = SnowWarMath.MACHINE_PICKUP_INTERVAL
+        throwTimer = 0
     }
 
     fun testCollision(ball: SnowWarSnowball): Boolean {
@@ -136,50 +185,51 @@ class SnowWarUser(
     }
 
     fun tickSnowballPickupTimer(): Boolean {
-        if (isWalking || (activityState != 0 && activityState != 3)) {
-            pickupTimer = SnowWarMath.CREATING_TIMER
+        if (isWalking || (activityState != SnowWarActivityState.NORMAL && activityState != SnowWarActivityState.INVINCIBLE)) {
+            pickupTimer = SnowWarMath.MACHINE_PICKUP_INTERVAL
             return false
         }
         if (pickupTimer > 0) {
             pickupTimer--
             return false
         }
-        pickupTimer = SnowWarMath.CREATING_TIMER
+        pickupTimer = SnowWarMath.MACHINE_PICKUP_INTERVAL
         return true
-    }
-
-    fun resetSnowballPickupTimer() {
-        pickupTimer = SnowWarMath.CREATING_TIMER
     }
 
     fun onActivityTimerExpired() {
         when (activityState) {
-            1 -> { // MAKING_SNOWBALL
-                activityState = 0
+            SnowWarActivityState.MAKING_SNOWBALL -> {
+                activityState = SnowWarActivityState.NORMAL
                 snowBallCount = min(snowBallCount + 1, SnowWarMath.MAX_SNOWBALLS)
             }
 
-            2 -> { // STUNNED
-                activityState = 3 // INVINCIBLE
+            SnowWarActivityState.STUNNED -> {
+                activityState = SnowWarActivityState.INVINCIBLE
                 activityTimer = SnowWarMath.INVINCIBILITY_TIMER
                 hitPoints = SnowWarMath.INITIAL_HEALTH
                 pendingHealth = SnowWarMath.INITIAL_HEALTH
                 pendingStun = false
             }
 
-            3 -> { // INVINCIBLE
-                activityState = 0
+            SnowWarActivityState.INVINCIBLE -> {
+                activityState = SnowWarActivityState.NORMAL
             }
+
+            else -> {}
         }
     }
 
-    fun subturn(heightmapRows: List<String>) {
+    fun subturn(isTileWalkable: (tileX: Int, tileY: Int) -> Boolean) {
         if (activityTimer > 0) {
             if (activityTimer == 1) {
                 onActivityTimerExpired()
             }
             activityTimer--
         }
+
+        // AS3 _SafeStr_8227: throw cooldown, decremented unconditionally every subturn
+        if (throwTimer > 0) throwTimer--
 
         if (canMove()) {
             if (nextTileX != -1 && nextTileY != -1) {
@@ -204,12 +254,22 @@ class SnowWarUser(
                     var candidateX = currentTileX + offsetX[resolvedDir]
                     var candidateY = currentTileY + offsetY[resolvedDir]
 
-                    // AS3: if primary direction blocked, try rotateDirection(-1), then rotateDirection(+2)
-                    if (!isTileWalkable(candidateX, candidateY, heightmapRows)) {
+                    // AS3 lines 234600-234618
+                    if (!isTileWalkable(candidateX, candidateY)) {
+                        // AS3: if (moveTarget.equals(candidateTile.location)) { stopMovement(); return; }
+                        val candidateWorldX = SnowWarMath.tileToWorld(candidateX)
+                        val candidateWorldY = SnowWarMath.tileToWorld(candidateY)
+                        if (moveTargetX == candidateWorldX && moveTargetY == candidateWorldY) {
+                            nextTileX = -1
+                            nextTileY = -1
+                            stopWalking()
+                            return
+                        }
+
                         val leftDir = (resolvedDir - 1 + 8) % 8
                         val leftX = currentTileX + offsetX[leftDir]
                         val leftY = currentTileY + offsetY[leftDir]
-                        if (isTileWalkable(leftX, leftY, heightmapRows)) {
+                        if (isTileWalkable(leftX, leftY)) {
                             resolvedDir = leftDir
                             candidateX = leftX
                             candidateY = leftY
@@ -218,7 +278,7 @@ class SnowWarUser(
                                 (leftDir + 2) % 8 // rotateDirection(2) from leftDir == rotateDirection(+1) from primary
                             val rightX = currentTileX + offsetX[rightDir]
                             val rightY = currentTileY + offsetY[rightDir]
-                            if (isTileWalkable(rightX, rightY, heightmapRows)) {
+                            if (isTileWalkable(rightX, rightY)) {
                                 resolvedDir = rightDir
                                 candidateX = rightX
                                 candidateY = rightY
@@ -236,12 +296,6 @@ class SnowWarUser(
                 }
             }
         }
-    }
-
-    private fun isTileWalkable(tileX: Int, tileY: Int, heightmapRows: List<String>): Boolean {
-        if (tileY < 0 || tileY >= heightmapRows.size) return false
-        val row = heightmapRows[tileY]
-        return !(tileX < 0 || tileX >= row.length) && row[tileX] != 'x' && row[tileX] != 'X'
     }
 
     private fun moveTowardsNextTile() {
@@ -284,10 +338,17 @@ class SnowWarUser(
     }
 
     fun stopWalking() {
+        // AS3 stopMovement(): snaps location and moveTarget to the current/next tile
+        if (nextTileX != -1) {
+            currentTileX = nextTileX
+            currentTileY = nextTileY
+            nextTileX = -1
+            nextTileY = -1
+        }
+        currentLocationX = SnowWarMath.tileToWorld(currentTileX)
+        currentLocationY = SnowWarMath.tileToWorld(currentTileY)
         moveTargetX = currentLocationX
         moveTargetY = currentLocationY
-        nextTileX = -1
-        nextTileY = -1
     }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
@@ -345,7 +406,7 @@ class SnowWarUser(
             writeInt(snowBallCount)
             writeInt(isBot)
             writeInt(activityTimer)
-            writeInt(activityState)
+            writeInt(activityState.id)
             writeInt(if (nextTileX != -1) nextTileX else currentTileX)
             writeInt(if (nextTileY != -1) nextTileY else currentTileY)
             writeInt(moveTargetX)
@@ -377,7 +438,7 @@ class SnowWarUser(
             snowBallCount,
             isBot,
             activityTimer,
-            activityState,
+            activityState.id,
             if (nextTileX != -1) nextTileX else currentTileX,
             if (nextTileY != -1) nextTileY else currentTileY,
             moveTargetX,

@@ -30,7 +30,12 @@ class Game2GameChatHandler {
     @Handler(Incoming.GAME_2_GAME_CHAT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val chatMessage = habboRequest.readUTF()
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.chat(habboSession, chatMessage)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        if (game != null) {
+            game.chat(habboSession, chatMessage)
+        } else {
+            val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
+            lobby?.chat(habboSession, chatMessage)
+        }
     }
 }

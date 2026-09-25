@@ -20,18 +20,27 @@
 package ovh.rwx.habbo.game.snowwar
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarEventType
+import ovh.rwx.habbo.game.snowwar.objects.SnowWarSnowball
 
 interface ISnowWarGameEvent {
-    val eventTypeId: Int
+    val type: SnowWarEventType
+    val eventTypeId: Int get() = type.id
     fun serialize(response: HabboResponse)
+    fun apply(game: SnowWarGame) {}
 }
 
 data class HumanLeftGameEvent(
     val humanGameObjectId: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 1
+    override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_LEFT
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        game.users.remove(user.userId)
     }
 }
 
@@ -40,11 +49,16 @@ data class NewMoveTargetGameEvent(
     val x: Int,
     val y: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 2
+    override val type: SnowWarEventType get() = SnowWarEventType.NEW_MOVE_TARGET
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(x)
         response.writeInt(y)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        user.changeMoveTarget(x, y)
     }
 }
 
@@ -53,11 +67,19 @@ data class HumanThrowsSnowballAtHumanGameEvent(
     val targetHumanGameObjectId: Int,
     val trajectory: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 3
+    override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_THROWS_SNOWBALL_AT_HUMAN
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(targetHumanGameObjectId)
         response.writeInt(trajectory)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        val targetUser = game.users.values.find { it.objectId == targetHumanGameObjectId }
+        val targetX = targetUser?.currentLocationX ?: user.currentLocationX
+        val targetY = targetUser?.currentLocationY ?: user.currentLocationY
+        user.throwSnowball(targetX, targetY)
     }
 }
 
@@ -67,41 +89,78 @@ data class HumanThrowsSnowballAtPositionGameEvent(
     val targetY: Int,
     val trajectory: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 4
+    override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_THROWS_SNOWBALL_AT_POSITION
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(targetX)
         response.writeInt(targetY)
         response.writeInt(trajectory)
     }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        user.throwSnowball(targetX, targetY)
+    }
 }
 
 data class HumanStartsToMakeASnowballGameEvent(
     val humanGameObjectId: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 7
+    override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_STARTS_TO_MAKE_A_SNOWBALL
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
     }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        user.startMakingSnowball()
+    }
 }
 
+// id=8: cria a bola física na arena do cliente (AS3 CreateSnowballEventData)
+// Wire: snowBallGameObjectId, humanGameObjectId, targetX, targetY, trajectory
 data class CreateSnowballGameEvent(
+    val snowBallGameObjectId: Int,
     val humanGameObjectId: Int,
-    val snowBallMachineReference: Int = 0
+    val targetX: Int,
+    val targetY: Int,
+    val trajectory: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 8
+    override val type: SnowWarEventType get() = SnowWarEventType.CREATE_SNOWBALL
     override fun serialize(response: HabboResponse) {
+        response.writeInt(snowBallGameObjectId)
         response.writeInt(humanGameObjectId)
-        response.writeInt(snowBallMachineReference)
+        response.writeInt(targetX)
+        response.writeInt(targetY)
+        response.writeInt(trajectory)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        val ball = SnowWarSnowball(
+            objectId = snowBallGameObjectId,
+            thrower = user,
+            startWorldX = user.currentLocationX,
+            startWorldY = user.currentLocationY,
+            targetWorldX = targetX,
+            targetWorldY = targetY,
+            trajectoryRequested = trajectory
+        )
+        game.snowballs.add(ball)
     }
 }
 
 data class MachineCreatesSnowballGameEvent(
     val snowBallMachineReference: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 11
+    override val type: SnowWarEventType get() = SnowWarEventType.MACHINE_CREATES_SNOWBALL
     override fun serialize(response: HabboResponse) {
         response.writeInt(snowBallMachineReference)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val machine = game.machines.find { it.objectId == snowBallMachineReference }
+        machine?.addSnowball()
     }
 }
 
@@ -109,9 +168,20 @@ data class HumanGetsSnowballsFromMachineGameEvent(
     val humanGameObjectId: Int,
     val snowBallMachineReference: Int
 ) : ISnowWarGameEvent {
-    override val eventTypeId: Int get() = 12
+    override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_GETS_SNOWBALLS_FROM_MACHINE
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(snowBallMachineReference)
+    }
+
+    override fun apply(game: SnowWarGame) {
+        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+        val machine = game.machines.find { it.objectId == snowBallMachineReference }
+        if (machine != null) {
+            machine.transferReservedSnowballTo(user)
+        } else {
+            val pile = game.piles.find { it.objectId == snowBallMachineReference }
+            pile?.transferReservedSnowballTo(user)
+        }
     }
 }

@@ -34,7 +34,7 @@ class Game2ThrowSnowballAtHumanHandler {
         val turnNumber = habboRequest.readInt()
         val subTurn = habboRequest.readInt()
 
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.onThrowSnowballAtHuman(habboSession, targetHumanGameObjectId, trajectory, turnNumber, subTurn)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        game?.onThrowSnowballAtHuman(habboSession, targetHumanGameObjectId, trajectory, turnNumber, subTurn)
     }
 }

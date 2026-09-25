@@ -21,8 +21,10 @@ package ovh.rwx.habbo.game.snowwar.objects
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.snowwar.SnowWarUser
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarActivityState
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameObjectType
 import ovh.rwx.habbo.game.snowwar.utils.SnowWarMath
+import kotlin.math.abs
 
 class SnowWarMachine(
     objectId: Int,
@@ -55,11 +57,13 @@ class SnowWarMachine(
     }
 
     fun canPlayerPickup(user: SnowWarUser): Boolean {
-        val pickupX = x
-        val pickupY = y + 1
-        if (user.currentTileX != pickupX || user.currentTileY != pickupY) return false
+        val dx = abs(user.currentTileX - x)
+        val dy = abs(user.currentTileY - y)
+        val isAdjacent = (dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0)) ||
+                (user.currentTileX in (x - 1..x + 2) && user.currentTileY in (y - 1..y + 2))
+        if (!isAdjacent) return false
         if (user.isWalking) return false
-        if (user.activityState != 0 && user.activityState != 1) return false
+        if (user.activityState != SnowWarActivityState.NORMAL && user.activityState != SnowWarActivityState.INVINCIBLE && user.activityState != SnowWarActivityState.MAKING_SNOWBALL) return false
         return snowballCount > reservedPickups && user.snowBallCount < SnowWarMath.MAX_SNOWBALLS
     }
 

@@ -35,7 +35,7 @@ class SnowWarTree(
 
     var hits: Int = 0
 
-    override fun isAlive(): Boolean = hits < maxHits
+    override fun isAlive(): Boolean = true
 
     fun hit(): Int {
         if (hits < maxHits) {
@@ -45,8 +45,9 @@ class SnowWarTree(
     }
 
     fun testCollision(ball: SnowWarSnowball): Boolean {
-        return isAlive() &&
-                ball.height < SnowWarMath.TREE_COLLISION_HEIGHT &&
+        // AS3 TreeGameObject: collisionHeight returns _SafeStr_5674 (height = 3200)
+        return hits < maxHits &&
+                ball.height < height &&
                 SnowWarMath.circlesOverlap(
                     ball.locH,
                     ball.locV,

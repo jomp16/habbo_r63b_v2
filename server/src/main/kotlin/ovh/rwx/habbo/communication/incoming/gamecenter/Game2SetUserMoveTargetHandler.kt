@@ -34,7 +34,7 @@ class Game2SetUserMoveTargetHandler {
         val turnNumber = habboRequest.readInt()
         val subTurn = habboRequest.readInt()
 
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.onUserMove(habboSession, targetX, targetY, turnNumber, subTurn)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        game?.onUserMove(habboSession, targetX, targetY, turnNumber, subTurn)
     }
 }

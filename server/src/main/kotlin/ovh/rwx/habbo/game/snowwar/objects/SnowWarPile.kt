@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.snowwar.objects
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.snowwar.SnowWarUser
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarActivityState
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameObjectType
 import ovh.rwx.habbo.game.snowwar.utils.SnowWarMath
 import kotlin.math.abs
@@ -39,10 +40,12 @@ class SnowWarPile(
     override fun isAlive(): Boolean = true
 
     fun canPlayerPickup(user: SnowWarUser): Boolean {
-        val distance = abs(user.currentTileX - x) + abs(user.currentTileY - y)
-        return distance == 1 &&
+        val dx = abs(user.currentTileX - x)
+        val dy = abs(user.currentTileY - y)
+        val isAdjacent = dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0)
+        return isAdjacent &&
                 !user.isWalking &&
-                (user.activityState == 0 || user.activityState == 1) &&
+                (user.activityState == SnowWarActivityState.NORMAL || user.activityState == SnowWarActivityState.INVINCIBLE || user.activityState == SnowWarActivityState.MAKING_SNOWBALL) &&
                 snowballCount > reservedPickups &&
                 user.snowBallCount < SnowWarMath.MAX_SNOWBALLS
     }

@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.snowwar.utils
 
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarTrajectory
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -40,13 +41,11 @@ object SnowWarMath {
     const val STUNNED_TIMER = 100
     const val INVINCIBILITY_TIMER = 60
     const val CREATING_TIMER = 20
+    const val MACHINE_PICKUP_INTERVAL = 6
+    const val SNOWBALL_THROW_INTERVAL = 5 // AS3 HumanGameObject.SNOWBALL_THROW_INTERVAL
     const val MACHINE_SNOWBALL_GENERATOR_TIME = 100
     const val MACHINE_MAX_SNOWBALL_CAPACITY = 5
     const val PILE_MAX_SNOWBALL_CAPACITY = 12
-    const val TRAJECTORY_QUICK = 0
-    const val TRAJECTORY_SHORT_LOB = 1
-    const val TRAJECTORY_LONG_LOB = 2
-    const val TRAJECTORY_DEFAULT = 3
     const val SHORT_LOB_MAX_RANGE = 60_000
     const val LONG_LOB_MAX_RANGE = 100_000
     const val DEFAULT_THROW_TO_LOB_CUTOFF_RANGE = 42_000
@@ -258,32 +257,38 @@ object SnowWarMath {
 
         val distanceSquared = (deltaX * deltaX) + (deltaY * deltaY)
         val distanceToTarget = fastSqrt(distanceSquared) * 200
-        var resolvedTrajectory = trajectory
+        var resolvedTrajectory = SnowWarTrajectory.fromId(trajectory)
 
-        if (resolvedTrajectory == TRAJECTORY_DEFAULT) {
+        if (resolvedTrajectory == SnowWarTrajectory.DEFAULT) {
             resolvedTrajectory = when {
-                distanceToTarget <= DEFAULT_THROW_TO_LOB_CUTOFF_RANGE -> TRAJECTORY_QUICK
-                distanceToTarget <= SHORT_LOB_MAX_RANGE -> TRAJECTORY_SHORT_LOB
-                else -> TRAJECTORY_LONG_LOB
+                distanceToTarget <= DEFAULT_THROW_TO_LOB_CUTOFF_RANGE -> SnowWarTrajectory.QUICK
+                distanceToTarget <= SHORT_LOB_MAX_RANGE -> SnowWarTrajectory.SHORT_LOB
+                else -> SnowWarTrajectory.LONG_LOB
             }
         }
 
         val cappedDistance: Int
-        if (resolvedTrajectory == TRAJECTORY_QUICK) {
-            output[1] = 10
-            output[3] = QUICK_THROW_PLANAR_VELOCITY
-        } else if (resolvedTrajectory == TRAJECTORY_SHORT_LOB) {
-            cappedDistance = min(distanceToTarget, SHORT_LOB_MAX_RANGE)
-            output[1] = (cappedDistance * 0.000559).toInt()
-            output[3] = if (output[1] == 0) 0 else cappedDistance / output[1]
-        } else {
-            cappedDistance = min(distanceToTarget, LONG_LOB_MAX_RANGE)
-            output[1] = (cappedDistance * 0.0007072135785007072).toInt()
-            output[3] = if (output[1] == 0) 0 else cappedDistance / output[1]
+        when (resolvedTrajectory) {
+            SnowWarTrajectory.QUICK -> {
+                output[1] = 10
+                output[3] = QUICK_THROW_PLANAR_VELOCITY
+            }
+
+            SnowWarTrajectory.SHORT_LOB -> {
+                cappedDistance = min(distanceToTarget, SHORT_LOB_MAX_RANGE)
+                output[1] = (cappedDistance * 0.000559).toInt()
+                output[3] = if (output[1] == 0) 0 else cappedDistance / output[1]
+            }
+
+            else -> {
+                cappedDistance = min(distanceToTarget, LONG_LOB_MAX_RANGE)
+                output[1] = (cappedDistance * 0.0007072135785007072).toInt()
+                output[3] = if (output[1] == 0) 0 else cappedDistance / output[1]
+            }
         }
 
         output[2] = output[1] / 2
-        output[4] = resolvedTrajectory
+        output[4] = resolvedTrajectory.id
 
         return output
     }

@@ -32,7 +32,7 @@ class Game2MakeSnowballHandler {
         val turnNumber = habboRequest.readInt()
         val subTurn = habboRequest.readInt()
 
-        val lobby = HabboServer.habboGame.snowWarManager.getLobbyForPlayer(habboSession)
-        lobby?.onMakeSnowball(habboSession, turnNumber, subTurn)
+        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
+        game?.onMakeSnowball(habboSession, turnNumber, subTurn)
     }
 }

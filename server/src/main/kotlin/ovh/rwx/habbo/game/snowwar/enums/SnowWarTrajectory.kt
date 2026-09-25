@@ -17,20 +17,17 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.gamecenter
+package ovh.rwx.habbo.game.snowwar.enums
 
-import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.Handler
-import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.game.user.HabboSession
+enum class SnowWarTrajectory(val id: Int) {
+    QUICK(0),
+    SHORT_LOB(1),
+    LONG_LOB(2),
+    DEFAULT(3);
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class Game2LoadStageReadyHandler {
-    @Handler(Incoming.GAME_2_LOAD_STAGE_READY)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val progressPercentage = habboRequest.readInt()
-        val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
-        game?.onPlayerLoaded(habboSession)
+    companion object {
+        fun fromId(id: Int): SnowWarTrajectory {
+            return entries.firstOrNull { it.id == id } ?: DEFAULT
+        }
     }
 }
