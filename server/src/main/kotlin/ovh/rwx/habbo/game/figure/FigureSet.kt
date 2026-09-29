@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,10 +17,17 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.antimutant
+package ovh.rwx.habbo.game.figure
 
-data class FigureColor(
-        var id: Int = 0,
-        var color: String = "",
-        var clubOnly: Boolean = false
+data class FigureSet(
+    var id: Int = 0,
+    var type: String = "",
+    var paletteId: Int = 0,
+    var colors: Int = 0,
+    var gender: String = "U",
+    var club: Int = 0,
+    var colorable: Boolean = true,
+    var selectable: Boolean = true,
+    var preselectable: Boolean = false,
+    var sellable: Boolean = false
 )

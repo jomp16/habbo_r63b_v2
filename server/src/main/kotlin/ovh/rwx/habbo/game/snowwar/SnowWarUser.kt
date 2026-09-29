@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.snowwar
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.game.snowwar.bot.SnowWarBotData
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarActivityState
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameObjectType
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarTeam
@@ -34,17 +35,23 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 
 class SnowWarUser(
-    val session: HabboSession,
-    var team: SnowWarTeam = SnowWarTeam.BLUE
+    val session: HabboSession? = null,
+    var team: SnowWarTeam = SnowWarTeam.BLUE,
+    val botData: SnowWarBotData? = null
 ) : SnowWarGameObject(0, SnowWarGameObjectType.HUMAN), IHabboResponseSerialize {
-    val userId: Int get() = session.userInformation.id
-    val name: String get() = session.userInformation.username
-    val figure: String get() = session.userInformation.figure
-    val gender: String get() = session.userInformation.gender
-    val mission: String get() = session.userInformation.motto
+    val isRealPlayer: Boolean get() = session != null
+    val userId: Int get() = session?.userInformation?.id ?: (botData?.id ?: 0)
+    val name: String get() = session?.userInformation?.username ?: (botData?.name ?: "")
+    val figure: String get() = session?.userInformation?.figure ?: (botData?.figure ?: "")
+    val gender: String get() = session?.userInformation?.gender ?: (botData?.gender ?: "M")
+    val mission: String get() = session?.userInformation?.motto ?: (botData?.mission ?: "")
 
     val stats: SnowWarPlayerStats
-        get() = HabboServer.habboGame.snowWarManager.getPlayerStats(userId)
+        get() = if (session != null) {
+            HabboServer.habboGame.snowWarManager.getPlayerStats(userId)
+        } else {
+            SnowWarPlayerStats(userId)
+        }
 
     val skillLevel: Int get() = stats.skillLevel
     val totalScore: Int get() = stats.totalScore
@@ -56,10 +63,8 @@ class SnowWarUser(
     var currentTileY: Int = 0
     var bodyDirection: Int = 2
     var hitPoints: Int = 5
-    var pendingHealth: Int = 5
-    var pendingStun: Boolean = false
     var snowBallCount: Int = 0
-    var isBot: Int = 0
+    val isBot: Boolean get() = session == null
     var activityTimer: Int = 0
     var activityState: SnowWarActivityState = SnowWarActivityState.NORMAL
     var nextTileX: Int = -1
@@ -74,8 +79,9 @@ class SnowWarUser(
     val kills = AtomicInteger(0)
     val throws = AtomicInteger(0)
     val deaths = AtomicInteger(0)
+    val treeHits = AtomicInteger(0)
 
-    var isLoaded: Boolean = false
+    var isLoaded: Boolean = session == null
 
     val isWalking: Boolean
         get() = (currentLocationX != moveTargetX || currentLocationY != moveTargetY) &&
@@ -159,10 +165,7 @@ class SnowWarUser(
         currentTileY = startTileY
         bodyDirection = bodyDir
         hitPoints = SnowWarMath.INITIAL_HEALTH
-        pendingHealth = SnowWarMath.INITIAL_HEALTH
-        pendingStun = false
         snowBallCount = SnowWarMath.MAX_SNOWBALLS
-        isBot = 0
         activityTimer = 0
         activityState = SnowWarActivityState.NORMAL
         nextTileX = -1
@@ -174,7 +177,7 @@ class SnowWarUser(
     }
 
     fun testCollision(ball: SnowWarSnowball): Boolean {
-        return !(ball.thrower == this || isImmune() || pendingStun || ball.height >= SnowWarMath.AVATAR_COLLISION_HEIGHT) && SnowWarMath.circlesOverlap(
+        return !(ball.thrower == this || isImmune() || activityState == SnowWarActivityState.STUNNED || ball.height >= SnowWarMath.AVATAR_COLLISION_HEIGHT) && SnowWarMath.circlesOverlap(
             ball.locH,
             ball.locV,
             SnowWarMath.SNOWBALL_RADIUS,
@@ -208,8 +211,6 @@ class SnowWarUser(
                 activityState = SnowWarActivityState.INVINCIBLE
                 activityTimer = SnowWarMath.INVINCIBILITY_TIMER
                 hitPoints = SnowWarMath.INITIAL_HEALTH
-                pendingHealth = SnowWarMath.INITIAL_HEALTH
-                pendingStun = false
             }
 
             SnowWarActivityState.INVINCIBLE -> {
@@ -404,7 +405,7 @@ class SnowWarUser(
             writeInt(bodyDirection)
             writeInt(hitPoints)
             writeInt(snowBallCount)
-            writeInt(isBot)
+            writeInt(0) // Variable 9 is _SafeStr_8223 in AS3 HumanGameObject (uninitialized, always 0)
             writeInt(activityTimer)
             writeInt(activityState.id)
             writeInt(if (nextTileX != -1) nextTileX else currentTileX)
@@ -436,7 +437,7 @@ class SnowWarUser(
             bodyDirection,
             hitPoints,
             snowBallCount,
-            isBot,
+            0, // Variable 9 is _SafeStr_8223 in AS3 HumanGameObject (uninitialized, always 0)
             activityTimer,
             activityState.id,
             if (nextTileX != -1) nextTileX else currentTileX,

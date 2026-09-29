@@ -130,6 +130,12 @@ object SnowWarMath {
         return !(deltaX > radius || deltaY > radius) && (deltaX.toLong() * deltaX) + (deltaY.toLong() * deltaY) < (radius.toLong() * radius)
     }
 
+    fun distance(x1: Int, y1: Int, x2: Int, y2: Int): Int {
+        val dx = (x1 - x2) / 200
+        val dy = (y1 - y2) / 200
+        return fastSqrt((dx * dx) + (dy * dy)) * 200
+    }
+
     fun fastSqrt(x: Int): Int {
         if (x >= 65536) {
             if (x >= 16777216) {
@@ -247,7 +253,7 @@ object SnowWarMath {
         startWorldY: Int,
         targetWorldX: Int,
         targetWorldY: Int,
-        trajectory: Int
+        trajectory: SnowWarTrajectory
     ): IntArray {
         val output = IntArray(5)
         val deltaX = (targetWorldX - startWorldX) / 200
@@ -257,7 +263,7 @@ object SnowWarMath {
 
         val distanceSquared = (deltaX * deltaX) + (deltaY * deltaY)
         val distanceToTarget = fastSqrt(distanceSquared) * 200
-        var resolvedTrajectory = SnowWarTrajectory.fromId(trajectory)
+        var resolvedTrajectory = trajectory
 
         if (resolvedTrajectory == SnowWarTrajectory.DEFAULT) {
             resolvedTrajectory = when {

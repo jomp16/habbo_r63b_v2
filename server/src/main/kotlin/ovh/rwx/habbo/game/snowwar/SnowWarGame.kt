@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.gamecenter.*
+import ovh.rwx.habbo.game.snowwar.bot.SnowWarBotAI
 import ovh.rwx.habbo.game.snowwar.enums.*
 import ovh.rwx.habbo.game.snowwar.objects.*
 import ovh.rwx.habbo.game.snowwar.utils.QuickRandom
@@ -42,6 +43,11 @@ class SnowWarGame(
     val onGameOver: () -> Unit = {}
 ) {
     private val log = LoggerFactory.getLogger("SnowWarGame-$gameId")
+    private val botAI = SnowWarBotAI(this)
+
+    fun queueEvent(subTurn: Int, event: ISnowWarGameEvent) {
+        pendingEvents.add(subTurn.coerceIn(0, 2) to event)
+    }
 
     val blockedTiles = HashSet<Pair<Int, Int>>()
     val machines = CopyOnWriteArrayList<SnowWarMachine>()
@@ -62,13 +68,9 @@ class SnowWarGame(
     private val pendingEvents = ConcurrentLinkedQueue<Pair<Int, ISnowWarGameEvent>>()
     private val deferredEvents = ConcurrentLinkedQueue<Pair<Int, ISnowWarGameEvent>>()
 
-    enum class DelayedEventType { HIT, STUN }
-    data class DelayedCollisionEvent(
-        val type: DelayedEventType,
-        val target: SnowWarUser,
-        val thrower: SnowWarUser,
-        val ballDirection: Int
-    )
+    fun sendHabboResponse(header: Outgoing, vararg params: Any) {
+        users.values.forEach { it.session?.sendHabboResponse(header, *params) }
+    }
 
     fun start() {
         if (state != SnowWarStageState.INACTIVE || users.isEmpty()) return
@@ -84,9 +86,7 @@ class SnowWarGame(
 
         val userList = users.values.toList()
         val lobbyData = lobbyDataProvider()
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_GAME_STARTED, lobbyData)
-        }
+        sendHabboResponse(Outgoing.GAME_2_GAME_STARTED, lobbyData)
 
         val arena = SnowWarArenaMaps.getArena(fieldType) ?: error("No arena found!")
         val arenaWidth = arena.width
@@ -181,14 +181,12 @@ class SnowWarGame(
             heightMap = arenaHeightMap,
             fuseObjects = arenaFuseObjects
         )
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_ENTER_ARENA, enterArenaData)
-            it.session.sendHabboResponse(Outgoing.GAME_2_STAGE_LOAD, gameType)
-            it.session.sendHabboResponse(
-                Outgoing.GAME_2_STAGE_STILL_LOADING,
-                Game2StageStillLoadingData(percentage = 0, finishedPlayers = emptyList())
-            )
-        }
+        sendHabboResponse(Outgoing.GAME_2_ENTER_ARENA, enterArenaData)
+        sendHabboResponse(Outgoing.GAME_2_STAGE_LOAD, gameType)
+        sendHabboResponse(
+            Outgoing.GAME_2_STAGE_STILL_LOADING,
+            Game2StageStillLoadingData(percentage = 0, finishedPlayers = emptyList())
+        )
 
         // Safety fallback: after 10 seconds, start stage if a client disconnected/lagged
         stageLoadingFuture = HabboServer.serverScheduledExecutor.schedule({
@@ -214,15 +212,13 @@ class SnowWarGame(
         val finishedPlayers = users.values.filter { it.isLoaded }.map { it.userId }
         val percentage = if (users.isNotEmpty()) (finishedPlayers.size * 100) / users.size else 100
 
-        users.values.forEach {
-            it.session.sendHabboResponse(
-                Outgoing.GAME_2_STAGE_STILL_LOADING,
-                Game2StageStillLoadingData(
-                    percentage = percentage,
-                    finishedPlayers = finishedPlayers
-                )
+        sendHabboResponse(
+            Outgoing.GAME_2_STAGE_STILL_LOADING,
+            Game2StageStillLoadingData(
+                percentage = percentage,
+                finishedPlayers = finishedPlayers
             )
-        }
+        )
 
         synchronized(this) {
             if (users.values.all { it.isLoaded } && state == SnowWarStageState.STAGE_LOADING) {
@@ -265,9 +261,7 @@ class SnowWarGame(
             gameObjects = initialGameObjects
         )
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_STAGE_STARTING, stageStartingData)
-        }
+        sendHabboResponse(Outgoing.GAME_2_STAGE_STARTING, stageStartingData)
 
         HabboServer.serverScheduledExecutor.schedule({
             startStageRunning()
@@ -287,9 +281,7 @@ class SnowWarGame(
             duration
         )
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_STAGE_RUNNING, duration)
-        }
+        sendHabboResponse(Outgoing.GAME_2_STAGE_RUNNING, duration)
 
         gameTickFuture = HabboServer.serverScheduledExecutor.scheduleAtFixedRate({
             tickGame()
@@ -308,6 +300,9 @@ class SnowWarGame(
 
         val currentTurn = turn.getAndIncrement()
 
+        // 1. Process bot AI decisions
+        botAI.processTurn(currentTurn)
+
         val subTurns = mutableListOf<MutableList<ISnowWarGameEvent>>()
         repeat(3) { subTurns.add(mutableListOf()) }
 
@@ -317,22 +312,20 @@ class SnowWarGame(
         val eventsToSend = mutableListOf<MutableList<ISnowWarGameEvent>>()
         repeat(3) { eventsToSend.add(mutableListOf()) }
 
-        // 1. Process deferred events: aplica agora o que foi enviado no turno passado
+        // 2. Process deferred events: aplica agora o que foi enviado no turno passado
         while (true) {
             val item = deferredEvents.poll() ?: break
             val subIndex = item.first.coerceIn(0, 2)
             eventsToApply[subIndex].add(item.second)
         }
 
-        // 2. Process pending user events: envia agora, mas aplica na física só no próximo turno
+        // 3. Process pending user/bot events: envia agora, mas aplica na física só no próximo turno
         while (true) {
             val item = pendingEvents.poll() ?: break
             val subIndex = item.first.coerceIn(0, 2)
             deferredEvents.add(subIndex to item.second)
             eventsToSend[subIndex].add(item.second)
         }
-
-        val delayedEvents = mutableListOf<DelayedCollisionEvent>()
 
         // Simulação física em 3 subturnos
         for (sub in 0 until 3) {
@@ -343,8 +336,8 @@ class SnowWarGame(
                 ev.apply(this)
             }
 
-            // Phase 1: Move players
-            for (user in users.values) {
+            // Phase 1: Move players (em ordem determinística por objectId, idêntico ao AS3 SynchronizedGameArena)
+            for (user in users.values.sortedBy { it.objectId }) {
                 user.subturn { tx, ty -> isTileWalkable(tx, ty, user) }
             }
 
@@ -352,7 +345,7 @@ class SnowWarGame(
             for (ball in snowballs.toList()) {
                 if (!ball.alive) continue
                 ball.calculateFrameMovement()
-                if (checkObjectCollision(ball, delayedEvents) || ball.hasFloorCollision(arenaHeightMapRows)) {
+                if (checkObjectCollision(ball) || ball.hasFloorCollision(arenaHeightMapRows)) {
                     ball.kill()
                     snowballs.remove(ball)
                 }
@@ -366,8 +359,8 @@ class SnowWarGame(
                 }
             }
 
-            // Phase 4: Coleta de bolas em máquinas e pilhas
-            for (user in users.values) {
+            // Phase 4: Coleta de bolas em máquinas e pilhas (em ordem determinística por objectId)
+            for (user in users.values.sortedBy { it.objectId }) {
                 if (!user.tickSnowballPickupTimer()) continue
 
                 val targetMachine = machines.find { it.canPlayerPickup(user) }
@@ -397,32 +390,7 @@ class SnowWarGame(
             }
         }
 
-        // Phase 5: Aplicação de dano/atordoamento retardado
-        if (delayedEvents.isNotEmpty()) {
-            for (ev in delayedEvents) {
-                val target = ev.target
-                val thrower = ev.thrower
-                when (ev.type) {
-                    DelayedEventType.HIT -> {
-                        target.hitPoints = target.pendingHealth
-                        thrower.score.addAndGet(1)
-                        thrower.hits.incrementAndGet()
-                    }
-
-                    DelayedEventType.STUN -> {
-                        target.stopWalking()
-                        target.activityState = SnowWarActivityState.STUNNED
-                        target.activityTimer = SnowWarMath.STUNNED_TIMER
-                        target.bodyDirection = (SnowWarMath.direction360To8(ev.ballDirection) + 4) % 8
-                        thrower.score.addAndGet(5)
-                        thrower.kills.incrementAndGet()
-                        target.deaths.incrementAndGet()
-                    }
-                }
-            }
-        }
-
-        // Phase 6: Checksum sempre por último!
+        // Phase 5: Checksum sempre por último!
         val cs = calculateChecksum(currentTurn)
 
         for (sub in 0 until 3) {
@@ -435,20 +403,16 @@ class SnowWarGame(
             subTurns = eventsToSend
         )
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_GAME_STATUS, statusData)
-        }
+        sendHabboResponse(Outgoing.GAME_2_GAME_STATUS, statusData)
     }
 
-    private fun checkObjectCollision(
-        ball: SnowWarSnowball,
-        delayedEvents: MutableList<DelayedCollisionEvent>
-    ): Boolean {
+    private fun checkObjectCollision(ball: SnowWarSnowball): Boolean {
         val collisionTiles = getCollisionTiles(ball)
         for (tile in collisionTiles) {
             for (tree in trees) {
                 if (tree.x == tile.first && tree.y == tile.second && tree.testCollision(ball)) {
                     tree.hit()
+                    ball.thrower.treeHits.incrementAndGet()
                     return true
                 }
             }
@@ -457,12 +421,15 @@ class SnowWarGame(
                     return true
                 }
             }
-            for (user in users.values) {
-                if (user.currentTileX != tile.first || user.currentTileY != tile.second || !user.testCollision(ball)) {
+            for (user in users.values.sortedBy { it.objectId }) {
+                // No AS3, quando um avatar está andando, ele desocupa o currentTile e ocupa o nextTile
+                val occX = if (user.nextTileX != -1) user.nextTileX else user.currentTileX
+                val occY = if (user.nextTileY != -1) user.nextTileY else user.currentTileY
+                if (occX != tile.first || occY != tile.second || !user.testCollision(ball)) {
                     continue
                 }
                 if (user.team != ball.thrower.team) {
-                    applyAvatarHit(user, ball, delayedEvents)
+                    applyAvatarHit(user, ball)
                 }
                 return true
             }
@@ -470,32 +437,25 @@ class SnowWarGame(
         return false
     }
 
-    private fun applyAvatarHit(
-        player: SnowWarUser,
-        ball: SnowWarSnowball,
-        delayedEvents: MutableList<DelayedCollisionEvent>
-    ) {
-        if (player.pendingHealth > 1) {
-            player.pendingHealth -= 1
-            delayedEvents.add(
-                DelayedCollisionEvent(
-                    DelayedEventType.HIT,
-                    player,
-                    ball.thrower,
-                    ball.direction
-                )
-            )
-        } else {
-            player.pendingHealth = 0
-            player.pendingStun = true
-            delayedEvents.add(
-                DelayedCollisionEvent(
-                    DelayedEventType.STUN,
-                    player,
-                    ball.thrower,
-                    ball.direction
-                )
-            )
+    private fun applyAvatarHit(player: SnowWarUser, ball: SnowWarSnowball) {
+        if (player.hitPoints > 0) {
+            val thrower = ball.thrower
+            if (player.hitPoints == 1) {
+                // AS3 playerFallsDown: HP decrementa para 0, atordoado e adiciona 1 (hit) + 5 (knockdown) = 6 pontos
+                player.hitPoints = 0
+                player.stopWalking()
+                player.activityState = SnowWarActivityState.STUNNED
+                player.activityTimer = SnowWarMath.STUNNED_TIMER
+                player.bodyDirection = (SnowWarMath.direction360To8(ball.direction) + 4) % 8
+                thrower.score.addAndGet(6)
+                thrower.hits.incrementAndGet()
+                thrower.kills.incrementAndGet()
+                player.deaths.incrementAndGet()
+            } else {
+                player.hitPoints -= 1
+                thrower.score.addAndGet(1)
+                thrower.hits.incrementAndGet()
+            }
         }
     }
 
@@ -515,20 +475,45 @@ class SnowWarGame(
         return true
     }
 
+    fun isValidTile(tileX: Int, tileY: Int): Boolean {
+        if (tileY !in arenaHeightMapRows.indices) return false
+        val row = arenaHeightMapRows[tileY]
+        if (tileX !in row.indices) return false
+        val c = row[tileX]
+        return c != 'x' && c != 'X'
+    }
+
     private fun getCollisionTiles(ball: SnowWarSnowball): List<Pair<Int, Int>> {
         val currentX = SnowWarMath.worldToTile(ball.locH)
         val currentY = SnowWarMath.worldToTile(ball.locV)
+        // No AS3 SnowBallGameObject.subturn():
+        // var tile = arena.getTileAt(tileX, tileY);
+        // if (tile) { ... testCollisions ... }
+        // Se a bola estiver voando sobre um buraco ('x'), getTileAt retorna null e nenhum teste de colisão é executado!
+        if (!isValidTile(currentX, currentY)) {
+            return emptyList()
+        }
+
         val direction = SnowWarMath.direction360To8(ball.direction)
         val offsetX = intArrayOf(0, 1, 1, 1, 0, -1, -1, -1)
         val offsetY = intArrayOf(-1, -1, 0, 1, 1, 1, 0, -1)
         val left = (direction - 1 + 8) % 8
         val right = (direction + 1) % 8
-        return listOf(
-            currentX to currentY,
-            (currentX + offsetX[direction]) to (currentY + offsetY[direction]),
-            (currentX + offsetX[left]) to (currentY + offsetY[left]),
-            (currentX + offsetX[right]) to (currentY + offsetY[right])
-        )
+
+        val tiles = mutableListOf(currentX to currentY)
+        val dirX = currentX + offsetX[direction]
+        val dirY = currentY + offsetY[direction]
+        if (isValidTile(dirX, dirY)) tiles.add(dirX to dirY)
+
+        val leftX = currentX + offsetX[left]
+        val leftY = currentY + offsetY[left]
+        if (isValidTile(leftX, leftY)) tiles.add(leftX to leftY)
+
+        val rightX = currentX + offsetX[right]
+        val rightY = currentY + offsetY[right]
+        if (isValidTile(rightX, rightY)) tiles.add(rightX to rightY)
+
+        return tiles
     }
 
     fun calculateChecksum(turnNumber: Int): Int {
@@ -636,7 +621,7 @@ class SnowWarGame(
         session: HabboSession,
         targetX: Int,
         targetY: Int,
-        trajectory: Int,
+        trajectory: SnowWarTrajectory,
         turn: Int,
         sub: Int
     ) {
@@ -667,7 +652,7 @@ class SnowWarGame(
     fun onThrowSnowballAtHuman(
         session: HabboSession,
         targetHumanGameObjectId: Int,
-        trajectory: Int,
+        trajectory: SnowWarTrajectory,
         turn: Int,
         sub: Int
     ) {
@@ -703,11 +688,10 @@ class SnowWarGame(
         }
 
         users.remove(userId)
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_USER_LEFT_GAME, userId)
-        }
+        sendHabboResponse(Outgoing.GAME_2_USER_LEFT_GAME, userId)
 
-        if (users.isEmpty()) {
+        val realPlayers = users.values.count { it.session != null }
+        if (users.isEmpty() || realPlayers == 0) {
             dispose()
             onGameOver()
         }
@@ -719,17 +703,15 @@ class SnowWarGame(
 
         dispose()
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_STAGE_ENDING, 5)
-        }
+        sendHabboResponse(Outgoing.GAME_2_STAGE_ENDING, 5)
 
         val team1Users = users.values.filter { it.team == SnowWarTeam.BLUE }
         val team2Users = users.values.filter { it.team == SnowWarTeam.RED }
         val team1TotalScore = team1Users.sumOf { it.score.get() }
         val team2TotalScore = team2Users.sumOf { it.score.get() }
 
-        users.values.forEach { user ->
-            val session = user.session
+        users.values.filter { it.session != null }.forEach { user ->
+            val session = user.session ?: return@forEach
             val uid = user.userId
             val scoreVal = user.score.get()
             val hitsVal = user.hits.get()
@@ -759,11 +741,12 @@ class SnowWarGame(
                     accumulate = true
                 )
             }
-            if (throwsVal > 0) {
+            val treeHitsVal = user.treeHits.get()
+            if (treeHitsVal > 0) {
                 HabboServer.habboGame.achievementManager.progress(
                     session,
                     "ACH_SnowStormThrow",
-                    throwsVal,
+                    treeHitsVal,
                     accumulate = true
                 )
             }
@@ -777,26 +760,31 @@ class SnowWarGame(
         val resultType = if (winningTeam == 0) SnowWarResultType.TIE.id else SnowWarResultType.WINNER.id
 
         if (winningTeam != 0) {
-            users.values.filter { it.team.id == winningTeam }.forEach { winnerUser ->
-                HabboServer.habboGame.achievementManager.progress(
-                    winnerUser.session,
-                    "ACH_SnowStormWin",
-                    1,
-                    accumulate = true
-                )
+            users.values.filter { it.team.id == winningTeam && it.session != null }.forEach { winnerUser ->
+                winnerUser.session?.let { session ->
+                    HabboServer.habboGame.achievementManager.progress(
+                        session,
+                        "ACH_SnowStormWin",
+                        1,
+                        accumulate = true
+                    )
+                }
             }
         }
 
         val mostKillsUser = users.values.maxByOrNull { it.kills.get() }
         val mostHitsUser = users.values.maxByOrNull { it.hits.get() }
+        val mostHitsRealUser = users.values.filter { it.session != null }.maxByOrNull { it.hits.get() }
 
-        if (mostHitsUser != null && mostHitsUser.hits.get() > 0) {
-            HabboServer.habboGame.achievementManager.progress(
-                mostHitsUser.session,
-                "ACH_SnowWarWeeklyBest",
-                1,
-                accumulate = true
-            )
+        if (mostHitsRealUser != null && mostHitsRealUser.hits.get() > 0) {
+            mostHitsRealUser.session?.let { session ->
+                HabboServer.habboGame.achievementManager.progress(
+                    session,
+                    "ACH_SnowWarWeeklyBest",
+                    1,
+                    accumulate = true
+                )
+            }
         }
 
         val endingData = Game2GameEndingData(
@@ -820,9 +808,7 @@ class SnowWarGame(
             playerWithMostHits = mostHitsUser?.userId ?: 0
         )
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_GAME_ENDING, endingData)
-        }
+        sendHabboResponse(Outgoing.GAME_2_GAME_ENDING, endingData)
 
         onGameOver()
     }
@@ -830,9 +816,7 @@ class SnowWarGame(
     fun chat(session: HabboSession, message: String) {
         if (!users.containsKey(session.userInformation.id)) return
         val chatPayload = Game2GameChatFromPlayerData(session.userInformation.id, message)
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_GAME_CHAT_FROM_PLAYER, chatPayload)
-        }
+        sendHabboResponse(Outgoing.GAME_2_GAME_CHAT_FROM_PLAYER, chatPayload)
     }
 
     fun dispose() {

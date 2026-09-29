@@ -66,7 +66,10 @@ class AchievementManager {
         if (habboSession?.isBot == true) return
         if (userId >= 2_000_000_000) return
 
-        val group = achievementGroups[achievementName] ?: return
+        val group = achievementGroups[achievementName]
+            ?: achievementGroups["${achievementName}_"]
+            ?: achievementGroups[achievementName.removeSuffix("_")]
+            ?: return
 
         // Busca achievement do usuário (do banco se sessão offline)
         val achievementUsers = habboSession?.userInformation?.achievementUsers

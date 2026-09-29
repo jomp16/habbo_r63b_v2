@@ -25,11 +25,11 @@ import org.jasypt.util.password.StrongPasswordEncryptor
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.achievement.AchievementManager
-import ovh.rwx.habbo.game.antimutant.AntiMutantManager
 import ovh.rwx.habbo.game.badge.BadgeManager
 import ovh.rwx.habbo.game.camera.CameraManager
 import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.chest.ChestManager
+import ovh.rwx.habbo.game.figure.FigureManager
 import ovh.rwx.habbo.game.group.GroupManager
 import ovh.rwx.habbo.game.habbicon.HabbiconManager
 import ovh.rwx.habbo.game.item.ItemManager
@@ -58,7 +58,7 @@ class HabboGame {
     val groupManager: GroupManager = GroupManager()
     val cameraManager: CameraManager = CameraManager()
     val achievementManager: AchievementManager = AchievementManager()
-    val antiMutantManager: AntiMutantManager = AntiMutantManager()
+    val figureManager: FigureManager = FigureManager()
     val petManager: PetManager = PetManager()
     val badgeManager: BadgeManager = BadgeManager()
     val habbiconManager: HabbiconManager = HabbiconManager()
@@ -74,7 +74,7 @@ class HabboGame {
         HabboServer.applicationScope.launch { moderationManager.load() }
         HabboServer.applicationScope.launch { groupManager.load() }
         HabboServer.applicationScope.launch { achievementManager.load() }
-        HabboServer.applicationScope.launch { antiMutantManager.load() }
+        HabboServer.applicationScope.launch { figureManager.load() }
         HabboServer.applicationScope.launch { petManager.load() }
         HabboServer.applicationScope.launch { badgeManager.load() }
         HabboServer.applicationScope.launch { habbiconManager.load() }

@@ -36,6 +36,8 @@ data class SnowWarConfig(
     val minPlayers: Int = 10,
     @param:JsonProperty("max_players")
     val maxPlayers: Int = 10,
+    @param:JsonProperty("fill_with_bots")
+    val fillWithBots: Boolean = true,
     @param:JsonProperty("countdown_seconds")
     val countdownSeconds: Int = 10,
     @param:JsonProperty("stage_starting_seconds")

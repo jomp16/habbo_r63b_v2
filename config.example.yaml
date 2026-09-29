@@ -75,6 +75,7 @@ game:
     enabled: true
     min_players: 10
     max_players: 10
+    fill_with_bots: true
     countdown_seconds: 10
     stage_starting_seconds: 5
     game_duration_seconds: 120

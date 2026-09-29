@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarTrajectory
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -35,6 +36,12 @@ class Game2ThrowSnowballAtHumanHandler {
         val subTurn = habboRequest.readInt()
 
         val game = HabboServer.habboGame.snowWarManager.getGameForPlayer(habboSession)
-        game?.onThrowSnowballAtHuman(habboSession, targetHumanGameObjectId, trajectory, turnNumber, subTurn)
+        game?.onThrowSnowballAtHuman(
+            habboSession,
+            targetHumanGameObjectId,
+            SnowWarTrajectory.fromId(trajectory),
+            turnNumber,
+            subTurn
+        )
     }
 }

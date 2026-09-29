@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.snowwar
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarEventType
+import ovh.rwx.habbo.game.snowwar.enums.SnowWarTrajectory
 import ovh.rwx.habbo.game.snowwar.objects.SnowWarSnowball
 
 interface ISnowWarGameEvent {
@@ -65,13 +66,13 @@ data class NewMoveTargetGameEvent(
 data class HumanThrowsSnowballAtHumanGameEvent(
     val humanGameObjectId: Int,
     val targetHumanGameObjectId: Int,
-    val trajectory: Int
+    val trajectory: SnowWarTrajectory
 ) : ISnowWarGameEvent {
     override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_THROWS_SNOWBALL_AT_HUMAN
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(targetHumanGameObjectId)
-        response.writeInt(trajectory)
+        response.writeInt(trajectory.id)
     }
 
     override fun apply(game: SnowWarGame) {
@@ -87,14 +88,14 @@ data class HumanThrowsSnowballAtPositionGameEvent(
     val humanGameObjectId: Int,
     val targetX: Int,
     val targetY: Int,
-    val trajectory: Int
+    val trajectory: SnowWarTrajectory
 ) : ISnowWarGameEvent {
     override val type: SnowWarEventType get() = SnowWarEventType.HUMAN_THROWS_SNOWBALL_AT_POSITION
     override fun serialize(response: HabboResponse) {
         response.writeInt(humanGameObjectId)
         response.writeInt(targetX)
         response.writeInt(targetY)
-        response.writeInt(trajectory)
+        response.writeInt(trajectory.id)
     }
 
     override fun apply(game: SnowWarGame) {
@@ -124,7 +125,7 @@ data class CreateSnowballGameEvent(
     val humanGameObjectId: Int,
     val targetX: Int,
     val targetY: Int,
-    val trajectory: Int
+    val trajectory: SnowWarTrajectory
 ) : ISnowWarGameEvent {
     override val type: SnowWarEventType get() = SnowWarEventType.CREATE_SNOWBALL
     override fun serialize(response: HabboResponse) {
@@ -132,7 +133,7 @@ data class CreateSnowballGameEvent(
         response.writeInt(humanGameObjectId)
         response.writeInt(targetX)
         response.writeInt(targetY)
-        response.writeInt(trajectory)
+        response.writeInt(trajectory.id)
     }
 
     override fun apply(game: SnowWarGame) {

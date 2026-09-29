@@ -33,7 +33,7 @@ class SnowWarSnowball(
     startWorldY: Int,
     targetWorldX: Int,
     targetWorldY: Int,
-    trajectoryRequested: Int
+    trajectoryRequested: SnowWarTrajectory
 ) : SnowWarGameObject(objectId, SnowWarGameObjectType.SNOWBALL) {
 
     var locH: Int = startWorldX
@@ -70,16 +70,10 @@ class SnowWarSnowball(
     }
 
     private fun calculateHeight(ttl: Int): Int {
-        var distanceFromPeak = ttl - parabolaOffset
+        val distanceFromPeak = ttl - parabolaOffset
         val trajectoryEnum = SnowWarTrajectory.fromId(trajectory)
         val heightMultiplier = when (trajectoryEnum) {
-            SnowWarTrajectory.QUICK -> {
-                if (ttl > 3) {
-                    distanceFromPeak = 3 - parabolaOffset
-                }
-                10
-            }
-
+            SnowWarTrajectory.QUICK -> 10
             SnowWarTrajectory.SHORT_LOB -> 25
             else -> 50
         }

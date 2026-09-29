@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,10 +17,11 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.game.antimutant
+package ovh.rwx.habbo.game.snowwar.bot
 
-data class FigureSet(
-        var paletteId: Int = 0,
-        var colors: Int = 0,
-        var gender: String = ""
-)
+enum class BotRole {
+    SNIPER,     // Long lob specialist, keeps distance (45k-85k)
+    SKIRMISHER, // Mid-range (25k-50k), flanker, agile
+    RUSHER,     // Aggressive close range (10k-25k), rapid throws
+    NORMAL      // Balanced / standard playstyle: adapts to distance, patrols, restocks
+}

@@ -40,27 +40,27 @@ class UserChangeFigureHandler {
         val gender = habboRequest.readUTF().uppercase(Locale.getDefault())
         val figure = habboRequest.readUTF()
 
-        if (figure == habboSession.userInformation.figure) return
+        if (figure == habboSession.userInformation.figure && gender == habboSession.userInformation.gender) return
 
-        /*if (!HabboServer.habboGame.antiMutantManager.isValidFigureSet(figure, gender, habboSession.habboSubscription.validUserSubscription)) {
-            habboSession.sendNotification("Trying to script it eh?")
+        if (HabboServer.habboGame.figureManager.isValidFigure(figure, gender, habboSession)) {
+            habboSession.userInformation.figure = figure
+            habboSession.userInformation.gender = gender
 
-            return
-        }*/
+            // ACH_AvatarLooks: mudar visual
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)
+        }
 
-        habboSession.userInformation.figure = figure
-        habboSession.userInformation.gender = gender
+        val currentFigure = habboSession.userInformation.figure
+        val currentGender = habboSession.userInformation.gender
 
-        // ACH_AvatarLooks: mudar visual
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)
-
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(
+        if (habboSession.habboVersion.isVersionBefore(2015, 12, 1)) {
+            habboSession.sendResponse(
+                Outgoing.USER_UPDATE,
                 OutgoingR63A.USER_UPDATE,
                 RoomUpdateUserData(
                     virtualId = -1,
-                    figure = figure,
-                    gender = gender,
+                    figure = currentFigure,
+                    gender = currentGender,
                     motto = habboSession.userInformation.motto,
                     achievementScore = habboSession.userStats.achievementScore
                 )
@@ -69,22 +69,24 @@ class UserChangeFigureHandler {
             habboSession.sendHabboResponse(
                 Outgoing.USER_UPDATE_FIGURE,
                 UserUpdateFigureData(
-                    figure = figure,
-                    gender = gender,
+                    figure = currentFigure,
+                    gender = currentGender,
                 )
             )
         }
 
-        habboSession.currentRoom?.sendResponse(
-            Outgoing.USER_UPDATE,
-            OutgoingR63A.USER_UPDATE,
-            RoomUpdateUserData(
-                virtualId = habboSession.roomUser!!.virtualID,
-                figure = figure,
-                gender = gender,
-                motto = habboSession.userInformation.motto,
-                achievementScore = habboSession.userStats.achievementScore
+        habboSession.roomUser?.let { roomUser ->
+            habboSession.currentRoom?.sendResponse(
+                Outgoing.USER_UPDATE,
+                OutgoingR63A.USER_UPDATE,
+                RoomUpdateUserData(
+                    virtualId = roomUser.virtualID,
+                    figure = currentFigure,
+                    gender = currentGender,
+                    motto = habboSession.userInformation.motto,
+                    achievementScore = habboSession.userStats.achievementScore
+                )
             )
-        )
+        }
     }
 }

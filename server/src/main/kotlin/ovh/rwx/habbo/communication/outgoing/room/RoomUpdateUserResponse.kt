@@ -19,10 +19,7 @@
 
 package ovh.rwx.habbo.communication.outgoing.room
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -56,10 +53,14 @@ class RoomUpdateUserResponse {
             writeUTF(data.figure)
             writeUTF(data.gender)
             writeUTF(data.motto)
-            writeInt(data.achievementScore)
 
-            if (isVersionAtLeast(2026, 8, 6)) {
+            if (isVersionAtLeast(2010, 11, 16)) {
+                writeInt(data.achievementScore)
+            }
+
+            if (isAir && isVersionAtLeast(2026, 5, 18)) {
                 writeUTF("") // 1. string ignorada (provável swim figure) - TODO
+
                 val items = emptyList<Triple<Int, Int, Int>>() // 2. TODO: usar lista real
                 writeInt(items.size)
                 items.forEach { (a, b, c) -> // 3. 3 ints por item - ignorados pelo cliente
@@ -67,6 +68,7 @@ class RoomUpdateUserResponse {
                     writeInt(b)
                     writeInt(c)
                 }
+
                 writeInt(0) // 4. badgesRank - TODO
             }
         }

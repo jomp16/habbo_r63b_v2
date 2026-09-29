@@ -24,12 +24,15 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2GameChatFromPlayerData
 import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2UserJoinedGameData
+import ovh.rwx.habbo.game.snowwar.bot.BotNameGenerator
+import ovh.rwx.habbo.game.snowwar.bot.SnowWarBotData
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarFieldType
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarStageState
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarTeam
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 class SnowWarLobby(
@@ -54,6 +57,19 @@ class SnowWarLobby(
     var countdownStarted: Boolean = false
         private set
     private var countdownFuture: ScheduledFuture<*>? = null
+
+    fun sendHabboResponse(header: Outgoing, vararg params: Any) {
+        users.values.forEach { it.session?.sendHabboResponse(header, *params) }
+    }
+
+    fun sendHabboResponseExcept(excluded: HabboSession, header: Outgoing, vararg params: Any) {
+        users.values.forEach { user ->
+            val session = user.session
+            if (session != null && session != excluded) {
+                session.sendHabboResponse(header, *params)
+            }
+        }
+    }
 
     fun toLobbyData(): SnowWarLobbyData {
         return SnowWarLobbyData(
@@ -91,9 +107,7 @@ class SnowWarLobby(
         session.sendHabboResponse(Outgoing.GAME_2_GAME_CREATED, toLobbyData())
 
         val joinedPayload = Game2UserJoinedGameData(snowWarUser, false)
-        users.values.filter { it.session != session }.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_USER_JOINED_GAME, joinedPayload)
-        }
+        sendHabboResponseExcept(session, Outgoing.GAME_2_USER_JOINED_GAME, joinedPayload)
 
         log.info(
             "[Lobby-{}] Player {} (userId={}) joined lobby on team={}, total players: {}/{}",
@@ -105,6 +119,57 @@ class SnowWarLobby(
             maximumPlayers
         )
         checkCountdown()
+    }
+
+    fun fillWithBots() {
+        if (users.size >= maximumPlayers) return
+        val existingNames = users.values.map { it.name }.toMutableSet()
+        var nextBotId = -1001
+
+        while (users.size < maximumPlayers) {
+            while (users.containsKey(nextBotId)) {
+                nextBotId--
+            }
+
+            val team1Count = users.values.count { it.team == SnowWarTeam.BLUE }
+            val team2Count = users.values.count { it.team == SnowWarTeam.RED }
+            val team = if (team1Count <= team2Count) SnowWarTeam.BLUE else SnowWarTeam.RED
+
+            val gender = if (ThreadLocalRandom.current().nextBoolean()) "M" else "F"
+            val botName = BotNameGenerator.generateNickname(existingNames)
+            existingNames.add(botName)
+
+            val figure = HabboServer.habboGame.figureManager.generateRandomFigure(gender)
+            val motto = BotNameGenerator.generateMotto()
+
+            val botUser = SnowWarUser(
+                session = null,
+                team = team,
+                botData = SnowWarBotData(
+                    id = nextBotId,
+                    name = botName,
+                    figure = figure,
+                    gender = gender,
+                    mission = motto
+                )
+            )
+            users[nextBotId] = botUser
+
+            val joinedPayload = Game2UserJoinedGameData(botUser, false)
+            sendHabboResponse(Outgoing.GAME_2_USER_JOINED_GAME, joinedPayload)
+
+            log.info(
+                "[Lobby-{}] Bot {} (id={}) joined lobby on team={}, total players: {}/{}",
+                gameId,
+                botName,
+                nextBotId,
+                team,
+                users.size,
+                maximumPlayers
+            )
+
+            nextBotId--
+        }
     }
 
     fun removePlayer(session: HabboSession) {
@@ -125,27 +190,32 @@ class SnowWarLobby(
             users.size
         )
 
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_USER_LEFT_GAME, userId)
-        }
+        sendHabboResponse(Outgoing.GAME_2_USER_LEFT_GAME, userId)
 
         val minPlayers = HabboServer.habboConfig.gameConfig.snowwar.minPlayers
-        if (countdownStarted && users.size < minPlayers && !started) {
-            countdownStarted = false
-            countdownFuture?.cancel(true)
-            countdownFuture = null
-            log.info(
-                "[Lobby-{}] Cancelled lobby countdown: players ({}) < minPlayers ({})",
-                gameId,
-                users.size,
-                minPlayers
-            )
-            users.values.forEach {
-                it.session.sendHabboResponse(Outgoing.GAME_2_STOP_COUNTER)
+        val realPlayers = users.values.count { it.session != null }
+        if (realPlayers < minPlayers && !started) {
+            val bots = users.values.filter { it.session == null }.toList()
+            bots.forEach { bot ->
+                users.remove(bot.userId)
+                sendHabboResponse(Outgoing.GAME_2_USER_LEFT_GAME, bot.userId)
+            }
+
+            if (countdownStarted) {
+                countdownStarted = false
+                countdownFuture?.cancel(true)
+                countdownFuture = null
+                log.info(
+                    "[Lobby-{}] Cancelled lobby countdown: real players ({}) < minPlayers ({})",
+                    gameId,
+                    realPlayers,
+                    minPlayers
+                )
+                sendHabboResponse(Outgoing.GAME_2_STOP_COUNTER)
             }
         }
 
-        if (users.isEmpty()) {
+        if (users.isEmpty() || realPlayers == 0) {
             countdownFuture?.cancel(true)
             HabboServer.habboGame.snowWarManager.removeLobby(gameId)
         }
@@ -153,19 +223,23 @@ class SnowWarLobby(
 
     fun checkCountdown() {
         val minPlayers = HabboServer.habboConfig.gameConfig.snowwar.minPlayers
-        if (!countdownStarted && !started && users.size >= minPlayers) {
+        val realPlayers = users.values.count { it.session != null }
+        if (!countdownStarted && !started && realPlayers >= minPlayers) {
+            if (HabboServer.habboConfig.gameConfig.snowwar.fillWithBots) {
+                fillWithBots()
+            }
             countdownStarted = true
             val count = HabboServer.habboConfig.gameConfig.snowwar.countdownSeconds
             log.info(
-                "[Lobby-{}] Starting lobby countdown: {}s (players: {} >= minPlayers: {})",
+                "[Lobby-{}] Starting lobby countdown: {}s (real players: {} >= minPlayers: {}, total: {}/{})",
                 gameId,
                 count,
+                realPlayers,
+                minPlayers,
                 users.size,
-                minPlayers
+                maximumPlayers
             )
-            users.values.forEach {
-                it.session.sendHabboResponse(Outgoing.GAME_2_START_COUNTER, count)
-            }
+            sendHabboResponse(Outgoing.GAME_2_START_COUNTER, count)
             countdownFuture = HabboServer.serverScheduledExecutor.schedule({
                 startGame()
             }, count.toLong(), TimeUnit.SECONDS)
@@ -197,8 +271,6 @@ class SnowWarLobby(
     fun chat(session: HabboSession, message: String) {
         if (!users.containsKey(session.userInformation.id)) return
         val chatPayload = Game2GameChatFromPlayerData(session.userInformation.id, message)
-        users.values.forEach {
-            it.session.sendHabboResponse(Outgoing.GAME_2_GAME_CHAT_FROM_PLAYER, chatPayload)
-        }
+        sendHabboResponse(Outgoing.GAME_2_GAME_CHAT_FROM_PLAYER, chatPayload)
     }
 }
