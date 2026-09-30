@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import ovh.rwx.habbo.game.user.HabboSession
 
 enum class HabboPlatform {
     AIR,
@@ -139,4 +140,15 @@ fun HabboResponse.isVersionBetween(
     endYear: Int, endMonth: Int, endDay: Int
 ): Boolean {
     return isVersionAtLeast(startYear, startMonth, startDay) && isVersionBefore(endYear, endMonth, endDay)
+}
+
+val HabboSession.isAir: Boolean
+    get() = habboVersion.isAir
+
+fun HabboSession.isVersionAtLeast(year: Int, month: Int, day: Int): Boolean {
+    return habboVersion.isVersionAtLeast(year, month, day)
+}
+
+fun HabboSession.isVersionBefore(year: Int, month: Int, day: Int): Boolean {
+    return habboVersion.isVersionBefore(year, month, day)
 }

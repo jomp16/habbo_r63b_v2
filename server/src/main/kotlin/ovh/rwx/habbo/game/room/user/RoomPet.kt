@@ -60,6 +60,8 @@ class RoomPet(
     }
 
     private fun broadcastPetChat(message: String) {
+        if (room.roomData.muteAllPets) return
+
         room.sendResponse(
             Outgoing.ROOM_USER_CHAT,
             OutgoingR63A.ROOM_USER_CHAT,

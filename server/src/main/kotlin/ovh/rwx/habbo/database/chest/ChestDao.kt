@@ -21,14 +21,13 @@ package ovh.rwx.habbo.database.chest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.github.andrewoma.kwery.core.Row
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.chest.ChestData
 import ovh.rwx.habbo.game.chest.ChestEntry
 import ovh.rwx.habbo.game.item.user.UserItem
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.localDateTime
+import ovh.rwx.habbo.database.*
 import java.time.LocalDateTime
+
+private val jsonMapper = jacksonObjectMapper()
 
 data class ChestLogItemEntry(
     val isWallItem: Boolean,
@@ -43,68 +42,29 @@ data class ChestLogItemsData(
 )
 
 object ChestDao {
-    private val jsonMapper = jacksonObjectMapper()
 
     private fun sql(name: String): String =
         javaClass.classLoader.getResource("sql/chest/$name.sql").readText()
 
-    fun getChest(itemId: Int): ChestData? = HabboServer.database {
-        select(sql("select_chest"), mapOf("item_id" to itemId)) {
-            ChestData(
-                itemId = it.int("item_id"),
-                userId = it.int("user_id"),
-                name = it.string("name"),
-                description = it.string("description"),
-                capacity = it.int("capacity"),
-                coins = it.int("coins"),
-                isWired = it.boolean("is_wired"),
-                locked = it.boolean("locked"),
-                autoLock = it.boolean("auto_lock"),
-                stateMode = it.int("state_mode"),
-                previewMode = it.int("preview_mode"),
-                previewAmount = it.int("preview_amount"),
-                anyoneCanOpen = it.boolean("anyone_can_open"),
-                anyoneCanDonate = it.boolean("anyone_can_donate"),
-                notificationMode = it.int("notification_mode"),
-                notifyFull = it.boolean("notify_full"),
-                notifyDonation = it.boolean("notify_donation"),
-                notifyWithdraw = it.boolean("notify_withdraw"),
-                notifyEmpty = it.boolean("notify_empty"),
-                notifyTransaction = it.boolean("notify_transaction"),
-            )
-        }.firstOrNull()
+    fun getChest(itemId: Int): ChestData? = db {
+        queryOne<ChestData>(sql("select_chest"), mapOf("item_id" to itemId))
     }
 
     fun createChest(itemId: Int, userId: Int, capacity: Int) {
-        HabboServer.database {
+        db {
             update(sql("insert_chest"), mapOf("item_id" to itemId, "user_id" to userId, "capacity" to capacity))
         }
     }
 
-    fun getChestEntries(itemId: Int): List<ChestEntry> = HabboServer.database {
-        select(sql("select_chest_items"), mapOf("item_id" to itemId)) {
-            val userItem = UserItem(
-                id = it.int("id"),
-                userId = it.int("user_id"),
-                itemName = it.string("item_name"),
-                extraData = it.string("extra_data"),
-                limited = it.boolean("is_limited"),
-                buildersClub = it.boolean("is_builders_club"),
-            )
-
-            ChestEntry(
-                chestItemId = it.int("chest_entry_id"),
-                item = userItem,
-                lockState = it.int("lock_state"),
-                transactionId = it.long("transaction_id"),
-            )
-        }
+    fun getChestEntries(itemId: Int): List<ChestEntry> = db {
+        query<ChestEntryDto>(sql("select_chest_items"), mapOf("item_id" to itemId))
+            .map { it.toDomain() }
     }
 
     fun insertChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        HabboServer.database {
+        db {
             batchUpdate(
                 sql("insert_chest_item"),
                 itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
@@ -115,7 +75,7 @@ object ChestDao {
     fun deleteChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        HabboServer.database {
+        db {
             batchUpdate(
                 sql("delete_chest_items"),
                 itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
@@ -124,7 +84,7 @@ object ChestDao {
     }
 
     fun updateChest(chest: ChestData) {
-        HabboServer.database {
+        db {
             update(
                 sql("update_chest"),
                 mapOf(
@@ -152,17 +112,8 @@ object ChestDao {
         }
     }
 
-    fun updateChestOwner(chestItemId: Int, userId: Int) {
-        HabboServer.database {
-            update(
-                "UPDATE `chests` SET `user_id` = :user_id WHERE `item_id` = :item_id",
-                mapOf("user_id" to userId, "item_id" to chestItemId)
-            )
-        }
-    }
-
     fun deleteChest(chestItemId: Int) {
-        HabboServer.database {
+        db {
             update("DELETE FROM `chest_items` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
             update("DELETE FROM `chest_logs` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
             update("DELETE FROM `chests` WHERE `item_id` = :item_id", mapOf("item_id" to chestItemId))
@@ -179,7 +130,7 @@ object ChestDao {
         withdrawCoinsCount: Int,
         depositCoinsCount: Int,
         itemsData: ChestLogItemsData? = null,
-    ): Int = HabboServer.database {
+    ): Int = db {
         val itemsDataJson = itemsData?.let { jsonMapper.writeValueAsString(it) }
 
         insertAndGetGeneratedKey(
@@ -212,54 +163,77 @@ object ChestDao {
         val createdAt: LocalDateTime,
     )
 
-    fun getChestLogs(itemId: Int, limit: Int, page: Int): Pair<Int, List<ChestLog>> = HabboServer.database {
-        val total = select(sql("count_chest_logs"), mapOf("item_id" to itemId)) { it.int("total") }.firstOrNull() ?: 0
-        val logs = select(
+    fun getChestLogs(itemId: Int, limit: Int, page: Int): Pair<Int, List<ChestLog>> = db {
+        val total = queryOne<Int>(sql("count_chest_logs"), mapOf("item_id" to itemId)) ?: 0
+        val logs = query<ChestLogDto>(
             sql("select_chest_logs"),
             mapOf("item_id" to itemId, "limit" to limit, "offset" to ((page - 1).coerceAtLeast(0) * limit))
-        ) { mapLog(it) }
+        ).map { it.toDomain() }
 
         total to logs
     }
 
-    fun getRoomLogs(roomId: Int, limit: Int, page: Int): Pair<Int, List<ChestLog>> = HabboServer.database {
-        val total = select(
+    fun getRoomLogs(roomId: Int, limit: Int, page: Int): Pair<Int, List<ChestLog>> = db {
+        val total = queryOne<Int>(
             "SELECT COUNT(*) AS `total` FROM `chest_logs` WHERE `room_id` = :room_id",
             mapOf("room_id" to roomId)
-        ) { it.int("total") }.firstOrNull() ?: 0
-        val logs = select(
+        ) ?: 0
+        val logs = query<ChestLogDto>(
             "SELECT * FROM `chest_logs` WHERE `room_id` = :room_id ORDER BY `id` DESC LIMIT :limit OFFSET :offset",
             mapOf("room_id" to roomId, "limit" to limit, "offset" to ((page - 1).coerceAtLeast(0) * limit))
-        ) { mapLog(it) }
+        ).map { it.toDomain() }
 
         total to logs
     }
 
-    fun getChestLog(logId: Long): ChestLog? = HabboServer.database {
-        select(
+    fun getChestLog(logId: Long): ChestLog? = db {
+        queryOne<ChestLogDto>(
             "SELECT * FROM `chest_logs` WHERE `id` = :log_id LIMIT 1",
             mapOf("log_id" to logId)
-        ) { mapLog(it) }.firstOrNull()
+        )?.toDomain()
     }
+}
 
-    private fun mapLog(it: Row): ChestLog {
-        val itemsDataJson = it.stringOrNull("items_data")
-        val itemsData = itemsDataJson?.let { json ->
+data class ChestLogDto(
+    val id: Int,
+    val chestItemId: Int,
+    val roomId: Int? = 0,
+    val userId: Int,
+    val username: String,
+    val withdrawFurniCount: Int = 0,
+    val depositFurniCount: Int = 0,
+    val withdrawCoinsCount: Int = 0,
+    val depositCoinsCount: Int = 0,
+    val itemsData: String? = null,
+    val createdAt: LocalDateTime
+) {
+    fun toDomain(): ChestDao.ChestLog {
+        val parsed = itemsData?.let { json ->
             runCatching { jsonMapper.readValue<ChestLogItemsData>(json) }.getOrNull()
         }
-
-        return ChestLog(
-            id = it.int("id"),
-            chestItemId = it.int("chest_item_id"),
-            roomId = it.intOrNull("room_id") ?: 0,
-            userId = it.int("user_id"),
-            username = it.string("username"),
-            withdrawFurniCount = it.int("withdraw_furni_count"),
-            depositFurniCount = it.int("deposit_furni_count"),
-            withdrawCoinsCount = it.int("withdraw_coins_count"),
-            depositCoinsCount = it.int("deposit_coins_count"),
-            itemsData = itemsData,
-            createdAt = it.localDateTime("created_at"),
+        return ChestDao.ChestLog(
+            id, chestItemId, roomId ?: 0, userId, username,
+            withdrawFurniCount, depositFurniCount, withdrawCoinsCount, depositCoinsCount,
+            parsed, createdAt
         )
     }
+}
+
+data class ChestEntryDto(
+    val chestEntryId: Int,
+    val id: Int,
+    val userId: Int,
+    val itemName: String,
+    val extraData: String,
+    val isLimited: Boolean,
+    val isBuildersClub: Boolean,
+    val lockState: Int,
+    val transactionId: Long
+) {
+    fun toDomain() = ChestEntry(
+        chestItemId = chestEntryId,
+        item = UserItem(id, userId, itemName, extraData, isLimited, isBuildersClub),
+        lockState = lockState,
+        transactionId = transactionId
+    )
 }

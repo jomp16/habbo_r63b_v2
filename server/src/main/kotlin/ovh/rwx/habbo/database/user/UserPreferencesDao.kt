@@ -19,41 +19,21 @@
 
 package ovh.rwx.habbo.database.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserPreferences
-import ovh.rwx.habbo.kotlin.insertWithIntGeneratedKey
+import ovh.rwx.habbo.database.db
 
 object UserPreferencesDao {
     fun getUserPreferences(userId: Int): UserPreferences {
-        val userPreferences = HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/users/preferences/select_user_preferences.sql").readText(),
-                mapOf(
-                    "user_id" to userId
-                )
-            ) {
-                UserPreferences(
-                    it.int("id"),
-                    it.string("volume"),
-                    it.boolean("prefer_old_chat"),
-                    it.boolean("ignore_room_invite"),
-                    it.boolean("disable_camera_follow"),
-                    it.int("navigator_x"),
-                    it.int("navigator_y"),
-                    it.int("navigator_width"),
-                    it.int("navigator_height"),
-                    it.boolean("hide_in_room"),
-                    it.boolean("block_new_friends"),
-                    it.int("chat_color"),
-                    it.boolean("friend_bar_open"),
-                    it.boolean("friend_stream_enabled")
-                )
-            }.firstOrNull()
+        val userPreferences = db {
+            queryOne<UserPreferences>(
+                "sql/users/preferences/select_user_preferences.sql",
+                mapOf("user_id" to userId)
+            )
         }
 
         if (userPreferences == null) {
             // no users preferences, create it
-            HabboServer.database {
+            db {
                 insertWithIntGeneratedKey(
                     javaClass.classLoader.getResource("sql/users/preferences/insert_user_preferences.sql").readText(),
                     mapOf(
@@ -69,7 +49,7 @@ object UserPreferencesDao {
     }
 
     fun savePreferences(userPreferences: UserPreferences) {
-        HabboServer.database {
+        db {
             update(
                 javaClass.classLoader.getResource("sql/users/preferences/update_user_preferences.sql").readText(),
                 mapOf(
@@ -92,3 +72,4 @@ object UserPreferencesDao {
         }
     }
 }
+

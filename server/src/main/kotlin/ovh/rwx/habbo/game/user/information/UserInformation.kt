@@ -23,29 +23,37 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.database.clothing.ClothingDao
 import ovh.rwx.habbo.database.wardrobe.WardrobeDao
+import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.achievement.AchievementUser
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 
-data class UserInformation(
+class UserInformation(
     val id: Int,
     val username: String,
     val email: String,
     val accountCreated: LocalDateTime,
     val realname: String,
-    var rank: Int,
-    var credits: Int,
-    var figure: String,
-    var gender: String,
-    var motto: String,
-    var homeRoom: Int,
-    var vip: Boolean,
+    rank: Int,
+    credits: Int,
+    figure: String,
+    gender: String,
+    motto: String,
+    homeRoom: Int,
+    vip: Boolean,
     val password: String,
     val activityPointsCurrencies: MutableMap<ActivityPointType, Int>
-) {
-    // todo
+) : AbstractDirtyEntity() {
+    var rank: Int = rank; set(v) { if (field != v) { field = v; markDirty() } }
+    var credits: Int = credits; set(v) { if (field != v) { field = v; markDirty() } }
+    var figure: String = figure; set(v) { if (field != v) { field = v; markDirty() } }
+    var gender: String = gender; set(v) { if (field != v) { field = v; markDirty() } }
+    var motto: String = motto; set(v) { if (field != v) { field = v; markDirty() } }
+    var homeRoom: Int = homeRoom; set(v) { if (field != v) { field = v; markDirty() } }
+    var vip: Boolean = vip; set(v) { if (field != v) { field = v; markDirty() } }
+
     val ambassador: Boolean
         get() = rank >= 7
     val wardrobes: MutableList<Wardrobe> by lazy { ArrayList(WardrobeDao.getWardrobes(id)) }
@@ -53,4 +61,9 @@ data class UserInformation(
     val achievementUsers: MutableList<AchievementUser> by lazy { ArrayList(AchievementDao.loadUserAchievements(id)) }
     val groups: List<Group>
         get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == id } }
+
+    override fun flush() {
+        ovh.rwx.habbo.database.user.UserInformationDao.saveInformation(this, online = true, ip = "")
+        markClean()
+    }
 }

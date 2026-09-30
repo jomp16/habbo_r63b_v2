@@ -25,6 +25,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
 import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -36,7 +37,7 @@ import ovh.rwx.habbo.game.item.xml.FurniXMLHandler
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
+import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.kotlin.urlUserAgent
 import ovh.rwx.habbo.util.ReplacingInputStream
 import ovh.rwx.habbo.util.Vector2
@@ -46,21 +47,24 @@ import java.lang.reflect.Constructor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.full.companionObject
 
 class ItemManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val furniXMLInfos: MutableMap<String, FurniXMLInfo> = mutableMapOf()
-    val furnishings: MutableMap<String, Furnishing> = mutableMapOf()
-    val oldGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val newGiftWrapper: MutableList<Furnishing> = mutableListOf()
-    val teleportLinks: MutableMap<Int, Int> = mutableMapOf()
-    val roomTeleportLinks: MutableMap<Int, Int> = mutableMapOf()
-    val furniInteractor: MutableMap<InteractionType, ItemInteractor> = mutableMapOf()
-    private val furniLogic: MutableMap<InteractionType, FurnitureLogic> = mutableMapOf()
-    private val furniLogicByName: MutableMap<String, FurnitureLogic> = mutableMapOf()
+    val itemSequence = HiLoSequence("items", blockSize = 1000)
+    val furniXMLInfos: ConcurrentHashMap<String, FurniXMLInfo> = ConcurrentHashMap()
+    val furnishings: ConcurrentHashMap<String, Furnishing> = ConcurrentHashMap()
+    val oldGiftWrapper: MutableList<Furnishing> = CopyOnWriteArrayList()
+    val newGiftWrapper: MutableList<Furnishing> = CopyOnWriteArrayList()
+    val teleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
+    val roomTeleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
+    val furniInteractor: ConcurrentHashMap<InteractionType, ItemInteractor> = ConcurrentHashMap()
+    private val furniLogic: ConcurrentHashMap<InteractionType, FurnitureLogic> = ConcurrentHashMap()
+    private val furniLogicByName: ConcurrentHashMap<String, FurnitureLogic> = ConcurrentHashMap()
     private val defaultFurnitureLogic: FurnitureLogic = DefaultFurnitureLogic()
-    private val wiredItems: MutableMap<InteractionType, Constructor<out WiredItem>> = mutableMapOf()
+    private val wiredItems: ConcurrentHashMap<InteractionType, Constructor<out WiredItem>> = ConcurrentHashMap()
 
     fun load() {
         log.info("Loading furnishings...")
@@ -74,24 +78,7 @@ class ItemManager {
         roomTeleportLinks.clear()
         wiredItems.clear()
 
-        if (furniXMLInfos.isEmpty()) {
-            urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use { inputStream ->
-                ReplacingInputStream(inputStream, "&#25;", "").use { replacingFileInputOne ->
-                    ReplacingInputStream(replacingFileInputOne, "&#28;", "").use { replacingFileInputTwo ->
-                        ReplacingInputStream(replacingFileInputTwo, "&#29;", "").use { replacingFileInputFinal ->
-                            replacingFileInputFinal.buffered().use { bufferedInputStream ->
-                                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                                val handler = FurniXMLHandler()
-
-                                saxParser.parse(bufferedInputStream, handler)
-
-                                furniXMLInfos += handler.furniXMLInfos.associateBy { furniXMLInfo -> furniXMLInfo.itemName }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        loadFurniXml()
 
         furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
         oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
@@ -101,24 +88,20 @@ class ItemManager {
         roomTeleportLinks.putAll(ItemDao.getLinkedTeleport(teleportLinks.keys))
 
         val interactors = HabboServer.reflections.getSubTypesOf(ItemInteractor::class.java)
-
         interactors.map { it.getConstructor().newInstance() }.forEach { interactor ->
             interactor.interactionType.forEach { furniInteractor[it] = interactor }
         }
 
         val furnitureLogics = HabboServer.reflections.getSubTypesOf(FurnitureLogic::class.java)
-
         furnitureLogics.map { it.getConstructor().newInstance() }.forEach { logic ->
             logic.interactionTypes.forEach { furniLogic[it] = logic }
             logic.itemNames.forEach { furniLogicByName[it] = logic }
         }
 
         val wiredItemsInteractor = HabboServer.reflections.getTypesAnnotatedWith(WiredItemInteractor::class.java)
-
         wiredItemsInteractor.forEach { wiredItemClasses ->
-            val wiredItemInteractor = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
-
-            wiredItemInteractor.interactionType.forEach {
+            val annotation = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
+            annotation.interactionType.forEach {
                 @Suppress("UNCHECKED_CAST")
                 wiredItems[it] =
                     (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
@@ -126,50 +109,9 @@ class ItemManager {
         }
 
         val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
-
         if (missingItems.isNotEmpty()) {
-            FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use {
-                it.apply {
-                    appendLine()
-                    appendLine("================")
-                    appendLine(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                    appendLine()
-
-                    missingItems.forEach { s ->
-                        appendLine(s)
-                    }
-
-                    appendLine()
-                    appendLine("================")
-                }
-
-                it.flush()
-            }
-
-            HabboServer.database {
-                batchInsertAndGetGeneratedKeys(
-                    javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql").readText().trim(),
-                    missingItems.map {
-                        mapOf(
-                            "item_name" to it,
-                            "type" to if (!furniXMLInfos[it]!!.wallFurni) "s" else "i",
-                            "stack_height" to "1",
-                            "can_stack" to true,
-                            "allow_recycle" to true,
-                            "allow_trade" to true,
-                            "allow_marketplace_sell" to true,
-                            "allow_gift" to true,
-                            "allow_inventory_stack" to true,
-                            "interaction_type" to (InteractionType.fromString(it).let { t ->
-                                if (t != InteractionType.NOT_FOUND && t != InteractionType.DEFAULT) t.type else "default"
-                            }),
-                            "interaction_modes_count" to 1,
-                            "vending_ids" to "0"
-                        )
-                    }
-                )
-            }
-
+            recordMissingItems(missingItems)
+            insertMissingItems(missingItems)
             log.info("Added more {} items to database!", furniXMLInfos.size - furnishings.size)
 
             furnishings.clear()
@@ -184,8 +126,69 @@ class ItemManager {
         log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
     }
 
+    private fun loadFurniXml() {
+        if (furniXMLInfos.isNotEmpty()) return
+
+        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use { rawStream ->
+            var stream = rawStream
+            for (replacement in XML_SANITIZATION_REPLACEMENTS) {
+                stream = ReplacingInputStream(stream, replacement, "")
+            }
+            stream.buffered().use { bufferedStream ->
+                val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                val handler = FurniXMLHandler()
+                saxParser.parse(bufferedStream, handler)
+                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+            }
+        }
+    }
+
+    private fun recordMissingItems(missingItems: List<String>) {
+        FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use { writer ->
+            writer.appendLine()
+            writer.appendLine("================")
+            writer.appendLine(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+            writer.appendLine()
+            missingItems.forEach { writer.appendLine(it) }
+            writer.appendLine()
+            writer.appendLine("================")
+            writer.flush()
+        }
+    }
+
+    private fun insertMissingItems(missingItems: List<String>) {
+        val insertSql = javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql")?.readText()?.trim()
+            ?: return
+        db {
+            batchInsertAndGetGeneratedKeys(
+                insertSql,
+                missingItems.map { itemName ->
+                    val xmlInfo = furniXMLInfos[itemName]
+                    val isWall = xmlInfo?.wallFurni == true
+                    val interactionType = InteractionType.fromString(itemName).let { t ->
+                        if (t != InteractionType.NOT_FOUND && t != InteractionType.DEFAULT) t.type else "default"
+                    }
+                    mapOf(
+                        "item_name" to itemName,
+                        "type" to if (!isWall) "s" else "i",
+                        "stack_height" to "1",
+                        "can_stack" to true,
+                        "allow_recycle" to true,
+                        "allow_trade" to true,
+                        "allow_marketplace_sell" to true,
+                        "allow_gift" to true,
+                        "allow_inventory_stack" to true,
+                        "interaction_type" to interactionType,
+                        "interaction_modes_count" to 1,
+                        "vending_ids" to "0"
+                    )
+                }
+            )
+        }
+    }
+
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, length: Int): List<Vector2> {
-        val list: MutableList<Vector2> = mutableListOf()
+        val list = ArrayList<Vector2>(width * length)
 
         for (i in 0 until width) {
             val x1 = if (rotation == 0 || rotation == 4) x + i else x
@@ -268,5 +271,9 @@ class ItemManager {
 
     fun correctExtradataCatalog(habboSession: HabboSession, extraData: String, furnishing: Furnishing): String? {
         return getFurnitureLogic(furnishing).correctCatalogExtraData(habboSession, extraData, furnishing)
+    }
+
+    companion object {
+        private val XML_SANITIZATION_REPLACEMENTS = listOf("&#25;", "&#28;", "&#29;")
     }
 }

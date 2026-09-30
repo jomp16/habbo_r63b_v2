@@ -45,6 +45,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.zip.InflaterInputStream
 import javax.imageio.ImageIO
@@ -56,7 +57,7 @@ class CameraManager {
     val cameraPreviewDirectory: Path = cameraDirectory.resolve("preview")
     val cameraPurchasedDirectory: Path = cameraDirectory.resolve("purchased")
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
-    private val currentPictureForUsers: MutableMap<String, Pair<LocalDateTime, String>> = mutableMapOf()
+    private val currentPictureForUsers: ConcurrentHashMap<String, Pair<LocalDateTime, String>> = ConcurrentHashMap()
     private val jacksonJson = jacksonObjectMapper()
     private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath)
 
@@ -73,43 +74,49 @@ class CameraManager {
         habboCameraRenderer.load()
 
         HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            Files.walk(cameraPreviewDirectory).use {
-                it.filter { path -> Files.isRegularFile(path) }.forEach { path ->
-                    val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)
-                    val localDateTime =
-                        LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.systemDefault())
-
-                    if (localDateTime.plusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes)
-                            .isBefore(LocalDateTime.now())
-                    ) {
-                        // expired image, delete this now
-                        if (!Files.deleteIfExists(path)) log.error("Couldn't delete camera preview: {}", path.fileName)
-
-                        Files.newDirectoryStream(path.parent).use { directoryStream ->
-                            if (!directoryStream.iterator().hasNext()) Files.deleteIfExists(path.parent)
-                        }
-                    }
-                }
-            }
-            // Delete old navigator thumbnail that room doesn't exists anymore
-            Files.walk(cameraNavigatorThumbnailDirectory).use {
-                it.filter { path -> Files.isRegularFile(path) }
-                    .filter { path ->
-                        !HabboServer.habboGame.roomManager.rooms.keys.contains(
-                            path.fileName.toString().replace(".png", "").toInt()
-                        )
-                    }
-                    .forEach { path ->
-                        // No more room fam, remove this image.
-                        if (!Files.deleteIfExists(path)) log.error(
-                            "Couldn't delete camera navigator thumbnail: {}",
-                            path.fileName
-                        )
-                    }
+            try {
+                cleanExpiredPreviews()
+                cleanOrphanThumbnails()
+            } catch (e: Exception) {
+                log.error("Error during camera directory maintenance", e)
             }
         }, 0, 5, TimeUnit.SECONDS)
 
         log.info("Done!")
+    }
+
+    private fun cleanExpiredPreviews() {
+        Files.walk(cameraPreviewDirectory).use { paths ->
+            paths.filter { path -> Files.isRegularFile(path) }.forEach { path ->
+                val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+                val localDateTime =
+                    LocalDateTime.ofInstant(basicFileAttributes.creationTime().toInstant(), ZoneId.systemDefault())
+
+                if (localDateTime.plusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes)
+                        .isBefore(LocalDateTime.now())
+                ) {
+                    if (!Files.deleteIfExists(path)) log.error("Couldn't delete camera preview: {}", path.fileName)
+
+                    Files.newDirectoryStream(path.parent).use { directoryStream ->
+                        if (!directoryStream.iterator().hasNext()) Files.deleteIfExists(path.parent)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun cleanOrphanThumbnails() {
+        Files.walk(cameraNavigatorThumbnailDirectory).use { paths ->
+            paths.filter { path -> Files.isRegularFile(path) }
+                .forEach { path ->
+                    val roomId = path.fileName.toString().removeSuffix(".png").toIntOrNull() ?: return@forEach
+                    if (!HabboServer.habboGame.roomManager.rooms.containsKey(roomId)) {
+                        if (!Files.deleteIfExists(path)) {
+                            log.error("Couldn't delete camera navigator thumbnail: {}", path.fileName)
+                        }
+                    }
+                }
+        }
     }
 
     fun createCameraPreview(habboSession: HabboSession, cameraBytes: ByteArray): Pair<Boolean, String> {
@@ -121,12 +128,7 @@ class CameraManager {
         val cameraPreviewPath = cameraPreviewUserPath.resolve("${uuid}.png")
         val cameraPreviewJsonPath = cameraPreviewUserPath.resolve("${uuid}.json")
 
-        val jsonData = if (isZlibCompressed(cameraBytes)) {
-            InflaterInputStream(cameraBytes.inputStream()).readBytes().decodeToString()
-        } else {
-            cameraBytes.decodeToString()
-        }
-
+        val jsonData = extractJsonData(cameraBytes)
         cameraPreviewJsonPath.writeText(jsonData)
 
         val renderedBytes = renderCameraData(jsonData)
@@ -142,51 +144,47 @@ class CameraManager {
         if (!habboSession.hasPermission("acc_can_use_camera")) return false
         val roomThumbnailPath = cameraNavigatorThumbnailDirectory.resolve("$roomId.png")
 
-        val jsonData = if (isZlibCompressed(roomThumbnailBytes)) {
-            InflaterInputStream(roomThumbnailBytes.inputStream()).readBytes().decodeToString()
-        } else {
-            roomThumbnailBytes.decodeToString()
-        }
-
+        val jsonData = extractJsonData(roomThumbnailBytes)
         val renderedBytes = renderCameraData(jsonData)
         roomThumbnailPath.toFile().writeBytes(renderedBytes)
 
         return true
     }
 
+    private fun extractJsonData(cameraBytes: ByteArray): String =
+        if (isZlibCompressed(cameraBytes)) {
+            InflaterInputStream(cameraBytes.inputStream()).readBytes().decodeToString()
+        } else {
+            cameraBytes.decodeToString()
+        }
+
     private fun renderCameraData(data: String): ByteArray {
         val habboCamera: HabboCamera = jacksonJson.readValue(data)
+        val dimmer = extractDimmerSettings(habboCamera.roomId.toInt())
+        return habboCameraRenderer.renderToBytes(habboCamera, dimmer.color, dimmer.alpha, dimmer.type)
+    }
 
-        var dimmerType = 2 // 1 = Fundo (Background), 2 = Quarto inteiro (Full room)
-        var dimmerColor: Color? = null
-        var dimmerAlpha = 0f
-
-        // 1. Busca a sala onde a foto foi tirada
-        val room = HabboServer.habboGame.roomManager.rooms[habboCamera.roomId.toInt()]
-
-        // 2. Busca o item do Dimmer na parede (ajuste "dimmer" para o itemName do seu banco)
+    private fun extractDimmerSettings(roomId: Int): DimmerSettings {
+        val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: return DimmerSettings.DEFAULT
         val dimmerItem =
-            room?.itemManager?.wallItems?.values?.find { it.furnishing.interactionType == InteractionType.DIMMER }
+            room.itemManager.wallItems.values.find { it.furnishing.interactionType == InteractionType.DIMMER }
+                ?: return DimmerSettings.DEFAULT
 
-        // 3. Verifica se o dimmer existe e está ligado
-        if (dimmerItem != null && dimmerItem.extraData.isNotEmpty()) {
+        if (dimmerItem.extraData.isNotEmpty()) {
             val parts = dimmerItem.extraData.split(",")
-
-            // O padrão Sulake para o extraData do dimmer é: "Estado,Preset,1,CorHex,Intensidade"
-            // Exemplo ligado: "2,1,1,#000000,255" (Estado 2 = Ligado)
+            // Padrão Sulake para o extraData do dimmer: "Estado,Preset,1,CorHex,Intensidade" (2 = Ligado)
             if (parts.size >= 5 && parts[0] == "2") {
                 try {
-                    dimmerType = parts[2].toInt()
-                    dimmerColor = Color.decode(parts[3])
-                    dimmerAlpha = parts[4].toFloat() / 255f
-                } catch (e: Exception) {
-                    // Se der erro no parse do Hex ou Float, ignora o dimmer para não crashar a foto
+                    val dimmerType = parts[2].toInt()
+                    val dimmerColor = Color.decode(parts[3])
+                    val dimmerAlpha = parts[4].toFloat() / 255f
+                    return DimmerSettings(dimmerType, dimmerColor, dimmerAlpha)
+                } catch (_: Exception) {
+                    // Ignora erro no parse do Hex/Float para não falhar a renderização da foto
                 }
             }
         }
-
-        // 4. Passa os dados do dimmer para o renderizador
-        return habboCameraRenderer.renderToBytes(habboCamera, dimmerColor, dimmerAlpha, dimmerType)
+        return DimmerSettings.DEFAULT
     }
 
     private fun isZlibCompressed(data: ByteArray): Boolean {
@@ -197,7 +195,6 @@ class CameraManager {
 
     fun purchaseCamera(habboSession: HabboSession): Boolean {
         if (!habboSession.hasPermission("acc_can_use_camera")) return false
-        if (!currentPictureForUsers.containsKey(habboSession.userInformation.username)) return false
         val picturePair = currentPictureForUsers.remove(habboSession.userInformation.username) ?: return false
         val picName = picturePair.second.replace(".png", "")
         val createdAt = picturePair.first
@@ -208,35 +205,40 @@ class CameraManager {
         val photoFurnishing = HabboServer.habboGame.itemManager.furnishings["external_image_wallitem_poster_small"]
             ?: return false
 
-        if (habboSession.userInformation.credits < HabboServer.habboConfig.cameraConfig.prices.credits || habboSession.userInformation.activityPointsCurrencies.getOrPut(
-                ActivityPointType.PIXELS, { 0 }
-            ) < HabboServer.habboConfig.cameraConfig.prices.pixels
-        ) {
-            Files.delete(previewPicturePath)
-            Files.delete(previewJsonPath)
+        val creditPrice = HabboServer.habboConfig.cameraConfig.prices.credits
+        val pixelPrice = HabboServer.habboConfig.cameraConfig.prices.pixels
+        val currentPixels = habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
 
+        if (habboSession.userInformation.credits < creditPrice || currentPixels < pixelPrice) {
+            Files.deleteIfExists(previewPicturePath)
+            Files.deleteIfExists(previewJsonPath)
             return false
         }
 
         if (Files.notExists(previewPicturePath) || Files.exists(purchasedPicturePath)) return false
         if (Files.notExists(purchasedPicturePath.parent)) Files.createDirectory(purchasedPicturePath.parent)
 
-        habboSession.userInformation.credits -= HabboServer.habboConfig.cameraConfig.prices.credits
+        habboSession.userInformation.credits -= creditPrice
         habboSession.userInformation.activityPointsCurrencies.merge(
             ActivityPointType.PIXELS,
-            -HabboServer.habboConfig.cameraConfig.prices.pixels,
+            -pixelPrice,
             Int::plus
         )
 
         Files.move(previewPicturePath, purchasedPicturePath)
-        Files.delete(previewJsonPath)
+        Files.deleteIfExists(previewJsonPath)
+
         val originalImage = ImageIO.read(purchasedPicturePath.toFile())
         val thumbnailWidth = originalImage.width / 2
         val thumbnailHeight = originalImage.height / 2
         val thumbnailImage = BufferedImage(thumbnailWidth, thumbnailHeight, BufferedImage.TYPE_INT_ARGB)
 
-        thumbnailImage.createGraphics()
-            .drawImage(originalImage.getScaledInstance(thumbnailWidth, thumbnailHeight, Image.SCALE_SMOOTH), 0, 0, null)
+        val graphics = thumbnailImage.createGraphics()
+        try {
+            graphics.drawImage(originalImage.getScaledInstance(thumbnailWidth, thumbnailHeight, Image.SCALE_SMOOTH), 0, 0, null)
+        } finally {
+            graphics.dispose()
+        }
 
         ImageIO.write(thumbnailImage, "png", File(cameraPurchasedDirectory.toFile(), "${tmpPath}_small.png"))
         val pictureId = CameraDao.savePictureDataToDatabase(habboSession.userInformation.id, picName)
@@ -259,5 +261,15 @@ class CameraManager {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_CameraPhotoCount", 1, accumulate = true)
 
         return true
+    }
+
+    private data class DimmerSettings(
+        val type: Int = 2,
+        val color: Color? = null,
+        val alpha: Float = 0f
+    ) {
+        companion object {
+            val DEFAULT = DimmerSettings()
+        }
     }
 }

@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.database.room
 
-import com.github.andrewoma.kwery.core.Row
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.RightData
@@ -27,135 +26,73 @@ import ovh.rwx.habbo.game.room.RoomData
 import ovh.rwx.habbo.game.room.RoomState
 import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.room.model.RoomModel
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.util.Vector3
-import java.util.*
+import ovh.rwx.habbo.database.*
+import java.util.Locale
+import org.slf4j.LoggerFactory
 
 object RoomDao {
-    fun getRoomsData(): List<RoomData> = HabboServer.database {
-        select("SELECT * FROM `rooms`") {
-            getRoomData(it)
-        }
+    private val log = LoggerFactory.getLogger(javaClass)
+    val roomSequence = HiLoSequence("rooms", blockSize = 100)
+    fun getRoomsData(): List<RoomData> = db {
+        query<RoomDataDto>("SELECT * FROM `rooms`").map { it.toDomain() }
     }
 
-    fun getRoomData(roomId: Int): RoomData = HabboServer.database {
-        select("SELECT * FROM `rooms` WHERE `id` = :room_id",
-                mapOf(
-                        "room_id" to roomId
-                )
-        ) {
-            getRoomData(it)
-        }.first()
+    fun getRoomData(roomId: Int): RoomData = db {
+        queryOne<RoomDataDto>(
+            "SELECT * FROM `rooms` WHERE `id` = :room_id",
+            mapOf("room_id" to roomId)
+        )!!.toDomain()
     }
 
-    private fun getRoomData(row: Row): RoomData = RoomData(
-        row.int("id"),
-        RoomType.valueOf(row.string("room_type").uppercase(Locale.getDefault())),
-        row.string("name"),
-        row.int("owner_id"),
-        row.string("description"),
-        row.int("category"),
-        RoomState.valueOf(row.string("state").uppercase(Locale.getDefault())),
-        row.int("trade_state"),
-        row.int("users_max"),
-        row.string("model_name"),
-        row.int("score"),
-        row.string("tags").split(','),
-        row.string("password"),
-        row.string("wallpaper"),
-        row.string("floor"),
-        row.string("landscape"),
-        row.boolean("hide_wall"),
-            row.int("wall_thick"),
-            row.int("wall_height"),
-            row.int("floor_thick"),
-            row.int("mute_settings"),
-            row.int("ban_settings"),
-            row.int("kick_settings"),
-            row.int("chat_type"),
-            row.int("chat_balloon"),
-            row.int("chat_speed"),
-            row.int("chat_max_distance"),
-            row.int("chat_flood_protection"),
-            row.boolean("allow_pets"),
-            row.boolean("allow_pets_eat"),
-            row.boolean("allow_walk_through"),
-            row.intOrNull("group_id") ?: 0
-    )
-
-    fun getRoomModels(): List<RoomModel> = HabboServer.database {
-        select("SELECT * FROM `rooms_models`") {
-            RoomModel(
-                    it.string("id"),
-                    0,
-                    Vector3(
-                            it.int("door_x"),
-                            it.int("door_y"),
-                            it.double("door_z")
-                    ),
-                    it.int("door_dir"),
-                    it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
-                    it.boolean("club_only")
-            )
-        }
+    fun getRoomModels(): List<RoomModel> = db {
+        query<RoomModelDto>("SELECT * FROM `rooms_models`").map { it.toDomain() }
     }
 
-    fun getCustomRoomModels(): List<RoomModel> = HabboServer.database {
-        select("SELECT * FROM `rooms_models_customs`") {
-            RoomModel(
-                    it.string("id"),
-                    it.int("room_id"),
-                    Vector3(
-                            it.int("door_x"),
-                            it.int("door_y"),
-                            it.double("door_z")
-                    ),
-                    it.int("door_dir"),
-                    it.string("heightmap").trim().split("[\\r\\n]+".toRegex()),
-                    false
-            )
-        }
+    fun getCustomRoomModels(): List<RoomModel> = db {
+        query<RoomModelDto>("SELECT * FROM `rooms_models_customs`").map { it.toDomain() }
     }
 
-    fun getRights(roomId: Int): List<RightData> = HabboServer.database {
-        select("SELECT `id`, `user_id` FROM `rooms_rights` WHERE `room_id` = :room_id",
-                mapOf(
-                        "room_id" to roomId
-                )
-        ) {
-            RightData(
-                    it.int("id"),
-                    it.int("user_id")
-            )
-        }
+    fun getRights(roomId: Int): List<RightData> = db {
+        query<RightData>(
+            "SELECT `id`, `user_id` FROM `rooms_rights` WHERE `room_id` = :room_id",
+            mapOf("room_id" to roomId)
+        )
     }
 
-    fun getWordFilter(roomId: Int): List<String> = HabboServer.database {
-        select("SELECT `word` FROM `rooms_word_filter` WHERE `room_id` = :room_id",
-                mapOf(
-                        "room_id" to roomId
-                )
-        ) {
-            it.string("word")
-        }
+    fun getWordFilter(roomId: Int): List<String> = db {
+        query<String>(
+            "SELECT `word` FROM `rooms_word_filter` WHERE `room_id` = :room_id",
+            mapOf("room_id" to roomId)
+        )
     }
 
-    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int = HabboServer.database {
-        insertAndGetGeneratedKey("INSERT INTO `rooms` (`name`, `description`, `owner_id`, `model_name`, `category`, `users_max`, `trade_state`) VALUES (:name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
-                mapOf(
+    fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int {
+        val roomId = roomSequence.nextId()
+        WriteBehindManager.queue {
+            db {
+                update(
+                    "INSERT INTO `rooms` (`id`, `name`, `description`, `owner_id`, `model_name`, `category`, `users_max`, `trade_state`) VALUES (:id, :name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
+                    mapOf(
+                        "id" to roomId,
                         "name" to name,
                         "description" to description,
                         "owner_id" to userId,
                         "model_name" to model,
                         "category" to category,
                         "users_max" to maxUsers,
-                        "trade_state" to tradeSettings.toString()
+                        "trade_state" to tradeSettings
+                    )
                 )
-        )
+            }
+        }
+        return roomId
     }
 
     fun saveItems(roomId: Int, roomItemsToSave: Collection<RoomItem>) {
-        HabboServer.database {
+        db {
             batchUpdate("UPDATE `items` SET `room_id` = :room_id, `x` = :x, `y` = :y, `z` = :z, `rot` = :rot, `wall_pos` = :wall_pos, `extra_data` = :extra_data WHERE `id` = :id",
                     roomItemsToSave.map {
                         val extraDataToSave = HabboServer.habboGame.itemManager
@@ -177,7 +114,7 @@ object RoomDao {
     }
 
     fun updateRoomData(roomData: RoomData) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/rooms/data/update_room_data.sql")!!.readText(),
                     mapOf(
                         "name" to roomData.name,
@@ -208,6 +145,13 @@ object RoomDao {
                             "landscape" to roomData.landscape,
                             "group_id" to if (roomData.groupId == 0) null else roomData.groupId,
                             "model_name" to roomData.modelName,
+                            "allow_navigator_dynamic_cats" to roomData.allowNavigatorDynamicCats,
+                            "leave_on_door_tile_enabled" to roomData.leaveOnDoorTileEnabled,
+                            "idle_sleep_enabled" to roomData.idleSleepEnabled,
+                            "idle_sleep_timeout_seconds" to roomData.idleSleepTimeoutSeconds,
+                            "idle_autokick_enabled" to roomData.idleAutokickEnabled,
+                            "idle_autokick_timeout_seconds" to roomData.idleAutokickTimeoutSeconds,
+                            "mute_all_pets" to roomData.muteAllPets,
                             "room_id" to roomData.id
                     )
             )
@@ -215,7 +159,7 @@ object RoomDao {
     }
 
     fun addWordFilter(roomId: Int, wordFilter: String) {
-        HabboServer.database {
+        db {
             insertAndGetGeneratedKey("INSERT INTO `rooms_word_filter` (`room_id`, `word`) VALUES (:room_id, :word)",
                     mapOf(
                             "room_id" to roomId,
@@ -226,7 +170,7 @@ object RoomDao {
     }
 
     fun removeWordFilter(roomId: Int, wordFilter: String) {
-        HabboServer.database {
+        db {
             update("DELETE FROM `rooms_word_filter` WHERE `room_id` = :room_id AND `word` = :word",
                     mapOf(
                             "room_id" to roomId,
@@ -236,20 +180,15 @@ object RoomDao {
         }
     }
 
-    fun getFavoritesRooms(userId: Int): List<Pair<Int, Int>> {
-        return HabboServer.database {
-            select("SELECT * FROM `users_favorites` WHERE `user_id` = :user_id",
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                it.int("id") to it.int("room_id")
-            }
-        }
+    fun getFavoritesRooms(userId: Int): List<Pair<Int, Int>> = db {
+        query<UserFavoriteRoomDto>(
+            "SELECT `id`, `room_id` FROM `users_favorites` WHERE `user_id` = :user_id",
+            mapOf("user_id" to userId)
+        ).map { it.id to it.roomId }
     }
 
     fun addRight(userId: Int, roomId: Int): RightData {
-        val id = HabboServer.database {
+        val id = db {
             insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/rights/insert_right.sql")!!.readText(),
                     mapOf(
                             "user_id" to userId,
@@ -262,7 +201,7 @@ object RoomDao {
     }
 
     fun removeRights(ids: List<Int>) {
-        HabboServer.database {
+        db {
             batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql")!!.readText(),
                     ids.map {
                         mapOf(
@@ -274,7 +213,7 @@ object RoomDao {
     }
 
     fun updateCustomRoomModel(roomModel: RoomModel) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/rooms/model/update_custom_model.sql")!!.readText(),
                     mapOf(
                             "door_x" to roomModel.doorVector3.x,
@@ -289,7 +228,7 @@ object RoomDao {
     }
 
     fun insertCustomRoomModel(roomModel: RoomModel) {
-        val id = HabboServer.database {
+        val id = db {
             insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/rooms/model/insert_custom_model.sql")!!.readText(),
                     mapOf(
                             "room_id" to roomModel.roomId,
@@ -305,3 +244,111 @@ object RoomDao {
         roomModel.id = id.toString()
     }
 }
+
+
+data class RoomDataDto(
+    val id: Int,
+    val roomType: String = "open",
+    val name: String,
+    val ownerId: Int,
+    val description: String = "",
+    val category: Int = 0,
+    val state: String = "open",
+    val tradeState: Int = 0,
+    val usersMax: Int = 25,
+    val modelName: String,
+    val score: Int = 0,
+    val tags: String = "",
+    val password: String = "",
+    val wallpaper: String = "0.0",
+    val floor: String = "0.0",
+    val landscape: String = "0.0",
+    val hideWall: Boolean = false,
+    val wallThick: Int = 0,
+    val wallHeight: Int = 0,
+    val floorThick: Int = 0,
+    val muteSettings: Int = 0,
+    val banSettings: Int = 0,
+    val kickSettings: Int = 0,
+    val chatType: Int = 0,
+    val chatBalloon: Int = 0,
+    val chatSpeed: Int = 0,
+    val chatMaxDistance: Int = 0,
+    val chatFloodProtection: Int = 0,
+    val allowPets: Boolean = true,
+    val allowPetsEat: Boolean = false,
+    val allowWalkThrough: Boolean = false,
+    val groupId: Int? = 0,
+    val allowNavigatorDynamicCats: Boolean = true,
+    val leaveOnDoorTileEnabled: Boolean = true,
+    val idleSleepEnabled: Boolean = true,
+    val idleSleepTimeoutSeconds: Int = 1200,
+    val idleAutokickEnabled: Boolean = false,
+    val idleAutokickTimeoutSeconds: Int = 1800,
+    val muteAllPets: Boolean = false
+) {
+    fun toDomain(): RoomData = RoomData(
+        id,
+        RoomType.valueOf(roomType.uppercase(Locale.getDefault())),
+        name,
+        ownerId,
+        description,
+        category,
+        RoomState.valueOf(state.uppercase(Locale.getDefault())),
+        tradeState,
+        usersMax,
+        modelName,
+        score,
+        tags.split(','),
+        password,
+        wallpaper,
+        floor,
+        landscape,
+        hideWall,
+        wallThick,
+        wallHeight,
+        floorThick,
+        muteSettings,
+        banSettings,
+        kickSettings,
+        chatType,
+        chatBalloon,
+        chatSpeed,
+        chatMaxDistance,
+        chatFloodProtection,
+        allowPets,
+        allowPetsEat,
+        allowWalkThrough,
+        groupId ?: 0,
+        allowNavigatorDynamicCats,
+        leaveOnDoorTileEnabled,
+        idleSleepEnabled,
+        idleSleepTimeoutSeconds,
+        idleAutokickEnabled,
+        idleAutokickTimeoutSeconds,
+        muteAllPets
+    )
+}
+
+data class RoomModelDto(
+    val id: String,
+    val roomId: Int = 0,
+    val doorX: Int,
+    val doorY: Int,
+    val doorZ: Double,
+    val doorDir: Int,
+    val heightmap: String,
+    val clubOnly: Boolean = false
+) {
+    fun toDomain() = RoomModel(
+        id, roomId, Vector3(doorX, doorY, doorZ), doorDir,
+        heightmap.trim().split("[\\r\\n]+".toRegex()), clubOnly
+    )
+}
+
+data class UserFavoriteRoomDto(
+    val id: Int,
+    val roomId: Int
+)
+
+

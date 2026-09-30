@@ -19,16 +19,13 @@
 
 package ovh.rwx.habbo.database.tag
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.database.db
 
 object TagDao {
-    fun getTags(userId: Int) = HabboServer.database {
-        select("SELECT * FROM `users_tags` WHERE `user_id` = :user_id",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
-            it.string("tag")
-        }
+    fun getTags(userId: Int): List<String> = db {
+        query<String>(
+            "SELECT `tag` FROM `users_tags` WHERE `user_id` = :user_id",
+            mapOf("user_id" to userId)
+        )
     }
 }

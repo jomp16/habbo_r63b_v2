@@ -306,7 +306,7 @@ abstract class RoomEntity(
             headRotation = bodyRotation
         }
 
-        if (stepVector2 == room.roomModel.doorVector3.vector2) {
+        if ((kicked || room.roomData.leaveOnDoorTileEnabled) && stepVector2 == room.roomModel.doorVector3.vector2) {
             room.userManager.removeEntity(this, notifyClient = true, kickNotification = kicked)
             return
         }

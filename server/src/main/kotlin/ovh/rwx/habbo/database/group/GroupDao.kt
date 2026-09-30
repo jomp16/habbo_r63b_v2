@@ -19,72 +19,71 @@
 
 package ovh.rwx.habbo.database.group
 
-import com.github.andrewoma.kwery.core.Row
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.group.GroupData
 import ovh.rwx.habbo.game.group.GroupMember
 import ovh.rwx.habbo.game.group.GroupMembershipState
 import ovh.rwx.habbo.game.group.GroupRequest
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.localDateTime
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.*
+import java.time.LocalDateTime
 
 object GroupDao {
-    fun getGroupsBadgesBases(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM `groups_badges_base`") {
-            Triple(it.int("id"), it.string("value1"), it.string("value2"))
-        }
+    val groupSequence = HiLoSequence("groups", blockSize = 100)
+
+    fun getGroupsBadgesBases(): List<Triple<Int, String, String>> = db {
+        query<GroupBadgePartDto>("SELECT * FROM `groups_badges_base`")
+            .map { Triple(it.id, it.value1, it.value2) }
     }
 
-    fun getGroupsBadgesSymbols(): List<Triple<Int, String, String>> = HabboServer.database {
-        select("SELECT * FROM `groups_badges_symbol`") {
-            Triple(it.int("id"), it.string("value1"), it.string("value2"))
-        }
+    fun getGroupsBadgesSymbols(): List<Triple<Int, String, String>> = db {
+        query<GroupBadgePartDto>("SELECT * FROM `groups_badges_symbol`")
+            .map { Triple(it.id, it.value1, it.value2) }
     }
 
-    fun getGroupsBadgesBaseColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM `groups_badges_base_color`") {
-            it.int("id") to it.string("color")
-        }
+    fun getGroupsBadgesBaseColors(): List<Pair<Int, String>> = db {
+        query<GroupBadgeColorDto>("SELECT * FROM `groups_badges_base_color`")
+            .map { it.id to it.color }
     }
 
-    fun getGroupsBadgesSymbolColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM `groups_badges_symbol_color`") {
-            it.int("id") to it.string("color")
-        }
+    fun getGroupsBadgesSymbolColors(): List<Pair<Int, String>> = db {
+        query<GroupBadgeColorDto>("SELECT * FROM `groups_badges_symbol_color`")
+            .map { it.id to it.color }
     }
 
-    fun getGroupsBadgesBackgroundColors(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM `groups_badges_background_color`") {
-            it.int("id") to it.string("color")
-        }
+    fun getGroupsBadgesBackgroundColors(): List<Pair<Int, String>> = db {
+        query<GroupBadgeColorDto>("SELECT * FROM `groups_badges_background_color`")
+            .map { it.id to it.color }
     }
 
-    fun getGroupsData(): List<GroupData> = HabboServer.database {
-        select(javaClass.getResource("/sql/groups/select_groups.sql").readText()) {
-            getGroupData(it)
-        }
+    fun getGroupsData(): List<GroupData> = db {
+        query<GroupDataDto>("sql/groups/select_groups.sql").map { it.toDomain() }
     }
 
     fun createGroup(name: String, description: String, badge: String, ownerId: Int, roomId: Int, groupMembershipState: GroupMembershipState, symbolColor: Int, backgroundColor: Int, onlyAdminCanDecorateRoom: Boolean): Int {
-        return HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/insert_group.sql").readText(),
-                    mapOf(
-                            "name" to name,
-                            "description" to description,
-                            "badge" to badge,
-                            "owner_id" to ownerId,
-                            "room_id" to roomId,
-                            "state" to groupMembershipState.state.toString(),
-                            "symbol_color" to symbolColor,
-                            "background_color" to backgroundColor,
-                            "only_admin_can_decorate" to onlyAdminCanDecorateRoom
-                    )
+        val groupId = groupSequence.nextId()
+        db {
+            update(
+                """INSERT INTO `groups` (`id`, `name`, `description`, `badge`, `owner_id`, `room_id`, `state`, `symbol_color`, `background_color`, `only_admin_can_decorate`)
+                   VALUES (:id, :name, :description, :badge, :owner_id, :room_id, :state, :symbol_color, :background_color, :only_admin_can_decorate)""",
+                mapOf(
+                    "id" to groupId,
+                    "name" to name,
+                    "description" to description,
+                    "badge" to badge,
+                    "owner_id" to ownerId,
+                    "room_id" to roomId,
+                    "state" to groupMembershipState.state.toString(),
+                    "symbol_color" to symbolColor,
+                    "background_color" to backgroundColor,
+                    "only_admin_can_decorate" to onlyAdminCanDecorateRoom
+                )
             )
         }
+        return groupId
     }
 
     fun addMember(groupId: Int, userId: Int, rank: Int): Int {
-        return HabboServer.database {
+        return db {
             insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/member/insert_group_member.sql").readText(),
                     mapOf(
                             "group_id" to groupId,
@@ -95,44 +94,30 @@ object GroupDao {
         }
     }
 
-    fun getGroupData(groupId: Int): GroupData {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/groups/select_group_from_id.sql").readText(),
-                    mapOf(
-                            "id" to groupId
-                    )) {
-                getGroupData(it)
-            }.first()
-        }
+    fun getGroupData(groupId: Int): GroupData = db {
+        queryOne<GroupDataDto>(
+            "sql/groups/select_group_from_id.sql",
+            mapOf("id" to groupId)
+        )!!.toDomain()
     }
 
-    fun getGroupMembers(groupId: Int): List<GroupMember> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/groups/member/select_group_members_from_group_id.sql").readText(),
-                    mapOf(
-                            "group_id" to groupId
-                    )
-            ) {
-                getGroupMember(it)
-            }
-        }
+    fun getGroupMembers(groupId: Int): List<GroupMember> = db {
+        query<GroupMember>(
+            "sql/groups/member/select_group_members_from_group_id.sql",
+            mapOf("group_id" to groupId)
+        )
     }
 
-    fun getGroupRequests(groupId: Int): List<GroupRequest> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/groups/request/select_group_requests_from_group_id.sql").readText(),
-                    mapOf(
-                            "group_id" to groupId
-                    )
-            ) {
-                getGroupRequests(it)
-            }
-        }
+    fun getGroupRequests(groupId: Int): List<GroupRequest> = db {
+        query<GroupRequest>(
+            "sql/groups/request/select_group_requests_from_group_id.sql",
+            mapOf("group_id" to groupId)
+        )
     }
 
     @Suppress("unused")
     fun addRequest(groupId: Int, userId: Int): Int {
-        return HabboServer.database {
+        return db {
             insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/request/insert_group_request.sql").readText(),
                     mapOf(
                             "group_id" to groupId,
@@ -143,7 +128,7 @@ object GroupDao {
     }
 
     fun updateGroupData(groupData: GroupData) {
-        HabboServer.database {
+        db {
             update(javaClass.getResource("/sql/groups/update_group.sql").readText(),
                     mapOf(
                             "name" to groupData.name,
@@ -158,31 +143,28 @@ object GroupDao {
             )
         }
     }
+}
 
-    private fun getGroupData(row: Row) = GroupData(
-            row.int("id"),
-            row.string("name"),
-            row.string("description"),
-            row.string("badge"),
-            row.int("owner_id"),
-            row.int("room_id"),
-            GroupMembershipState.valueOf(row.int("state")),
-            row.int("symbol_color"),
-            row.int("background_color"),
-            row.boolean("only_admin_can_decorate"),
-            row.localDateTime("created_at")
-    )
-
-    private fun getGroupMember(row: Row) = GroupMember(
-            row.int("id"),
-            row.int("user_id"),
-            row.int("rank"),
-            row.localDateTime("created_at")
-    )
-
-    private fun getGroupRequests(row: Row) = GroupRequest(
-            row.int("id"),
-            row.int("user_id"),
-            row.localDateTime("created_at")
+data class GroupDataDto(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val badge: String,
+    val ownerId: Int,
+    val roomId: Int,
+    val state: Int,
+    val symbolColor: Int,
+    val backgroundColor: Int,
+    val onlyAdminCanDecorate: Boolean,
+    val createdAt: LocalDateTime
+) {
+    fun toDomain() = GroupData(
+        id, name, description, badge, ownerId, roomId,
+        GroupMembershipState.valueOf(state), symbolColor, backgroundColor,
+        onlyAdminCanDecorate, createdAt
     )
 }
+
+data class GroupBadgePartDto(val id: Int, val value1: String, val value2: String)
+data class GroupBadgeColorDto(val id: Int, val color: String)
+

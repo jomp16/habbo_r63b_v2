@@ -69,6 +69,12 @@ data class ChestData(
     val usedCount: Int
         get() = if (type == ChestType.COINS) coins else entries.size
 
+    val maxCapacity: Int
+        get() = if (type == ChestType.COINS) ChestConstants.COINS_MAX_CAPACITY else ChestConstants.FURNI_MAX_CAPACITY
+
+    val remainingCapacity: Int
+        get() = (capacity - usedCount).coerceAtLeast(0)
+
     fun isFull(): Boolean = usedCount >= capacity
 }
 

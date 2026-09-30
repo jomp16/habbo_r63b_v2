@@ -19,61 +19,58 @@
 
 package ovh.rwx.habbo.database.pet
 
-import com.github.andrewoma.kwery.core.Row
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.pet.PetBreed
 import ovh.rwx.habbo.game.pet.PetData
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.*
+import org.slf4j.LoggerFactory
 
 object PetDao {
-    fun getPetBreeds(): Map<Int, List<PetBreed>> = HabboServer.database {
-        select("SELECT * FROM `pet_breeds` ORDER BY `pet_type`, `breed_id`, `palette_id`") { row ->
-            PetBreed(
-                petType = row.int("pet_type"),
-                breedId = row.int("breed_id"),
-                paletteId = row.int("palette_id"),
-                sellable = row.boolean("sellable"),
-                rare = row.boolean("rare")
-            )
-        }.groupBy { it.petType }
+    private val log = LoggerFactory.getLogger(javaClass)
+    val petSequence = HiLoSequence("users_pets", blockSize = 100)
+
+    fun getPetBreeds(): Map<Int, List<PetBreed>> = db {
+        query<PetBreed>("SELECT * FROM `pet_breeds` ORDER BY `pet_type`, `breed_id`, `palette_id`")
+            .groupBy { it.petType }
     }
 
-    fun insertPet(userId: Int, name: String, type: Int, race: Int, color: String): Int = HabboServer.database {
-        insertAndGetGeneratedKey(
-            """INSERT INTO `users_pets` (`user_id`, `name`, `type`, `race`, `color`)
-               VALUES (:user_id, :name, :type, :race, :color)""",
-            mapOf(
-                "user_id" to userId,
-                "name" to name,
-                "type" to type,
-                "race" to race,
-                "color" to color
-            )
-        )
+    fun insertPet(userId: Int, name: String, type: Int, race: Int, color: String): Int {
+        val petId = petSequence.nextId()
+        WriteBehindManager.queue {
+            db {
+                update(
+                    "INSERT INTO `users_pets` (`id`, `user_id`, `name`, `type`, `race`, `color`) VALUES (:id, :user_id, :name, :type, :race, :color)",
+                    mapOf("id" to petId, "user_id" to userId, "name" to name, "type" to type, "race" to race, "color" to color)
+                )
+            }
+        }
+        return petId
     }
 
-    fun getPetById(petId: Int): PetData? = HabboServer.database {
-        select(
+    fun getPetById(petId: Int): PetData? = db {
+        queryOne<PetDataDto>(
             "SELECT * FROM `users_pets` WHERE `id` = :id",
             mapOf("id" to petId)
-        ) { mapPetData(it) }.firstOrNull()
+        )?.toDomain()
     }
 
-    fun getPetsByRoomId(roomId: Int): List<PetData> = HabboServer.database {
-        select(
+    fun getPetsByRoomId(roomId: Int): List<PetData> = db {
+        query<PetDataDto>(
             "SELECT * FROM `users_pets` WHERE `room_id` = :room_id",
             mapOf("room_id" to roomId)
-        ) { mapPetData(it) }
+        ).map { it.toDomain() }
     }
 
-    fun getPetsByUserId(userId: Int): List<PetData> = HabboServer.database {
-        select(
+    fun getPetsByUserId(userId: Int): List<PetData> = db {
+        query<PetDataDto>(
             "SELECT * FROM `users_pets` WHERE `user_id` = :user_id AND `room_id` IS NULL",
             mapOf("user_id" to userId)
-        ) { mapPetData(it) }
+        ).map { it.toDomain() }
     }
 
-    fun savePet(pet: PetData) = HabboServer.database {
+    fun savePet(pet: PetData) = db {
         update(
             """UPDATE `users_pets` SET 
                 `room_id` = :room_id, `experience` = :experience, `energy` = :energy,
@@ -98,26 +95,50 @@ object PetDao {
             )
         )
     }
+}
 
-    private fun mapPetData(row: Row): PetData = PetData(
-        id = row.int("id"),
-        userId = row.int("user_id"),
-        roomId = row.intOrNull("room_id") ?: 0,
-        name = row.string("name"),
-        race = row.int("race"),
-        type = row.int("type"),
-        color = row.string("color"),
-        happiness = row.int("happiness"),
-        experience = row.int("experience"),
-        energy = row.int("energy"),
-        hunger = row.int("hunger"),
-        thirst = row.int("thirst"),
-        respect = row.int("respect"),
-        createdAt = row.timestamp("created_at").time / 1000,
-        x = row.int("x"),
-        y = row.int("y"),
-        z = row.double("z"),
-        rot = row.int("rot"),
-        extraDataJson = row.string("extra_data")
+
+data class PetDataDto(
+    val id: Int,
+    val userId: Int,
+    val roomId: Int? = 0,
+    val name: String,
+    val race: Int,
+    val type: Int,
+    val color: String,
+    val happiness: Int = 100,
+    val experience: Int = 0,
+    val energy: Int = 100,
+    val hunger: Int = 0,
+    val thirst: Int = 0,
+    val respect: Int = 0,
+    val createdAt: java.sql.Timestamp,
+    val x: Int = 0,
+    val y: Int = 0,
+    val z: Double = 0.0,
+    val rot: Int = 0,
+    val extraData: String = ""
+) {
+    fun toDomain() = PetData(
+        id = id,
+        userId = userId,
+        roomId = roomId ?: 0,
+        name = name,
+        race = race,
+        type = type,
+        color = color,
+        happiness = happiness,
+        experience = experience,
+        energy = energy,
+        hunger = hunger,
+        thirst = thirst,
+        respect = respect,
+        createdAt = createdAt.time / 1000,
+        x = x,
+        y = y,
+        z = z,
+        rot = rot,
+        extraDataJson = extraData
     )
 }
+

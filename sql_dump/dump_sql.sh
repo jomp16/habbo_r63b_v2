@@ -31,21 +31,28 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Variável para controlar se é apenas estrutura
+# Variável para controlar se é apenas estrutura ou migração Flyway
 ONLY_SCHEMA=false
+MIGRATION_MODE=false
 
 # 1. Processa argumentos (Flags)
-while getopts "s" opt; do
+while getopts "sm" opt; do
   case $opt in
     s)
       ONLY_SCHEMA=true
       ;;
+    m)
+      MIGRATION_MODE=true
+      OUTPUT_FILE="$REPO_ROOT/server/src/main/resources/db/migration/V1__initial_schema.sql"
+      ;;
     \?)
-      echo "Uso: $0 [-s (apenas estrutura)]"
+      echo "Uso: $0 [-s (apenas estrutura)] [-m (gerar V1__initial_schema.sql para Flyway)]"
       exit 1
       ;;
   esac
 done
+
+mkdir -p "$(dirname "$OUTPUT_FILE")"
 
 echo "🔄 Iniciando backup do banco de dados..."
 
@@ -69,10 +76,14 @@ DB_NAME=$(yq -r '.database.name' "$CONFIG_FILE")
 
 # 4. Define argumentos extras baseados na flag
 EXTRA_ARGS=""
-if [ "$ONLY_SCHEMA" = true ]; then
+if [ "$MIGRATION_MODE" = true ]; then
+    echo -e "${YELLOW}ℹ️ Modo: Migração Flyway V1 (Apenas estrutura DDL)${NC}"
+    EXTRA_ARGS="--no-data"
+    OUTPUT_FILE="$REPO_ROOT/server/src/main/resources/db/migration/V1__initial_schema.sql"
+elif [ "$ONLY_SCHEMA" = true ]; then
     echo -e "${YELLOW}ℹ️ Modo: Apenas estrutura (DDL)${NC}"
     EXTRA_ARGS="--no-data"
-    OUTPUT_FILE="$REPO_ROOT/sql_dump/schema.sql" # Opcional: muda o nome do arquivo
+    OUTPUT_FILE="$REPO_ROOT/sql_dump/schema.sql"
 fi
 
 # 5. Executa o dump

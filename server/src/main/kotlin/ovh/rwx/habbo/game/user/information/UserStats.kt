@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -20,34 +20,56 @@
 package ovh.rwx.habbo.game.user.information
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.group.Group
 import java.time.Duration
 import java.time.LocalDateTime
 
-data class UserStats(
-        val id: Int,
-        var lastOnline: LocalDateTime,
-        var lastOnlineDatabase: LocalDateTime,
-        private var onlineSeconds: Long,
-        var roomVisits: Int,
-        var respect: Int,
-        var giftsGiven: Int,
-        var giftsReceived: Int,
-        var dailyRespectPoints: Int,
-        var dailyPetRespectPoints: Int,
-        var dailyCompetitionVotes: Int,
-        var achievementScore: Int,
-        var questId: Int,
-        var questProgress: Int,
-        var favoriteGroupId: Int,
-        var ticketsAnswered: Int,
-        var marketplaceTickets: Int,
-        var creditsLastUpdate: LocalDateTime,
-        var respectLastUpdate: LocalDateTime
-) {
+class UserStats(
+    val id: Int,
+    var lastOnline: LocalDateTime,
+    var lastOnlineDatabase: LocalDateTime,
+    private var onlineSeconds: Long,
+    roomVisits: Int,
+    respect: Int,
+    giftsGiven: Int,
+    giftsReceived: Int,
+    dailyRespectPoints: Int,
+    dailyPetRespectPoints: Int,
+    dailyCompetitionVotes: Int,
+    achievementScore: Int,
+    questId: Int,
+    questProgress: Int,
+    favoriteGroupId: Int,
+    ticketsAnswered: Int,
+    marketplaceTickets: Int,
+    creditsLastUpdate: LocalDateTime,
+    respectLastUpdate: LocalDateTime
+) : AbstractDirtyEntity() {
+    var roomVisits: Int = roomVisits; set(v) { if (field != v) { field = v; markDirty() } }
+    var respect: Int = respect; set(v) { if (field != v) { field = v; markDirty() } }
+    var giftsGiven: Int = giftsGiven; set(v) { if (field != v) { field = v; markDirty() } }
+    var giftsReceived: Int = giftsReceived; set(v) { if (field != v) { field = v; markDirty() } }
+    var dailyRespectPoints: Int = dailyRespectPoints; set(v) { if (field != v) { field = v; markDirty() } }
+    var dailyPetRespectPoints: Int = dailyPetRespectPoints; set(v) { if (field != v) { field = v; markDirty() } }
+    var dailyCompetitionVotes: Int = dailyCompetitionVotes; set(v) { if (field != v) { field = v; markDirty() } }
+    var achievementScore: Int = achievementScore; set(v) { if (field != v) { field = v; markDirty() } }
+    var questId: Int = questId; set(v) { if (field != v) { field = v; markDirty() } }
+    var questProgress: Int = questProgress; set(v) { if (field != v) { field = v; markDirty() } }
+    var favoriteGroupId: Int = favoriteGroupId; set(v) { if (field != v) { field = v; markDirty() } }
+    var ticketsAnswered: Int = ticketsAnswered; set(v) { if (field != v) { field = v; markDirty() } }
+    var marketplaceTickets: Int = marketplaceTickets; set(v) { if (field != v) { field = v; markDirty() } }
+    var creditsLastUpdate: LocalDateTime = creditsLastUpdate; set(v) { if (field != v) { field = v; markDirty() } }
+    var respectLastUpdate: LocalDateTime = respectLastUpdate; set(v) { if (field != v) { field = v; markDirty() } }
+
     val totalOnlineSeconds: Long
         get() = Duration.between(lastOnline, LocalDateTime.now()).seconds + onlineSeconds
     val favoriteGroup: Group?
         get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
     var firstLoginOfDay: Boolean = false
+
+    override fun flush() {
+        ovh.rwx.habbo.database.user.UserStatsDao.saveStats(this)
+        markClean()
+    }
 }

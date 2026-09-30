@@ -19,42 +19,27 @@
 
 package ovh.rwx.habbo.database.navigator
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.navigator.NavigatorEventCategory
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.*
 
 object NavigatorDao {
-    fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/navigator/categories/room/select_room_categories.sql").readText(),
-                mapOf(
-                        "enabled" to true
-                )
-        ) {
-            NavigatorRoomCategory(
-                    it.int("id"),
-                    it.string("caption"),
-                    it.int("min_rank")
-            )
-        }
+    fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = db {
+        query<NavigatorRoomCategory>(
+            "sql/navigator/categories/room/select_room_categories.sql",
+            mapOf("enabled" to true)
+        )
     }
 
-    fun getNavigatorEventCategories(): List<NavigatorEventCategory> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/navigator/categories/event/select_event_categories.sql").readText(),
-                mapOf(
-                        "visible" to true
-                )
-        ) {
-            NavigatorEventCategory(
-                    it.int("id"),
-                    it.string("caption"),
-                    it.int("min_rank")
-            )
-        }
+    fun getNavigatorEventCategories(): List<NavigatorEventCategory> = db {
+        query<NavigatorEventCategory>(
+            "sql/navigator/categories/event/select_event_categories.sql",
+            mapOf("visible" to true)
+        )
     }
 
     fun addFavoriteRoom(userId: Int, roomId: Int): Int {
-        return HabboServer.database {
+        return db {
             insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/navigator/favorite/insert_favorite_room.sql").readText(),
                     mapOf(
                             "user_id" to userId,
@@ -65,7 +50,7 @@ object NavigatorDao {
     }
 
     fun removeFavoriteRoom(id: Int) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/navigator/favorite/delete_favorite_room.sql").readText(),
                     mapOf(
                             "id" to id

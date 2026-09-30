@@ -19,19 +19,40 @@
 
 package ovh.rwx.habbo.game.user.information
 
+import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
+
 class UserPreferences(
     var id: Int,
-    var volume: String,
-    var preferOldChat: Boolean,
-    var ignoreRoomInvite: Boolean,
-    var disableCameraFollow: Boolean,
-    var navigatorX: Int,
-    var navigatorY: Int,
-    var navigatorWidth: Int,
-    var navigatorHeight: Int,
-    var hideInRoom: Boolean,
-    var blockNewFriends: Boolean,
-    var chatColor: Int,
-    var friendBarOpen: Boolean,
-    var friendStreamEnabled: Boolean,
-)
+    volume: String,
+    preferOldChat: Boolean,
+    ignoreRoomInvite: Boolean,
+    disableCameraFollow: Boolean,
+    navigatorX: Int,
+    navigatorY: Int,
+    navigatorWidth: Int,
+    navigatorHeight: Int,
+    hideInRoom: Boolean,
+    blockNewFriends: Boolean,
+    chatColor: Int,
+    friendBarOpen: Boolean,
+    friendStreamEnabled: Boolean,
+) : AbstractDirtyEntity() {
+    var volume: String = volume; set(v) { if (field != v) { field = v; markDirty() } }
+    var preferOldChat: Boolean = preferOldChat; set(v) { if (field != v) { field = v; markDirty() } }
+    var ignoreRoomInvite: Boolean = ignoreRoomInvite; set(v) { if (field != v) { field = v; markDirty() } }
+    var disableCameraFollow: Boolean = disableCameraFollow; set(v) { if (field != v) { field = v; markDirty() } }
+    var navigatorX: Int = navigatorX; set(v) { if (field != v) { field = v; markDirty() } }
+    var navigatorY: Int = navigatorY; set(v) { if (field != v) { field = v; markDirty() } }
+    var navigatorWidth: Int = navigatorWidth; set(v) { if (field != v) { field = v; markDirty() } }
+    var navigatorHeight: Int = navigatorHeight; set(v) { if (field != v) { field = v; markDirty() } }
+    var hideInRoom: Boolean = hideInRoom; set(v) { if (field != v) { field = v; markDirty() } }
+    var blockNewFriends: Boolean = blockNewFriends; set(v) { if (field != v) { field = v; markDirty() } }
+    var chatColor: Int = chatColor; set(v) { if (field != v) { field = v; markDirty() } }
+    var friendBarOpen: Boolean = friendBarOpen; set(v) { if (field != v) { field = v; markDirty() } }
+    var friendStreamEnabled: Boolean = friendStreamEnabled; set(v) { if (field != v) { field = v; markDirty() } }
+
+    override fun flush() {
+        ovh.rwx.habbo.database.user.UserPreferencesDao.savePreferences(this)
+        markClean()
+    }
+}

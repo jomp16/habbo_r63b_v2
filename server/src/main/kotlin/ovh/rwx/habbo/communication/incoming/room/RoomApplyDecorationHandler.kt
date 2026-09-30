@@ -76,6 +76,8 @@ class RoomApplyDecorationHandler {
             }
         }
 
+        habboSession.currentRoom?.roomData?.markDirty()
+
         habboSession.currentRoom?.sendResponse(
             Outgoing.ROOM_DECORATION,
             OutgoingR63A.ROOM_DECORATION,

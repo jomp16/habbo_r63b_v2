@@ -52,7 +52,6 @@
         <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>-->
 
         <Logger name="ovh.rwx.habbo.camera" level="debug"/>
-        <Logger name="com.github.andrewoma.kwery" level="error"/>
         <Logger name="io.netty" level="error"/>
         <Logger name="com.zaxxer" level="error"/>
         <Logger name="org.reflections8" level="error"/>

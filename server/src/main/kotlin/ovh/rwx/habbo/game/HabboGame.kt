@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game
 
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import org.slf4j.LoggerFactory
@@ -42,10 +42,13 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
 import ovh.rwx.habbo.game.snowwar.SnowWarManager
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
-class HabboGame {
-    @Suppress("unused")
+class HabboGame : AutoCloseable {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    val gameJob = SupervisorJob()
+    val gameScope = CoroutineScope(Dispatchers.Default + gameJob)
 
     val passwordEncryptor: PasswordEncryptor = StrongPasswordEncryptor()
     val landingManager: LandingManager = LandingManager()
@@ -66,53 +69,76 @@ class HabboGame {
     val snowWarManager: SnowWarManager = SnowWarManager()
 
     init {
-        HabboServer.applicationScope.launch { landingManager.load() }
-        HabboServer.applicationScope.launch { itemManager.load() }
-        HabboServer.applicationScope.launch { catalogManager.load() }
-        HabboServer.applicationScope.launch { navigatorManager.load() }
-        HabboServer.applicationScope.launch { permissionManager.load() }
-        HabboServer.applicationScope.launch { moderationManager.load() }
-        HabboServer.applicationScope.launch { groupManager.load() }
-        HabboServer.applicationScope.launch { achievementManager.load() }
-        HabboServer.applicationScope.launch { figureManager.load() }
-        HabboServer.applicationScope.launch { petManager.load() }
-        HabboServer.applicationScope.launch { badgeManager.load() }
-        HabboServer.applicationScope.launch { habbiconManager.load() }
-        HabboServer.applicationScope.launch { snowWarManager.load() }
+        gameScope.launch { landingManager.load() }
+        gameScope.launch { itemManager.load() }
+        gameScope.launch { catalogManager.load() }
+        gameScope.launch { navigatorManager.load() }
+        gameScope.launch { permissionManager.load() }
+        gameScope.launch { moderationManager.load() }
+        gameScope.launch { groupManager.load() }
+        gameScope.launch { achievementManager.load() }
+        gameScope.launch { figureManager.load() }
+        gameScope.launch { petManager.load() }
+        gameScope.launch { badgeManager.load() }
+        gameScope.launch { habbiconManager.load() }
+        gameScope.launch { snowWarManager.load() }
 
         // 1. Guardamos a referência do Job do RoomManager
-        val roomJob = HabboServer.applicationScope.launch { roomManager.load() }
+        val roomJob = gameScope.launch { roomManager.load() }
 
         // 2. Lançamos o CameraManager, mas mandamos ele esperar o RoomManager terminar
-        HabboServer.applicationScope.launch {
+        gameScope.launch {
             roomJob.join() // Suspende essa coroutine até que roomManager.load() termine
             cameraManager.load()
         }
 
-        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }
-                .forEach { HabboServer.applicationScope.launch { it.habboSubscription.clearHabboClub() } }
-        }, 0, 1, TimeUnit.MINUTES)
-
-        if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
-            HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-                HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
-                    .forEach { HabboServer.applicationScope.launch { it.rewardUser() } }
-            }, 0, HabboServer.habboConfig.timerConfig.creditsSeconds.toLong(), TimeUnit.SECONDS)
+        launchPeriodic(TimeUnit.MINUTES.toMillis(1)) {
+            HabboServer.habboSessionManager.habboSessions.values
+                .filter { it.authenticated && !it.handshaking && !it.habboSubscription.validUserSubscription }
+                .forEach { it.habboSubscription.clearHabboClub() }
         }
 
-        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
-                .forEach { HabboServer.applicationScope.launch { it.processPeriodicAchievements() } }
-        }, 0, 1, TimeUnit.MINUTES)
+        if (HabboServer.habboConfig.timerConfig.creditsSeconds > 0) {
+            launchPeriodic(TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())) {
+                HabboServer.habboSessionManager.habboSessions.values
+                    .filter { it.authenticated && !it.handshaking }
+                    .forEach { it.rewardUser() }
+            }
+        }
 
-        HabboServer.serverScheduledExecutor.scheduleWithFixedDelay({
+        launchPeriodic(TimeUnit.MINUTES.toMillis(1)) {
+            HabboServer.habboSessionManager.habboSessions.values
+                .filter { it.authenticated && !it.handshaking }
+                .forEach { it.processPeriodicAchievements() }
+        }
+
+        launchPeriodic(TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong())) {
             roomManager.rooms.values.filter { it.running }.forEach(Room::saveRoom)
 
-            HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated && !it.handshaking }
-                .forEach { HabboServer.applicationScope.launch { it.saveAllQueuedStuffs() } }
+            HabboServer.habboSessionManager.habboSessions.values
+                .filter { it.authenticated && !it.handshaking }
+                .forEach { it.saveAllQueuedStuffs() }
 
             achievementManager.saveQueuedAchievements()
-        }, 0, HabboServer.habboConfig.roomTaskConfig.saveItemSeconds.toLong(), TimeUnit.SECONDS)
+        }
+    }
+
+    private fun launchPeriodic(intervalMs: Long, initialDelayMs: Long = 0L, action: suspend () -> Unit): Job =
+        gameScope.launch {
+            if (initialDelayMs > 0L) delay(initialDelayMs.milliseconds)
+            while (isActive) {
+                try {
+                    action()
+                } catch (e: CancellationException) {
+                    break
+                } catch (e: Exception) {
+                    log.error("Error executing periodic task in HabboGame", e)
+                }
+                delay(intervalMs.milliseconds)
+            }
+        }
+
+    override fun close() {
+        gameJob.cancel()
     }
 }

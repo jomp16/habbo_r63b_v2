@@ -21,53 +21,34 @@ package ovh.rwx.habbo.database.badge
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.badge.Badge
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.db
+import org.slf4j.LoggerFactory
 
 object BadgeDao {
-    fun getBadges(userId: Int): Map<String, Badge> {
-        return HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/badges/select_badges.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                Badge(
-                        it.int("id"),
-                        it.string("code"),
-                        it.int("slot")
-                )
-            }.associateBy { it.code }
-        }
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    val badgeSequence = HiLoSequence("users_badges", blockSize = 500)
+
+    fun getBadges(userId: Int): Map<String, Badge> = db {
+        query<Badge>("sql/badges/select_badges.sql", mapOf("user_id" to userId))
+            .associateBy { it.code }
     }
 
-    fun getAllBadges(): Map<Int, Map<String, Badge>> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/badges/select_all_badges.sql").readText(),
-                mapOf()
-            ) {
-                it.int("user_id") to Badge(
-                    it.int("id"),
-                    it.string("code"),
-                    it.int("slot")
-                )
-            }.groupBy({ it.first }, { it.second }).mapValues { it.value.associateBy { badge -> badge.code } }
-        }
+    fun getAllBadges(): Map<Int, Map<String, Badge>> = db {
+        query<UserBadgeDto>("sql/badges/select_all_badges.sql")
+            .groupBy({ it.userId }, { it.toBadge() })
+            .mapValues { it.value.associateBy { badge -> badge.code } }
     }
 
-    fun getOwnerCounts(): Map<String, Int> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/badges/select_badge_owner_counts.sql").readText(),
-                mapOf()
-            ) {
-                it.string("code") to it.int("owner_count")
-            }.toMap()
-        }
+    fun getOwnerCounts(): Map<String, Int> = db {
+        query<BadgeOwnerCountDto>("sql/badges/select_badge_owner_counts.sql")
+            .associate { it.code to it.ownerCount }
     }
 
     fun removeBadge(userId: Int, id: Int, code: String) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
                     mapOf(
                             "id" to id
@@ -78,23 +59,24 @@ object BadgeDao {
         HabboServer.habboGame.badgeManager.removeBadge(userId, code)
     }
 
-    fun addBadge(userId: Int, code: String, slot: Int): Badge = HabboServer.database {
-        val id = insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/badges/insert_badge.sql").readText(),
-                mapOf(
-                        "user_id" to userId,
-                        "code" to code,
-                        "slot" to slot
-                )
-        )
-
-        Badge(id, code, slot)
-    }.also { badge ->
+    fun addBadge(userId: Int, code: String, slot: Int): Badge {
+        val id = badgeSequence.nextId()
+        val badge = Badge(id, code, slot)
         HabboServer.habboGame.badgeManager.addBadge(userId, badge)
+        WriteBehindManager.queue {
+            db {
+                update(
+                    "INSERT INTO `users_badges` (`id`, `user_id`, `code`, `slot`) VALUES (:id, :user_id, :code, :slot)",
+                    mapOf("id" to badge.id, "user_id" to userId, "code" to badge.code, "slot" to badge.slot)
+                )
+            }
+        }
+        return badge
     }
 
     fun saveBadges(badges: Collection<Badge>) {
         if (badges.isNotEmpty()) {
-            HabboServer.database {
+            db {
                 batchUpdate(javaClass.classLoader.getResource("sql/badges/update_badge.sql").readText(),
                         badges.map {
                             mapOf(
@@ -107,3 +89,18 @@ object BadgeDao {
         }
     }
 }
+
+data class UserBadgeDto(
+    val userId: Int,
+    val id: Int,
+    val code: String,
+    val slot: Int
+) {
+    fun toBadge() = Badge(id, code, slot)
+}
+
+data class BadgeOwnerCountDto(
+    val code: String,
+    val ownerCount: Int
+)
+

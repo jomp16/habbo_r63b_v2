@@ -19,44 +19,33 @@
 
 package ovh.rwx.habbo.database.user
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.database.db
 
 object UserUniqueIdDao {
     @Suppress("unused")
-    fun getUniqueIdsForUser(userId: Int): List<String> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/users/unique_ids/select_unique_ids.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                it.string("unique_id")
-            }
-        }
+    fun getUniqueIdsForUser(userId: Int): List<String> = db {
+        query<String>(
+            "sql/users/unique_ids/select_unique_ids.sql",
+            mapOf("user_id" to userId)
+        )
     }
 
     fun addUniqueIdForUser(userId: Int, uniqueID: String, osInformation: String) {
-        HabboServer.database {
-            update(javaClass.getResource("/sql/users/unique_ids/insert_unique_ids.sql").readText(),
-                    mapOf(
-                            "user_id" to userId,
-                            "unique_id" to uniqueID,
-                            "os_information" to osInformation
-                    )
+        db {
+            update("sql/users/unique_ids/insert_unique_ids.sql",
+                mapOf(
+                    "user_id" to userId,
+                    "unique_id" to uniqueID,
+                    "os_information" to osInformation
+                )
             )
         }
     }
 
-    fun containsUniqueIdForUser(userId: Int, uniqueID: String): Boolean {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/users/unique_ids/select_count_unique_id.sql").readText(),
-                    mapOf(
-                            "user_id" to userId,
-                            "unique_id" to uniqueID
-                    )
-            ) {
-                it.boolean("unique_id_exists")
-            }.first()
-        }
+    fun containsUniqueIdForUser(userId: Int, uniqueID: String): Boolean = db {
+        queryOne<Boolean>(
+            "sql/users/unique_ids/select_count_unique_id.sql",
+            mapOf("user_id" to userId, "unique_id" to uniqueID)
+        ) ?: false
     }
 }

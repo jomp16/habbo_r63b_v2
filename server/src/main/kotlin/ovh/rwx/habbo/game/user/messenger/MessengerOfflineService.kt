@@ -17,7 +17,16 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-SELECT uh.habbicon_id
-FROM users_habbicons uh
-WHERE uh.user_id = :user_id
-  AND uh.state >= 2
+package ovh.rwx.habbo.game.user.messenger
+
+import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.database.messenger.MessengerDao
+
+object MessengerOfflineService {
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    fun sendOfflineMessage(fromUserId: Int, toUserId: Int, message: String) {
+        log.debug("Queueing offline messenger message from {} to {}", fromUserId, toUserId)
+        MessengerDao.addOfflineMessage(fromUserId, toUserId, message)
+    }
+}

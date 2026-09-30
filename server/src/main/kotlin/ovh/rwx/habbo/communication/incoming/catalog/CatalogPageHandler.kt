@@ -46,27 +46,22 @@ class CatalogPageHandler {
         }
 
     @Handler(Incoming.CATALOG_PAGE)
+    @HandlerR63A(IncomingR63A.CATALOG_PAGE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val pageId = habboRequest.readInt()
         val chosenOfferId = habboRequest.readInt()
-        val category = habboRequest.readUTF()
+        val category = if (habboSession.habboVersion.isVersionAtLeast(2016, 7, 26)) {
+            habboRequest.readUTF()
+        } else {
+            "NORMAL"
+        }
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            habboSession.sendHabboResponse(
+            habboSession.sendResponse(
                 Outgoing.CATALOG_PAGE,
+                OutgoingR63A.CATALOG_PAGE,
                 CatalogPageData(it, category, chosenOfferId)
             )
-        }
-    }
-
-    @HandlerR63A(IncomingR63A.CATALOG_PAGE)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val pageId = habboRequest.readInt()
-        val chosenOfferId = habboRequest.readInt()
-        val category = "NORMAL"
-
-        validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
-            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PAGE, it, chosenOfferId)
         }
     }
 }

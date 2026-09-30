@@ -19,9 +19,11 @@
 
 package ovh.rwx.habbo.game.item
 
+import org.jdbi.v3.core.mapper.reflect.ColumnName
+
 data class LimitedItemData(
         val id: Int,
         val itemId: Int,
-        val limitedNumber: Int,
+        @ColumnName("limited_num") val limitedNumber: Int,
         val limitedTotal: Int
 )

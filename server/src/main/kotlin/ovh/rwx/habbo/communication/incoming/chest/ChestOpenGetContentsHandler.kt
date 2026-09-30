@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.game.chest.ChestPermissions
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -33,7 +34,7 @@ class ChestOpenGetContentsHandler {
         val chestManager = HabboServer.habboGame.chestManager
         val chest = chestManager.getChest(room, habboRequest.readInt()) ?: return
 
-        if (!chestManager.canView(habboSession, room, chest)) return
+        if (!ChestPermissions.canView(habboSession, room, chest)) return
 
         chestManager.sendContents(habboSession, room, chest)
     }

@@ -22,24 +22,25 @@ package ovh.rwx.habbo.game.snowwar
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.snowwar.SnowWarDao
-import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarFieldType
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarGameType
 import ovh.rwx.habbo.game.user.HabboSession
-import java.time.DayOfWeek
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.temporal.TemporalAdjusters
-import java.time.temporal.WeekFields
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Gerenciador central de SnowWar (Game2).
+ * Coordena lobbies, matchmaking, estatísticas dos jogadores e delega consultas de ranking
+ * para [leaderboardService].
+ */
 class SnowWarManager {
     private val log = LoggerFactory.getLogger(SnowWarManager::class.java)
+
     val lobbies = ConcurrentHashMap<Int, SnowWarLobby>()
     private val playerStatsCache = ConcurrentHashMap<Int, SnowWarPlayerStats>()
     private val lobbyIdCounter = AtomicInteger(1)
+
+    val leaderboardService = SnowWarLeaderboardService(this)
 
     @Volatile
     var forcedArenaId: Int? = null
@@ -158,13 +159,11 @@ class SnowWarManager {
         if (exit) lobby.removePlayer(session)
     }
 
-    fun getLobbyForPlayer(session: HabboSession): SnowWarLobby? {
-        return lobbies.values.lastOrNull { it.users.containsKey(session.userInformation.id) }
-    }
+    fun getLobbyForPlayer(session: HabboSession): SnowWarLobby? =
+        lobbies.values.lastOrNull { it.users.containsKey(session.userInformation.id) }
 
-    fun getGameForPlayer(session: HabboSession): SnowWarGame? {
-        return getLobbyForPlayer(session)?.activeGame
-    }
+    fun getGameForPlayer(session: HabboSession): SnowWarGame? =
+        getLobbyForPlayer(session)?.activeGame
 
     fun removeLobby(gameId: Int) {
         val removed = lobbies.remove(gameId)
@@ -173,20 +172,15 @@ class SnowWarManager {
         }
     }
 
-    fun getCurrentYearAndWeek(): Pair<Int, Int> {
-        val now = LocalDate.now()
-        val weekFields = WeekFields.ISO
-        val year = now.get(weekFields.weekBasedYear())
-        val week = now.get(weekFields.weekOfWeekBasedYear())
-        return Pair(year, week)
-    }
+    // ------------------------------------------------------------------
+    // Delegações de Leaderboard
+    // ------------------------------------------------------------------
 
-    fun getMinutesUntilReset(): Int {
-        val now = LocalDateTime.now()
-        val nextMonday = now.with(TemporalAdjusters.next(DayOfWeek.MONDAY))
-            .withHour(0).withMinute(0).withSecond(0).withNano(0)
-        return Duration.between(now, nextMonday).toMinutes().toInt().coerceAtLeast(0)
-    }
+    fun getCurrentYearAndWeek(): Pair<Int, Int> =
+        leaderboardService.getCurrentYearAndWeek()
+
+    fun getMinutesUntilReset(): Int =
+        leaderboardService.getMinutesUntilReset()
 
     fun getFriendsLeaderboard(
         session: HabboSession,
@@ -195,46 +189,8 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        val friendIds = mutableSetOf<Int>()
-        friendIds.addAll(session.habboMessenger.friends.keys)
-        friendIds.add(session.userInformation.id)
-
-        val rawEntries = friendIds.mapNotNull { uid: Int ->
-            val stats = getPlayerStats(uid)
-            val userInfo = if (uid == session.userInformation.id) {
-                session.userInformation
-            } else {
-                UserInformationDao.getUserInformationById(uid)
-            }
-            if (userInfo == null) null
-            else {
-                SnowWarLeaderboardUserEntry(
-                    userId = uid,
-                    score = stats.totalScore,
-                    rank = 0,
-                    name = userInfo.username,
-                    figure = userInfo.figure,
-                    gender = userInfo.gender
-                )
-            }
-        }.sortedWith(compareByDescending<SnowWarLeaderboardUserEntry> { it.score }.thenBy { it.userId })
-
-        val entries = rawEntries.mapIndexed { index, entry ->
-            SnowWarLeaderboardUserEntry(
-                userId = entry.userId,
-                score = entry.score,
-                rank = index + 1,
-                name = entry.name,
-                figure = entry.figure,
-                gender = entry.gender
-            )
-        }
-
-        val totalListSize = entries.size
-        val limitedEntries = if (maxEntries > 0) entries.take(maxEntries) else entries
-        return Pair(limitedEntries, totalListSize)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getFriendsLeaderboard(session, gameTypeId, rank, direction, pageSize, maxEntries)
 
     fun getWeeklyFriendsLeaderboard(
         session: HabboSession,
@@ -244,46 +200,8 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        val friendIds = mutableSetOf<Int>()
-        friendIds.addAll(session.habboMessenger.friends.keys)
-        friendIds.add(session.userInformation.id)
-
-        val rawEntries = friendIds.mapNotNull { uid: Int ->
-            val stats = getPlayerStats(uid)
-            val userInfo = if (uid == session.userInformation.id) {
-                session.userInformation
-            } else {
-                UserInformationDao.getUserInformationById(uid)
-            }
-            if (userInfo == null) null
-            else {
-                SnowWarLeaderboardUserEntry(
-                    userId = uid,
-                    score = stats.weeklyScore,
-                    rank = 0,
-                    name = userInfo.username,
-                    figure = userInfo.figure,
-                    gender = userInfo.gender
-                )
-            }
-        }.sortedWith(compareByDescending<SnowWarLeaderboardUserEntry> { it.score }.thenBy { it.userId })
-
-        val entries = rawEntries.mapIndexed { index, entry ->
-            SnowWarLeaderboardUserEntry(
-                userId = entry.userId,
-                score = entry.score,
-                rank = index + 1,
-                name = entry.name,
-                figure = entry.figure,
-                gender = entry.gender
-            )
-        }
-
-        val totalListSize = entries.size
-        val limitedEntries = if (maxEntries > 0) entries.take(maxEntries) else entries
-        return Pair(limitedEntries, totalListSize)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getWeeklyFriendsLeaderboard(session, gameTypeId, offset, rank, direction, pageSize, maxEntries)
 
     fun getTotalLeaderboard(
         session: HabboSession,
@@ -292,28 +210,8 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        val limit = if (maxEntries > 0) maxEntries else 50
-        val dbEntries = SnowWarDao.getTotalLeaderboard(limit, 0)
-        val result = dbEntries.toMutableList()
-
-        val myStats = getPlayerStats(session.userInformation.id)
-        val myRank = (dbEntries.indexOfFirst { it.userId == session.userInformation.id }.takeIf { it >= 0 }?.plus(1))
-            ?: (dbEntries.size + 1)
-
-        result.add(
-            SnowWarLeaderboardUserEntry(
-                userId = session.userInformation.id,
-                score = myStats.totalScore,
-                rank = myRank,
-                name = session.userInformation.username,
-                figure = session.userInformation.figure,
-                gender = session.userInformation.gender
-            )
-        )
-
-        return Pair(result, dbEntries.size)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getTotalLeaderboard(session, gameTypeId, rank, direction, pageSize, maxEntries)
 
     fun getWeeklyLeaderboard(
         session: HabboSession,
@@ -323,30 +221,8 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        val (year, week) = getCurrentYearAndWeek()
-        val limit = if (maxEntries > 0) maxEntries else 50
-        val targetWeek = (week - offset).coerceAtLeast(1)
-        val dbEntries = SnowWarDao.getWeeklyLeaderboard(year, targetWeek, limit, 0)
-        val result = dbEntries.toMutableList()
-
-        val myStats = getPlayerStats(session.userInformation.id)
-        val myRank = (dbEntries.indexOfFirst { it.userId == session.userInformation.id }.takeIf { it >= 0 }?.plus(1))
-            ?: (dbEntries.size + 1)
-
-        result.add(
-            SnowWarLeaderboardUserEntry(
-                userId = session.userInformation.id,
-                score = myStats.weeklyScore,
-                rank = myRank,
-                name = session.userInformation.username,
-                figure = session.userInformation.figure,
-                gender = session.userInformation.gender
-            )
-        )
-
-        return Pair(result, dbEntries.size)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getWeeklyLeaderboard(session, gameTypeId, offset, rank, direction, pageSize, maxEntries)
 
     fun getTotalGroupLeaderboard(
         session: HabboSession,
@@ -355,9 +231,8 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        return Pair(emptyList(), 0)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getTotalGroupLeaderboard(session, gameTypeId, rank, direction, pageSize, maxEntries)
 
     fun getWeeklyGroupLeaderboard(
         session: HabboSession,
@@ -367,7 +242,6 @@ class SnowWarManager {
         direction: Int,
         pageSize: Int,
         maxEntries: Int
-    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> {
-        return Pair(emptyList(), 0)
-    }
+    ): Pair<List<SnowWarLeaderboardUserEntry>, Int> =
+        leaderboardService.getWeeklyGroupLeaderboard(session, gameTypeId, offset, rank, direction, pageSize, maxEntries)
 }

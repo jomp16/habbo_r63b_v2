@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.achievement
 
+import org.jdbi.v3.core.mapper.reflect.ColumnName
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
@@ -28,7 +29,7 @@ import ovh.rwx.habbo.util.ActivityPointType
 data class AchievementUser(
     val id: Int,
     val userId: Int,
-    val groupId: Int,
+    @ColumnName("achievement_group_id") val groupId: Int,
     var level: Int,
     var progress: Int
 ) : IHabboResponseSerialize {

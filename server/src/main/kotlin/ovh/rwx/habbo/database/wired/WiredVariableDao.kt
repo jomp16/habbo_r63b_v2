@@ -19,9 +19,9 @@
 
 package ovh.rwx.habbo.database.wired
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.wired.variable.*
-import ovh.rwx.habbo.kotlin.localDateTime
+import ovh.rwx.habbo.database.*
+import java.time.LocalDateTime
 
 object WiredVariableDao {
     fun getVariablesForOwner(
@@ -39,8 +39,8 @@ object WiredVariableDao {
 
         val idsString = ownerIds.joinToString(",")
 
-        return HabboServer.database {
-            select(
+        return db {
+            query<WiredVariableRowDto>(
                 """
                 SELECT variable_id, variable_name, variable_type, availability_type, owner_id, owner_type, value, created_at, updated_at
                 FROM wired_variables
@@ -49,31 +49,14 @@ object WiredVariableDao {
                 mapOf(
                     "owner_type" to ownerType.name
                 )
-            ) {
-                val variable = WiredVariable(
-                    variableId = it.string("variable_id"),
-                    variableType = WiredVariableType.fromCode(it.int("variable_type"))
-                        ?: WiredVariableType.USER_DEFINED,
-                    variableName = it.string("variable_name"),
-                    availabilityType = VariableAvailabilityType.fromCode(it.int("availability_type"))
-                )
-                val value = WiredVariableValue(
-                    variableId = it.string("variable_id"),
-                    value = it.stringOrNull("value") ?: "",
-                    createdAt = it.localDateTime("created_at"),
-                    updatedAt = it.localDateTime("updated_at"),
-                    ownerId = it.int("owner_id"),
-                    ownerType = VariableOwnerType.valueOf(it.string("owner_type"))
-                )
-                variable to value
-            }
+            ).map { it.toDomain() }
         }
     }
 
     fun saveVariables(variables: List<Pair<WiredVariable, WiredVariableValue>>) {
         if (variables.isEmpty()) return
 
-        HabboServer.database {
+        db {
             batchUpdate(
                 """
                 INSERT INTO wired_variables
@@ -105,7 +88,7 @@ object WiredVariableDao {
     }
 
     fun deleteVariable(variableId: String, ownerId: Int, ownerType: VariableOwnerType) {
-        HabboServer.database {
+        db {
             update(
                 """
                 DELETE FROM wired_variables
@@ -123,8 +106,8 @@ object WiredVariableDao {
     fun getGlobalPlaceholderNamesForRooms(roomIds: Collection<Int>): List<Pair<Int, String>> {
         if (roomIds.isEmpty()) return emptyList()
         val idsString = roomIds.joinToString(",")
-        return HabboServer.database {
-            select(
+        return db {
+            query<WiredMessageRowDto>(
                 """
                 SELECT i.room_id, iw.message
                 FROM items i
@@ -135,14 +118,42 @@ object WiredVariableDao {
                        OR f.interaction_type LIKE '%placeholder%'
                        OR f.interaction_type LIKE '%global_placeholder%')
                 """.trimIndent()
-            ) {
-                val rId = it.int("room_id")
-                val msg = it.stringOrNull("message") ?: ""
-                val name = msg.split("\t").firstOrNull()?.trim() ?: ""
-                if (name.isNotEmpty()) {
-                    rId to name
-                } else null
-            }.filterNotNull()
+            ).mapNotNull {
+                val name = (it.message ?: "").split("\t").firstOrNull()?.trim() ?: ""
+                if (name.isNotEmpty()) Pair(it.roomId, name) else null
+            }
         }
     }
 }
+
+data class WiredVariableRowDto(
+    val variableId: String,
+    val variableName: String,
+    val variableType: Int,
+    val availabilityType: Int,
+    val ownerId: Int,
+    val ownerType: String,
+    val value: String? = "",
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+) {
+    fun toDomain(): Pair<WiredVariable, WiredVariableValue> {
+        val variable = WiredVariable(
+            variableId = variableId,
+            variableType = WiredVariableType.fromCode(variableType) ?: WiredVariableType.USER_DEFINED,
+            variableName = variableName,
+            availabilityType = VariableAvailabilityType.fromCode(availabilityType)
+        )
+        val varValue = WiredVariableValue(
+            variableId = variableId,
+            value = value ?: "",
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+            ownerId = ownerId,
+            ownerType = VariableOwnerType.valueOf(ownerType)
+        )
+        return variable to varValue
+    }
+}
+
+data class WiredMessageRowDto(val roomId: Int, val message: String? = null)

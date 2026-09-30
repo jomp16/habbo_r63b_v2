@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomItemPlacedData
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerBotReachesFurni
@@ -51,7 +52,7 @@ data class RoomItem(
     var wallPosition: String,
     val limited: Boolean,
     val buildersClub: Boolean,
-) : IHabboResponseSerialize, Serializable {
+) : AbstractDirtyEntity(), IHabboResponseSerialize, Serializable {
     var magicRemove: Boolean = false
     private val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
     val wiredData: WiredData? by lazy { ItemDao.getWiredData(id) }
@@ -354,4 +355,15 @@ data class RoomItem(
     override fun hashCode(): Int {
         return id.hashCode()
     }
+
+    override fun flush() {
+        if (roomId > 0) {
+            ovh.rwx.habbo.database.room.RoomDao.saveItems(roomId, listOf(this))
+            if (furnishing.interactionType.name.startsWith("WIRED_") && wiredData != null) {
+                ovh.rwx.habbo.database.item.ItemDao.saveWireds(listOf(this))
+            }
+        }
+        markClean()
+    }
 }
+

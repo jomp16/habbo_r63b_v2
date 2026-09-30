@@ -23,9 +23,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.landing.LandingDao
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 class LandingManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val landingPromos: MutableList<LandingPromo> = mutableListOf()
+    val landingPromos: MutableList<LandingPromo> = CopyOnWriteArrayList()
     var landingReward: LandingReward? = null
         private set
 

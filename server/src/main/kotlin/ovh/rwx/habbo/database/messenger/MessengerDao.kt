@@ -19,53 +19,48 @@
 
 package ovh.rwx.habbo.database.messenger
 
-import com.github.andrewoma.kwery.core.Row
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 import ovh.rwx.habbo.game.user.messenger.MessengerRelationship
 import ovh.rwx.habbo.game.user.messenger.MessengerRequest
-import ovh.rwx.habbo.kotlin.batchInsertAndGetGeneratedKeys
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.localDateTime
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.*
+import ovh.rwx.habbo.database.*
+import org.slf4j.LoggerFactory
 
 object MessengerDao {
-    fun getFriends(userId: Int): List<MessengerFriend> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/messenger/select_friends.sql")!!.readText(),
-                mapOf(
-                        "user_one_id" to userId
-                )
-        ) { createMessengerFriend(it) }
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    val friendshipSequence = HiLoSequence("messenger_friendships", blockSize = 500)
+    val requestSequence = HiLoSequence("messenger_requests", blockSize = 500)
+    fun getFriends(userId: Int): List<MessengerFriend> = db {
+        query<MessengerFriendDto>(
+            "sql/messenger/select_friends.sql",
+            mapOf("user_one_id" to userId)
+        ).map { it.toDomain() }
     }
 
-    fun getRequests(toUserId: Int): List<MessengerRequest> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/messenger/select_requests.sql")!!.readText(),
-                mapOf(
-                        "to_id" to toUserId
-                )
-        ) {
-            MessengerRequest(
-                    it.int("id"),
-                    it.int("from_id")
+    fun getRequests(toUserId: Int): List<MessengerRequest> = db {
+        query<MessengerRequest>(
+            "sql/messenger/select_requests.sql",
+            mapOf("to_id" to toUserId)
+        )
+    }
+
+    fun searchFriends(userId: Int, username: String): List<MessengerFriend> = db {
+        query<MessengerFriendDto>(
+            "sql/messenger/select_search_friends.sql",
+            mapOf(
+                "username" to "$username%",
+                "user_id" to userId
             )
-        }
+        ).map { it.toDomain() }
     }
-
-    fun searchFriends(userId: Int, username: String): List<MessengerFriend> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/messenger/select_search_friends.sql")!!.readText(),
-                mapOf(
-                        "username" to "$username%",
-                        "user_id" to userId
-                )
-        ) { createMessengerFriend(it) }
-    }
-
-    private fun createMessengerFriend(row: Row): MessengerFriend = MessengerFriend(row.int("id"), row.int("user_id"), MessengerRelationship.findByType(row.int("relationship")))
 
     fun removeFriendships(userId: Int, friendIds: List<Int>) {
-        HabboServer.database {
+        db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_friends.sql")!!.readText(),
                     friendIds.map {
                         listOf(
@@ -84,7 +79,7 @@ object MessengerDao {
     }
 
     fun removeAllRequests(toUserId: Int) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/messenger/delete_all_requests.sql")!!.readText(),
                     mapOf(
                             "to_id" to toUserId
@@ -94,7 +89,7 @@ object MessengerDao {
     }
 
     fun removeRequests(requestIds: List<Int>) {
-        HabboServer.database {
+        db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_request.sql")!!.readText(),
                     requestIds.map {
                         mapOf(
@@ -107,84 +102,74 @@ object MessengerDao {
 
     fun addFriends(userId: Int, friendIds: Collection<Int>): Set<MessengerFriend> {
         val friends: MutableSet<MessengerFriend> = HashSet()
+        val inserts = mutableListOf<Map<String, Any?>>()
 
-        HabboServer.database {
-            friendIds.forEach {
-                val ids = batchInsertAndGetGeneratedKeys(javaClass.classLoader.getResource("sql/messenger/insert_friends.sql")!!.readText(),
-                        listOf(
-                                mapOf(
-                                        "user_one_id" to userId,
-                                        "user_two_id" to it
-                                ),
-                                mapOf(
-                                        "user_one_id" to it,
-                                        "user_two_id" to userId
-                                )
-                        )
-                )
-
-                friends += ids.map { id -> MessengerFriend(id, it, MessengerRelationship.NONE) }
-            }
+        friendIds.forEach { friendId ->
+            val id1 = friendshipSequence.nextId()
+            val id2 = friendshipSequence.nextId()
+            friends += MessengerFriend(id1, friendId, MessengerRelationship.NONE)
+            inserts += mapOf("id" to id1, "user_one_id" to userId, "user_two_id" to friendId)
+            inserts += mapOf("id" to id2, "user_one_id" to friendId, "user_two_id" to userId)
         }
 
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    "INSERT INTO `messenger_friendships` (`id`, `user_one_id`, `user_two_id`) VALUES (:id, :user_one_id, :user_two_id)",
+                    inserts
+                )
+            }
+        }
         return friends
     }
 
     fun addRequest(fromUserId: Int, toUserId: Int): MessengerRequest {
-        val id = HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/messenger/insert_request.sql")!!.readText(),
-                    mapOf(
-                            "to_id" to toUserId,
-                            "from_id" to fromUserId
-                    )
+        val id = requestSequence.nextId()
+        val request = MessengerRequest(id, fromUserId)
+        WriteBehindManager.queue {
+            db {
+                update(
+                    "INSERT INTO `messenger_requests` (`id`, `to_id`, `from_id`) VALUES (:id, :to_id, :from_id)",
+                    mapOf("id" to id, "to_id" to toUserId, "from_id" to fromUserId)
+                )
+            }
+        }
+        return request
+    }
+
+    fun getOfflineMessages(toUserId: Int): Set<Triple<Int, String, Int>> = db {
+        val messages = query<OfflineMessageDto>(
+            javaClass.classLoader.getResource("sql/messenger/select_offline_messages.sql")!!.readText(),
+            mapOf("to_id" to toUserId)
+        ).map { it.toDomain() }.toSet()
+
+        if (messages.isNotEmpty()) {
+            update(
+                javaClass.classLoader.getResource("sql/messenger/delete_offline_messages.sql")!!.readText(),
+                mapOf("to_id" to toUserId)
             )
         }
 
-        return MessengerRequest(id, fromUserId)
-    }
-
-    fun getOfflineMessages(toUserId: Int): Set<Triple<Int, String, Int>> {
-        val offlineMessages: MutableSet<Triple<Int, String, Int>> = HashSet()
-
-        HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/messenger/select_offline_messages.sql")!!.readText(),
-                    mapOf(
-                            "to_id" to toUserId
-                    )
-            ) {
-                offlineMessages += Triple(
-                        it.int("from_id"),
-                        it.string("message"),
-                        (Instant.now().epochSecond - it.localDateTime("timestamp").atZone(ZoneId.systemDefault()).toEpochSecond()).toInt()
-                )
-            }
-
-            if (offlineMessages.isNotEmpty()) {
-                update(javaClass.classLoader.getResource("sql/messenger/delete_offline_messages.sql")!!.readText(),
-                        mapOf(
-                                "to_id" to toUserId
-                        )
-                )
-            }
-        }
-
-        return offlineMessages
+        messages
     }
 
     fun addOfflineMessage(fromUserId: Int, toUserId: Int, message: String) {
-        HabboServer.database {
-            insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/messenger/insert_offline_message.sql")!!.readText(),
+        WriteBehindManager.queue {
+            db {
+                insertAndGetGeneratedKey(
+                    javaClass.classLoader.getResource("sql/messenger/insert_offline_message.sql")!!.readText(),
                     mapOf(
-                            "to_id" to toUserId,
-                            "from_id" to fromUserId,
-                            "message" to message
+                        "to_id" to toUserId,
+                        "from_id" to fromUserId,
+                        "message" to message
                     )
-            )
+                )
+            }
         }
     }
 
     fun updateRelationship(messengerFriend: MessengerFriend) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/messenger/update_relationship.sql")!!.readText(),
                     mapOf(
                             "relationship" to messengerFriend.relationship.type,
@@ -194,3 +179,25 @@ object MessengerDao {
         }
     }
 }
+
+
+data class MessengerFriendDto(
+    val id: Int,
+    val userId: Int,
+    val relationship: Int
+) {
+    fun toDomain() = MessengerFriend(id, userId, MessengerRelationship.findByType(relationship))
+}
+
+data class OfflineMessageDto(
+    val fromId: Int,
+    val message: String,
+    val timestamp: LocalDateTime
+) {
+    fun toDomain(): Triple<Int, String, Int> = Triple(
+        fromId,
+        message,
+        (Instant.now().epochSecond - timestamp.atZone(ZoneId.systemDefault()).toEpochSecond()).toInt()
+    )
+}
+

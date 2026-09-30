@@ -50,8 +50,13 @@ data class CatalogPage(
     val customData: Map<String, Any>
 ) : IHabboResponseSerialize {
     val catalogItems: List<CatalogItem>
-        get() = HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }.sortedBy { it.id }
-            .sortedBy { it.orderNum }
+        get() {
+            val indexed = HabboServer.habboGame.catalogManager.getItemsForPage(id)
+            if (indexed.isNotEmpty()) return indexed
+            return HabboServer.habboGame.catalogManager.catalogItems.filter { it.pageId == id }
+                .sortedBy { it.id }
+                .sortedBy { it.orderNum }
+        }
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -174,5 +179,31 @@ data class CatalogPage(
                 }
             }
         }
+    }
+
+    companion object {
+        fun createRoot(id: Int, codename: String = "root"): CatalogPage = CatalogPage(
+            id = id,
+            parentId = 0,
+            name = "",
+            codename = codename,
+            iconImage = 0,
+            visible = false,
+            enabled = true,
+            minRank = 1,
+            clubOnly = false,
+            orderNum = 1,
+            pageLayout = "",
+            pageHeadline = "",
+            pageTeaser = "",
+            pageSpecial = "",
+            pageText1 = "",
+            pageText2 = "",
+            pageTextDetails = "",
+            pageTextTeaser = "",
+            pageLinkDescription = "",
+            pageLinkPagename = "",
+            customData = emptyMap()
+        )
     }
 }

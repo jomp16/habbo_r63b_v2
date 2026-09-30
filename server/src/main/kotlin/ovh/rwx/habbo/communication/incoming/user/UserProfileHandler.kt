@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.database.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserProfileHandler {
@@ -36,19 +37,17 @@ class UserProfileHandler {
         val showProfile = habboRequest.readBoolean()
         val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
         val userStats = UserStatsDao.getUserStats(userId)
-        val friends = HabboServer.database {
+        val friends = db {
             if (userId != UserInformationDao.serverConsoleUserInformation.id) {
-                select("SELECT COUNT(*) AS `friends_count` FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
-                        mapOf(
-                                "user_one_id" to userId
-                        )
-                ) { it.int("friends_count") }.first()
+                queryOne<Int>(
+                    "SELECT COUNT(*) FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
+                    mapOf("user_one_id" to userId)
+                ) ?: 0
             } else {
-                select("SELECT COUNT(*) AS `friends_count` FROM `users` WHERE `rank` IN (SELECT `rank` FROM `permissions_ranks` WHERE `acc_server_console` = :acc_server_console) OR `id` IN (SELECT `user_id` FROM `permissions_users` WHERE `acc_server_console` = :acc_server_console)",
-                        mapOf(
-                                "acc_server_console" to true
-                        )
-                ) { it.int("friends_count") }.first()
+                queryOne<Int>(
+                    "SELECT COUNT(*) FROM `users` WHERE `rank` IN (SELECT `rank` FROM `permissions_ranks` WHERE `acc_server_console` = :acc_server_console) OR `id` IN (SELECT `user_id` FROM `permissions_users` WHERE `acc_server_console` = :acc_server_console)",
+                    mapOf("acc_server_console" to true)
+                ) ?: 0
             }
         }
         val isFriend = habboSession.habboMessenger.friends.containsKey(userId)

@@ -24,12 +24,13 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.user.RoomUser
+import java.util.concurrent.ConcurrentHashMap
 
 class RoomManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val rooms: MutableMap<Int, Room> = mutableMapOf()
-    private val roomModels: MutableMap<String, RoomModel> = mutableMapOf()
-    val customRoomModels: MutableMap<Int, RoomModel> = mutableMapOf()
+    val rooms: ConcurrentHashMap<Int, Room> = ConcurrentHashMap()
+    private val roomModels: ConcurrentHashMap<String, RoomModel> = ConcurrentHashMap()
+    val customRoomModels: ConcurrentHashMap<Int, RoomModel> = ConcurrentHashMap()
     val roomTaskManager: RoomTaskManager = RoomTaskManager()
 
     fun load() {
@@ -41,25 +42,49 @@ class RoomManager {
         customRoomModels.clear()
         rooms.clear()
 
-        roomModels += RoomDao.getRoomModels().associateBy { it.id }
-        customRoomModels += RoomDao.getCustomRoomModels().associateBy { it.roomId }
-        rooms += RoomDao.getRoomsData().associateBy({ it.id }, {
-            Room(it, if (it.modelName == "custom") customRoomModels[it.id]!! else roomModels[it.modelName]!!)
-        })
+        RoomDao.getRoomModels().forEach { roomModels[it.id] = it }
+        RoomDao.getCustomRoomModels().forEach { customRoomModels[it.roomId] = it }
+        RoomDao.getRoomsData().forEach { roomData ->
+            val model = if (roomData.modelName == "custom") customRoomModels[roomData.id] else roomModels[roomData.modelName]
+            if (model != null) {
+                rooms[roomData.id] = Room(roomData, model)
+            } else {
+                log.warn("Room {} has unknown model {}", roomData.id, roomData.modelName)
+            }
+        }
 
         log.info("Loaded {} room models!", roomModels.size)
         log.info("Loaded {} custom room models!", customRoomModels.size)
         log.info("Loaded {} rooms!", rooms.size)
     }
 
-    fun createRoom(userId: Int, validSubscription: Boolean, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Room? {
+    fun createRoom(
+        userId: Int,
+        validSubscription: Boolean,
+        name: String,
+        description: String,
+        model: String,
+        category: Int,
+        maxUsers: Int,
+        tradeSettings: Int
+    ): Room? {
         val roomModel = roomModels[model]
 
-        if (name.length < 3 || roomModel == null || roomModel.clubOnly && !validSubscription) return null
+        if (name.length < 3 || roomModel == null || (roomModel.clubOnly && !validSubscription)) return null
         val roomId = RoomDao.createRoom(userId, name, description, model, category, maxUsers, tradeSettings)
 
         log.info("Created new room n° {} - name {}", roomId, name)
-        val room = Room(RoomDao.getRoomData(roomId), roomModel)
+        val roomData = RoomData.createPrivate(
+            id = roomId,
+            userId = userId,
+            name = name,
+            description = description,
+            model = model,
+            category = category,
+            maxUsers = maxUsers,
+            tradeSettings = tradeSettings
+        )
+        val room = Room(roomData, roomModel)
 
         rooms[roomId] = room
 
@@ -71,9 +96,9 @@ class RoomManager {
      */
     fun getPopularRooms(categoryId: Int = -1, limit: Int = 40): List<Room> {
         return rooms.values
-            .filter { it.running && it.userManager.entities.values.filterIsInstance<RoomUser>().isNotEmpty() }
+            .filter { it.running && it.userManager.entities.values.any { entity -> entity is RoomUser } }
             .filter { categoryId == -1 || it.roomData.category == categoryId }
-            .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }
+            .sortedByDescending { it.userManager.entities.values.count { entity -> entity is RoomUser } }
             .take(limit)
     }
 
@@ -81,7 +106,8 @@ class RoomManager {
      * Motor de busca global (por nome, dono, descrição ou tags).
      */
     fun searchRooms(searchTerm: String, limit: Int = 50): List<Room> {
-        if (searchTerm.isBlank()) return emptyList()
+        val term = searchTerm.trim()
+        if (term.isBlank()) return emptyList()
 
         return rooms.values.filter { room ->
             val data = room.roomData
@@ -91,33 +117,39 @@ class RoomManager {
 
             when {
                 // Busca por Prefixo exato
-                searchTerm.startsWith("owner:") ->
-                    data.ownerName.equals(searchTerm.substring(6), ignoreCase = true)
+                term.startsWith("owner:") ->
+                    data.ownerName.equals(term.substring(6).trim(), ignoreCase = true)
 
-                searchTerm.startsWith("tag:") ->
-                    data.tags.any { it.equals(searchTerm.substring(4), ignoreCase = true) }
+                term.startsWith("tag:") ->
+                    data.tags.any { it.equals(term.substring(4).trim(), ignoreCase = true) }
 
-                searchTerm.startsWith("roomname:") ->
-                    data.name.equals(searchTerm.substring(9), ignoreCase = true)
+                term.startsWith("roomname:") ->
+                    data.name.equals(term.substring(9).trim(), ignoreCase = true)
 
-                // Busca Global via Regex (Contém)
-                else -> {
-                    val regex = "(?i:.*${Regex.escape(searchTerm)}.*)".toRegex()
-                    data.ownerName.matches(regex) ||
-                            data.name.matches(regex) ||
-                            data.description.matches(regex) ||
-                            data.tags.any { it.matches(regex) }
+                // Busca por Mobi / Dynamic Category (navigator.roomsettings.allow_dynamic_categories)
+                term.startsWith("furni:") -> {
+                    if (!data.allowNavigatorDynamicCats) return@filter false
+                    val furniQuery = term.substring(6).trim()
+                    room.itemManager.items.values.any { item ->
+                        item.furnishing.itemName.contains(furniQuery, ignoreCase = true)
+                    }
                 }
+
+                // Busca Global sem recompilação repetitiva de Regex
+                else ->
+                    data.ownerName.contains(term, ignoreCase = true) ||
+                            data.name.contains(term, ignoreCase = true) ||
+                            data.description.contains(term, ignoreCase = true) ||
+                            data.tags.any { it.contains(term, ignoreCase = true) }
             }
         }
-            .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }
+            .sortedByDescending { it.userManager.entities.values.count { entity -> entity is RoomUser } }
             .take(limit)
     }
 
     /**
      * Retorna os quartos de um usuário específico.
      */
-    fun getRoomsByOwner(ownerId: Int): List<Room> {
-        return rooms.values.filter { it.roomData.ownerId == ownerId }
-    }
+    fun getRoomsByOwner(ownerId: Int): List<Room> =
+        rooms.values.filter { it.roomData.ownerId == ownerId }
 }

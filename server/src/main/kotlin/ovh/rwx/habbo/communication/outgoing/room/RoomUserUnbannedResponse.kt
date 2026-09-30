@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,18 +17,19 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.kotlin
+package ovh.rwx.habbo.communication.outgoing.room
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 
-@Suppress("SqlWithoutWhere")
-fun HabboServer.cleanUpUsers() {
-    database {
-        update("UPDATE `users` SET `auth_ticket` = :ticket, `online` = :online",
-                mapOf(
-                        "ticket" to null,
-                        "online" to false
-                )
-        )
+@Suppress("unused", "UNUSED_PARAMETER")
+class RoomUserUnbannedResponse {
+    @Response(Outgoing.ROOM_USER_UNBANNED)
+    fun response(habboResponse: HabboResponse, roomId: Int, userId: Int) {
+        habboResponse.apply {
+            writeInt(roomId)
+            writeInt(userId)
+        }
     }
 }

@@ -18,7 +18,9 @@ motd/
 plugins/
 
 *.txt
+*.TXT
 *.tar.xz
+*.tar.gz
 
 camera_data/
 PACKET_INFOS/
@@ -32,7 +34,6 @@ log4j2.private.xml
 .kiro/
 .kotlin/
 .opencode/
-.agents/
 
 *.log
 
@@ -42,3 +43,8 @@ rebel.xml
 .DS_Store
 
 launcher-tui/habbo-launcher-tui
+.stignore
+run-server.sh
+run_server.sh
+
+

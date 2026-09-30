@@ -19,11 +19,9 @@
 
 package ovh.rwx.habbo.database.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserStats
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
-import ovh.rwx.habbo.kotlin.localDateTime
 import java.time.LocalDateTime
+import ovh.rwx.habbo.database.db
 
 object UserStatsDao {
     private val serverConsoleUserStats: UserStats = UserStats(UserInformationDao.serverConsoleUserInformation.id,
@@ -48,39 +46,16 @@ object UserStatsDao {
 
     fun getUserStats(userId: Int): UserStats {
         if (userId == UserInformationDao.serverConsoleUserInformation.id) return serverConsoleUserStats
-        val userStats = HabboServer.database {
-            select(javaClass.classLoader.getResource("sql/users/stats/select_user_stats.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                UserStats(
-                        it.int("id"),
-                        LocalDateTime.now(),
-                        it.localDateTime("last_online"),
-                        it.long("online_seconds"),
-                        it.int("room_visits"),
-                        it.int("respect"),
-                        it.int("gifts_given"),
-                        it.int("gifts_received"),
-                        it.int("daily_respect_points"),
-                        it.int("daily_pet_respect_points"),
-                        it.int("daily_competition_votes"),
-                        it.int("achievement_score"),
-                        it.int("quest_id"),
-                        it.int("quest_progress"),
-                        it.intOrNull("favorite_group") ?: 0,
-                        it.int("tickets_answered"),
-                        it.int("marketplace_tickets"),
-                        it.localDateTime("credits_last_update"),
-                        it.localDateTime("respect_last_update")
-                )
-            }.firstOrNull()
+        val userStats = db {
+            queryOne<UserStatsDto>(
+                "sql/users/stats/select_user_stats.sql",
+                mapOf("user_id" to userId)
+            )?.toDomain()
         }
 
         if (userStats == null) {
             // no users stats, create it
-            HabboServer.database {
+            db {
                 insertAndGetGeneratedKey(javaClass.classLoader.getResource("sql/users/stats/insert_user_stats.sql").readText(),
                         mapOf(
                                 "id" to userId
@@ -103,7 +78,7 @@ object UserStatsDao {
     }
 
     fun saveStats(userStats: UserStats) {
-        HabboServer.database {
+        db {
             update(javaClass.classLoader.getResource("sql/users/stats/update_user_stats.sql").readText(),
                     mapOf(
                             "last_online" to userStats.lastOnlineDatabase,
@@ -122,3 +97,33 @@ object UserStatsDao {
         }
     }
 }
+
+data class UserStatsDto(
+    val id: Int,
+    val lastOnline: LocalDateTime = LocalDateTime.now(),
+    val onlineSeconds: Long = 0,
+    val roomVisits: Int = 0,
+    val respect: Int = 0,
+    val giftsGiven: Int = 0,
+    val giftsReceived: Int = 0,
+    val dailyRespectPoints: Int = 3,
+    val dailyPetRespectPoints: Int = 3,
+    val dailyCompetitionVotes: Int = 3,
+    val achievementScore: Int = 0,
+    val questId: Int = 0,
+    val questProgress: Int = 0,
+    val favoriteGroup: Int? = 0,
+    val ticketsAnswered: Int = 0,
+    val marketplaceTickets: Int = 0,
+    val creditsLastUpdate: LocalDateTime = LocalDateTime.now(),
+    val respectLastUpdate: LocalDateTime = LocalDateTime.now()
+) {
+    fun toDomain(): UserStats = UserStats(
+        id, LocalDateTime.now(), lastOnline, onlineSeconds, roomVisits, respect,
+        giftsGiven, giftsReceived, dailyRespectPoints, dailyPetRespectPoints,
+        dailyCompetitionVotes, achievementScore, questId, questProgress,
+        favoriteGroup ?: 0, ticketsAnswered, marketplaceTickets,
+        creditsLastUpdate, respectLastUpdate
+    )
+}
+

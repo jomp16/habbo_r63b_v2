@@ -33,7 +33,12 @@ dependencies {
 
     implementation(libs.netty.all)
     implementation(libs.netty.epoll)
-    implementation(libs.kwery.core)
+    implementation(libs.jdbi.core)
+    implementation(libs.jdbi.kotlin)
+    implementation(libs.jdbi.sqlobject)
+    implementation(libs.jdbi.kotlin.sqlobject)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.mysql)
     implementation(libs.mariadb.driver)
     implementation(libs.hikari)
     implementation(libs.reflections)

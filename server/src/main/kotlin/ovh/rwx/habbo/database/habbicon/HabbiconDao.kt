@@ -19,25 +19,24 @@
 
 package ovh.rwx.habbo.database.habbicon
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.habbicon.Habbicon
 import ovh.rwx.habbo.game.habbicon.HabbiconCollection
 import ovh.rwx.habbo.game.habbicon.UserHabbicon
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.*
 
 object HabbiconDao {
-    fun getOrCreateCollection(name: String): Int = HabboServer.database {
-        select(
+    fun getOrCreateCollection(name: String): Int = db {
+        queryOne<Int>(
             "SELECT id FROM habbicon_collections WHERE name = :name LIMIT 1",
             mapOf("name" to name)
-        ) { it.int("id") }.firstOrNull() ?: insertAndGetGeneratedKey(
+        ) ?: insertAndGetGeneratedKey(
             "INSERT INTO habbicon_collections (name, enabled, price_credits, price_activity_points, activity_point_type) VALUES (:name, 1, 1, 0, 0)",
             mapOf("name" to name)
         )
     }
 
     fun upsertHabbicon(id: Int, collectionId: Int, name: String, purchasable: Boolean) {
-        HabboServer.database {
+        db {
             update(
                 """
                 INSERT INTO habbicons
@@ -59,15 +58,15 @@ object HabbiconDao {
         }
     }
 
-    fun getCollectionRewardId(collectionId: Int): Int? = HabboServer.database {
-        select(
+    fun getCollectionRewardId(collectionId: Int): Int? = db {
+        queryOne<Int>(
             "SELECT reward_habbicon_id FROM habbicon_collections WHERE id = :id",
             mapOf("id" to collectionId)
-        ) { it.intOrNull("reward_habbicon_id") }.firstOrNull()
+        )
     }
 
     fun setCollectionReward(collectionId: Int, habbiconId: Int) {
-        HabboServer.database {
+        db {
             update(
                 "UPDATE habbicon_collections SET reward_habbicon_id = :habbicon_id WHERE id = :collection_id",
                 mapOf("habbicon_id" to habbiconId, "collection_id" to collectionId)
@@ -75,64 +74,23 @@ object HabbiconDao {
         }
     }
 
-    fun getCollections(): List<HabbiconCollection> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/habbicon/select_collections.sql").readText(),
-                emptyMap<String, Any>()
-            ) {
-                HabbiconCollection(
-                    id = it.int("id"),
-                    name = it.string("name"),
-                    enabled = it.boolean("enabled"),
-                    priceCredits = it.int("price_credits"),
-                    priceActivityPoints = it.int("price_activity_points"),
-                    activityPointType = it.int("activity_point_type"),
-                    rewardHabbiconId = it.intOrNull("reward_habbicon_id"),
-                    rewardState = it.int("reward_state")
-                )
-            }
-        }
+    fun getCollections(): List<HabbiconCollection> = db {
+        query<HabbiconCollection>("sql/habbicon/select_collections.sql")
     }
 
-    fun getHabbicons(): List<Habbicon> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/habbicon/select_habbicons.sql").readText(),
-                emptyMap<String, Any>()
-            ) {
-                Habbicon(
-                    id = it.int("id"),
-                    collectionId = it.int("collection_id"),
-                    name = it.string("name"),
-                    enabled = it.boolean("enabled"),
-                    purchasable = it.boolean("purchasable"),
-                    priceCredits = it.int("price_credits"),
-                    priceActivityPoints = it.int("price_activity_points"),
-                    activityPointType = it.int("activity_point_type")
-                )
-            }
-        }
+    fun getHabbicons(): List<Habbicon> = db {
+        query<Habbicon>("sql/habbicon/select_habbicons.sql")
     }
 
-    fun getUserHabbicons(userId: Int): List<UserHabbicon> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/habbicon/select_user_habbicons.sql").readText(),
-                mapOf("user_id" to userId)
-            ) {
-                UserHabbicon(
-                    id = it.int("id"),
-                    userId = it.int("user_id"),
-                    habbiconId = it.int("habbicon_id"),
-                    state = it.int("state")
-                )
-            }
-        }
+    fun getUserHabbicons(userId: Int): List<UserHabbicon> = db {
+        query<UserHabbicon>(
+            "sql/habbicon/select_user_habbicons.sql",
+            mapOf("user_id" to userId)
+        )
     }
 
     fun addUserHabbicon(userId: Int, habbiconId: Int, state: Int): Int {
-        return HabboServer.database {
+        return db {
             insertAndGetGeneratedKey(
                 javaClass.classLoader.getResource("sql/habbicon/insert_user_habbicon.sql").readText(),
                 mapOf(
@@ -145,7 +103,7 @@ object HabbiconDao {
     }
 
     fun updateUserHabbiconState(userId: Int, habbiconId: Int, state: Int) {
-        HabboServer.database {
+        db {
             update(
                 javaClass.classLoader.getResource("sql/habbicon/update_user_habbicon_state.sql").readText(),
                 mapOf(
@@ -158,7 +116,7 @@ object HabbiconDao {
     }
 
     fun updateUserHabbiconRecentIds(userId: Int, habbiconId: Int, recentIds: List<Int>) {
-        HabboServer.database {
+        db {
             update("DELETE FROM users_habbicon_recent WHERE user_id = :user_id", mapOf("user_id" to userId))
             recentIds.forEachIndexed { position, recentId ->
                 update(
@@ -169,21 +127,10 @@ object HabbiconDao {
         }
     }
 
-    fun getRecentHabbiconIds(userId: Int): List<Int> = HabboServer.database {
-        select(
-            javaClass.classLoader.getResource("sql/habbicon/select_user_habbicon_recent.sql").readText(),
+    fun getRecentHabbiconIds(userId: Int): List<Int> = db {
+        query<Int>(
+            "sql/habbicon/select_user_habbicon_recent.sql",
             mapOf("user_id" to userId)
-        ) { it.int("habbicon_id") }
-    }
-
-    fun getUserOwnedHabbiconIds(userId: Int): Set<Int> {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/habbicon/select_user_owned_habbicon_ids.sql").readText(),
-                mapOf("user_id" to userId)
-            ) {
-                it.int("habbicon_id")
-            }.toSet()
-        }
+        )
     }
 }

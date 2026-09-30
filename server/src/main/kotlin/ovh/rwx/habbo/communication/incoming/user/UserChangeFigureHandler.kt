@@ -45,6 +45,7 @@ class UserChangeFigureHandler {
         if (HabboServer.habboGame.figureManager.isValidFigure(figure, gender, habboSession)) {
             habboSession.userInformation.figure = figure
             habboSession.userInformation.gender = gender
+            habboSession.userInformation.markDirty()
 
             // ACH_AvatarLooks: mudar visual
             HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)

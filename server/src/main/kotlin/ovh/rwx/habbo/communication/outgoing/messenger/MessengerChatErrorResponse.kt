@@ -21,16 +21,23 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerChatErrorResponse {
     @Response(Outgoing.MESSENGER_CHAT_ERROR)
+    @ResponseR63A(OutgoingR63A.MESSENGER_CHAT_ERROR)
     fun response(habboResponse: HabboResponse, messengerChatError: MessengerChatError, userId: Int, message: String) {
         habboResponse.apply {
             writeInt(messengerChatError.errorCode)
             writeInt(userId)
-            writeUTF(message)
+
+            if (isVersionAtLeast(2012, 11, 14)) {
+                writeUTF(message)
+            }
         }
     }
 

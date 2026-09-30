@@ -24,8 +24,10 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.banzai.BattleBanzaiGame
 import ovh.rwx.habbo.game.room.user.RoomEntity
 
+import java.util.concurrent.ConcurrentHashMap
+
 class RoomGameManager(val room: Room) {
-    val games = mutableMapOf<RoomGameType, RoomGame>()
+    val games = ConcurrentHashMap<RoomGameType, RoomGame>()
 
     fun getGame(gameType: RoomGameType) = games[gameType]
 

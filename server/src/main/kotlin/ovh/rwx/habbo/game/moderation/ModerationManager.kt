@@ -23,10 +23,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.moderation.ModerationDao
 
+import java.util.concurrent.ConcurrentHashMap
+
 class ModerationManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val moderationCategories: MutableMap<Int, String> = mutableMapOf()
-    val moderationTopics: MutableMap<Int, ModerationTopic> = mutableMapOf()
+    val moderationCategories: ConcurrentHashMap<Int, String> = ConcurrentHashMap()
+    val moderationTopics: ConcurrentHashMap<Int, ModerationTopic> = ConcurrentHashMap()
 
     fun load() {
         log.info("Loading moderation stuffs...")
@@ -37,7 +39,7 @@ class ModerationManager {
         moderationCategories += ModerationDao.getCategories()
         moderationTopics += ModerationDao.getTopics().associateBy { it.topicId }
 
-        log.info("Loaded ${moderationCategories.size} moderation categories!")
-        log.info("Loaded ${moderationTopics.size} moderation topics!")
+        log.info("Loaded {} moderation categories!", moderationCategories.size)
+        log.info("Loaded {} moderation topics!", moderationTopics.size)
     }
 }

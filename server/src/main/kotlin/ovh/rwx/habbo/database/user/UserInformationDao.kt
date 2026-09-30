@@ -19,14 +19,14 @@
 
 package ovh.rwx.habbo.database.user
 
-import com.github.andrewoma.kwery.core.Row
+import ovh.rwx.habbo.database.*
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt
 import ovh.rwx.habbo.BuildConfig
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserInformation
-import ovh.rwx.habbo.kotlin.localDateTime
 import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
+import ovh.rwx.habbo.database.db
 
 object UserInformationDao {
     private val userInformationsList: MutableMap<Int, UserInformation> = LinkedHashMap()
@@ -51,14 +51,11 @@ object UserInformationDao {
         if (userId == serverConsoleUserInformation.id) return serverConsoleUserInformation
 
         if (!userInformationsList.containsKey(userId)) {
-            val userInformation = HabboServer.database {
-                select(
-                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_id.sql")!!
-                        .readText(),
-                    mapOf(
-                        "user_id" to userId
-                    )
-                ) { getUserInformation(it) }.firstOrNull()
+            val userInformation = db {
+                queryOne<UserInformationDto>(
+                    "sql/users/information/select_user_information_from_id.sql",
+                    mapOf("user_id" to userId)
+                )?.toDomain()
             } ?: return null
 
             userInformationsList[userId] = userInformation
@@ -67,16 +64,11 @@ object UserInformationDao {
         return userInformationsList[userId]
     }
 
-    fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
-        return HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/users/information/select_user_information_from_auth_ticket.sql")!!
-                    .readText(),
-                mapOf(
-                    "ticket" to ssoTicket
-                )
-            ) { getUserInformationById(it.int("id")) }.firstOrNull()
-        }
+    fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? = db {
+        queryOne<Int>(
+            "sql/users/information/select_user_information_from_auth_ticket.sql",
+            mapOf("ticket" to ssoTicket)
+        )?.let { getUserInformationById(it) }
     }
 
     fun getUserInformationByUsername(username: String): UserInformation? {
@@ -84,18 +76,14 @@ object UserInformationDao {
 
         return if (userInformation != null) userInformation
         else {
-            val userInformation1 = HabboServer.database {
-                select(
-                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_username.sql")!!
-                        .readText(),
-                    mapOf(
-                        "username" to username
-                    )
-                ) { getUserInformation(it) }.firstOrNull()
+            val userInformation1 = db {
+                queryOne<UserInformationDto>(
+                    "sql/users/information/select_user_information_from_username.sql",
+                    mapOf("username" to username)
+                )?.toDomain()
             } ?: return null
 
             userInformationsList[userInformation1.id] = userInformation1
-
             userInformation1
         }
     }
@@ -105,31 +93,24 @@ object UserInformationDao {
 
         return if (userInformation != null) userInformation
         else {
-            val userInformation1 = HabboServer.database {
-                select(
-                    javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql")!!
-                        .readText(),
-                    mapOf(
-                        "email" to email
-                    )
-                ) { getUserInformation(it) }.firstOrNull()
+            val userInformation1 = db {
+                queryOne<UserInformationDto>(
+                    "sql/users/information/select_user_information_from_email.sql",
+                    mapOf("email" to email)
+                )?.toDomain()
             } ?: return null
 
             userInformationsList[userInformation1.id] = userInformation1
-
             userInformation1
         }
     }
 
     fun getUserInformationByEmailAndPassword(email: String, password: String): UserInformation? {
-        val userInformation = HabboServer.database {
-            select(
-                javaClass.classLoader.getResource("sql/users/information/select_user_information_from_email.sql")!!
-                    .readText(),
-                mapOf(
-                    "email" to email
-                )
-            ) { getUserInformation(it) }.firstOrNull()
+        val userInformation = db {
+            queryOne<UserInformationDto>(
+                "sql/users/information/select_user_information_from_email.sql",
+                mapOf("email" to email)
+            )?.toDomain()
         } ?: return null
 
         if (OpenBSDBCrypt.checkPassword(userInformation.password, password.toCharArray())) {
@@ -140,7 +121,7 @@ object UserInformationDao {
     }
 
     fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
-        HabboServer.database {
+        db {
             update(
                 javaClass.classLoader.getResource("sql/users/information/update_user_information.sql")!!.readText(),
                 mapOf(
@@ -169,7 +150,7 @@ object UserInformationDao {
     }
 
     fun updateAuthTicket(userInformation: UserInformation, authTicket: String? = null) {
-        HabboServer.database {
+        db {
             update(
                 javaClass.classLoader.getResource("sql/users/information/update_auth_ticket_information.sql")!!
                     .readText(),
@@ -180,42 +161,45 @@ object UserInformationDao {
             )
         }
     }
+}
 
-    private fun getUserInformation(row: Row): UserInformation {
-        val currenciesStr = row.string("currencies_str")
+/**
+ * DTO matching SQL columns 1:1, auto-mapped by Jdbi.
+ */
+data class UserInformationDto(
+    val id: Int,
+    val username: String,
+    val email: String = "",
+    val accountCreated: LocalDateTime = LocalDateTime.now(),
+    val realname: String = "",
+    val rank: Int = 1,
+    val credits: Int = 0,
+    val figure: String = "",
+    val gender: String = "M",
+    val motto: String = "",
+    val homeRoom: Int = 0,
+    val vip: Boolean = false,
+    val password: String = "",
+    val currenciesStr: String = ""
+) {
+    fun toDomain(): UserInformation {
         val currenciesMap = mutableMapOf<ActivityPointType, Int>()
-
         if (currenciesStr.isNotEmpty()) {
             currenciesStr.split(";").forEach { pair ->
                 val parts = pair.split(":")
                 if (parts.size == 2) {
                     val typeInt = parts[0].toIntOrNull() ?: return@forEach
                     val points = parts[1].toIntOrNull() ?: 0
-
                     val typeEnum = ActivityPointType.fromType(typeInt)
-
                     if (typeEnum != null) {
                         currenciesMap[typeEnum] = points
                     }
                 }
             }
         }
-
         return UserInformation(
-            row.int("id"),
-            row.string("username"),
-            row.string("email"),
-            row.localDateTime("account_created"),
-            row.string("realname"),
-            row.int("rank"),
-            row.int("credits"),
-            row.string("figure"),
-            row.string("gender"),
-            row.string("motto"),
-            row.int("home_room"),
-            row.boolean("vip"),
-            row.string("password"),
-            currenciesMap,
+            id, username, email, accountCreated, realname, rank, credits,
+            figure, gender, motto, homeRoom, vip, password, currenciesMap
         )
     }
 }

@@ -19,18 +19,24 @@
 
 package ovh.rwx.habbo.database.camera
 
-import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.db
 
 object CameraDao {
+    val cameraSequence = HiLoSequence("camera_pictures", blockSize = 100)
+
     fun savePictureDataToDatabase(userId: Int, fileName: String): Int {
-        return HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO `camera_pictures` (`user_id`, `file_name`) VALUES (:user_id, :file_name)",
-                    mapOf(
-                            "user_id" to userId,
-                            "file_name" to fileName
-                    )
+        val id = cameraSequence.nextId()
+        db {
+            update(
+                "INSERT INTO `camera_pictures` (`id`, `user_id`, `file_name`) VALUES (:id, :user_id, :file_name)",
+                mapOf(
+                    "id" to id,
+                    "user_id" to userId,
+                    "file_name" to fileName
+                )
             )
         }
+        return id
     }
 }

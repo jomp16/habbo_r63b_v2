@@ -19,88 +19,49 @@
 
 package ovh.rwx.habbo.database.achievement
 
-import ovh.rwx.habbo.HabboServer
+import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.database.db
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementCategory
 import ovh.rwx.habbo.game.achievement.AchievementGroup
 import ovh.rwx.habbo.game.achievement.AchievementUser
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
 import java.util.*
 
 object AchievementDao {
-    fun loadAchievementGroups(): List<Pair<String, AchievementGroup>> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/achievement/select_achievement_groups.sql").readText()) {
-                it.string("name") to AchievementGroup(
-                    it.int("id"),
-                    it.string("name"),
-                    if (it.string("category").isEmpty()) AchievementCategory.EMPTY else AchievementCategory.valueOf(
-                        it.string("category").uppercase(Locale.getDefault())
-                    ),
-                    it.boolean("badge_append_level")
-                )
-            }
-        }
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    val achievementSequence = HiLoSequence("users_achievements", blockSize = 500)
+
+    fun loadAchievementGroups(): List<Pair<String, AchievementGroup>> = db {
+        query<AchievementGroupRowDto>("/sql/achievement/select_achievement_groups.sql")
+            .map { it.toDomain() }
     }
 
-    fun loadAchievements(): List<Achievement> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/achievement/select_achievements.sql").readText()) {
-                Achievement(
-                    it.int("id"),
-                    it.int("achievement_group_id"),
-                    it.int("level"),
-                    it.int("reward_activity_points"),
-                    it.int("reward_achievement_points"),
-                    it.int("progress_requirement"),
-                    it.boolean("enabled")
-                )
-            }
-        }
+    fun loadAchievements(): List<Achievement> = db {
+        query<Achievement>("/sql/achievement/select_achievements.sql")
     }
 
-    fun loadUserAchievements(userId: Int): List<AchievementUser> {
-        return HabboServer.database {
-            select(
-                javaClass.getResource("/sql/achievement/select_user_achievements.sql").readText(),
-                mapOf(
-                    "user_id" to userId
-                )
-            ) {
-                AchievementUser(
-                    it.int("id"),
-                    it.int("user_id"),
-                    it.int("achievement_group_id"),
-                    it.int("level"),
-                    it.int("progress")
-                )
-            }
-        }
+    fun loadUserAchievements(userId: Int): List<AchievementUser> = db {
+        query<AchievementUser>(
+            "/sql/achievement/select_user_achievements.sql",
+            mapOf("user_id" to userId)
+        )
     }
 
-    fun loadAllUserAchievements(): Map<Int, List<AchievementUser>> {
-        return HabboServer.database {
-            select(
-                javaClass.getResource("/sql/achievement/select_all_user_achievements.sql").readText(),
-                mapOf()
-            ) {
-                AchievementUser(
-                    it.int("id"),
-                    it.int("user_id"),
-                    it.int("achievement_group_id"),
-                    it.int("level"),
-                    it.int("progress")
-                )
-            }.groupBy { it.userId }
-        }
+    fun loadAllUserAchievements(): Map<Int, List<AchievementUser>> = db {
+        query<AchievementUser>(
+            "/sql/achievement/select_all_user_achievements.sql"
+        ).groupBy { it.userId }
     }
 
     fun saveUserAchievements(achievementUsers: Collection<AchievementUser>) {
         if (achievementUsers.isEmpty()) return
 
-        HabboServer.database {
+        db {
             batchUpdate(
-                javaClass.getResource("/sql/achievement/update_user_achievement.sql").readText(),
+                "/sql/achievement/update_user_achievement.sql",
                 achievementUsers.map {
                     mapOf(
                         "level" to it.level,
@@ -113,17 +74,31 @@ object AchievementDao {
     }
 
     fun insertUserAchievement(userId: Int, groupId: Int, level: Int, progress: Int): AchievementUser {
-        val id = HabboServer.database {
-            insertAndGetGeneratedKey(
-                javaClass.getResource("/sql/achievement/insert_user_achievement.sql").readText(),
-                mapOf(
-                    "user_id" to userId,
-                    "achievement_group_id" to groupId,
-                    "level" to level,
-                    "progress" to progress
+        val id = achievementSequence.nextId()
+        val achievementUser = AchievementUser(id, userId, groupId, level, progress)
+        WriteBehindManager.queue {
+            db {
+                update(
+                    "INSERT INTO `users_achievements` (`id`, `user_id`, `achievement_group_id`, `level`, `progress`) VALUES (:id, :user_id, :achievement_group_id, :level, :progress)",
+                    mapOf("id" to id, "user_id" to userId, "achievement_group_id" to groupId, "level" to level, "progress" to progress)
                 )
-            )
+            }
         }
-        return AchievementUser(id, userId, groupId, level, progress)
+        return achievementUser
     }
+}
+
+
+data class AchievementGroupRowDto(
+    val id: Int,
+    val name: String,
+    val category: String,
+    val badgeAppendLevel: Boolean
+) {
+    fun toDomain() = name to AchievementGroup(
+        id,
+        name,
+        if (category.isEmpty()) AchievementCategory.EMPTY else AchievementCategory.valueOf(category.uppercase(Locale.getDefault())),
+        badgeAppendLevel
+    )
 }

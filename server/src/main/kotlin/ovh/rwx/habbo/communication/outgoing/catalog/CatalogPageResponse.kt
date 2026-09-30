@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import ovh.rwx.habbo.game.catalog.CatalogPage
 import ovh.rwx.habbo.game.user.subscription.ClubType
 
@@ -35,309 +36,237 @@ data class CatalogPageData(
     val chosenOfferId: Int = -1
 )
 
+data class CatalogFrontPageItem(
+    val position: Int,
+    val itemName: String,
+    val itemPromoImage: String,
+    val type: Int = 0,
+    val cataloguePageLocation: String = "",
+    val productOfferId: Int = -1,
+    val expiration: Int = -1
+) {
+    fun serialize(response: HabboResponse) {
+        response.apply {
+            writeInt(position)
+            writeUTF(itemName)
+            writeUTF(itemPromoImage)
+            writeInt(type)
+            when (type) {
+                0 -> writeUTF(cataloguePageLocation)
+                1 -> writeInt(productOfferId)
+                2 -> writeUTF(cataloguePageLocation)
+                else -> writeUTF("")
+            }
+            writeInt(expiration)
+        }
+    }
+}
+
+data class CatalogPagePresentation(
+    val layoutCode: String,
+    val images: List<String>,
+    val texts: List<String>,
+    val frontPageItems: List<CatalogFrontPageItem> = emptyList()
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageResponse {
     @Response(Outgoing.CATALOG_PAGE)
-    fun response(
-        habboResponse: HabboResponse,
-        data: CatalogPageData
-    ) {
-        val catalogPage = data.catalogPage
-        val category = data.category
-        val chosenOfferId = data.chosenOfferId
-
-        habboResponse.apply {
-            writeInt(catalogPage.id)
-
-            when (catalogPage.pageLayout) {
-                "frontpage",
-                "frontpage4" -> {
-                    writeUTF(category)
-                    writeUTF("frontpage4")
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageText2)
-                    writeInt(0)
-                    writeInt(-1)
-                    writeBoolean(false)
-                    val imagesSplit = catalogPage.pageTextDetails.split('-')
-
-                    writeInt(imagesSplit.size)
-
-                    imagesSplit.forEachIndexed { i, s ->
-                        val split = s.split("[\\r\\n]+".toRegex()).filterNot(String::isEmpty)
-
-                        writeInt(i + 1)
-                        writeUTF(if (split.isNotEmpty()) split[0] else "")
-                        writeUTF(if (split.size >= 2) split[1] else "")
-                        writeInt(0)
-                        writeUTF(if (split.size >= 3) split[2] else "")
-                        writeInt(-1)
-                    }
-                }
-
-                "vip_buy" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(0)
-                }
-
-                "builders_club_frontpage_normal",
-                "builders_club_frontpage" -> {
-                    writeUTF(category)
-                    writeUTF("builders_club_frontpage")
-                    writeInt(0)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageText1)
-
-                    val buildersOffers = HabboServer.habboGame.catalogManager.catalogClubOffers
-                        .filter { it.clubType == ClubType.BUILDERS_CLUB }
-                        .sortedBy { it.credits }
-
-                    writeInt(buildersOffers.size)
-
-                    buildersOffers.forEach { offer ->
-                        writeInt(offer.itemId)
-                        writeUTF(offer.name)
-                        writeBoolean(false) // isRent
-                        writeInt(offer.credits)
-                        writeInt(offer.points)
-                        writeInt(offer.pointsType)
-                        if (isVersionAtLeast(2024, 1, 22)) {
-                            writeInt(0) // priceInSilver
-                        }
-                        writeBoolean(true) // giftable
-                        writeInt(0) // items
-                        writeInt(0) // club only
-                        writeBoolean(true)
-                        writeBoolean(false) // is pet
-                        writeUTF("")
-                    }
-                }
-
-                "pets",
-                "pets2",
-                "pets3" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(4)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageText2)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF(catalogPage.pageTextTeaser)
-                }
-
-                "spaces_new" -> {
-                    writeUTF(category)
-                    writeUTF("spaces_new")
-                    writeInt(1)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageText1)
-                }
-
-                "guild_frontpage" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF(catalogPage.pageText2)
-                }
-
-                "guild_custom_furni" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF("")
-                    writeUTF("")
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF(catalogPage.pageText2)
-                }
-
-                "badge_display" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageText2)
-                    writeUTF(catalogPage.pageTextDetails)
-                }
-
-                "trophies" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                }
-
-                "recycler" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageText1)
-                }
-
-                "recycler_info" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageText2)
-                    writeUTF(catalogPage.pageTextDetails)
-                }
-
-                "recycler_prizes" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageText1)
-                }
-
-                "marketplace_own_items",
-                "marketplace" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(1)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeInt(0)
-                }
-
-                "empty" -> {
-                    writeUTF(category)
-                    writeUTF("")
-                    writeInt(0)
-                    writeInt(0)
-                }
-
-                "roomads" -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeInt(2)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                }
-
-                else -> {
-                    writeUTF(category)
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeUTF(catalogPage.pageSpecial)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF(catalogPage.pageTextTeaser)
-                }
-            }
-
-            writeInt(catalogPage.catalogItems.size)
-
-            catalogPage.catalogItems.forEach { serialize(it) }
-
-            writeInt(chosenOfferId)
-            writeBoolean(false)
-
-            if (isVersionAtLeast(2021, 4, 9)) {
-                // frontPageItems (optional for HabboAir)
-                if (catalogPage.pageLayout == "frontpage" || catalogPage.pageLayout == "frontpage4") {
-                    writeInt(0) // frontPageItems count
-                }
-            }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.CATALOG_PAGE)
-    fun responseR63A(habboResponse: HabboResponse, catalogPage: CatalogPage, chosenOfferId: Int = -1) {
+    fun response(habboResponse: HabboResponse, data: CatalogPageData) {
+        val page = data.catalogPage
+        val presentation = resolvePresentation(habboResponse, page)
+
         habboResponse.apply {
-            writeInt(catalogPage.id) // pageId
+            // Campo #1: pageId
+            writeInt(page.id)
 
-            when (catalogPage.pageLayout) {
-                "frontpage",
-                "frontpage4" -> {
-                    writeUTF("frontpage3") // layoutCode
-                    writeInt(2) // images count
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageSpecial)
-                    writeInt(11) // texts count
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt1", "").toString()) // ctlg_txt1
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt2", "").toString()) // ctlg_txt2
-                    writeUTF(
-                        catalogPage.customData.getOrDefault("ctlg_txt3", "").toString()
-                    ) // ctlg_txt3 (text - linkable)
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt4", "").toString()) // ctlg_txt4
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt5", "").toString()) // ctlg_txt5
-                    writeUTF(
-                        catalogPage.customData.getOrDefault("ctlg_txt6", "").toString()
-                    ) // ctlg_txt6 (redeem voucher)
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt3_link", "").toString()) // link for ctlg_txt3
-                    writeUTF(
-                        catalogPage.customData.getOrDefault("color_ctlg_txt1_ctlg_txt2", "#FAF8CC").toString()
-                    ) // color for ctlg_txt1 and ctlg_txt2
-                    writeUTF(
-                        catalogPage.customData.getOrDefault("color_ctlg_txt3", "#FAF8CC").toString()
-                    ) // color for ctlg_txt3
-                    writeUTF(
-                        catalogPage.customData.getOrDefault("ctlg_txt7", "").toString()
-                    ) // ctlg_txt7 (text - linkable)
-                    writeUTF(catalogPage.customData.getOrDefault("ctlg_txt7_link", "").toString()) // link for ctlg_txt7
-                }
-
-                else -> {
-                    writeUTF(catalogPage.pageLayout)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageHeadline)
-                    writeUTF(catalogPage.pageTeaser)
-                    writeUTF(catalogPage.pageSpecial)
-                    writeInt(3)
-                    writeUTF(catalogPage.pageText1)
-                    writeUTF(catalogPage.pageTextDetails)
-                    writeUTF(catalogPage.pageTextTeaser)
-                }
+            // Campo #2: catalogType (Modern >= 2016)
+            if (isVersionAtLeast(2016, 7, 26)) {
+                writeUTF(data.category)
             }
 
-            writeInt(catalogPage.catalogItems.size)
+            // Campo #3: layoutCode
+            writeUTF(presentation.layoutCode)
 
-            catalogPage.catalogItems.forEach { serialize(it) }
+            // Campo #4: localization (images & texts)
+            writeInt(presentation.images.size)
+            presentation.images.forEach { writeUTF(it) }
 
+            writeInt(presentation.texts.size)
+            presentation.texts.forEach { writeUTF(it) }
+
+            // Campo #5: offers
+            val isBuildersClub = isVersionAtLeast(2016, 7, 26) && page.pageLayout.startsWith("builders_club_frontpage")
+            if (isBuildersClub) {
+                val buildersOffers = HabboServer.habboGame.catalogManager.catalogClubOffers
+                    .filter { it.clubType == ClubType.BUILDERS_CLUB }
+                    .sortedBy { it.credits }
+                writeInt(buildersOffers.size)
+                buildersOffers.forEach { serializeBuildersClubOffer(this, it) }
+            } else {
+                writeInt(page.catalogItems.size)
+                page.catalogItems.forEach { serialize(it) }
+            }
+
+            // Campo #6: offerId (chosenOfferId) (Adicionado na build 201109301501 / R63A)
             if (isVersionAtLeast(2010, 11, 12)) {
-                writeInt(chosenOfferId)
+                writeInt(data.chosenOfferId)
+            }
+
+            // Campo #7: acceptSeasonCurrencyAsCredits (Modern >= 2012)
+            if (isVersionAtLeast(2012, 3, 29)) {
+                writeBoolean(false)
+            }
+
+            // Campo #8: frontPageItems (Modern >= 2016)
+            if (isVersionAtLeast(2016, 7, 26)) {
+                writeInt(presentation.frontPageItems.size)
+                presentation.frontPageItems.forEach { it.serialize(this) }
             }
         }
     }
 
+    companion object {
+        private val NEWLINE_SPLIT_REGEX = Regex("[\\r\\n]+")
 
+        fun resolvePresentation(habboResponse: HabboResponse, page: CatalogPage): CatalogPagePresentation {
+            return if (habboResponse.isVersionAtLeast(2016, 7, 26)) {
+                resolveModernPresentation(page)
+            } else {
+                resolveR63APresentation(page)
+            }
+        }
+
+        fun resolveModernPresentation(page: CatalogPage): CatalogPagePresentation {
+            val layout = when (page.pageLayout) {
+                "frontpage", "frontpage4" -> "frontpage4"
+                "spaces_new" -> "spaces_new"
+                "builders_club_frontpage_normal", "builders_club_frontpage" -> "builders_club_frontpage"
+                "empty" -> ""
+                else -> page.pageLayout
+            }
+
+            val images = when (page.pageLayout) {
+                "frontpage", "frontpage4", "vip_buy", "pets", "pets2", "pets3",
+                "guild_frontpage", "badge_display", "recycler", "recycler_info", "roomads" ->
+                    listOf(page.pageHeadline, page.pageTeaser)
+
+                "spaces_new", "trophies", "recycler_prizes", "marketplace_own_items", "marketplace" ->
+                    listOf(page.pageHeadline)
+
+                "guild_custom_furni" ->
+                    listOf(page.pageHeadline, "", "")
+
+                "builders_club_frontpage_normal", "builders_club_frontpage", "empty" ->
+                    emptyList()
+
+                else ->
+                    listOf(page.pageHeadline, page.pageTeaser, page.pageSpecial)
+            }
+
+            val texts = when (page.pageLayout) {
+                "frontpage", "frontpage4" ->
+                    listOf(page.pageText1, page.pageText2)
+
+                "vip_buy", "marketplace_own_items", "marketplace", "empty" ->
+                    emptyList()
+
+                "builders_club_frontpage_normal", "builders_club_frontpage", "spaces_new",
+                "recycler", "recycler_prizes" ->
+                    listOf(page.pageText1)
+
+                "pets", "pets2", "pets3" ->
+                    listOf(page.pageText1, page.pageText2, page.pageTextDetails, page.pageTextTeaser)
+
+                "guild_frontpage", "guild_custom_furni" ->
+                    listOf(page.pageText1, page.pageTextDetails, page.pageText2)
+
+                "badge_display", "recycler_info" ->
+                    listOf(page.pageText1, page.pageText2, page.pageTextDetails)
+
+                "trophies", "roomads" ->
+                    listOf(page.pageText1, page.pageTextDetails)
+
+                else ->
+                    listOf(page.pageText1, page.pageTextDetails, page.pageTextTeaser)
+            }
+
+            val frontPageItems = if (page.pageLayout == "frontpage" || page.pageLayout == "frontpage4") {
+                parseFrontPageItems(page.pageTextDetails)
+            } else {
+                emptyList()
+            }
+
+            return CatalogPagePresentation(layout, images, texts, frontPageItems)
+        }
+
+        fun resolveR63APresentation(page: CatalogPage): CatalogPagePresentation {
+            if (page.pageLayout == "frontpage" || page.pageLayout == "frontpage4") {
+                val custom = page.customData
+                val color1and2 = custom.getOrDefault("color_ctlg_txt1_ctlg_txt2", "#FAF8CC").toString()
+                val color3 = custom.getOrDefault("color_ctlg_txt3", "#FAF8CC").toString()
+
+                val texts = listOf(
+                    custom.getOrDefault("ctlg_txt1", "").toString(),
+                    custom.getOrDefault("ctlg_txt2", "").toString(),
+                    custom.getOrDefault("ctlg_txt3", "").toString(),
+                    custom.getOrDefault("ctlg_txt4", "").toString(),
+                    custom.getOrDefault("ctlg_txt5", "").toString(),
+                    custom.getOrDefault("ctlg_txt6", "").toString(),
+                    custom.getOrDefault("ctlg_txt3_link", "").toString(),
+                    color1and2,
+                    color3,
+                    custom.getOrDefault("ctlg_txt7", "").toString(),
+                    custom.getOrDefault("ctlg_txt7_link", "").toString()
+                )
+                return CatalogPagePresentation(
+                    layoutCode = "frontpage3",
+                    images = listOf(page.pageHeadline, page.pageSpecial),
+                    texts = texts
+                )
+            }
+
+            return CatalogPagePresentation(
+                layoutCode = page.pageLayout,
+                images = listOf(page.pageHeadline, page.pageTeaser, page.pageSpecial),
+                texts = listOf(page.pageText1, page.pageTextDetails, page.pageTextTeaser)
+            )
+        }
+
+        private fun parseFrontPageItems(pageTextDetails: String): List<CatalogFrontPageItem> {
+            if (pageTextDetails.isBlank()) return emptyList()
+            return pageTextDetails.split('-').mapIndexed { index, section ->
+                val lines = section.split(NEWLINE_SPLIT_REGEX).filterNot(String::isEmpty)
+                CatalogFrontPageItem(
+                    position = index + 1,
+                    itemName = lines.getOrElse(0) { "" },
+                    itemPromoImage = lines.getOrElse(1) { "" },
+                    type = 0,
+                    cataloguePageLocation = lines.getOrElse(2) { "" },
+                    expiration = -1
+                )
+            }
+        }
+
+        private fun serializeBuildersClubOffer(response: HabboResponse, offer: CatalogClubOffer) {
+            response.apply {
+                writeInt(offer.itemId)
+                writeUTF(offer.name)
+                writeBoolean(false) // isRent
+                writeInt(offer.credits)
+                writeInt(offer.points)
+                writeInt(offer.pointsType)
+                if (isVersionAtLeast(2024, 1, 22)) {
+                    writeInt(0) // priceInSilver
+                }
+                writeBoolean(true) // giftable
+                writeInt(0) // items
+                writeInt(0) // club only
+                writeBoolean(true)
+                writeBoolean(false) // is pet
+                writeUTF("")
+            }
+        }
+    }
 }

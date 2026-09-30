@@ -43,6 +43,7 @@ class UserChangeMottoHandler {
         if (motto.length > 38) motto = motto.substring(0, 38)
 
         habboSession.userInformation.motto = motto
+        habboSession.userInformation.markDirty()
 
         // ACH_Motto: mudar estado
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Motto", 1, accumulate = true)

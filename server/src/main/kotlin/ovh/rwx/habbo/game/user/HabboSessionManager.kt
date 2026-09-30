@@ -23,11 +23,12 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 import io.netty.util.AttributeKey
 import ovh.rwx.fastfood.game.FastFoodSession
+import java.util.concurrent.ConcurrentHashMap
 
 class HabboSessionManager {
-    val habboSessions: MutableMap<ChannelId, HabboSession> = mutableMapOf()
+    val habboSessions: ConcurrentHashMap<ChannelId, HabboSession> = ConcurrentHashMap()
     @Suppress("MemberVisibilityCanBePrivate")
-    val fastFoodSessions: MutableMap<ChannelId, FastFoodSession> = mutableMapOf()
+    val fastFoodSessions: ConcurrentHashMap<ChannelId, FastFoodSession> = ConcurrentHashMap()
 
     val sessionsCount: Int
         get() = habboSessions.size
@@ -36,43 +37,38 @@ class HabboSessionManager {
         val habboSession = HabboSession(channel)
         channel.attr(habboSessionAttributeKey).set(habboSession)
 
-        return habboSessions.put(channel.id(), habboSession) == null
+        return habboSessions.putIfAbsent(channel.id(), habboSession) == null
     }
 
     fun makeFastFoodSession(channel: Channel): Boolean {
         val fastFoodSession = FastFoodSession(channel)
         channel.attr(fastFoodAttributeKey).set(fastFoodSession)
 
-        return fastFoodSessions.put(channel.id(), fastFoodSession) == null
+        return fastFoodSessions.putIfAbsent(channel.id(), fastFoodSession) == null
     }
 
     fun removeHabboSession(channel: Channel): Boolean {
-        return if (habboSessions.containsKey(channel.id())) {
-            habboSessions.remove(channel.id())?.close()
-
-            true
-        } else {
-            false
-        }
+        val session = habboSessions.remove(channel.id()) ?: return false
+        session.close()
+        return true
     }
 
     fun removeFastFoodSession(channel: Channel): Boolean {
-        return if (fastFoodSessions.containsKey(channel.id())) {
-            fastFoodSessions.remove(channel.id())?.close()
-
-            true
-        } else {
-            false
-        }
+        val session = fastFoodSessions.remove(channel.id()) ?: return false
+        session.close()
+        return true
     }
 
-    fun getHabboSessionById(id: Int) = habboSessions.values.find { it.authenticated && it.userInformation.id == id }
+    fun getHabboSessionById(id: Int): HabboSession? =
+        habboSessions.values.find { it.authenticated && it.userInformation.id == id }
 
-    fun getHabboSessionByUsername(username: String) = habboSessions.values.find { it.authenticated && it.userInformation.username == username }
+    fun getHabboSessionByUsername(username: String): HabboSession? =
+        habboSessions.values.find { it.authenticated && it.userInformation.username == username }
 
-    fun getHabboSessionByCryptoToken(token: String) = habboSessions.values.find { it.cryptoToken == token }
+    fun getHabboSessionByCryptoToken(token: String): HabboSession? =
+        habboSessions.values.find { it.cryptoToken == token }
 
-    fun containsHabboSessionById(id: Int) = getHabboSessionById(id) != null
+    fun containsHabboSessionById(id: Int): Boolean = getHabboSessionById(id) != null
 
     companion object {
         val habboSessionAttributeKey: AttributeKey<HabboSession> = AttributeKey.valueOf<HabboSession>("HABBO_SESSION")

@@ -23,11 +23,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.navigator.NavigatorDao
 
+import java.util.concurrent.ConcurrentHashMap
+
 class NavigatorManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val navTabs: Array<String> = arrayOf("official_view", "hotel_view", "roomads_view", "myworld_view")
-    val navigatorRoomCategories: MutableMap<Int, NavigatorRoomCategory> = mutableMapOf()
-    val navigatorEventCategories: MutableMap<Int, NavigatorEventCategory> = mutableMapOf()
+    val navigatorRoomCategories: ConcurrentHashMap<Int, NavigatorRoomCategory> = ConcurrentHashMap()
+    val navigatorEventCategories: ConcurrentHashMap<Int, NavigatorEventCategory> = ConcurrentHashMap()
 
     fun load() {
         log.info("Loading navigator...")

@@ -19,23 +19,19 @@
 
 package ovh.rwx.habbo.database.clothing
 
-import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.*
 
 object ClothingDao {
-    fun getClothings(userId: Int): List<String> = HabboServer.database {
-        select("SELECT `item_name` FROM `users_clothing` WHERE `user_id` = :user_id",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
-            it.string("item_name")
-        }
+    fun getClothings(userId: Int): List<String> = db {
+        query<String>(
+            "SELECT `item_name` FROM `users_clothing` WHERE `user_id` = :user_id",
+            mapOf("user_id" to userId)
+        )
     }
 
     fun addClothing(userId: Int, itemName: String) {
-        HabboServer.database {
-            insertAndGetGeneratedKey("INSERT INTO `users_clothing` (`user_id`, `item_name`) VALUES (:user_id, :item_name)",
+        db {
+            update("INSERT INTO `users_clothing` (`user_id`, `item_name`) VALUES (:user_id, :item_name)",
                     mapOf(
                             "user_id" to userId,
                             "item_name" to itemName

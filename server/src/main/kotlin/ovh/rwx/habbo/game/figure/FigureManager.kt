@@ -31,9 +31,9 @@ import javax.xml.parsers.SAXParserFactory
 class FigureManager {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    val figureSets: MutableMap<Int, FigureSet> = mutableMapOf()
-    val figurePalette: MutableMap<Int, MutableList<FigureColor>> = mutableMapOf()
-    val figureSetTypes: MutableMap<String, FigureSetType> = mutableMapOf()
+    val figureSets: MutableMap<Int, FigureSet> = java.util.concurrent.ConcurrentHashMap()
+    val figurePalette: MutableMap<Int, MutableList<FigureColor>> = java.util.concurrent.ConcurrentHashMap()
+    val figureSetTypes: MutableMap<String, FigureSetType> = java.util.concurrent.ConcurrentHashMap()
 
     fun load() {
         log.info("Loading figure data...")

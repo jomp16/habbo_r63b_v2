@@ -49,26 +49,36 @@ class BadgeManager {
     fun getBadgeCount(userId: Int): Int = getBadges(userId).size
 
     fun addBadge(userId: Int, badge: Badge) {
-        userBadges[userId] = getBadges(userId) + (badge.code to badge)
-        badgeOwnerCounts[badge.code] = getOwnerCount(badge.code) + 1
+        var added = false
+        userBadges.compute(userId) { _, current ->
+            val map = current ?: emptyMap()
+            if (!map.containsKey(badge.code)) {
+                added = true
+                map + (badge.code to badge)
+            } else {
+                map
+            }
+        }
+        if (added) {
+            badgeOwnerCounts.compute(badge.code) { _, count -> (count ?: 0) + 1 }
+        }
     }
 
     fun removeBadge(userId: Int, code: String) {
-        val userBadgeMap = getBadges(userId)
-
-        if (userBadgeMap.containsKey(code)) {
-            if (userBadgeMap.size == 1) {
-                userBadges.remove(userId)
+        var removed = false
+        userBadges.computeIfPresent(userId) { _, current ->
+            if (current.containsKey(code)) {
+                removed = true
+                val updated = current - code
+                if (updated.isEmpty()) null else updated
             } else {
-                userBadges[userId] = userBadgeMap - code
+                current
             }
+        }
 
-            val ownerCount = getOwnerCount(code)
-
-            if (ownerCount <= 1) {
-                badgeOwnerCounts.remove(code)
-            } else {
-                badgeOwnerCounts[code] = ownerCount - 1
+        if (removed) {
+            badgeOwnerCounts.computeIfPresent(code) { _, count ->
+                if (count <= 1) null else count - 1
             }
         }
     }

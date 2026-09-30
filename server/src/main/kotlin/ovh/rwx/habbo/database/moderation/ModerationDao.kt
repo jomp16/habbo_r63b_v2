@@ -19,25 +19,19 @@
 
 package ovh.rwx.habbo.database.moderation
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.moderation.ModerationTopic
+import ovh.rwx.habbo.database.*
 
 object ModerationDao {
-    fun getCategories(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM `moderation_categories`") {
-            it.int("id") to it.string("name")
-        }
+    fun getCategories(): List<Pair<Int, String>> = db {
+        query<ModerationCategoryDto>("SELECT `id`, `name` FROM `moderation_categories`")
+            .map { it.id to it.name }
     }
 
-    fun getTopics(): List<ModerationTopic> = HabboServer.database {
-        select("SELECT * FROM `moderation_topics`") {
-            ModerationTopic(
-                    it.int("id"),
-                    it.int("category_id"),
-                    it.string("name"),
-                    it.int("topic_id"),
-                    it.string("consequence")
-            )
-        }
+    fun getTopics(): List<ModerationTopic> = db {
+        query<ModerationTopic>("SELECT * FROM `moderation_topics`")
     }
 }
+
+data class ModerationCategoryDto(val id: Int, val name: String)
+

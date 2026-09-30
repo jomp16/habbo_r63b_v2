@@ -28,17 +28,21 @@ import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class AchievementManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val achievementGroups: MutableMap<String, AchievementGroup> = mutableMapOf()
-    private val achievements: MutableList<Achievement> = mutableListOf()
+
+    val achievementGroups: ConcurrentHashMap<String, AchievementGroup> = ConcurrentHashMap()
+    private val achievements: MutableList<Achievement> = CopyOnWriteArrayList()
     private val saveQueue: MutableSet<AchievementUser> = ConcurrentHashMap.newKeySet()
-    val userAchievements: MutableMap<Int, List<AchievementUser>> = ConcurrentHashMap()
-    val achievementLevels: Map<Int, List<Achievement>>
-        get() = achievements.filter { it.enabled }.groupBy { it.groupId }
-    val groupedAchievements: Map<AchievementGroup, List<Achievement>>
-        get() = achievements.filter { it.enabled }.groupBy { it.group }
+    val userAchievements: ConcurrentHashMap<Int, List<AchievementUser>> = ConcurrentHashMap()
+
+    var achievementLevels: Map<Int, List<Achievement>> = emptyMap()
+        private set
+
+    var groupedAchievements: Map<AchievementGroup, List<Achievement>> = emptyMap()
+        private set
 
     fun load() {
         log.info("Loading achievements...")
@@ -47,9 +51,14 @@ class AchievementManager {
         achievements.clear()
         userAchievements.clear()
 
-        achievementGroups += AchievementDao.loadAchievementGroups()
-        achievements += AchievementDao.loadAchievements()
+        achievementGroups.putAll(AchievementDao.loadAchievementGroups())
+        achievements.addAll(AchievementDao.loadAchievements())
         userAchievements.putAll(AchievementDao.loadAllUserAchievements())
+
+        // Pré-calcula os agrupamentos ativos para evitar recalcular em runtime a cada acesso
+        val enabledAchievements = achievements.filter { it.enabled }
+        achievementLevels = enabledAchievements.groupBy { it.groupId }
+        groupedAchievements = enabledAchievements.groupBy { it.group }
 
         log.info("Loaded {} achievement groups!", achievementGroups.size)
         log.info("Loaded {} achievements!", achievements.size)
@@ -176,45 +185,38 @@ class AchievementManager {
                 habboSession.habboBadge.addBadge(newBadgeCode)
             }
 
-            if (habboSession.release == "R63A") {
-                habboSession.sendHabboResponse(
-                    OutgoingR63A.ACTIVITY_POINTS_BALANCE,
-                    habboSession.userInformation.activityPointsCurrencies
-                )
-                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
-                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
-
-                habboSession.sendHabboResponse(
-                    OutgoingR63A.ACHIEVEMENT_LIST,
-                    AchievementListData(
-                        habboSession.userInformation.achievementUsers,
-                        groupedAchievements
-                    )
-                )
-            } else {
-                habboSession.sendHabboResponse(
-                    Outgoing.ACTIVITY_POINTS_BALANCE,
-                    habboSession.userInformation.activityPointsCurrencies
-                )
-                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
-                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_UNLOCKED, userData, lastUnlockedLevel!!)
-                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
-
-                habboSession.sendHabboResponse(
-                    Outgoing.ACHIEVEMENT_LIST,
-                    AchievementListData(
-                        habboSession.userInformation.achievementUsers,
-                        groupedAchievements
-                    )
-                )
-            }
+            habboSession.sendResponse(
+                Outgoing.ACTIVITY_POINTS_BALANCE,
+                OutgoingR63A.ACTIVITY_POINTS_BALANCE,
+                habboSession.userInformation.activityPointsCurrencies
+            )
+            habboSession.sendResponse(
+                Outgoing.ACHIEVEMENT_SCORE,
+                OutgoingR63A.ACHIEVEMENT_SCORE,
+                habboSession.userStats.achievementScore
+            )
+            habboSession.sendResponse(
+                Outgoing.ACHIEVEMENT_UNLOCKED,
+                OutgoingR63A.ACHIEVEMENT_UNLOCKED,
+                userData,
+                lastUnlockedLevel!!
+            )
+            habboSession.sendResponse(
+                Outgoing.ACHIEVEMENT_PROGRESS,
+                OutgoingR63A.ACHIEVEMENT_PROGRESS,
+                userData
+            )
+            habboSession.sendResponse(
+                Outgoing.ACHIEVEMENT_LIST,
+                OutgoingR63A.ACHIEVEMENT_LIST,
+                AchievementListData(habboSession.userInformation.achievementUsers, groupedAchievements)
+            )
         } else {
-            if (habboSession.release == "R63A") {
-                habboSession.sendHabboResponse(OutgoingR63A.ACHIEVEMENT_PROGRESS, userData)
-            } else {
-                habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_PROGRESS, userData)
-            }
+            habboSession.sendResponse(
+                Outgoing.ACHIEVEMENT_PROGRESS,
+                OutgoingR63A.ACHIEVEMENT_PROGRESS,
+                userData
+            )
         }
     }
 }

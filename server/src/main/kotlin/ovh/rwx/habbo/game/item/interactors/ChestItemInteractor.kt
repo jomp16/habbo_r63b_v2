@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.item.interactors
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.chest.ChestPermissions
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -42,7 +43,7 @@ class ChestItemInteractor : ItemInteractor() {
         val chestManager = HabboServer.habboGame.chestManager
         val chest = chestManager.getOrCreateChest(roomItem) ?: return
 
-        if (!chestManager.canView(session, room, chest)) {
+        if (!ChestPermissions.canView(session, room, chest)) {
             session.sendNotification($$"${wiredchests.lock_info.title}")
 
             return

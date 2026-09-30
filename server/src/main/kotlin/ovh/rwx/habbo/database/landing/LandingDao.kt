@@ -19,33 +19,25 @@
 
 package ovh.rwx.habbo.database.landing
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.landing.LandingPromo
 import ovh.rwx.habbo.game.landing.LandingReward
+import ovh.rwx.habbo.database.*
 
 object LandingDao {
-    fun getLandingPromos(): List<LandingPromo> = HabboServer.database {
-        select("SELECT * FROM `landing_promos`") {
-            LandingPromo(
-                    it.int("id"),
-                    it.string("header"),
-                    it.string("body"),
-                    it.string("button"),
-                    it.boolean("show_button"),
-                    it.string("button_link"),
-                    it.string("image")
-            )
-        }
+    fun getLandingPromos(): List<LandingPromo> = db {
+        query<LandingPromo>("SELECT * FROM `landing_promos`")
     }
 
-    fun getLandingReward(): LandingReward? = HabboServer.database {
-        select("SELECT * FROM `landing_reward` LIMIT 1") {
-            LandingReward(
-                    it.int("id"),
-                    it.string("item_name"),
-                    it.int("total_amount"),
-                    it.string("random_rewards").split(',')
-            )
-        }.firstOrNull()
+    fun getLandingReward(): LandingReward? = db {
+        queryOne<LandingRewardDto>("SELECT * FROM `landing_reward` LIMIT 1")?.toDomain()
     }
+}
+
+data class LandingRewardDto(
+    val id: Int,
+    val itemName: String,
+    val totalAmount: Int,
+    val randomRewards: String
+) {
+    fun toDomain() = LandingReward(id, itemName, totalAmount, randomRewards.split(','))
 }

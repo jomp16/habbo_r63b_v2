@@ -19,27 +19,33 @@
 
 package ovh.rwx.habbo.database.release
 
-import ovh.rwx.habbo.HabboServer
 import java.util.*
+import ovh.rwx.habbo.database.*
 
 object ReleaseDao {
-    fun getReleases(): List<String> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/release/select_releases.sql").readText()) {
-            it.string("release_name")
-        }
+    fun getReleases(): List<String> = db {
+        query<String>("sql/release/select_releases.sql")
     }
 
-    fun getHeaders(): List<ReleaseHeaderInfo> = HabboServer.database {
-        select(javaClass.classLoader.getResource("sql/release/select_headers.sql").readText()) {
-            ReleaseHeaderInfo(
-                ReleaseType.valueOf(it.string("type").uppercase(Locale.getDefault())),
-                it.string("release_name"),
-                it.string("name"),
-                it.intOrNull("header") ?: -1,
-                it.stringOrNull("override_method")
-            )
-        }
+    fun getHeaders(): List<ReleaseHeaderInfo> = db {
+        query<ReleaseHeaderInfoDto>("sql/release/select_headers.sql").map { it.toDomain() }
     }
+}
+
+data class ReleaseHeaderInfoDto(
+    val type: String,
+    val releaseName: String,
+    val name: String,
+    val header: Int? = -1,
+    val overrideMethod: String?
+) {
+    fun toDomain() = ReleaseHeaderInfo(
+        ReleaseType.valueOf(type.uppercase(Locale.getDefault())),
+        releaseName,
+        name,
+        header ?: -1,
+        overrideMethod
+    )
 }
 
 data class ReleaseHeaderInfo(

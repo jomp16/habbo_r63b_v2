@@ -19,27 +19,18 @@
 
 package ovh.rwx.habbo.database.wardrobe
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
-import ovh.rwx.habbo.kotlin.insertAndGetGeneratedKey
+import ovh.rwx.habbo.database.db
 
 object WardrobeDao {
-    fun getWardrobes(userId: Int): List<Wardrobe> = HabboServer.database {
-        select("SELECT * FROM `users_wardrobe` WHERE `user_id` = :user_id",
-                mapOf(
-                        "user_id" to userId
-                )
-        ) {
-            Wardrobe(
-                    it.int("id"),
-                    it.int("slot_id"),
-                    it.string("figure"),
-                    it.string("gender")
-            )
-        }
+    fun getWardrobes(userId: Int): List<Wardrobe> = db {
+        query<Wardrobe>(
+            "SELECT `id`, `slot_id`, `figure`, `gender` FROM `users_wardrobe` WHERE `user_id` = :user_id",
+            mapOf("user_id" to userId)
+        )
     }
 
-    fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
+    fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe = db {
         update("UPDATE `users_wardrobe` SET `figure` = :figure, `gender` = :gender, `slot_id` = :slot_id WHERE `id` = :id",
                 mapOf(
                         "figure" to figure,
@@ -52,7 +43,7 @@ object WardrobeDao {
         Wardrobe(id, slotId, figure, gender)
     }
 
-    fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = HabboServer.database {
+    fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = db {
         val id = insertAndGetGeneratedKey("INSERT INTO `users_wardrobe` (`user_id`, `slot_id`, `figure`, `gender`) VALUES (:user_id, :slot_id, :figure, :gender)",
                 mapOf(
                         "user_id" to userId,

@@ -21,105 +21,44 @@ package ovh.rwx.habbo.database.catalog
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import ovh.rwx.habbo.game.catalog.CatalogDeal
 import ovh.rwx.habbo.game.catalog.CatalogItem
 import ovh.rwx.habbo.game.catalog.CatalogPage
 import ovh.rwx.habbo.game.user.subscription.ClubType
 import java.util.concurrent.atomic.AtomicInteger
+import ovh.rwx.habbo.database.*
+
+private val jsonMapper = jacksonObjectMapper()
 
 object CatalogDao {
-    fun getCatalogPages(): List<CatalogPage> = HabboServer.database {
-        val jacksonObjectMapper = jacksonObjectMapper()
-
-        select("SELECT * FROM `catalog_pages` WHERE `id` != -1 AND `id` != -2") {
-            CatalogPage(
-                it.int("id"),
-                it.int("parent_id"),
-                it.string("name").trim(),
-                it.string("code_name").trim(),
-                it.int("icon_image"),
-                it.boolean("visible"),
-                it.boolean("enabled"),
-                it.int("min_rank"),
-                it.boolean("club_only"),
-                it.int("order_num"),
-                it.string("page_layout").trim(),
-                it.string("page_headline").trim(),
-                it.string("page_teaser").trim(),
-                it.string("page_special").trim(),
-                it.string("page_text1").trim(),
-                it.string("page_text2").trim(),
-                it.string("page_text_details").trim(),
-                it.string("page_text_teaser").trim(),
-                it.string("page_link_description").trim(),
-                it.string("page_link_pagename").trim(),
-                jacksonObjectMapper.readValue(it.string("custom_data"))
-            )
-        }
+    fun getCatalogPages(): List<CatalogPage> = db {
+        query<CatalogPageDto>("SELECT * FROM `catalog_pages` WHERE `id` != -1 AND `id` != -2")
+            .map { it.toDomain() }
     }
 
-    fun getCatalogItems(): List<CatalogItem> = HabboServer.database {
-        val jacksonObjectMapper = jacksonObjectMapper()
-
-        select("SELECT * FROM `catalog_items`") {
-            CatalogItem(
-                it.int("id"),
-                it.int("page_id"),
-                it.string("item_name").trim(),
-                it.int("order_num"),
-                it.intOrNull("deal_id") ?: 0,
-                it.string("catalog_name").trim(),
-                it.string("badge").trim(),
-                it.int("cost_credits"),
-                it.int("cost_pixels"),
-                it.int("cost_vip"),
-                it.int("amount"),
-                it.boolean("club_only"),
-                AtomicInteger(it.int("limited_sells")),
-                it.int("limited_stack"),
-                it.boolean("offer_active"),
-                jacksonObjectMapper.readValue(it.string("extra_data"))
-            )
-        }
+    fun getCatalogItems(): List<CatalogItem> = db {
+        query<CatalogItemDto>("SELECT * FROM `catalog_items`")
+            .map { it.toDomain() }
     }
 
-    fun getCatalogClubOffers(): List<CatalogClubOffer> = HabboServer.database {
-        select("SELECT * FROM `catalog_club_offers`") {
-            CatalogClubOffer(
-                it.int("id"),
-                it.int("item_id"),
-                it.string("name").trim(),
-                ClubType.valueOf(it.string("club_type").uppercase()),
-                it.int("months"),
-                it.int("credits"),
-                it.int("points"),
-                it.int("points_type"),
-                it.boolean("giftable"),
-                it.int("items_limit")
-            )
-        }
+    fun getCatalogClubOffers(): List<CatalogClubOffer> = db {
+        query<CatalogClubOfferDto>("SELECT * FROM `catalog_club_offers`")
+            .map { it.toDomain() }
     }
 
-    fun getCatalogDeals(): List<CatalogDeal> = HabboServer.database {
-        select("SELECT * FROM `catalog_deals`") {
-            CatalogDeal(
-                it.int("id"),
-                it.string("item_names").split(',').map(String::trim),
-                it.string("amounts").split(',').map(String::toInt)
-            )
-        }
+    fun getCatalogDeals(): List<CatalogDeal> = db {
+        query<CatalogDealDto>("SELECT * FROM `catalog_deals`")
+            .map { it.toDomain() }
     }
 
-    fun getRecyclerRewards(): List<Pair<Int, String>> = HabboServer.database {
-        select("SELECT * FROM `catalog_recycler`") {
-            it.int("level") to it.string("item_name").trim()
-        }
+    fun getRecyclerRewards(): List<Pair<Int, String>> = db {
+        query<RecyclerRewardDto>("SELECT * FROM `catalog_recycler`")
+            .map { it.level to it.itemName.trim() }
     }
 
     fun updateLimitedSells(catalogItem: CatalogItem) {
-        HabboServer.database {
+        db {
             update(
                 "UPDATE `catalog_items` SET `limited_sells` = :limited_sells WHERE `id` = :id",
                 mapOf(
@@ -130,3 +69,91 @@ object CatalogDao {
         }
     }
 }
+
+data class CatalogPageDto(
+    val id: Int,
+    val parentId: Int,
+    val name: String,
+    val codeName: String,
+    val iconImage: Int,
+    val visible: Boolean,
+    val enabled: Boolean,
+    val minRank: Int,
+    val clubOnly: Boolean,
+    val orderNum: Int,
+    val pageLayout: String,
+    val pageHeadline: String,
+    val pageTeaser: String,
+    val pageSpecial: String,
+    val pageText1: String,
+    val pageText2: String,
+    val pageTextDetails: String,
+    val pageTextTeaser: String,
+    val pageLinkDescription: String,
+    val pageLinkPagename: String,
+    val customData: String
+) {
+    fun toDomain(): CatalogPage = CatalogPage(
+        id, parentId, name.trim(), codeName.trim(), iconImage, visible, enabled, minRank, clubOnly, orderNum,
+        pageLayout.trim(), pageHeadline.trim(), pageTeaser.trim(), pageSpecial.trim(), pageText1.trim(),
+        pageText2.trim(), pageTextDetails.trim(), pageTextTeaser.trim(), pageLinkDescription.trim(),
+        pageLinkPagename.trim(), jsonMapper.readValue(customData)
+    )
+}
+
+data class CatalogItemDto(
+    val id: Int,
+    val pageId: Int,
+    val itemName: String,
+    val orderNum: Int,
+    val dealId: Int? = 0,
+    val catalogName: String,
+    val badge: String,
+    val costCredits: Int,
+    val costPixels: Int,
+    val costVip: Int,
+    val amount: Int,
+    val clubOnly: Boolean,
+    val limitedSells: Int = 0,
+    val limitedStack: Int = 0,
+    val offerActive: Boolean,
+    val extraData: String
+) {
+    fun toDomain(): CatalogItem = CatalogItem(
+        id, pageId, itemName.trim(), orderNum, dealId ?: 0, catalogName.trim(), badge.trim(),
+        costCredits, costPixels, costVip, amount, clubOnly, AtomicInteger(limitedSells),
+        limitedStack, offerActive, jsonMapper.readValue(extraData)
+    )
+}
+
+data class CatalogClubOfferDto(
+    val id: Int,
+    val itemId: Int,
+    val name: String,
+    val clubType: String,
+    val months: Int,
+    val credits: Int,
+    val points: Int,
+    val pointsType: Int,
+    val giftable: Boolean,
+    val itemsLimit: Int
+) {
+    fun toDomain() = CatalogClubOffer(
+        id, itemId, name.trim(), ClubType.valueOf(clubType.uppercase()),
+        months, credits, points, pointsType, giftable, itemsLimit
+    )
+}
+
+data class CatalogDealDto(
+    val id: Int,
+    val itemName: String,
+    val amount: String
+) {
+    fun toDomain() = CatalogDeal(
+        id,
+        itemName.split(',').map(String::trim),
+        amount.split(',').map(String::toInt)
+    )
+}
+
+data class RecyclerRewardDto(val level: Int, val itemName: String)

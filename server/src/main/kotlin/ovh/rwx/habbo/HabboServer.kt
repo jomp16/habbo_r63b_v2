@@ -23,10 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.github.andrewoma.kwery.core.Session
-import com.github.andrewoma.kwery.core.SessionFactory
-import com.github.andrewoma.kwery.core.dialect.MysqlDialect
-import com.github.andrewoma.kwery.core.interceptor.LoggingInterceptor
 import com.zaxxer.hikari.HikariDataSource
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
@@ -48,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.jdbi.v3.core.Jdbi
 import org.reflections8.Reflections
 import org.reflections8.util.ClasspathHelper
 import org.reflections8.util.ConfigurationBuilder
@@ -56,31 +53,31 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.FastFoodHandler
 import ovh.rwx.habbo.communication.HabboHandler
 import ovh.rwx.habbo.config.HabboConfig
+import ovh.rwx.habbo.console.ServerConsole
+import ovh.rwx.habbo.console.ServerControlSocket
+import ovh.rwx.habbo.database.DatabaseManager
+import ovh.rwx.habbo.database.migration.FlywayMigration
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.core.PluginManager
 import java.io.File
-import java.net.UnixDomainSocketAddress
-import java.nio.channels.Channels
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.security.Security
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.system.exitProcess
-import java.nio.channels.SocketChannel as UnixSocketChannel
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val habboConfig: HabboConfig = ObjectMapper(YAMLFactory()).registerKotlinModule().readValue(File("config.yaml"))
     val pluginManager: PluginManager = PluginManager()
     // SQL
-    private val hikariDataSource: HikariDataSource
-    val databaseFactory: SessionFactory
+    val hikariDataSource: HikariDataSource
+    val jdbi: Jdbi
     // Netty
     private val habboServerBootstrap: ServerBootstrap
     private val habboWebSocketServerBootstrap: ServerBootstrap
@@ -97,14 +94,13 @@ object HabboServer : AutoCloseable {
     val serverScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
     val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
-    private val tuiSocketPath = Path.of(System.getProperty("habbo.tui.socket") ?: "/tmp/habbo-r63b.sock")
-    private var controlSocket: UnixSocketChannel? = null
-    private var controlWriter: java.io.BufferedWriter? = null
+    val serverConsole: ServerConsole = ServerConsole(this)
+    val serverControlSocket: ServerControlSocket = ServerControlSocket(this, serverConsole)
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val reflections: Reflections
         get() = Reflections(ConfigurationBuilder().addUrls(ClasspathHelper.forClassLoader()).addUrls(ClasspathHelper.forManifest()).addUrls(ClasspathHelper.forJavaClassPath()))
-    private val started: Boolean
+    val started: Boolean
         get() = !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
     init {
@@ -125,14 +121,11 @@ object HabboServer : AutoCloseable {
         log.info("Initializing database...")
 
         hikariDataSource = HikariDataSource(habboConfig.databaseConfig.hikariConfig)
-        databaseFactory = SessionFactory(hikariDataSource, MysqlDialect(), LoggingInterceptor())
+        FlywayMigration.migrate(hikariDataSource)
+        jdbi = DatabaseManager.init(hikariDataSource)
+        WriteBehindManager.start(applicationScope)
 
-        log.info("Database initialized!")
-        log.info("Cleaning up some things in database...")
-        log.debug("Fixing some data in users table...")
-        cleanUpUsers()
-        log.debug("Done!")
-        log.info("Done!")
+        log.info("Database and Flyway initialized!")
 
         log.info("Loading Habbo handler...")
         habboHandler = HabboHandler()
@@ -171,7 +164,8 @@ object HabboServer : AutoCloseable {
 
     fun start() {
         try {
-            startControlServer()
+            serverControlSocket.start()
+            serverConsole.startConsoleReader()
             val stringEncoder = StringEncoder(Charsets.UTF_8)
             val habboNettyEncoder = HabboNettyEncoder()
             val habboNettyHandler = HabboNettyHandler()
@@ -266,69 +260,11 @@ object HabboServer : AutoCloseable {
         }
     }
 
-    private fun startControlServer() {
-        Thread({
-            while (controlSocket == null) {
-                try {
-                    val socket = UnixSocketChannel.open(java.net.StandardProtocolFamily.UNIX)
-                    socket.connect(UnixDomainSocketAddress.of(tuiSocketPath))
-                    controlSocket = socket
-                    controlWriter =
-                        Channels.newWriter(socket, StandardCharsets.UTF_8.newEncoder(), -1).buffered()
-                    controlWriter?.append("HELLO\tCONTROL\n")?.flush()
-                    handleControlClient(socket)
-                } catch (e: Exception) {
-                    Thread.sleep(250)
-                }
-            }
-        }, "tui-control-acceptor").apply { isDaemon = true }.start()
-
-        serverScheduledExecutor.scheduleWithFixedDelay(
-            { broadcastControlStats() },
-            0,
-            1,
-            java.util.concurrent.TimeUnit.SECONDS
-        )
-    }
-
-    private fun handleControlClient(socket: UnixSocketChannel) {
-        Thread({
-            socket.use { client ->
-                val reader = Channels.newReader(client, StandardCharsets.UTF_8.newDecoder(), -1).buffered()
-                reader.lineSequence().forEach { command ->
-                    if (command.startsWith("CMD\t")) {
-                        controlWriter?.append(commandResult(command.removePrefix("CMD\t")))?.append('\n')?.flush()
-                    }
-                }
-            }
-            controlSocket = null
-        }, "tui-control-client").apply { isDaemon = true }.start()
-    }
-
-    private fun broadcastControlStats() {
-        val stats = controlStatsLine()
-        controlWriter?.append(stats)?.append('\n')?.flush()
-    }
-
-    private fun controlStatsLine(): String {
-        val sessions = habboSessionManager.habboSessions.values
-        return "STATS\tusers=${sessions.count { it.authenticated && !it.handshaking }}\trooms_loaded=${habboGame.roomManager.rooms.values.count { it.running }}"
-    }
-
-    private fun commandResult(command: String): String {
-        val name = command.trim()
-        return "RESULT\t$command\t${if (name.isBlank()) "Comando inválido" else "Comando ainda não implementado: $name"}"
-    }
-
-    inline fun <R> database(crossinline task: Session.() -> R): R = databaseFactory.use { session ->
-        session.task()
-    }
-
     override fun close() {
         if (started) {
-            controlWriter?.close()
-            controlSocket?.close()
+            serverControlSocket.close()
             log.info("Shutting down ${BuildConfig.NAME} server...")
+            habboGame.close()
             // Start room
             log.debug("Closing all loaded rooms...")
             habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
@@ -341,6 +277,10 @@ object HabboServer : AutoCloseable {
             habboGame.achievementManager.saveQueuedAchievements()
             log.debug("Done!")
             // End achievements
+            // Flush Write-Behind before shutdown
+            log.debug("Flushing write-behind persistence...")
+            WriteBehindManager.stop()
+            log.debug("Done!")
             // Start Netty
             log.debug("Shutting down Netty server...")
             bossGroup.shutdownGracefully().awaitUninterruptibly()
@@ -348,8 +288,8 @@ object HabboServer : AutoCloseable {
             log.debug("Done!")
             // End Netty
             // Start database
-            log.debug("Fixing some data in users table...")
-            cleanUpUsers()
+            log.debug("Closing database connection pool...")
+            hikariDataSource.close()
             log.debug("Done!")
             // End database
             // Start plugins

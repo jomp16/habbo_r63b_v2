@@ -19,9 +19,6 @@
 
 package ovh.rwx.habbo.game.habbicon
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
@@ -37,16 +34,18 @@ import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
-import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
+
+data class HabbiconChatContent(val habbiconId: Int)
 
 class HabbiconManager {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    val collections: MutableMap<Int, HabbiconCollection> = mutableMapOf()
-    val habbicons: MutableMap<Int, Habbicon> = mutableMapOf()
+    val collections: ConcurrentHashMap<Int, HabbiconCollection> = ConcurrentHashMap()
+    val habbicons: ConcurrentHashMap<Int, Habbicon> = ConcurrentHashMap()
 
     fun load() {
-        syncAssets()
+        HabbiconAssetSynchronizer.syncAssets()
         collections.clear()
         habbicons.clear()
 
@@ -60,50 +59,6 @@ class HabbiconManager {
         }
 
         log.info("Loaded {} habbicon collections and {} habbicons", collections.size, habbicons.size)
-    }
-
-    private fun syncAssets() {
-        runCatching {
-            val variables = URI.create(HabboServer.habboConfig.externalVariablesTxt)
-                .toURL()
-                .openStream()
-                .bufferedReader()
-                .useLines { lines ->
-                    lines.mapNotNull { line ->
-                        val separator = line.indexOf('=')
-                        if (separator <= 0) null else line.substring(0, separator) to line.substring(separator + 1)
-                    }.toMap()
-                }
-            val hash = variables["habbicons.hash"]?.takeIf { it.isNotBlank() }
-                ?: error("habbicons.hash was not found in external variables")
-            val assetRoot = (variables["habbicons.url"] ?: "https://images.habbo.com/habbicons").trimEnd('/')
-            val metadataUrl = URI.create("$assetRoot/$hash/habbicons.json").toURL()
-            val assets: HabbiconAssetFile = metadataUrl.openStream().bufferedReader().use {
-                jacksonObjectMapper().readValue(it.readText())
-            }
-            val grouped = assets.habbicons
-                .filter { it.id > 0 && !it.name.isNullOrBlank() }
-                .groupBy { it.name!!.substringBefore('_') }
-
-            grouped.forEach { (collectionName, entries) ->
-                val collectionId = HabbiconDao.getOrCreateCollection(collectionName)
-                val rewardId = HabbiconDao.getCollectionRewardId(collectionId)
-                    ?: entries.random().id.also { HabbiconDao.setCollectionReward(collectionId, it) }
-
-                entries.forEach { asset ->
-                    HabbiconDao.upsertHabbicon(
-                        id = asset.id,
-                        collectionId = collectionId,
-                        name = asset.name!!,
-                        purchasable = asset.id != rewardId
-                    )
-                }
-            }
-
-            log.info("Synchronized {} Habbicons from {}", grouped.values.sumOf { it.size }, metadataUrl)
-        }.onFailure { error ->
-            log.warn("Could not synchronize Habbicons from external variables", error)
-        }
     }
 
     fun getCollection(collectionId: Int): HabbiconCollection? = collections[collectionId]
@@ -201,9 +156,6 @@ class HabbiconManager {
 
         val userHabbicons = habboSession.habboHabbicon.userHabbicons
         if (userHabbicons.containsKey(habbiconId)) return false
-
-        val collectionHabbicons = collection.habbicons.filter { it.id != collection.rewardHabbiconId && it.enabled }
-        val ownedCount = collectionHabbicons.count { userHabbicons.containsKey(it.id) }
 
         val targetState = if (collection.rewardState in listOf(UserHabbicon.STATE_OWNED, UserHabbicon.STATE_FAVORITE)) {
             collection.rewardState
@@ -376,13 +328,4 @@ class HabbiconManager {
 
         habboSession.updateAllCurrencies()
     }
-
 }
-
-data class HabbiconChatContent(val habbiconId: Int)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class HabbiconAssetFile(val habbicons: List<HabbiconAsset> = emptyList())
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class HabbiconAsset(val id: Int, val name: String? = null)

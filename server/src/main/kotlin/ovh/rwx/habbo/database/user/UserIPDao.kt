@@ -19,55 +19,38 @@
 
 package ovh.rwx.habbo.database.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.util.IpInfo
+import ovh.rwx.habbo.database.db
 
 object UserIPDao {
     @Suppress("unused")
-    fun getIPsForUser(userId: Int): List<String> {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/users/ips/select_ips.sql").readText(),
-                    mapOf(
-                            "user_id" to userId
-                    )
-            ) {
-                it.string("ip")
-            }
-        }
+    fun getIPsForUser(userId: Int): List<String> = db {
+        query<String>("sql/users/ips/select_ips.sql", mapOf("user_id" to userId))
     }
 
     fun addIPForUser(userId: Int, isInternalIP: Boolean, ipInfo: IpInfo) {
-        HabboServer.database {
-            update(javaClass.getResource("/sql/users/ips/insert_ip.sql").readText(),
-                    mapOf(
-                            "user_id" to userId,
-                            "ip" to ipInfo.ip,
-                            "hostname" to ipInfo.hostname,
-                            "ip_type" to ipInfo.type,
-                            "internal" to isInternalIP,
-                            "continent_code" to ipInfo.continentCode,
-                            "continent" to ipInfo.continentName,
-                            "country_code" to ipInfo.countryCode,
-                            "country" to ipInfo.countryName,
-                            "region_code" to ipInfo.regionCode,
-                            "region" to ipInfo.regionName,
-                            "latitude" to ipInfo.latitude,
-                            "longitude" to ipInfo.longitude
-                    )
+        db {
+            update("sql/users/ips/insert_ip.sql",
+                mapOf(
+                    "user_id" to userId,
+                    "ip" to ipInfo.ip,
+                    "hostname" to ipInfo.hostname,
+                    "ip_type" to ipInfo.type,
+                    "internal" to isInternalIP,
+                    "continent_code" to ipInfo.continentCode,
+                    "continent" to ipInfo.continentName,
+                    "country_code" to ipInfo.countryCode,
+                    "country" to ipInfo.countryName,
+                    "region_code" to ipInfo.regionCode,
+                    "region" to ipInfo.regionName,
+                    "latitude" to ipInfo.latitude,
+                    "longitude" to ipInfo.longitude
+                )
             )
         }
     }
 
-    fun containsIPForUser(userId: Int, ip: String): Boolean {
-        return HabboServer.database {
-            select(javaClass.getResource("/sql/users/ips/select_count_ips.sql").readText(),
-                    mapOf(
-                            "user_id" to userId,
-                            "ip" to ip
-                    )
-            ) {
-                it.boolean("ip_exists")
-            }.first()
-        }
+    fun containsIPForUser(userId: Int, ip: String): Boolean = db {
+        queryOne<Boolean>("sql/users/ips/select_count_ips.sql", mapOf("user_id" to userId, "ip" to ip)) ?: false
     }
 }

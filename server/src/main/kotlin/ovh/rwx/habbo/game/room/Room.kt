@@ -32,6 +32,8 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.group.GroupDao
 import ovh.rwx.habbo.database.pet.PetDao
+import ovh.rwx.habbo.database.room.RoomBanDao
+import ovh.rwx.habbo.database.room.RoomBanEntry
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
@@ -57,6 +59,7 @@ import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
 import ovh.rwx.habbo.pathfinding.core.heuristics.EuclideanHeuristic
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
@@ -107,6 +110,33 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     // endregion
 
     val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
+    val bannedUsers: MutableMap<Int, RoomBanEntry> by lazy {
+        ConcurrentHashMap(RoomBanDao.getBansByRoomId(roomData.id).associateBy { it.userId })
+    }
+
+    fun isBanned(userId: Int): Boolean {
+        val ban = bannedUsers[userId] ?: return false
+        val now = System.currentTimeMillis() / 1000
+        if (ban.expireTimestamp <= now) {
+            bannedUsers.remove(userId)
+            RoomBanDao.removeBan(roomData.id, userId)
+            return false
+        }
+        return true
+    }
+
+    fun banUser(userId: Int, username: String, durationSeconds: Long) {
+        val now = System.currentTimeMillis() / 1000
+        val expireTimestamp = if (durationSeconds == Long.MAX_VALUE) Long.MAX_VALUE else now + durationSeconds
+        val entry = RoomBanEntry(userId, username, expireTimestamp)
+        bannedUsers[userId] = entry
+        RoomBanDao.addBan(roomData.id, userId, expireTimestamp)
+    }
+
+    fun unbanUser(userId: Int) {
+        bannedUsers.remove(userId)
+        RoomBanDao.removeBan(roomData.id, userId)
+    }
 
     val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
     val loadedGroups: MutableSet<Group> by lazy { CopyOnWriteArraySet() }

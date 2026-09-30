@@ -309,6 +309,7 @@ class RoomItemManager(private val room: Room) {
     // --- SALVAMENTO EM LOTE ---
     fun addItemToSave(roomItem: RoomItem) {
         itemsToSave.add(roomItem)
+        roomItem.markDirty()
     }
 
     fun savePendingItems() {

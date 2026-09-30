@@ -62,6 +62,19 @@ class SnowWarPile(
         }
     }
 
+    fun testCollision(ball: SnowWarSnowball): Boolean {
+        if (snowballCount <= 0) return false
+        val radius = snowballCount * 100
+        return ball.height < radius && SnowWarMath.circlesOverlap(
+            ball.locH,
+            ball.locV,
+            SnowWarMath.SNOWBALL_RADIUS,
+            SnowWarMath.tileToWorld(x),
+            SnowWarMath.tileToWorld(y),
+            radius
+        )
+    }
+
     override fun getChecksumVariables(): List<Int> {
         return listOf(
             type.id,

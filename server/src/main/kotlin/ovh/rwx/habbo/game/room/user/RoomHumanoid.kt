@@ -46,7 +46,15 @@ abstract class RoomHumanoid(
     var idle: Boolean = false
         set(newValue) {
             idleCount = if (newValue) {
-                (TimeUnit.SECONDS.toMillis(HabboServer.habboConfig.timerConfig.roomIdleSeconds.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                val sleepTimeout = if (room.roomData.idleSleepEnabled && room.roomData.idleSleepTimeoutSeconds > 0) {
+                    room.roomData.idleSleepTimeoutSeconds
+                } else {
+                    HabboServer.habboConfig.timerConfig.roomIdleSeconds
+                }
+                maxOf(
+                    idleCount,
+                    (TimeUnit.SECONDS.toMillis(sleepTimeout.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                )
             } else 0
 
             if (field != newValue) {
@@ -89,7 +97,9 @@ abstract class RoomHumanoid(
     }
 
     override fun onIdleExpired() {
-        idle = true
+        if (room.roomData.idleSleepEnabled) {
+            idle = true
+        }
     }
 
     override fun processEntityTimers() {
@@ -122,14 +132,31 @@ abstract class RoomHumanoid(
     }
 
     override fun handleIdleCounter() {
-        if (idle) return
+        if (this !is RoomUser) return
 
         idleCount++
         val secondsIdle =
             TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
 
-        if (secondsIdle >= HabboServer.habboConfig.timerConfig.roomIdleSeconds) {
-            idle = true
+        if (!idle && room.roomData.idleSleepEnabled) {
+            val sleepTimeout = if (room.roomData.idleSleepTimeoutSeconds > 0) {
+                room.roomData.idleSleepTimeoutSeconds
+            } else {
+                HabboServer.habboConfig.timerConfig.roomIdleSeconds
+            }
+            if (sleepTimeout > 0 && secondsIdle >= sleepTimeout) {
+                idle = true
+            }
+        }
+
+        if (room.roomData.idleAutokickEnabled && room.roomData.idleAutokickTimeoutSeconds > 0) {
+            if (secondsIdle >= room.roomData.idleAutokickTimeoutSeconds) {
+                val canBypass = room.userManager.hasRights(this) || habboSession.hasPermission("acc_unkickable")
+                if (!canBypass) {
+                    room.userManager.removeEntity(this, notifyClient = true, kickNotification = true)
+                    return
+                }
+            }
         }
     }
 

@@ -421,6 +421,11 @@ class SnowWarGame(
                     return true
                 }
             }
+            for (pile in piles) {
+                if (pile.x == tile.first && pile.y == tile.second && pile.testCollision(ball)) {
+                    return true
+                }
+            }
             for (user in users.values.sortedBy { it.objectId }) {
                 // No AS3, quando um avatar está andando, ele desocupa o currentTile e ocupa o nextTile
                 val occX = if (user.nextTileX != -1) user.nextTileX else user.currentTileX
