@@ -27,30 +27,27 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.handshake.InitCryptoData
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeInitCryptoHandler {
     @Handler(Incoming.INIT_CRYPTO, requiredAuth = false)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.handshaking = true
-        val dh = HabboServer.habboEncryptionHandler.generateDiffieHellmanParameterSpec()
-        val prime = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.p.toString().toByteArray())
-        val generator = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.g.toString().toByteArray())
-
-        habboSession.diffieHellmanParams = dh
-        habboSession.sendHabboResponse(Outgoing.INIT_CRYPTO, prime, generator)
-    }
-
     @HandlerR63A(IncomingR63A.HANDSHAKE_INIT_CRYPTO, requiredAuth = false)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.handshaking = true
 
         val dh = HabboServer.habboEncryptionHandler.generateDiffieHellmanParameterSpec()
         habboSession.diffieHellmanParams = dh
         habboSession.cryptoToken = UUID.randomUUID().toString().replace("-", "")
 
-        habboSession.sendHabboResponse(OutgoingR63A.INIT_CRYPTO, habboSession.cryptoToken)
+        val data = InitCryptoData(
+            token = habboSession.cryptoToken,
+            prime = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.p.toString().toByteArray()),
+            generator = HabboServer.habboEncryptionHandler.getRsaStringEncrypted(dh.g.toString().toByteArray()),
+        )
+
+        habboSession.sendResponse(Outgoing.INIT_CRYPTO, OutgoingR63A.INIT_CRYPTO, data)
     }
 }

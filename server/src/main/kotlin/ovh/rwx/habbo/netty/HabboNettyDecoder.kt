@@ -27,6 +27,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboBase64
@@ -36,6 +37,27 @@ import ovh.rwx.habbo.kotlin.ip
 
 class HabboNettyDecoder : ByteToMessageDecoder() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    companion object {
+        // Última release preshuffle (era estática R63A, 2009..2011-09): clientes R63A não
+        // carregam data de build em lugar nenhum do protocolo, então a sessão ancora aqui
+        // para predicados temporais (isVersionBefore/AtLeast) avaliarem a era correta.
+        private val R63A_HABBO_VERSION = HabboVersion.parse("RELEASE63-201109301501-135705747")
+    }
+
+    /**
+     * Trata a versão na fronteira do wire: todo cliente RELEASE/PRODUCTION/WIN63 carrega
+     * data de build na release string (pacote 4000) e parseia na hora — não depende do
+     * roteamento do RELEASE_CHECK nem da ordem dos pacotes seguintes. R63A (preshuffle,
+     * sem data em lugar nenhum) ancora na última release estática.
+     */
+    private fun updateHabboVersion(habboSession: HabboSession) {
+        habboSession.habboVersion = if (habboSession.release == "R63A") {
+            R63A_HABBO_VERSION
+        } else {
+            runCatching { HabboVersion.parse(habboSession.release) }.getOrDefault(habboSession.habboVersion)
+        }
+    }
 
     override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, out: MutableList<Any>) {
         if (msg.readableBytes() < 1) return
@@ -66,7 +88,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
 <!DOCTYPE cross-domain-policy SYSTEM "/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="*" />
-</cross-domain-policy>"""
+</cross-domain-policy>""" + '\u0000' // Flash exige o policy terminado em NUL (0x00)
             )
                 .addListener(ChannelFutureListener.CLOSE)
 
@@ -128,10 +150,14 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                     habboSession.release = "R63A"
                     habboSession.r63ANewEncoding = true
                 }
+
+                updateHabboVersion(habboSession)
             } else if (!habboSession.releaseInitialized && headerId == 206) {
                 // Init crypto, mark session as old client
                 habboSession.release = "R63A"
                 habboSession.r63ANewEncoding = delimiter != 64.toByte()
+
+                updateHabboVersion(habboSession)
             }
 
             out += habboRequest

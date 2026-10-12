@@ -45,5 +45,13 @@ extensions.configure<IdeaModel> {
 }
 
 tasks.withType<Jar>().configureEach {
-    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.MF", "rebel.xml")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.MF")
+    // rebel.xml gerado pelo plugin JRebel precisa ir DENTRO do jar (o agente lê do classpath)
+}
+
+// JRebel plugin: gera rebel.xml em build/jrebel/main e copia para processResources.
+// Gradle 9 exige estratégia explícita de duplicados no Copy.
+tasks.withType<ProcessResources>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

@@ -97,6 +97,7 @@ Regras do gerador de migration:
 4. Entenda o ciclo de vida do NULL: `ReleaseDao` converte `NULL → -1`; `-1` nunca despacha;
    `HabboResponse` para header inexistente loga e não envia. Ou seja: `NULL` = feature
    silenciosamente desligada naquela release.
+5. **Renomeações de Headers Existentes**: Caso precise corrigir o nome de um header já existente no banco (ex: em `releases_incoming_headers_r63a` ou `releases_outgoing_headers_r63a`), use sempre `UPDATE tabela SET name = 'NOVO' WHERE name = 'ANTIGO';`. NUNCA utilize `DELETE` + `INSERT`.
 
 ## Fase 3 — Implementação no emulador
 
@@ -135,6 +136,8 @@ Regras do código:
   - **Ações Pontuais e Semântica Clássica**: Se a ação existia apenas via menu contextual ou comando (ex: `ROOM_BAN_USER` no Header 320 com apenas `userId: Int`), adicione o `@HandlerR63A(IncomingR63A.XXX)` com leitura condicional (`isR63A`) e adote o comportamento clássico esperado (ex: ban permanente = `RWUAM_BAN_USER_PERM`). Se a feature não existia de forma alguma, apenas enums nas listas modernas — headers NULL de R63A ficam na tabela `_r63a` com o mesmo padrão se necessário.
   - **Headers R63A na Migration**: Headers de R63A devem ser inseridos em `releases_incoming_headers_r63a` ou `releases_outgoing_headers_r63a` no mesmo arquivo `V{N}__*.sql` da feature.
   - **Não executar DDL no banco**: Deixe que o Flyway aplique a migration no próximo boot do emulador.
+- **Responses Unificadas e Predicados Temporais**: Quando uma resposta cobre múltiplas eras (R63A, R63B, AIR), anote o mesmo método com `@Response(Outgoing.X)` e `@ResponseR63A(OutgoingR63A.X)` (ou enums equivalentes). Dentro do bloco `habboResponse.apply`, faça a ramificação estritamente via `isVersionBetween(...)`, `isVersionBefore(...)` ou `isVersionAtLeast(...)`. Nunca condicione o fluxo pela presença de instâncias como `habboResponse.outgoingR63A != null`.
+- **Mesclagem de Handlers e Responses Similares**: Se o pacote incoming/outgoing apenas mudou de ID ou sofreu mutação estrutural entre releases (ex: de `RoomInterstitial` para `ShowInterstitials`), mescle em um único handler (`@Handler` + `@HandlerR63A`) e uma única response em vez de espalhar arquivos e stubs duplicados pelo projeto.
 
 ## Fase 4 — Feature com mobília (furni)
 

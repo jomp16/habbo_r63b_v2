@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.plugin.event.events.room.RoomItemPlaceEvent
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -145,6 +146,10 @@ class RoomPlaceItemHandler {
 
         if (success) {
             habboSession.habboInventory.removeItems(listOf(itemId))
+
+            habboSession.currentRoom?.let { room ->
+                HabboServer.pluginManager.executeEventAsync(RoomItemPlaceEvent(room, habboSession, userItem))
+            }
 
             // ACH_PlaceCreditValue: colocar moedas de câmbio no quarto
             if (userItem.itemName.startsWith("CF_") || userItem.itemName.startsWith("CFC_")) {

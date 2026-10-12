@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.encryption.RC4Encryption
@@ -43,17 +44,45 @@ class HandshakeSecretKeyHandler {
     @Handler(Incoming.SECRET_KEY, requiredAuth = false)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (HabboServer.habboConfig.encryptionConfig.rc4) {
+            // ignoreSign: o KeyAgreement devolve o secret em bytes; se o MSB estiver setado,
+            // BigInteger(bytes) viraria NEGATIVO e divergiria do modPow do AS3 (sempre positivo).
             val sharedKeyPair = HabboServer.habboEncryptionHandler.calculateDiffieHellmanSharedKey(
                 habboSession.diffieHellmanParams,
-                habboRequest.readUTF()
+                habboRequest.readUTF(),
+                ignoreSign = true
             )
 
-            habboSession.rc4Encryption = RC4Encryption(sharedKeyPair.second.toByteArray())
+            // Normalização idêntica à do AS3: o cliente faz getSharedKey(16).toUpperCase()
+            // + hexDecode — bytes mínimos, sem o byte de sinal do BigInteger.toByteArray()
+            // (o mesmo consimento do path R63A, logo abaixo).
+            var sharedSecretHex = sharedKeyPair.second.toString(16)
+            if (sharedSecretHex.length % 2 != 0) {
+                sharedSecretHex = "0$sharedSecretHex"
+            }
+            val sharedSecretBytes = Hex.decode(sharedSecretHex)
 
-            habboSession.sendHabboResponse(
-                Outgoing.SECRET_KEY,
-                HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first.toString().toByteArray())
-            )
+            habboSession.rc4Encryption = RC4Encryption(sharedSecretBytes)
+
+            if (habboSession.isVersionAtLeast(2014, 8, 14)) {
+                // Era pacote (≥ 2014-08-14): o parser do SecretKey do cliente lê um boolean opcional;
+                // true = o cliente instancia um SEGUNDO cipher RC4 (mesma chave, estado independente)
+                // para decriptar server→client. O emulador espelha isso: full-duplex. A chave
+                // pública viaja RSA-assinada (o cliente faz rsa.verify antes do DH).
+                // A data aqui precisa bater com o predicado do HandshakeSecretKeyResponse.
+                habboSession.rc4EncryptionOut = RC4Encryption(sharedSecretBytes)
+
+                habboSession.sendHabboResponse(
+                    Outgoing.SECRET_KEY,
+                    HabboServer.habboEncryptionHandler.getRsaStringEncrypted(sharedKeyPair.first.toString().toByteArray())
+                )
+            } else {
+                // Era supersecret (2013-03-22..2014-07-09): o cliente consome a chave pública do
+                // servidor como STRING BASE 10 CRUA (generateSharedKey(key, 10), sem RSA — o DH
+                // prime/generator veio esteganografado da imagem supersecret). Enviar hex RSA
+                // aqui faz o BigInteger(str, 10) do AS3 derivar uma chave errada → RC4
+                // dessincroniza → "Invalid delimiter" logo depois.
+                habboSession.sendHabboResponse(Outgoing.SECRET_KEY, sharedKeyPair.first.toString(10))
+            }
         }
     }
 

@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.user.HabboSession
 
 class RoomNetworkDispatcher(private val room: Room) {
     fun sendResponse(habboResponse: HabboResponse) {
@@ -32,11 +33,11 @@ class RoomNetworkDispatcher(private val room: Room) {
             .forEach { it.habboSession.sendHabboResponse(habboResponse) }
     }
 
-    fun sendResponseModern(outgoing: Outgoing, vararg args: Any?) {
+    fun sendResponseModern(outgoing: Outgoing, vararg args: Any?, excludeSession: HabboSession? = null) {
         val sessions = room.userManager.entities.values
             .filterIsInstance<RoomUser>()
             .map { it.habboSession }
-            .filter { it.release != "R63A" }
+            .filter { it.release != "R63A" && it != excludeSession }
 
         if (sessions.isEmpty()) return
 
@@ -69,11 +70,11 @@ class RoomNetworkDispatcher(private val room: Room) {
         }
     }
 
-    fun sendResponseR63A(outgoing: OutgoingR63A, vararg args: Any?) {
+    fun sendResponseR63A(outgoing: OutgoingR63A, vararg args: Any?, excludeSession: HabboSession? = null) {
         val sessions = room.userManager.entities.values
             .filterIsInstance<RoomUser>()
             .map { it.habboSession }
-            .filter { it.release == "R63A" }
+            .filter { it.release == "R63A" && it != excludeSession }
 
         if (sessions.isEmpty()) return
 
@@ -101,8 +102,8 @@ class RoomNetworkDispatcher(private val room: Room) {
      * Envia a resposta correta para cada sessão do quarto de acordo com a release do cliente.
      * Evita if/else nos handlers/tasks de quarto quando há dois enum variants para a mesma mensagem lógica.
      */
-    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
-        if (outgoing != null) sendResponseModern(outgoing, *args)
-        if (outgoingR63A != null) sendResponseR63A(outgoingR63A, *args)
+    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?, excludeSession: HabboSession? = null) {
+        if (outgoing != null) sendResponseModern(outgoing, *args, excludeSession = excludeSession)
+        if (outgoingR63A != null) sendResponseR63A(outgoingR63A, *args, excludeSession = excludeSession)
     }
 }

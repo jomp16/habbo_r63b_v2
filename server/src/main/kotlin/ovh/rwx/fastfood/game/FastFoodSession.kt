@@ -45,5 +45,8 @@ class FastFoodSession(val channel: Channel) : AutoCloseable {
     }
 
     override fun close() {
+        FastFoodGameManager.leave(this)
+        habboSession?.fastFoodSession = null
+        habboSession = null
     }
 }

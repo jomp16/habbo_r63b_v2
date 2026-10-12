@@ -74,6 +74,16 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
                     writeByte(1)
                 }
             }
+
+            // Full-duplex RC4 (era pacote, ≥ 2014-08-14): XOR do frame INTEIRO (length +
+            // header + corpo) com o keystream do cipher de saída — espelho do leitor AS3
+            // `_SafeStr_8113`, que decripta length e corpo continuamente com `_SafeStr_8088`.
+            habboSession.rc4EncryptionOut?.takeIf { !msg.plaintext }?.let { crypto ->
+                val plain = ByteArray(out.readableBytes())
+                out.readBytes(plain)
+                out.clear()
+                out.writeBytes(crypto.parse(plain))
+            }
         } finally {
             // Guaranteed to run, preventing the memory leak
             if (!msg.keepCopy) {

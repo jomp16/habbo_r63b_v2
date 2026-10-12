@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,17 +19,29 @@
 
 package ovh.rwx.habbo.communication.incoming.gamecenter
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2AccountStatusData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GameCenterInitializeHandler {
     @Handler(Incoming.INITIALIZE_GAME_CENTER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // todo: check what I need to send to client too...
-        habboSession.sendHabboResponse(Outgoing.GAME_CENTER_ACCOUNT_STATUS)
+        val manager = HabboServer.habboGame.gameCenterManager
+        val requested = habboRequest.readInt()
+        // 997 (vazio) drena 0 e nao pede status de jogo nenhum: o layout
+        // pede explicitamente via 3548. Chutar um jogo aqui manda status do
+        // snowwar e confunde o cliente.
+        val game = manager.findById(requested) ?: return
+
+        // ponytail: gamesLeft/promote fixos (-1 = ilimitado); contagem semanal fica pro game loop
+        habboSession.sendHabboResponse(
+            Outgoing.GAME_2_ACCOUNT_GAME_STATUS,
+            Game2AccountStatusData(game.gameTypeId, -1, 1)
+        )
     }
 }

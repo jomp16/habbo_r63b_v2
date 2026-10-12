@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2025 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -24,15 +24,18 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerInitData
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
+    @HandlerR63A(IncomingR63A.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         var attempts = 0
         while (!habboSession.habboMessenger.initialized && attempts < 10) {
@@ -41,40 +44,26 @@ class MessengerInitializeHandler {
         }
         if (!habboSession.habboMessenger.initialized) return
 
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_INIT, 500, 3000)
-        habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values) // BuddyListComposer
-        MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            habboSession.sendHabboResponse(
-                Outgoing.MESSENGER_CHAT,
-                MessengerChatData(
-                    id = it.first,
-                    message = it.second,
-                    diffTimestamp = it.third,
-                )
+        // R63A envia o init combinado (pré-shuffle o header estático 12 carrega limites + amigos + requests)
+        habboSession.sendResponse(
+            Outgoing.MESSENGER_INIT,
+            OutgoingR63A.MESSENGER_INIT,
+            MessengerInitData(
+                maxFriends = 500,
+                maxFriendsHC = 3000,
+                friends = habboSession.habboMessenger.friends.values,
             )
-        }
-
-
-        habboSession.habboMessenger.notifyFriends()
-    }
-    
-    @HandlerR63A(IncomingR63A.MESSENGER_INIT)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        var attempts = 0
-        while (!habboSession.habboMessenger.initialized && attempts < 10) {
-            Thread.sleep(500)
-            attempts++
-        }
-        if (!habboSession.habboMessenger.initialized) return
-
-        habboSession.sendHabboResponse(
-            OutgoingR63A.MESSENGER_FRIENDS,
-            500,
-            3000,
-            habboSession.habboMessenger.friends.values
         )
+
+        // A partir de 2014-12-10 os amigos saem do init e vão num pacote separado (BuddyList);
+        // antes disso a lista já vai embutida no próprio init
+        if (habboSession.isVersionAtLeast(2014, 12, 10)) {
+            habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values)
+        }
+
         MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            habboSession.sendHabboResponse(
+            habboSession.sendResponse(
+                Outgoing.MESSENGER_CHAT,
                 OutgoingR63A.MESSENGER_CHAT,
                 MessengerChatData(
                     id = it.first,

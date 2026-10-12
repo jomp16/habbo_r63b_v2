@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user.inventory
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.item.ItemDao
@@ -55,8 +56,12 @@ class HabboInventory(private val habboSession: HabboSession) {
         if (habboSession.release == "R63A") {
             habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE)
         } else {
-//            habboSession.sendHabboResponse(Outgoing.INVENTORY_UPDATE)
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE, userItems)
+            if (habboSession.isVersionAtLeast(2025, 4, 17)) {
+                habboSession.sendHabboResponse(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE, userItems)
+            } else {
+                // Parser antigo: 1 item por pacote, SEM count no wire
+                userItems.forEach { habboSession.sendHabboResponse(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE, listOf(it)) }
+            }
         }
     }
 

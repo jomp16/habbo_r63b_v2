@@ -69,10 +69,18 @@ data class HabboConfig(
     val petConfig: PetConfig = PetConfig(),
     @param:JsonProperty("stress_test")
     val stressTest: Boolean = false,
+    @param:JsonProperty("habbo_host")
+    val habboHost: String? = null,
+    @param:JsonProperty("games_url")
+    val gamesUrl: String? = null,
+    @param:JsonProperty("c_images_url")
+    val cImagesUrl: String? = null,
     @param:JsonProperty("bot_ticket_prefix")
     val botTicketPrefix: String = "bot-",
     @param:JsonProperty("debug")
     val debug: Boolean = false,
+    @param:JsonProperty("dynamic_dns")
+    val dynamicDnsConfig: DynamicDnsConfig? = null,
 ) {
     val motdContents: String by lazy {
         val f = File(motdFilePath)

@@ -43,6 +43,7 @@ class HandshakeReleaseCheckHandler {
         }
 
         habboSession.habboVersion = HabboVersion.parse(habboSession.release)
+        habboSession.releaseCheckReceived = true
     }
 
     @HandlerR63A(IncomingR63A.RELEASE_CHECK, requiredAuth = false)

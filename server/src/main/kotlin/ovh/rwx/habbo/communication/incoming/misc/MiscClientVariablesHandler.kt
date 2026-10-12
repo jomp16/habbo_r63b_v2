@@ -36,7 +36,10 @@ class MiscClientVariablesHandler {
         val gordonUrl = habboRequest.readUTF()
         val externalVariablesUrl = habboRequest.readUTF()
 
-        if (gordonUrl != "app:/") {
+        // O 4000 (ReleaseCheck) é a fonte autoritativa da release do client; o gordonUrl daqui
+        // (misc client variables) aponta pro flash.client.url — que pode ser um flash-assets
+        // genérico, sem relação com a build do Habbo.swf. Só preenche se o release check não rodou.
+        if (gordonUrl != "app:/" && !habboSession.releaseCheckReceived) {
             habboSession.habboVersion = HabboVersion.parse(gordonUrl)
         }
     }

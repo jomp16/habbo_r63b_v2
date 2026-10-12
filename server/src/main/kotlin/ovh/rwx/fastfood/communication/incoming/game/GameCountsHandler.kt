@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -17,20 +17,21 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.gamecenter
+package ovh.rwx.fastfood.communication.incoming.game
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
-import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.fastfood.communication.FFHandler
+import ovh.rwx.fastfood.communication.incoming.FFIncoming
+import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
+import ovh.rwx.fastfood.game.FastFoodSession
+import ovh.rwx.habbo.communication.HabboRequest
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class GameCenterAccountStatusResponse {
-    @Response(Outgoing.GAME_CENTER_ACCOUNT_STATUS)
-    fun response(habboResponse: HabboResponse) {
-        habboResponse.apply {
-            writeInt(3) // game type id
-            writeInt(-1) // how many times you can play left
-            writeInt(1) // promote the game?
-        }
+class GameCountsHandler {
+    @FFHandler(FFIncoming.GET_GAME_COUNTS)
+    fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
+        if (!fastFoodSession.authenticated) return
+
+        // -1, -1 esconde o texto "games played this week" no lobby
+        fastFoodSession.sendHabboResponse(FFOutgoing.GAME_COUNT, -1, -1)
     }
 }

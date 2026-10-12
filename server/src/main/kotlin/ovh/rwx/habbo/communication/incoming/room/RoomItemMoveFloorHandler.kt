@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -26,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.plugin.event.events.room.RoomItemMoveEvent
 import ovh.rwx.habbo.util.Vector2
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -58,6 +60,10 @@ class RoomItemMoveFloorHandler {
             }
 
             roomItem.update(updateDb = false, updateClient = true)
+        } else {
+            HabboServer.pluginManager.executeEventAsync(
+                RoomItemMoveEvent(habboSession.currentRoom!!, habboSession, roomItem, newPosition, rotation)
+            )
         }
     }
 
@@ -86,6 +92,10 @@ class RoomItemMoveFloorHandler {
             }
 
             roomItem.update(updateDb = false, updateClient = true)
+        } else {
+            HabboServer.pluginManager.executeEventAsync(
+                RoomItemMoveEvent(habboSession.currentRoom!!, habboSession, roomItem, newPosition, rotation)
+            )
         }
     }
 }

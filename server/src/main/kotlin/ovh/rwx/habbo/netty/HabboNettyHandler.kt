@@ -89,7 +89,10 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
                     return@launch
                 }
 
-                if (evt.state() == IdleState.READER_IDLE && habboSession.release != "R63A" && !habboSession.handshaking) {
+                // game SWF aberto (BaseJump etc.) pausa o socket principal: o cliente
+                // nao responde o ping mas continua conectado via socket do jogo
+                if (evt.state() == IdleState.READER_IDLE && habboSession.release != "R63A" && !habboSession.handshaking
+                        && habboSession.fastFoodSession == null) {
                     log.error("User $username didn't reply ping! Disconnecting it.")
 
                     ctx.close()

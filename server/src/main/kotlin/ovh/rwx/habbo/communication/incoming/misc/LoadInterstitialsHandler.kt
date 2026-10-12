@@ -21,14 +21,21 @@ package ovh.rwx.habbo.communication.incoming.misc
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class LoadInterstitialsHandler {
     @Handler(Incoming.LOAD_INTERSTITIALS)
+    @HandlerR63A(IncomingR63A.LOAD_INTERSTITIALS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.SHOW_INTERSTITIALS)
+        habboSession.sendResponse(
+            Outgoing.SHOW_INTERSTITIALS,
+            OutgoingR63A.SHOW_INTERSTITIALS
+        )
     }
 }

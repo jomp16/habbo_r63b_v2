@@ -27,7 +27,14 @@ enum class NavigatorGuestRoomsMode(val mode: Int) {
     MY_ROOMS(5),
     MY_FAVORITES(6),
     MY_VISITED_ROOMS(7),
-    SEARCH(9);
+    TEXT_SEARCH(8),
+    TAG_SEARCH(9),
+    LATEST_EVENTS(12),
+    OFFICIAL(14),
+    PROMO(15),
+    // Room ads do Events tab 2013 (searchType 16/17 no composer genérico _-2fh@293)
+    ROOM_ADS_TOP(16),
+    ROOM_ADS_NEW(17);
 
     companion object {
         fun fromInt(mode: Int): NavigatorGuestRoomsMode = entries.find { it.mode == mode } ?: POPULAR

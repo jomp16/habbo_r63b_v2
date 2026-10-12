@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
@@ -30,12 +33,14 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorMyRoomsHandler {
+    // 2013: aba Me -> _-0KM@3504 (vazio); pré-shuffle: header 434
+    @Handler(Incoming.NAVIGATOR_MY_ROOMS)
     @HandlerR63A(IncomingR63A.NAVIGATOR_MY_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val myRooms = HabboServer.habboGame.roomManager.getRoomsByOwner(habboSession.userInformation.id)
 
-        habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
+        habboSession.sendResponse(
+            Outgoing.NAVIGATOR_LIST_ROOMS, OutgoingR63A.NAVIGATOR_LIST_ROOMS,
             NavigatorListPayload(
                 rooms = myRooms,
                 mode = NavigatorGuestRoomsMode.MY_ROOMS,

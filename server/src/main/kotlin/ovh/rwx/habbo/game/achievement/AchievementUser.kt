@@ -23,7 +23,9 @@ import org.jdbi.v3.core.mapper.reflect.ColumnName
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isAir
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.util.ActivityPointType
 
 data class AchievementUser(
@@ -39,14 +41,48 @@ data class AchievementUser(
         val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return
 
         val totalLevels = group.totalLevels
-        val isMaxLevel = level >= totalLevels
 
         var targetLevel = level + 1
         targetLevel = if (targetLevel > totalLevels) totalLevels else targetLevel
 
+        // Invariante do cliente AS3 (AchievementData / AchievementController):
+        //  - badge exibido: finalLevel ? badgeId : getPreviousLevelBadgeId(badgeId)
+        //    (getPreviousLevelBadgeId DECREMENTA o dígito final do badgeId)
+        //  - contagem: finalLevel ? level : (level - 1)
+        //  - cinza: !(level > 1 || finalLevel)
+        //
+        // Grupos multi-nível: comportamento clássico, finalLevel = nível do usuário.
+        //
+        // Grupos de 1 nível com dígito no nome (modelo AIR 2021, ex.: ACH_Tutorial2):
+        // para exibir o card correto (nome certo + cinza quando não conquistada),
+        // aplicamos a gambiarra do espelho: quando NÃO conquistada enviamos
+        // level=1, finalLevel=false e o badgeId com o dígito INCREMENTADO
+        // (ACH_Tutorial3 para o grupo ACH_Tutorial2): o cliente decrementa de volta
+        // e desenha ACH_Tutorial2 cinza, contando level-1 = 0.
+        // Quando conquistada: level=1, finalLevel=true, badgeId cru — colorida,
+        // contando 1.
+        val isMaxLevel: Boolean
+        val wireLevel: Int
+        if (totalLevels == 1) {
+            isMaxLevel = level >= 1
+            wireLevel = 1
+        } else {
+            isMaxLevel = level >= totalLevels
+            wireLevel = targetLevel
+        }
+        val badgeCodeRaw = if (group.badgeAppendLevel) "${group.name}$targetLevel" else group.name
+
         val targetAchievement = levels.find { it.level == targetLevel } ?: levels.lastOrNull() ?: return
 
-        val badgeCode = if (group.badgeAppendLevel) "${group.name}$targetLevel" else group.name
+        // Espelho do decremento do cliente: grupos de 1 nível, não conquistada, nome
+        // com dígito no final → badgeId com dígito incrementado (cliente decrementa de volta).
+        val badgeCode: String = if (
+            totalLevels == 1 && level < 1 && group.name.isNotEmpty() && group.name.last().isDigit()
+        ) {
+            "${group.name.dropLast(1)}${group.name.last() - '0' + 1}"
+        } else {
+            badgeCodeRaw
+        }
         val scoreAtStart = if (targetLevel == 1) 0 else {
             levels.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
         }
@@ -55,59 +91,46 @@ data class AchievementUser(
 
         habboResponse.apply {
             writeInt(group.id) // achievementId
-            writeInt(targetLevel) // level
+            writeInt(wireLevel) // level
             writeUTF(badgeCode) // badgeId
-            writeInt(scoreAtStart) // scoreAtStartOfLevel
-            writeInt(targetAchievement.progressRequirement) // scoreLimit
-            writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
-            writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
-            writeInt(progress) // currentPoints
-            writeBoolean(isMaxLevel) // finalLevel
-            writeUTF(group.category.category) // category
-            writeUTF("") // subCategory
-            writeInt(totalLevels) // levelCount
-            writeInt(displayMethod) // displayMethod
-            writeShort(0) // state
+
+            if (isVersionBefore(2011, 6, 16)) {
+                if (isVersionAtLeast(2010, 11, 12)) {
+                    writeInt(targetAchievement.progressRequirement)
+                    writeInt(targetAchievement.rewardActivityPoints)
+                    writeInt(ActivityPointType.PIXELS.code)
+                }
+
+                if (isVersionAtLeast(2010, 11, 19)) {
+                    writeInt(progress)
+                }
+
+                if (isVersionAtLeast(2011, 5, 6)) {
+                    writeBoolean(isMaxLevel)
+                    writeUTF(group.category.category)
+                    writeInt(totalLevels)
+                }
+            } else {
+                writeInt(scoreAtStart) // scoreAtStartOfLevel
+                writeInt(targetAchievement.progressRequirement) // scoreLimit
+                writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
+                writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
+                writeInt(progress) // currentPoints
+                writeBoolean(isMaxLevel) // finalLevel
+                writeUTF(group.category.category) // category
+                writeUTF("") // subCategory
+                writeInt(totalLevels) // levelCount
+                writeInt(displayMethod) // displayMethod
+
+                if (isAir && isVersionAtLeast(2021, 2, 18)) {
+                    writeShort(0) // state
+                }
+            }
         }
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return
-
-        val totalLevels = group.totalLevels
-        val isMaxLevel = level >= totalLevels
-
-        var targetLevel = level + 1
-        targetLevel = if (targetLevel > totalLevels) totalLevels else targetLevel
-
-        val targetAchievement = levels.find { it.level == targetLevel } ?: levels.lastOrNull() ?: return
-
-        val badgeCode = if (group.badgeAppendLevel) "${group.name}$targetLevel" else group.name
-        val scoreAtStart = if (targetLevel == 1) 0 else {
-            levels.find { it.level == targetLevel - 1 }?.progressRequirement ?: 0
-        }
-
-        habboResponse.apply {
-            writeInt(group.id)
-            writeInt(targetLevel)
-            writeUTF(badgeCode)
-
-            if (isVersionAtLeast(2010, 11, 12)) {
-                writeInt(targetAchievement.progressRequirement)
-                writeInt(targetAchievement.rewardActivityPoints)
-                writeInt(ActivityPointType.PIXELS.code)
-            }
-
-            if (isVersionAtLeast(2010, 11, 19)) {
-                writeInt(progress)
-            }
-
-            if (isVersionAtLeast(2011, 5, 6)) {
-                writeBoolean(isMaxLevel)
-                writeUTF(group.category.category)
-                writeInt(totalLevels)
-            }
-        }
+        serializeHabboResponse(habboResponse, *params)
     }
 
     fun serializeUnlocked(habboResponse: HabboResponse) {

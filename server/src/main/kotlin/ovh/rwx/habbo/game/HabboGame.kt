@@ -31,6 +31,8 @@ import ovh.rwx.habbo.game.catalog.CatalogManager
 import ovh.rwx.habbo.game.chest.ChestManager
 import ovh.rwx.habbo.game.figure.FigureManager
 import ovh.rwx.habbo.game.group.GroupManager
+import ovh.rwx.habbo.game.campaign.CampaignCalendarManager
+import ovh.rwx.habbo.game.gamecenter.GameCenterManager
 import ovh.rwx.habbo.game.habbicon.HabbiconManager
 import ovh.rwx.habbo.game.item.ItemManager
 import ovh.rwx.habbo.game.landing.LandingManager
@@ -67,27 +69,34 @@ class HabboGame : AutoCloseable {
     val habbiconManager: HabbiconManager = HabbiconManager()
     val chestManager: ChestManager = ChestManager()
     val snowWarManager: SnowWarManager = SnowWarManager()
+    val campaignCalendarManager: CampaignCalendarManager = CampaignCalendarManager()
+    val gameCenterManager: GameCenterManager = GameCenterManager()
+
+    private val loadJobs = mutableListOf<Job>()
 
     init {
-        gameScope.launch { landingManager.load() }
-        gameScope.launch { itemManager.load() }
-        gameScope.launch { catalogManager.load() }
-        gameScope.launch { navigatorManager.load() }
-        gameScope.launch { permissionManager.load() }
-        gameScope.launch { moderationManager.load() }
-        gameScope.launch { groupManager.load() }
-        gameScope.launch { achievementManager.load() }
-        gameScope.launch { figureManager.load() }
-        gameScope.launch { petManager.load() }
-        gameScope.launch { badgeManager.load() }
-        gameScope.launch { habbiconManager.load() }
-        gameScope.launch { snowWarManager.load() }
+        loadJobs += gameScope.launch { landingManager.load() }
+        loadJobs += gameScope.launch { itemManager.load() }
+        loadJobs += gameScope.launch { catalogManager.load() }
+        loadJobs += gameScope.launch { navigatorManager.load() }
+        loadJobs += gameScope.launch { permissionManager.load() }
+        loadJobs += gameScope.launch { moderationManager.load() }
+        loadJobs += gameScope.launch { groupManager.load() }
+        loadJobs += gameScope.launch { achievementManager.load() }
+        loadJobs += gameScope.launch { figureManager.load() }
+        loadJobs += gameScope.launch { petManager.load() }
+        loadJobs += gameScope.launch { badgeManager.load() }
+        loadJobs += gameScope.launch { habbiconManager.load() }
+        loadJobs += gameScope.launch { snowWarManager.load() }
+        loadJobs += gameScope.launch { campaignCalendarManager.load() }
+        loadJobs += gameScope.launch { gameCenterManager.load() }
 
         // 1. Guardamos a referência do Job do RoomManager
         val roomJob = gameScope.launch { roomManager.load() }
+        loadJobs += roomJob
 
         // 2. Lançamos o CameraManager, mas mandamos ele esperar o RoomManager terminar
-        gameScope.launch {
+        loadJobs += gameScope.launch {
             roomJob.join() // Suspende essa coroutine até que roomManager.load() termine
             cameraManager.load()
         }
@@ -122,6 +131,9 @@ class HabboGame : AutoCloseable {
             achievementManager.saveQueuedAchievements()
         }
     }
+
+    /** Bloqueia até todos os loads paralelos terminarem (chamado antes do bind do Netty). */
+    fun awaitLoaded() = runBlocking { loadJobs.joinAll() }
 
     private fun launchPeriodic(intervalMs: Long, initialDelayMs: Long = 0L, action: suspend () -> Unit): Job =
         gameScope.launch {

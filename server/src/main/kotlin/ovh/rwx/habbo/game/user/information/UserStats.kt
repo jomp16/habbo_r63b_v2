@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user.information
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.group.Group
 import java.time.Duration
@@ -69,7 +70,7 @@ class UserStats(
     var firstLoginOfDay: Boolean = false
 
     override fun flush() {
-        ovh.rwx.habbo.database.user.UserStatsDao.saveStats(this)
+        UserStatsDao.saveStats(this)
         markClean()
     }
 }

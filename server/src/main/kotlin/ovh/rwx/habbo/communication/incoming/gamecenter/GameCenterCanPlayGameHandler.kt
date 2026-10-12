@@ -23,12 +23,24 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.gamecenter.GameCenterCanPlayGameResponse
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
-class Game2LeaveGameHandler {
-    @Handler(Incoming.GAME_2_LEAVE_GAME)
+class GameCenterCanPlayGameHandler {
+    // _-X0@1372 não existe no 2013: o can-play lá é o 2144 (_-1bs, int gameTypeId),
+    // resposta _-00Z@2424 (status 0 = OK habilita o botão Play).
+    @Handler(Incoming.GAME_CENTER_CAN_PLAY_GAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        HabboServer.habboGame.snowWarManager.leaveGame(habboSession, true)
+        val gameId = habboRequest.readInt()
+        val exists = HabboServer.habboGame.gameCenterManager.findById(gameId) != null
+
+        habboSession.sendHabboResponse(
+                Outgoing.GAME_CENTER_CAN_PLAY_GAME,
+                gameId,
+                if (exists) GameCenterCanPlayGameResponse.GameCenterCanPlayGameStatus.OK
+                else GameCenterCanPlayGameResponse.GameCenterCanPlayGameStatus.ERROR
+        )
     }
 }

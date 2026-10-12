@@ -19,12 +19,12 @@
 
 package ovh.rwx.habbo.game.catalog
 
-import org.apache.commons.lang3.StringUtils
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
+import ovh.rwx.habbo.communication.isVersionBetween
 
 data class CatalogPage(
     val id: Int,
@@ -63,23 +63,54 @@ data class CatalogPage(
             val rank = params[0] as Int
             val club = params[1] as Boolean
 
+            // Evolução do CatalogIndexMessageEvent (nó = NodeData):
+            //  - 2011-08-17..2012-02-08: bool + int color + int icon + int pageId + 1 string + filhos
+            //  - 2012-02-08..2014-01-30: idem, porém 2 strings (pageName + localization)
+            //  - >= 2014-01-30: bool + int icon + int pageId + 2 strings + LOOP[Int] itemIds + filhos
             writeBoolean(visible)
-            writeInt(iconImage)
-            writeInt(if (pageLayout == "category") -1 else id)
-            writeUTF(codename)
-
-            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && (parentId != -1 && parentId != -2)) writeUTF(
-                "$name (${catalogItems.size})"
-            )
-            else writeUTF(name)
-
-            writeInt(catalogItems.size)
-            catalogItems.forEach {
-                writeInt(it.id)
+            if (isVersionBetween(2011, 8, 17, 2014, 1, 30)) {
+                writeInt(0) // icon color (era 2011-08-17..2014-01-30)
             }
-            val childCatalogPages =
-                HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true }
-                    .sortedBy { it.orderNum }
+            writeInt(iconImage)
+            writeInt(if (isVersionAtLeast(2012, 2, 8) && pageLayout == "category") -1 else id)
+
+            val displayName = if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && (parentId != -1 && parentId != -2)) {
+                "$name (${catalogItems.size})"
+            } else {
+                name
+            }
+            if (isVersionAtLeast(2012, 2, 8)) {
+                writeUTF(codename)
+                writeUTF(displayName)
+            } else {
+                writeUTF(displayName)
+            }
+
+            if (isVersionAtLeast(2014, 1, 30)) {
+                writeInt(catalogItems.size)
+                catalogItems.forEach {
+                    writeInt(it.id)
+                }
+            }
+            // Catálogo antigo (<2014-01-30, sem abas): root achatado — pastas nível 1 viram cópias com parentId=-1
+            val childCatalogPages: List<CatalogPage> =
+                if (isVersionBefore(2014, 1, 30) && id == -1) {
+                    val level1Nodes = HabboServer.habboGame.catalogManager.catalogPages.filter {
+                        it.parentId == -1 && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true
+                    }
+                    val level1Ids = level1Nodes.map { it.id }
+                    val level2Nodes = HabboServer.habboGame.catalogManager.catalogPages.filter { page ->
+                        level1Ids.contains(page.parentId) && page.enabled && page.visible && page.minRank <= rank && if (page.clubOnly) club else true
+                    }
+                    val parentIdsThatAreFolders = level2Nodes.map { it.parentId }.distinct()
+                    val orphansLevel1 = level1Nodes.filter { !parentIdsThatAreFolders.contains(it.id) }
+                    (orphansLevel1 + level2Nodes)
+                        .sortedWith(compareBy({ if (it.parentId == -1) it.id else it.parentId }, { it.orderNum }))
+                        .map { if (it.parentId == -1) it else it.copy(parentId = -1) }
+                } else {
+                    HabboServer.habboGame.catalogManager.catalogPages.filter { it.parentId == id && it.enabled && it.visible && it.minRank <= rank && if (it.clubOnly) club else true }
+                        .sortedBy { it.orderNum }
+                }
             writeInt(childCatalogPages.size)
 
             childCatalogPages.forEach {
@@ -87,98 +118,20 @@ data class CatalogPage(
             }
 
             if (id == -1 || id == -2) {
-                writeBoolean(false)
-                writeUTF(if (id == -1) "NORMAL" else "BUILDERS_CLUB")
+                // newAdditionsAvailable nasce em 2011-06-13; catalogType em 2014-01-30
+                if (isVersionAtLeast(2011, 6, 13)) {
+                    writeBoolean(false)
+                }
+                if (isVersionAtLeast(2014, 1, 30)) {
+                    writeUTF(if (id == -1) "NORMAL" else "BUILDERS_CLUB")
+                }
             }
         }
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            val rank = params[0] as Int
-            val club = params[1] as Boolean
-
-            writeBoolean(visible)
-            writeInt(0) // todo: icon color
-            writeInt(iconImage) // icon
-            writeInt(id)
-
-            if (HabboServer.habboConfig.catalogConfig.showHowManyItemsInTitle && pageLayout != "category" && parentId != -1) writeUTF(
-                "${StringUtils.stripAccents(name)} (${catalogItems.size})"
-            )
-            else writeUTF(StringUtils.stripAccents(name))
-
-            if (isVersionBefore(2011, 3, 25)) {
-                writeBoolean(false) // Campo 'Disabled' (§_-tJ§)
-            }
-
-            // CASO ESPECIAL: Se eu sou a página ROOT (-1), eu busco os NETOS
-            if (id == -1) {
-                val level1Nodes = HabboServer.habboGame.catalogManager.catalogPages.filter {
-                    it.parentId == -1 &&
-                            it.enabled && it.visible && it.minRank <= rank &&
-                            if (it.clubOnly) club else true
-                }
-
-                val level1Ids = level1Nodes.map { it.id }
-
-                // 2. Busca os "Netos" (Nível 2) que são filhos desses IDs (Ex: ID 14 filho de 2, ID 55 filho de 6)
-                val level2Nodes = HabboServer.habboGame.catalogManager.catalogPages
-                    .filter { page ->
-                        level1Ids.contains(page.parentId) &&
-                                page.enabled && page.visible && page.minRank <= rank &&
-                                if (page.clubOnly) club else true
-                    }
-
-                // 3. Identifica quais IDs do nível 1 serviram de "Pasta"
-                // (Ex: ID 2 e 6 estão aqui porque seus filhos entraram na lista level2Nodes)
-                val parentIdsThatAreFolders = level2Nodes.map { it.parentId }.distinct()
-
-                // 4. Filtra os "Orfãos" do Nível 1 (Páginas Reais)
-                // Mantemos o ID 1 aqui porque ele NÃO está na lista de 'parentIdsThatAreFolders'
-                val orphansLevel1 = level1Nodes.filter { !parentIdsThatAreFolders.contains(it.id) }
-
-                // 5. Une as duas listas: (Página Principal) + (Conteúdo das Pastas)
-                val finalPages = (orphansLevel1 + level2Nodes)
-                    .sortedWith(compareBy({
-                        // Lógica de Ordenação:
-                        // Se for orfão (ID 1), usa o próprio ID como agrupador (ou -1 para garantir topo)
-                        // Se for neto (ID 14), usa o ID do pai (2) para manter agrupado com sua categoria original
-                        if (it.parentId == -1) it.id else it.parentId
-                    }, { it.orderNum }))
-
-                writeInt(finalPages.size)
-
-                finalPages.forEach { page ->
-                    // Truque: Se já for filho de -1 (Principal), manda normal.
-                    // Se for neto, manda uma cópia com parentId -1.
-                    val pageToSend = if (page.parentId == -1) page else page.copy(parentId = -1)
-                    serialize(pageToSend, rank, club)
-                }
-            } else {
-                // CASO PADRÃO: Se eu sou uma página normal (ex: 14), busco meus filhos normais (ex: 35)
-                val directChildren = HabboServer.habboGame.catalogManager.catalogPages
-                    .filter { page ->
-                        page.parentId == id && // Busca filhos deste ID atual
-                                page.enabled && page.visible && page.minRank <= rank &&
-                                if (page.clubOnly) club else true
-                    }
-                    .sortedBy { it.orderNum }
-
-                writeInt(directChildren.size)
-
-                directChildren.forEach { page ->
-                    // Serialização normal, sem fake
-                    serialize(page, rank, club)
-                }
-            }
-
-            if (isVersionAtLeast(2011, 6, 13)) {
-                if (id == -1 || id == -2) {
-                    writeBoolean(false) // newAdditionsAvailable -> link to catalog.page.latest_added
-                }
-            }
-        }
+        // Unificado: R63A (ancorado em 2011-09-30 no decoder) cai nos predicados da era preshuffle
+        serializeHabboResponse(habboResponse, *params)
     }
 
     companion object {

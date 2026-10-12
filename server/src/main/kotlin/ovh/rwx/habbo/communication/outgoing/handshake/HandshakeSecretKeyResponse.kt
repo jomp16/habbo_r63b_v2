@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.handshake
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -31,8 +32,18 @@ class HandshakeSecretKeyResponse {
     @ResponseR63A(OutgoingR63A.SECRET_KEY)
     fun response(habboResponse: HabboResponse, publicKey: String) {
         habboResponse.apply {
+            // Nascimento do boolean: 2014-08-14 (era pacote do DH). true = o cliente cria o
+            // segundo cipher RC4 (`_SafeStr_8088`) e passa a decriptar server→client; antes disso
+            // o parser lê só a String e o boolean trailing é ignorado. A data aqui precisa
+            // bater com o predicado do HandshakeSecretKeyHandler.
+            val fullDuplex = isVersionAtLeast(2014, 8, 14)
+
             writeUTF(publicKey)
-            writeBoolean(false)
+            writeBoolean(fullDuplex)
+
+            // A própria resposta SecretKey vai em plaintext: o cliente só instancia o
+            // cipher 2 depois de parsear este pacote.
+            if (fullDuplex) plaintext = true
         }
     }
 }

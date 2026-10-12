@@ -22,6 +22,13 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.dependency.updates)
+
+    // JRebel: gera rebel.xml por módulo (task generateRebel, hookada em processResources)
+    id("org.zeroturnaround.gradle.jrebel") version "1.2.3" apply false
+}
+
+allprojects {
+    apply(plugin = "org.zeroturnaround.gradle.jrebel")
 }
 
 // Shared build logic lives in build-logic; modules apply conventions explicitly.

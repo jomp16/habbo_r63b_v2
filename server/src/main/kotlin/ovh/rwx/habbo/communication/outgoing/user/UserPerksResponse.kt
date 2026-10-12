@@ -21,19 +21,29 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
-@Suppress("unused", "UNUSED_PARAMETER")
 class UserPerksResponse {
     @Response(Outgoing.USER_PERKS)
     fun response(habboResponse: HabboResponse, perksData: Array<Triple<String, String, Boolean>>) {
         habboResponse.apply {
             writeInt(perksData.size)
 
+            // Até 2013-05-31 o PerkAllowancesMessageParser lê (code, isAllowed, errorMessage);
+            // de 2013-06-03 em diante Sulake trocou para (code, errorMessage, isAllowed)
+            val oldEra = isVersionBefore(2013, 6, 3)
+
             perksData.forEach { (name, requirement, enabled) ->
-                writeUTF(name)
-                writeUTF(requirement)
-                writeBoolean(enabled)
+                if (oldEra) {
+                    writeUTF(name)
+                    writeBoolean(enabled)
+                    writeUTF(requirement)
+                } else {
+                    writeUTF(name)
+                    writeUTF(requirement)
+                    writeBoolean(enabled)
+                }
             }
         }
     }

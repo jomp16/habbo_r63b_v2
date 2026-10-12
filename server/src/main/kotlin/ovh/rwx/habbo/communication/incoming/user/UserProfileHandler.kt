@@ -55,5 +55,10 @@ class UserProfileHandler {
         val isOnline = userId == UserInformationDao.serverConsoleUserInformation.id || HabboServer.habboSessionManager.containsHabboSessionById(userId)
 
         habboSession.sendHabboResponse(Outgoing.USER_PROFILE, userInformation, userStats, showProfile, friends, isFriend, isRequest, isOnline)
+
+        // Por conferir o seu próprio perfil..
+        if (userId == habboSession.userInformation.id) {
+            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial2", 1)
+        }
     }
 }

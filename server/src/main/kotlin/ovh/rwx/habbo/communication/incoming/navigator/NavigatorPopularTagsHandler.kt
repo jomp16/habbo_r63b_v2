@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.room.user.RoomUser
@@ -30,6 +33,8 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorPopularTagsHandler {
+    // 2013: _-0G6@1475 (vazio); pré-shuffle idem
+    @Handler(Incoming.NAVIGATOR_POPULAR_TAGS)
     @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_TAGS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val popularTags = mutableMapOf<String, Int>()
@@ -52,6 +57,6 @@ class NavigatorPopularTagsHandler {
                 }
             }
 
-        habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_POPULAR_TAGS, popularTags)
+        habboSession.sendResponse(Outgoing.NAVIGATOR_POPULAR_TAGS, OutgoingR63A.NAVIGATOR_POPULAR_TAGS, popularTags)
     }
 }

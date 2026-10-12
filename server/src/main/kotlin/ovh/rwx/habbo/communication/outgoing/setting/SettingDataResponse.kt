@@ -31,8 +31,7 @@ data class UserSettingsData(
     val ignoreRoomInvite: Boolean = false,
     val disableCameraFollow: Boolean = false,
     val friendBarOpen: Boolean = false,
-    val chatColor: Int = 0,
-    val unknownR63A: Boolean = false
+    val chatColor: Int = 0
 )
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -41,30 +40,31 @@ class SettingDataResponse {
     @ResponseR63A(OutgoingR63A.USER_SETTINGS)
     fun response(habboResponse: HabboResponse, data: UserSettingsData) {
         habboResponse.apply {
-            if (isVersionBefore(2011, 9, 20)) {
-                writeInt(data.systemVolume)
-                writeBoolean(data.unknownR63A)
-            } else {
-                writeInt(data.systemVolume)
-                writeInt(data.furniVolume)
-                writeInt(data.musicVolume)
-                writeBoolean(data.preferOldChat)
-                writeBoolean(data.ignoreRoomInvite)
-                writeBoolean(data.disableCameraFollow)
-                writeInt(if (data.friendBarOpen) 1 else 0)
-                writeInt(data.chatColor)
+            // Volume único comum a todas as eras (preshuffle le exatamente 1 int: _-WA@308 2011-08, _-40@308 2009)
+            writeInt(data.systemVolume)
+            if (isVersionBefore(2011, 9, 20)) return@apply
 
-                if (isVersionAtLeast(2024, 5, 24)) {
-                    writeBoolean(false) // wired menu button
-                    writeBoolean(false) // wired inspect button
-                    writeBoolean(false) // play test mode
-                    if (isVersionAtLeast(2024, 5, 30)) writeInt(0) // useless
-                    if (isVersionAtLeast(2024, 12, 12)) writeBoolean(false) // wired whisper disabled
-                    if (isVersionAtLeast(2025, 9, 11)) writeBoolean(false) // show all notifications
-                    if (isVersionAtLeast(2026, 2, 9)) writeUTF("illumina") // wiredUiStyle
-                } else {
-                    writeInt(0)
-                }
+            // Era 2011-09..2014-12: SoundSettings só com os 3 volumes (parser _-12G@2564, sem bools)
+            writeInt(data.furniVolume)
+            writeInt(data.musicVolume)
+            if (isVersionBefore(2014, 12, 10)) return@apply
+
+            writeBoolean(data.preferOldChat)
+            writeBoolean(data.ignoreRoomInvite)
+            writeBoolean(data.disableCameraFollow)
+            writeInt(if (data.friendBarOpen) 1 else 0)
+            writeInt(data.chatColor)
+
+            if (isVersionAtLeast(2024, 5, 24)) {
+                writeBoolean(false) // wired menu button
+                writeBoolean(false) // wired inspect button
+                writeBoolean(false) // play test mode
+                if (isVersionAtLeast(2024, 5, 30)) writeInt(0) // useless
+                if (isVersionAtLeast(2024, 12, 12)) writeBoolean(false) // wired whisper disabled
+                if (isVersionAtLeast(2025, 9, 11)) writeBoolean(false) // show all notifications
+                if (isVersionAtLeast(2026, 2, 9)) writeUTF("illumina") // wiredUiStyle
+            } else {
+                writeInt(0)
             }
         }
     }

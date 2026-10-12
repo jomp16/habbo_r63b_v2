@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.plugin.event.events.room.RoomLeaveEvent
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
@@ -153,6 +154,7 @@ class RoomUserManager(private val room: Room) {
         if (roomEntity is RoomUser) {
             // Cancela qualquer troca ativa do usuário antes de remover
             room.tradeManager.onUserDisconnect(roomEntity)
+            HabboServer.pluginManager.executeEventAsync(RoomLeaveEvent(room, roomEntity.habboSession))
             val session = roomEntity.habboSession
             // Baús com auto-lock: trancam quando o dono sai do quarto
             HabboServer.habboGame.chestManager.onUserLeaveRoom(room, session)

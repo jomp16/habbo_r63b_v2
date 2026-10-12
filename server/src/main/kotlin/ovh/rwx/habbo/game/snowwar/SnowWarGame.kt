@@ -65,6 +65,12 @@ class SnowWarGame(
     private var gameFuture: ScheduledFuture<*>? = null
     private var gameTickFuture: ScheduledFuture<*>? = null
     private val turn = AtomicInteger(0)
+
+    @Volatile
+    private var lastCompletedTurn: Int = 0
+
+    @Volatile
+    private var lastCompletedChecksum: Int = 0
     private val pendingEvents = ConcurrentLinkedQueue<Pair<Int, ISnowWarGameEvent>>()
     private val deferredEvents = ConcurrentLinkedQueue<Pair<Int, ISnowWarGameEvent>>()
 
@@ -134,9 +140,6 @@ class SnowWarGame(
         }
         for (machine in machines) {
             blockedTiles.add(machine.x to machine.y)
-        }
-        for (pile in piles) {
-            blockedTiles.add(pile.x to pile.y)
         }
         for (obj in arenaFuseObjects) {
             val furnishing = obj.furnishing
@@ -273,6 +276,9 @@ class SnowWarGame(
         state = SnowWarStageState.STAGE_RUNNING
         turn.set(0)
         pendingEvents.clear()
+        deferredEvents.clear()
+        lastCompletedTurn = 0
+        lastCompletedChecksum = calculateChecksum(0)
 
         val duration = HabboServer.habboConfig.gameConfig.snowwar.gameDurationSeconds
         log.info(
@@ -293,117 +299,132 @@ class SnowWarGame(
     }
 
     private fun tickGame() {
-        if (state != SnowWarStageState.STAGE_RUNNING || users.isEmpty()) {
-            gameTickFuture?.cancel(true)
-            return
-        }
-
-        val currentTurn = turn.getAndIncrement()
-
-        // 1. Process bot AI decisions
-        botAI.processTurn(currentTurn)
-
-        val subTurns = mutableListOf<MutableList<ISnowWarGameEvent>>()
-        repeat(3) { subTurns.add(mutableListOf()) }
-
-        val eventsToApply = mutableListOf<MutableList<ISnowWarGameEvent>>()
-        repeat(3) { eventsToApply.add(mutableListOf()) }
-
-        val eventsToSend = mutableListOf<MutableList<ISnowWarGameEvent>>()
-        repeat(3) { eventsToSend.add(mutableListOf()) }
-
-        // 2. Process deferred events: aplica agora o que foi enviado no turno passado
-        while (true) {
-            val item = deferredEvents.poll() ?: break
-            val subIndex = item.first.coerceIn(0, 2)
-            eventsToApply[subIndex].add(item.second)
-        }
-
-        // 3. Process pending user/bot events: envia agora, mas aplica na física só no próximo turno
-        while (true) {
-            val item = pendingEvents.poll() ?: break
-            val subIndex = item.first.coerceIn(0, 2)
-            deferredEvents.add(subIndex to item.second)
-            eventsToSend[subIndex].add(item.second)
-        }
-
-        // Simulação física em 3 subturnos
-        for (sub in 0 until 3) {
-            val subturnEvents = subTurns[sub]
-
-            // Phase 0: Aplica ações sincronizadas no cliente
-            for (ev in eventsToApply[sub]) {
-                ev.apply(this)
+        synchronized(this) {
+            if (state != SnowWarStageState.STAGE_RUNNING || users.isEmpty()) {
+                gameTickFuture?.cancel(true)
+                return
             }
 
-            // Phase 1: Move players (em ordem determinística por objectId, idêntico ao AS3 SynchronizedGameArena)
-            for (user in users.values.sortedBy { it.objectId }) {
-                user.subturn { tx, ty -> isTileWalkable(tx, ty, user) }
+            val currentTurn = turn.getAndIncrement()
+
+            // 1. Process bot AI decisions
+            botAI.processTurn(currentTurn)
+
+            val subTurns = mutableListOf<MutableList<ISnowWarGameEvent>>()
+            repeat(3) { subTurns.add(mutableListOf()) }
+
+            val eventsToApply = mutableListOf<MutableList<ISnowWarGameEvent>>()
+            repeat(3) { eventsToApply.add(mutableListOf()) }
+
+            val eventsToSend = mutableListOf<MutableList<ISnowWarGameEvent>>()
+            repeat(3) { eventsToSend.add(mutableListOf()) }
+
+            // 2. Process deferred events: aplica agora o que foi enviado no turno passado
+            while (true) {
+                val item = deferredEvents.poll() ?: break
+                val subIndex = item.first.coerceIn(0, 2)
+                eventsToApply[subIndex].add(item.second)
             }
 
-            // Phase 2: Move snowballs & test collisions
-            for (ball in snowballs.toList()) {
-                if (!ball.alive) continue
-                ball.calculateFrameMovement()
-                if (checkObjectCollision(ball) || ball.hasFloorCollision(arenaHeightMapRows)) {
-                    ball.kill()
-                    snowballs.remove(ball)
+            // 3. Process pending user/bot events: envia agora, mas aplica na física só no próximo turno
+            while (true) {
+                val item = pendingEvents.poll() ?: break
+                val subIndex = item.first.coerceIn(0, 2)
+                deferredEvents.add(subIndex to item.second)
+                eventsToSend[subIndex].add(item.second)
+            }
+
+            // Simulação física em 3 subturnos
+            for (sub in 0 until 3) {
+                val subturnEvents = subTurns[sub]
+
+                // Phase 0: Aplica ações sincronizadas no cliente
+                for (ev in eventsToApply[sub]) {
+                    ev.apply(this)
                 }
-            }
 
-            // Phase 3: Generator ticks das máquinas
-            for (machine in machines) {
-                if (machine.processGeneratorTick()) {
-                    deferredEvents.add(sub to MachineCreatesSnowballGameEvent(machine.objectId))
-                    eventsToSend[sub].add(MachineCreatesSnowballGameEvent(machine.objectId))
+                // Phase 1: Move players (em ordem determinística por objectId, idêntico ao AS3 SynchronizedGameArena)
+                for (user in users.values.sortedBy { it.objectId }) {
+                    user.subturn { tx, ty -> isTileWalkable(tx, ty, user) }
                 }
-            }
 
-            // Phase 4: Coleta de bolas em máquinas e pilhas (em ordem determinística por objectId)
-            for (user in users.values.sortedBy { it.objectId }) {
-                if (!user.tickSnowballPickupTimer()) continue
+                // Phase 2: Move snowballs & test collisions
+                for (ball in snowballs.toList()) {
+                    if (!ball.alive) continue
+                    ball.calculateFrameMovement()
+                    if (checkObjectCollision(ball) || ball.hasFloorCollision(arenaHeightMapRows)) {
+                        ball.kill()
+                        snowballs.remove(ball)
+                    }
+                }
 
-                val targetMachine = machines.find { it.canPlayerPickup(user) }
-                if (targetMachine != null) {
-                    targetMachine.reservePickup()
-                    deferredEvents.add(
-                        sub to HumanGetsSnowballsFromMachineGameEvent(
-                            user.objectId,
-                            targetMachine.objectId
+                // Phase 3: Generator ticks das máquinas
+                for (machine in machines) {
+                    if (machine.processGeneratorTick()) {
+                        deferredEvents.add(sub to MachineCreatesSnowballGameEvent(machine.objectId))
+                        eventsToSend[sub].add(MachineCreatesSnowballGameEvent(machine.objectId))
+                    }
+                }
+
+                // Phase 4: Coleta de bolas em máquinas e pilhas (em ordem determinística por objectId)
+                for (user in users.values.sortedBy { it.objectId }) {
+                    if (!user.tickSnowballPickupTimer()) continue
+
+                    val targetMachine = machines.find { it.canPlayerPickup(user) }
+                    if (targetMachine != null) {
+                        targetMachine.reservePickup()
+                        deferredEvents.add(
+                            sub to HumanGetsSnowballsFromMachineGameEvent(
+                                user.objectId,
+                                targetMachine.objectId
+                            )
                         )
-                    )
-                    eventsToSend[sub].add(HumanGetsSnowballsFromMachineGameEvent(user.objectId, targetMachine.objectId))
-                    continue
-                }
-
-                val targetPile = piles.find { it.canPlayerPickup(user) }
-                if (targetPile != null) {
-                    targetPile.reservePickup()
-                    deferredEvents.add(
-                        sub to HumanGetsSnowballsFromMachineGameEvent(
-                            user.objectId,
-                            targetPile.objectId
+                        eventsToSend[sub].add(
+                            HumanGetsSnowballsFromMachineGameEvent(
+                                user.objectId,
+                                targetMachine.objectId
+                            )
                         )
-                    )
-                    eventsToSend[sub].add(HumanGetsSnowballsFromMachineGameEvent(user.objectId, targetPile.objectId))
+                        continue
+                    }
+
+                    val targetPile = piles.find { it.canPlayerPickup(user) }
+                    if (targetPile != null) {
+                        targetPile.reservePickup()
+                        deferredEvents.add(
+                            sub to HumanGetsSnowballsFromMachineGameEvent(
+                                user.objectId,
+                                targetPile.objectId
+                            )
+                        )
+                        eventsToSend[sub].add(
+                            HumanGetsSnowballsFromMachineGameEvent(
+                                user.objectId,
+                                targetPile.objectId
+                            )
+                        )
+                    }
                 }
             }
+
+            // Phase 5: Checksum sempre por último!
+            val cs = calculateChecksum(currentTurn)
+
+            for (sub in 0 until 3) {
+                eventsToSend[sub].addAll(subTurns[sub])
+            }
+
+            val statusData = Game2GameStatusData(
+                turn = currentTurn,
+                checksum = cs,
+                subTurns = eventsToSend
+            )
+
+            lastCompletedTurn = currentTurn
+            lastCompletedChecksum = cs
+
+            sendHabboResponse(Outgoing.GAME_2_GAME_STATUS, statusData)
         }
-
-        // Phase 5: Checksum sempre por último!
-        val cs = calculateChecksum(currentTurn)
-
-        for (sub in 0 until 3) {
-            eventsToSend[sub].addAll(subTurns[sub])
-        }
-
-        val statusData = Game2GameStatusData(
-            turn = currentTurn,
-            checksum = cs,
-            subTurns = eventsToSend
-        )
-
-        sendHabboResponse(Outgoing.GAME_2_GAME_STATUS, statusData)
     }
 
     private fun checkObjectCollision(ball: SnowWarSnowball): Boolean {
@@ -467,10 +488,13 @@ class SnowWarGame(
     fun isTileWalkable(tileX: Int, tileY: Int, movingUser: SnowWarUser): Boolean {
         if (tileY !in 0 until arenaHeightMapRows.size) return false
         val row = arenaHeightMapRows[tileY]
-        if (tileX !in 0 until row.length) return false
+        if (tileX !in row.indices) return false
         val c = row[tileX]
         if (c == 'x' || c == 'X') return false
         if ((tileX to tileY) in blockedTiles) return false
+        for (pile in piles) {
+            if (pile.snowballCount > 0 && pile.x == tileX && pile.y == tileY) return false
+        }
         for (u in users.values) {
             if (u.objectId == movingUser.objectId || !u.isAlive()) continue
             val occX = if (u.nextTileX != -1) u.nextTileX else u.currentTileX
@@ -567,33 +591,50 @@ class SnowWarGame(
     val duration: Int get() = HabboServer.habboConfig.gameConfig.snowwar.gameDurationSeconds
 
     fun onFullStatusRequest(session: HabboSession, requestedTurn: Int) {
-        val currentTurn = turn.get()
-        log.info("[Game-{}] Client asked for full status at turn {}", gameId, currentTurn)
-        val elapsedSeconds = (currentTurn * 150) / 1000
-        val remaining = (duration - elapsedSeconds).coerceAtLeast(0)
-        val cs = calculateChecksum(currentTurn)
-        val statusData = Game2GameStatusData(
-            turn = currentTurn,
-            checksum = cs,
-            subTurns = listOf(emptyList(), emptyList(), emptyList())
-        )
+        synchronized(this) {
+            val currentTurn = lastCompletedTurn
+            val cs = lastCompletedChecksum
+            log.info(
+                "[Game-{}] Client asked for full status at turn {} (reason={})",
+                gameId,
+                currentTurn,
+                requestedTurn
+            )
+            val elapsedSeconds = (currentTurn * 150) / 1000
+            val remaining = (duration - elapsedSeconds).coerceAtLeast(0)
 
-        val allObjects = mutableListOf<SnowWarGameObject>()
-        allObjects.addAll(machines)
-        allObjects.addAll(piles)
-        allObjects.addAll(trees)
-        allObjects.addAll(users.values.sortedBy { it.objectId })
-        allObjects.addAll(snowballs.filter { it.alive })
+            val eventsBySubTurn = listOf(
+                mutableListOf<ISnowWarGameEvent>(),
+                mutableListOf(),
+                mutableListOf()
+            )
+            for ((sub, ev) in deferredEvents) {
+                eventsBySubTurn[sub.coerceIn(0, 2)].add(ev)
+            }
 
-        val fullData = Game2FullGameStatusData(
-            remainingTimeSeconds = remaining,
-            durationInSeconds = duration,
-            objects = allObjects,
-            numberOfTeams = numberOfTeams,
-            status = statusData
-        )
+            val statusData = Game2GameStatusData(
+                turn = currentTurn,
+                checksum = cs,
+                subTurns = eventsBySubTurn
+            )
 
-        session.sendHabboResponse(Outgoing.GAME_2_FULL_GAME_STATUS, fullData)
+            val allObjects = mutableListOf<SnowWarGameObject>()
+            allObjects.addAll(machines)
+            allObjects.addAll(piles)
+            allObjects.addAll(trees)
+            allObjects.addAll(users.values.sortedBy { it.objectId })
+            allObjects.addAll(snowballs.filter { it.alive })
+
+            val fullData = Game2FullGameStatusData(
+                remainingTimeSeconds = remaining,
+                durationInSeconds = duration,
+                objects = allObjects,
+                numberOfTeams = numberOfTeams,
+                status = statusData
+            )
+
+            session.sendHabboResponse(Outgoing.GAME_2_FULL_GAME_STATUS, fullData)
+        }
     }
 
     fun onUserMove(session: HabboSession, targetX: Int, targetY: Int, turnNumber: Int, subTurn: Int) {

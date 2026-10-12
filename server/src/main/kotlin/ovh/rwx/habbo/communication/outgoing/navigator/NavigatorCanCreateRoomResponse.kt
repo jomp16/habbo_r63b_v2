@@ -20,11 +20,25 @@
 package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorCanCreateRoomResponse {
+    /**
+     * CanCreateRoomMessageEvent 2013 (_-3fP@434, parser _-24X): int resultCode (0 = pode criar),
+     * int maxRooms. O parser pré-shuffle lia Boolean, daí o branch de era separado.
+     */
+    @Response(Outgoing.NAVIGATOR_CAN_CREATE_ROOM)
+    fun response2013(habboResponse: HabboResponse, cannotCreate: Boolean, maxRooms: Int) {
+        habboResponse.apply {
+            writeInt(if (cannotCreate) 1 else 0)
+            writeInt(maxRooms)
+        }
+    }
+
     @ResponseR63A(OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM)
     fun response(habboResponse: HabboResponse, cannotCreate: Boolean, maxRooms: Int) {
         habboResponse.apply {

@@ -20,35 +20,16 @@
 package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
-/**
- * Payload estruturado para direitos de propriedade do quarto (ROOM_OWNERSHIP).
- *
- * @param roomId ID do quarto.
- * @param isOwner Se o usuário é o dono do quarto.
- * @param isPrivate Se o quarto é privado (usado no R63A).
- */
-data class RoomOwnershipData(
-    val roomId: Int,
-    val isOwner: Boolean,
-    val isPrivate: Boolean = true,
-)
-
 @Suppress("unused", "UNUSED_PARAMETER")
-class RoomOwnershipResponse {
-    @Response(Outgoing.ROOM_OWNERSHIP)
-    @ResponseR63A(OutgoingR63A.ROOM_OWNERSHIP)
-    fun response(habboResponse: HabboResponse, data: RoomOwnershipData) {
+class RoomAdvertisementResponse {
+    @ResponseR63A(OutgoingR63A.ROOM_ADVERTISEMENT)
+    fun responseR63A(habboResponse: HabboResponse, imageUrl: String, clickUrl: String) {
         habboResponse.apply {
-            if (outgoingR63A != null) {
-                writeBoolean(data.isPrivate)
-            }
-            writeInt(data.roomId)
-            writeBoolean(data.isOwner)
+            writeUTF(imageUrl)
+            writeUTF(clickUrl)
         }
     }
 }

@@ -32,6 +32,8 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
     lateinit var incoming: Incoming
     lateinit var incomingR63A: IncomingR63A
+
+    val isIncomingInitialized: Boolean get() = this::incoming.isInitialized
     lateinit var methodName: String
     var r63ANewEncoding: Boolean = false
 

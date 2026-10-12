@@ -41,6 +41,8 @@ class RoomUser(
 
     override fun onMovementStepCommitted() {
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_LegDay", 1, accumulate = true)
+        // Por dar uma volta pelo Hotel (primeiro passo em um quarto)
+        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial1", 1)
     }
 
     fun chat(

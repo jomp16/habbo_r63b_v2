@@ -17,18 +17,17 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.incoming.room
+package ovh.rwx.habbo.plugin.event.events.room
 
-import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.HandlerR63A
-import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomIntersitialHandler {
-    @HandlerR63A(IncomingR63A.ROOM_INTERSITIAL)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_INTERSITIAL, "", "")
-    }
-}
+class RoomEnterEvent(
+    room: Room,
+    val habboSession: HabboSession
+) : IRoomEvent(room)
+
+class RoomLeaveEvent(
+    room: Room,
+    val habboSession: HabboSession
+) : IRoomEvent(room)

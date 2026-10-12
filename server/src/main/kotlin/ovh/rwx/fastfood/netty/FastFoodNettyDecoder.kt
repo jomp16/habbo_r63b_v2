@@ -63,7 +63,7 @@ class FastFoodNettyDecoder : ByteToMessageDecoder() {
 <!DOCTYPE cross-domain-policy SYSTEM "/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="*" />
-</cross-domain-policy>""")
+</cross-domain-policy>""" + '\u0000') // Flash exige o policy terminado em NUL (0x00)
 
             return
         } else {

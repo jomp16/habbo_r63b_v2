@@ -41,7 +41,7 @@ dependencies {
     implementation(libs.flyway.mysql)
     implementation(libs.mariadb.driver)
     implementation(libs.hikari)
-    implementation(libs.reflections)
+    implementation(libs.classgraph)
     implementation(libs.commons.lang)
     implementation(libs.jasypt)
     implementation(libs.bouncycastle)

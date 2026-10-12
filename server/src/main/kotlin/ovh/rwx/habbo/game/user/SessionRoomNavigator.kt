@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.plugin.event.events.room.RoomEnterEvent
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscGenericErrorResponse
@@ -141,4 +142,6 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
     }
 
     room.userManager.addUser(this)
+
+    HabboServer.pluginManager.executeEventAsync(RoomEnterEvent(room, this))
 }

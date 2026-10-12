@@ -19,52 +19,62 @@
 
 package ovh.rwx.fastfood.communication
 
-import org.reflections8.Reflections
-import org.reflections8.scanners.MethodAnnotationsScanner
+import io.github.classgraph.ClassGraph
+import io.github.classgraph.ScanResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.fastfood.game.FastFoodSession
+import ovh.rwx.habbo.communication.HabboInvokers
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.HabboVersion
+import ovh.rwx.habbo.communication.RequestInvoker
+import ovh.rwx.habbo.communication.ResponseInvoker
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.lang.reflect.Method
 import java.lang.invoke.WrongMethodTypeException
 import java.time.LocalDateTime
 
 class FastFoodHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private val fastFoodMessageHandlers: MutableMap<FFIncoming, Pair<Any, MethodHandle>> = mutableMapOf()
-    private val fastFoodMessageResponses: MutableMap<FFOutgoing, Pair<Any, MethodHandle>> = mutableMapOf()
+    private val fastFoodMessageHandlers: MutableMap<FFIncoming, Pair<RequestInvoker, MethodHandle>> = mutableMapOf()
+    private val fastFoodMessageResponses: MutableMap<FFOutgoing, Pair<ResponseInvoker, MethodHandle>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
     var largestNameSize: Int = 0
 
     init {
         val lookup = MethodHandles.lookup()
-        val reflections = Reflections(javaClass.classLoader, javaClass.`package`.name, MethodAnnotationsScanner())
 
-        reflections.getMethodsAnnotatedWith(FFHandler::class.java).forEach {
-            val clazz = getInstance(it.declaringClass)
-            val handler = it.getAnnotation(FFHandler::class.java)
-            val methodHandle = lookup.unreflect(it)
+        ClassGraph()
+            .enableAllInfo()
+            .acceptPackages(javaClass.`package`.name)
+            .scan()
+            .use { scanResult ->
+                annotatedMethods(scanResult, FFHandler::class.java).forEach { method ->
+                    val handler = method.getAnnotation(FFHandler::class.java) ?: return@forEach
+                    val instance = getInstance(method.declaringClass)
+                    val invoker = HabboInvokers.buildRequestInvoker(lookup, instance, method, FastFoodSession::class.java)
+                    val handle = lookup.unreflect(method)
 
-            handler.headers.forEach { incoming ->
-                if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers[incoming] = Pair(clazz, methodHandle)
+                    handler.headers.forEach { incoming ->
+                        if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers[incoming] = invoker to handle
+                    }
+                }
+
+                annotatedMethods(scanResult, FFResponse::class.java).forEach { method ->
+                    val response = method.getAnnotation(FFResponse::class.java) ?: return@forEach
+                    val instance = getInstance(method.declaringClass)
+                    val invoker = HabboInvokers.buildResponseInvoker(instance, method)
+                    val handle = lookup.unreflect(method)
+
+                    response.headers.forEach { outgoing ->
+                        if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] = invoker to handle
+                    }
+                }
             }
-        }
-
-        reflections.getMethodsAnnotatedWith(FFResponse::class.java).forEach {
-            val clazz = getInstance(it.declaringClass)
-            val response = it.getAnnotation(FFResponse::class.java)
-            val methodHandle = lookup.unreflect(it)
-
-            response.headers.forEach { outgoing ->
-                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] =
-                    Pair(clazz, methodHandle)
-            }
-        }
 
         largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name })
             .maxByOrNull { it.length }!!.length
@@ -73,20 +83,25 @@ class FastFoodHandler {
         log.info("Loaded {} FastFood response handlers", fastFoodMessageResponses.size)
     }
 
+    private fun annotatedMethods(scanResult: ScanResult, annotation: Class<out Annotation>): Sequence<Method> =
+        scanResult.getClassesWithMethodAnnotation(annotation.name).asSequence()
+            .flatMap { classInfo -> classInfo.methodInfo.asSequence().filter { it.hasAnnotation(annotation) } }
+            .map { it.loadClassAndGetMethod() }
+
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         fastFoodSession.incomingExecutor.execute {
             habboRequest.use {
                 val ffIncoming: FFIncoming? = FFIncoming.values().firstOrNull { ffIncoming -> ffIncoming.headerId == habboRequest.headerId }
 
                 if (ffIncoming != null && fastFoodMessageHandlers.containsKey(ffIncoming)) {
-                    val (clazz, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
+                    val (invoker, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
 
                     try {
-                        methodHandle.invokeWithArguments(clazz, fastFoodSession, habboRequest)
+                        invoker.invoke(fastFoodSession, habboRequest)
                     } catch (e: Exception) {
                         log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
 
-                        if (e is ClassCastException || e is WrongMethodTypeException) {
+                        if (e is ClassCastException || e is WrongMethodTypeException || e is ArrayIndexOutOfBoundsException) {
                             log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
                             log.error("Received parameters: {}", listOf(FastFoodSession::class.java.simpleName, HabboRequest::class.java))
                         }
@@ -100,7 +115,7 @@ class FastFoodHandler {
 
     fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
         if (fastFoodMessageResponses.containsKey(ffOutgoing)) {
-            val (clazz, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
+            val (invoker, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
             val habboResponse = HabboResponse(
                 headerId = ffOutgoing.headerId,
                 outgoing = null,
@@ -108,13 +123,13 @@ class FastFoodHandler {
             )
 
             try {
-                methodHandle.invokeWithArguments(clazz, habboResponse, *args)
+                invoker.invoke(habboResponse, args)
 
                 return habboResponse
             } catch (e: Exception) {
                 log.error("Error when invoking HabboResponse for ${ffOutgoing.headerId} - $ffOutgoing!", e)
 
-                if (e is ClassCastException || e is WrongMethodTypeException) {
+                if (e is ClassCastException || e is WrongMethodTypeException || e is ArrayIndexOutOfBoundsException) {
                     log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { it.simpleName })
                     log.error("Received parameters: {}", listOf(HabboResponse::class.java.simpleName).plus(args.map { it?.javaClass?.simpleName }))
                 }

@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.user.information
 
+import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 
 class UserPreferences(
@@ -52,7 +53,7 @@ class UserPreferences(
     var friendStreamEnabled: Boolean = friendStreamEnabled; set(v) { if (field != v) { field = v; markDirty() } }
 
     override fun flush() {
-        ovh.rwx.habbo.database.user.UserPreferencesDao.savePreferences(this)
+        UserPreferencesDao.savePreferences(this)
         markClean()
     }
 }

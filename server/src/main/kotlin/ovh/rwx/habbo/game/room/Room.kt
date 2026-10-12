@@ -28,6 +28,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.group.GroupDao
@@ -55,6 +56,7 @@ import ovh.rwx.habbo.game.room.wired.WiredErrorLogger
 import ovh.rwx.habbo.game.room.wired.WiredPerformanceMonitor
 import ovh.rwx.habbo.game.room.wired.WiredRoomSettings
 import ovh.rwx.habbo.game.room.wired.WiredVariableManager
+import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
@@ -446,8 +448,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         networkDispatcher.sendResponseR63A(outgoing, *args)
     }
 
-    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
-        networkDispatcher.sendResponse(outgoing, outgoingR63A, *args)
+    fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?, excludeSession: HabboSession? = null) {
+        networkDispatcher.sendResponse(outgoing, outgoingR63A, *args, excludeSession = excludeSession)
     }
     // endregion
 
@@ -476,34 +478,68 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             val enterRoom = params.getOrNull(1) as? Boolean ?: false
+            val userCount = userManager.entities.values.filterIsInstance<RoomUser>().size
+            val groupData = group?.groupData
+            // GuestRoomData antigo (2013-05-22 _SafeStr_1749 == 2014-12-10 _SafeStr_2293, verificado no AS3);
+            // o layout morre antes de PRODUCTION-201512012203, que já lê o bitmask condicional moderno
+            val oldLayout = isVersionBefore(2015, 12, 1)
 
             writeInt(roomData.id)
             writeUTF(roomData.name)
+            if (oldLayout) {
+                // showOwnerName (UI mostra o dono se true && ownerId > 0); no layout moderno migrou para o bit 8 do bitmask
+                writeBoolean(true)
+            }
             writeInt(roomData.ownerId)
             writeUTF(roomData.ownerName)
-            writeInt(roomData.state.state)
-            writeInt(userManager.entities.values.filterIsInstance<RoomUser>().size)
+            writeInt(roomData.state.state) // doorMode: 1=doorbell, 2=password
+            writeInt(userCount)
             writeInt(roomData.usersMax)
             writeUTF(roomData.description)
-            writeInt(roomData.tradeState)
+            if (oldLayout) {
+                writeInt(0) // srchSpecPrm, remanescente preshuffle sem uso na UI
+            }
+            writeInt(roomData.tradeState) // "trading_allowed" na UI
             writeInt(roomData.score)
             writeInt(0) // ranking
             writeInt(roomData.category)
+            if (oldLayout) {
+                // grupo incondicional de 4 campos antes das tags
+                writeInt(groupData?.id ?: 0) // >0 faz o cliente pedir os dados do grupo
+                writeUTF(groupData?.name ?: "")
+                writeUTF(groupData?.badge ?: "")
+                writeUTF("") // string sem uso na UI 2013
+            }
 
             writeInt(roomData.tags.size)
             roomData.tags.forEach { writeUTF(it) }
 
-            var bitMaskValue = if (enterRoom) 32 else 0
-            if (group != null) bitMaskValue += 2
-            if (roomData.roomType == RoomType.PRIVATE) bitMaskValue += 8
-            if (roomData.allowPets) bitMaskValue += 16
+            if (oldLayout) {
+                // rabo extinto no layout moderno: a moderação vive no wrapper externo nas duas eras
 
-            writeInt(bitMaskValue)
+                // DTO de moderação embutido: 0/0/0 -> o cliente aplica o default (mute=1, kick=0, ban=(4,1))
+                writeInt(0)
+                writeInt(0)
+                writeInt(0)
+                // ponytail: flag de settings do editor de quarto sempre false; mover para roomData quando o fluxo de settings 2013 for endereçado
+                writeBoolean(false)
+                writeBoolean(false) // roomenterad
+                writeUTF("") // eventName
+                writeUTF("") // eventDesc
+                writeInt(0) // eventMinutes
+            } else {
+                var bitMaskValue = if (enterRoom) 32 else 0
+                if (group != null) bitMaskValue += 2
+                if (roomData.roomType == RoomType.PRIVATE) bitMaskValue += 8
+                if (roomData.allowPets) bitMaskValue += 16
 
-            group?.let {
-                writeInt(it.groupData.id)
-                writeUTF(it.groupData.name)
-                writeUTF(it.groupData.badge)
+                writeInt(bitMaskValue)
+
+                groupData?.let {
+                    writeInt(it.id)
+                    writeUTF(it.name)
+                    writeUTF(it.badge)
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,7 +21,7 @@ package ovh.rwx.fastfood.communication.outgoing
 
 enum class FFOutgoing(val headerId: Int) {
     FAST_FOOD_MAINENTANCE(1),
-    USER_JOIN_GAME(3),
+    GAME_STARTING(3),
     DROP_FOOD(4),
     NEXT_PLATE(5),
     END_GAME(6),
@@ -33,6 +33,7 @@ enum class FFOutgoing(val headerId: Int) {
     POWER_UPS_INVENTORY(14),
     POWER_UPS_PRICE(15),
     USER_CREDITS(16),
+    POWER_UP_GAINED(18),
     GAME_COUNT(19),
-    USE_PARACHUTE(-1),
+    GLOBAL_SCORES(20),
 }

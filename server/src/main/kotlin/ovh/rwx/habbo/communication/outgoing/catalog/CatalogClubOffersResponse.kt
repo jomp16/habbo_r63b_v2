@@ -21,6 +21,7 @@ package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import java.time.LocalDateTime
@@ -45,7 +46,11 @@ class CatalogClubOffersResponse {
                 writeBoolean(true)
                 writeInt(ChronoUnit.MONTHS.between(lastExpireOffer, localDateTime).toInt())
                 writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
-                writeBoolean(it.giftable)
+                // giftable nasce entre RELEASE63-201406121205 e RELEASE63-201407091214;
+                // antes disso o offer do wire tem só 2 bools (AS3: _SafeStr_2838@0522 = 13 reads)
+                if (isVersionAtLeast(2014, 7, 9)) {
+                    writeBoolean(it.giftable)
+                }
                 writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
                 writeInt(localDateTime.year)
                 writeInt(localDateTime.monthValue)

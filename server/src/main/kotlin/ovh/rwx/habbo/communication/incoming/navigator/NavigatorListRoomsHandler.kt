@@ -20,8 +20,11 @@
 package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
@@ -30,18 +33,17 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorListRoomsHandler {
+    // 2013: composer genérico _-2fh@293 (int nodeId, int searchType) — mesmos (int, int) do pré-shuffle
+    @Handler(Incoming.NAVIGATOR_LIST_ROOMS)
     @HandlerR63A(IncomingR63A.NAVIGATOR_LIST_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val forceDisplay = habboRequest.readInt()
         val mode = NavigatorGuestRoomsMode.fromInt(habboRequest.readInt())
 
-        val rooms: List<Room> = when (mode) {
-            NavigatorGuestRoomsMode.MY_ROOMS -> habboSession.rooms
-            else -> emptyList()
-        }
+        val rooms: List<Room> = NavigatorSearchTypeHandler.roomsForMode(habboSession, mode)
 
-        habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS, NavigatorListPayload(
+        habboSession.sendResponse(
+            Outgoing.NAVIGATOR_LIST_ROOMS, OutgoingR63A.NAVIGATOR_LIST_ROOMS, NavigatorListPayload(
                 forceDisplay = forceDisplay,
                 mode = mode,
                 rooms = rooms,

@@ -21,8 +21,11 @@ package ovh.rwx.habbo.communication.incoming.navigator
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
@@ -30,13 +33,16 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorPopularRoomsHandler {
+    // 2013: _-2Lm@3559 (String categoria, int) — body compatível (UTF + int ignorado)
+    @Handler(Incoming.NAVIGATOR_POPULAR_ROOMS)
     @HandlerR63A(IncomingR63A.NAVIGATOR_POPULAR_ROOMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val categoryId = habboRequest.readUTF().toIntOrNull() ?: -1
+        // 2013 manda trailing int (slot do dropdown); bytes não lidos são descartados com o frame
         val popularRooms = HabboServer.habboGame.roomManager.getPopularRooms(categoryId)
 
-        habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
+        habboSession.sendResponse(
+            Outgoing.NAVIGATOR_LIST_ROOMS, OutgoingR63A.NAVIGATOR_LIST_ROOMS,
             NavigatorListPayload(
                 rooms = popularRooms,
                 mode = NavigatorGuestRoomsMode.POPULAR,

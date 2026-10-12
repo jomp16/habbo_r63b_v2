@@ -21,14 +21,29 @@ package ovh.rwx.habbo.communication.outgoing.misc
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class ShowInterstitialsResponse {
     @Response(Outgoing.SHOW_INTERSTITIALS)
+    @ResponseR63A(OutgoingR63A.SHOW_INTERSTITIALS)
     fun response(habboResponse: HabboResponse) {
         habboResponse.apply {
-            writeBoolean(false)
+            if (isVersionBefore(2016, 7, 26)) {
+                // Era Flash legada (R35 / R63A até 2015): RoomInterstitialMessageEvent
+                writeUTF("") // imageUrl (vazio quando não há anúncio)
+                writeUTF("") // clickUrl
+                if (isVersionAtLeast(2015, 12, 1)) {
+                    writeUTF("") // videoXmlUrl (adicionado no final de 2015)
+                }
+            } else {
+                // Flash / AIR moderno (PRODUCTION-2016 em diante): InterstitialMessageEvent
+                writeBoolean(false) // canShowInterstitial
+            }
         }
     }
 }

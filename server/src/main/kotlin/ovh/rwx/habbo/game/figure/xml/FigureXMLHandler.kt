@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.figure.xml
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import ovh.rwx.habbo.game.figure.FigureColor
+import ovh.rwx.habbo.game.figure.FigurePart
 import ovh.rwx.habbo.game.figure.FigureSet
 import ovh.rwx.habbo.game.figure.FigureSetType
 
@@ -110,7 +111,17 @@ class FigureXMLHandler : DefaultHandler() {
                 if (color > currentSetColors) {
                     currentSetColors = color
                 }
+                currentSet?.parts?.add(
+                    FigurePart(
+                        id = attributes.getValue("id").toInt(),
+                        type = attributes.getValue("type") ?: "",
+                        colorable = attributes.getValue("colorable")?.let { it == "1" } ?: true,
+                        colorIndex = color
+                    )
+                )
             }
+
+            "layer" -> currentSet?.hiddenLayers?.add(attributes.getValue("parttype") ?: return)
         }
     }
 

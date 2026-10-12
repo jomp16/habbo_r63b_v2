@@ -41,16 +41,18 @@ class NavigatorSearchHandler {
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_SEARCH, habboSession, category, searchTerm)
     }
 
+    // 2013: busca textual _-4Hp@2475 (String) — mesmo body do pré-shuffle
+    @Handler(Incoming.NAVIGATOR_SEARCH)
     @HandlerR63A(IncomingR63A.NAVIGATOR_SEARCH)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val searchTerm = habboRequest.readUTF()
         val rooms = HabboServer.habboGame.roomManager.searchRooms(searchTerm)
 
-        habboSession.sendHabboResponse(
-            OutgoingR63A.NAVIGATOR_LIST_ROOMS,
+        habboSession.sendResponse(
+            Outgoing.NAVIGATOR_LIST_ROOMS, OutgoingR63A.NAVIGATOR_LIST_ROOMS,
             NavigatorListPayload(
                 rooms = rooms,
-                mode = NavigatorGuestRoomsMode.SEARCH,
+                mode = NavigatorGuestRoomsMode.TEXT_SEARCH,
                 query = searchTerm,
                 categoryId = -1,
                 forceDisplay = 1

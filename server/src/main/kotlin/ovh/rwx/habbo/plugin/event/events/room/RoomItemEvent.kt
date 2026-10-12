@@ -17,19 +17,24 @@
  * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ovh.rwx.habbo.communication.outgoing.room
+package ovh.rwx.habbo.plugin.event.events.room
 
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.ResponseR63A
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.util.Vector2
 
-@Suppress("unused", "UNUSED_PARAMETER")
-class RoomIntersitialResponse {
-    @ResponseR63A(OutgoingR63A.ROOM_INTERSITIAL)
-    fun responseR63A(habboResponse: HabboResponse, image: String, url: String) {
-        habboResponse.apply {
-            writeUTF(image)
-            writeUTF(url)
-        }
-    }
-}
+class RoomItemPlaceEvent(
+    room: Room,
+    val habboSession: HabboSession,
+    val userItem: UserItem
+) : IRoomEvent(room)
+
+class RoomItemMoveEvent(
+    room: Room,
+    val habboSession: HabboSession,
+    val roomItem: RoomItem,
+    val newPosition: Vector2,
+    val rotation: Int
+) : IRoomEvent(room)

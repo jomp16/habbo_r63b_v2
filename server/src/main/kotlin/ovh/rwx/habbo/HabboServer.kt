@@ -45,12 +45,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.jdbi.v3.core.Jdbi
-import org.reflections8.Reflections
-import org.reflections8.util.ClasspathHelper
-import org.reflections8.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.FastFoodHandler
+import ovh.rwx.fastfood.netty.FastFoodNettyDecoder
+import ovh.rwx.fastfood.netty.FastFoodNettyEncoder
+import ovh.rwx.fastfood.netty.FastFoodNettyHandler
 import ovh.rwx.habbo.communication.HabboHandler
 import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.console.ServerConsole
@@ -75,31 +75,34 @@ object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     val habboConfig: HabboConfig = ObjectMapper(YAMLFactory()).registerKotlinModule().readValue(File("config.yaml"))
     val pluginManager: PluginManager = PluginManager()
+
     // SQL
     val hikariDataSource: HikariDataSource
     val jdbi: Jdbi
+
     // Netty
     private val habboServerBootstrap: ServerBootstrap
     private val habboWebSocketServerBootstrap: ServerBootstrap
-    //private val fastFoodServerBootstrap: ServerBootstrap
+    private val fastFoodServerBootstrap: ServerBootstrap
     private val workerGroup: EventLoopGroup
     private val bossGroup: EventLoopGroup
+
     // Habbo
     val habboEncryptionHandler: HabboEncryptionHandler
     val habboSessionManager: HabboSessionManager
     val habboHandler: HabboHandler
     val fastFoodHandler: FastFoodHandler
     val habboGame: HabboGame
+
     // Thread Executors
-    val serverScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
+    val serverScheduledExecutor: ScheduledExecutorService =
+        Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
     val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
     val serverConsole: ServerConsole = ServerConsole(this)
     val serverControlSocket: ServerControlSocket = ServerControlSocket(this, serverConsole)
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val reflections: Reflections
-        get() = Reflections(ConfigurationBuilder().addUrls(ClasspathHelper.forClassLoader()).addUrls(ClasspathHelper.forManifest()).addUrls(ClasspathHelper.forJavaClassPath()))
     val started: Boolean
         get() = !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
@@ -110,7 +113,13 @@ object HabboServer : AutoCloseable {
 
         log.info("")
         log.info("Version: ${BuildConfig.VERSION}.")
-        log.info("Built in: ${DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}")
+        log.info(
+            "Built in: ${
+                DATE_TIME_FORMATTER_WITH_HOURS.format(
+                    BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )
+            }"
+        )
         log.info("Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}.")
         log.info("By jomp16 and Lucas.")
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
@@ -132,7 +141,11 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
 
         log.info("Loading Habbo encryption...")
-        habboEncryptionHandler = HabboEncryptionHandler(habboConfig.encryptionConfig.rsaConfig.n, habboConfig.encryptionConfig.rsaConfig.d, habboConfig.encryptionConfig.rsaConfig.e)
+        habboEncryptionHandler = HabboEncryptionHandler(
+            habboConfig.encryptionConfig.rsaConfig.n,
+            habboConfig.encryptionConfig.rsaConfig.d,
+            habboConfig.encryptionConfig.rsaConfig.e
+        )
         log.info("Done!")
 
         log.info("Loading Habbo game...")
@@ -146,7 +159,7 @@ object HabboServer : AutoCloseable {
         habboSessionManager = HabboSessionManager()
         habboServerBootstrap = ServerBootstrap()
         habboWebSocketServerBootstrap = ServerBootstrap()
-        //fastFoodServerBootstrap = ServerBootstrap()
+        fastFoodServerBootstrap = ServerBootstrap()
         val ioHandlerFactory = if (Epoll.isAvailable()) EpollIoHandler.newFactory() else NioIoHandler.newFactory()
         workerGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
         bossGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
@@ -170,25 +183,25 @@ object HabboServer : AutoCloseable {
             val habboNettyEncoder = HabboNettyEncoder()
             val habboNettyHandler = HabboNettyHandler()
             val habboNettyWebSocketHandler = HabboNettyWebSocketHandler()
-            //val fastFoodNettyEncoder = FastFoodNettyEncoder()
-            //val fastFoodNettyHandler = FastFoodNettyHandler()
+            val fastFoodNettyEncoder = FastFoodNettyEncoder()
+            val fastFoodNettyHandler = FastFoodNettyHandler()
             habboServerBootstrap.group(bossGroup, workerGroup)
-                    .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                    .childHandler(object : ChannelInitializer<SocketChannel>() {
-                        override fun initChannel(socketChannel: SocketChannel) {
-                            socketChannel.pipeline().apply {
-                                addLast(IdleStateHandler(30, 10, 0))
+                .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
+                .childHandler(object : ChannelInitializer<SocketChannel>() {
+                    override fun initChannel(socketChannel: SocketChannel) {
+                        socketChannel.pipeline().apply {
+                            addLast(IdleStateHandler(30, 10, 0))
 
-                                addLast(stringEncoder)
-                                addLast(habboNettyEncoder)
+                            addLast(stringEncoder)
+                            addLast(habboNettyEncoder)
 
-                                if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
+                            if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
 
-                                addLast(HabboNettyDecoder())
-                                addLast(habboNettyHandler)
-                            }
+                            addLast(HabboNettyDecoder())
+                            addLast(habboNettyHandler)
                         }
-                    })
+                    }
+                })
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
 
@@ -209,41 +222,47 @@ object HabboServer : AutoCloseable {
                             if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
 
                             addLast(HabboNettyDecoder())
-                                addLast(habboNettyHandler)
-                            }
+                            addLast(habboNettyHandler)
                         }
-                    })
-                    .option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true)
-            /*fastFoodServerBootstrap.group(bossGroup, workerGroup)
-                    .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                    .childHandler(object : ChannelInitializer<SocketChannel>() {
-                        override fun initChannel(socketChannel: SocketChannel) {
-                            socketChannel.pipeline().apply {
-                                addLast(IdleStateHandler(30, 10, 0))
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+            fastFoodServerBootstrap.group(bossGroup, workerGroup)
+                .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
+                .childHandler(object : ChannelInitializer<SocketChannel>() {
+                    override fun initChannel(socketChannel: SocketChannel) {
+                        socketChannel.pipeline().apply {
+                            addLast(IdleStateHandler(30, 10, 0))
 
-                                addLast(stringEncoder)
-                                addLast(fastFoodNettyEncoder)
-                                addLast(FastFoodNettyDecoder())
-                                addLast(fastFoodNettyHandler)
-                            }
+                            addLast(stringEncoder)
+                            addLast(fastFoodNettyEncoder)
+                            addLast(FastFoodNettyDecoder())
+                            addLast(fastFoodNettyHandler)
                         }
-                    })
-                    .option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true)*/
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+            log.info("Waiting for Habbo game to finish loading...")
+            habboGame.awaitLoaded()
+            log.info("Habbo game loaded!")
+
+            habboConfig.dynamicDnsConfig?.let { ovh.rwx.habbo.net.DynamicDnsUpdater.start(it) }
+
             val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
             val habboWebSocketChannelFuture = habboWebSocketServerBootstrap.bind(habboConfig.wsPort)
-            //val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 1)
+            val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 10)
             habboChannelFuture.sync()
             habboWebSocketChannelFuture.sync()
-            //fastFoodChannelFuture.sync()
-            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess/* && fastFoodChannelFuture.isSuccess*/) {
+            fastFoodChannelFuture.sync()
+            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
                 log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
                 log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
-                //log.info("FastFood server started on port {}!", habboConfig.port + 1)
+                log.info("FastFood server started on port {}!", habboConfig.port + 10)
                 habboChannelFuture.channel().closeFuture().await()
                 habboWebSocketChannelFuture.channel().closeFuture().await()
-                //fastFoodChannelFuture.channel().closeFuture().sync()
+                fastFoodChannelFuture.channel().closeFuture().sync()
             } else {
                 log.error(
                     "Error starting ${BuildConfig.NAME} server!",

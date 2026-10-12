@@ -21,6 +21,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
@@ -31,19 +32,27 @@ import ovh.rwx.habbo.game.room.model.SquareState
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloormapResponse {
     @Response(Outgoing.ROOM_FLOORMAP)
+    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
     fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
-            writeBoolean(true)
-            writeInt(room.roomData.wallHeight)
-            writeFloorPlan(this, room)
-            writeAreaHideMessageData(this)
-            writeCameraInit(this)
+            // Evolução do corpo do FloorHeightMapMessageEvent (parser do cliente):
+            //  - < 2013-09 (best-effort, gap de dumps 2013-06..2014-01; inclui R63A, ancorado
+            //    em 2011-09-30 no decoder): apenas o string do mapa
+            //  - 2013-09..2016-11: boolean + string do mapa
+            //  - >= 2016-11-29: boolean + wallHeight + mapa + AreaHideData + CameraInit
+            if (isVersionAtLeast(2016, 11, 29)) {
+                writeBoolean(true)
+                writeInt(room.roomData.wallHeight)
+                writeFloorPlan(this, room)
+                writeAreaHideMessageData(this)
+                writeCameraInit(this)
+            } else if (isVersionAtLeast(2013, 9, 1)) {
+                writeBoolean(true)
+                writeFloorPlan(this, room)
+            } else {
+                writeFloorPlan(this, room)
+            }
         }
-    }
-
-    @ResponseR63A(OutgoingR63A.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_FLOORMAP)
-    fun responseR63A(habboResponse: HabboResponse, room: Room) {
-        writeFloorPlan(habboResponse, room)
     }
 
     private fun writeFloorPlan(habboResponse: HabboResponse, room: Room) {

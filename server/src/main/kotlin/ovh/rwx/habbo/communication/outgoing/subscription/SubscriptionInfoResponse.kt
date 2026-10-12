@@ -49,63 +49,38 @@ class SubscriptionInfoResponse {
         }
 
         habboResponse.apply {
-            // Campo #1: currentHcStreak (Dias contínuos de HC)
-            writeInt(currentStreak)
-
-            // Campo #2: firstSubscriptionDate (Introduzido no Redesign de 20160726+)
             if (isVersionAtLeast(2016, 7, 26)) {
+                // Redesign 20160726+: currentHcStreak, firstSubscriptionDate, kickback, missed/rewarded, spent, bonus, reward, payday
+                writeInt(currentStreak)
                 writeUTF(firstSubDate)
-            }
-
-            // Campo #3: kickbackPercentage (ou divisor de cálculo antes de 2016)
-            if (isVersionAtLeast(2016, 7, 26)) {
                 writeDouble(kickbackPercentage)
-            } else {
-                writeInt((kickbackPercentage * 10).toInt())
-            }
-
-            // Campos #4 & #5: totalCreditsMissed / totalCreditsRewarded
-            // (Na fórmula legada pré-2016: atuavam como multiplicador e limiar de desconto)
-            writeInt(0) // totalCreditsMissed
-            writeInt(0) // totalCreditsRewarded
-
-            // Campo #6: Tabela de Patamares de Desconto Progressivo vs Créditos Gastos
-            if (isVersionBetween(2012, 1, 30, 2016, 7, 26)) {
-                /*
-                 * JANELA 2012.01.30 -> 2016.07.25 (RELEASE63):
-                 * No ActionScript (_-0Et / getter _-0CC consumido pela classe _-26x):
-                 * Este campo é um LOOP[Int] representando os patamares/degraus (thresholds)
-                 * de compra do Habbo Club para cálculo de desconto cumulativo:
-                 *
-                 * for each (tier in _-0CC) {
-                 *     if (amountSpent >= tier) discountMultiplier++;
-                 * }
-                 *
-                 * Estrutura enviada na rede:
-                 * writeInt(thresholds.size) // Quantidade de patamares
-                 * thresholds.forEach { writeInt(it) } // Cada degrau em moedas (ex: 50, 100, 200)
-                 *
-                 * Se enviado vazio (0), nenhum desconto por degrau adicional é aplicado na UI:
-                 */
-                val discountThresholds = emptyList<Int>() // Ex: listOf(10, 50, 100)
-                writeInt(discountThresholds.size)
-                discountThresholds.forEach { threshold ->
-                    writeInt(threshold)
-                }
-            } else {
-                // Antes de 2012 e a partir de 2016 (onde voltou a ser um Int escalar simples: totalCreditsSpent)
-                writeInt(0)
-            }
-
-            // Campo #7: creditRewardForStreakBonus (Ausente apenas no intervalo [2011-12-13, 2012-01-30))
-            if (!isVersionBetween(2011, 12, 13, 2012, 1, 30)) {
+                writeInt(0) // totalCreditsMissed
+                writeInt(0) // totalCreditsRewarded
+                writeInt(0) // totalCreditsSpent
                 writeInt(bonus)
-            }
-
-            // Campos #8 & #9: Recompensa mensal e tempo restante até o Payday (20160726+)
-            if (isVersionAtLeast(2016, 7, 26)) {
                 writeInt(monthlyReward)
                 writeInt(timeUntilPayday)
+            } else {
+                /*
+                 * Era pré-2016 (ScrUserInfo, verificado no AS3 RELEASE63-201305221112:
+                 * parser _-0sk/_SafeStr_1895, evento _-2tA/_SafeStr_1801 header 870):
+                 * UTF productName, int clubDays, int (minutos restantes), int clubPeriods,
+                 * int status (0=sem club), bool, bool, int, int, int
+                 */
+                val daysLeft = 0
+                val minutesLeft = 0
+                val periodsLeft = 0
+
+                writeUTF("habbo_club")
+                writeInt(daysLeft)
+                writeInt(minutesLeft)
+                writeInt(periodsLeft)
+                writeInt(0) // status: 0 = sem assinatura
+                writeBoolean(false) // hasEverBeenMember
+                writeBoolean(false) // isHC
+                writeInt(0)
+                writeInt(0)
+                writeInt(0)
             }
         }
     }

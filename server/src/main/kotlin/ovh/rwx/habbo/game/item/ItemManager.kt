@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.item
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import io.github.classgraph.ClassGraph
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isVersionAtLeast
@@ -87,18 +88,29 @@ class ItemManager {
 
         roomTeleportLinks.putAll(ItemDao.getLinkedTeleport(teleportLinks.keys))
 
-        val interactors = HabboServer.reflections.getSubTypesOf(ItemInteractor::class.java)
-        interactors.map { it.getConstructor().newInstance() }.forEach { interactor ->
+        val interactors: List<ItemInteractor>
+        val furnitureLogics: List<FurnitureLogic>
+        val wiredItemsInteractor: List<Class<*>>
+
+        ClassGraph().enableAllInfo().acceptPackages("ovh.rwx.habbo").scan().use { scanResult ->
+            interactors = scanResult.getSubclasses(ItemInteractor::class.java).loadClasses()
+                .map { it.asSubclass(ItemInteractor::class.java).getConstructor().newInstance() }
+
+            furnitureLogics = scanResult.getSubclasses(FurnitureLogic::class.java).loadClasses()
+                .map { it.asSubclass(FurnitureLogic::class.java).getConstructor().newInstance() }
+
+            wiredItemsInteractor = scanResult.getClassesWithAnnotation(WiredItemInteractor::class.java).loadClasses()
+        }
+
+        interactors.forEach { interactor ->
             interactor.interactionType.forEach { furniInteractor[it] = interactor }
         }
 
-        val furnitureLogics = HabboServer.reflections.getSubTypesOf(FurnitureLogic::class.java)
-        furnitureLogics.map { it.getConstructor().newInstance() }.forEach { logic ->
+        furnitureLogics.forEach { logic ->
             logic.interactionTypes.forEach { furniLogic[it] = logic }
             logic.itemNames.forEach { furniLogicByName[it] = logic }
         }
 
-        val wiredItemsInteractor = HabboServer.reflections.getTypesAnnotatedWith(WiredItemInteractor::class.java)
         wiredItemsInteractor.forEach { wiredItemClasses ->
             val annotation = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
             annotation.interactionType.forEach {

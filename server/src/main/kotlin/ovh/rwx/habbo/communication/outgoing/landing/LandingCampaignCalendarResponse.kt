@@ -22,23 +22,24 @@ package ovh.rwx.habbo.communication.outgoing.landing
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.campaign.CampaignCalendarData
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class LandingCampaignCalendarResponse {
     @Response(Outgoing.CAMPAIGN_CALENDAR)
-    fun response(habboResponse: HabboResponse, campaignName: String, unknown: String, currentDay: Int, daysOfCampaign: Int, openedBoxes: IntArray, lateBoxes: IntArray) {
+    fun response(habboResponse: HabboResponse, data: CampaignCalendarData) {
         habboResponse.apply {
-            writeUTF(campaignName)
-            writeUTF(unknown) // useless
-            writeInt(currentDay)
-            writeInt(daysOfCampaign)
-            writeInt(openedBoxes.size)
+            writeUTF(data.campaignName)
+            writeUTF(data.campaignImage) // campo 2 do parser = campaignImage no cliente
+            writeInt(data.currentDay)
+            writeInt(data.daysOfCampaign)
+            writeInt(data.openedBoxes.size)
 
-            openedBoxes.forEach { writeInt(it) }
+            data.openedBoxes.forEach { writeInt(it) }
 
-            writeInt(lateBoxes.size)
+            writeInt(data.lateBoxes.size)
 
-            lateBoxes.forEach { writeInt(it) }
+            data.lateBoxes.forEach { writeInt(it) }
         }
     }
 }

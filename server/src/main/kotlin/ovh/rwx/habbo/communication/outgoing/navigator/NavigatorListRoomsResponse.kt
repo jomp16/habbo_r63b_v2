@@ -20,11 +20,32 @@
 package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.*
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorListRoomsResponse {
+    /**
+     * GuestRoomSearchResultMessageEvent 2013 (_-mq@2559, parser _-1yy/_SafeStr_2703):
+     * int searchType, String query, int roomCount, loop flatDTO, boolean hasExtra.
+     * O flatDTO é o mesmo oldLayout do ROOM_INFO, já coberto por Room.serializeHabboResponse.
+     */
+    @Response(Outgoing.NAVIGATOR_LIST_ROOMS)
+    fun response2013(habboResponse: HabboResponse, payload: NavigatorListPayload) {
+        habboResponse.apply {
+            writeInt(payload.mode.mode)
+            writeUTF(payload.query)
+            writeInt(payload.rooms.size)
+
+            payload.rooms.forEach {
+                it.serializeHabboResponse(habboResponse)
+            }
+
+            writeBoolean(false) // hasExtra: sem bloco de ad/disc
+        }
+    }
+
     @ResponseR63A(OutgoingR63A.NAVIGATOR_LIST_ROOMS)
     fun responseR63A(habboResponse: HabboResponse, payload: NavigatorListPayload) {
         habboResponse.apply {

@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room
 
+import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 
@@ -103,7 +104,7 @@ class RoomData(
     val ownerName: String by lazy { UserInformationDao.getUserInformationById(ownerId)?.username ?: "null" }
 
     override fun flush() {
-        ovh.rwx.habbo.database.room.RoomDao.updateRoomData(this)
+        RoomDao.updateRoomData(this)
         markClean()
     }
 

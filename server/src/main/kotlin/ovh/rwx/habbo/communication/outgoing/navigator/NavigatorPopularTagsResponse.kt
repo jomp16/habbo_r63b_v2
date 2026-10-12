@@ -20,11 +20,15 @@
 package ovh.rwx.habbo.communication.outgoing.navigator
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorPopularTagsResponse {
+    // 2013 (_-1ku@3454, parser _-Rl) e pré-shuffle: mesmo body count + loop(String, int)
+    @Response(Outgoing.NAVIGATOR_POPULAR_TAGS)
     @ResponseR63A(OutgoingR63A.NAVIGATOR_POPULAR_TAGS)
     fun responseR63A(
         habboResponse: HabboResponse,

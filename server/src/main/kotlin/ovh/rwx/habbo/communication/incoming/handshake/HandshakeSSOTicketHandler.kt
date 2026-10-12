@@ -33,6 +33,7 @@ import ovh.rwx.habbo.communication.outgoing.habbicon.HabbiconShopData
 import ovh.rwx.habbo.communication.outgoing.habbicon.UserHabbiconsData
 import ovh.rwx.habbo.communication.outgoing.handshake.AuthenticationOkData
 import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
+import ovh.rwx.habbo.communication.outgoing.user.AvailabilityStatusData
 import ovh.rwx.habbo.communication.outgoing.user.UserHomeRoomData
 import ovh.rwx.habbo.communication.outgoing.user.UserLevelRightsData
 import ovh.rwx.habbo.database.user.UserIPDao
@@ -93,7 +94,7 @@ class HandshakeSSOTicketHandler {
                 ambassador = habboSession.userInformation.ambassador
             )
         )
-        habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS)
+        habboSession.sendHabboResponse(Outgoing.AVAILABILITY_STATUS, AvailabilityStatusData())
         habboSession.sendHabboResponse(Outgoing.ENABLE_TRADING, true)
         habboSession.sendHabboResponse(Outgoing.ACHIEVEMENT_SCORE, habboSession.userStats.achievementScore)
         habboSession.sendHabboResponse(
@@ -105,15 +106,9 @@ class HandshakeSSOTicketHandler {
             Outgoing.BUILDERS_SUBSCRIPTION_STATUS,
             habboSession.habboSubscription
         )
-        habboSession.sendHabboResponse(
-            Outgoing.CAMPAIGN_CALENDAR,
-            "easter21",
-            "",
-            LocalDate.now().dayOfMonth - 1,
-            LocalDate.now().lengthOfMonth(),
-            intArrayOf(),
-            intArrayOf()
-        )
+        HabboServer.habboGame.campaignCalendarManager.calendarDataFor(habboSession)?.let {
+            habboSession.sendHabboResponse(Outgoing.CAMPAIGN_CALENDAR, it)
+        }
         habboSession.sendHabboResponse(
             Outgoing.MODERATION_TOPICS_INIT,
             HabboServer.habboGame.moderationManager.moderationCategories,

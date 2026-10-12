@@ -29,5 +29,7 @@ data class FigureSet(
     var colorable: Boolean = true,
     var selectable: Boolean = true,
     var preselectable: Boolean = false,
-    var sellable: Boolean = false
+    var sellable: Boolean = false,
+    val parts: MutableList<FigurePart> = mutableListOf(),
+    val hiddenLayers: MutableList<String> = mutableListOf()
 )

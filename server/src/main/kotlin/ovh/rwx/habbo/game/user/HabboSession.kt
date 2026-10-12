@@ -26,8 +26,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.plugin.event.events.user.UserDisconnectEvent
+import ovh.rwx.habbo.plugin.event.events.user.UserLoginEvent
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -38,10 +40,12 @@ import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.encryption.IHabboEncryption
 import ovh.rwx.habbo.game.habbicon.HabboHabbicon
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.room.tasks.UserDisconnectRoomTask
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.badge.HabboBadge
 import ovh.rwx.habbo.game.user.information.UserInformation
@@ -65,6 +69,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var release: String
     val releaseInitialized get() = this::release.isInitialized
     var habboVersion: HabboVersion = HabboVersion(LocalDateTime.now(), 63)
+    var releaseCheckReceived: Boolean = false
     var r63ANewEncoding: Boolean = false
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
@@ -104,11 +109,17 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val authenticated: Boolean
         get() = ::userInformation.isInitialized && userInformation.id > 0 && ::userStats.isInitialized && userStats.id > 0 && ::userPreferences.isInitialized && userPreferences.id > 0
     var rc4Encryption: IHabboEncryption? = null
+
+    /** Cipher RC4 server→client (cipher 2 do cliente, `_SafeStr_8088`). Instância independente
+     *  do [rc4Encryption] (mesma chave, estado separado) — só existe quando a resposta
+     *  SecretKey levou o boolean `true` (era pacote, ≥ 2014-08-14). */
+    var rc4EncryptionOut: IHabboEncryption? = null
     var uniqueID: String = ""
     var osInformation: String = ""
     var ping: Long = 0
     val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
+    var fastFoodSession: FastFoodSession? = null
     var cryptoToken: String = ""
     var isBot: Boolean = false
 
@@ -259,9 +270,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
         processLoginAchievements()
 
-        UserInformationDao.updateAuthTicket(userInformation, null)
+        // UserInformationDao.updateAuthTicket(userInformation, null)
         UserInformationDao.saveInformation(userInformation, true, ip)
         UserStatsDao.saveStats(userStats)
+
+        HabboServer.pluginManager.executeEventAsync(UserLoginEvent(this))
 
         return true
     }
@@ -277,7 +290,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     override fun close() {
         if (authenticated) {
-            currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
+            HabboServer.pluginManager.executeEventAsync(UserDisconnectEvent(this))
+
+            // Cleanup serializado na thread do quarto: o roomUser ainda é null antes do
+            // UserJoinRoomTask rodar, e removeEntity inline deixava room user fantasma
+            currentRoom?.addTask(UserDisconnectRoomTask(this))
             HabboServer.habboGame.snowWarManager.leaveGame(this, true)
 
             if (!isBot) {

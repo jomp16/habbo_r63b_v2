@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,6 +21,7 @@ package ovh.rwx.fastfood.communication.incoming.game
 
 import ovh.rwx.fastfood.communication.FFHandler
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
+import ovh.rwx.fastfood.game.FastFoodGameManager
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.communication.HabboRequest
 
@@ -31,20 +32,23 @@ class GameExecuteActionHandler {
         if (!fastFoodSession.authenticated) return
 
         when (habboRequest.readInt()) {
-            0 -> {
-                // drop food
+            0 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
+                game.dropFood(player)
             }
-            1 -> {
-                // open parachute
+            1 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
+                game.parachute(player, big = false)
             }
-            2 -> {
-                // open big parachute
+            2 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
+                game.bigParachute(player)
             }
-            3 -> {
-                // launch missile
+            3 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
+                // míssil num adversário aleatório
+                game.players.filter { it.id != player.id }.randomOrNull()?.let { target ->
+                    game.missile(player, target)
+                }
             }
-            4 -> {
-                // shield food
+            4 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
+                game.shield(player, true)
             }
         }
     }

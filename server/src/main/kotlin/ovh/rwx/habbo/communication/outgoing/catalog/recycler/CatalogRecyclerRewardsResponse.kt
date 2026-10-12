@@ -41,7 +41,7 @@ class CatalogRecyclerRewardsResponse {
                 entry.value.forEach { s ->
                     HabboServer.habboGame.itemManager.furnishings[s]?.let { furnishing ->
                         writeUTF(furnishing.itemName)
-                        writeInt(1) // enabled
+                        writeInt(1) // todo: it isn't enabled, and yes item count (could be a bundle)
                         writeUTF(furnishing.type.type) // productItemType
                         writeInt(furnishing.spriteId) // productItemTypeId
                     }

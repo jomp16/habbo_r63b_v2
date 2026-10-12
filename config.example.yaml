@@ -29,6 +29,9 @@ reward:
   pixels_max: -1
   vip_points: 10
   vip_points_max: -1
+habbo_host: 127.0.0.1
+games_url: https://swf.habbo.rwx.ovh/games
+c_images_url: https://swf.habbo.rwx.ovh/c_images
 auto_join_room: false
 timer:
   credits_seconds: 10
@@ -86,5 +89,14 @@ pets:
   name_min_length: 2
   name_max_length: 15
 stress_test: false
+# Keeps habbo.server.local in the nginx box's /etc/hosts pointing at this
+# machine's LAN IP, so the habbo.rwx.ovh/websocket proxy always reaches the
+# emulator wherever it runs. Uncomment to enable.
+#dynamic_dns:
+#  ssh_target: root@192.168.10.103
+#  hostname: habbo.server.local
+#  reload_command: systemctl reload nginx
+#  subnets:
+#    - 192.168.0.0/16
 bot_ticket_prefix: "bot-"
 debug: false

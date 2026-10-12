@@ -37,6 +37,12 @@ class HabboResponse(
     val r63ANewEncoding: Boolean = false,
     val habboVersion: HabboVersion,
 ) : AutoCloseable {
+    /** Se true, o encoder envia este pacote SEM o RC4 de saída — mesmo para sessões com
+     *  [ovh.rwx.habbo.game.user.HabboSession.rc4EncryptionOut] ativo. É o caso da própria
+     *  resposta SecretKey, que criptografa o handshake: o cliente só instancia o cipher 2
+     *  DEPOIS de parseá-la. Decisão tomada no momento da criação (dentro do @Response),
+     *  imune à corrida coroutine→event-loop do write. */
+    var plaintext: Boolean = false
     private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
     private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
     private val debugString = StringBuilder()
@@ -49,7 +55,9 @@ class HabboResponse(
             debugString.append("{s:\"$debugStr\"}")
         }
         if (outgoingR63A != null && !r63ANewEncoding) {
-            byteBufOutputStream.writeBytes(s)
+            // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
+            // readUTFBytes = UTF-8 (writeBytes/data é Latin-1 e vira triângulo no cliente)
+            byteBufOutputStream.write(s.toByteArray(Charsets.UTF_8))
             byteBufOutputStream.writeByte(breakChar)
         } else {
             byteBufOutputStream.writeUTF(s)
@@ -62,7 +70,9 @@ class HabboResponse(
             debugString.append("{s:\"$debugStr\"}")
         }
         if (outgoingR63A != null && !r63ANewEncoding) {
-            byteBufOutputStream.writeBytes(s)
+            // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
+            // readUTFBytes = UTF-8 (writeBytes/data é Latin-1 e vira triângulo no cliente)
+            byteBufOutputStream.write(s.toByteArray(Charsets.UTF_8))
         }
     }
 

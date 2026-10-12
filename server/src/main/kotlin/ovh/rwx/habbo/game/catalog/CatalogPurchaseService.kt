@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.catalog
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.plugin.event.events.catalog.CatalogPurchaseEvent
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseNotAllowedErrorResponse
@@ -118,6 +119,10 @@ class CatalogPurchaseService {
 
         // 9. Efeitos colaterais (LTD, emblemas, conquistas)
         processPurchaseSideEffects(habboSession, catalogItem)
+
+        HabboServer.pluginManager.executeEventAsync(
+            CatalogPurchaseEvent(habboSession, catalogItem, extraData, amount, userItems)
+        )
     }
 
     private fun buildPurchaseDataList(

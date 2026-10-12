@@ -21,26 +21,48 @@ package ovh.rwx.habbo.communication.outgoing.messenger
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.user.messenger.MessengerFriend
+
+data class MessengerInitData(
+    val maxFriends: Int,
+    val maxFriendsHC: Int,
+    val friends: Collection<MessengerFriend>,
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInitializeResponse {
     @Response(Outgoing.MESSENGER_INIT)
-    fun response(habboResponse: HabboResponse, maxFriends: Int, maxFriendsHC: Int) {
-        habboResponse.apply {
-            writeInt(maxFriends) // Max friends normal
-            writeInt(maxFriends)
-            writeInt(maxFriendsHC) // Max friends HC
-            writeInt(0) // category count
-            // category structure:
-            // int - id
-            // string - name
-            // groups category
-//            writeInt(1)
-//            writeUTF("Groups")
+    @ResponseR63A(OutgoingR63A.MESSENGER_INIT)
+    fun response(habboResponse: HabboResponse, data: MessengerInitData) {
+        val (maxFriends, maxFriendsHC, friends) = data
 
-            writeInt(100)
-            writeInt(0)
+        habboResponse.apply {
+            writeInt(maxFriends) // userFriendLimit
+            writeInt(maxFriends) // normalFriendLimit
+            writeInt(maxFriendsHC) // extendedFriendLimit
+
+            if (isVersionAtLeast(2010, 4, 7) && isVersionBefore(2016, 7, 26)) {
+                writeInt(maxFriendsHC) // evenMoreExtendedFriendLimit (nome real no parser pré-shuffle); sai do init em 2016-07-26
+            }
+
+            writeInt(0) // categories count
+
+            if (isVersionBefore(2014, 12, 10)) {
+                // Era pré-2014-12-10 (pré-shuffle e 2013): amigos embutidos no próprio init
+                // (parser 2013 _SafeStr_2443: 4 ints + categorias LOOP[id|name] + amigos LOOP[full DTO])
+                writeInt(friends.size)
+                friends.forEach { serialize(it) }
+
+                if (isVersionBefore(2011, 2, 22)) {
+                    writeInt(0) // Pager status?
+                    writeInt(0) // Extra padding?
+                }
+            }
         }
     }
 }

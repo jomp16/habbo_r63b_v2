@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.communication.outgoing.gamecenter
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -27,15 +28,19 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 class GameCenterListGamesResponse {
     @Response(Outgoing.GAME_CENTER_LIST)
     fun response(habboResponse: HabboResponse) {
+        val gameCenterManager = HabboServer.habboGame.gameCenterManager
+        val games = gameCenterManager.all()
+
         habboResponse.apply {
-            writeInt(1) // available games
-            // BaseJump / Fast Food
-            writeInt(3) // id
-            writeUTF("basejump") // game name
-            writeUTF("68bbd2") // game background color
-            writeUTF("") // game text color
-            writeUTF("https://swf.hfinch.tk/c_images/gamecenter_basejump/") // todo: add dynamic c_images URL
-            writeUTF("") // idk
+            writeInt(games.size)
+            for (game in games) {
+                writeInt(game.gameTypeId)
+                writeUTF(game.name)
+                writeUTF(game.bgColor)
+                writeUTF(game.textColor)
+                writeUTF(gameCenterManager.assetsBaseUrl(game))
+                writeUTF(game.playUrl)
+            }
         }
     }
 }

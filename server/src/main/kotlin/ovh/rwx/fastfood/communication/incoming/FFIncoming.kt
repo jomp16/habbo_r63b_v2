@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -21,13 +21,14 @@ package ovh.rwx.fastfood.communication.incoming
 
 enum class FFIncoming(val headerId: Int) {
     HANDSHAKE_SSO_TICKET(1),
-    HANDSHAKE_GET_CLIENT_LOCALIZATIONS(7),
+    EXECUTE_ACTION(3),
     USER_DISCONNECT(5),
+    JOIN_LOBBY_GAME(6),
+    HANDSHAKE_GET_CLIENT_LOCALIZATIONS(7),
     GET_POWER_UPS(8),
     GET_POWER_UPS_PRICE(9),
-    GET_GAME_COUNTS(11),
-    GET_USER_CREDITS(14),
-    JOIN_LOBBY_GAME(6),
     PURCHASE_POWER_UP(10),
-    EXECUTE_ACTION(3)
+    GET_GAME_COUNTS(11),
+    GET_GLOBAL_SCORES(13),
+    GET_USER_CREDITS(14)
 }

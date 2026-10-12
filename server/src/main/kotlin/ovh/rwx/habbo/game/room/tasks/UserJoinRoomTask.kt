@@ -80,8 +80,10 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         room.roomGamemap.addRoomEntity(roomUser, roomUser.currentVector3.vector2)
 
         // 4. Broadcast de entrada leve para os usuários presentes na sala
+        // O entrante NÃO pode receber este broadcast: clientes 2013-2014 criam o trie do safe-chat
+        // apenas ao processar o ROOM_INITIAL_INFO, e um ROOM_USERS antes dele causa TypeError #1009
         session.let {
-            room.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, listOf(roomUser))
+            room.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, listOf(roomUser), excludeSession = session)
             /*room.sendHabboResponse(
                 Outgoing.USER_UPDATE,
                 RoomUpdateUserData(
@@ -92,7 +94,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
                     achievementScore = it.userStats.achievementScore
                 )
             )*/
-            room.sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomUser))
+            room.sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomUser), excludeSession = session)
         }
 
         // 5. Reset do contador de sala vazia
@@ -190,12 +192,13 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         habboSession.sendResponse(Outgoing.ROOM_HEIGHTMAP, OutgoingR63A.ROOM_HEIGHTMAP, room)
         habboSession.sendResponse(Outgoing.ROOM_FLOORMAP, OutgoingR63A.ROOM_FLOORMAP, room)
         habboSession.sendResponse(
-            Outgoing.ROOM_OWNERSHIP,
-            OutgoingR63A.ROOM_OWNERSHIP,
-            RoomOwnershipData(
+            Outgoing.GUEST_ROOM_RESULT,
+            OutgoingR63A.GUEST_ROOM_RESULT,
+            GuestRoomResultData(
                 roomId = room.roomData.id,
                 isOwner = isOwner,
-                isPrivate = room.roomData.roomType == RoomType.PRIVATE
+                isPrivate = room.roomData.roomType == RoomType.PRIVATE,
+                roomName = room.roomData.name
             )
         )
         habboSession.sendResponse(
@@ -223,12 +226,12 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
         habboSession.sendResponse(
             Outgoing.ROOM_FLOOR_ITEMS,
-            null,
+            OutgoingR63A.ROOM_FLOOR_ITEMS,
             RoomFloorItemsData(room, room.itemManager.floorItems.values)
         )
         habboSession.sendResponse(
             Outgoing.ROOM_WALL_ITEMS,
-            null,
+            OutgoingR63A.ROOM_WALL_ITEMS,
             RoomWallItemsData(room, room.itemManager.wallItems.values)
         )
 

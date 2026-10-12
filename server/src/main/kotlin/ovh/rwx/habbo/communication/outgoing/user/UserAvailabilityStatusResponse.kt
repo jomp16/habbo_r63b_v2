@@ -21,18 +21,37 @@ package ovh.rwx.habbo.communication.outgoing.user
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * AvailabilityStatusMessageEvent — estado do hotel enviado no login (antes do SSO).
+ *
+ * @param isOpen Hotel aberto para jogar (`false` = manutenção, cliente mostra tela de manutenção).
+ * @param onShutDown Hotel em processo de desligamento/reboot — o cliente exibe aviso de desconexão iminente.
+ * @param isAuthenticHabbo Gate de "sessão autêntica": quando `true` e o furniture data terminou de carregar,
+ *        o SessionDataManager dispara os callbacks de sessão pronta (_SafeStr_16167). Nasce em 2016-07-26;
+ *        antes disso o parser lê apenas `isOpen`/`onShutDown` e o byte extra desincronizaria o buffer.
+ */
+data class AvailabilityStatusData(
+    val isOpen: Boolean = true,
+    val onShutDown: Boolean = false,
+    val isAuthenticHabbo: Boolean = true,
+)
+
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserAvailabilityStatusResponse {
     @Response(Outgoing.AVAILABILITY_STATUS)
-    fun response(habboResponse: HabboResponse) {
+    fun response(habboResponse: HabboResponse, data: AvailabilityStatusData) {
         habboResponse.apply {
-            writeBoolean(true)
-            writeBoolean(false)
-            writeBoolean(true)
+            writeBoolean(data.isOpen)
+            writeBoolean(data.onShutDown)
+            // isAuthenticHabbo nasce em 2016-07-26; antes o parser lê apenas isOpen/onShutDown
+            if (isVersionAtLeast(2016, 7, 26)) {
+                writeBoolean(data.isAuthenticHabbo)
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -31,18 +31,30 @@ import java.util.*
 class GameCenterJoinGameHandler {
     @Handler(Incoming.GAME_CENTER_JOIN_GAME)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val gameId = habboRequest.readInt()
+        sendLoadGame(habboSession, habboRequest.readInt())
+    }
 
-        if (gameId != 3) return
+    private fun sendLoadGame(habboSession: HabboSession, gameId: Int) {
+        val gameCenterManager = HabboServer.habboGame.gameCenterManager
+        val game = gameCenterManager.findById(gameId) ?: return
+
+        if (game.swf.isBlank()) {
+            // Jogo embutido no Habbo.swf (SnowWar): roda via GAME_2_* na conexão principal;
+            // GAME_CENTER_LOAD_GAME (491) é só para jogos externos (BaseJump) e causa loadGameClientError.
+            if (game.name == "snowwar") {
+                HabboServer.habboGame.snowWarManager.quickJoin(habboSession)
+            }
+            return
+        }
+
         val ssoToken = UUID.randomUUID().toString()
 
         habboSession.gameSSOToken = ssoToken
-        // BaseJump
         // todo: achievements?
         habboSession.sendHabboResponse(Outgoing.GAME_CENTER_LOAD_GAME,
-                gameId,
+                game.gameTypeId,
                 habboSession.userInformation.id.toString(), // client id
-                "https://swf.hfinch.tk/games/gamecenter_basejump/BaseJump.swf", // SWF of game to load
+                gameCenterManager.swfUrl(game), // SWF of game to load
                 "best", // quality
                 "showAll", // scale mode
                 60, // frames per second,
@@ -50,11 +62,11 @@ class GameCenterJoinGameHandler {
                 0, // flash minor version min
                 mapOf(
                         "accessToken" to ssoToken,
-                        "habboHost" to "jomp16.ddns.net",
-                        "gameServerHost" to "jomp16.ddns.net",
-                        "gameServerPort" to (HabboServer.habboConfig.port + 1).toString(),
-                        "socketPolicyPort" to (HabboServer.habboConfig.port + 1).toString(),
-                        "assetUrl" to "https://swf.hfinch.tk/games/gamecenter_basejump/BasicAssets.swf"
+                        "habboHost" to (HabboServer.habboConfig.habboHost ?: "127.0.0.1"),
+                        "gameServerHost" to (HabboServer.habboConfig.habboHost ?: "127.0.0.1"),
+                        "gameServerPort" to (HabboServer.habboConfig.port + 10).toString(),
+                        "socketPolicyPort" to (HabboServer.habboConfig.port + 10).toString(),
+                        "assetUrl" to (gameCenterManager.gameAssetsUrl(game) ?: gameCenterManager.swfUrl(game))
                 )
         )
     }

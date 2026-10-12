@@ -92,8 +92,13 @@ data class CatalogItem(
             // Campos que vêm APÓS o array de produtos
             writeInt(if (clubOnly) 1 else 0) // clubLevel
             writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
-            writeBoolean(false) // isPet ?
-            writeUTF(extraData.getOrDefault("preview_image", "") as String) // previewImage
+
+            // isPet + previewImage nasceram em 2016-07-26 (CatalogPageMessageOfferData);
+            // antes o offer termina no bundlePurchaseAllowed — campos extras desalinham o stream
+            if (isVersionAtLeast(2016, 7, 26)) {
+                writeBoolean(false) // isPet
+                writeUTF(extraData.getOrDefault("preview_image", "") as String) // previewImage
+            }
         }
     }
 
@@ -141,8 +146,8 @@ data class CatalogItem(
             writeUTF(furnishing.type.type) // productType
 
             if (furnishing.type == ItemType.BADGE) {
+                // Parser AS3 (todas as eras): case "b" lê UMA string e retorna — sem Int de count
                 writeUTF(furnishing.itemName) // extraParam for badge
-                writeInt(1) // count for badge
             } else {
                 writeInt(furnishing.spriteId) // furniClassId
                 writeUTF(

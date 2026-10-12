@@ -22,24 +22,39 @@ package ovh.rwx.habbo.communication.outgoing.handshake
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeInitCryptoResponse {
     @Response(Outgoing.INIT_CRYPTO)
-    fun response(habboResponse: HabboResponse, prime: String, generator: String) {
-        habboResponse.apply {
-            writeUTF(prime)
-            writeUTF(generator)
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.INIT_CRYPTO)
-    fun responseR63A(habboResponse: HabboResponse, token: String) {
+    fun response(habboResponse: HabboResponse, data: InitCryptoData) {
         habboResponse.apply {
-            writeUTF(token)
-            writeBoolean(true) // isServerEncrypted
+            if (isVersionBefore(2014, 8, 14)) {
+                // Era supersecret (preshuffle R63A + RELEASE63-2013-03-22..2014-07-09):
+                // o DH prime/generator não trafega no socket — o cliente busca esteganografado
+                // na imagem hotelview.banner.url?token=...; o pacote carrega só o token.
+                writeUTF(data.token)
+                writeBoolean(true) // isServerEncrypted
+            } else {
+                // Era pacote (2014-08-14 em diante): prime/generator RSA-assinados no corpo
+                writeUTF(data.prime)
+                writeUTF(data.generator)
+            }
         }
     }
 }
+
+/**
+ * Payload do InitDiffieHandshakeEvent/InitCryptoMessageEvent. A era define quais
+ * campos trafegam: [InitCryptoData.token] na era supersecret (o cliente usa o token
+ * para buscar a imagem com os parâmetros DH), [InitCryptoData.prime] e
+ * [InitCryptoData.generator] na era pacote.
+ */
+data class InitCryptoData(
+    val token: String,
+    val prime: String,
+    val generator: String,
+)

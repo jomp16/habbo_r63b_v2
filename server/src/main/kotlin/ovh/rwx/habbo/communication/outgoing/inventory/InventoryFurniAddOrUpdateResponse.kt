@@ -20,17 +20,27 @@
 package ovh.rwx.habbo.communication.outgoing.inventory
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.item.user.UserItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryFurniAddOrUpdateResponse {
+    // FurniListAddOrUpdateParser no AS3:
+    //  - até WIN63-202504011439: `var _local_2:int = 1` (hardcoded, SEM count no wire, 1 item por pacote)
+    //  - de WIN63-202504171200 em diante: `var _local_2:int = _arg_1.readInteger()` (count no wire)
+    // Um count extra no wire antigo faz o readString ler o itemId como length UTF → "Failed to parse".
     @Response(Outgoing.INVENTORY_FURNI_ADD_OR_UPDATE)
     fun response(habboResponse: HabboResponse, items: Collection<UserItem>) {
         habboResponse.apply {
-            writeInt(items.size)
-            items.forEach { habboResponse.serialize(it) }
+            if (isVersionAtLeast(2025, 4, 17)) {
+                writeInt(items.size)
+                items.forEach { serialize(it) }
+            } else {
+                check(items.size == 1) { "INVENTORY_FURNI_ADD_OR_UPDATE expects exactly 1 item, got ${items.size}" }
+                serialize(items.first())
+            }
         }
     }
 }

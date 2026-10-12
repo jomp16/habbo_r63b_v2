@@ -35,10 +35,14 @@ class HandshakeSSOTicketHandler {
         val hotelHost = habboRequest.readUTF()
         // todo: authenticate with sso ticket please
         val habboSession = HabboServer.habboSessionManager.habboSessions.values.filter { it.gameSSOToken.isNotBlank() }.firstOrNull { it.gameSSOToken == ssoTicket }
+            // token chumbado de debug: conecta o BaseJump standalone (flash
+            // debugger) na PRIMEIRA sessao autenticada, sem precisar clicar Play
+            ?: if (ssoTicket == "debug") HabboServer.habboSessionManager.habboSessions.values.firstOrNull { it.authenticated } else null
 
         if (habboSession != null) {
             habboSession.gameSSOToken = ""
             fastFoodSession.habboSession = habboSession
+            habboSession.fastFoodSession = fastFoodSession
 
             fastFoodSession.sendHabboResponse(FFOutgoing.HANDSHAKE_AUTHENTICATION_OK)
         } else {

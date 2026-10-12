@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.user.information
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.achievement.AchievementDao
 import ovh.rwx.habbo.database.clothing.ClothingDao
+import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.wardrobe.WardrobeDao
 import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.achievement.AchievementUser
@@ -63,7 +64,7 @@ class UserInformation(
         get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == id } }
 
     override fun flush() {
-        ovh.rwx.habbo.database.user.UserInformationDao.saveInformation(this, online = true, ip = "")
+        UserInformationDao.saveInformation(this, online = true, ip = "")
         markClean()
     }
 }

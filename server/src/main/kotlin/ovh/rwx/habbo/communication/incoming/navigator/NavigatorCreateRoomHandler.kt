@@ -47,6 +47,7 @@ class NavigatorCreateRoomHandler {
         habboSession.sendHabboResponse(Outgoing.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
     }
 
+    @Handler(Incoming.NAVIGATOR_CREATE_ROOM)
     @HandlerR63A(IncomingR63A.NAVIGATOR_CREATE_ROOM)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val name = habboRequest.readUTF()
@@ -63,10 +64,10 @@ class NavigatorCreateRoomHandler {
         )
 
         if (room == null) {
-            habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM, true, 50)
+            habboSession.sendResponse(Outgoing.NAVIGATOR_CAN_CREATE_ROOM, OutgoingR63A.NAVIGATOR_CAN_CREATE_ROOM, true, 50)
             return
         }
 
-        habboSession.sendHabboResponse(OutgoingR63A.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
+        habboSession.sendResponse(Outgoing.NAVIGATOR_CREATE_ROOM, OutgoingR63A.NAVIGATOR_CREATE_ROOM, room.roomData.id, room.roomData.name)
     }
 }
