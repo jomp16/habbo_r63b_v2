@@ -94,6 +94,7 @@ object HabboServer : AutoCloseable {
     val habboHandler: HabboHandler
     val fastFoodHandler: FastFoodHandler
     val habboGame: HabboGame
+        get() = HabboGame.instance ?: error("habboGame não inicializado")
 
     // Thread Executors
     val serverScheduledExecutor: ScheduledExecutorService =
@@ -150,7 +151,7 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
 
         log.info("Loading Habbo game...")
-        habboGame = HabboGame()
+        HabboGame.instance = HabboGame()
         log.info("Done!")
         log.info("Loading FastFood handler...")
         fastFoodHandler = FastFoodHandler()

@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.item
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.camera.Dimensions
 import ovh.rwx.habbo.camera.SwfInfo
 import kotlin.math.max
@@ -45,10 +45,10 @@ data class Furnishing(
     val stackMultiple: Boolean = stackHeight.size > 1
 
     val interactor: ItemInteractor?
-        get() = HabboServer.habboGame.itemManager.furniInteractor[interactionType]
+        get() = HabboGame.instance!!.itemManager.furniInteractor[interactionType]
 
     val swfInfo: SwfInfo? by lazy {
-        HabboServer.habboGame.cameraManager.getSwfInfo(itemName.substringBefore('*'))
+        HabboGame.instance!!.cameraManager.getSwfInfo(itemName.substringBefore('*'))
     }
 
     val interactionModesCount: Int by lazy {

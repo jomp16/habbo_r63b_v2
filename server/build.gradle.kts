@@ -24,6 +24,7 @@ plugins {
 
 dependencies {
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlin.coroutines)

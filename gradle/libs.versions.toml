@@ -3,6 +3,7 @@ kotlin = "2.4.20"
 gradleVersions = "0.64.0"
 buildConfig = "6.1.2"
 junit = "4.13.2"
+mockk = "1.14.3"
 jackson = "2.22.3"
 netty = "4.2.18.Final"
 log4j = "2.26.1"
@@ -26,6 +27,7 @@ jbcrypt = "0.4"
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 junit = { module = "junit:junit", version.ref = "junit" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }

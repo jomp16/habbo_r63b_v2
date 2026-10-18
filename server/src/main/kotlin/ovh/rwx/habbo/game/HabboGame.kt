@@ -153,4 +153,14 @@ class HabboGame : AutoCloseable {
     override fun close() {
         gameJob.cancel()
     }
+
+    companion object {
+        /**
+         * Seam do grafo de jogo: o servidor atribui no boot (HabboServer delega
+         * [ovh.rwx.habbo.HabboServer.habboGame] para cá); testes unitários atribuem um
+         * grafo leve sem disparar o init do HabboServer (que roda Flyway/DB).
+         */
+        @JvmStatic
+        var instance: HabboGame? = null
+    }
 }

@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.item.room
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
@@ -58,9 +58,9 @@ data class RoomItem(
     private val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
     val wiredData: WiredData? by lazy { ItemDao.getWiredData(id) }
     val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+        get() = HabboGame.instance!!.itemManager.furnishings[itemName]!!
     val room: Room
-        get() = HabboServer.habboGame.roomManager.rooms[roomId]!!
+        get() = HabboGame.instance!!.roomManager.rooms[roomId]!!
     val height: Double
         get() {
             // Se for multi-height (mais de 1 valor no banco), usamos a lista do banco baseada no estado atual
@@ -83,7 +83,7 @@ data class RoomItem(
     val totalHeight: Double
         get() = position.z + height
     val affectedTiles: List<Vector2>
-        get() = HabboServer.habboGame.itemManager.getAffectedTiles(
+        get() = HabboGame.instance!!.itemManager.getAffectedTiles(
             position.x,
             position.y,
             rotation,
@@ -117,7 +117,7 @@ data class RoomItem(
                 writeUTF(height.toString())
             }
 
-            HabboServer.habboGame.itemManager.writeExtradata(
+            HabboGame.instance!!.itemManager.writeExtradata(
                 habboResponse,
                 extraData,
                 furnishing,
