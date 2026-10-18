@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_AT_GIVEN_TIME)
 class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger<EmptyTriggerData>(room, roomItem) {
@@ -74,9 +75,9 @@ class WiredTriggerAtGivenTime(room: Room, roomItem: RoomItem) : WiredTrigger<Emp
         hasTriggered = false
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(1), "") // Configuração inicial padrão para 0.5s
         }
     }

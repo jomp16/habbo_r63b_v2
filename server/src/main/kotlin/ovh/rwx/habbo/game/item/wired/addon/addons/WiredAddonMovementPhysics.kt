@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddon
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EXTRA_MOVEMENT_PHYSICS)
@@ -38,9 +39,9 @@ class WiredAddonMovementPhysics(room: Room, roomItem: RoomItem) : WiredAddon(roo
         wiredContext.variables["movement_physics"] = physicsMode
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0), "")
         }
     }

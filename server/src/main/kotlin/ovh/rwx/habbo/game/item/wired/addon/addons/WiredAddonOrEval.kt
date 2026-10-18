@@ -26,15 +26,16 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddon
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EXTRA_OR_EVAL)
 class WiredAddonOrEval(room: Room, roomItem: RoomItem) : WiredAddon(room, roomItem) {
     override val addonType = WiredAddonType.CONDITION_EVALUATION
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_CONDITION_TIME_MORE_THAN, InteractionType.WIRED_CONDITION_TIME_LESS_THAN)
@@ -57,9 +58,9 @@ class WiredConditionTime(room: Room, roomItem: RoomItem) : WiredCondition(room, 
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(21), "")
         }
     }

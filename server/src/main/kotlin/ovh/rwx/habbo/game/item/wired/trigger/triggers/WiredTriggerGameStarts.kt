@@ -27,10 +27,17 @@ import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_GAME_STARTS)
 class WiredTriggerGameStarts(room: Room, roomItem: RoomItem) : WiredTrigger<EmptyTriggerData>(room, roomItem) {
     override fun code() = WiredTriggerType.GAME_STARTS.code
 
     override fun onTrigger(wiredContext: WiredContext, data: EmptyTriggerData): Boolean = true
+    companion object : WiredDefaultDataFactory {
+        override fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
+        }
+    }
 }

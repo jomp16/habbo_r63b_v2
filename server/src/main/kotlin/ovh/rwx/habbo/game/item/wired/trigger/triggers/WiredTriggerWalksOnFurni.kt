@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.FurniTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_WALKS_ON_FURNI)
 class WiredTriggerWalksOnFurni(room: Room, roomItem: RoomItem) : WiredTrigger<FurniTriggerData>(room, roomItem) {
@@ -57,9 +58,9 @@ class WiredTriggerWalksOnFurni(room: Room, roomItem: RoomItem) : WiredTrigger<Fu
         return triggered
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

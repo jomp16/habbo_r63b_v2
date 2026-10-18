@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.variable.VariableOwnerType
 import ovh.rwx.habbo.game.item.wired.variable.WiredVariableTarget
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_CHANGE_VARIABLE_VALUE)
@@ -215,9 +216,9 @@ class WiredEffectChangeVariableValue(room: Room, roomItem: RoomItem) : WiredEffe
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

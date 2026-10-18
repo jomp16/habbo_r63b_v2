@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.addon.WiredAddon
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EXTRA_TEXT_OUTPUT_USERNAME)
@@ -55,9 +56,9 @@ class WiredAddonTextOutputUsername(room: Room, roomItem: RoomItem) : WiredAddon(
         wiredContext.placeholders[placeholder] = value
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0), "")
         }
     }

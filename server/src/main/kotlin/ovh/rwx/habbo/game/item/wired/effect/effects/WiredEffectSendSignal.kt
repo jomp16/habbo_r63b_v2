@@ -31,6 +31,7 @@ import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.item.wired.trigger.SignalTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.WiredTriggerReceiveSignal
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_SEND_SIGNAL, InteractionType.WIRED_EFFECT_NEGATIVE_SEND_SIGNAL)
@@ -133,9 +134,9 @@ class WiredEffectSendSignal(room: Room, roomItem: RoomItem) : WiredEffect(room, 
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

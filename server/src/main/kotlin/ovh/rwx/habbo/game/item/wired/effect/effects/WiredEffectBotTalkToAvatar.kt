@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffectType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_BOT_TALK_TO_AVATAR)
@@ -37,9 +38,9 @@ class WiredEffectBotTalkToAvatar(room: Room, roomItem: RoomItem) : WiredEffect(r
         // TODO: Requer implementação completa do subsistema de IA e entidades de Bots no RoomUserManager
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

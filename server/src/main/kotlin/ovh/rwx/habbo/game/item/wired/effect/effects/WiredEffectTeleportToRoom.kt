@@ -32,6 +32,7 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.room.user.RoomUserEffect
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_TELEPORT_TO_ROOM)
@@ -110,9 +111,9 @@ class WiredEffectTeleportToRoom(room: Room, roomItem: RoomItem) : WiredEffect(ro
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0, 0, 0), "")
         }
     }

@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.TimerTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLOCK_COUNTER)
 class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger<TimerTriggerData>(room, roomItem) {
@@ -71,9 +72,9 @@ class WiredTriggerClockCounter(room: Room, roomItem: RoomItem) : WiredTrigger<Ti
         return currentClockTimeHalfSeconds == targetTimeHalfSeconds
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             // Padrão do client para os 3 ints (segundos, minutos, fração)
             return WiredData(0, 0, emptyList(), "", listOf(0, 0, 0), "")
         }

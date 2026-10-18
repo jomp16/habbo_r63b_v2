@@ -30,6 +30,7 @@ import ovh.rwx.habbo.game.room.Room
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EXTRA_VARIABLE_LEVELUP_SYSTEM)
@@ -137,9 +138,9 @@ class WiredAddonVariableLevelUpSystem(room: Room, roomItem: RoomItem) : WiredAdd
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

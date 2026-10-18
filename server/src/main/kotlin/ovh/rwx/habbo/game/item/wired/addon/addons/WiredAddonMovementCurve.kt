@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddon
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EXTRA_MOVEMENT_CURVE)
@@ -38,9 +39,9 @@ class WiredAddonMovementCurve(room: Room, roomItem: RoomItem) : WiredAddon(room,
         wiredContext.variables["movement_curve"] = curve
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0), "")
         }
     }

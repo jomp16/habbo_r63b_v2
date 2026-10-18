@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.CollisionTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_COLLISION)
 class WiredTriggerCollision(room: Room, roomItem: RoomItem) : WiredTrigger<CollisionTriggerData>(room, roomItem) {
@@ -41,9 +42,9 @@ class WiredTriggerCollision(room: Room, roomItem: RoomItem) : WiredTrigger<Colli
         return true
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

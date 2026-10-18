@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomBot
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_BOT_REACHES_AVATAR)
@@ -46,9 +47,9 @@ class WiredTriggerBotReachesAvatar(room: Room, roomItem: RoomItem) : WiredTrigge
         return botsOnTile.any { it.botName.equals(botName, ignoreCase = true) }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

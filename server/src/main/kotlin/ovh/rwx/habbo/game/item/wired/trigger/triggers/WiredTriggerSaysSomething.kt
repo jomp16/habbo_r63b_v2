@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_SAYS_SOMETHING)
 class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger<SayTriggerData>(room, roomItem) {
@@ -79,9 +80,9 @@ class WiredTriggerSaysSomething(room: Room, roomItem: RoomItem) : WiredTrigger<S
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(0, ChatTriggerType.CONTAINS.value, 0), "")
         }
     }

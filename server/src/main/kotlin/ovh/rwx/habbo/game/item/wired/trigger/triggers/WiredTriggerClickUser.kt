@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.UserTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_USER)
 class WiredTriggerClickUser(room: Room, roomItem: RoomItem) : WiredTrigger<UserTriggerData>(room, roomItem) {
@@ -39,9 +40,9 @@ class WiredTriggerClickUser(room: Room, roomItem: RoomItem) : WiredTrigger<UserT
         return true
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

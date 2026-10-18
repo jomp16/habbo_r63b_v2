@@ -31,6 +31,7 @@ import ovh.rwx.habbo.game.room.user.RoomBot
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_SELECTOR_USERS_BY_TYPE)
@@ -79,9 +80,9 @@ class WiredSelectorUsersByType(room: Room, roomItem: RoomItem) : WiredSelector(r
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", listOf(1), "")
         }
     }

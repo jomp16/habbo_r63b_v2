@@ -32,6 +32,7 @@ import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.util.Vector2
 import kotlin.math.abs
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_EFFECT_CHASE_USER)
@@ -109,9 +110,9 @@ class WiredEffectChase(room: Room, roomItem: RoomItem) : WiredEffect(room, roomI
         }
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

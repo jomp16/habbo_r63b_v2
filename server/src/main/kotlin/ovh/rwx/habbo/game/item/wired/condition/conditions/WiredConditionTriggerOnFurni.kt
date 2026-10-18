@@ -28,6 +28,8 @@ import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.wired.condition.WiredCondition
 import ovh.rwx.habbo.game.item.wired.condition.WiredConditionType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(
@@ -66,5 +68,10 @@ class WiredConditionTriggerOnFurni(room: Room, roomItem: RoomItem) : WiredCondit
         }
 
         return if (isNegative) !isOnFurni else isOnFurni
+    }
+    companion object : WiredDefaultDataFactory {
+        override fun getDefaultWiredData(): WiredData {
+            return WiredData(0, 0, emptyList(), "", emptyList(), "")
+        }
     }
 }

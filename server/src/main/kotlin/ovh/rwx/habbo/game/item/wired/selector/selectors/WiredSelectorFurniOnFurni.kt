@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelector
 import ovh.rwx.habbo.game.item.wired.selector.WiredSelectorType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @Suppress("unused")
 @WiredItemInteractor(InteractionType.WIRED_SELECTOR_FURNI_ON_FURNI)
@@ -59,9 +60,9 @@ class WiredSelectorFurniOnFurni(room: Room, roomItem: RoomItem) : WiredSelector(
         )
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }

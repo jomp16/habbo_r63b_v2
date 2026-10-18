@@ -32,8 +32,10 @@ import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.stuff.LimitedStuffData
 import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 import ovh.rwx.habbo.game.item.wired.WiredItem
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
+import kotlin.reflect.full.companionObjectInstance
 import ovh.rwx.habbo.game.item.xml.FurniXMLHandler
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
 import ovh.rwx.habbo.game.room.Room
@@ -66,6 +68,7 @@ class ItemManager {
     private val furniLogicByName: ConcurrentHashMap<String, FurnitureLogic> = ConcurrentHashMap()
     private val defaultFurnitureLogic: FurnitureLogic = DefaultFurnitureLogic()
     private val wiredItems: ConcurrentHashMap<InteractionType, Constructor<out WiredItem>> = ConcurrentHashMap()
+    private val wiredDefaultData: ConcurrentHashMap<InteractionType, WiredDefaultDataFactory> = ConcurrentHashMap()
 
     fun load() {
         log.info("Loading furnishings...")
@@ -113,10 +116,19 @@ class ItemManager {
 
         wiredItemsInteractor.forEach { wiredItemClasses ->
             val annotation = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
+
+            // Registro tipado do WiredData default: resolvido UMA vez no load — companion
+            // sem factory é warn de boot, não null silencioso em runtime
+            val defaultDataFactory = wiredItemClasses.kotlin.companionObjectInstance as? WiredDefaultDataFactory
+            if (defaultDataFactory == null) {
+                log.warn("Wired {} sem factory de WiredData default (companion não implementa WiredDefaultDataFactory)", wiredItemClasses.simpleName)
+            }
+
             annotation.interactionType.forEach {
                 @Suppress("UNCHECKED_CAST")
                 wiredItems[it] =
                     (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
+                defaultDataFactory?.let { factory -> wiredDefaultData[it] = factory }
             }
         }
 
@@ -206,17 +218,8 @@ class ItemManager {
     fun getWiredInstance(room: Room, roomItem: RoomItem): WiredItem? =
         wiredItems[roomItem.furnishing.interactionType]?.newInstance(room, roomItem)
 
-    fun getWiredDefaultData(interactionType: InteractionType): WiredData? {
-        return try {
-            val wiredClass = wiredItems[interactionType]?.declaringClass
-            val companionObject = wiredClass?.kotlin?.companionObject
-            val companionInstance = companionObject?.objectInstance
-            val getDefaultWiredDataMethod = companionObject?.members?.find { it.name == "getDefaultWiredData" }
-            getDefaultWiredDataMethod?.call(companionInstance) as? WiredData
-        } catch (_: Exception) {
-            null
-        }
-    }
+    fun getWiredDefaultData(interactionType: InteractionType): WiredData? =
+        wiredDefaultData[interactionType]?.getDefaultWiredData()
 
     fun getFurnitureLogic(furnishing: Furnishing): FurnitureLogic =
         furniLogicByName[furnishing.itemName]

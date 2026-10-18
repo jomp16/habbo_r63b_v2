@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.item.wired.trigger.TileTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTrigger
 import ovh.rwx.habbo.game.item.wired.trigger.WiredTriggerType
 import ovh.rwx.habbo.game.room.Room
+import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
 
 @WiredItemInteractor(InteractionType.WIRED_TRIGGER_CLICK_TILE)
 class WiredTriggerClickTile(room: Room, roomItem: RoomItem) : WiredTrigger<TileTriggerData>(room, roomItem) {
@@ -38,9 +39,9 @@ class WiredTriggerClickTile(room: Room, roomItem: RoomItem) : WiredTrigger<TileT
         return data.x >= 0 && data.y >= 0
     }
 
-    companion object {
+    companion object : WiredDefaultDataFactory {
         @Suppress("unused")
-        fun getDefaultWiredData(): WiredData {
+        override fun getDefaultWiredData(): WiredData {
             return WiredData(0, 0, emptyList(), "", emptyList(), "")
         }
     }
