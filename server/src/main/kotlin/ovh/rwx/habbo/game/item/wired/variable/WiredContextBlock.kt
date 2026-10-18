@@ -49,9 +49,6 @@ data class ObjectIdAndValuePair(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }
 
 /**
@@ -70,9 +67,6 @@ data class SharedVariable(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }
 
 /**
@@ -91,9 +85,6 @@ data class SharedGlobalPlaceholder(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }
 
 /**
@@ -101,9 +92,6 @@ data class SharedGlobalPlaceholder(
  * (_SafeStr_4327 / com.sulake.habbo.communication.messages.incoming.userdefinedroomevents.wiredcontext.WiredContext / _-315.*).
  */
 sealed class WiredContextBlock(val typeCode: Int) : IHabboResponseSerialize {
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 
     /**
      * Type 0: AllVariablesInRoom (_-315.AllVariablesInRoom)

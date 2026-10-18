@@ -45,7 +45,7 @@ class WiredSaveHandler {
                 habboSession
             )
         ) {
-            if (habboSession.release != "R63A") {
+            if (!habboSession.isPreShuffle) {
                 habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_") ||
                     roomItem.furnishing.interactionType.name.contains("TEXT_CONNECTOR")

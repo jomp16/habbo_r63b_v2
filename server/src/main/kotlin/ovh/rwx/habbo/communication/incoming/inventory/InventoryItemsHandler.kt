@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.incoming.inventory
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -39,7 +40,7 @@ class InventoryItemsHandler {
     @HandlerR63A(IncomingR63A.INVENTORY_ITEMS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         // Nessa versão, é enviado floor e wall separados.
-        if (habboSession.habboVersion.isVersionAtLeast(2011, 2, 25)) {
+        if (habboSession.isVersionAtLeast(2011, 2, 25)) {
             habboSession.sendHabboResponse(
                 OutgoingR63A.INVENTORY_ITEMS,
                 "S",

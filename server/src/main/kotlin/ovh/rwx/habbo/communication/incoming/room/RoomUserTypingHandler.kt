@@ -33,7 +33,7 @@ class RoomUserTypingHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        if (habboSession.release == "R63A") {
+        if (habboSession.isPreShuffle) {
             habboSession.roomUser?.typing = habboRequest.incomingR63A == IncomingR63A.ROOM_USER_START_TYPING
         } else {
             habboSession.roomUser?.typing = habboRequest.incoming == Incoming.ROOM_USER_START_TYPING

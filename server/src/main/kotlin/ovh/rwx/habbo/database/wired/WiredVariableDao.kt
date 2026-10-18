@@ -21,6 +21,7 @@ package ovh.rwx.habbo.database.wired
 
 import ovh.rwx.habbo.game.item.wired.variable.*
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import java.time.LocalDateTime
 
 object WiredVariableDao {
@@ -56,8 +57,24 @@ object WiredVariableDao {
     fun saveVariables(variables: List<Pair<WiredVariable, WiredVariableValue>>) {
         if (variables.isEmpty()) return
 
-        db {
-            batchUpdate(
+        // snapshot antes de enfileirar — a entidade pode mutar até o flush
+        val snapshot = variables.map { (variable, value) ->
+            mapOf(
+                "variable_id" to variable.variableId,
+                "variable_name" to variable.variableName,
+                "variable_type" to variable.variableType.code,
+                "availability_type" to variable.availabilityType.code,
+                "owner_id" to value.ownerId,
+                "owner_type" to value.ownerType.name,
+                "value" to value.value.toString(),
+                "created_at" to value.createdAt,
+                "updated_at" to value.updatedAt
+            )
+        }
+
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
                 """
                 INSERT INTO wired_variables
                     (variable_id, variable_name, variable_type, availability_type, owner_id, owner_type, value, created_at, updated_at)
@@ -70,24 +87,13 @@ object WiredVariableDao {
                     value = VALUES(value),
                     updated_at = VALUES(updated_at)
                 """.trimIndent(),
-                variables.map { (variable, value) ->
-                    mapOf(
-                        "variable_id" to variable.variableId,
-                        "variable_name" to variable.variableName,
-                        "variable_type" to variable.variableType.code,
-                        "availability_type" to variable.availabilityType.code,
-                        "owner_id" to value.ownerId,
-                        "owner_type" to value.ownerType.name,
-                        "value" to value.value.toString(),
-                        "created_at" to value.createdAt,
-                        "updated_at" to value.updatedAt
-                    )
-                }
-            )
+                    snapshot
+                )
+            }
         }
     }
 
-    fun deleteVariable(variableId: String, ownerId: Int, ownerType: VariableOwnerType) {
+    fun deleteVariable(variableId: String, ownerId: Int, ownerType: VariableOwnerType) = WriteBehindManager.queue {
         db {
             update(
                 """

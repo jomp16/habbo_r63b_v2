@@ -34,7 +34,7 @@ class CatalogCommandsListener : PluginListener() {
         HabboServer.habboGame.catalogManager.load()
 
         HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-            if (it.release != "R63A")
+            if (!it.isPreShuffle)
                 it.sendHabboResponse(Outgoing.CATALOG_UPDATE)
             else
                 it.sendHabboResponse(OutgoingR63A.CATALOG_UPDATE)

@@ -21,6 +21,8 @@ package ovh.rwx.habbo.communication.incoming.user
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -54,7 +56,7 @@ class UserChangeFigureHandler {
         val currentFigure = habboSession.userInformation.figure
         val currentGender = habboSession.userInformation.gender
 
-        if (habboSession.habboVersion.isVersionBefore(2015, 12, 1)) {
+        if (habboSession.isVersionBefore(2015, 12, 1)) {
             habboSession.sendResponse(
                 Outgoing.USER_UPDATE,
                 OutgoingR63A.USER_UPDATE,

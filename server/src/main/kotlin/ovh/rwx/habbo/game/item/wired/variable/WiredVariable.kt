@@ -71,7 +71,4 @@ data class WiredVariable(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }

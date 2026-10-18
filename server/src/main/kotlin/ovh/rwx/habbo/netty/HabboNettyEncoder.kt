@@ -28,6 +28,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.ProtocolEra
 import ovh.rwx.habbo.encryption.decoder.HabboBase64
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
@@ -44,7 +45,7 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
                 if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             if (log.isDebugEnabled) {
-                val outgoing: String = if (habboSession.release != "R63A") {
+                val outgoing: String = if (!habboSession.isPreShuffle) {
                     HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
                         ?: "null"
                 } else {
@@ -64,7 +65,7 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
             val byteBuf = msg.byteBuf
 
             out.apply {
-                if (habboSession.release != "R63A" || habboSession.r63ANewEncoding) {
+                if (!habboSession.isPreShuffle || habboSession.protocolEra == ProtocolEra.PRE_SHUFFLE_MODERN) {
                     writeInt(byteBuf.writerIndex() + 2)
                     writeShort(msg.headerId)
                     writeBytes(byteBuf)

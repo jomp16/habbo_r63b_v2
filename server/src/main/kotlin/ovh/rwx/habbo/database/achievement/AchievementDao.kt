@@ -59,17 +59,19 @@ object AchievementDao {
     fun saveUserAchievements(achievementUsers: Collection<AchievementUser>) {
         if (achievementUsers.isEmpty()) return
 
-        db {
-            batchUpdate(
-                "/sql/achievement/update_user_achievement.sql",
-                achievementUsers.map {
-                    mapOf(
-                        "level" to it.level,
-                        "progress" to it.progress,
-                        "id" to it.id
-                    )
-                }
-            )
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    "/sql/achievement/update_user_achievement.sql",
+                    achievementUsers.map {
+                        mapOf(
+                            "level" to it.level,
+                            "progress" to it.progress,
+                            "id" to it.id
+                        )
+                    }
+                )
+            }
         }
     }
 

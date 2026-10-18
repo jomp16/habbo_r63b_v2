@@ -36,26 +36,13 @@ class RoomBot(
     bodyRotation: Int
 ) : RoomHumanoid(room, virtualID, currentVector3, headRotation, bodyRotation) {
 
+    /**
+     * Serialização unificada — o ramo bot (userType == 3) do UsersMessageParser NÃO lê
+     * nada além dos campos comuns em nenhuma era (verificado de 2011-05-06 a WIN63-2026:
+     * o ramo só faz fallback de figure e sex="M"). Os campos ownerId/ownerName/"5" dos
+     * gêmeos antigos eram corrupção de wire que desyncava o próximo item do loop.
+     */
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            writeInt(botId * -1)
-            writeUTF(botName)
-            writeUTF(motto)
-            writeUTF(figure)
-            writeInt(virtualID)
-            writeInt(currentVector3.x)
-            writeInt(currentVector3.y)
-            writeUTF(currentVector3.z.toString())
-            writeInt(0)
-            writeInt(3) // 1 for user, 2 for pet, 3 for bot.
-            writeUTF(gender.lowercase())
-            writeInt(-1) // ownerId
-            writeUTF("") // ownerName
-            writeInt(5) // unknown
-        }
-    }
-
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(botId * -1)
             writeUTF(botName)
@@ -67,10 +54,6 @@ class RoomBot(
             writeUTF(currentVector3.z.toString())
             writeInt(bodyRotation)
             writeInt(3) // 1 for user, 2 for pet, 3 for bot.
-            writeUTF(gender.lowercase())
-            writeInt(-1) // ownerId
-            writeUTF("") // ownerName
-            writeInt(5) // unknown
         }
     }
 }

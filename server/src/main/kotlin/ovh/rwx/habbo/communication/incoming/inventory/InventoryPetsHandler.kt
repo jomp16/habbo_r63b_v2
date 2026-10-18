@@ -35,10 +35,6 @@ class InventoryPetsHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val pets = habboSession.habboInventory.pets.values.toList()
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_PETS, pets)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.INVENTORY_PETS, pets)
-        }
+        habboSession.sendResponse(Outgoing.INVENTORY_PETS, OutgoingR63A.INVENTORY_PETS, pets)
     }
 }

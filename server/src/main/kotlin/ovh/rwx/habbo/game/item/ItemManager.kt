@@ -169,34 +169,7 @@ class ItemManager {
     }
 
     private fun insertMissingItems(missingItems: List<String>) {
-        val insertSql = javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql")?.readText()?.trim()
-            ?: return
-        db {
-            batchInsertAndGetGeneratedKeys(
-                insertSql,
-                missingItems.map { itemName ->
-                    val xmlInfo = furniXMLInfos[itemName]
-                    val isWall = xmlInfo?.wallFurni == true
-                    val interactionType = InteractionType.fromString(itemName).let { t ->
-                        if (t != InteractionType.NOT_FOUND && t != InteractionType.DEFAULT) t.type else "default"
-                    }
-                    mapOf(
-                        "item_name" to itemName,
-                        "type" to if (!isWall) "s" else "i",
-                        "stack_height" to "1",
-                        "can_stack" to true,
-                        "allow_recycle" to true,
-                        "allow_trade" to true,
-                        "allow_marketplace_sell" to true,
-                        "allow_gift" to true,
-                        "allow_inventory_stack" to true,
-                        "interaction_type" to interactionType,
-                        "interaction_modes_count" to 1,
-                        "vending_ids" to "0"
-                    )
-                }
-            )
-        }
+        ItemDao.insertMissingFurnishings(furniXMLInfos, missingItems)
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, length: Int): List<Vector2> {

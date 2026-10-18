@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -115,7 +116,7 @@ class HandshakeSSOTicketHandler {
             HabboServer.habboGame.moderationManager.moderationTopics.values
         )
 
-        if (habboSession.habboVersion.isVersionAtLeast(2026, 8, 6)) {
+        if (habboSession.isVersionAtLeast(2026, 8, 6)) {
             habboSession.sendHabboResponse(
                 Outgoing.USER_HABBICONS,
                 UserHabbiconsData(

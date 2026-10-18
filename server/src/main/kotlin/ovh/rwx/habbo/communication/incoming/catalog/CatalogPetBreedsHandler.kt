@@ -37,10 +37,6 @@ class CatalogPetBreedsHandler {
         val productCode = habboRequest.readUTF()
         val breeds = HabboServer.habboGame.petManager.getBreedsForType(productCode) ?: return
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.CATALOG_PET_BREEDS, productCode, breeds)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PET_BREEDS, productCode, breeds)
-        }
+        habboSession.sendResponse(Outgoing.CATALOG_PET_BREEDS, OutgoingR63A.CATALOG_PET_BREEDS, productCode, breeds)
     }
 }

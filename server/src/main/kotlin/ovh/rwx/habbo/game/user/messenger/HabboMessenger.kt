@@ -49,7 +49,7 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
     fun notifyFriends() {
         friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
-            if (it.habboSession!!.release != "R63A") {
+            if (!it.habboSession!!.isPreShuffle) {
                 it.habboSession!!.sendHabboResponse(
                     Outgoing.MESSENGER_FRIENDS_UPDATE,
                     listOf(it.habboSession!!.habboMessenger.friends[habboSession.userInformation.id]),

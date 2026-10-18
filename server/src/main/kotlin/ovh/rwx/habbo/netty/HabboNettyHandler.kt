@@ -65,7 +65,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 
-                if (habboSession.release == "R63A") {
+                if (habboSession.isPreShuffle) {
                     HabboServer.habboHandler.handleR63A(habboSession, msg)
                 } else {
                     HabboServer.habboHandler.handle(habboSession, msg)
@@ -91,12 +91,12 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                 // game SWF aberto (BaseJump etc.) pausa o socket principal: o cliente
                 // nao responde o ping mas continua conectado via socket do jogo
-                if (evt.state() == IdleState.READER_IDLE && habboSession.release != "R63A" && !habboSession.handshaking
+                if (evt.state() == IdleState.READER_IDLE && !habboSession.isPreShuffle && !habboSession.handshaking
                         && habboSession.fastFoodSession == null) {
                     log.error("User $username didn't reply ping! Disconnecting it.")
 
                     ctx.close()
-                } else if (evt.state() == IdleState.WRITER_IDLE && habboSession.release != "R63A" && (habboSession.authenticated || !habboSession.handshaking)) {
+                } else if (evt.state() == IdleState.WRITER_IDLE && !habboSession.isPreShuffle && (habboSession.authenticated || !habboSession.handshaking)) {
                     log.trace("Didn't send any message to user $username, pinging it.")
 
                     habboSession.ping = System.nanoTime()

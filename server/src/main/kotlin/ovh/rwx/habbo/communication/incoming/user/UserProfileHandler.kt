@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -37,19 +38,7 @@ class UserProfileHandler {
         val showProfile = habboRequest.readBoolean()
         val userInformation = UserInformationDao.getUserInformationById(userId) ?: return
         val userStats = UserStatsDao.getUserStats(userId)
-        val friends = db {
-            if (userId != UserInformationDao.serverConsoleUserInformation.id) {
-                queryOne<Int>(
-                    "SELECT COUNT(*) FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
-                    mapOf("user_one_id" to userId)
-                ) ?: 0
-            } else {
-                queryOne<Int>(
-                    "SELECT COUNT(*) FROM `users` WHERE `rank` IN (SELECT `rank` FROM `permissions_ranks` WHERE `acc_server_console` = :acc_server_console) OR `id` IN (SELECT `user_id` FROM `permissions_users` WHERE `acc_server_console` = :acc_server_console)",
-                    mapOf("acc_server_console" to true)
-                ) ?: 0
-            }
-        }
+        val friends = MessengerDao.countFriendsForProfile(userId)
         val isFriend = habboSession.habboMessenger.friends.containsKey(userId)
         val isRequest = habboSession.habboMessenger.requests.containsKey(userId)
         val isOnline = userId == UserInformationDao.serverConsoleUserInformation.id || HabboServer.habboSessionManager.containsHabboSessionById(userId)

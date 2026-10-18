@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.user.subscription.ClubType
 import ovh.rwx.habbo.game.user.subscription.Subscription
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import java.time.LocalDateTime
 
 object SubscriptionDao {
@@ -108,33 +109,37 @@ object SubscriptionDao {
     fun updateBuildersClubSubscription(subscription: Subscription?) {
         if (subscription == null) return
 
-        db {
-            update(
-                javaClass.classLoader.getResource("sql/subscription/update_subscription_expire_with_limit.sql")
-                    .readText(),
-                mapOf(
-                    "activated" to subscription.activated,
-                    "expire" to subscription.expire,
-                    "items_limit" to subscription.itemsLimit,
-                    "id" to subscription.id
+        WriteBehindManager.queue {
+            db {
+                update(
+                    javaClass.classLoader.getResource("sql/subscription/update_subscription_expire_with_limit.sql")
+                        .readText(),
+                    mapOf(
+                        "activated" to subscription.activated,
+                        "expire" to subscription.expire,
+                        "items_limit" to subscription.itemsLimit,
+                        "id" to subscription.id
+                    )
                 )
-            )
+            }
         }
     }
 
     fun updateBuildersItemsUsed(subscription: Subscription?, itemsUsed: Int) {
         if (subscription == null) return
 
-        db {
-            subscription.itemsUsed = itemsUsed
+        subscription.itemsUsed = itemsUsed // estado em memória permanece síncrono
 
-            update(
-                javaClass.classLoader.getResource("sql/subscription/update_builders_items_used.sql").readText(),
-                mapOf(
-                    "items_used" to itemsUsed,
-                    "id" to subscription.id
+        WriteBehindManager.queue {
+            db {
+                update(
+                    javaClass.classLoader.getResource("sql/subscription/update_builders_items_used.sql").readText(),
+                    mapOf(
+                        "items_used" to itemsUsed,
+                        "id" to subscription.id
+                    )
                 )
-            )
+            }
         }
     }
 

@@ -36,7 +36,7 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
     currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
     if (room.itemManager.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
-        if (release != "R63A") {
+        if (!isPreShuffle) {
             sendHabboResponse(Outgoing.ROOM_EXIT)
             sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_VISIT_DENIED_GUEST)
         } else {
@@ -47,7 +47,7 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
     }
 
     if (room.isBanned(userInformation.id) && !room.userManager.hasRights(this, true) && !hasPermission("acc_any_room_owner")) {
-        if (release != "R63A") {
+        if (!isPreShuffle) {
             sendHabboResponse(Outgoing.ROOM_ERROR, 4, "")
             sendHabboResponse(Outgoing.ROOM_EXIT)
         } else {
@@ -64,7 +64,7 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
             true
         ) && !hasPermission("acc_enter_full_room")
     ) {
-        if (release != "R63A") {
+        if (!isPreShuffle) {
             sendHabboResponse(Outgoing.ROOM_ERROR, 1, "")
             sendHabboResponse(Outgoing.ROOM_EXIT)
         } else {
@@ -82,7 +82,7 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
                 room.roomData.password
             )
         ) {
-            if (release != "R63A") {
+            if (!isPreShuffle) {
                 sendHabboResponse(
                     Outgoing.MISC_GENERIC_ERROR,
                     MiscGenericErrorResponse.MiscGenericError.WRONG_PASSWORD
@@ -105,29 +105,17 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
                     RoomDoorbellDeniedData(username = "", roomId = room.roomData.id)
                 )
 
-                if (release != "R63A") {
-                    sendHabboResponse(Outgoing.ROOM_EXIT)
-                } else {
-                    sendHabboResponse(OutgoingR63A.ROOM_EXIT)
-                }
+                sendResponse(Outgoing.ROOM_EXIT, OutgoingR63A.ROOM_EXIT)
             } else {
                 currentRoom = room
 
                 roomUsersWithRights.forEach {
                     (it as? RoomUser)?.habboSession?.let { habboSession ->
-                        if (habboSession.release != "R63A") {
-                            habboSession.sendHabboResponse(Outgoing.ROOM_DOORBELL, userInformation.username)
-                        } else {
-                            habboSession.sendHabboResponse(OutgoingR63A.ROOM_DOORBELL, userInformation.username)
-                        }
+                        habboSession.sendResponse(Outgoing.ROOM_DOORBELL, OutgoingR63A.ROOM_DOORBELL, userInformation.username)
                     }
                 }
 
-                if (release != "R63A") {
-                    sendHabboResponse(Outgoing.ROOM_DOORBELL, "")
-                } else {
-                    sendHabboResponse(OutgoingR63A.ROOM_DOORBELL, "")
-                }
+                sendResponse(Outgoing.ROOM_DOORBELL, OutgoingR63A.ROOM_DOORBELL, "")
             }
             return
         }

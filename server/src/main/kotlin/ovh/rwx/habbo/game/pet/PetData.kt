@@ -97,9 +97,6 @@ data class PetData(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, *params)
-    }
 
     private fun HabboResponse.writePetFigureData() {
         // Pré-2011: Protocolo legado baseado em string de look

@@ -33,7 +33,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class CatalogPurchaseHandler {
     @Handler(Incoming.CATALOG_PURCHASE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.release == "R63A") {
+        if (habboSession.isPreShuffle) {
             return
         }
 

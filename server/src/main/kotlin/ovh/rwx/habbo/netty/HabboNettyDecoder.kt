@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.HabboVersion
+import ovh.rwx.habbo.communication.ProtocolEra
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboBase64
@@ -39,23 +40,23 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        // Última release preshuffle (era estática R63A, 2009..2011-09): clientes R63A não
-        // carregam data de build em lugar nenhum do protocolo, então a sessão ancora aqui
-        // para predicados temporais (isVersionBefore/AtLeast) avaliarem a era correta.
-        private val R63A_HABBO_VERSION = HabboVersion.parse("RELEASE63-201109301501-135705747")
+        // A detecção de era é empírica: o cliente pré-shuffle não reporta a versão na conexão
+        // (só nas misc client variables, via flash.client.url), então a família é inferida pelo
+        // framing. Cada era ancora na sua última build verificada (ver ProtocolEra para as
+        // fronteiras exatas empíricas) até as misc variables refinarem a versão por cliente.
     }
 
     /**
-     * Trata a versão na fronteira do wire: todo cliente RELEASE/PRODUCTION/WIN63 carrega
-     * data de build na release string (pacote 4000) e parseia na hora — não depende do
-     * roteamento do RELEASE_CHECK nem da ordem dos pacotes seguintes. R63A (preshuffle,
-     * sem data em lugar nenhum) ancora na última release estática.
+     * Trata a versão na fronteira do wire: clientes pós-shuffle carregam data de build na
+     * release string (pacote 4000) e parseiam na hora — não depende do roteamento do
+     * RELEASE_CHECK nem da ordem dos pacotes seguintes. Eras pré-shuffle ancoram na
+     * última build da família até o MiscClientVariablesHandler refinar por cliente.
      */
     private fun updateHabboVersion(habboSession: HabboSession) {
-        habboSession.habboVersion = if (habboSession.release == "R63A") {
-            R63A_HABBO_VERSION
+        habboSession.habboVersion = if (habboSession.isPreShuffle) {
+            habboSession.protocolEra.anchorVersion
         } else {
-            runCatching { HabboVersion.parse(habboSession.release) }.getOrDefault(habboSession.habboVersion)
+            runCatching { HabboVersion.parse(habboSession.release) }.getOrDefault(habboSession.protocolEra.anchorVersion)
         }
     }
 
@@ -148,14 +149,25 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                     habboSession.release = "PRODUCTION-201611291003-338511768"
                 } else if (habboSession.release == "development") {
                     habboSession.release = "R63A"
-                    habboSession.r63ANewEncoding = true
+                }
+
+                habboSession.protocolEra = if (habboSession.release == "R63A") {
+                    // "development": cliente pré-shuffle com encoder moderno (2011-08-17 → 2011-10-04)
+                    ProtocolEra.PRE_SHUFFLE_MODERN
+                } else {
+                    // Release string com data de build: era embaralhada (≥ 2011-10-05)
+                    ProtocolEra.SHUFFLED
                 }
 
                 updateHabboVersion(habboSession)
             } else if (!habboSession.releaseInitialized && headerId == 206) {
-                // Init crypto, mark session as old client
+                // Init crypto: chave da tabela estática pré-shuffle (lookup no banco, não conceito de era)
                 habboSession.release = "R63A"
-                habboSession.r63ANewEncoding = delimiter != 64.toByte()
+
+                // Framing decide a família pré-shuffle: delimiter '@' (64) = Wedgie B64,
+                // caso contrário = encoder moderno com headers fixos.
+                habboSession.protocolEra =
+                    if (delimiter == 64.toByte()) ProtocolEra.WEDGIE_PRE_SHUFFLE else ProtocolEra.PRE_SHUFFLE_MODERN
 
                 updateHabboVersion(habboSession)
             }
@@ -166,7 +178,7 @@ class HabboNettyDecoder : ByteToMessageDecoder() {
                 val username =
                     if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
-                val incoming: String = if (habboSession.release != "R63A") {
+                val incoming: String = if (!habboSession.isPreShuffle) {
                     if (headerId == 4000) Incoming.RELEASE_CHECK.name
                     else HabboServer.habboHandler.incomingNames[habboSession.release]?.find { it.first == headerId }?.second?.name
                         ?: "null"

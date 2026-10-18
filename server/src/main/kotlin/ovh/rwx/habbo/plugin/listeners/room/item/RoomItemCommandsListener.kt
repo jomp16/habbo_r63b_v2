@@ -91,7 +91,7 @@ class RoomItemCommandsListener : PluginListener() {
         HabboServer.habboSessionManager.getHabboSessionById(userId)?.let { habboSession ->
             habboSession.habboInventory.addItems(userItems)
 
-            if (habboSession.release == "R63A") {
+            if (habboSession.isPreShuffle) {
                 habboSession.sendNotification("You got a new item, check your inventory.")
             } else {
                 habboSession.sendHabboResponse(

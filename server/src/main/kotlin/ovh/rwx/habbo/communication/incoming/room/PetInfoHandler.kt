@@ -41,10 +41,6 @@ class PetInfoHandler {
             .filterIsInstance<RoomPet>()
             .find { it.petData.id == petId } ?: return
 
-        if (habboSession.release != "R63A") {
-            habboSession.sendHabboResponse(Outgoing.PET_INFO, roomPet.petData, habboSession.userInformation.id)
-        } else {
-            habboSession.sendHabboResponse(OutgoingR63A.PET_INFO, roomPet.petData, habboSession.userInformation.id)
-        }
+        habboSession.sendResponse(Outgoing.PET_INFO, OutgoingR63A.PET_INFO, roomPet.petData, habboSession.userInformation.id)
     }
 }

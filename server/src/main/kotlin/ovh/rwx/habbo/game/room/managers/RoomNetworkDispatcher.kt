@@ -37,7 +37,7 @@ class RoomNetworkDispatcher(private val room: Room) {
         val sessions = room.userManager.entities.values
             .filterIsInstance<RoomUser>()
             .map { it.habboSession }
-            .filter { it.release != "R63A" && it != excludeSession }
+            .filter { !it.isPreShuffle && it != excludeSession }
 
         if (sessions.isEmpty()) return
 
@@ -74,7 +74,7 @@ class RoomNetworkDispatcher(private val room: Room) {
         val sessions = room.userManager.entities.values
             .filterIsInstance<RoomUser>()
             .map { it.habboSession }
-            .filter { it.release == "R63A" && it != excludeSession }
+            .filter { it.isPreShuffle && it != excludeSession }
 
         if (sessions.isEmpty()) return
 
@@ -90,7 +90,7 @@ class RoomNetworkDispatcher(private val room: Room) {
             val clonedResponse = HabboResponse(
                 prototypeResponse.headerId,
                 outgoingR63A = outgoing,
-                r63ANewEncoding = prototypeResponse.r63ANewEncoding,
+                protocolEra = prototypeResponse.protocolEra,
                 habboVersion = session.habboVersion
             )
             clonedResponse.byteBuf.writeBytes(payload)

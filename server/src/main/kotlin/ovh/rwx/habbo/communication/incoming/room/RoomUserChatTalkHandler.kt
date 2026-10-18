@@ -35,27 +35,27 @@ class RoomUserChatTalkHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        val isR63A = habboSession.release == "R63A"
+        val isPreShuffle = habboSession.isPreShuffle
 
-        val (message, bubble) = parse(habboRequest, isR63A) ?: return
+        val (message, bubble) = parse(habboRequest, isPreShuffle) ?: return
         // todo: check if user can use bubble
         // todo: check if user is muted
         habboSession.roomUser?.chat(
             habboSession.roomUser!!.virtualID,
             message,
             bubble,
-            if (!isR63A && habboRequest.incoming == Incoming.ROOM_USER_SHOUT || isR63A && habboRequest.incomingR63A == IncomingR63A.ROOM_USER_SHOUT) RoomChatType.SHOUT else RoomChatType.CHAT,
+            if (!isPreShuffle && habboRequest.incoming == Incoming.ROOM_USER_SHOUT || isPreShuffle && habboRequest.incomingR63A == IncomingR63A.ROOM_USER_SHOUT) RoomChatType.SHOUT else RoomChatType.CHAT,
             false
         )
     }
 
-    private fun parse(habboRequest: HabboRequest, isR63A: Boolean): Pair<String, RoomChatMessageBubbles>? {
+    private fun parse(habboRequest: HabboRequest, isPreShuffle: Boolean): Pair<String, RoomChatMessageBubbles>? {
         var message = habboRequest.readUTF().trim()
 
         if (message.isBlank()) return null
         if (message.length > Byte.MAX_VALUE) message = message.substring(0, Byte.MAX_VALUE.toInt())
         val bubble =
-            if (isR63A) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
+            if (isPreShuffle) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
 
         return Pair(message, bubble)
     }

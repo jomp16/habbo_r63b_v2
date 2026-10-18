@@ -223,7 +223,7 @@ class CatalogPurchaseService {
         if (catalogItem.limited) {
             // Notifica todos os usuários autenticados conectados
             HabboServer.habboSessionManager.habboSessions.values
-                .filter { it.authenticated && it.release != "R63A" }
+                .filter { it.authenticated && !it.isPreShuffle }
                 .forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
 
             CatalogDao.updateLimitedSells(catalogItem)

@@ -37,47 +37,40 @@ class RoomAboutCommandListener : PluginListener() {
     fun about(room: Room, roomUser: RoomUser, args: List<String>) {
         roomUser.habboSession.sendNotification(
             NotificationType.MOTD_ALERT,
-                BuildConfig.NAME +
-                        "\n\n" +
-                        "Version: ${BuildConfig.VERSION}" +
-                        "\n\n" +
-                        "Built at: ${HabboServer.DATE_TIME_FORMATTER_WITH_HOURS.format(BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime())}" +
-                        "\n\n" +
-                        "Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}." +
-                        "\n\n" +
-                        "Written in Java and Kotlin by jomp16 and Lucas." +
-                        "\n\n" +
-                        "Licensed under GPLv3 and LGPLv3." +
-                        "\n\n" +
-                        "Source code at: https://git.rwx.ovh/Habbo/habbo_r63b_v2" +
-                        "\n\n" +
-                        "- Uptime: ${DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false)}." +
-                        "\n" +
-                        "- RAM usage: ${Utils.ramUsageString}." +
-                        "\n" +
-                        "- Total memory: ${Utils.humanReadableByteCount(Runtime.getRuntime().totalMemory(), true)}." +
-                        "\n" +
-                        "- Processor cores: ${Runtime.getRuntime().availableProcessors()}." +
-                        "\n" +
-                        "- Online users: ${HabboServer.habboSessionManager.habboSessions.size}." +
-                        "\n" +
-                        "- Loaded rooms: ${HabboServer.habboGame.roomManager.roomTaskManager.rooms.size}." +
-                        "\n" +
-                        "- Catalog pages: ${HabboServer.habboGame.catalogManager.catalogPages.size}." +
-                        "\n" +
-                        "- Catalog items: ${HabboServer.habboGame.catalogManager.catalogItems.size}." +
-                        "\n" +
-                        "- Furnis: ${HabboServer.habboGame.itemManager.furnishings.size}." +
-                        "\n" +
-                        "- Available releases: ${HabboServer.habboHandler.releases.size}." +
-                        "\n" +
-                        "- Current logged release: ${roomUser.habboSession.release}." +
-                        "\n" +
-                        "- Loaded plugins jar: ${HabboServer.pluginManager.pluginsJar.size}." +
-                        "\n" +
-                        "- Loaded plugin listeners: ${HabboServer.pluginManager.pluginsListener.size}." +
-                        "\n\n\n" +
-                        "Have fun!"
+            """${BuildConfig.NAME}
+
+Version: ${BuildConfig.VERSION}
+
+Built at: ${
+                HabboServer.DATE_TIME_FORMATTER_WITH_HOURS.format(
+                    BuildConfig.BUILD_INSTANT.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )
+            }
+
+Git commit hash: ${BuildConfig.GIT_COMMIT_FULL}.
+
+Written in Java and Kotlin by jomp16 and Lucas.
+
+Licensed under GPLv3 and LGPLv3.
+
+Source code at: https://git.rwx.ovh/Habbo/habbo_r63b_v2
+
+- Uptime: ${DurationFormatUtils.formatDurationWords(ManagementFactory.getRuntimeMXBean().uptime, true, false)}.
+- RAM usage: ${Utils.ramUsageString}.
+- Total memory: ${Utils.humanReadableByteCount(Runtime.getRuntime().totalMemory(), true)}.
+- Processor cores: ${Runtime.getRuntime().availableProcessors()}.
+- Online users: ${HabboServer.habboSessionManager.habboSessions.size}.
+- Loaded rooms: ${HabboServer.habboGame.roomManager.roomTaskManager.rooms.size}.
+- Catalog pages: ${HabboServer.habboGame.catalogManager.catalogPages.size}.
+- Catalog items: ${HabboServer.habboGame.catalogManager.catalogItems.size}.
+- Furnis: ${HabboServer.habboGame.itemManager.furnishings.size}.
+- Available releases: ${HabboServer.habboHandler.releases.size}.
+- Current logged release: ${roomUser.habboSession.release}.
+- Loaded plugins jar: ${HabboServer.pluginManager.pluginsJar.size}.
+- Loaded plugin listeners: ${HabboServer.pluginManager.pluginsListener.size}.
+
+
+Have fun!"""
         )
     }
 }

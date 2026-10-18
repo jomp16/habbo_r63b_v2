@@ -25,6 +25,7 @@ import ovh.rwx.habbo.game.group.GroupMembershipState
 import ovh.rwx.habbo.game.group.GroupRequest
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import java.time.LocalDateTime
 
 object GroupDao {
@@ -127,7 +128,7 @@ object GroupDao {
         }
     }
 
-    fun updateGroupData(groupData: GroupData) {
+    fun updateGroupData(groupData: GroupData) = WriteBehindManager.queue {
         db {
             update(javaClass.getResource("/sql/groups/update_group.sql").readText(),
                     mapOf(

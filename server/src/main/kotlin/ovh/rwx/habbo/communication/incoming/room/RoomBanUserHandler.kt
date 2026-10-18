@@ -34,10 +34,10 @@ class RoomBanUserHandler {
     @Handler(Incoming.ROOM_BAN_USER)
     @HandlerR63A(IncomingR63A.ROOM_BAN_USER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val isR63A = habboSession.release == "R63A"
+        val isPreShuffle = habboSession.isPreShuffle
         val userId = habboRequest.readInt()
-        val roomId = if (isR63A) (habboSession.currentRoom?.roomData?.id ?: return) else habboRequest.readInt()
-        val banDuration = if (isR63A) "RWUAM_BAN_USER_PERM" else habboRequest.readUTF()
+        val roomId = if (isPreShuffle) (habboSession.currentRoom?.roomData?.id ?: return) else habboRequest.readInt()
+        val banDuration = if (isPreShuffle) "RWUAM_BAN_USER_PERM" else habboRequest.readUTF()
 
         val room = HabboServer.habboGame.roomManager.rooms[roomId] ?: habboSession.currentRoom ?: return
 

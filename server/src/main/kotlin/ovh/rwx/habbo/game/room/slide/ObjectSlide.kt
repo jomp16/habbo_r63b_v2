@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.room.slide
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.wired.WiredFurniMove
@@ -113,10 +114,11 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
     this.userManager.entities.values.forEach { entity ->
         val habboSession = (entity as? RoomUser)?.habboSession ?: return@forEach
 
-        val responseMethod = if (habboSession.release == "R63A") "DISABLED" else
-            HabboServer.habboHandler.getOverrideMethodForHeader(Outgoing.WIRED_MOVEMENT, habboSession.release)
+        // WiredMovementsMessageEvent nasceu no cliente em 2023-05-23 (WIN63-202305231413):
+        // a véspera (2023-05-19) ainda não tinha o pacote — verificado nos Sulek messages.json.
+        val wiredMovementSupported = habboSession.isVersionAtLeast(2023, 5, 23)
 
-        if (responseMethod != "DISABLED") {
+        if (wiredMovementSupported) {
             habboSession.sendHabboResponse(Outgoing.WIRED_MOVEMENT, movements)
         } else {
             // Clientes antigos precisam receber os slides individualmente
@@ -130,11 +132,7 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
                             rollerId = -2, // Assinatura genérica de Wired para o legado
                             items = listOf(SlideItem(move.furniId, move.sourceZ, move.targetZ))
                         )
-                        if (habboSession.release == "R63A") {
-                            habboSession.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
-                        } else {
-                            habboSession.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, slide)
-                        }
+                        habboSession.sendResponse(Outgoing.ROOM_OBJECT_SLIDE, OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
 
                         // O legado não gira mobis no Slide. Se rotacionou, enviamos um Update à força.
                         val item = this.itemManager.items[move.furniId]
@@ -156,11 +154,7 @@ fun Room.flushWiredMovements(movements: List<WiredMoveEntry>) {
                                 type = if (move.sliding) SlideType.SLIDE else SlideType.MOVE
                             )
                         )
-                        if (habboSession.release == "R63A") {
-                            habboSession.sendHabboResponse(OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
-                        } else {
-                            habboSession.sendHabboResponse(Outgoing.ROOM_OBJECT_SLIDE, slide)
-                        }
+                        habboSession.sendResponse(Outgoing.ROOM_OBJECT_SLIDE, OutgoingR63A.ROOM_OBJECT_SLIDE, slide)
 
                         // O legado precisa do pacote UserUpdate para girar a cabeça/corpo no lugar
                         val roomEntity = this.userManager.entities[move.userIndex]

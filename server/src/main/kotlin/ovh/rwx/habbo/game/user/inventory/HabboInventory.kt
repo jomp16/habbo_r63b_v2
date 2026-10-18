@@ -53,7 +53,7 @@ class HabboInventory(private val habboSession: HabboSession) {
             UnseenItemsData.fromUserItems(userItems)
         )
 
-        if (habboSession.release == "R63A") {
+        if (habboSession.isPreShuffle) {
             habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE)
         } else {
             if (habboSession.isVersionAtLeast(2025, 4, 17)) {
@@ -82,12 +82,10 @@ class HabboInventory(private val habboSession: HabboSession) {
         itemIds.forEach {
             items.remove(it)
 
-            if (habboSession.release == "R63A") {
-                // don't try to put negative here, R63A requires it to be non negative.
-                habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_REMOVE_OBJECT, it)
-            } else {
-                habboSession.sendHabboResponse(Outgoing.INVENTORY_REMOVE_OBJECT, -it)
-            }
+            // O stripId trafega NEGATIVO em ambas as eras (convenção oficial desde R62/2010-11):
+            // as listas de inventário mandam -id (UserItem), o cliente indexa por essa chave e
+            // faz abs/Math.abs ao colocar no quarto — o remove manda o mesmo -id da lista.
+            habboSession.sendResponse(Outgoing.INVENTORY_REMOVE_OBJECT, OutgoingR63A.INVENTORY_REMOVE_OBJECT, -it)
         }
 
         if (delete) ItemDao.deleteItems(itemIds)

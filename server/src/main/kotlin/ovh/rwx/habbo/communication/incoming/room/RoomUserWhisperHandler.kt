@@ -36,9 +36,9 @@ class RoomUserWhisperHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
 
-        val isR63A = habboSession.release == "R63A"
+        val isPreShuffle = habboSession.isPreShuffle
 
-        val (targetName, message, bubble) = parse(habboRequest, isR63A) ?: return
+        val (targetName, message, bubble) = parse(habboRequest, isPreShuffle) ?: return
 
         if (habboSession.userInformation.username == targetName) return
         val targetRoomUser = habboSession.currentRoom!!.userManager.entities.values
@@ -50,13 +50,13 @@ class RoomUserWhisperHandler {
         targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
     }
 
-    private fun parse(habboRequest: HabboRequest, isR63A: Boolean): Triple<String, String, RoomChatMessageBubbles>? {
+    private fun parse(habboRequest: HabboRequest, isPreShuffle: Boolean): Triple<String, String, RoomChatMessageBubbles>? {
         var raw = habboRequest.readUTF().trim()
 
         if (raw.isBlank()) return null
         if (raw.length > Byte.MAX_VALUE) raw = raw.substring(0, Byte.MAX_VALUE.toInt())
         val bubble =
-            if (isR63A) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
+            if (isPreShuffle) RoomChatMessageBubbles.NORMAL else RoomChatMessageBubbles.fromType(habboRequest.readInt())
 
         val targetName = raw.substringBefore(' ')
         val message = raw.substring(targetName.length + 1)

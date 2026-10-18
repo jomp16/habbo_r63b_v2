@@ -129,10 +129,6 @@ data class CatalogPage(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        // Unificado: R63A (ancorado em 2011-09-30 no decoder) cai nos predicados da era preshuffle
-        serializeHabboResponse(habboResponse, *params)
-    }
 
     companion object {
         fun createRoot(id: Int, codename: String = "root"): CatalogPage = CatalogPage(

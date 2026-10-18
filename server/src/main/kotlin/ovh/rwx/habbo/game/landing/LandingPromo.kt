@@ -43,7 +43,4 @@ data class LandingPromo(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }

@@ -281,7 +281,7 @@ class HabboHandler {
 
             dispatchRequest(habboSession, habboRequest, methodInfo, incomingEnum) {
                 habboRequest.incomingR63A = incomingEnum
-                habboRequest.r63ANewEncoding = habboSession.r63ANewEncoding
+                habboRequest.protocolEra = habboSession.protocolEra
             }
         }
     }
@@ -353,7 +353,7 @@ class HabboHandler {
                     headerId = id,
                     outgoing = null,
                     outgoingR63A = outgoing,
-                    r63ANewEncoding = habboSession.r63ANewEncoding,
+                    protocolEra = habboSession.protocolEra,
                     habboVersion = habboSession.habboVersion
                 )
             },
@@ -451,10 +451,6 @@ class HabboHandler {
 
     private fun getInstance(clazz: Class<*>): Any =
         instances.getOrPut(clazz) { clazz.getDeclaredConstructor().newInstance() }
-
-    fun getOverrideMethodForHeader(outgoing: Outgoing, release: String): String =
-        outgoingHeaders.firstOrNull { it.release == release && it.name == outgoing.name }?.overrideMethod
-            ?: DEFAULT_METHOD
 
     private companion object {
         const val DISABLED = "DISABLED"

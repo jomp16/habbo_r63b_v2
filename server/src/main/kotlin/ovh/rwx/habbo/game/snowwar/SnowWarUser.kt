@@ -367,9 +367,6 @@ class SnowWarUser(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, *params)
-    }
 
     fun serializeLobby(habboResponse: HabboResponse) {
         habboResponse.apply {

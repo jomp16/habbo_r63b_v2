@@ -21,5 +21,12 @@ package ovh.rwx.habbo.communication
 
 interface IHabboResponseSerialize {
     fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any)
-    fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any)
+
+    /**
+     * Serialização da era pré-shuffle. O default delega à era moderna: o corpo do wire só difere
+     * entre eras quando existe um override — o override É a documentação da divergência real
+     * (ex.: RoomUser, UserItem, CatalogItem). Não crie delegações manuais; delete-as.
+     */
+    fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) =
+        serializeHabboResponse(habboResponse, *params)
 }

@@ -34,7 +34,7 @@ class HabboResponse(
     val outgoing: Outgoing? = null,
     val keepCopy: Boolean = false,
     val outgoingR63A: OutgoingR63A? = null,
-    val r63ANewEncoding: Boolean = false,
+    val protocolEra: ProtocolEra = ProtocolEra.SHUFFLED,
     val habboVersion: HabboVersion,
 ) : AutoCloseable {
     /** Se true, o encoder envia este pacote SEM o RC4 de saída — mesmo para sessões com
@@ -54,7 +54,7 @@ class HabboResponse(
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
             debugString.append("{s:\"$debugStr\"}")
         }
-        if (outgoingR63A != null && !r63ANewEncoding) {
+        if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
             // readUTFBytes = UTF-8 (writeBytes/data é Latin-1 e vira triângulo no cliente)
             byteBufOutputStream.write(s.toByteArray(Charsets.UTF_8))
@@ -69,7 +69,7 @@ class HabboResponse(
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
             debugString.append("{s:\"$debugStr\"}")
         }
-        if (outgoingR63A != null && !r63ANewEncoding) {
+        if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
             // readUTFBytes = UTF-8 (writeBytes/data é Latin-1 e vira triângulo no cliente)
             byteBufOutputStream.write(s.toByteArray(Charsets.UTF_8))
@@ -87,7 +87,7 @@ class HabboResponse(
         if (HabboServer.habboConfig.debug) {
             debugString.append("{i:$i}")
         }
-        if (outgoingR63A != null && !r63ANewEncoding) {
+        if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             HabboVl64.encodeBytes(i)?.let {
                 byteBufOutputStream.write(it)
             }
@@ -121,7 +121,7 @@ class HabboResponse(
         if (HabboServer.habboConfig.debug) {
             debugString.append("{b:$b}")
         }
-        if (outgoingR63A != null && !r63ANewEncoding) {
+        if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             byteBufOutputStream.writeByte((if (b) 73 else 72))
         } else {
             byteBufOutputStream.writeBoolean(b)

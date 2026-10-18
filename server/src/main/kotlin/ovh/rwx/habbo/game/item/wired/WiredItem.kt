@@ -108,7 +108,8 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
         } else emptyList()
 
     fun saveWired(habboRequest: HabboRequest, habboSession: HabboSession): Boolean {
-        val habboAir = habboSession.habboVersion.isAir && habboSession.habboVersion.isVersionAtLeast(2023, 4, 14)
+        val wire = WiredDialogWire(habboSession.habboVersion)
+        val habboAir = wire.isAirDialog
         roomItem.wiredData?.let {
             // param2: intParams
             val intParamsCount = habboRequest.readInt()
@@ -125,13 +126,9 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             val roomItemsIds = mutableListOf<Int>()
             repeat(itemsCount) { _ ->
                 val itemId = habboRequest.readInt()
-                if (room.itemManager.items.containsKey(itemId)) {
-                    val roomItem1 = room.itemManager.items[itemId] ?: return@repeat
-                    val isWiredLogic = roomItem1.furnishing.interactionType.name.startsWith("WIRED_") &&
-                            roomItem1.furnishing.interactionType != InteractionType.WIRED_ANTENNA
-                    if (!isWiredLogic) {
-                        roomItemsIds += itemId
-                    }
+                val target = room.itemManager.items[itemId] ?: return@repeat
+                if (target.isValidWiredTarget()) {
+                    roomItemsIds += itemId
                 }
             }
 
@@ -172,13 +169,14 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 }
                 it.userSources = userSources
 
-                // param3: resolveVariableIds()
-                if (habboSession.habboVersion.isVersionAtLeast(2023, 6, 30)) {
+                // param3: resolveVariableIds() — nasce junto com o WiredContext (2024-05-06):
+                // Long até < 2024-12-12, String/UTF depois
+                if (wire.hasVariableIds) {
                     val variableIdsCount = habboRequest.readInt()
                     val variableIds = mutableListOf<String>()
                     repeat(variableIdsCount) { _ ->
-                        variableIds += if (habboSession.habboVersion.isVersionBefore(2024, 12, 12)) {
-                            habboRequest.readInt().toString()
+                        variableIds += if (wire.variableIdsAsLong) {
+                            habboRequest.readLong().toString()
                         } else {
                             habboRequest.readUTF()
                         }
@@ -187,18 +185,14 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 }
 
                 // param6: getStuffIds2() (Mobis secundários)
-                if (habboSession.habboVersion.isVersionAtLeast(2025, 5, 6)) {
+                if (wire.hasStuffIds2) {
                     val stuffIds2Count = habboRequest.readInt()
                     val roomItemsIds2 = mutableListOf<Int>()
                     repeat(stuffIds2Count) { _ ->
                         val itemId = habboRequest.readInt()
-                        if (room.itemManager.items.containsKey(itemId)) {
-                            val roomItem2 = room.itemManager.items[itemId] ?: return@repeat
-                            val isWiredLogic2 = roomItem2.furnishing.interactionType.name.startsWith("WIRED_") &&
-                                    roomItem2.furnishing.interactionType != InteractionType.WIRED_ANTENNA
-                            if (!isWiredLogic2) {
-                                roomItemsIds2 += itemId
-                            }
+                        val target = room.itemManager.items[itemId] ?: return@repeat
+                        if (target.isValidWiredTarget()) {
+                            roomItemsIds2 += itemId
                         }
                     }
                     it.stuffIds2 = roomItemsIds2
@@ -236,7 +230,8 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
         habboResponse: HabboResponse,
         wiredData: WiredData
     ) {
-        val habboAir = habboResponse.isAir && habboResponse.isVersionAtLeast(2023, 4, 14)
+        val wire = WiredDialogWire(habboResponse.habboVersion)
+        val habboAir = wire.isAirDialog
         habboResponse.apply {
             if (!habboAir && isVersionBetween(2011, 2, 22, 2023, 4, 14)) {
                 writeBoolean(stuffTypeSelectionEnabled)
@@ -244,9 +239,9 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
             // Determine if this wired uses items
             if (requiresItems) {
-                writeItems(wiredData, habboAir)
+                writeItems(wiredData, wire)
             } else {
-                writeEmptyItems(habboAir)
+                writeEmptyItems(wire)
             }
 
             writeItemInfo(roomItem)
@@ -268,11 +263,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             )
 
             if (habboAir) {
-                if (isVersionAtLeast(2023, 6, 30)) {
+                if (wire.hasVariableIds) {
                     writeInt(wiredData.variableIds.size)
                     wiredData.variableIds.forEach {
-                        if (isVersionBefore(2024, 12, 12)) {
-                            writeInt(it.toIntOrNull() ?: 0)
+                        if (wire.variableIdsAsLong) {
+                            writeLong(it.toLongOrNull() ?: 0L)
                         } else {
                             writeUTF(it)
                         }
@@ -297,10 +292,8 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR")) {
                 writeSelectorDefinitionSpecifics(wiredData.filter, wiredData.inverse)
             } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
-                if (isVersionAtLeast(2024, 5, 6)) {
-                    writeConditionDefinitionSpecifics(quantifierCode = 0)
-                } else {
-                    writeConditionDefinitionSpecifics(quantifierCode = 0)
+                writeConditionDefinitionSpecifics(quantifierCode = 0)
+                if (wire.hasConditionInvert) {
                     writeBoolean(false) // isInvert
                 }
             }
@@ -316,17 +309,17 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 writeBoolean(false) // allowWallFurni
 
                 if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
-                    if (isVersionAtLeast(2024, 5, 6)) {
+                    if (wire.hasWiredContext) {
                         writeConditionTypeSpecifics(quantifierType = 0, isInvert = false)
                     } else {
                         writeByte(0) // quantifierType lido no final do ctor da subclasse em 2023
                     }
                 }
 
-                if (isVersionAtLeast(2024, 5, 6)) {
+                if (wire.hasWiredContext) {
                     writeWiredContext(buildWiredContextBlocks(roomItem.room, wiredData, roomItem, this@WiredItem))
                 }
-                if (isVersionAtLeast(2025, 5, 6)) {
+                if (wire.hasStuffIds2) {
                     writeDefaultIntParams()
                 }
             } else {
@@ -341,16 +334,16 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
     }
 
     companion object {
-        fun HabboResponse.writeEmptyItems(habboAir: Boolean) {
+        fun HabboResponse.writeEmptyItems(wire: WiredDialogWire) {
             writeInt(0) // selectable items
             writeInt(0) // items
 
-            if (habboAir && isVersionAtLeast(2025, 5, 6)) {
+            if (wire.hasStuffIds2) {
                 writeInt(0) // stuffIds2
             }
         }
 
-        fun HabboResponse.writeItems(wiredData: WiredData, habboAir: Boolean) {
+        fun HabboResponse.writeItems(wiredData: WiredData, wire: WiredDialogWire) {
             writeInt(20) // selectable items
             writeInt(wiredData.items.size)
 
@@ -358,7 +351,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 writeInt(it)
             }
 
-            if (habboAir && isVersionAtLeast(2025, 5, 6)) {
+            if (wire.hasStuffIds2) {
                 writeInt(wiredData.stuffIds2.size)
                 wiredData.stuffIds2.forEach {
                     writeInt(it)
@@ -585,3 +578,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
         }
     }
 }
+
+/**
+ * Alvo válido de wired: qualquer mobi que não seja lógica WIRED_ (a antena é a exceção
+ * que conta como alvo). Consumido pelos loops de stuffIds e stuffIds2 do saveWired.
+ */
+private fun RoomItem.isValidWiredTarget(): Boolean =
+    !(furnishing.interactionType.name.startsWith("WIRED_") &&
+            furnishing.interactionType != InteractionType.WIRED_ANTENNA)

@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.room.user
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomUserChatData
@@ -126,6 +127,14 @@ class RoomPet(
         return "$base ${parts.size} ${parts.joinToString(" ")}"
     }
 
+    /**
+     * Serialização unificada (UsersMessageEvent, ramo pet userType==2) — evolução AS3:
+     * pré-shuffle lê só petType; a seção pós-shuffle nasce em 2011-10-05 com
+     * ownerId+hasSaddle e cresce por campo (datas do habbo-timeline):
+     * isRiding ≥2012-03-23, canBreed ≥2012-03-29, canHarvest ≥2012-04-11,
+     * ownerName+rarityLevel+canRevive ≥2012-04-24,
+     * hasBreedingPermission+petLevel+petPosture ≥2012-04-30 (estável até 2026).
+     */
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         val horse = petData.horseData
 
@@ -138,36 +147,31 @@ class RoomPet(
             writeInt(currentVector3.x)
             writeInt(currentVector3.y)
             writeUTF(currentVector3.z.toString())
-            writeInt(0)
-            writeInt(2) // entity type: pet
-            writeInt(petData.type)
-            writeInt(petData.userId)
-            writeUTF(petData.ownerName)
-            writeInt(1) // rarityLevel
-            writeBoolean(horse?.hasSaddle ?: false)
-            writeBoolean(false) // isRiding
-            writeBoolean(false) // canBreed
-            writeBoolean(false) // canHarvest
-            writeBoolean(false) // canRevive
-            writeBoolean(false) // hasBreedingPermission
-            writeInt(petData.level)
-            writeUTF("") // petPosture
-        }
-    }
-
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            writeInt(petData.id)
-            writeUTF(petData.name)
-            writeUTF("") // motto
-            writeUTF(buildLookString())
-            writeInt(virtualID)
-            writeInt(currentVector3.x)
-            writeInt(currentVector3.y)
-            writeUTF(currentVector3.z.toString())
             writeInt(bodyRotation)
             writeInt(2) // entity type: pet
-            writeInt(petData.type)
+            writeInt(petData.type) // petType — único campo do ramo pet pré-shuffle
+
+            if (isVersionAtLeast(2011, 10, 5)) {
+                writeInt(petData.userId) // ownerId
+
+                if (isVersionAtLeast(2012, 4, 24)) {
+                    writeUTF(petData.ownerName)
+                    writeInt(1) // rarityLevel
+                }
+
+                writeBoolean(horse?.hasSaddle ?: false)
+
+                if (isVersionAtLeast(2012, 3, 23)) writeBoolean(false) // isRiding
+                if (isVersionAtLeast(2012, 3, 29)) writeBoolean(false) // canBreed
+                if (isVersionAtLeast(2012, 4, 11)) writeBoolean(false) // canHarvest
+                if (isVersionAtLeast(2012, 4, 24)) writeBoolean(false) // canRevive
+
+                if (isVersionAtLeast(2012, 4, 30)) {
+                    writeBoolean(false) // hasBreedingPermission
+                    writeInt(petData.level) // petLevel
+                    writeUTF("") // petPosture
+                }
+            }
         }
     }
 }

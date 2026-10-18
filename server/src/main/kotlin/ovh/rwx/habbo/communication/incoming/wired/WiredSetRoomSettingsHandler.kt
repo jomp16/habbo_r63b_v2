@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.incoming.wired
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -34,7 +35,7 @@ class WiredSetRoomSettingsHandler {
 
         val modifyPermissionMask = habboRequest.readInt()
         val readPermissionMask = habboRequest.readInt()
-        val timezone = if (habboSession.habboVersion.isVersionAtLeast(2024, 12, 12)) {
+        val timezone = if (habboSession.isVersionAtLeast(2024, 12, 12)) {
             habboRequest.readUTF()
         } else {
             "UTC"

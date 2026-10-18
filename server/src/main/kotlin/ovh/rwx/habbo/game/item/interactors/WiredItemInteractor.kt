@@ -65,7 +65,7 @@ class WiredItemInteractor : ItemInteractor() {
             val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(roomItem.room, roomItem)
 
             if (wiredInstance != null) {
-                val outgoing = if (habboSession.release == "R63A") {
+                val outgoing = if (habboSession.isPreShuffle) {
                     when {
                         roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> OutgoingR63A.WIRED_TRIGGER_DIALOG
                         roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> OutgoingR63A.WIRED_EFFECT_DIALOG

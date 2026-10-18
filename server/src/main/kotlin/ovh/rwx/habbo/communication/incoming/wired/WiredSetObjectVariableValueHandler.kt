@@ -20,6 +20,8 @@
 package ovh.rwx.habbo.communication.incoming.wired
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -38,7 +40,7 @@ class WiredSetObjectVariableValueHandler {
 
         val typeCode = habboRequest.readInt()
         val targetId = habboRequest.readInt()
-        val variableId = if (habboSession.habboVersion.isVersionBefore(2024, 12, 12)) {
+        val variableId = if (habboSession.isVersionBefore(2024, 12, 12)) {
             habboRequest.readInt().toString()
         } else {
             habboRequest.readUTF()

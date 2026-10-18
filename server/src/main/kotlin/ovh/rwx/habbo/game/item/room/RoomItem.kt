@@ -102,9 +102,6 @@ data class RoomItem(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, *params)
-    }
 
     private fun serializeFloorItem(habboResponse: HabboResponse) {
         habboResponse.apply {

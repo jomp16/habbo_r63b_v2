@@ -44,7 +44,7 @@ class InventoryUpdateBadgesHandler {
             habboSession.habboBadge.badges[code]?.slot = slot
         }
 
-        if (habboSession.release == "R63A") {
+        if (habboSession.isPreShuffle) {
             habboSession.sendHabboResponse(
                 OutgoingR63A.USER_BADGES,
                 habboSession.userInformation.id,

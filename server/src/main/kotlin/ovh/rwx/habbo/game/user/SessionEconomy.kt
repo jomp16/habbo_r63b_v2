@@ -96,11 +96,6 @@ fun HabboSession.updateAllCurrenciesImpl() {
     }
 
     // === ENVIAR PACOTES ===
-    if (release != "R63A") {
-        sendHabboResponse(Outgoing.CREDITS_BALANCE, userInformation.credits)
-        sendHabboResponse(Outgoing.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
-    } else {
-        sendHabboResponse(OutgoingR63A.CREDITS_BALANCE, userInformation.credits)
-        sendHabboResponse(OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
-    }
+    sendResponse(Outgoing.CREDITS_BALANCE, OutgoingR63A.CREDITS_BALANCE, userInformation.credits)
+    sendResponse(Outgoing.ACTIVITY_POINTS_BALANCE, OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
 }

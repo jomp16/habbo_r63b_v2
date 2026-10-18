@@ -28,10 +28,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.plugin.event.events.user.UserDisconnectEvent
-import ovh.rwx.habbo.plugin.event.events.user.UserLoginEvent
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.HabboVersion
+import ovh.rwx.habbo.communication.ProtocolEra
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
@@ -55,6 +54,8 @@ import ovh.rwx.habbo.game.user.inventory.HabboInventory
 import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.plugin.event.events.user.UserDisconnectEvent
+import ovh.rwx.habbo.plugin.event.events.user.UserLoginEvent
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -70,7 +71,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val releaseInitialized get() = this::release.isInitialized
     var habboVersion: HabboVersion = HabboVersion(LocalDateTime.now(), 63)
     var releaseCheckReceived: Boolean = false
-    var r63ANewEncoding: Boolean = false
+    /** Era do protocolo, detectada empiricamente no decoder pelo framing; ver [ProtocolEra]. */
+    var protocolEra: ProtocolEra = ProtocolEra.SHUFFLED
+    val isPreShuffle: Boolean get() = protocolEra.isPreShuffle
     lateinit var diffieHellmanParams: DHParameterSpec
     lateinit var userInformation: UserInformation
         internal set
@@ -132,22 +135,22 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     }
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
-        if (release != "R63A") {
+        if (!isPreShuffle) {
             HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
                 sendHabboResponse(it)
             }
         } else {
-            log.error("Tried to send $outgoing to a R63A client!")
+            log.error("Tried to send $outgoing to a pre-shuffle client!")
         }
     }
 
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
-        if (release == "R63A") {
+        if (isPreShuffle) {
             HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
                 sendHabboResponse(it)
             }
         } else {
-            log.error("Tried to send $outgoing to a non R63A client!")
+            log.error("Tried to send $outgoing to a post-shuffle client!")
         }
     }
 
@@ -156,12 +159,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
      * Evita if/else nos handlers quando há dois enum variants para a mesma mensagem lógica ou pacotes exclusivos de uma release.
      */
     fun sendResponse(outgoing: Outgoing?, outgoingR63A: OutgoingR63A?, vararg args: Any?) {
-        if (release == "R63A") {
-            if (outgoingR63A != null) {
+        when {
+            isPreShuffle && outgoingR63A != null -> {
                 sendHabboResponse(outgoingR63A, *args)
             }
-        } else {
-            if (outgoing != null) {
+            !isPreShuffle && outgoing != null -> {
                 sendHabboResponse(outgoing, *args)
             }
         }
@@ -184,19 +186,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     fun sendNotification(notificationType: NotificationType, message: String) {
         when (notificationType) {
             NotificationType.MOTD_ALERT -> {
-                if (release == "R63A") {
-                    sendHabboResponse(OutgoingR63A.MISC_MOTD_NOTIFICATION, message)
-                } else {
-                    sendHabboResponse(Outgoing.MISC_MOTD_NOTIFICATION, message)
-                }
+                sendResponse(Outgoing.MISC_MOTD_NOTIFICATION, OutgoingR63A.MISC_MOTD_NOTIFICATION, message)
             }
 
             NotificationType.BROADCAST_ALERT -> {
-                if (release == "R63A") {
-                    sendHabboResponse(OutgoingR63A.MISC_BROADCAST_NOTIFICATION, message)
-                } else {
-                    sendHabboResponse(Outgoing.MISC_BROADCAST_NOTIFICATION, message)
-                }
+                sendResponse(Outgoing.MISC_BROADCAST_NOTIFICATION, OutgoingR63A.MISC_BROADCAST_NOTIFICATION, message)
             }
         }
     }
@@ -261,11 +255,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             launch {
                 habboInventory.load()
 
-                if (release == "R63A") {
-                    sendHabboResponse(OutgoingR63A.INVENTORY_UPDATE) // notify the user that the inventory was loaded
-                } else {
-                    sendHabboResponse(Outgoing.INVENTORY_UPDATE) // notify the user that the inventory was loaded
-                }
+                // notify the user that the inventory was loaded
+                sendResponse(Outgoing.INVENTORY_UPDATE, OutgoingR63A.INVENTORY_UPDATE)
             }
         }
         processLoginAchievements()

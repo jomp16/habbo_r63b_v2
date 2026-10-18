@@ -48,12 +48,14 @@ object BadgeDao {
     }
 
     fun removeBadge(userId: Int, id: Int, code: String) {
-        db {
-            update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
-                    mapOf(
-                            "id" to id
-                    )
-            )
+        WriteBehindManager.queue {
+            db {
+                update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
+                        mapOf(
+                                "id" to id
+                        )
+                )
+            }
         }
 
         HabboServer.habboGame.badgeManager.removeBadge(userId, code)

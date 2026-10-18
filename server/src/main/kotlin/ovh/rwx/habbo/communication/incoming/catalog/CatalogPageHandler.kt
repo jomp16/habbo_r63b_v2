@@ -21,6 +21,7 @@ package ovh.rwx.habbo.communication.incoming.catalog
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -50,7 +51,7 @@ class CatalogPageHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val pageId = habboRequest.readInt()
         val chosenOfferId = habboRequest.readInt()
-        val category = if (habboSession.habboVersion.isVersionAtLeast(2016, 7, 26)) {
+        val category = if (habboSession.isVersionAtLeast(2016, 7, 26)) {
             habboRequest.readUTF()
         } else {
             "NORMAL"

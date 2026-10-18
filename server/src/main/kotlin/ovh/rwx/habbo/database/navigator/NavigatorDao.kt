@@ -22,6 +22,7 @@ package ovh.rwx.habbo.database.navigator
 import ovh.rwx.habbo.game.navigator.NavigatorEventCategory
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 
 object NavigatorDao {
     fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = db {
@@ -49,7 +50,7 @@ object NavigatorDao {
         }
     }
 
-    fun removeFavoriteRoom(id: Int) {
+    fun removeFavoriteRoom(id: Int) = WriteBehindManager.queue {
         db {
             update(javaClass.classLoader.getResource("sql/navigator/favorite/delete_favorite_room.sql").readText(),
                     mapOf(

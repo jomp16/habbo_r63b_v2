@@ -57,9 +57,6 @@ data class Habbicon(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, *params)
-    }
 }
 
 data class UserHabbicon(

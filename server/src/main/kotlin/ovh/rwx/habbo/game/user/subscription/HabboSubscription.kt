@@ -119,7 +119,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
         SubscriptionDao.updateBuildersItemsUsed(buildersClubSubscription, buildersClubSubscription.itemsUsed + 1)
 
         if (buildersClubSubscription.trial && room.itemManager.items.values.count { it.buildersClub } == 1) {
-            if (habboSession.release == "R63A") {
+            if (habboSession.isPreShuffle) {
                 habboSession.sendNotification($$"${notification.builders_club.room_locked.message}")
             } else {
                 habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_LOCKED)
@@ -136,7 +136,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
             )
 
             if (room.itemManager.items.values.count { it.buildersClub } <= 0) {
-                if (habboSession.release == "R63A") {
+                if (habboSession.isPreShuffle) {
                     habboSession.sendNotification($$"${notification.builders_club.room_unlocked.message}")
                 } else {
                     habboSession.sendSuperNotification(MiscSuperNotificationResponse.MiscSuperNotificationKeys.BUILDERS_CLUB_ROOM_UNLOCKED)
@@ -201,7 +201,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
     }
 
     fun updateBuildersClubStatus() {
-        if (habboSession.release == "R63A") return
+        if (habboSession.isPreShuffle) return
 
         habboSession.sendHabboResponse(Outgoing.BUILDERS_SUBSCRIPTION_STATUS, this)
     }

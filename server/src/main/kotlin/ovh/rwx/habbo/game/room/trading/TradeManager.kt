@@ -71,7 +71,7 @@ class TradeManager(private val room: Room) {
 
         if (existingTradeForInitiator != null) {
             initiator.habboSession.let { session ->
-                if (session.release == "R63A") {
+                if (session.isPreShuffle) {
                     session.sendHabboResponse(OutgoingR63A.TRADING_ALREADY_OPEN)
                 } else {
                     session.sendHabboResponse(
@@ -86,7 +86,7 @@ class TradeManager(private val room: Room) {
 
         if (existingTradeForTarget != null) {
             initiator.habboSession.let { session ->
-                if (session.release == "R63A") {
+                if (session.isPreShuffle) {
                     session.sendHabboResponse(OutgoingR63A.TRADING_ALREADY_OPEN)
                 } else {
                     session.sendAnyResponse(
@@ -180,60 +180,28 @@ class TradeManager(private val room: Room) {
         val targetCanTrade = canTrade(target)
 
         // Envia para o iniciante
-        if (initiator.habboSession.release == "R63A") {
-            initiator.habboSession.sendHabboResponse(
-                OutgoingR63A.TRADING_OPEN,
-                initiatorId,
+        initiator.habboSession.sendResponse(Outgoing.TRADING_OPEN, OutgoingR63A.TRADING_OPEN,
+            initiatorId,
                 if (initiatorCanTrade) 1 else 0,
                 targetId,
-                if (targetCanTrade) 1 else 0
-            )
-        } else {
-            initiator.habboSession.sendHabboResponse(
-                Outgoing.TRADING_OPEN,
-                initiatorId,
-                if (initiatorCanTrade) 1 else 0,
-                targetId,
-                if (targetCanTrade) 1 else 0
-            )
-        }
+                if (targetCanTrade) 1 else 0)
 
         // Envia para o alvo
-        if (target.habboSession.release == "R63A") {
-            target.habboSession.sendHabboResponse(
-                OutgoingR63A.TRADING_OPEN,
-                initiatorId,
+        target.habboSession.sendResponse(Outgoing.TRADING_OPEN, OutgoingR63A.TRADING_OPEN,
+            initiatorId,
                 if (initiatorCanTrade) 1 else 0,
                 targetId,
-                if (targetCanTrade) 1 else 0
-            )
-        } else {
-            target.habboSession.sendHabboResponse(
-                Outgoing.TRADING_OPEN,
-                initiatorId,
-                if (initiatorCanTrade) 1 else 0,
-                targetId,
-                if (targetCanTrade) 1 else 0
-            )
-        }
+                if (targetCanTrade) 1 else 0)
 
         // Se algum não puder trocar, envia evento de erro
         if (!initiatorCanTrade) {
             initiator.habboSession.let { session ->
-                if (session.release == "R63A") {
-                    session.sendHabboResponse(OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
-                } else {
-                    session.sendHabboResponse(Outgoing.TRADING_YOU_ARE_NOT_ALLOWED)
-                }
+                session.sendResponse(Outgoing.TRADING_YOU_ARE_NOT_ALLOWED, OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
             }
         }
         if (!targetCanTrade) {
             initiator.habboSession.let { session ->
-                if (session.release == "R63A") {
-                    session.sendHabboResponse(OutgoingR63A.TRADING_OTHER_NOT_ALLOWED)
-                } else {
-                    session.sendHabboResponse(Outgoing.TRADING_OTHER_NOT_ALLOWED)
-                }
+                session.sendResponse(Outgoing.TRADING_OTHER_NOT_ALLOWED, OutgoingR63A.TRADING_OTHER_NOT_ALLOWED)
             }
         }
     }

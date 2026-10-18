@@ -40,10 +40,6 @@ class RoomPostItHandler {
 
         if (roomItem.furnishing.interactionType != InteractionType.POST_IT) return
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.ROOM_POST_IT, itemId, roomItem.extraData)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.ROOM_POST_IT, itemId, roomItem.extraData)
-        }
+        habboSession.sendResponse(Outgoing.ROOM_POST_IT, OutgoingR63A.ROOM_POST_IT, itemId, roomItem.extraData)
     }
 }

@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.database.clothing
 
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 
 object ClothingDao {
     fun getClothings(userId: Int): List<String> = db {
@@ -29,7 +30,7 @@ object ClothingDao {
         )
     }
 
-    fun addClothing(userId: Int, itemName: String) {
+    fun addClothing(userId: Int, itemName: String) = WriteBehindManager.queue {
         db {
             update("INSERT INTO `users_clothing` (`user_id`, `item_name`) VALUES (:user_id, :item_name)",
                     mapOf(

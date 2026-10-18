@@ -35,12 +35,12 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
 
     val isIncomingInitialized: Boolean get() = this::incoming.isInitialized
     lateinit var methodName: String
-    var r63ANewEncoding: Boolean = false
+    var protocolEra: ProtocolEra = ProtocolEra.SHUFFLED
 
     fun readUTF(): String {
         if (byteBuf.readableBytes() < 2) return ""
 
-        return if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
+        return if (this::incomingR63A.isInitialized && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             val bytes = ByteArray(2)
 
             byteBufInputStream.read(bytes)
@@ -60,7 +60,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     fun readShort(): Short = if (byteBuf.readableBytes() < 2) 0 else byteBufInputStream.readShort()
 
     fun readInt(): Int {
-        if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
+        if (this::incomingR63A.isInitialized && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             return if (byteBuf.readableBytes() < 1) 0 else {
                 byteBufInputStream.mark(0)
 
@@ -86,7 +86,7 @@ class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     }
 
     fun readBoolean(): Boolean {
-        return if (this::incomingR63A.isInitialized && !r63ANewEncoding) {
+        return if (this::incomingR63A.isInitialized && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             byteBuf.readableBytes() >= 1 && byteBufInputStream.readByte() == 65.toByte()
         } else {
             byteBuf.readableBytes() >= 1 && byteBufInputStream.readBoolean()

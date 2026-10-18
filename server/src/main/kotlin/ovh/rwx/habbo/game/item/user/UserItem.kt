@@ -45,6 +45,11 @@ data class UserItem(
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
+            // Era moderna (≥ shuffle): o stripId (chave de inventário no cliente) trafega NEGATIVO por
+            // convenção oficial do protocolo — o cliente indexa o inventário por essa chave
+            // (AIR: selectItemById faz getItemById(-id)), faz Math.abs só na hora de colocar no
+            // quarto, e espera o MESMO sinal negativo no FurniListRemove. O campo ref abaixo vai
+            // positivo. Exceção oficial: presentes (gift) trafegam positivos — todo pendente.
             writeInt(-id) // todo: if gift do not send negative
             writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
             writeInt(id)
@@ -69,7 +74,11 @@ data class UserItem(
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
-            writeInt(id)
+            // Mesma convenção de stripId negativo da era moderna: o cliente oficial R62+
+            // (2010-11-12 em diante, ainda Wedgie) compara o id da seleção de placement contra a
+            // NEGAÇÃO do id do objeto no quarto (HabboUserDefinedRoomEvents: selected.id == -(objId)).
+            // Clientes 2009–R54 não têm expectativa de sinal (armazenam cru e o place volta com abs).
+            writeInt(-id)
             if (isVersionBefore(2011, 2, 25)) {
                 writeInt(0) // useless?
             }

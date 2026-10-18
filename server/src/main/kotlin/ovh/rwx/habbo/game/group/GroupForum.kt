@@ -40,7 +40,4 @@ class GroupForum(private val group: Group) : IHabboResponseSerialize {
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        TODO("Not yet implemented")
-    }
 }

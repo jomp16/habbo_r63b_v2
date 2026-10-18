@@ -28,6 +28,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.user.UserInformationDao
 import org.slf4j.LoggerFactory
 
 object MessengerDao {
@@ -59,7 +60,22 @@ object MessengerDao {
         ).map { it.toDomain() }
     }
 
-    fun removeFriendships(userId: Int, friendIds: List<Int>) {
+    /** Contagem de amigos exibida no perfil; para o server console conta o staff com acc_server_console. */
+    fun countFriendsForProfile(userId: Int): Int = db {
+        if (userId != UserInformationDao.serverConsoleUserInformation.id) {
+            queryOne<Int>(
+                "SELECT COUNT(*) FROM `messenger_friendships` WHERE `user_one_id` = :user_one_id",
+                mapOf("user_one_id" to userId)
+            ) ?: 0
+        } else {
+            queryOne<Int>(
+                "SELECT COUNT(*) FROM `users` WHERE `rank` IN (SELECT `rank` FROM `permissions_ranks` WHERE `acc_server_console` = :acc_server_console) OR `id` IN (SELECT `user_id` FROM `permissions_users` WHERE `acc_server_console` = :acc_server_console)",
+                mapOf("acc_server_console" to true)
+            ) ?: 0
+        }
+    }
+
+    fun removeFriendships(userId: Int, friendIds: List<Int>) = WriteBehindManager.queue {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_friends.sql")!!.readText(),
                     friendIds.map {
@@ -78,7 +94,7 @@ object MessengerDao {
         }
     }
 
-    fun removeAllRequests(toUserId: Int) {
+    fun removeAllRequests(toUserId: Int) = WriteBehindManager.queue {
         db {
             update(javaClass.classLoader.getResource("sql/messenger/delete_all_requests.sql")!!.readText(),
                     mapOf(
@@ -88,7 +104,7 @@ object MessengerDao {
         }
     }
 
-    fun removeRequests(requestIds: List<Int>) {
+    fun removeRequests(requestIds: List<Int>) = WriteBehindManager.queue {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_request.sql")!!.readText(),
                     requestIds.map {
@@ -168,7 +184,7 @@ object MessengerDao {
         }
     }
 
-    fun updateRelationship(messengerFriend: MessengerFriend) {
+    fun updateRelationship(messengerFriend: MessengerFriend) = WriteBehindManager.queue {
         db {
             update(javaClass.classLoader.getResource("sql/messenger/update_relationship.sql")!!.readText(),
                     mapOf(

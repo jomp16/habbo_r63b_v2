@@ -56,6 +56,10 @@ class AchievementListResponse {
                 serialize(userAchievement)
             }
 
+            // defaultCategory nasceu no cliente em 2011-06-16 23:08 (RELEASE63-34422-34425-201106162308):
+            // o parser lê o String final após o loop; a build 2011-05-23 ainda não lê. Verificado no AS3
+            // direto e re-confirmado pelo habbo-timeline corrigido (body_parser resolve os reads
+            // ofuscados por typeMap — bissecação por regex de nomes de acessores dá falso negativo).
             if (isVersionAtLeast(2011, 6, 16)) {
                 writeUTF("") // defaultCategory
             }

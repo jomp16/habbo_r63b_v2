@@ -89,6 +89,41 @@ val verifyPacketSignatures = tasks.register<VerifyPacketSignaturesTask>("verifyP
     dependsOn("compileKotlin")
 }
 
+val verifySyncJdbiAccess = tasks.register<VerifySyncJdbiAccessTask>("verifySyncJdbiAccess") {
+    classesDirs.from(tasks.named("compileKotlin"))
+    // Write-behind: JDBC síncrono (db{}) só dentro do pacote database — writes de handler
+    // Netty se auto-enfileiram no DAO via WriteBehindManager.queue
+    allowedPackages.convention(setOf("ovh/rwx/habbo/database"))
+    allowedCallers.convention(
+        setOf(
+            // Boot: loadPermissions() roda no start, antes de aceitar conexões
+            "ovh/rwx/habbo/HabboServer",
+            "ovh/rwx/habbo/game/permission/PermissionManager",
+        )
+    )
+    dependsOn("compileKotlin")
+}
+
+val verifySessionReleaseAccess = tasks.register<VerifySessionReleaseAccessTask>("verifySessionReleaseAccess") {
+    classesDirs.from(tasks.named("compileKotlin"))
+    // Seam de wire + handshake + diagnóstico: os únicos que podem tocar HabboSession.release
+    allowedCallers.convention(
+        setOf(
+            "ovh/rwx/habbo/communication/HabboHandler",
+            "ovh/rwx/habbo/netty/HabboNettyDecoder",
+            "ovh/rwx/habbo/netty/HabboNettyEncoder",
+            // Seam de wire: agrupa sessions por header-ID p/ clone de protótipo no broadcast de quarto
+            "ovh/rwx/habbo/game/room/managers/RoomNetworkDispatcher",
+            "ovh/rwx/habbo/communication/incoming/handshake/HandshakeReleaseCheckHandler",
+            // Diagnóstico: comando about exibe a release ao admin
+            "ovh/rwx/habbo/plugin/listeners/room/about/RoomAboutCommandListener",
+        )
+    )
+    dependsOn("compileKotlin")
+}
+
 tasks.named("classes") {
     dependsOn(verifyPacketSignatures)
+    dependsOn(verifySessionReleaseAccess)
+    dependsOn(verifySyncJdbiAccess)
 }

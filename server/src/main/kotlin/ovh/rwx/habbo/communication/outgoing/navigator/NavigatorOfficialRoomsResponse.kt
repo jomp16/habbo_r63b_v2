@@ -158,12 +158,4 @@ class NavigatorOfficialRoomsResponse {
             OfficialRoomEntryType.NONE, OfficialRoomEntryType.FOLDER -> writeBoolean(false)
         }
     }
-
-    /**
-     * OfficialRoomsEvent pré-shuffle (450) — era 2011-08 (_SafeStr_1987): cada quarto é
-     * uma entry GUEST_ROOM (mesmo wire do 1263), tail = 1 int promoAdCount, sem promotedRooms.
-     */
-    @ResponseR63A(OutgoingR63A.NAVIGATOR_OFFICIAL_ROOMS_RESULT)
-    fun responseR63A(habboResponse: HabboResponse, data: NavigatorOfficialRoomsData) =
-        response(habboResponse, data)
 }

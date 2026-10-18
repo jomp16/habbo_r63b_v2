@@ -46,6 +46,41 @@ object ItemDao {
             .map { it.toDomain(furniXMLInfos) }
     }
 
+    /**
+     * Boot: insere mobílias presentes no furnidata e ausentes do banco (sync de catálogo no start).
+     * Só pode rodar no boot — em runtime use o auto-enfileiramento do WriteBehindManager.
+     */
+    fun insertMissingFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>, missingItems: List<String>) {
+        val insertSql = javaClass.classLoader.getResource("sql/furnishings/insert_furnishings.sql")?.readText()?.trim()
+            ?: return
+        db {
+            batchInsertAndGetGeneratedKeys(
+                insertSql,
+                missingItems.map { itemName ->
+                    val xmlInfo = furniXMLInfos[itemName]
+                    val isWall = xmlInfo?.wallFurni == true
+                    val interactionType = InteractionType.fromString(itemName).let { t ->
+                        if (t != InteractionType.NOT_FOUND && t != InteractionType.DEFAULT) t.type else "default"
+                    }
+                    mapOf(
+                        "item_name" to itemName,
+                        "type" to if (!isWall) "s" else "i",
+                        "stack_height" to "1",
+                        "can_stack" to true,
+                        "allow_recycle" to true,
+                        "allow_trade" to true,
+                        "allow_marketplace_sell" to true,
+                        "allow_gift" to true,
+                        "allow_inventory_stack" to true,
+                        "interaction_type" to interactionType,
+                        "interaction_modes_count" to 1,
+                        "vending_ids" to "0"
+                    )
+                }
+            )
+        }
+    }
+
     fun getRoomItems(roomId: Int): Map<Int, RoomItem> = db {
         query<RoomItemRowDto>(
             javaClass.classLoader.getResource("sql/items/room/select_room_items.sql").readText(),
@@ -121,7 +156,7 @@ object ItemDao {
         ).map { it.teleportId to (it.roomId ?: 0) }
     }
 
-    fun deleteItems(itemIds: List<Int>) {
+    fun deleteItems(itemIds: List<Int>) = WriteBehindManager.queue {
         db {
             batchUpdate(
                 javaClass.classLoader.getResource("sql/items/item/delete_item.sql").readText(),
@@ -137,36 +172,42 @@ object ItemDao {
     private fun removeRoomItems(roomItemsToRemove: Collection<RoomItem>) {
         if (roomItemsToRemove.isEmpty()) return
 
-        db {
-            batchUpdate(
-                javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
-                roomItemsToRemove.map {
-                    val extraData = HabboServer.habboGame.itemManager
-                        .getFurnitureLogic(it.furnishing)
-                        .sanitizeForDatabase(it.extraData)
-                    mapOf(
-                        "room_id" to null,
-                        "extra_data" to extraData,
-                        "id" to it.id
-                    )
-                }
+        // snapshot: extrai extra_data antes de enfileirar — a entidade pode mutar até o flush
+        val snapshot = roomItemsToRemove.map {
+            mapOf(
+                "room_id" to null,
+                "extra_data" to HabboServer.habboGame.itemManager
+                    .getFurnitureLogic(it.furnishing)
+                    .sanitizeForDatabase(it.extraData),
+                "id" to it.id
             )
+        }
+
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
+                    snapshot
+                )
+            }
         }
     }
 
     fun updateItemsOwner(itemIds: List<Int>, userId: Int) {
         if (itemIds.isEmpty()) return
 
-        db {
-            batchUpdate(
-                javaClass.classLoader.getResource("sql/items/item/update_item_owner.sql").readText(),
-                itemIds.map {
-                    mapOf(
-                        "user_id" to userId,
-                        "id" to it
-                    )
-                }
-            )
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    javaClass.classLoader.getResource("sql/items/item/update_item_owner.sql").readText(),
+                    itemIds.map {
+                        mapOf(
+                            "user_id" to userId,
+                            "id" to it
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -189,46 +230,59 @@ object ItemDao {
     }
 
     fun saveDimmer(roomDimmer: RoomDimmer) {
-        db {
-            update(
-                javaClass.classLoader.getResource("sql/items/dimmer/update_dimmer.sql").readText(),
-                mapOf(
-                    "enabled" to roomDimmer.enabled,
-                    "current_preset" to roomDimmer.currentPreset,
-                    "preset_one" to roomDimmer.presets[0].toString(),
-                    "preset_two" to roomDimmer.presets[1].toString(),
-                    "preset_three" to roomDimmer.presets[2].toString(),
-                    "id" to roomDimmer.id
+        // snapshot: o dimmer é mutável e pode mudar antes do flush
+        val enabled = roomDimmer.enabled
+        val currentPreset = roomDimmer.currentPreset
+        val presetOne = roomDimmer.presets[0].toString()
+        val presetTwo = roomDimmer.presets[1].toString()
+        val presetThree = roomDimmer.presets[2].toString()
+        val id = roomDimmer.id
+
+        WriteBehindManager.queue {
+            db {
+                update(
+                    javaClass.classLoader.getResource("sql/items/dimmer/update_dimmer.sql").readText(),
+                    mapOf(
+                        "enabled" to enabled,
+                        "current_preset" to currentPreset,
+                        "preset_one" to presetOne,
+                        "preset_two" to presetTwo,
+                        "preset_three" to presetThree,
+                        "id" to id
+                    )
                 )
-            )
+            }
         }
     }
 
+    /** Write-behind: enfileira no Dispatchers.IO — nunca chamar db{} síncrono em thread Netty. */
     fun saveWireds(wireds: List<RoomItem>) {
         val wiredData = wireds.mapNotNull { it.wiredData }
 
         if (wiredData.isEmpty()) return
 
-        db {
-            batchUpdate(
-                javaClass.classLoader.getResource("sql/items/wired/update_wired_data.sql").readText(),
-                wiredData.map {
-                    mapOf(
-                        "delay" to it.delay,
-                        "items" to it.items.joinToString(","),
-                        "message" to it.message,
-                        "options" to it.options.joinToString(","),
-                        "extradata" to it.extradata,
-                        "is_filter" to it.filter,
-                        "is_inverse" to it.inverse,
-                        "furni_sources" to it.furniSources.map { source -> source.code }.joinToString(","),
-                        "user_sources" to it.userSources.map { source -> source.code }.joinToString(","),
-                        "stuff_ids2" to it.stuffIds2.joinToString(","),
-                        "variable_ids" to it.variableIds.joinToString(","),
-                        "id" to it.id
-                    )
-                }
-            )
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    javaClass.classLoader.getResource("sql/items/wired/update_wired_data.sql").readText(),
+                    wiredData.map {
+                        mapOf(
+                            "delay" to it.delay,
+                            "items" to it.items.joinToString(","),
+                            "message" to it.message,
+                            "options" to it.options.joinToString(","),
+                            "extradata" to it.extradata,
+                            "is_filter" to it.filter,
+                            "is_inverse" to it.inverse,
+                            "furni_sources" to it.furniSources.map { source -> source.code }.joinToString(","),
+                            "user_sources" to it.userSources.map { source -> source.code }.joinToString(","),
+                            "stuff_ids2" to it.stuffIds2.joinToString(","),
+                            "variable_ids" to it.variableIds.joinToString(","),
+                            "id" to it.id
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -317,7 +371,7 @@ object ItemDao {
         return itemId
     }
 
-    fun deleteGiftData(id: Int) {
+    fun deleteGiftData(id: Int) = WriteBehindManager.queue {
         db {
             update(
                 javaClass.classLoader.getResource("sql/items/gift/delete_gift.sql").readText(),

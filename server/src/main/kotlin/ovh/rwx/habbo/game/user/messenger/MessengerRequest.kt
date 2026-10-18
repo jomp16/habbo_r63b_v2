@@ -34,7 +34,4 @@ data class MessengerRequest(val id: Int, val fromId: Int) : IHabboResponseSerial
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        this.serializeHabboResponse(habboResponse, params)
-    }
 }

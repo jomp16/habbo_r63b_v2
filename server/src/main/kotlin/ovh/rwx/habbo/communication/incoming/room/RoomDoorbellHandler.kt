@@ -52,7 +52,7 @@ class RoomDoorbellHandler {
                 OutgoingR63A.ROOM_DOORBELL_ACCEPT,
                 RoomDoorbellAcceptData(username = "", roomId = roomId)
             )
-            if (requestHabboSession.release != "R63A") {
+            if (!requestHabboSession.isPreShuffle) {
                 requestHabboSession.enterRoom(habboSession.currentRoom!!, "", true)
             }
 

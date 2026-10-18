@@ -111,16 +111,26 @@ data class AchievementUser(
                     writeInt(totalLevels)
                 }
             } else {
-                writeInt(scoreAtStart) // scoreAtStartOfLevel
+                // Campos do layout moderno nascidos em datas distintas (bissecção AS3 nos dumps):
+                // scoreAtStart: 2012-05-28 (RELEASE63-201205281541; a build 09:37 do mesmo dia ainda não tinha)
+                if (isVersionAtLeast(2012, 5, 28)) {
+                    writeInt(scoreAtStart) // scoreAtStartOfLevel
+                }
                 writeInt(targetAchievement.progressRequirement) // scoreLimit
                 writeInt(targetAchievement.rewardActivityPoints) // levelRewardPoints
                 writeInt(ActivityPointType.PIXELS.code) // levelRewardPointType
                 writeInt(progress) // currentPoints
                 writeBoolean(isMaxLevel) // finalLevel
                 writeUTF(group.category.category) // category
-                writeUTF("") // subCategory
+                // subCategory: 2012-03-29 (RELEASE63-201203290918; a de 2012-03-27 ainda não tinha)
+                if (isVersionAtLeast(2012, 3, 29)) {
+                    writeUTF("") // subCategory
+                }
                 writeInt(totalLevels) // levelCount
-                writeInt(displayMethod) // displayMethod
+                // displayMethod: 2012-05-31 (RELEASE63-201205311427; a de 2012-05-30 ainda não tinha)
+                if (isVersionAtLeast(2012, 5, 31)) {
+                    writeInt(displayMethod) // displayMethod
+                }
 
                 if (isAir && isVersionAtLeast(2021, 2, 18)) {
                     writeShort(0) // state
@@ -129,9 +139,6 @@ data class AchievementUser(
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        serializeHabboResponse(habboResponse, *params)
-    }
 
     fun serializeUnlocked(habboResponse: HabboResponse) {
         val levels = HabboServer.habboGame.achievementManager.achievementLevels[groupId] ?: return

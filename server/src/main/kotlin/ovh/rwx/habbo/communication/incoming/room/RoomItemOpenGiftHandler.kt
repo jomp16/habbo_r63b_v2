@@ -114,7 +114,7 @@ class RoomItemOpenGiftHandler {
         }
 
         // Envia resposta para o cliente
-        if (habboSession.release == "R63A") {
+        if (habboSession.isPreShuffle) {
             habboSession.sendHabboResponse(OutgoingR63A.ROOM_ITEM_OPEN_GIFT_RESULT, giftData.furnishing)
         } else {
             habboSession.sendHabboResponse(

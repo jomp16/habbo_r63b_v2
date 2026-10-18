@@ -300,7 +300,7 @@ class RoomItemManager(private val room: Room) {
 
         room.userManager.usersWithRights
             .filterIsInstance<RoomUser>()
-            .filter { it.habboSession.release != "R63A" }
+            .filter { !it.habboSession.isPreShuffle }
             .forEach { user ->
                 user.habboSession.sendHabboResponse(Outgoing.FLOOR_PLAN_USED_SQUARES, validKeys)
             }

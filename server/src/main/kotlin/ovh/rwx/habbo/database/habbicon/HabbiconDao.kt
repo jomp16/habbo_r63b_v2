@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.habbicon.Habbicon
 import ovh.rwx.habbo.game.habbicon.HabbiconCollection
 import ovh.rwx.habbo.game.habbicon.UserHabbicon
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 
 object HabbiconDao {
     fun getOrCreateCollection(name: String): Int = db {
@@ -65,7 +66,7 @@ object HabbiconDao {
         )
     }
 
-    fun setCollectionReward(collectionId: Int, habbiconId: Int) {
+    fun setCollectionReward(collectionId: Int, habbiconId: Int) = WriteBehindManager.queue {
         db {
             update(
                 "UPDATE habbicon_collections SET reward_habbicon_id = :habbicon_id WHERE id = :collection_id",
@@ -102,7 +103,7 @@ object HabbiconDao {
         }
     }
 
-    fun updateUserHabbiconState(userId: Int, habbiconId: Int, state: Int) {
+    fun updateUserHabbiconState(userId: Int, habbiconId: Int, state: Int) = WriteBehindManager.queue {
         db {
             update(
                 javaClass.classLoader.getResource("sql/habbicon/update_user_habbicon_state.sql").readText(),
@@ -115,7 +116,7 @@ object HabbiconDao {
         }
     }
 
-    fun updateUserHabbiconRecentIds(userId: Int, habbiconId: Int, recentIds: List<Int>) {
+    fun updateUserHabbiconRecentIds(userId: Int, habbiconId: Int, recentIds: List<Int>) = WriteBehindManager.queue {
         db {
             update("DELETE FROM users_habbicon_recent WHERE user_id = :user_id", mapOf("user_id" to userId))
             recentIds.forEachIndexed { position, recentId ->

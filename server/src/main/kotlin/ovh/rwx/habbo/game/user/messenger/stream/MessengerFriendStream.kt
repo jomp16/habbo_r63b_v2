@@ -68,9 +68,6 @@ data class MessengerFriendStream(
 ) : IHabboResponseSerialize {
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
-    }
-
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id)
             writeInt(type.id)

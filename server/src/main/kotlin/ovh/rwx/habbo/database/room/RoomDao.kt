@@ -158,7 +158,7 @@ object RoomDao {
         }
     }
 
-    fun addWordFilter(roomId: Int, wordFilter: String) {
+    fun addWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue {
         db {
             insertAndGetGeneratedKey("INSERT INTO `rooms_word_filter` (`room_id`, `word`) VALUES (:room_id, :word)",
                     mapOf(
@@ -169,7 +169,7 @@ object RoomDao {
         }
     }
 
-    fun removeWordFilter(roomId: Int, wordFilter: String) {
+    fun removeWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue {
         db {
             update("DELETE FROM `rooms_word_filter` WHERE `room_id` = :room_id AND `word` = :word",
                     mapOf(
@@ -200,7 +200,7 @@ object RoomDao {
         return RightData(id, userId)
     }
 
-    fun removeRights(ids: List<Int>) {
+    fun removeRights(ids: List<Int>) = WriteBehindManager.queue {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql")!!.readText(),
                     ids.map {

@@ -25,6 +25,7 @@ import ovh.rwx.habbo.game.chest.ChestData
 import ovh.rwx.habbo.game.chest.ChestEntry
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.database.*
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import java.time.LocalDateTime
 
 private val jsonMapper = jacksonObjectMapper()
@@ -64,30 +65,35 @@ object ChestDao {
     fun insertChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        db {
-            batchUpdate(
-                sql("insert_chest_item"),
-                itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
-            )
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    sql("insert_chest_item"),
+                    itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
+                )
+            }
         }
     }
 
     fun deleteChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        db {
-            batchUpdate(
-                sql("delete_chest_items"),
-                itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
-            )
+        WriteBehindManager.queue {
+            db {
+                batchUpdate(
+                    sql("delete_chest_items"),
+                    itemIds.map { mapOf("chest_item_id" to chestItemId, "item_id" to it) }
+                )
+            }
         }
     }
 
     fun updateChest(chest: ChestData) {
-        db {
-            update(
-                sql("update_chest"),
-                mapOf(
+        WriteBehindManager.queue {
+            db {
+                update(
+                    sql("update_chest"),
+                    mapOf(
                     "item_id" to chest.itemId,
                     "name" to chest.name,
                     "description" to chest.description,
@@ -107,16 +113,19 @@ object ChestDao {
                     "notify_withdraw" to chest.notifyWithdraw,
                     "notify_empty" to chest.notifyEmpty,
                     "notify_transaction" to chest.notifyTransaction,
+                    )
                 )
-            )
+            }
         }
     }
 
     fun deleteChest(chestItemId: Int) {
-        db {
-            update("DELETE FROM `chest_items` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
-            update("DELETE FROM `chest_logs` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
-            update("DELETE FROM `chests` WHERE `item_id` = :item_id", mapOf("item_id" to chestItemId))
+        WriteBehindManager.queue {
+            db {
+                update("DELETE FROM `chest_items` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
+                update("DELETE FROM `chest_logs` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
+                update("DELETE FROM `chests` WHERE `item_id` = :item_id", mapOf("item_id" to chestItemId))
+            }
         }
     }
 

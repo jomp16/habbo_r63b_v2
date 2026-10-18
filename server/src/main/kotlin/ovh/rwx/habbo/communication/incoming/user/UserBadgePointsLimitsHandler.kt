@@ -36,10 +36,6 @@ class UserBadgePointsLimitsHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val groupedAchievements = HabboServer.habboGame.achievementManager.groupedAchievements
 
-        if (habboSession.release == "R63A") {
-            habboSession.sendHabboResponse(OutgoingR63A.BADGE_POINTS_LIMIT, groupedAchievements)
-        } else {
-            habboSession.sendHabboResponse(Outgoing.BADGE_POINTS_LIMIT, groupedAchievements)
-        }
+        habboSession.sendResponse(Outgoing.BADGE_POINTS_LIMIT, OutgoingR63A.BADGE_POINTS_LIMIT, groupedAchievements)
     }
 }

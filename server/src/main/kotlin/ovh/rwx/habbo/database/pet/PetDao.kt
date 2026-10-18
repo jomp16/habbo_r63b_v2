@@ -70,7 +70,8 @@ object PetDao {
         ).map { it.toDomain() }
     }
 
-    fun savePet(pet: PetData) = db {
+    fun savePet(pet: PetData) = WriteBehindManager.queue {
+        db {
         update(
             """UPDATE `users_pets` SET 
                 `room_id` = :room_id, `experience` = :experience, `energy` = :energy,
@@ -95,6 +96,7 @@ object PetDao {
             )
         )
     }
+}
 }
 
 
