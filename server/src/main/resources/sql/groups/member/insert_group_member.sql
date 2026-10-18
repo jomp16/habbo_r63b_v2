@@ -1,2 +1,2 @@
-INSERT INTO `groups_members` (`group_id`, `user_id`, `rank`)
-VALUES (:group_id, :user_id, :rank)
+INSERT INTO `groups_members` (`id`, `group_id`, `user_id`, `rank`)
+VALUES (:id, :group_id, :user_id, :rank)

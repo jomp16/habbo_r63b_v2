@@ -30,6 +30,7 @@ import java.time.LocalDateTime
 
 object GroupDao {
     val groupSequence = HiLoSequence("groups", blockSize = 100)
+    val groupMemberSequence = HiLoSequence("groups_members", tableName = "groups_members", blockSize = 100)
 
     fun getGroupsBadgesBases(): List<Triple<Int, String, String>> = db {
         query<GroupBadgePartDto>("SELECT * FROM `groups_badges_base`")
@@ -62,8 +63,9 @@ object GroupDao {
 
     fun createGroup(name: String, description: String, badge: String, ownerId: Int, roomId: Int, groupMembershipState: GroupMembershipState, symbolColor: Int, backgroundColor: Int, onlyAdminCanDecorateRoom: Boolean): Int {
         val groupId = groupSequence.nextId()
-        db {
-            update(
+        WriteBehindManager.queue {
+            db {
+                update(
                 """INSERT INTO `groups` (`id`, `name`, `description`, `badge`, `owner_id`, `room_id`, `state`, `symbol_color`, `background_color`, `only_admin_can_decorate`)
                    VALUES (:id, :name, :description, :badge, :owner_id, :room_id, :state, :symbol_color, :background_color, :only_admin_can_decorate)""",
                 mapOf(
@@ -79,20 +81,27 @@ object GroupDao {
                     "only_admin_can_decorate" to onlyAdminCanDecorateRoom
                 )
             )
+            }
         }
         return groupId
     }
 
     fun addMember(groupId: Int, userId: Int, rank: Int): Int {
-        return db {
-            insertAndGetGeneratedKey(javaClass.getResource("/sql/groups/member/insert_group_member.sql").readText(),
-                    mapOf(
-                            "group_id" to groupId,
-                            "user_id" to userId,
-                            "rank" to rank.toString()
-                    )
-            )
+        val memberId = groupMemberSequence.nextId()
+        WriteBehindManager.queue {
+            db {
+                update(
+                        javaClass.getResource("/sql/groups/member/insert_group_member.sql").readText(),
+                        mapOf(
+                                "id" to memberId,
+                                "group_id" to groupId,
+                                "user_id" to userId,
+                                "rank" to rank.toString()
+                        )
+                )
+            }
         }
+        return memberId
     }
 
     fun getGroupData(groupId: Int): GroupData = db {

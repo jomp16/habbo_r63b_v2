@@ -21,8 +21,11 @@ package ovh.rwx.habbo.database.wardrobe
 
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 import ovh.rwx.habbo.database.db
+import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 
 object WardrobeDao {
+    val wardrobeSequence = HiLoSequence("users_wardrobe", tableName = "users_wardrobe", blockSize = 100)
     fun getWardrobes(userId: Int): List<Wardrobe> = db {
         query<Wardrobe>(
             "SELECT `id`, `slot_id`, `figure`, `gender` FROM `users_wardrobe` WHERE `user_id` = :user_id",
@@ -30,29 +33,39 @@ object WardrobeDao {
         )
     }
 
-    fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe = db {
-        update("UPDATE `users_wardrobe` SET `figure` = :figure, `gender` = :gender, `slot_id` = :slot_id WHERE `id` = :id",
-                mapOf(
-                        "figure" to figure,
-                        "gender" to gender,
-                        "slot_id" to slotId,
-                        "id" to id
+    fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe {
+        WriteBehindManager.queue {
+            db {
+                update("UPDATE `users_wardrobe` SET `figure` = :figure, `gender` = :gender, `slot_id` = :slot_id WHERE `id` = :id",
+                        mapOf(
+                                "figure" to figure,
+                                "gender" to gender,
+                                "slot_id" to slotId,
+                                "id" to id
+                        )
                 )
-        )
+            }
+        }
 
-        Wardrobe(id, slotId, figure, gender)
+        return Wardrobe(id, slotId, figure, gender)
     }
 
-    fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe = db {
-        val id = insertAndGetGeneratedKey("INSERT INTO `users_wardrobe` (`user_id`, `slot_id`, `figure`, `gender`) VALUES (:user_id, :slot_id, :figure, :gender)",
-                mapOf(
-                        "user_id" to userId,
-                        "slot_id" to slotId,
-                        "figure" to figure,
-                        "gender" to gender
+    fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe {
+        val id = wardrobeSequence.nextId()
+        WriteBehindManager.queue {
+            db {
+                update("INSERT INTO `users_wardrobe` (`id`, `user_id`, `slot_id`, `figure`, `gender`) VALUES (:id, :user_id, :slot_id, :figure, :gender)",
+                        mapOf(
+                                "id" to id,
+                                "user_id" to userId,
+                                "slot_id" to slotId,
+                                "figure" to figure,
+                                "gender" to gender
+                        )
                 )
-        )
+            }
+        }
 
-        Wardrobe(id, slotId, figure, gender)
+        return Wardrobe(id, slotId, figure, gender)
     }
 }

@@ -22,7 +22,7 @@ package ovh.rwx.habbo.game.group
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.group.GroupDao
-
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -89,13 +89,32 @@ class GroupManager {
             backgroundColorSecondary,
             false
         )
-        GroupDao.addMember(groupId, ownerId, 2)
+        val memberId = GroupDao.addMember(groupId, ownerId, 2)
 
         // todo: delete room rights
 
         log.info("Created new group n° {} - name {}", groupId, name)
-        val groupData = GroupDao.getGroupData(groupId)
+        // GroupData em memória (padrão de RoomData.createPrivate): os INSERTs já estão
+        // no write-behind — um read-back aqui voltaria vazio e bloquearia o event loop
+        val now = LocalDateTime.now()
+        val groupData = GroupData(
+            id = groupId,
+            name = name,
+            description = description,
+            badge = groupBadge,
+            ownerId = ownerId,
+            roomId = roomId,
+            membershipState = GroupMembershipState.OPEN,
+            symbolColor = backgroundColorPrimary,
+            backgroundColor = backgroundColorSecondary,
+            onlyAdminCanDecorateRoom = false,
+            createdAt = now
+        )
         val group = Group(groupData)
+
+        // Seed do dono: o lazy de members faria read-back no banco (ainda não flushado);
+        // materializar aqui deixa o estado em memória correto desde o primeiro acesso
+        group.members.add(GroupMember(memberId, ownerId, 2, now))
 
         groups[groupId] = group
 
