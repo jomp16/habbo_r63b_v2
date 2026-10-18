@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.room.managers
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomFloorItemRemoveData
@@ -66,7 +66,7 @@ class RoomItemManager(private val room: Room) {
             item.furnishing.interactor?.onPlace(room, null, item)
 
             if (item.furnishing.interactionType.isWired) {
-                HabboServer.habboGame.itemManager.getWiredInstance(room, item)?.let { wired ->
+                HabboGame.instance!!.itemManager.getWiredInstance(room, item)?.let { wired ->
                     wiredHandler.addWiredItem(item.position.vector2, wired)
                     wired.setData()
                 }
@@ -90,7 +90,7 @@ class RoomItemManager(private val room: Room) {
         if (roomItem.position.vector2 == position && roomItem.rotation == rotation && overrideZ == -1.0) return false
 
         val isNewItem = !items.containsKey(roomItem.id)
-        val newAffectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+        val newAffectedTiles = HabboGame.instance!!.itemManager.getAffectedTiles(
             position.x, position.y, rotation, roomItem.furnishing.width, roomItem.furnishing.length
         )
 
@@ -138,7 +138,7 @@ class RoomItemManager(private val room: Room) {
         tilesToUpdate.addAll(roomItem.affectedTiles)
 
         if (roomItem.furnishing.interactionType.isWired) {
-            HabboServer.habboGame.itemManager.getWiredInstance(room, roomItem)?.let {
+            HabboGame.instance!!.itemManager.getWiredInstance(room, roomItem)?.let {
                 wiredHandler.addWiredItem(position, it)
                 it.setData()
             }
@@ -178,7 +178,7 @@ class RoomItemManager(private val room: Room) {
                 val itemsOnTile = room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
                 itemsOnTile.forEach { item ->
                     if (item.furnishing.interactionType.wiredKind == WiredKind.VARIABLE) {
-                        (HabboServer.habboGame.itemManager.getWiredInstance(
+                        (HabboGame.instance!!.itemManager.getWiredInstance(
                             room,
                             item
                         ) as? WiredVariableItem)?.registerToManager()

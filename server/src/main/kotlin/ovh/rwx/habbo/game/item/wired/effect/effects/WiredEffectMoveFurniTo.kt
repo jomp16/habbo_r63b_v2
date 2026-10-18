@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.item.wired.effect.effects
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -53,7 +53,7 @@ class WiredEffectMoveFurniTo(room: Room, roomItem: RoomItem) : WiredEffect(room,
         val width = item.furnishing.width
         val length = item.furnishing.length
 
-        val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+        val affectedTiles = HabboGame.instance!!.itemManager.getAffectedTiles(
             targetPos.x,
             targetPos.y,
             item.rotation,

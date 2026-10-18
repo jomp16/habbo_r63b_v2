@@ -40,6 +40,7 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomData
 import ovh.rwx.habbo.game.room.RoomManager
+import ovh.rwx.habbo.game.room.gamemap.RoomGamemap
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
@@ -82,7 +83,7 @@ abstract class WiredHarness {
                 id = 1, userId = 1, name = "test", description = "",
                 model = "model", category = 1, maxUsers = 10, tradeSettings = 0
             ),
-            RoomModel("model", 1, Vector3(1, 1, 0.0), 2, listOf("0000000000"), false)
+            RoomModel("model", 1, Vector3(1, 1, 0.0), 2, (0 until 10).map { "0000000000" }, false)
         )
         roomManager.rooms[1] = room
 
@@ -133,4 +134,12 @@ abstract class WiredHarness {
      */
     protected fun roomUser(virtualId: Int, x: Int, y: Int): RoomUser =
         RoomUser(HabboSession(EmbeddedChannel()), room, virtualId, Vector3(x, y, 0.0), 2, 2)
+
+    /**
+     * Inicializa o roomGamemap (lateinit) com os itens JÁ registrados — destrava os
+     * efeitos de movimento/altitude, que atravessam setFloorItem e o gamemap.
+     */
+    protected fun initGamemap() {
+        room.roomGamemap = RoomGamemap(room)
+    }
 }
