@@ -52,6 +52,7 @@ import ovh.rwx.fastfood.netty.FastFoodNettyDecoder
 import ovh.rwx.fastfood.netty.FastFoodNettyEncoder
 import ovh.rwx.fastfood.netty.FastFoodNettyHandler
 import ovh.rwx.habbo.communication.HabboHandler
+import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.console.ServerConsole
 import ovh.rwx.habbo.console.ServerControlSocket
@@ -177,7 +178,7 @@ object HabboServer : AutoCloseable {
 
     fun start() {
         try {
-            serverControlSocket.start()
+            HabboResponse.debugEnabled = habboConfig.debug
             serverConsole.startConsoleReader()
             val stringEncoder = StringEncoder(Charsets.UTF_8)
             val habboNettyEncoder = HabboNettyEncoder()

@@ -23,7 +23,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.util.ReferenceCountUtil
-import ovh.rwx.habbo.HabboServer
+
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.encryption.decoder.HabboVl64
@@ -50,7 +50,7 @@ class HabboResponse(
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
 
     fun writeUTF(s: String, breakChar: Int = 2) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
             debugString.append("{s:\"$debugStr\"}")
         }
@@ -65,7 +65,7 @@ class HabboResponse(
     }
 
     fun writeUTFWithoutBreak(s: String) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
             debugString.append("{s:\"$debugStr\"}")
         }
@@ -77,14 +77,14 @@ class HabboResponse(
     }
 
     fun writeShort(i: Int) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{sh:\"$i\"}")
         }
         byteBufOutputStream.writeShort(i)
     }
 
     fun writeInt(i: Int) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{i:$i}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
@@ -97,28 +97,28 @@ class HabboResponse(
     }
 
     fun writeDouble(d: Double) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{dl:$d}")
         }
         byteBufOutputStream.writeDouble(d)
     }
 
     fun writeFloat(d: Float) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{f:$d}")
         }
         byteBufOutputStream.writeFloat(d)
     }
 
     fun writeLong(l: Long) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{l:$l}")
         }
         byteBufOutputStream.writeLong(l)
     }
 
     fun writeBoolean(b: Boolean) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{b:$b}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
@@ -129,7 +129,7 @@ class HabboResponse(
     }
 
     fun writeByte(b: Int) {
-        if (HabboServer.habboConfig.debug) {
+        if (debugEnabled) {
             debugString.append("{by:$b}")
         }
         byteBufOutputStream.writeByte(b)
@@ -154,5 +154,12 @@ class HabboResponse(
         _byteBuf.discardSomeReadBytes()
 
         ReferenceCountUtil.release(_byteBuf)
+    }
+
+    companion object {
+        /** Flag de debug de pacotes — copiada do config no boot (HabboServer.start) para
+         *  desacoplar o write path do singleton (e permitir teste headless do writer). */
+        @JvmField
+        var debugEnabled: Boolean = false
     }
 }
