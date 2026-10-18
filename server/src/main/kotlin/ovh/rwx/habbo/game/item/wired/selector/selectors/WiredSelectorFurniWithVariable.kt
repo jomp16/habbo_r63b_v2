@@ -45,7 +45,7 @@ class WiredSelectorFurniWithVariable(room: Room, roomItem: RoomItem) : WiredSele
         val refValue = wiredData.options.getOrElse(2) { 0 }.toDouble()
 
         val matchingItems = room.itemManager.items.values.filter { item ->
-            val varVal = context.variableManager.getVariableValue(variableId, item.id, VariableOwnerType.FURNI)?.value
+            val varVal = context.variableManager.variablesOfFurni(item.id)[variableId]?.value
             if (!checkValue) {
                 varVal != null
             } else {

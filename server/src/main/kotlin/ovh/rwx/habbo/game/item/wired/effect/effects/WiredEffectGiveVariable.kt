@@ -86,15 +86,10 @@ class WiredEffectGiveVariable(room: Room, roomItem: RoomItem) : WiredEffect(room
             WiredVariableTarget.FURNI -> {
                 val furnis = wiredContext.getEffectiveFurnis(this, 0)
                 furnis.forEach { furni ->
-                    val existing =
-                        room.wiredVariableManager.getVariableValue(variableId, furni.id, VariableOwnerType.FURNI)
+                    val variables = room.wiredVariableManager.variablesOfFurni(furni.id)
+                    val existing = variables[variableId]
                     if (existing == null || overrideExisting) {
-                        room.wiredVariableManager.setVariableValue(
-                            variableId,
-                            initialValue,
-                            furni.id,
-                            VariableOwnerType.FURNI
-                        )
+                        variables[variableId] = initialValue
                     }
                 }
             }
@@ -103,22 +98,16 @@ class WiredEffectGiveVariable(room: Room, roomItem: RoomItem) : WiredEffect(room
                 val users = wiredContext.getEffectiveUsers(this, 0)
                 users.filterIsInstance<RoomUser>().forEach { user ->
                     val userId = user.habboSession.userInformation.id
-                    val existing =
-                        room.wiredVariableManager.getVariableValue(variableId, userId, VariableOwnerType.USER)
+                    val variables = room.wiredVariableManager.variablesOfUser(userId)
+                    val existing = variables[variableId]
                     if (existing == null || overrideExisting) {
-                        room.wiredVariableManager.setVariableValue(
-                            variableId,
-                            initialValue,
-                            userId,
-                            VariableOwnerType.USER
-                        )
+                        variables[variableId] = initialValue
                     }
                 }
             }
 
             WiredVariableTarget.GLOBAL -> {
-                val existing =
-                    room.wiredVariableManager.getVariableValue(variableId, room.roomData.id, VariableOwnerType.ROOM)
+                val existing = room.wiredVariableManager.roomVariables()[variableId]
                 if (existing == null || overrideExisting) {
                     wiredContext.setVariable(variableId, initialValue, room.roomData.id, VariableOwnerType.ROOM)
                 }

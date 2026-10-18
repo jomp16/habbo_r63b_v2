@@ -47,7 +47,7 @@ class WiredSelectorUsersWithVariable(room: Room, roomItem: RoomItem) : WiredSele
 
         val matchingUsers = room.userManager.entities.values.filter { entity ->
             val userId = (entity as? RoomUser)?.habboSession?.userInformation?.id ?: entity.virtualID
-            val varVal = context.variableManager.getVariableValue(variableId, userId, VariableOwnerType.USER)?.value
+            val varVal = context.variableManager.variablesOfUser(userId)[variableId]?.value
             if (!checkValue) {
                 varVal != null
             } else {

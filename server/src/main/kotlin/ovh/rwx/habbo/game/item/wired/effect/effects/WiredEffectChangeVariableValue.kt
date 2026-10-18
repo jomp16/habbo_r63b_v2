@@ -109,15 +109,12 @@ class WiredEffectChangeVariableValue(room: Room, roomItem: RoomItem) : WiredEffe
             WiredVariableTarget.FURNI -> {
                 val furnis = wiredContext.getEffectiveFurnis(this, 0)
                 furnis.forEach { furni ->
-                    val currentVal = (room.wiredVariableManager.getVariableValue(
-                        destVarId,
-                        furni.id,
-                        VariableOwnerType.FURNI
-                    )?.value as? Number)?.toLong() ?: 0L
+                    val variables = room.wiredVariableManager.variablesOfFurni(furni.id)
+                    val currentVal = (variables[destVarId]?.value as? Number)?.toLong() ?: 0L
                     val newVal = calculateNewValue(currentVal, operandVal, operator)
                     val oldPos = furni.position.copy()
                     val oldRot = furni.rotation
-                    room.wiredVariableManager.setVariableValue(destVarId, newVal, furni.id, VariableOwnerType.FURNI)
+                    variables[destVarId] = newVal
                     if (oldPos != furni.position || oldRot != furni.rotation) {
                         wiredContext.batchedMovements.add(
                             WiredFurniMove(
@@ -140,16 +137,13 @@ class WiredEffectChangeVariableValue(room: Room, roomItem: RoomItem) : WiredEffe
                 val users = wiredContext.getEffectiveUsers(this, 0)
                 users.filterIsInstance<RoomUser>().forEach { user ->
                     val userId = user.habboSession.userInformation.id
-                    val currentVal = (room.wiredVariableManager.getVariableValue(
-                        destVarId,
-                        userId,
-                        VariableOwnerType.USER
-                    )?.value as? Number)?.toLong() ?: 0L
+                    val variables = room.wiredVariableManager.variablesOfUser(userId)
+                    val currentVal = (variables[destVarId]?.value as? Number)?.toLong() ?: 0L
                     val newVal = calculateNewValue(currentVal, operandVal, operator)
                     val oldPos = user.currentVector3.copy()
                     val oldBodyRot = user.bodyRotation
                     val oldHeadRot = user.headRotation
-                    room.wiredVariableManager.setVariableValue(destVarId, newVal, userId, VariableOwnerType.USER)
+                    variables[destVarId] = newVal
                     if (oldPos != user.currentVector3 || oldBodyRot != user.bodyRotation || oldHeadRot != user.headRotation) {
                         wiredContext.batchedMovements.add(
                             WiredUserMove(
@@ -171,11 +165,7 @@ class WiredEffectChangeVariableValue(room: Room, roomItem: RoomItem) : WiredEffe
             }
 
             WiredVariableTarget.GLOBAL -> {
-                val currentVal = (room.wiredVariableManager.getVariableValue(
-                    destVarId,
-                    room.roomData.id,
-                    VariableOwnerType.ROOM
-                )?.value as? Number)?.toLong() ?: 0L
+                val currentVal = (room.wiredVariableManager.roomVariables()[destVarId]?.value as? Number)?.toLong() ?: 0L
                 val newVal = calculateNewValue(currentVal, operandVal, operator)
                 wiredContext.setVariable(destVarId, newVal, room.roomData.id, VariableOwnerType.ROOM)
             }

@@ -112,11 +112,9 @@ class WiredConditionVariableValueMatch(room: Room, roomItem: RoomItem) : WiredCo
             WiredVariableTarget.FURNI -> {
                 val furnis = wiredContext.getEffectiveFurnis(this, 0)
                 furnis.isNotEmpty() && furnis.all { furni ->
-                    val leftVal = (room.wiredVariableManager.getVariableValue(
-                        leftVarId,
-                        furni.id,
-                        VariableOwnerType.FURNI
-                    )?.value as? Number)?.toLong() ?: 0L
+                    val leftVal =
+                        (room.wiredVariableManager.variablesOfFurni(furni.id)[leftVarId]?.value as? Number)?.toLong()
+                            ?: 0L
                     compare(leftVal, rightValue, operator)
                 }
             }
@@ -124,11 +122,9 @@ class WiredConditionVariableValueMatch(room: Room, roomItem: RoomItem) : WiredCo
             WiredVariableTarget.USER -> {
                 val users = wiredContext.getEffectiveUsers(this, 0).filterIsInstance<RoomUser>()
                 users.isNotEmpty() && users.all { user ->
-                    val leftVal = (room.wiredVariableManager.getVariableValue(
-                        leftVarId,
-                        user.habboSession.userInformation.id,
-                        VariableOwnerType.USER
-                    )?.value as? Number)?.toLong() ?: 0L
+                    val leftVal =
+                        (room.wiredVariableManager.variablesOfUser(user.habboSession.userInformation.id)[leftVarId]?.value as? Number)?.toLong()
+                            ?: 0L
                     compare(leftVal, rightValue, operator)
                 }
             }

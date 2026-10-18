@@ -99,20 +99,15 @@ class WiredAddonTextOutputVariable(room: Room, roomItem: RoomItem) : WiredAddon(
                 val strVal = if (!isShowMultiple) {
                     val first = furnis.firstOrNull()
                     val num = if (first != null) {
-                        (room.wiredVariableManager.getVariableValue(
-                            variableId,
-                            first.id,
-                            VariableOwnerType.FURNI
-                        )?.value as? Number)?.toLong() ?: 0L
+                        (room.wiredVariableManager.variablesOfFurni(first.id)[variableId]?.value as? Number)?.toLong()
+                            ?: 0L
                     } else 0L
                     formatVal(num)
                 } else {
                     furnis.joinToString(delimiter) { furni ->
-                        val num = (room.wiredVariableManager.getVariableValue(
-                            variableId,
-                            furni.id,
-                            VariableOwnerType.FURNI
-                        )?.value as? Number)?.toLong() ?: 0L
+                        val num =
+                            (room.wiredVariableManager.variablesOfFurni(furni.id)[variableId]?.value as? Number)?.toLong()
+                                ?: 0L
                         formatVal(num)
                     }
                 }
@@ -125,20 +120,15 @@ class WiredAddonTextOutputVariable(room: Room, roomItem: RoomItem) : WiredAddon(
                 val strVal = if (!isShowMultiple) {
                     val first = users.firstOrNull()
                     val num = if (first != null) {
-                        (room.wiredVariableManager.getVariableValue(
-                            variableId,
-                            first.habboSession.userInformation.id,
-                            VariableOwnerType.USER
-                        )?.value as? Number)?.toLong() ?: 0L
+                        (room.wiredVariableManager.variablesOfUser(first.habboSession.userInformation.id)[variableId]?.value as? Number)?.toLong()
+                            ?: 0L
                     } else 0L
                     formatVal(num)
                 } else {
                     users.joinToString(delimiter) { user ->
-                        val num = (room.wiredVariableManager.getVariableValue(
-                            variableId,
-                            user.habboSession.userInformation.id,
-                            VariableOwnerType.USER
-                        )?.value as? Number)?.toLong() ?: 0L
+                        val num =
+                            (room.wiredVariableManager.variablesOfUser(user.habboSession.userInformation.id)[variableId]?.value as? Number)?.toLong()
+                                ?: 0L
                         formatVal(num)
                     }
                 }
@@ -147,11 +137,7 @@ class WiredAddonTextOutputVariable(room: Room, roomItem: RoomItem) : WiredAddon(
             }
 
             WiredVariableTarget.GLOBAL -> {
-                val num = (room.wiredVariableManager.getVariableValue(
-                    variableId,
-                    room.roomData.id,
-                    VariableOwnerType.ROOM
-                )?.value as? Number)?.toLong() ?: 0L
+                val num = (room.wiredVariableManager.roomVariables()[variableId]?.value as? Number)?.toLong() ?: 0L
                 val strVal = formatVal(num)
                 wiredContext.placeholders[placeholder] = strVal
                 wiredContext.placeholders[variableId] = strVal

@@ -50,31 +50,16 @@ class WiredSetObjectVariableValueHandler {
         val targetType = WiredVariableTarget.fromCode(typeCode) ?: WiredVariableTarget.CONTEXT
 
         when (targetType) {
-            WiredVariableTarget.FURNI -> room.wiredVariableManager.setVariableValue(
-                variableId,
-                value,
-                ownerId = targetId,
-                ownerType = VariableOwnerType.FURNI
-            )
+            WiredVariableTarget.FURNI -> room.wiredVariableManager.variablesOfFurni(targetId)[variableId] = value
 
             WiredVariableTarget.USER -> {
                 val entity = room.userManager.entities[targetId]
                     ?: room.userManager.entities.values.firstOrNull { (it as? RoomUser)?.habboSession?.userInformation?.id == targetId }
                 val userId = (entity as? RoomUser)?.habboSession?.userInformation?.id ?: targetId
-                room.wiredVariableManager.setVariableValue(
-                    variableId,
-                    value,
-                    ownerId = userId,
-                    ownerType = VariableOwnerType.USER
-                )
+                room.wiredVariableManager.variablesOfUser(userId)[variableId] = value
             }
 
-            WiredVariableTarget.GLOBAL, WiredVariableTarget.CONTEXT -> room.wiredVariableManager.setVariableValue(
-                variableId,
-                value,
-                ownerId = room.roomData.id,
-                ownerType = VariableOwnerType.ROOM
-            )
+            WiredVariableTarget.GLOBAL, WiredVariableTarget.CONTEXT -> room.wiredVariableManager.roomVariables()[variableId] = value
         }
 
         val variablesMap = mutableMapOf<String, Int>()
@@ -82,7 +67,7 @@ class WiredSetObjectVariableValueHandler {
 
         when (targetType) {
             WiredVariableTarget.FURNI -> {
-                val furniVars = room.wiredVariableManager.getFurniVariables(targetId)
+                val furniVars = room.wiredVariableManager.variablesOfFurni(targetId).entries
                 furniVars.forEach { (varId, v) ->
                     val intVal = (v.value as? Number)?.toInt() ?: v.value.toString().toIntOrNull() ?: 0
                     variablesMap[varId] = intVal
@@ -100,7 +85,7 @@ class WiredSetObjectVariableValueHandler {
                 val entity = room.userManager.entities[targetId]
                     ?: room.userManager.entities.values.firstOrNull { (it as? RoomUser)?.habboSession?.userInformation?.id == targetId }
                 val userId = (entity as? RoomUser)?.habboSession?.userInformation?.id ?: targetId
-                val userVars = room.wiredVariableManager.getUserVariables(userId)
+                val userVars = room.wiredVariableManager.variablesOfUser(userId).entries
                 userVars.forEach { (varId, v) ->
                     val intVal = (v.value as? Number)?.toInt() ?: v.value.toString().toIntOrNull() ?: 0
                     variablesMap[varId] = intVal
@@ -108,7 +93,7 @@ class WiredSetObjectVariableValueHandler {
             }
 
             WiredVariableTarget.GLOBAL, WiredVariableTarget.CONTEXT -> {
-                val roomVars = room.wiredVariableManager.getRoomVariables()
+                val roomVars = room.wiredVariableManager.roomVariables().entries
                 roomVars.forEach { (varId, v) ->
                     val intVal = (v.value as? Number)?.toInt() ?: v.value.toString().toIntOrNull() ?: 0
                     variablesMap[varId] = intVal

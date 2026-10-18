@@ -46,7 +46,7 @@ class WiredAddonFilterFurniByVariable(room: Room, roomItem: RoomItem) : WiredAdd
 
         wiredContext.targetFurnis.retainAll { item ->
             val varVal =
-                wiredContext.variableManager.getVariableValue(variableId, item.id, VariableOwnerType.FURNI)?.value
+                wiredContext.variableManager.variablesOfFurni(item.id)[variableId]?.value
             if (!checkValue) {
                 varVal != null
             } else {

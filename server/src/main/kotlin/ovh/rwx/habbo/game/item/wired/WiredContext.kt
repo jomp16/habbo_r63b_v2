@@ -247,14 +247,14 @@ data class WiredContext(
             }
 
             WiredVariableTarget.GLOBAL -> {
-                val v = variableManager.getVariableValue(variableId, trigger.room.roomData.id, VariableOwnerType.ROOM)
+                val v = variableManager.roomVariables()[variableId]
                 (v?.value as? Number)?.toLong() ?: (v?.value as? String)?.toLongOrNull() ?: 0L
             }
 
             WiredVariableTarget.FURNI -> {
                 val furnis = getEffectiveFurnis(wiredItem, groupIndex)
                 val furni = furnis.firstOrNull() ?: return 0L
-                val v = variableManager.getVariableValue(variableId, furni.id, VariableOwnerType.FURNI)
+                val v = variableManager.variablesOfFurni(furni.id)[variableId]
                 (v?.value as? Number)?.toLong() ?: (v?.value as? String)?.toLongOrNull() ?: 0L
             }
 
@@ -262,7 +262,7 @@ data class WiredContext(
                 val users = getEffectiveUsers(wiredItem, groupIndex)
                 val user = users.firstOrNull() ?: return 0L
                 val userId = (user as? RoomUser)?.habboSession?.userInformation?.id ?: user.virtualID
-                val v = variableManager.getVariableValue(variableId, userId, VariableOwnerType.USER)
+                val v = variableManager.variablesOfUser(userId)[variableId]
                 (v?.value as? Number)?.toLong() ?: (v?.value as? String)?.toLongOrNull() ?: 0L
             }
         }

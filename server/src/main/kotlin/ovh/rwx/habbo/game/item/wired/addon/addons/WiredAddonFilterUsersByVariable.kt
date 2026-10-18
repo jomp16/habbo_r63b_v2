@@ -48,7 +48,7 @@ class WiredAddonFilterUsersByVariable(room: Room, roomItem: RoomItem) : WiredAdd
         wiredContext.targetUsers.retainAll { entity ->
             val userId = (entity as? RoomUser)?.habboSession?.userInformation?.id ?: entity.virtualID
             val varVal =
-                wiredContext.variableManager.getVariableValue(variableId, userId, VariableOwnerType.USER)?.value
+                wiredContext.variableManager.variablesOfUser(userId)[variableId]?.value
             if (!checkValue) {
                 varVal != null
             } else {

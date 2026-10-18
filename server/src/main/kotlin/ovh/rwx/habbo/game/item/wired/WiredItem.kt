@@ -209,15 +209,13 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                             def.availabilityType == VariableAvailabilityType.TEMPORARY_FURNI -> {
                         val holders = if (wiredData.items.isNotEmpty()) {
                             wiredData.items.map { itemId ->
-                                val v =
-                                    room.wiredVariableManager.getVariableValue(varId, itemId, VariableOwnerType.FURNI)
+                                val v = room.wiredVariableManager.variablesOfFurni(itemId)[varId]
                                 val intVal = (v?.value as? Number)?.toInt() ?: (v?.value as? String)?.toIntOrNull() ?: 0
                                 ObjectIdAndValuePair(itemId, intVal)
                             }
                         } else {
                             room.itemManager.items.keys.mapNotNull { itemId ->
-                                val v =
-                                    room.wiredVariableManager.getVariableValue(varId, itemId, VariableOwnerType.FURNI)
+                                val v = room.wiredVariableManager.variablesOfFurni(itemId)[varId]
                                 if (v != null) {
                                     val intVal =
                                         (v.value as? Number)?.toInt() ?: (v.value as? String)?.toIntOrNull() ?: 0
@@ -234,8 +232,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                         val holders =
                             room.userManager.entities.values.filterIsInstance<RoomUser>().mapNotNull { roomUser ->
                                 val userId = roomUser.habboSession.userInformation.id
-                                val v =
-                                    room.wiredVariableManager.getVariableValue(varId, userId, VariableOwnerType.USER)
+                                val v = room.wiredVariableManager.variablesOfUser(userId)[varId]
                                 if (v != null) {
                                     val intVal =
                                         (v.value as? Number)?.toInt() ?: (v.value as? String)?.toIntOrNull() ?: 0
@@ -246,8 +243,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                     }
 
                     else -> {
-                        val v =
-                            room.wiredVariableManager.getVariableValue(varId, room.roomData.id, VariableOwnerType.ROOM)
+                        val v = room.wiredVariableManager.roomVariables()[varId]
                         val intVal = (v?.value as? Number)?.toInt() ?: (v?.value as? String)?.toIntOrNull() ?: 0
                         blocks.add(WiredContextBlock.GlobalVariableInfoAndValue(def, intVal))
                     }

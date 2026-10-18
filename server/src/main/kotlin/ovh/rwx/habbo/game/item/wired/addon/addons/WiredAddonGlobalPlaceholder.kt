@@ -49,10 +49,8 @@ class WiredAddonGlobalPlaceholder(room: Room, roomItem: RoomItem) : WiredAddon(r
             wiredContext.formatPlaceholders(staticValueOrSharedName)
         } else {
             val targetRoom = HabboServer.habboGame.roomManager.rooms[targetRoomId]
-            val sharedVal = targetRoom?.wiredVariableManager?.getVariableValue(
-                staticValueOrSharedName,
-                targetRoomId
-            )?.value?.toString()
+            val sharedVal = targetRoom?.wiredVariableManager?.roomVariables()
+                ?.get(staticValueOrSharedName)?.value?.toString()
                 ?: staticValueOrSharedName
             wiredContext.formatPlaceholders(sharedVal)
         }

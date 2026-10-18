@@ -36,6 +36,22 @@ import ovh.rwx.habbo.util.Vector3
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Variáveis com escopo de um holder (mobi, usuário ou sala) — a view que os callers
+ * atravessam: um fato por chamada (o id do holder) em vez de três (variableId + ownerId +
+ * VariableOwnerType). Implementação delega ao [WiredVariableManager], que absorve o dispatch.
+ */
+interface WiredVariables {
+    /** Valor atual (inclui variáveis internas do holder); null se não existe. */
+    operator fun get(variableId: String): WiredVariableValue?
+
+    /** Escreve o valor (variáveis de domínio e internas escrevíveis). */
+    operator fun set(variableId: String, value: Any)
+
+    /** Todas as variáveis do holder (domínio + internas). */
+    val entries: Map<String, WiredVariableValue>
+}
+
 class WiredVariableManager(private val room: Room) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -81,7 +97,40 @@ class WiredVariableManager(private val room: Room) {
         markDirty()
     }
 
-    fun getFurniVariables(furniId: Int): Map<String, WiredVariableValue> {
+    fun variablesOfFurni(furniId: Int): WiredVariables = object : WiredVariables {
+        override fun get(variableId: String): WiredVariableValue? =
+            getVariableValue(variableId, furniId, VariableOwnerType.FURNI)
+
+        override fun set(variableId: String, value: Any) =
+            setVariableValue(variableId, value, furniId, VariableOwnerType.FURNI)
+
+        override val entries: Map<String, WiredVariableValue>
+            get() = getFurniVariables(furniId)
+    }
+
+    fun variablesOfUser(userId: Int): WiredVariables = object : WiredVariables {
+        override fun get(variableId: String): WiredVariableValue? =
+            getVariableValue(variableId, userId, VariableOwnerType.USER)
+
+        override fun set(variableId: String, value: Any) =
+            setVariableValue(variableId, value, userId, VariableOwnerType.USER)
+
+        override val entries: Map<String, WiredVariableValue>
+            get() = getUserVariables(userId)
+    }
+
+    fun roomVariables(): WiredVariables = object : WiredVariables {
+        override fun get(variableId: String): WiredVariableValue? =
+            getVariableValue(variableId, room.roomData.id, VariableOwnerType.ROOM)
+
+        override fun set(variableId: String, value: Any) =
+            setVariableValue(variableId, value, room.roomData.id, VariableOwnerType.ROOM)
+
+        override val entries: Map<String, WiredVariableValue>
+            get() = getRoomVariables()
+    }
+
+    private fun getFurniVariables(furniId: Int): Map<String, WiredVariableValue> {
         val map = mutableMapOf<String, WiredVariableValue>()
         furniValues[furniId]?.let { map.putAll(it) }
         InternalVariableDefinition.entries.filter { it.variableTarget == WiredVariableTarget.FURNI }.forEach { def ->
@@ -90,7 +139,7 @@ class WiredVariableManager(private val room: Room) {
         return map
     }
 
-    fun getUserVariables(userId: Int): Map<String, WiredVariableValue> {
+    private fun getUserVariables(userId: Int): Map<String, WiredVariableValue> {
         val map = mutableMapOf<String, WiredVariableValue>()
         userValues[userId]?.let { map.putAll(it) }
         InternalVariableDefinition.entries.filter { it.variableTarget == WiredVariableTarget.USER }.forEach { def ->
@@ -99,7 +148,7 @@ class WiredVariableManager(private val room: Room) {
         return map
     }
 
-    fun getRoomVariables(): Map<String, WiredVariableValue> {
+    private fun getRoomVariables(): Map<String, WiredVariableValue> {
         val map = mutableMapOf<String, WiredVariableValue>()
         roomValues.let { map.putAll(it) }
         InternalVariableDefinition.entries.filter { it.variableTarget == WiredVariableTarget.GLOBAL }.forEach { def ->
@@ -235,7 +284,7 @@ class WiredVariableManager(private val room: Room) {
         }
     }
 
-    fun getFurniInternalVariable(def: InternalVariableDefinition, furniId: Int): WiredVariableValue? {
+    private fun getFurniInternalVariable(def: InternalVariableDefinition, furniId: Int): WiredVariableValue? {
         val item = room.itemManager.items[furniId] ?: return null
         val value: Any = when (def) {
             InternalVariableDefinition.FURNI_ID -> item.id
@@ -259,7 +308,7 @@ class WiredVariableManager(private val room: Room) {
         return WiredVariableValue(def.variableId, value, ownerId = furniId, ownerType = VariableOwnerType.FURNI)
     }
 
-    fun getUserInternalVariable(def: InternalVariableDefinition, userIdOrIndex: Int): WiredVariableValue? {
+    private fun getUserInternalVariable(def: InternalVariableDefinition, userIdOrIndex: Int): WiredVariableValue? {
         val entity = room.userManager.entities.values.firstOrNull {
             it.virtualID == userIdOrIndex || (it as? RoomUser)?.habboSession?.userInformation?.id == userIdOrIndex
         } ?: return null
@@ -339,7 +388,7 @@ class WiredVariableManager(private val room: Room) {
         return WiredVariableValue(def.variableId, value, ownerId = userIdOrIndex, ownerType = VariableOwnerType.USER)
     }
 
-    fun getRoomInternalVariable(def: InternalVariableDefinition): WiredVariableValue {
+    private fun getRoomInternalVariable(def: InternalVariableDefinition): WiredVariableValue {
         val value: Any = when (def) {
             InternalVariableDefinition.ROOM_FURNI_COUNT -> room.itemManager.items.size
             InternalVariableDefinition.ROOM_USER_COUNT -> room.userManager.entities.values.count { it is RoomUser }
