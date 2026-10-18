@@ -19,14 +19,14 @@
 
 package ovh.rwx.habbo.game.snowwar.bot
 
-import ovh.rwx.habbo.game.snowwar.SnowWarGame
+import ovh.rwx.habbo.game.snowwar.SnowWarArena
 import ovh.rwx.habbo.game.snowwar.SnowWarUser
 import ovh.rwx.habbo.game.snowwar.utils.SnowWarMath
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.abs
 import kotlin.math.sign
 
-class SnowWarBotNavigator(private val game: SnowWarGame) {
+class SnowWarBotNavigator(private val arena: SnowWarArena) {
 
     fun isAdjacent(x1: Int, y1: Int, x2: Int, y2: Int): Boolean {
         return abs(x1 - x2) <= 1 && abs(y1 - y2) <= 1
@@ -39,7 +39,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
                 if (dx == 0 && dy == 0) continue
                 val tx = centerX + dx
                 val ty = centerY + dy
-                if (game.isTileWalkable(tx, ty, bot)) {
+                if (arena.isTileWalkable(tx, ty, bot)) {
                     candidates.add(tx to ty)
                 }
             }
@@ -63,7 +63,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
             (bot.currentTileX + offsetX[rightDodgeDir]) to (bot.currentTileY + offsetY[rightDodgeDir])
         )
 
-        return candidates.firstOrNull { game.isTileWalkable(it.first, it.second, bot) }
+        return candidates.firstOrNull { arena.isTileWalkable(it.first, it.second, bot) }
     }
 
     fun flankEnemy(fromX: Int, fromY: Int, toX: Int, toY: Int, bot: SnowWarUser): Pair<Int, Int>? {
@@ -74,7 +74,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
         val perpY = dx.sign * 3
         val targetX = fromX + perpX + dx.sign * 2
         val targetY = fromY + perpY + dy.sign * 2
-        if (game.isTileWalkable(targetX, targetY, bot)) return targetX to targetY
+        if (arena.isTileWalkable(targetX, targetY, bot)) return targetX to targetY
         return stepTowards(fromX, fromY, toX, toY, bot, 2)
     }
 
@@ -84,7 +84,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
         for (step in stepSize downTo 1) {
             val stepX = fromX + dx * step
             val stepY = fromY + dy * step
-            if (game.isTileWalkable(stepX, stepY, bot)) return stepX to stepY
+            if (arena.isTileWalkable(stepX, stepY, bot)) return stepX to stepY
         }
         return randomWalkableNeighbor(fromX, fromY, bot, 2)
     }
@@ -102,7 +102,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
         for (step in stepSize downTo 1) {
             val stepX = fromX + dx * step
             val stepY = fromY + dy * step
-            if (game.isTileWalkable(stepX, stepY, bot)) return stepX to stepY
+            if (arena.isTileWalkable(stepX, stepY, bot)) return stepX to stepY
         }
         return randomWalkableNeighbor(fromX, fromY, bot, 2)
     }
@@ -115,7 +115,7 @@ class SnowWarBotNavigator(private val game: SnowWarGame) {
                 if (dx == 0 && dy == 0) continue
                 val tx = fromX + dx
                 val ty = fromY + dy
-                if (game.isTileWalkable(tx, ty, bot)) {
+                if (arena.isTileWalkable(tx, ty, bot)) {
                     candidates.add(tx to ty)
                 }
             }

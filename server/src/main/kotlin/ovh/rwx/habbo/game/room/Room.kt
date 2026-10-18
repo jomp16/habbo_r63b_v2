@@ -71,7 +71,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val stressLog = LoggerFactory.getLogger("ovh.rwx.habbo.stress")
 
     // region Managers
     val networkDispatcher = RoomNetworkDispatcher(this)
@@ -187,16 +186,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         initialize()
         roomGamemap.clearEntities()
 
-        val stressTest = HabboServer.habboConfig.stressTest
-        // Stress-test ring buffers (only allocated when stressTest == true)
-        val tickProcessingBuffer = if (stressTest) LongArray(200) else LongArray(0)
-        val majorTickIntervalBuffer = if (stressTest) LongArray(20) else LongArray(0)
-        var stressTickIdx = 0
-        var stressMajorIdx = 0
-        var stressTickCount = 0
-        var stressMajorCount = 0
-        var stressLogCounter = 0
-        var lastMajorTickNano = 0L
+        val tickMonitor = RoomTickMonitor(roomData.id, HabboServer.habboConfig.stressTest)
 
         loopJob = HabboServer.applicationScope.launch {
             while (isActive) {
@@ -217,45 +207,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 val elapsedNanos = System.nanoTime() - startNano
                 val elapsedMs = elapsedNanos / 1_000_000
 
-                if (stressTest) {
-                    tickProcessingBuffer[stressTickIdx] = elapsedMs
-                    stressTickIdx = (stressTickIdx + 1) % tickProcessingBuffer.size
-                    stressTickCount++
-                    stressLogCounter++
-
-                    if (isMajorTick) {
-                        val nowNano = System.nanoTime()
-                        if (lastMajorTickNano > 0) {
-                            val interval = (nowNano - lastMajorTickNano) / 1_000_000
-                            majorTickIntervalBuffer[stressMajorIdx] = interval
-                            stressMajorIdx = (stressMajorIdx + 1) % majorTickIntervalBuffer.size
-                            stressMajorCount++
-                        }
-                        lastMajorTickNano = nowNano
-                    }
-
-                    // Log rolling summary every ~10 seconds (200 ticks * 50ms)
-                    if (stressLogCounter >= 200) {
-                        stressLogCounter = 0
-                        val procCount = minOf(stressTickCount, tickProcessingBuffer.size)
-                        val (procAvg, procP95, procMax) = computeStats(tickProcessingBuffer, procCount)
-
-                        val majCount = minOf(stressMajorCount, majorTickIntervalBuffer.size)
-                        var majInfo = "n/a"
-                        if (majCount >= 2) {
-                            val (majAvg, majP95, majMax) = computeStats(majorTickIntervalBuffer, majCount)
-                            val drift = majAvg - 500.0
-                            majInfo = "avg=%.1fms p95=%dms max=%dms drift=%.1fms".format(majAvg, majP95, majMax, drift)
-                        }
-
-                        val procInfo = "avg=%.1fms p95=%dms max=%dms".format(procAvg, procP95, procMax)
-
-                        stressLog.info(
-                            "[stress-test] room={} ticks={} proc: {} | major-interval: {}",
-                            roomData.id, procCount, procInfo, majInfo
-                        )
-                    }
-                }
+                tickMonitor.onTick(elapsedMs, isMajorTick)
 
                 delay((50L - elapsedMs).coerceAtLeast(1L).milliseconds)
             }
@@ -294,16 +246,6 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         roomTimer.set(0)
     }
 
-    private fun computeStats(buffer: LongArray, count: Int): Triple<Double, Long, Long> {
-        val times = LongArray(count)
-        for (i in 0 until count) times[i] = buffer[i]
-        val sorted = times.sorted()
-        return Triple(
-            sorted.average(),
-            sorted[(count * 0.95).toInt().coerceIn(0, count - 1)],
-            sorted.last(),
-        )
-    }
     // endregion
 
     // region Tick Processing

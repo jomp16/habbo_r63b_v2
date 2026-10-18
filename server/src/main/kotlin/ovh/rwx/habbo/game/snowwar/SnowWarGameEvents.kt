@@ -28,7 +28,7 @@ interface ISnowWarGameEvent {
     val type: SnowWarEventType
     val eventTypeId: Int get() = type.id
     fun serialize(response: HabboResponse)
-    fun apply(game: SnowWarGame) {}
+    fun apply(arena: SnowWarArena) {}
 }
 
 data class HumanLeftGameEvent(
@@ -39,9 +39,9 @@ data class HumanLeftGameEvent(
         response.writeInt(humanGameObjectId)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
-        game.users.remove(user.userId)
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
+        arena.users.remove(user.userId)
     }
 }
 
@@ -57,8 +57,8 @@ data class NewMoveTargetGameEvent(
         response.writeInt(y)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
         user.changeMoveTarget(x, y)
     }
 }
@@ -75,9 +75,9 @@ data class HumanThrowsSnowballAtHumanGameEvent(
         response.writeInt(trajectory.id)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
-        val targetUser = game.users.values.find { it.objectId == targetHumanGameObjectId }
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
+        val targetUser = arena.users.values.find { it.objectId == targetHumanGameObjectId }
         val targetX = targetUser?.currentLocationX ?: user.currentLocationX
         val targetY = targetUser?.currentLocationY ?: user.currentLocationY
         user.throwSnowball(targetX, targetY)
@@ -98,8 +98,8 @@ data class HumanThrowsSnowballAtPositionGameEvent(
         response.writeInt(trajectory.id)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
         user.throwSnowball(targetX, targetY)
     }
 }
@@ -112,8 +112,8 @@ data class HumanStartsToMakeASnowballGameEvent(
         response.writeInt(humanGameObjectId)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
         user.startMakingSnowball()
     }
 }
@@ -136,8 +136,8 @@ data class CreateSnowballGameEvent(
         response.writeInt(trajectory.id)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
         val ball = SnowWarSnowball(
             objectId = snowBallGameObjectId,
             thrower = user,
@@ -147,7 +147,7 @@ data class CreateSnowballGameEvent(
             targetWorldY = targetY,
             trajectoryRequested = trajectory
         )
-        game.snowballs.add(ball)
+        arena.snowballs.add(ball)
     }
 }
 
@@ -159,8 +159,8 @@ data class MachineCreatesSnowballGameEvent(
         response.writeInt(snowBallMachineReference)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val machine = game.machines.find { it.objectId == snowBallMachineReference }
+    override fun apply(arena: SnowWarArena) {
+        val machine = arena.machines.find { it.objectId == snowBallMachineReference }
         machine?.addSnowball()
     }
 }
@@ -175,13 +175,13 @@ data class HumanGetsSnowballsFromMachineGameEvent(
         response.writeInt(snowBallMachineReference)
     }
 
-    override fun apply(game: SnowWarGame) {
-        val user = game.users.values.find { it.objectId == humanGameObjectId } ?: return
-        val machine = game.machines.find { it.objectId == snowBallMachineReference }
+    override fun apply(arena: SnowWarArena) {
+        val user = arena.users.values.find { it.objectId == humanGameObjectId } ?: return
+        val machine = arena.machines.find { it.objectId == snowBallMachineReference }
         if (machine != null) {
             machine.transferReservedSnowballTo(user)
         } else {
-            val pile = game.piles.find { it.objectId == snowBallMachineReference }
+            val pile = arena.piles.find { it.objectId == snowBallMachineReference }
             pile?.transferReservedSnowballTo(user)
         }
     }

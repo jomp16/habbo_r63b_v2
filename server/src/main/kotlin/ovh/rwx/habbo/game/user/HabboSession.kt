@@ -92,13 +92,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var habboHabbicon: HabboHabbicon
         internal set
     val rooms: List<Room>
-        get() = HabboServer.habboGame.roomManager.rooms.values.filter {
-            it.userManager.hasRights(
-                this,
-                ownerRight = true,
-                ignorePermissionAnyRoomOwner = true
-            )
-        }
+        get() = HabboServer.habboGame.roomManager.ownedBy(userInformation.id)
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
         internal set
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }

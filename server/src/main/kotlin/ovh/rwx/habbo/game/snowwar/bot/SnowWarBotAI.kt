@@ -28,14 +28,14 @@ import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.abs
 import kotlin.math.max
 
-class SnowWarBotAI(private val game: SnowWarGame) {
-    private val navigator = SnowWarBotNavigator(game)
+class SnowWarBotAI(private val arena: SnowWarArena) {
+    private val navigator = SnowWarBotNavigator(arena)
     private val botNextActionTurn = ConcurrentHashMap<Int, Int>()
 
     fun processTurn(currentTurn: Int) {
         val rnd = ThreadLocalRandom.current()
 
-        for (bot in game.users.values) {
+        for (bot in arena.users.values) {
             if (!bot.isBot || !bot.isAlive()) continue
             if (bot.activityState == SnowWarActivityState.STUNNED) continue
             if (bot.activityState == SnowWarActivityState.MAKING_SNOWBALL) continue
@@ -44,7 +44,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
 
             // Defensive reaction: Dodge incoming enemy snowballs if stationary
             if (!bot.isWalking && bot.canMove()) {
-                val incomingBall = game.snowballs.find { ball ->
+                val incomingBall = arena.snowballs.find { ball ->
                     ball.alive && ball.thrower.team != bot.team &&
                             SnowWarMath.distance(
                                 ball.locH,
@@ -59,7 +59,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                         val sub = rnd.nextInt(3)
                         val targetX = SnowWarMath.tileToWorld(dodgeTile.first)
                         val targetY = SnowWarMath.tileToWorld(dodgeTile.second)
-                        game.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
+                        arena.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
                         botNextActionTurn[bot.objectId] = currentTurn + rnd.nextInt(4, 9)
                         continue
                     }
@@ -74,14 +74,14 @@ class SnowWarBotAI(private val game: SnowWarGame) {
             botNextActionTurn[bot.objectId] = currentTurn + cooldownTurns
 
             val hasSnowballs = bot.snowBallCount > 0
-            val enemies = game.users.values.filter {
+            val enemies = arena.users.values.filter {
                 it.team != bot.team && it.isAlive() && !it.isImmune() && it.hitPoints > 0
             }
 
             // Scenario 1: Snowball replenishment (seeking machines across map or making on ground)
             if (personality.shouldRestock(bot, rnd)) {
-                val availableMachines = game.machines.filter { it.snowballCount > 0 }
-                val availablePiles = game.piles.filter { it.snowballCount > 0 }
+                val availableMachines = arena.machines.filter { it.snowballCount > 0 }
+                val availablePiles = arena.piles.filter { it.snowballCount > 0 }
                 val targetProviders = (availableMachines.map { it.x to it.y } + availablePiles.map { it.x to it.y })
 
                 val targetCoords = if (targetProviders.isNotEmpty() && rnd.nextDouble() < 0.70) {
@@ -102,7 +102,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                         val sub = rnd.nextInt(3)
                         val targetX = SnowWarMath.tileToWorld(neighborTile.first)
                         val targetY = SnowWarMath.tileToWorld(neighborTile.second)
-                        game.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
+                        arena.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
                         continue
                     }
                 }
@@ -110,7 +110,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                 // If no machine or already adjacent or random choice: make a snowball on ground
                 if (bot.canMakeSnowballs()) {
                     val sub = rnd.nextInt(3)
-                    game.queueEvent(sub, HumanStartsToMakeASnowballGameEvent(bot.objectId))
+                    arena.queueEvent(sub, HumanStartsToMakeASnowballGameEvent(bot.objectId))
                     continue
                 }
             }
@@ -147,10 +147,10 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                     val aimX = target.currentLocationX + scatterX
                     val aimY = target.currentLocationY + scatterY
 
-                    val ballId = game.nextObjectId.getAndIncrement()
+                    val ballId = arena.nextObjectId.getAndIncrement()
                     val sub = rnd.nextInt(3)
 
-                    game.queueEvent(
+                    arena.queueEvent(
                         sub,
                         HumanThrowsSnowballAtHumanGameEvent(
                             bot.objectId,
@@ -158,7 +158,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                             trajectory
                         )
                     )
-                    game.queueEvent(
+                    arena.queueEvent(
                         sub,
                         CreateSnowballGameEvent(
                             ballId,
@@ -174,7 +174,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
 
             // Scenario 3: Movement, Flanking, and Anti-Clustering
             if (!bot.isWalking && bot.canMove()) {
-                val teammates = game.users.values.filter {
+                val teammates = arena.users.values.filter {
                     it.team == bot.team && it.objectId != bot.objectId && it.isAlive()
                 }
 
@@ -220,7 +220,7 @@ class SnowWarBotAI(private val game: SnowWarGame) {
                     val sub = rnd.nextInt(3)
                     val targetX = SnowWarMath.tileToWorld(moveTile.first)
                     val targetY = SnowWarMath.tileToWorld(moveTile.second)
-                    game.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
+                    arena.queueEvent(sub, NewMoveTargetGameEvent(bot.objectId, targetX, targetY))
                 }
             }
         }

@@ -24,6 +24,15 @@ Termos de domínio do habbo_r63b_v2. Mantenha o código e a conversa usando este
 - **`WiredVariables` (view com escopo de holder)**: a interface de 3 métodos (`get`/`set` operator + `entries`) que callers atravessam para ler/escrever variáveis de um holder (`variablesOfFurni(id)`/`variablesOfUser(id)`/`roomVariables()` do `WiredVariableManager`). Um fato por chamada em vez de três (variableId + ownerId + VariableOwnerType); `getVariableValue`/`setVariableValue` crus só para holder genuinamente dinâmico (WiredContext).
 - **`WiredDefaultDataFactory`**: registro tipado do WiredData default — o companion de toda classe `@WiredItemInteractor` implementa a factory; o ItemManager resolve o mapa InteractionType→factory uma vez no load (companion sem factory = WARN de boot). Reflexão por nome de método com catch-all é proibida.
 
+## SnowWar
+
+- **`SnowWarArena` (seam de simulação)**: módulo puro e determinístico da arena — campo (heightmap, blockedTiles, máquinas/pilhas/árvores), física em 3 subturnos, aplicação de eventos e checksum — sem rede, sem executor, sem config. `SnowWarGame` é o adapter (máquina de estados, relógio do `serverScheduledExecutor`, broadcast, stats/achievements); a `SnowWarBotAI` é um **produtor de eventos** plugado em `arena.onBeforeTick`, invocado dentro do mesmo lock do tick. Testes de replay headless atravessam o seam da arena (`tick()`/`queueEvent()`/`fullStatusData()`, ver `SnowWarArenaTest`) — os antigos testes de física que furavam a interface (`calculateFrameMovement` direto) eram o sintoma de que o seam faltava. `ISnowWarGameEvent.apply` recebe a **arena**, não o game. Fato de física: a bola nasce a z=3000; em tile `'1'` (3200) ela colide com o chão no próprio subturn de spawn — o chão das arenas é `'0'`.
+
+## Sala
+
+- **`RoomManager.ownedBy(userId)`**: quartos carregados de posse estrita (ownerId). O lookup "quais salas são minhas" mora no RoomManager; `HabboSession.rooms` delega. NUNCA re-introduzir o scan de todas as salas via `hasRights` (além de O(salas), disparava lazy-load de `RoomDao.getRights` por sala no primeiro acesso).
+- **`RoomTickMonitor`**: telemetria de tick da sala (ring buffers de latência + p95 + log rolling no logger `ovh.rwx.habbo.stress`) atrás de uma interface de um método, `onTick(elapsedMs, isMajorTick)` — no-op quando `stressTest == false`. O game loop do `Room` fica com scheduling puro (delay 50ms + `processRoomTick`); telemetria não é implementação do loop.
+
 ## Persistência
 
 - **Entidade suja (`AbstractDirtyEntity`)**: entidade de estado de jogo marcada para flush; o `WriteBehindManager` coleta e invoca `flush()` polimorficamente.

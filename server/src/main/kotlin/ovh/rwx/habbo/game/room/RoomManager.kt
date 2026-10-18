@@ -92,6 +92,13 @@ class RoomManager {
     }
 
     /**
+     * Quartos carregados de posse estrita do usuário (ownerId) — não inclui permissões de
+     * group/rights. Antes isto era um scan de todas as salas via hasRights, que ainda
+     * disparava lazy-load de DAO por sala.
+     */
+    fun ownedBy(userId: Int): List<Room> = rooms.values.filter { it.roomData.ownerId == userId }
+
+    /**
      * Busca os quartos ativos mais populares, opcionalmente por categoria.
      */
     fun getPopularRooms(categoryId: Int = -1, limit: Int = 40): List<Room> {
