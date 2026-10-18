@@ -46,12 +46,10 @@ class WiredEffectToggleState(room: Room, roomItem: RoomItem) : WiredEffect(room,
         targets.forEach { item ->
             val interactor = item.furnishing.interactor
             if (interactor != null) {
+                // O interactor é quem muda o estado e quem notifica WiredTriggerStuffState
+                // (convenção de todos os interactors) — disparar aqui também acionava os
+                // triggers de estado 2x no caminho wired (o caminho manual dispara 1x)
                 interactor.onTrigger(item.room, null, item, true, 0)
-                item.room.itemManager.wiredHandler.triggerWired(
-                    WiredTriggerStuffState::class,
-                    wiredContext.triggererUser,
-                    StateTriggerData(item)
-                )
             } else {
                 val modes = item.furnishing.interactionModesCount - 1
                 if (modes > 0) {
