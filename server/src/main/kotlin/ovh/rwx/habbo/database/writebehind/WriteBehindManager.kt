@@ -138,7 +138,7 @@ object WriteBehindManager {
             if (roomItemsToSave.isNotEmpty()) {
                 RoomDao.saveItems(roomId, roomItemsToSave)
                 val wireds = roomItemsToSave.filter {
-                    it.furnishing.interactionType.name.startsWith("WIRED_") && it.wiredData != null
+                    it.furnishing.interactionType.isWired && it.wiredData != null
                 }
                 if (wireds.isNotEmpty()) ItemDao.saveWireds(wireds)
                 roomItemsToSave.forEach { it.markClean() }
@@ -197,7 +197,7 @@ object WriteBehindManager {
                 try {
                     if (roomId > 0) RoomDao.saveItems(roomId, roomItems)
                     val wireds = roomItems.filter {
-                        it.furnishing.interactionType.name.startsWith("WIRED_") && it.wiredData != null
+                        it.furnishing.interactionType.isWired && it.wiredData != null
                     }
                     if (wireds.isNotEmpty()) ItemDao.saveWireds(wireds)
                     roomItems.forEach { it.markClean() }

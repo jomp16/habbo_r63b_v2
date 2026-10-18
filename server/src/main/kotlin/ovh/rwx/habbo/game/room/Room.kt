@@ -38,6 +38,7 @@ import ovh.rwx.habbo.database.room.RoomBanEntry
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.RoomGameKind
 import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.*
@@ -152,7 +153,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         itemManager.triggerItems()
         wiredVariableManager.loadPersistentVariables()
 
-        if (itemManager.items.values.any { it.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") }) {
+        if (itemManager.items.values.any { it.furnishing.interactionType.roomGameKind == RoomGameKind.BATTLE_BANZAI }) {
             gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
         }
 

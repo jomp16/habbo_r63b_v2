@@ -874,8 +874,9 @@ class WiredVariableManager(private val room: Room) {
                     val isGlobalPlaceholder =
                         item.furnishing.interactionType == InteractionType.WIRED_EXTRA_TEXT_INPUT_VARIABLE ||
                                 item.furnishing.interactionType == InteractionType.WIRED_EXTRA_TEXT_OUTPUT_VARIABLE ||
-                                item.furnishing.interactionType.name.contains("PLACEHOLDER") ||
-                                item.furnishing.interactionType.name.contains("GLOBAL_PLACEHOLDER")
+                                item.furnishing.interactionType == InteractionType.WIRED_EXTRA_GLOBAL_PLACEHOLDER ||
+                                item.furnishing.interactionType == InteractionType.WIRED_EXTRA_USER_PLACEHOLDER ||
+                                item.furnishing.interactionType == InteractionType.WIRED_EXTRA_VARIABLE_PLACEHOLDER
 
                     val wiredInstance = HabboServer.habboGame.itemManager.getWiredInstance(otherRoom, item)
                     val isCode2000 =

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.item.wired.addon.addons
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.WiredKind
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.WiredContext
 import ovh.rwx.habbo.game.item.wired.WiredItemInteractor
@@ -38,7 +39,7 @@ class WiredAddonVariableTextConnector(room: Room, roomItem: RoomItem) : WiredAdd
     override fun setData() {
         val itemsOnTile = room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
         itemsOnTile.forEach { item ->
-            if (item.id != roomItem.id && item.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_")) {
+            if (item.id != roomItem.id && item.furnishing.interactionType.wiredKind == WiredKind.VARIABLE) {
                 val variableItem = HabboServer.habboGame.itemManager.getWiredInstance(room, item) as? WiredVariableItem
                 variableItem?.registerToManager()
             }

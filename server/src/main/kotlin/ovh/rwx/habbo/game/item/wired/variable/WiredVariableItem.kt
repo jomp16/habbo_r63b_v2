@@ -50,8 +50,7 @@ abstract class WiredVariableItem(room: Room, roomItem: RoomItem) : WiredItem(roo
         val textConnectorItem = itemsOnTile.firstOrNull {
             it.furnishing.interactionType == InteractionType.WIRED_EXTRA_VARIABLE_TEXT_CONNECTOR ||
                     it.furnishing.itemName == "wf_xtra_text_connector" ||
-                    it.furnishing.itemName == "wf_xtra_var_text_connector" ||
-                    it.furnishing.interactionType.name.contains("VARIABLE_TEXT_CONNECTOR")
+                    it.furnishing.itemName == "wf_xtra_var_text_connector"
         } ?: return emptyMap()
 
         val msg = textConnectorItem.wiredData?.message ?: return emptyMap()

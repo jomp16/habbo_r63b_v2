@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.room.games
 
+import ovh.rwx.habbo.game.item.RoomGameKind
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.games.banzai.BattleBanzaiGame
@@ -61,10 +62,10 @@ class RoomGameManager(val room: Room) {
     }
 
     fun getGameForItem(roomItem: RoomItem): RoomGame? {
-        return when {
-            roomItem.furnishing.interactionType.name.startsWith("BATTLE_BANZAI") -> games[RoomGameType.BATTLE_BANZAI]
-            roomItem.furnishing.interactionType.name.startsWith("FREEZE") -> games[RoomGameType.FREEZE]
-            else -> null
+        return when (roomItem.furnishing.interactionType.roomGameKind) {
+            RoomGameKind.BATTLE_BANZAI -> games[RoomGameType.BATTLE_BANZAI]
+            RoomGameKind.FREEZE -> games[RoomGameType.FREEZE]
+            null -> null
         }
     }
 

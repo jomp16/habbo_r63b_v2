@@ -19,6 +19,13 @@
 
 package ovh.rwx.habbo.game.item
 
+/** Categoria de mobília Wired, derivada uma única vez do prefixo do enum (seam de kind).
+ *  Nulo para não-Wired e para Wired sem categoria (antena, caixa, arrowplates, room linker…). */
+enum class WiredKind { TRIGGER, EFFECT, CONDITION, SELECTOR, ADDON, VARIABLE }
+
+/** Jogo de sala ao qual a mobília pertence (registro de RoomGameManager). */
+enum class RoomGameKind { BATTLE_BANZAI, FREEZE }
+
 enum class InteractionType(val type: String) {
     ALERT("alert"),
     BADGE_DISPLAY("badge_display"),
@@ -273,6 +280,25 @@ enum class InteractionType(val type: String) {
     WIRED_VARIABLE_REFERENCE("wf_var_reference"),
     WIRED_VARIABLE_ROOM("wf_var_room"),
     WIRED_VARIABLE_USER("wf_var_user");
+
+    /** Qualquer mobília Wired (inclui sem categoria: antena, caixa, arrowplates, room linker). */
+    val isWired: Boolean get() = name.startsWith("WIRED")
+
+    val wiredKind: WiredKind? get() = when {
+        name.startsWith("WIRED_TRIGGER") -> WiredKind.TRIGGER
+        name.startsWith("WIRED_EFFECT") -> WiredKind.EFFECT
+        name.startsWith("WIRED_CONDITION") -> WiredKind.CONDITION
+        name.startsWith("WIRED_SELECTOR") -> WiredKind.SELECTOR
+        name.startsWith("WIRED_EXTRA") -> WiredKind.ADDON
+        name.startsWith("WIRED_VARIABLE") -> WiredKind.VARIABLE
+        else -> null
+    }
+
+    val roomGameKind: RoomGameKind? get() = when {
+        name.startsWith("BATTLE_BANZAI") -> RoomGameKind.BATTLE_BANZAI
+        name.startsWith("FREEZE") -> RoomGameKind.FREEZE
+        else -> null
+    }
 
     companion object {
         fun fromString(value: String): InteractionType {

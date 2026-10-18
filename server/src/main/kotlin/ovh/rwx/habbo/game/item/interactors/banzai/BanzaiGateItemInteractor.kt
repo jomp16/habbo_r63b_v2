@@ -27,7 +27,12 @@ import ovh.rwx.habbo.game.room.user.RoomEntity
 
 @Suppress("unused")
 class BanzaiGateItemInteractor : ItemInteractor() {
-    override val interactionType = InteractionType.entries.filter { it.name.startsWith("BATTLE_BANZAI_GATE") }
+    override val interactionType = listOf(
+        InteractionType.BATTLE_BANZAI_GATE_BLUE,
+        InteractionType.BATTLE_BANZAI_GATE_GREEN,
+        InteractionType.BATTLE_BANZAI_GATE_RED,
+        InteractionType.BATTLE_BANZAI_GATE_YELLOW,
+    )
 
     override fun onUserWalksOn(room: Room, roomEntity: RoomEntity, roomItem: RoomItem) {
         super.onUserWalksOn(room, roomEntity, roomItem)

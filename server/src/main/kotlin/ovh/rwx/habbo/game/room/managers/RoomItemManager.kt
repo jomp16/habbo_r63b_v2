@@ -29,6 +29,7 @@ import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
+import ovh.rwx.habbo.game.item.WiredKind
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.variable.WiredVariableItem
 import ovh.rwx.habbo.game.room.Room
@@ -64,7 +65,7 @@ class RoomItemManager(private val room: Room) {
         items.values.forEach { item ->
             item.furnishing.interactor?.onPlace(room, null, item)
 
-            if (item.furnishing.interactionType.name.startsWith("WIRED_")) {
+            if (item.furnishing.interactionType.isWired) {
                 HabboServer.habboGame.itemManager.getWiredInstance(room, item)?.let { wired ->
                     wiredHandler.addWiredItem(item.position.vector2, wired)
                     wired.setData()
@@ -103,7 +104,7 @@ class RoomItemManager(private val room: Room) {
             tilesToUpdate.addAll(oldAffectedTiles)
             room.roomGamemap.removeRoomItem(roomItem)
 
-            if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+            if (roomItem.furnishing.interactionType.isWired) {
                 wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
             }
 
@@ -136,7 +137,7 @@ class RoomItemManager(private val room: Room) {
         room.roomGamemap.addRoomItem(roomItem)
         tilesToUpdate.addAll(roomItem.affectedTiles)
 
-        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+        if (roomItem.furnishing.interactionType.isWired) {
             HabboServer.habboGame.itemManager.getWiredInstance(room, roomItem)?.let {
                 wiredHandler.addWiredItem(position, it)
                 it.setData()
@@ -167,16 +168,16 @@ class RoomItemManager(private val room: Room) {
         room.roomGamemap.removeRoomItem(roomItem)
         itemsToSave.remove(roomItem)
 
-        if (roomItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+        if (roomItem.furnishing.interactionType.isWired) {
             ItemDao.saveWireds(listOf(roomItem))
             wiredHandler.removeWiredItem(roomItem.position.vector2, roomItem)
-            if (roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_")) {
+            if (roomItem.furnishing.interactionType.wiredKind == WiredKind.VARIABLE) {
                 room.wiredVariableManager.deleteVariable(roomItem.id.toString())
                 room.networkDispatcher.sendResponseModern(Outgoing.WIRED_ALL_VARIABLES_HASH, room)
             } else if (roomItem.furnishing.interactionType == InteractionType.WIRED_EXTRA_VARIABLE_TEXT_CONNECTOR) {
                 val itemsOnTile = room.roomGamemap.getItemsFromVector2(roomItem.position.vector2)
                 itemsOnTile.forEach { item ->
-                    if (item.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_")) {
+                    if (item.furnishing.interactionType.wiredKind == WiredKind.VARIABLE) {
                         (HabboServer.habboGame.itemManager.getWiredInstance(
                             room,
                             item
@@ -318,7 +319,7 @@ class RoomItemManager(private val room: Room) {
         RoomDao.saveItems(room.roomData.id, itemsToSave)
 
         val wiredsToSave =
-            itemsToSave.filter { it.furnishing.interactionType.name.startsWith("WIRED_") && it.wiredData != null }
+            itemsToSave.filter { it.furnishing.interactionType.isWired && it.wiredData != null }
         if (wiredsToSave.isNotEmpty()) ItemDao.saveWireds(wiredsToSave)
 
         roomDimmer?.let {

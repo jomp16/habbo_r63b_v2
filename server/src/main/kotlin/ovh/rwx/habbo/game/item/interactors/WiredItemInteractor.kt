@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
+import ovh.rwx.habbo.game.item.WiredKind
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomEntity
@@ -35,7 +36,7 @@ import ovh.rwx.habbo.game.room.user.RoomUser
 class WiredItemInteractor : ItemInteractor() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    override val interactionType = InteractionType.entries.filter { it.name.startsWith("WIRED") }
+    override val interactionType = InteractionType.entries.filter { it.isWired }
 
     override fun onPlace(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
         super.onPlace(room, roomEntity, roomItem)
@@ -66,24 +67,24 @@ class WiredItemInteractor : ItemInteractor() {
 
             if (wiredInstance != null) {
                 val outgoing = if (habboSession.isPreShuffle) {
-                    when {
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> OutgoingR63A.WIRED_TRIGGER_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> OutgoingR63A.WIRED_EFFECT_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> OutgoingR63A.WIRED_CONDITION_DIALOG
+                    when (roomItem.furnishing.interactionType.wiredKind) {
+                        WiredKind.TRIGGER -> OutgoingR63A.WIRED_TRIGGER_DIALOG
+                        WiredKind.EFFECT -> OutgoingR63A.WIRED_EFFECT_DIALOG
+                        WiredKind.CONDITION -> OutgoingR63A.WIRED_CONDITION_DIALOG
                         else -> {
                             habboSession.sendNotification("WIRED isn't available for your release.")
                             return
                         }
                     }
                 } else {
-                    when {
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER") -> Outgoing.WIRED_TRIGGER_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> Outgoing.WIRED_EFFECT_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> Outgoing.WIRED_CONDITION_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_EXTRA") -> Outgoing.WIRED_ADDON_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> Outgoing.WIRED_SELECTOR_DIALOG
-                        roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE") -> Outgoing.WIRED_VARIABLE_DIALOG
-                        else -> return
+                    when (roomItem.furnishing.interactionType.wiredKind) {
+                        WiredKind.TRIGGER -> Outgoing.WIRED_TRIGGER_DIALOG
+                        WiredKind.EFFECT -> Outgoing.WIRED_EFFECT_DIALOG
+                        WiredKind.CONDITION -> Outgoing.WIRED_CONDITION_DIALOG
+                        WiredKind.ADDON -> Outgoing.WIRED_ADDON_DIALOG
+                        WiredKind.SELECTOR -> Outgoing.WIRED_SELECTOR_DIALOG
+                        WiredKind.VARIABLE -> Outgoing.WIRED_VARIABLE_DIALOG
+                        null -> return
                     }
                 }
 

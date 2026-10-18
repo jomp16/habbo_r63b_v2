@@ -357,7 +357,7 @@ data class RoomItem(
     override fun flush() {
         if (roomId > 0) {
             RoomDao.saveItems(roomId, listOf(this))
-            if (furnishing.interactionType.name.startsWith("WIRED_") && wiredData != null) {
+            if (furnishing.interactionType.isWired && wiredData != null) {
                 ItemDao.saveWireds(listOf(this))
             }
         }

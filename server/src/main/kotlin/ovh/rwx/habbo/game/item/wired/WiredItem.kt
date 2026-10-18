@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
+import ovh.rwx.habbo.game.item.WiredKind
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.wired.addon.WiredAddonType
 import ovh.rwx.habbo.game.item.wired.effect.WiredEffect
@@ -134,23 +135,25 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
             if (habboAir) {
                 // Diferentes tipos têm diferentes parâmetros extras
-                when {
-                    roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT") -> {
+                when (roomItem.furnishing.interactionType.wiredKind) {
+                    WiredKind.EFFECT -> {
                         // Effect: param7 = getActionDelay()
                         it.delay = habboRequest.readInt()
                     }
 
-                    roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION") -> {
+                    WiredKind.CONDITION -> {
                         // Condition: param7 = resolveQuantifier()
                         val quantifier = habboRequest.readInt() // TODO: implement quantifier
                         log.info("[WIRED] TODO: condition quantifier: {}", quantifier)
                     }
 
-                    roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR") -> {
+                    WiredKind.SELECTOR -> {
                         // Selector: param7 = resolveFilterField(), param8 = resolveInverseField()
                         it.filter = habboRequest.readBoolean()
                         it.inverse = habboRequest.readBoolean()
                     }
+
+                    else -> {}
                 }
 
                 // param7/param8: furniSourceTypes (Ex: 0 = Selected Furni, 100 = Triggering Furni)
@@ -200,7 +203,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
 
             } else {
                 // Delay apenas para effects na versão antiga
-                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
+                if (roomItem.furnishing.interactionType.wiredKind == WiredKind.EFFECT) {
                     it.delay = habboRequest.readInt()
                 }
 
@@ -287,11 +290,11 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
             // Para o Habbo antes do AIR , a classe pai termina antes de CODE
             writeInt(code())
 
-            if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
+            if (roomItem.furnishing.interactionType.wiredKind == WiredKind.EFFECT) {
                 writeDelay(wiredData.delay)
-            } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_SELECTOR")) {
+            } else if (habboAir && roomItem.furnishing.interactionType.wiredKind == WiredKind.SELECTOR) {
                 writeSelectorDefinitionSpecifics(wiredData.filter, wiredData.inverse)
-            } else if (habboAir && roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
+            } else if (habboAir && roomItem.furnishing.interactionType.wiredKind == WiredKind.CONDITION) {
                 writeConditionDefinitionSpecifics(quantifierCode = 0)
                 if (wire.hasConditionInvert) {
                     writeBoolean(false) // isInvert
@@ -308,7 +311,7 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 writeInputSourcesConf(this@WiredItem)
                 writeBoolean(false) // allowWallFurni
 
-                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_CONDITION")) {
+                if (roomItem.furnishing.interactionType.wiredKind == WiredKind.CONDITION) {
                     if (wire.hasWiredContext) {
                         writeConditionTypeSpecifics(quantifierType = 0, isInvert = false)
                     } else {
@@ -324,9 +327,9 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
                 }
             } else {
                 // Legacy format - conflictingActions
-                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_TRIGGER")) {
+                if (roomItem.furnishing.interactionType.wiredKind == WiredKind.TRIGGER) {
                     writeBlockedTriggers(wiredData)
-                } else if (roomItem.furnishing.interactionType.name.startsWith("WIRED_EFFECT")) {
+                } else if (roomItem.furnishing.interactionType.wiredKind == WiredKind.EFFECT) {
                     writeBlockedActions(wiredData)
                 }
             }
@@ -584,5 +587,5 @@ abstract class WiredItem(val room: Room, val roomItem: RoomItem) {
  * que conta como alvo). Consumido pelos loops de stuffIds e stuffIds2 do saveWired.
  */
 private fun RoomItem.isValidWiredTarget(): Boolean =
-    !(furnishing.interactionType.name.startsWith("WIRED_") &&
+    !(furnishing.interactionType.isWired &&
             furnishing.interactionType != InteractionType.WIRED_ANTENNA)

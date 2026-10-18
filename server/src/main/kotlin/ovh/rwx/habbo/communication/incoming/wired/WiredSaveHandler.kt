@@ -25,6 +25,8 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.WiredKind
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -47,8 +49,8 @@ class WiredSaveHandler {
         ) {
             if (!habboSession.isPreShuffle) {
                 habboSession.sendHabboResponse(Outgoing.WIRED_SAVED)
-                if (roomItem.furnishing.interactionType.name.startsWith("WIRED_VARIABLE_") ||
-                    roomItem.furnishing.interactionType.name.contains("TEXT_CONNECTOR")
+                if (roomItem.furnishing.interactionType.wiredKind == WiredKind.VARIABLE ||
+                    roomItem.furnishing.interactionType == InteractionType.WIRED_EXTRA_VARIABLE_TEXT_CONNECTOR
                 ) {
                     habboSession.currentRoom!!.networkDispatcher.sendResponseModern(
                         Outgoing.WIRED_ALL_VARIABLES_HASH,

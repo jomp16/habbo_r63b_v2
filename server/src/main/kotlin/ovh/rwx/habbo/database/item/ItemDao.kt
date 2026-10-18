@@ -408,7 +408,7 @@ object ItemDao {
     }
 
     private fun addSpecialItemData(userItem: UserItem) {
-        if (userItem.furnishing.interactionType.name.startsWith("WIRED_")) {
+        if (userItem.furnishing.interactionType.isWired) {
             val defaultWiredData =
                 HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
                     ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
