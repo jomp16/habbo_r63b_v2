@@ -61,9 +61,11 @@ class RoomUser(
      * Serialização unificada (UsersMessageEvent / header pré-shuffle 28) — evolução completa
      * do wire por bissecção AS3 + habbo-timeline:
      * - campos comuns: id, name, motto, figure, roomIndex, x, y, z, dir, entityType.
-     * - seção user pré-shuffle (≤2011-10-04): sex, xp, groupId, groupStatus, groupName,
-     *   [achievementScore ≥ 2010-12-03].
-     * - 2011-10-05 (1º pós-shuffle): +String entre groupName e achievementScore.
+     * - seção user pré-shuffle (≤2011-10-04): sex, xp, groupId, groupStatus, poolFigure,
+     *   [achievementScore ≥ 2010-12-03]. A String depois do groupStatus é a roupa de natação
+     *   ("ch=s01/<cor>"), não o nome do grupo: não vazia, o client acrescenta ".bds-10001-<pele>.ss-…" ao
+     *   visual e veste o corpo de piscina, que esconde bd/lh/rh (os braços somem fora da piscina).
+     * - 2011-10-05 (1º pós-shuffle): +groupName entre groupStatus e poolFigure.
      * - 2011-10-17: xp morre (extinto entre os builds 10-05 e 10-17).
      * - 2014-01-30: +isModerator (Boolean) — o AS3 chama de isModerator; escrever
      *   hasBuildersClub ali era valor trocado.
@@ -89,19 +91,14 @@ class RoomUser(
 
             val group = habboSession.userStats.favoriteGroup
 
-            if (group == null) {
-                writeInt(-1)
-                writeInt(0)
-                writeUTF("")
-            } else {
-                writeInt(group.groupData.id)
-                writeInt(0)
-                writeUTF(group.groupData.name)
-            }
+            writeInt(group?.groupData?.id ?: -1)
+            writeInt(0) // groupStatus
 
             if (isVersionAtLeast(2011, 10, 5)) {
-                writeUTF("") // String nascida no primeiro build pós-shuffle
+                writeUTF(group?.groupData?.name ?: "") // groupName — antes de 2011-10-05 não existe
             }
+
+            writeUTF("") // poolFigure: vazia fora da piscina (senão o client veste o corpo de natação)
 
             if (isVersionAtLeast(2010, 12, 3)) {
                 writeInt(habboSession.userStats.achievementScore)
