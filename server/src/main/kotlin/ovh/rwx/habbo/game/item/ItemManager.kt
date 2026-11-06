@@ -30,6 +30,7 @@ import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
 import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.stuff.LegacyStuffData
 import ovh.rwx.habbo.game.item.stuff.LimitedStuffData
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.item.wired.WiredDefaultDataFactory
@@ -235,13 +236,20 @@ class ItemManager {
         inventory: Boolean = false,
     ) {
         if (habboResponse.outgoingR63A != null || !habboResponse.isVersionAtLeast(2012, 1, 13)) {
-            if (!inventory) {
-                habboResponse.writeInt(0)
-            }
             val legacy = getFurnitureLogic(furnishing)
                 .parseStuffData(extraData, furnishing, limitedItemData, magicRemove)
                 .legacyValue
-            habboResponse.writeUTF(legacy)
+
+            if (habboResponse.isVersionAtLeast(2011, 9, 8)) {
+                // A partir de RELEASE63-35846 (08/09/2011) o cliente lê um StuffData tipado: o "extra" (só no objeto
+                // do quarto; no cliente é o id da música de discos de jukebox, 0 para o resto), o tipo (0 = legado:
+                // o dado é só uma string) e a string. É o LegacyStuffData que o WIN63 já usa.
+                LegacyStuffData(legacy).write(habboResponse, inventory)
+            } else {
+                // Até 02/09/2011: o "extra" (só no quarto) e a string, sem tipo
+                if (!inventory) habboResponse.writeInt(0)
+                habboResponse.writeUTF(legacy)
+            }
             return
         }
 
