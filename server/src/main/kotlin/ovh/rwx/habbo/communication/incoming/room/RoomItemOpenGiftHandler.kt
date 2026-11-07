@@ -66,7 +66,7 @@ class RoomItemOpenGiftHandler {
 
         // Deleta o registro do presente do banco
         ItemDao.deleteItems(listOf(giftRoomItem.id))
-        ItemDao.deleteGiftData(giftData.id)
+        ItemDao.deleteGiftData(giftData.id, giftRoomItem.id)
 
         var openedRoomItemId = 0
 

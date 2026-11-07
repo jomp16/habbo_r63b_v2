@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
@@ -30,16 +31,13 @@ import ovh.rwx.habbo.game.room.RoomType
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomForwardResponse {
     @Response(Outgoing.ROOM_FORWARD)
+    @ResponseR63A(OutgoingR63A.ROOM_FORWARD)
     fun response(habboResponse: HabboResponse, room: Room) {
         habboResponse.apply {
-            writeInt(room.roomData.id)
-        }
-    }
+            if (isVersionBefore(2014, 6, 12)) {
+                writeBoolean(room.roomData.roomType == RoomType.PUBLIC)
+            }
 
-    @ResponseR63A(OutgoingR63A.ROOM_FORWARD)
-    fun responseR63A(habboResponse: HabboResponse, room: Room) {
-        habboResponse.apply {
-            writeBoolean(room.roomData.roomType == RoomType.PUBLIC)
             writeInt(room.roomData.id)
         }
     }

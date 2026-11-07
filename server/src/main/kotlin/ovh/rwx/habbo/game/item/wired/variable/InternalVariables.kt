@@ -500,6 +500,7 @@ enum class InternalVariableDefinition(
         canWriteValue = canWriteValue,
         canInterceptChanges = true,
         isInvisible = false,
+        requiresExecutionContext = variableTarget == WiredVariableTarget.CONTEXT,
         canReadCreationTime = false,
         canReadLastUpdateTime = false,
         textConnectors = textConnectors

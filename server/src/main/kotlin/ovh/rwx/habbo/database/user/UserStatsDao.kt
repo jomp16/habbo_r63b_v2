@@ -24,6 +24,32 @@ import java.time.LocalDateTime
 import ovh.rwx.habbo.database.db
 
 object UserStatsDao {
+    private const val LAST_ONLINE_TTL_MS = 120_000L
+    private val lastOnlineCache = java.util.concurrent.ConcurrentHashMap<Int, Pair<LocalDateTime, Long>>()
+
+    /**
+     * Último acesso de um usuário (exibido para amigos offline no messenger). Usa o cache pré-carregado por
+     * [prefetchLastOnline] (TTL curto) e só cai no banco quando não há entrada válida.
+     */
+    fun getLastOnline(userId: Int): LocalDateTime {
+        val cached = lastOnlineCache[userId]
+        if (cached != null && System.currentTimeMillis() - cached.second < LAST_ONLINE_TTL_MS) return cached.first
+        return getUserStats(userId).lastOnline
+    }
+
+    /** Carrega em UMA query o último acesso de vários usuários, evitando uma ida ao banco por amigo. */
+    fun prefetchLastOnline(userIds: Collection<Int>) {
+        val ids = userIds.filter { it != UserInformationDao.serverConsoleUserInformation.id }.distinct()
+        if (ids.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        db {
+            query<UserLastOnlineDto>(
+                "SELECT `user_id`, `last_online` FROM `users_stats` WHERE `user_id` IN (${ids.joinToString(",")})"
+            )
+        }.forEach { lastOnlineCache[it.userId] = it.lastOnline to now }
+    }
+
     private val serverConsoleUserStats: UserStats = UserStats(UserInformationDao.serverConsoleUserInformation.id,
             LocalDateTime.now(),
             LocalDateTime.now(),
@@ -127,3 +153,7 @@ data class UserStatsDto(
     )
 }
 
+data class UserLastOnlineDto(
+    val userId: Int,
+    val lastOnline: LocalDateTime
+)

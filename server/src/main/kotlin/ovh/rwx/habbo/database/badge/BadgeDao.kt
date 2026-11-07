@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.badge.Badge
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.database.db
 import org.slf4j.LoggerFactory
 
@@ -48,7 +49,7 @@ object BadgeDao {
     }
 
     fun removeBadge(userId: Int, id: Int, code: String) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.user(userId)) {
             db {
                 update(javaClass.classLoader.getResource("sql/badges/delete_badge.sql").readText(),
                         mapOf(
@@ -65,7 +66,7 @@ object BadgeDao {
         val id = badgeSequence.nextId()
         val badge = Badge(id, code, slot)
         HabboServer.habboGame.badgeManager.addBadge(userId, badge)
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.user(userId)) {
             db {
                 update(
                     "INSERT INTO `users_badges` (`id`, `user_id`, `code`, `slot`) VALUES (:id, :user_id, :code, :slot)",

@@ -45,6 +45,8 @@ abstract class RoomEntity(
     var bodyRotation: Int
 ) : IHabboResponseSerialize {
 
+    private val slowTickLog = org.slf4j.LoggerFactory.getLogger("ovh.rwx.habbo.room.slowtick")
+
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
     var pendingJoin: Boolean = true
@@ -134,16 +136,25 @@ abstract class RoomEntity(
     }
 
     fun processTick() {
-        processExpiredStatuses()
-        processPendingTeleport()
-        commitPendingMovementStep()
-        processTimers()
-        processEntityTimers()
+        timedSection("processExpiredStatuses") { processExpiredStatuses() }
+        timedSection("processPendingTeleport") { processPendingTeleport() }
+        timedSection("commitPendingMovementStep") { commitPendingMovementStep() }
+        timedSection("processTimers") { processTimers() }
+        timedSection("processEntityTimers") { processEntityTimers() }
 
         if (walking) {
-            processWalking()
+            timedSection("processWalking") { processWalking() }
         } else {
-            handleIdleCounter()
+            timedSection("handleIdleCounter") { handleIdleCounter() }
+        }
+    }
+
+    private inline fun timedSection(label: String, block: () -> Unit) {
+        val start = System.nanoTime()
+        block()
+        val elapsed = System.nanoTime() - start
+        if (elapsed > 5_000_000L && slowTickLog.isWarnEnabled) {
+            slowTickLog.warn("[slow-section] room={} entity#{} {} took {}ms", room.roomData.id, virtualID, label, "%.2f".format(elapsed / 1_000_000.0))
         }
     }
 

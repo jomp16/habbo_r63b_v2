@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -44,7 +45,7 @@ class RoomFloorItemPlacedResponse {
     fun response(habboResponse: HabboResponse, data: RoomItemPlacedData) {
         habboResponse.apply {
             serialize(data.roomItem)
-            if (outgoingR63A == null) {
+            if (isVersionAtLeast(2011, 9, 21)) {
                 writeUTF(data.userName)
             }
         }

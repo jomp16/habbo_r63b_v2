@@ -31,7 +31,6 @@ import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -50,8 +49,18 @@ object WriteBehindManager {
     // Unified dirty set — entities self-persist via AbstractDirtyEntity.flush()
     private val dirtyEntities = ConcurrentHashMap.newKeySet<AbstractDirtyEntity>()
 
-    // Unified queue for asynchronous deferred writes
-    private val pendingWrites = ConcurrentLinkedQueue<() -> Unit>()
+    // How many writes hit the database at once. Kept well below the Hikari pool size so handlers never starve.
+    private const val WRITE_PARALLELISM = 4
+
+    // A flush cycle slower than this means writes are being produced faster than they are persisted
+    private const val SLOW_CYCLE_MS = 1000L
+    private val slowLog: Logger = LoggerFactory.getLogger("ovh.rwx.habbo.room.slowtick")
+
+    // Deferred writes. Each declares the rows it touches (WriteKey): writes sharing a row keep their order,
+    // writes on disjoint rows are persisted in parallel. See KeyedWriteScheduler.
+    private val writes = KeyedWriteScheduler(WRITE_PARALLELISM) { e ->
+        log.error("Write-Behind error executing deferred write action", e)
+    }
 
     // Coroutine worker state
     private var workerJob: Job? = null
@@ -89,8 +98,26 @@ object WriteBehindManager {
         dirtyEntities.add(entity)
     }
 
+    /**
+     * Queues a write without declaring the rows it touches: it joins the default lane, which keeps strict global FIFO
+     * among such writes and runs one at a time. Prefer the overloads that declare keys; use this only when unsure.
+     * Order against keyed writes is NOT guaranteed.
+     */
     fun queue(action: () -> Unit) {
-        pendingWrites.add(action)
+        writes.submit(listOf(WriteKey.DEFAULT_LANE), action)
+    }
+
+    /**
+     * Queues a write that touches the rows identified by [keys]. It runs after every earlier write that shares any
+     * of them, and in parallel with the ones that share none. An empty [keys] means the write is independent (a pure
+     * append nobody reads back or modifies later) and can run at any time.
+     */
+    fun queue(keys: Collection<WriteKey>, action: () -> Unit) {
+        writes.submit(keys, action)
+    }
+
+    fun queue(vararg keys: WriteKey, action: () -> Unit) {
+        writes.submit(keys.asList(), action)
     }
 
     // --- Targeted Flush Methods ---
@@ -151,27 +178,39 @@ object WriteBehindManager {
     // --- Periodic & Global Flush ---
 
     private fun flushDirtyEntities() {
-        if (log.isDebugEnabled) {
-            val d = dirtyEntities.size
-            val p = pendingWrites.size
-            if (d > 0 || p > 0) log.debug("Write-Behind flush — dirty: {}, pending writes: {}", d, p)
+        val dirty = dirtyEntities.size
+        val pending = writes.pendingCount()
+        if (log.isDebugEnabled && (dirty > 0 || pending > 0)) {
+            log.debug("Write-Behind flush — dirty: {}, pending writes: {}", dirty, pending)
         }
-        flushPendingWrites()
+
+        val start = System.nanoTime()
+        // Stage 1 must finish before stage 2: a queued insert of a row has to land before the dirty-set update of it
+        writes.drain()
         flushDirtySet()
-    }
 
-    private fun flushPendingWrites() {
-        if (pendingWrites.isEmpty()) return
-        while (true) {
-            val action = pendingWrites.poll() ?: break
-            try {
-                action()
-            } catch (e: Exception) {
-                log.error("Write-Behind error executing deferred write action", e)
-            }
+        val elapsedMs = (System.nanoTime() - start) / 1_000_000
+        if (elapsedMs > SLOW_CYCLE_MS && slowLog.isWarnEnabled) {
+            slowLog.warn(
+                "[write-behind] flush cycle took {}ms (before it: dirty={}, queued writes={})",
+                elapsedMs, dirty, pending
+            )
         }
     }
 
+    /** Runs [tasks] at most [WRITE_PARALLELISM] at a time and returns when all are done. One failing task never stops the rest. */
+    private fun runParallel(tasks: List<() -> Unit>) {
+        if (tasks.isEmpty()) return
+        if (tasks.size == 1) {
+            tasks[0]()
+            return
+        }
+        runBlocking(Dispatchers.IO.limitedParallelism(WRITE_PARALLELISM)) {
+            tasks.map { task -> async { task() } }.awaitAll()
+        }
+    }
+
+    /** Stage 2: every dirty entity is an independent row, so entities (and each room's item batch) persist in parallel. */
     private fun flushDirtySet() {
         if (dirtyEntities.isEmpty()) return
         val snapshot = ArrayList<AbstractDirtyEntity>()
@@ -183,17 +222,21 @@ object WriteBehindManager {
 
         // RoomItems in the same room are batched for efficiency; all other entities self-flush polymorphically
         val (items, others) = snapshot.partition { it is RoomItem }
+        val tasks = ArrayList<() -> Unit>()
+
         others.forEach { entity ->
-            try {
-                entity.flush()
-            } catch (e: Exception) {
-                log.error("Write-Behind error flushing dirty entity ${entity.javaClass.simpleName}", e)
+            tasks += {
+                try {
+                    entity.flush()
+                } catch (e: Exception) {
+                    log.error("Write-Behind error flushing dirty entity ${entity.javaClass.simpleName}", e)
+                }
             }
         }
 
-        if (items.isNotEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            (items as List<RoomItem>).groupBy { it.roomId }.forEach { (roomId, roomItems) ->
+        @Suppress("UNCHECKED_CAST")
+        (items as List<RoomItem>).groupBy { it.roomId }.forEach { (roomId, roomItems) ->
+            tasks += {
                 try {
                     if (roomId > 0) RoomDao.saveItems(roomId, roomItems)
                     val wireds = roomItems.filter {
@@ -206,12 +249,14 @@ object WriteBehindManager {
                 }
             }
         }
+
+        runParallel(tasks)
     }
 
     fun flushAllSync() {
         log.info("Flushing all pending Write-Behind entities synchronously...")
         try {
-            while (pendingWrites.isNotEmpty() || dirtyEntities.isNotEmpty()) {
+            while (!writes.isEmpty() || dirtyEntities.isNotEmpty()) {
                 flushDirtyEntities()
             }
             log.info("Write-Behind synchronous flush complete.")

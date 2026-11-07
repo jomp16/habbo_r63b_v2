@@ -23,22 +23,24 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.landing.LandingDao
 
-import java.util.concurrent.CopyOnWriteArrayList
-
 class LandingManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val landingPromos: MutableList<LandingPromo> = CopyOnWriteArrayList()
+    @Volatile
+    var landingPromos: List<LandingPromo> = emptyList()
+        private set
+    @Volatile
     var landingReward: LandingReward? = null
         private set
 
     fun load() {
         log.info("Loading landing...")
 
-        landingPromos.clear()
-        landingReward = null
+        // Lê antes de trocar; promos como snapshot imutável atômico (sem clear/refill)
+        val promos = LandingDao.getLandingPromos().toList()
+        val reward = LandingDao.getLandingReward()
 
-        landingPromos += LandingDao.getLandingPromos()
-        landingReward = LandingDao.getLandingReward()
+        landingPromos = promos
+        landingReward = reward
 
         log.info("Loaded {} landing promos!", landingPromos.size)
         log.info("Loaded landing reward, data=$landingReward")

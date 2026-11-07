@@ -80,41 +80,41 @@ class NavigatorOfficialRoomsResponse {
     @ResponseR63A(OutgoingR63A.NAVIGATOR_OFFICIAL_ROOMS_RESULT)
     fun response(habboResponse: HabboResponse, data: NavigatorOfficialRoomsData) {
         habboResponse.apply {
-            writeInt(data.entries.size)
-            data.entries.forEach { writeEntry(it) }
-
             if (isVersionBefore(2009, 6, 30)) {
-                // RELEASE34: tail bool/int/bool + promo loop {int,int} + tag loop {String,int}
+                // RELEASE34 (2009-06-16): nao e a arvore oficial, e o payload plano de busca de quartos:
+                // int N x guestRoom, bool, int, bool, int M x (int,int), int P x (str,int). Vazio e valido.
+                writeInt(0)
                 writeBoolean(false)
                 writeInt(0)
                 writeBoolean(false)
-                writeInt(0) // 0 promo entries
-                writeInt(0) // 0 promoted tags
+                writeInt(0)
+                writeInt(0)
                 return@apply
             }
 
             if (isVersionBefore(2010, 1, 14)) {
+                // R35..R40: entries sem index; o unico int de contagem e o userCount (tooltip "usercounttooltip.users")
                 if (isVersionBefore(2009, 8, 21)) {
-                    // 2009-06-30: bool isGuestRoom; true → listas, false → 1 int
-                    writeBoolean(true)
+                    // R35-R36: bool lider (false = arvore oficial; true = fluxo plano de busca, nunca usado aqui)
                     writeBoolean(false)
-                    writeInt(0)
-                    writeBoolean(false)
-                    writeInt(0)
-                    writeInt(0)
                 } else {
-                    // 2009-08-21: 1 int extra
+                    // R37-R40: lista de nos (int id, str nome) antes das entries; vazia
                     writeInt(0)
                 }
+                writeInt(data.entries.size)
+                data.entries.forEach { writeLegacyEntry(it) }
                 return@apply
             }
+
+            writeInt(data.entries.size)
+            data.entries.forEach { writeEntry(it) }
 
             if (isVersionAtLeast(2011, 6, 21)) {
                 writeInt(min(data.promoAds.size, 1))
                 data.promoAds.firstOrNull()?.let { writeEntry(it) }
             }
 
-            if (isVersionAtLeast(2013, 5, 22)) {
+            if (isVersionAtLeast(2012, 3, 20)) {
                 writeInt(data.promotedRooms.size)
                 data.promotedRooms.forEach {
                     writeUTF(it.code)
@@ -126,6 +126,42 @@ class NavigatorOfficialRoomsResponse {
                     it.extraRooms.forEach { room -> serialize(room) }
                 }
             }
+        }
+    }
+
+    /**
+     * Entry pre-2010-01-14 (R35..R42, verificado no AS3 de RELEASE35-18827 / RELEASE37-20416):
+     * str name, str desc, int (R35-R36: largura da celula 1..4, 4 = linha inteira; R37+: showDetails==1),
+     * str picText, str picLink, int userCount, int type e o payload do tipo.
+     */
+    private fun HabboResponse.writeLegacyEntry(entry: OfficialRoomEntry) {
+        val isR37 = isVersionAtLeast(2009, 8, 21)
+        writeUTF(entry.name)
+        writeUTF(entry.description)
+        writeInt(if (isR37) (if (entry.showDetails) 1 else 0) else 4)
+        writeUTF(entry.picText)
+        writeUTF(entry.picLink)
+        writeInt(entry.userCount)
+        writeInt(entry.type.id)
+        when (entry.type) {
+            OfficialRoomEntryType.TAG -> writeUTF(entry.tag ?: "")
+            OfficialRoomEntryType.GUEST_ROOM -> {
+                // sem quarto o parser leria um guestRoom inexistente: o chamador deve fornecer o Room
+                entry.guestRoom?.let { serialize(it) }
+            }
+            OfficialRoomEntryType.PUBLIC_ROOM -> {
+                val publicRoom = entry.publicRoom ?: OfficialRoomPublicData()
+                writeUTF(publicRoom.name)
+                writeInt(publicRoom.enterBytes)
+                writeInt(publicRoom.owner)
+                writeUTF(publicRoom.imageNames.joinToString(","))
+                // 5o campo (usersNow): R36 de 2009-08-07 (RELEASE36-20012); 6o (maxUsers): R38 de 2009-09-21 (RELEASE38-21541)
+                if (isVersionAtLeast(2009, 8, 7)) writeInt(publicRoom.usersNow)
+                if (isVersionAtLeast(2009, 9, 21)) writeInt(publicRoom.maxUsers)
+            }
+            // type 4 (pasta) so existe a partir de R37 e le um int; types fora de 1..4 nao tem payload
+            OfficialRoomEntryType.FOLDER -> if (isR37) writeInt(0)
+            OfficialRoomEntryType.NONE -> Unit
         }
     }
 

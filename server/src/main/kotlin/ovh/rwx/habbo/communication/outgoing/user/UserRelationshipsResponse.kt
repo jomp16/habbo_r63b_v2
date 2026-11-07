@@ -32,10 +32,13 @@ class UserRelationshipsResponse {
             writeInt(userId)
             writeInt(relationships.size)
 
+            // contagem por tipo calculada uma vez (antes era um filter completo por amigo: O(n²))
+            val countByRelationship = relationships.groupingBy { it.relationship }.eachCount()
+
             relationships.forEach { messengerFriend ->
                 messengerFriend.userInformation?.let { userInformation ->
                     writeInt(messengerFriend.relationship.type)
-                    writeInt(relationships.filter { it.relationship == messengerFriend.relationship }.size)
+                    writeInt(countByRelationship[messengerFriend.relationship] ?: 0)
                     writeInt(messengerFriend.userId)
                     writeUTF(userInformation.username)
                     writeUTF(userInformation.figure)

@@ -41,13 +41,14 @@ class InventoryPetsResponse {
         }
     }
 
+    @Response(Outgoing.INVENTORY_PETS) // override_method 'responseR63A' dos clients pós-shuffle com o formato antigo (2011-10)
     @ResponseR63A(OutgoingR63A.INVENTORY_PETS)
     fun responseR63A(habboResponse: HabboResponse, pets: List<PetData>) {
         habboResponse.apply {
             writeInt(pets.size)
 
             pets.forEach { pet ->
-                serialize(pet)
+                serializeR63A(pet)
             }
         }
     }

@@ -21,6 +21,7 @@ package ovh.rwx.habbo.database.user
 
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object UserUniqueIdDao {
     @Suppress("unused")
@@ -31,7 +32,7 @@ object UserUniqueIdDao {
         )
     }
 
-    fun addUniqueIdForUser(userId: Int, uniqueID: String, osInformation: String) = WriteBehindManager.queue {
+    fun addUniqueIdForUser(userId: Int, uniqueID: String, osInformation: String) = WriteBehindManager.queue(WriteKey.user(userId)) {
         db {
             update("sql/users/unique_ids/insert_unique_ids.sql",
                 mapOf(

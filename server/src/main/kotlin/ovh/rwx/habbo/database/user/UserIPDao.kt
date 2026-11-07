@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.database.user
 
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.util.IpInfo
 import ovh.rwx.habbo.database.db
 
@@ -29,7 +30,7 @@ object UserIPDao {
         query<String>("sql/users/ips/select_ips.sql", mapOf("user_id" to userId))
     }
 
-    fun addIPForUser(userId: Int, isInternalIP: Boolean, ipInfo: IpInfo) = WriteBehindManager.queue {
+    fun addIPForUser(userId: Int, isInternalIP: Boolean, ipInfo: IpInfo) = WriteBehindManager.queue(WriteKey.user(userId)) {
         db {
             update("sql/users/ips/insert_ip.sql",
                 mapOf(

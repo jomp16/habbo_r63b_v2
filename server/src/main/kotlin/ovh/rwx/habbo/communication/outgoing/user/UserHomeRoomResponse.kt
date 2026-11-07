@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.user
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -43,7 +44,10 @@ class UserHomeRoomResponse {
     fun response(habboResponse: HabboResponse, data: UserHomeRoomData) {
         habboResponse.apply {
             writeInt(data.roomId)
-            writeInt(if (data.autoJoinRoom) data.roomId else 0) // auto join room
+
+            if (isVersionAtLeast(2011, 8, 19)) {
+                writeInt(if (data.autoJoinRoom) data.roomId else 0) // auto join room
+            }
         }
     }
 }

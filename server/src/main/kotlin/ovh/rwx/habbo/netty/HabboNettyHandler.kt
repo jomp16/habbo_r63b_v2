@@ -33,6 +33,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.metrics.ServerMetrics
 
 @ChannelHandler.Sharable
 class HabboNettyHandler : ChannelInboundHandlerAdapter() {
@@ -61,6 +62,7 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+        if (msg is HabboRequest) ServerMetrics.recordPacketIn()
         HabboServer.applicationScope.launch {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()

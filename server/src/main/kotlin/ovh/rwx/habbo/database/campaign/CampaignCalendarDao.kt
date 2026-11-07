@@ -21,6 +21,7 @@ package ovh.rwx.habbo.database.campaign
 
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.campaign.CampaignCalendar
 import ovh.rwx.habbo.game.campaign.CampaignCalendarReward
 
@@ -58,7 +59,7 @@ object CampaignCalendarDao {
     }
 
     fun insertOpen(userId: Int, campaignName: String, doorIndex: Int) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.user(userId)) {
             db {
                 update(
                     """

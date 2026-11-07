@@ -24,42 +24,12 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.game.item.room.RoomItem
-import ovh.rwx.habbo.game.room.Room
-
-/**
- * Payload estruturado para itens de parede do quarto (ROOM_WALL_ITEMS).
- *
- * @param ownerId ID do proprietário do quarto/grupo.
- * @param ownerName Nome do proprietário do quarto/grupo.
- * @param wallItems Coleção de itens de parede presentes no quarto.
- */
-data class RoomWallItemsData(
-    val ownerId: Int,
-    val ownerName: String,
-    val wallItems: Collection<RoomItem>,
-) {
-    constructor(room: Room, wallItems: Collection<RoomItem>) : this(
-        ownerId = room.roomData.ownerId,
-        ownerName = room.roomData.ownerName,
-        wallItems = wallItems,
-    )
-}
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomWallItemsResponse {
     @Response(Outgoing.ROOM_WALL_ITEMS)
     @ResponseR63A(OutgoingR63A.ROOM_WALL_ITEMS)
-    fun response(habboResponse: HabboResponse, data: RoomWallItemsData) {
-        habboResponse.apply {
-            if (outgoingR63A == null) {
-                // todo: group
-                writeInt(1)
-                writeInt(data.ownerId)
-                writeUTF(data.ownerName)
-            }
-            writeInt(data.wallItems.size) // size
-            data.wallItems.forEach { serialize(it) }
-        }
+    fun response(habboResponse: HabboResponse, data: RoomItemsData) {
+        habboResponse.writeRoomItems(data)
     }
 }

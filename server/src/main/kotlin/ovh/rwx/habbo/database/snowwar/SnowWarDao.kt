@@ -27,6 +27,7 @@ import ovh.rwx.habbo.game.snowwar.SnowWarLeaderboardUserEntry
 import ovh.rwx.habbo.game.snowwar.SnowWarPlayerStats
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object SnowWarDao {
     fun getStats(userId: Int): SnowWarPlayerStats? = db {
@@ -36,7 +37,7 @@ object SnowWarDao {
         )
     }
 
-    fun saveStats(stats: SnowWarPlayerStats) = WriteBehindManager.queue {
+    fun saveStats(stats: SnowWarPlayerStats) = WriteBehindManager.queue(WriteKey.user(stats.userId)) {
         db {
             update(
                 javaClass.classLoader.getResource("sql/snowwar/insert_user_snowwar_stats.sql")!!.readText(),

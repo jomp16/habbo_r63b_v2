@@ -80,12 +80,15 @@ class CameraManager {
             } catch (e: Exception) {
                 log.error("Error during camera directory maintenance", e)
             }
-        }, 0, 5, TimeUnit.SECONDS)
+        }, 1, 1, TimeUnit.MINUTES)
 
         log.info("Done!")
     }
 
     private fun cleanExpiredPreviews() {
+        val cutoff = LocalDateTime.now().minusMinutes(HabboServer.habboConfig.cameraConfig.previewTimeoutMinutes)
+        currentPictureForUsers.entries.removeIf { it.value.first.isBefore(cutoff) }
+
         Files.walk(cameraPreviewDirectory).use { paths ->
             paths.filter { path -> Files.isRegularFile(path) }.forEach { path ->
                 val basicFileAttributes = Files.readAttributes(path, BasicFileAttributes::class.java)

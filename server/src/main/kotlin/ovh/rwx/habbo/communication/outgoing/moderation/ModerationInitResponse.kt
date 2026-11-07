@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.moderation
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBetween
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -46,6 +47,11 @@ class ModerationInitResponse {
             writeBoolean(true) // ?
             // todo: room presets
             writeInt(0)
+
+            // Action categories count (Sulake experiment active between 2012-01-20 and 2012-07-10)
+            if (isVersionBetween(2012, 1, 20, 2012, 7, 10)) {
+                writeInt(0)
+            }
         }
     }
 
@@ -68,6 +74,11 @@ class ModerationInitResponse {
             writeUTF("") // ?
             // todo: room presets
             writeInt(0)
+
+            // Action categories count (Sulake experiment active between 2012-01-20 and 2012-07-10)
+            if (isVersionBetween(2012, 1, 20, 2012, 7, 10)) {
+                writeInt(0)
+            }
         }
     }
 }

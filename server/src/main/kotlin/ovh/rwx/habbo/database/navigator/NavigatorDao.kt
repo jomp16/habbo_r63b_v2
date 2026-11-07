@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.navigator.NavigatorEventCategory
 import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object NavigatorDao {
     fun getNavigatorRoomCategories(): List<NavigatorRoomCategory> = db {
@@ -50,7 +51,8 @@ object NavigatorDao {
         }
     }
 
-    fun removeFavoriteRoom(id: Int) = WriteBehindManager.queue {
+    // [id] é a linha de users_favorites (já gravada: o insert é síncrono): a chave é a própria linha
+    fun removeFavoriteRoom(id: Int) = WriteBehindManager.queue(WriteKey("favorite", id.toLong())) {
         db {
             update(javaClass.classLoader.getResource("sql/navigator/favorite/delete_favorite_room.sql").readText(),
                     mapOf(

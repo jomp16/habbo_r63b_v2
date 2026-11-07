@@ -38,6 +38,19 @@ class HiLoSequence(
     private val currentLo = AtomicInteger(blockSize) // Start exhausted to trigger initial fetch
     private val lock = Any()
 
+    /**
+     * Reserva o primeiro bloco no boot, evitando uma transação síncrona (round-trip ao banco)
+     * na primeira chamada a [nextId] — normalmente dentro da thread de um quarto/event loop.
+     */
+    fun warmUp() {
+        synchronized(lock) {
+            if (currentLo.get() >= blockSize) {
+                currentHi = fetchNextHi()
+                currentLo.set(0)
+            }
+        }
+    }
+
     fun nextId(): Int {
         while (true) {
             val lo = currentLo.getAndIncrement()

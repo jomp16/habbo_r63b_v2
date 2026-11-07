@@ -23,6 +23,7 @@ import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object WardrobeDao {
     val wardrobeSequence = HiLoSequence("users_wardrobe", tableName = "users_wardrobe", blockSize = 100)
@@ -34,7 +35,8 @@ object WardrobeDao {
     }
 
     fun updateWardrobe(id: Int, slotId: Int, figure: String, gender: String): Wardrobe {
-        WriteBehindManager.queue {
+        // mesma chave do createWardrobe: o UPDATE de uma linha recém-criada roda depois do INSERT dela
+        WriteBehindManager.queue(WriteKey("wardrobe", id.toLong())) {
             db {
                 update("UPDATE `users_wardrobe` SET `figure` = :figure, `gender` = :gender, `slot_id` = :slot_id WHERE `id` = :id",
                         mapOf(
@@ -52,7 +54,7 @@ object WardrobeDao {
 
     fun createWardrobe(userId: Int, slotId: Int, figure: String, gender: String): Wardrobe {
         val id = wardrobeSequence.nextId()
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey("wardrobe", id.toLong())) {
             db {
                 update("INSERT INTO `users_wardrobe` (`id`, `user_id`, `slot_id`, `figure`, `gender`) VALUES (:id, :user_id, :slot_id, :figure, :gender)",
                         mapOf(

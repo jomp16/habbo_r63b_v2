@@ -20,11 +20,12 @@
 package ovh.rwx.habbo.game.room
 
 import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.metrics.ServerMetrics
 
 /**
- * Telemetria de tick da sala: ring buffers de latência de processamento e de intervalo
- * de major ticks, com resumo p95 a cada ~10s no logger `ovh.rwx.habbo.stress`.
- * Interface de um método; no-op quando o stress test está desligado.
+ * Telemetria de tick da sala. Sempre alimenta o [ServerMetrics] (processamento por cadência, período real do major
+ * tick e atraso de agendamento); com o stress test ligado, também grava um resumo p95 a cada ~10s no logger
+ * `ovh.rwx.habbo.stress`.
  */
 class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
     private val stressLog = LoggerFactory.getLogger("ovh.rwx.habbo.stress")
@@ -38,7 +39,29 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
     private var stressLogCounter = 0
     private var lastMajorTickNano = 0L
 
-    fun onTick(elapsedMs: Long, isMajorTick: Boolean) {
+    /**
+     * @param startNano instante em que o tick começou (System.nanoTime)
+     * @param elapsedNanos tempo de processamento do tick
+     * @param isMajorTick true no tick de 500 ms (física/animação), false no de 50 ms (só gatilhos periódicos do wired)
+     */
+    fun onTick(startNano: Long, elapsedNanos: Long, isMajorTick: Boolean) {
+        val elapsedMs = elapsedNanos / 1_000_000
+
+        // métricas do servidor sempre recebem o tick; o log de stress só roda quando habilitado
+        ServerMetrics.recordRoomTick(roomId, elapsedNanos, isMajorTick)
+
+        // período real entre major ticks da MESMA sala (esperado 500 ms): enxerga também o atraso de agendamento,
+        // que o tempo de processamento não mostra. Início a início, então inclui tudo que atrasou o ciclo.
+        var majorIntervalMs = -1L
+        if (isMajorTick) {
+            if (lastMajorTickNano > 0) {
+                val intervalNanos = startNano - lastMajorTickNano
+                ServerMetrics.recordMajorInterval(intervalNanos)
+                majorIntervalMs = intervalNanos / 1_000_000
+            }
+            lastMajorTickNano = startNano
+        }
+
         if (!enabled) return
 
         tickProcessingBuffer[stressTickIdx] = elapsedMs
@@ -46,15 +69,10 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
         stressTickCount++
         stressLogCounter++
 
-        if (isMajorTick) {
-            val nowNano = System.nanoTime()
-            if (lastMajorTickNano > 0) {
-                val interval = (nowNano - lastMajorTickNano) / 1_000_000
-                majorTickIntervalBuffer[stressMajorIdx] = interval
-                stressMajorIdx = (stressMajorIdx + 1) % majorTickIntervalBuffer.size
-                stressMajorCount++
-            }
-            lastMajorTickNano = nowNano
+        if (majorIntervalMs >= 0) {
+            majorTickIntervalBuffer[stressMajorIdx] = majorIntervalMs
+            stressMajorIdx = (stressMajorIdx + 1) % majorTickIntervalBuffer.size
+            stressMajorCount++
         }
 
         // Log rolling summary every ~10 seconds (200 ticks * 50ms)
@@ -78,6 +96,14 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
                 roomId, procCount, procInfo, majInfo
             )
         }
+    }
+
+    /**
+     * Atraso de agendamento: quanto o loop acordou depois do tempo pedido ao `delay`. Tick lento não explica isso
+     * (o delay só começa depois do tick): são pool de threads ocupado, pausa de GC ou safepoint.
+     */
+    fun onSchedulingLag(lagNanos: Long) {
+        ServerMetrics.recordSchedulingLag(lagNanos)
     }
 
     private fun computeStats(buffer: LongArray, count: Int): Triple<Double, Long, Long> {

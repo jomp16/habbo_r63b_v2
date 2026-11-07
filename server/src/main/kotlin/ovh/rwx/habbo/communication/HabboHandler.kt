@@ -26,6 +26,7 @@ import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.metrics.ServerMetrics
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
@@ -39,95 +40,148 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.exitProcess
+
+/** Falha de validação ao recarregar os handlers: o estado atual é mantido. */
+class HandlerReloadException(message: String) : RuntimeException(message)
 
 class HabboHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+    private val slowLog: Logger = LoggerFactory.getLogger("ovh.rwx.habbo.room.slowtick")
 
-    private val messageHandlers: MutableMap<Incoming, MutableMap<String, HabboMethodInfo>> = mutableMapOf()
-    private val messageResponses: MutableMap<Outgoing, MutableMap<String, RegisteredResponse>> = mutableMapOf()
-    private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
-    private var incomingHeaders: List<ReleaseHeaderInfo> = emptyList()
-    private var outgoingHeaders: List<ReleaseHeaderInfo> = emptyList()
-
-    // R63A
-    private val messageHandlersR63A: MutableMap<IncomingR63A, HabboMethodInfo> = mutableMapOf()
-    private val messageResponsesR63A: MutableMap<OutgoingR63A, RegisteredResponse> = mutableMapOf()
-    private var incomingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
-    private var outgoingHeadersR63A: List<ReleaseHeaderInfo> = emptyList()
-
-    val releases: MutableSet<String> by lazy { HashSet(ReleaseDao.getReleases()) }
-    val incomingNames: MutableMap<String, List<Pair<Int, Incoming>>> = mutableMapOf()
-    val outgoingNames: MutableMap<String, List<Pair<Int, Outgoing>>> = mutableMapOf()
-    val incomingNamesR63A: MutableMap<String, List<Pair<Int, IncomingR63A>>> = mutableMapOf()
-    val outgoingNamesR63A: MutableMap<String, List<Pair<Int, OutgoingR63A>>> = mutableMapOf()
-    var largestNameSize: Int = 0
-    var largestNameSizeR63A: Int = 0
-
-    init {
-        load()
+    /**
+     * Estado completo e imutável dos handlers/headers. Construído por inteiro, validado e só então
+     * publicado trocando a referência [snapshot]: as threads do netty enxergam sempre o estado antigo
+     * completo ou o novo completo, nunca um mapa limpo/parcial.
+     */
+    class Snapshot(
+        val messageHandlers: Map<Incoming, Map<String, HabboMethodInfo>>,
+        val messageResponses: Map<Outgoing, Map<String, RegisteredResponse>>,
+        val incomingHeaders: List<ReleaseHeaderInfo>,
+        val outgoingHeaders: List<ReleaseHeaderInfo>,
+        val messageHandlersR63A: Map<IncomingR63A, HabboMethodInfo>,
+        val messageResponsesR63A: Map<OutgoingR63A, RegisteredResponse>,
+        val incomingHeadersR63A: List<ReleaseHeaderInfo>,
+        val outgoingHeadersR63A: List<ReleaseHeaderInfo>,
+        val releases: Set<String>,
+        val incomingNames: Map<String, List<Pair<Int, Incoming>>>,
+        val outgoingNames: Map<String, List<Pair<Int, Outgoing>>>,
+        val incomingNamesR63A: Map<String, List<Pair<Int, IncomingR63A>>>,
+        val outgoingNamesR63A: Map<String, List<Pair<Int, OutgoingR63A>>>,
+        val largestNameSize: Int,
+        val largestNameSizeR63A: Int,
+    ) {
+        val outgoingHeadersByReleaseAndName: Map<Pair<String, String>, ReleaseHeaderInfo> =
+            outgoingHeaders.associateBy { it.release to it.name }
+        val outgoingHeadersR63AByReleaseAndName: Map<Pair<String, String>, ReleaseHeaderInfo> =
+            outgoingHeadersR63A.associateBy { it.release to it.name }
+        val incomingHeadersByReleaseAndHeader: Map<Pair<String, Int>, ReleaseHeaderInfo> =
+            incomingHeaders.associateBy { it.release to it.header }
+        val incomingHeadersR63AByReleaseAndHeader: Map<Pair<String, Int>, ReleaseHeaderInfo> =
+            incomingHeadersR63A.associateBy { it.release to it.header }
+        val incomingEnumByReleaseAndHeader: Map<Pair<String, Int>, Incoming> =
+            incomingNames.flatMap { (rel, list) -> list.map { (headerId, enumVal) -> (rel to headerId) to enumVal } }.toMap()
+        val incomingEnumR63AByReleaseAndHeader: Map<Pair<String, Int>, IncomingR63A> =
+            incomingNamesR63A.flatMap { (rel, list) -> list.map { (headerId, enumVal) -> (rel to headerId) to enumVal } }.toMap()
     }
 
+    @Volatile
+    private lateinit var snapshot: Snapshot
+
+    // Leitores externos (netty encoder/decoder, handlers) continuam lendo por estas propriedades
+    val releases: Set<String> get() = snapshot.releases
+    val incomingNames: Map<String, List<Pair<Int, Incoming>>> get() = snapshot.incomingNames
+    val outgoingNames: Map<String, List<Pair<Int, Outgoing>>> get() = snapshot.outgoingNames
+    val incomingNamesR63A: Map<String, List<Pair<Int, IncomingR63A>>> get() = snapshot.incomingNamesR63A
+    val outgoingNamesR63A: Map<String, List<Pair<Int, OutgoingR63A>>> get() = snapshot.outgoingNamesR63A
+    val largestNameSize: Int get() = snapshot.largestNameSize
+    val largestNameSizeR63A: Int get() = snapshot.largestNameSizeR63A
+
+    init {
+        // Boot: headers faltando/overrides inválidos continuam encerrando o processo
+        try {
+            load()
+        } catch (e: HandlerReloadException) {
+            log.error("{} Exiting!", e.message)
+            exitProcess(1)
+        }
+    }
+
+    /**
+     * (Re)carrega handlers e headers. Constrói tudo localmente, valida e só então publica de forma
+     * atômica. Se a validação falhar lança [HandlerReloadException] e o estado atual é mantido.
+     */
+    @Synchronized
     fun load() {
         log.info("Loading handlers...")
 
-        instances.clear()
-        messageHandlers.clear()
-        messageResponses.clear()
-        incomingNames.clear()
-        outgoingNames.clear()
-        messageHandlersR63A.clear()
-        messageResponsesR63A.clear()
-        incomingNamesR63A.clear()
-        outgoingNamesR63A.clear()
+        val candidate = buildSnapshot()
+        val errors = HandlerValidation.validate(candidate)
 
-        loadReleaseHeaders()
-        loadHeaderNames()
-        loadAnnotatedMethods()
-        validateOverrideMethods()
+        if (errors.isNotEmpty()) {
+            errors.forEach { log.error(it) }
+
+            throw HandlerReloadException("Validação dos handlers falhou, mantendo o estado atual: ${errors.joinToString("; ")}")
+        }
+
+        snapshot = candidate
+
+        log.info("Loaded {} Habbo releases. Available releases: {}", candidate.releases.size, candidate.releases.sorted().joinToString())
+        log.info("All configured override_method entries validated successfully!")
     }
 
     // ---------------------------------------------------------------- load
 
-    private fun loadReleaseHeaders() {
+    private fun buildSnapshot(): Snapshot {
         val headers = ReleaseDao.getHeaders().groupBy { it.type }
         val incoming = headers[ReleaseType.INCOMING] ?: error("Couldn't find the incoming headers!")
         val outgoing = headers[ReleaseType.OUTGOING] ?: error("Couldn't find the outgoing headers!")
 
-        incomingHeaders = incoming.filterNot { it.release == R63A_RELEASE }
-        outgoingHeaders = outgoing.filterNot { it.release == R63A_RELEASE }
-        incomingHeadersR63A = incoming.filter { it.release == R63A_RELEASE }
-        outgoingHeadersR63A = outgoing.filter { it.release == R63A_RELEASE }
-    }
+        val incomingHeaders = incoming.filterNot { it.release == R63A_RELEASE }
+        val outgoingHeaders = outgoing.filterNot { it.release == R63A_RELEASE }
+        val incomingHeadersR63A = incoming.filter { it.release == R63A_RELEASE }
+        val outgoingHeadersR63A = outgoing.filter { it.release == R63A_RELEASE }
 
-    private fun loadHeaderNames() {
-        if (incomingNames.isEmpty() && outgoingNames.isEmpty()) {
-            releases.forEach { release ->
-                incomingNames[release] = mapHeaders<Incoming>(incomingHeaders, release)
-                outgoingNames[release] = mapHeaders<Outgoing>(outgoingHeaders, release)
-            }
+        val releases: Set<String> = HashSet(ReleaseDao.getReleases())
 
-            verifyNoMissingHeaders("incoming", incomingNames, Incoming.entries - Incoming.RELEASE_CHECK)
-            verifyNoMissingHeaders("outgoing", outgoingNames, Outgoing.entries.toList())
-
-            largestNameSize = largestNameSizeOf(incomingNames.values.flatten().map { it.second }, outgoingNames.values.flatten().map { it.second })
-
-            log.info("Loaded {} Habbo releases. Available releases: {}", releases.size, releases.sorted().joinToString())
+        val incomingNames = HashMap<String, List<Pair<Int, Incoming>>>()
+        val outgoingNames = HashMap<String, List<Pair<Int, Outgoing>>>()
+        releases.forEach { release ->
+            incomingNames[release] = mapHeaders<Incoming>(incomingHeaders, release)
+            outgoingNames[release] = mapHeaders<Outgoing>(outgoingHeaders, release)
         }
 
-        if (incomingNamesR63A.isEmpty() && outgoingNamesR63A.isEmpty()) {
-            incomingNamesR63A[R63A_RELEASE] = mapHeaders<IncomingR63A>(incomingHeadersR63A, null)
-            outgoingNamesR63A[R63A_RELEASE] = mapHeaders<OutgoingR63A>(outgoingHeadersR63A, null)
+        val incomingNamesR63A = HashMap<String, List<Pair<Int, IncomingR63A>>>()
+        val outgoingNamesR63A = HashMap<String, List<Pair<Int, OutgoingR63A>>>()
+        incomingNamesR63A[R63A_RELEASE] = mapHeaders<IncomingR63A>(incomingHeadersR63A, null)
+        outgoingNamesR63A[R63A_RELEASE] = mapHeaders<OutgoingR63A>(outgoingHeadersR63A, null)
 
-            verifyNoMissingHeaders("incoming", incomingNamesR63A, IncomingR63A.entries - IncomingR63A.RELEASE_CHECK)
-            verifyNoMissingHeaders("outgoing", outgoingNamesR63A, OutgoingR63A.entries.toList())
+        val handlers = HashMap<Incoming, MutableMap<String, HabboMethodInfo>>()
+        val responses = HashMap<Outgoing, MutableMap<String, RegisteredResponse>>()
+        val handlersR63A = HashMap<IncomingR63A, HabboMethodInfo>()
+        val responsesR63A = HashMap<OutgoingR63A, RegisteredResponse>()
 
-            largestNameSizeR63A = largestNameSizeOf(incomingNamesR63A.values.flatten().map { it.second }, outgoingNamesR63A.values.flatten().map { it.second })
-        }
+        loadAnnotatedMethods(handlers, responses, handlersR63A, responsesR63A)
+
+        return Snapshot(
+            handlers, responses, incomingHeaders, outgoingHeaders, handlersR63A, responsesR63A,
+            incomingHeadersR63A, outgoingHeadersR63A, releases,
+            incomingNames, outgoingNames, incomingNamesR63A, outgoingNamesR63A,
+            largestNameSizeOf(incomingNames.values.flatten().map { it.second }, outgoingNames.values.flatten().map { it.second }),
+            largestNameSizeOf(incomingNamesR63A.values.flatten().map { it.second }, outgoingNamesR63A.values.flatten().map { it.second }),
+        )
     }
 
-    private fun loadAnnotatedMethods() {
+    private fun loadAnnotatedMethods(
+        messageHandlers: MutableMap<Incoming, MutableMap<String, HabboMethodInfo>>,
+        messageResponses: MutableMap<Outgoing, MutableMap<String, RegisteredResponse>>,
+        messageHandlersR63A: MutableMap<IncomingR63A, HabboMethodInfo>,
+        messageResponsesR63A: MutableMap<OutgoingR63A, RegisteredResponse>,
+    ) {
         val lookup = MethodHandles.lookup()
+        // instâncias dos handlers desta carga (local; cada carga cria as suas)
+        val instances = ConcurrentHashMap<Class<*>, Any>()
 
         ClassGraph()
             .enableAllInfo()
@@ -136,11 +190,11 @@ class HabboHandler {
             .use { scanResult ->
                 runBlocking {
                     val jobHandlers = HabboServer.applicationScope.launch {
-                        loadAnnotated(lookup, scanResult, Handler::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                        loadAnnotated(lookup, scanResult, instances, Handler::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
                             messageHandlers.getOrPut(incoming) { mutableMapOf() }[method.name] =
                                 HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
                         }
-                        loadAnnotated(lookup, scanResult, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                        loadAnnotated(lookup, scanResult, instances, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
                             messageHandlersR63A[incoming] =
                                 HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
                         }
@@ -149,11 +203,11 @@ class HabboHandler {
                     }
 
                     val jobResponses = HabboServer.applicationScope.launch {
-                        loadAnnotated(lookup, scanResult, Response::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                        loadAnnotated(lookup, scanResult, instances, Response::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
                             messageResponses.getOrPut(outgoing) { mutableMapOf() }[method.name] =
                                 RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
                         }
-                        loadAnnotated(lookup, scanResult, ResponseR63A::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                        loadAnnotated(lookup, scanResult, instances, ResponseR63A::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
                             messageResponsesR63A[outgoing] =
                                 RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
                         }
@@ -172,6 +226,7 @@ class HabboHandler {
     private fun <A : Annotation, E> loadAnnotated(
         lookup: MethodHandles.Lookup,
         scanResult: ScanResult,
+        instances: ConcurrentHashMap<Class<*>, Any>,
         annotationClass: Class<A>,
         headersOf: (A) -> Array<out E>,
         requiredAuthOf: (A) -> Boolean,
@@ -181,7 +236,7 @@ class HabboHandler {
             classInfo.methodInfo.filter { it.hasAnnotation(annotationClass) }.forEach { methodInfo ->
                 val method = methodInfo.loadClassAndGetMethod()
                 val annotation = method.getAnnotation(annotationClass) ?: return@forEach
-                val instance = getInstance(method.declaringClass)
+                val instance = getInstance(instances, method.declaringClass)
                 val handle = lookup.unreflect(method)
                 val requiredAuth = requiredAuthOf(annotation)
 
@@ -190,70 +245,22 @@ class HabboHandler {
         }
     }
 
-    // ---------------------------------------------------------------- validação
-
-    private fun validateOverrideMethods() {
-        val missingOverrides = validateOverrides("incoming", incomingHeaders, { runCatching { Incoming.valueOf(it) }.getOrNull() }) { messageHandlers[it as Incoming] }
-            .plus(validateOverrides("outgoing", outgoingHeaders, { runCatching { Outgoing.valueOf(it) }.getOrNull() }) { messageResponses[it as Outgoing] })
-
-        if (missingOverrides > 0) {
-            log.error(
-                "Found {} invalid override_method entries configured in releases headers. Fix database or add missing handler/response methods! Exiting!",
-                missingOverrides
-            )
-            exitProcess(1)
-        }
-
-        log.info("All configured override_method entries validated successfully!")
-    }
-
-    private fun validateOverrides(
-        kind: String,
-        headers: List<ReleaseHeaderInfo>,
-        valueOf: (String) -> Enum<*>?,
-        methodsOf: (Enum<*>) -> Map<String, *>?
-    ): Int {
-        var missing = 0
-
-        headers.forEach { headerInfo ->
-            val override = headerInfo.overrideMethod
-            if (override.isNullOrEmpty() || override == DISABLED) return@forEach
-
-            val enum = valueOf(headerInfo.name) ?: return@forEach
-
-            val methods = methodsOf(enum)
-            if (methods == null || !methods.containsKey(override)) {
-                log.error(
-                    "Override validation error: Release '{}' specifies override_method='{}' for {} '{}' (header {}), but method does not exist! Registered methods: {}",
-                    headerInfo.release,
-                    override,
-                    kind,
-                    headerInfo.name,
-                    headerInfo.header,
-                    methods?.keys?.joinToString() ?: "none"
-                )
-                missing++
-            }
-        }
-
-        return missing
-    }
-
     // ---------------------------------------------------------------- dispatch (request)
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val s = snapshot
         habboRequest.use {
             val incomingEnum: Incoming? =
                 if (habboRequest.headerId == RELEASE_CHECK_ID) Incoming.RELEASE_CHECK
-                else incomingNames[habboSession.release]?.firstOrNull { it.first == habboRequest.headerId }?.second
+                else s.incomingEnumByReleaseAndHeader[habboSession.release to habboRequest.headerId]
 
-            if (incomingEnum == null || !messageHandlers.containsKey(incomingEnum)) {
+            if (incomingEnum == null || !s.messageHandlers.containsKey(incomingEnum)) {
                 warnUnknownRequest(habboRequest.headerId, incomingEnum)
                 return@use
             }
 
-            val methodName = overrideMethodFor(habboSession.release, habboRequest.headerId) ?: "handle"
-            val methodInfo = messageHandlers[incomingEnum]?.get(methodName)
+            val methodName = overrideMethodFor(s, habboSession.release, habboRequest.headerId) ?: "handle"
+            val methodInfo = s.messageHandlers[incomingEnum]?.get(methodName)
 
             if (methodInfo == null) {
                 log.warn("No method with name '{}' found for {}!", methodName, incomingEnum)
@@ -268,12 +275,13 @@ class HabboHandler {
     }
 
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val s = snapshot
         habboRequest.use {
             val incomingEnum: IncomingR63A? =
                 if (habboRequest.headerId == RELEASE_CHECK_ID) IncomingR63A.RELEASE_CHECK
-                else incomingNamesR63A[habboSession.release]?.firstOrNull { it.first == habboRequest.headerId }?.second
+                else s.incomingEnumR63AByReleaseAndHeader[habboSession.release to habboRequest.headerId]
 
-            val methodInfo = incomingEnum?.let { messageHandlersR63A[it] }
+            val methodInfo = incomingEnum?.let { s.messageHandlersR63A[it] }
             if (methodInfo == null) {
                 warnUnknownRequest(habboRequest.headerId, incomingEnum)
                 return@use
@@ -286,8 +294,8 @@ class HabboHandler {
         }
     }
 
-    private fun overrideMethodFor(release: String, headerId: Int): String? =
-        incomingHeaders.firstOrNull { it.header == headerId && it.release == release }?.overrideMethod
+    private fun overrideMethodFor(s: Snapshot, release: String, headerId: Int): String? =
+        s.incomingHeadersByReleaseAndHeader[release to headerId]?.overrideMethod
 
     private fun warnUnknownRequest(headerId: Int, incomingEnum: Any?) {
         log.warn("Non existent request header ID: {} - {}", headerId, incomingEnum)
@@ -306,6 +314,9 @@ class HabboHandler {
             return
         }
 
+        val start = System.nanoTime()
+        // espera entre o pedido nascer no decoder e o handler começar: fila do dispatcher, GC, CPU saturada
+        ServerMetrics.recordHandlerQueueWait(start - habboRequest.receivedNano)
         try {
             prepare()
             methodInfo.invoker.invoke(habboSession, habboRequest)
@@ -318,20 +329,28 @@ class HabboHandler {
                     listOf(HabboSession::class.java.simpleName, HabboRequest::class.java.simpleName)
                 )
             }
+        } finally {
+            val elapsed = System.nanoTime() - start
+            // a chave é o nome semântico do enum (SSO_TICKET), nunca o id do cabeçalho: o id muda a cada release
+            ServerMetrics.recordHandler(logLabel?.toString() ?: "UNKNOWN", elapsed)
+            if (elapsed > 5_000_000L && slowLog.isWarnEnabled) {
+                slowLog.warn("[slow-handler] {} (header {}) took {}ms", logLabel, habboRequest.headerId, "%.2f".format(elapsed / 1_000_000.0))
+            }
         }
     }
 
     // ---------------------------------------------------------------- dispatch (response)
 
     fun invokeResponse(habboSession: HabboSession, outgoing: Outgoing, vararg args: Any?): HabboResponse? {
-        val headerId = outgoingNames[habboSession.release]?.firstOrNull { it.second == outgoing }?.first
-        val headerInfo = outgoingHeaders.firstOrNull { it.release == habboSession.release && it.name == outgoing.name }
+        val s = snapshot
+        val headerInfo = s.outgoingHeadersByReleaseAndName[habboSession.release to outgoing.name]
+        val headerId = headerInfo?.header
 
         return dispatchResponse(
             habboSession,
             headerId,
             headerInfo?.overrideMethod,
-            messageResponses[outgoing]?.get(headerInfo?.overrideMethod ?: DEFAULT_METHOD),
+            s.messageResponses[outgoing]?.get(headerInfo?.overrideMethod ?: DEFAULT_METHOD),
             outgoing,
             { id -> HabboResponse(headerId = id, outgoing = outgoing, habboVersion = habboSession.habboVersion) },
             args
@@ -339,14 +358,16 @@ class HabboHandler {
     }
 
     fun invokeResponse(habboSession: HabboSession, outgoing: OutgoingR63A, vararg args: Any?): HabboResponse? {
-        val headerId = outgoingNamesR63A[habboSession.release]?.firstOrNull { it.second == outgoing }?.first
-        val overrideMethod = outgoingHeadersR63A.firstOrNull { it.release == habboSession.release && it.name == outgoing.name }?.overrideMethod
+        val s = snapshot
+        val headerInfo = s.outgoingHeadersR63AByReleaseAndName[habboSession.release to outgoing.name]
+        val headerId = headerInfo?.header
+        val overrideMethod = headerInfo?.overrideMethod
 
         return dispatchResponse(
             habboSession,
             headerId,
             overrideMethod,
-            messageResponsesR63A[outgoing],
+            s.messageResponsesR63A[outgoing],
             outgoing,
             { id ->
                 HabboResponse(
@@ -422,35 +443,14 @@ class HabboHandler {
         headers.filter { (release == null || it.release == release) && enumValues<E>().any { e -> e.name == it.name } }
             .map { it.header to enumValueOf<E>(it.name) }
 
-    private fun <E : Enum<E>> verifyNoMissingHeaders(
-        kind: String,
-        names: Map<String, List<Pair<Int, E>>>,
-        expected: Collection<E>
-    ) {
-        var missing = false
-
-        names.forEach { (release, pairs) ->
-            val missingHeaders = expected - pairs.map { it.second }.toSet()
-
-            if (missingHeaders.isNotEmpty()) {
-                log.error("Missing {} headers for release={}, headers={}", kind, release, missingHeaders.joinToString())
-                missing = true
-            }
-        }
-
-        if (missing) {
-            log.error("Missing headers... Fix it! Exiting!")
-            exitProcess(1)
-        }
-    }
-
     private fun largestNameSizeOf(vararg enumLists: Collection<Enum<*>>): Int =
         enumLists.asSequence()
             .flatten()
             .maxOfOrNull { it.name.length } ?: 0
 
-    private fun getInstance(clazz: Class<*>): Any =
-        instances.getOrPut(clazz) { clazz.getDeclaredConstructor().newInstance() }
+    // computeIfAbsent é atômico: as duas corrotinas (handlers e responses) nunca criam duas instâncias da mesma classe
+    private fun getInstance(instances: ConcurrentHashMap<Class<*>, Any>, clazz: Class<*>): Any =
+        instances.computeIfAbsent(clazz) { it.getDeclaredConstructor().newInstance() }
 
     private companion object {
         const val DISABLED = "DISABLED"

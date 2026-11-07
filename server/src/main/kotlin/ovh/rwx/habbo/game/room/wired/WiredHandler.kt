@@ -43,6 +43,7 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.slide.flushWiredMovements
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.metrics.ServerMetrics
 import ovh.rwx.habbo.util.Vector2
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -72,6 +73,8 @@ class WiredHandler(val room: Room) {
         data: T,
         parentContext: WiredContext? = (data as? SignalTriggerData)?.context
     ): List<WiredTrigger<T>> {
+        if (wiredStack.isEmpty()) return emptyList()
+
         val triggeredWireds = mutableListOf<WiredTrigger<T>>()
         val batchedMovements: MutableList<WiredMoveEntry> = mutableListOf()
 
@@ -98,6 +101,7 @@ class WiredHandler(val room: Room) {
             if (triggersInStack.isEmpty()) return@forEach
 
             triggersInStack.forEach { trigger ->
+                val wiredStartNano = System.nanoTime()
                 val wiredContext = WiredContext(
                     triggererUser = roomUser,
                     trigger = trigger,
@@ -197,6 +201,8 @@ class WiredHandler(val room: Room) {
                     }
                 } catch (e: Exception) {
                     room.wiredErrorLogger.logError(e.javaClass.simpleName, "EXECUTION", e)
+                } finally {
+                    ServerMetrics.recordWired(System.nanoTime() - wiredStartNano)
                 }
             }
         }

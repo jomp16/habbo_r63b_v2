@@ -26,8 +26,6 @@ import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.Room
-import ovh.rwx.habbo.game.room.model.RoomModel
-import ovh.rwx.habbo.game.room.model.SquareState
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomFloormapResponse {
@@ -56,27 +54,7 @@ class RoomFloormapResponse {
     }
 
     private fun writeFloorPlan(habboResponse: HabboResponse, room: Room) {
-        habboResponse.apply {
-            val stringBuilder = StringBuilder()
-
-            for (i in 0 until room.roomModel.mapSizeY) {
-                for (j in 0 until room.roomModel.mapSizeX) {
-                    if (j == room.roomModel.doorVector3.x && i == room.roomModel.doorVector3.y) {
-                        if (room.roomModel.doorVector3.z > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.doorVector3.z.toInt() - 10])
-                        else stringBuilder.append(room.roomModel.doorVector3.z.toInt())
-                    } else if (room.roomModel.squareStates[j][i] == SquareState.CLOSED) {
-                        stringBuilder.append("x")
-                    } else {
-                        if (room.roomModel.floorHeight[j][i] > 9) stringBuilder.append(RoomModel.letters.toCharArray()[room.roomModel.floorHeight[j][i] - 10])
-                        else stringBuilder.append(room.roomModel.floorHeight[j][i].toInt())
-                    }
-                }
-
-                stringBuilder.append('\r')
-            }
-
-            writeUTF(stringBuilder.toString())
-        }
+        habboResponse.writeUTF(room.roomModel.floorPlanString())
     }
 
     private fun writeAreaHideMessageData(response: HabboResponse) {

@@ -28,6 +28,7 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.LimitedItemData
+import ovh.rwx.habbo.game.item.stuff.LegacyStuffData
 import java.io.Serializable
 import java.util.*
 
@@ -44,6 +45,9 @@ data class UserItem(
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
+        // Clients pós-shuffle até 2013-05-22 (R63 de 2011-2012) ainda lêem o item no layout antigo
+        if (habboResponse.isVersionBefore(2013, 5, 22)) return serializeHabboResponseR63A(habboResponse, *params)
+
         habboResponse.apply {
             // Era moderna (≥ shuffle): o stripId (chave de inventário no cliente) trafega NEGATIVO por
             // convenção oficial do protocolo — o cliente indexa o inventário por essa chave
@@ -94,7 +98,13 @@ data class UserItem(
 
             writeInt(typeId)
 
-            writeUTF(extraData)
+            if (isVersionAtLeast(2011, 9, 8)) {
+                // StuffData tipado a partir de RELEASE63-35846 (08/09/2011): tipo 0 (legado) e a string. No
+                // inventário não há o "extra" que o objeto do quarto traz (ver ItemManager.writeExtradata)
+                LegacyStuffData(extraData).write(habboResponse, inventory = true)
+            } else {
+                writeUTF(extraData)
+            }
 
             writeBoolean(furnishing.allowRecycle)
             writeBoolean(furnishing.allowTrade)

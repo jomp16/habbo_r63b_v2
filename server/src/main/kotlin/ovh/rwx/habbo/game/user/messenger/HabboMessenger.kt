@@ -19,11 +19,15 @@
 
 package ovh.rwx.habbo.game.user.messenger
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
+import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
 
 class HabboMessenger(private val habboSession: HabboSession) {
@@ -42,6 +46,16 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
             friends += MessengerDao.getFriends(habboSession.userInformation.id).associateBy { it.userId }
             requests += MessengerDao.getRequests(habboSession.userInformation.id).associateBy { it.fromId }
+
+            // Pré-carrega os dados dos amigos em lote (1 query cada, em paralelo) em vez de 2 idas por amigo,
+            // duas vezes, durante a serialização do MESSENGER_INIT.
+            val friendIds = friends.values.map { it.userId }.filter { it > 0 }
+            if (friendIds.isNotEmpty()) {
+                runBlocking(Dispatchers.IO) {
+                    launch { UserInformationDao.prefetchUserInformations(friendIds) }
+                    launch { UserStatsDao.prefetchLastOnline(friendIds) }
+                }
+            }
 
             initialized = true
         }

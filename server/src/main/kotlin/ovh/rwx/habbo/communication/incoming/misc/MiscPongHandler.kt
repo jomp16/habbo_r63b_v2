@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.metrics.ServerMetrics
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -36,6 +37,7 @@ class MiscPongHandler {
         val timeElapsed = System.nanoTime() - habboSession.ping
 
         habboSession.ping = 0.toLong()
+        ServerMetrics.recordPing(timeElapsed)
 
         log.info("User ${habboSession.userInformation.username} replied to ping! Time elapsed: ${TimeUnit.NANOSECONDS.toMillis(timeElapsed)}ms")
     }

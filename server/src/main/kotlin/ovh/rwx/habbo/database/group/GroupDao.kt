@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.group.GroupRequest
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import java.time.LocalDateTime
 
 object GroupDao {
@@ -63,7 +64,8 @@ object GroupDao {
 
     fun createGroup(name: String, description: String, badge: String, ownerId: Int, roomId: Int, groupMembershipState: GroupMembershipState, symbolColor: Int, backgroundColor: Int, onlyAdminCanDecorateRoom: Boolean): Int {
         val groupId = groupSequence.nextId()
-        WriteBehindManager.queue {
+        // aponta para a sala (groups.room_id): se a sala acabou de ser criada, roda depois do INSERT dela
+        WriteBehindManager.queue(WriteKey.group(groupId), WriteKey.room(roomId)) {
             db {
                 update(
                 """INSERT INTO `groups` (`id`, `name`, `description`, `badge`, `owner_id`, `room_id`, `state`, `symbol_color`, `background_color`, `only_admin_can_decorate`)
@@ -88,7 +90,7 @@ object GroupDao {
 
     fun addMember(groupId: Int, userId: Int, rank: Int): Int {
         val memberId = groupMemberSequence.nextId()
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.group(groupId)) {
             db {
                 update(
                         javaClass.getResource("/sql/groups/member/insert_group_member.sql").readText(),
@@ -137,7 +139,7 @@ object GroupDao {
         }
     }
 
-    fun updateGroupData(groupData: GroupData) = WriteBehindManager.queue {
+    fun updateGroupData(groupData: GroupData) = WriteBehindManager.queue(WriteKey.group(groupData.id)) {
         db {
             update(javaClass.getResource("/sql/groups/update_group.sql").readText(),
                     mapOf(

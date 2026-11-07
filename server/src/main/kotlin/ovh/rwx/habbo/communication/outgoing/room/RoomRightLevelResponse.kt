@@ -43,10 +43,6 @@ class RoomRightLevelResponse {
     @ResponseR63A(OutgoingR63A.ROOM_RIGHT)
     fun response(habboResponse: HabboResponse, data: RoomRightLevelData) {
         habboResponse.apply {
-            if (outgoingR63A != null) {
-                // R63A ROOM_RIGHT não tem corpo (body vazio)
-                return@apply
-            }
             if (isVersionAtLeast(2018, 5, 23)) {
                 writeInt(data.roomId)
             }

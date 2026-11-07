@@ -22,6 +22,7 @@ package ovh.rwx.habbo.database.wired
 import ovh.rwx.habbo.game.item.wired.variable.*
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import java.time.LocalDateTime
 
 object WiredVariableDao {
@@ -72,7 +73,10 @@ object WiredVariableDao {
             )
         }
 
-        WriteBehindManager.queue {
+        // cada variável pertence a um dono (sala, mobi ou usuário): ordena por (tipo de dono, id do dono)
+        val ownerKeys = snapshot.map { WriteKey("wired-var-${it["owner_type"]}", (it["owner_id"] as Number).toLong()) }.distinct()
+
+        WriteBehindManager.queue(ownerKeys) {
             db {
                 batchUpdate(
                 """
@@ -93,7 +97,8 @@ object WiredVariableDao {
         }
     }
 
-    fun deleteVariable(variableId: String, ownerId: Int, ownerType: VariableOwnerType) = WriteBehindManager.queue {
+    fun deleteVariable(variableId: String, ownerId: Int, ownerType: VariableOwnerType) =
+        WriteBehindManager.queue(WriteKey("wired-var-${ownerType.name}", ownerId.toLong())) {
         db {
             update(
                 """

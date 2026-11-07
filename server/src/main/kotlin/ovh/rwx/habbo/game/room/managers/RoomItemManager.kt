@@ -27,6 +27,9 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.database.user.UserInformationDao
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.WiredKind
@@ -43,7 +46,10 @@ import ovh.rwx.habbo.util.Vector3
 import java.util.concurrent.ConcurrentHashMap
 
 class RoomItemManager(private val room: Room) {
-    val items: MutableMap<Int, RoomItem> by lazy { ConcurrentHashMap(ItemDao.getRoomItems(room.roomData.id)) }
+    private val log = LoggerFactory.getLogger(javaClass)
+    val items: MutableMap<Int, RoomItem> by lazy {
+        ConcurrentHashMap(ItemDao.getRoomItems(room.roomData.id))
+    }
     val wallItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.FLOOR }
 
@@ -57,8 +63,17 @@ class RoomItemManager(private val room: Room) {
     val hiddenBuildersClub: Boolean
         get() = hasBuildersClubItems && !SubscriptionDao.hasActiveBuildersClub(room.roomData.ownerId)
 
+    /** Força o carregamento dos itens da sala (a propriedade lazy faz a query); antes relia os itens do banco uma 2ª vez. */
     fun loadItems() {
-        items.putAll(ItemDao.getRoomItems(room.roomData.id))
+        items.size
+    }
+
+    /**
+     * Uma query para todos os wireds da sala, em vez de uma por mobi no primeiro acionamento.
+     * Separado do carregamento dos itens para rodar em paralelo com as variáveis dos mobis (ambos só precisam dos ids).
+     */
+    fun preloadWiredData() {
+        ItemDao.preloadWiredData(items.keys)
     }
 
     fun triggerItems() {
@@ -313,19 +328,33 @@ class RoomItemManager(private val room: Room) {
         roomItem.markDirty()
     }
 
-    fun savePendingItems() {
-        if (itemsToSave.isEmpty()) return
-
-        RoomDao.saveItems(room.roomData.id, itemsToSave)
-
-        val wiredsToSave =
-            itemsToSave.filter { it.furnishing.interactionType.isWired && it.wiredData != null }
-        if (wiredsToSave.isNotEmpty()) ItemDao.saveWireds(wiredsToSave)
-
-        roomDimmer?.let {
-            if (itemsToSave.contains(it.roomItem)) ItemDao.saveDimmer(it)
+    fun drainItemsToSave(): List<RoomItem> {
+        if (itemsToSave.isEmpty()) return emptyList()
+        val list = ArrayList<RoomItem>(itemsToSave.size)
+        val iterator = itemsToSave.iterator()
+        while (iterator.hasNext()) {
+            list.add(iterator.next())
+            iterator.remove()
         }
+        return list
+    }
 
-        itemsToSave.clear()
+    fun savePendingItems() {
+        val pending = drainItemsToSave()
+        if (pending.isEmpty()) return
+
+        val dimmer = roomDimmer?.takeIf { pending.contains(it.roomItem) }
+        dimmer?.let { ItemDao.saveDimmer(it) }
+
+        // atualiza as linhas dos itens, incluindo room_id (FK da sala): declara os itens e a sala
+        WriteBehindManager.queue(WriteKey.items(pending.map { it.id }) + WriteKey.room(room.roomData.id)) {
+            try {
+                RoomDao.saveItems(room.roomData.id, pending)
+                val wiredsToSave = pending.filter { it.furnishing.interactionType.isWired && it.wiredData != null }
+                if (wiredsToSave.isNotEmpty()) ItemDao.saveWireds(wiredsToSave)
+            } catch (e: Exception) {
+                log.error("Failed to save pending items for room ${room.roomData.id}", e)
+            }
+        }
     }
 }

@@ -21,6 +21,7 @@ package ovh.rwx.habbo.communication.incoming.inventory
 
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -33,24 +34,16 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryItemsHandler {
     @Handler(Incoming.INVENTORY_ITEMS)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(Outgoing.INVENTORY_ITEMS, habboSession.habboInventory.items.values)
-    }
-
     @HandlerR63A(IncomingR63A.INVENTORY_ITEMS)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // Nessa versão, é enviado floor e wall separados.
-        if (habboSession.isVersionAtLeast(2011, 2, 25)) {
-            habboSession.sendHabboResponse(
-                OutgoingR63A.INVENTORY_ITEMS,
-                "S",
-                habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.FLOOR })
-            habboSession.sendHabboResponse(
-                OutgoingR63A.INVENTORY_ITEMS,
-                "I",
-                habboSession.habboInventory.items.values.filter { it.furnishing.type == ItemType.WALL })
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        val items = habboSession.habboInventory.items.values
+
+        // De 2011-02-25 até 2013-05-22 é enviado floor e wall separados, cada um com a sua categoria
+        if (habboSession.isVersionAtLeast(2011, 2, 25) && habboSession.isVersionBefore(2013, 5, 22)) {
+            habboSession.sendResponse(Outgoing.INVENTORY_ITEMS, OutgoingR63A.INVENTORY_ITEMS, "S", items.filter { it.furnishing.type == ItemType.FLOOR })
+            habboSession.sendResponse(Outgoing.INVENTORY_ITEMS, OutgoingR63A.INVENTORY_ITEMS, "I", items.filter { it.furnishing.type == ItemType.WALL })
         } else {
-            habboSession.sendHabboResponse(OutgoingR63A.INVENTORY_ITEMS, "", habboSession.habboInventory.items.values)
+            habboSession.sendResponse(Outgoing.INVENTORY_ITEMS, OutgoingR63A.INVENTORY_ITEMS, "", items)
         }
     }
 }

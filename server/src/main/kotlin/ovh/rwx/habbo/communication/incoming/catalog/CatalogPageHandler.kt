@@ -33,6 +33,33 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPageHandler {
+    private companion object {
+        /** O cliente AIR oficial às vezes pede a mesma página duas vezes em ~15ms; ignorar a repetida evita reenviar e reprocessar páginas de 100+ KB. */
+        const val DUPLICATE_WINDOW_NANOS = 250_000_000L
+        const val MAX_TRACKED_REQUESTS = 64
+    }
+
+    /** true se o mesmo pedido (categoria, página, oferta) já foi atendido há menos de [DUPLICATE_WINDOW_NANOS]. */
+    private fun isDuplicateRequest(habboSession: HabboSession, pageId: Int, chosenOfferId: Int, category: String): Boolean {
+        val recent = habboSession.recentCatalogPageRequests
+        val now = System.nanoTime()
+        var duplicate = false
+
+        // o instante só avança quando o pedido é atendido: um retry contínuo nunca fica sem resposta
+        recent.compute("$category:$pageId:$chosenOfferId") { _, last ->
+            if (last != null && now - last < DUPLICATE_WINDOW_NANOS) {
+                duplicate = true
+                last
+            } else {
+                now
+            }
+        }
+
+        if (recent.size > MAX_TRACKED_REQUESTS) recent.values.removeIf { now - it > DUPLICATE_WINDOW_NANOS }
+
+        return duplicate
+    }
+
     private fun validateAndGetCatalogPage(
         habboSession: HabboSession,
         pageId: Int,
@@ -56,6 +83,8 @@ class CatalogPageHandler {
         } else {
             "NORMAL"
         }
+
+        if (isDuplicateRequest(habboSession, pageId, chosenOfferId, category)) return
 
         validateAndGetCatalogPage(habboSession, pageId, chosenOfferId, category)?.let {
             habboSession.sendResponse(

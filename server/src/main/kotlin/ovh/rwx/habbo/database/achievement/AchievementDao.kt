@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.achievement.Achievement
 import ovh.rwx.habbo.game.achievement.AchievementCategory
 import ovh.rwx.habbo.game.achievement.AchievementGroup
@@ -59,7 +60,8 @@ object AchievementDao {
     fun saveUserAchievements(achievementUsers: Collection<AchievementUser>) {
         if (achievementUsers.isEmpty()) return
 
-        WriteBehindManager.queue {
+        // a linha pode ter sido inserida por insertUserAchievement na mesma janela: ordena por usuário
+        WriteBehindManager.queue(achievementUsers.map { WriteKey.user(it.userId) }.distinct()) {
             db {
                 batchUpdate(
                     "/sql/achievement/update_user_achievement.sql",
@@ -78,7 +80,7 @@ object AchievementDao {
     fun insertUserAchievement(userId: Int, groupId: Int, level: Int, progress: Int): AchievementUser {
         val id = achievementSequence.nextId()
         val achievementUser = AchievementUser(id, userId, groupId, level, progress)
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.user(userId)) {
             db {
                 update(
                     "INSERT INTO `users_achievements` (`id`, `user_id`, `achievement_group_id`, `level`, `progress`) VALUES (:id, :user_id, :achievement_group_id, :level, :progress)",

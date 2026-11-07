@@ -19,11 +19,15 @@
 
 package ovh.rwx.habbo.communication.incoming.user
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.database.messenger.MessengerDao
+import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -32,6 +36,23 @@ class UserRelationshipsHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val userId = habboRequest.readInt()
 
-        habboSession.sendHabboResponse(Outgoing.USER_RELATIONSHIPS, userId, MessengerDao.getFriends(userId))
+        // Usuário online: os amigos já estão em memória no messenger da sessão (sem ida ao banco).
+        // O stub do server console não é uma amizade real, então fica de fora (o DAO nunca o retornava).
+        val onlineMessenger = try {
+            HabboServer.habboSessionManager.getHabboSessionById(userId)?.habboMessenger?.takeIf { it.initialized }
+        } catch (_: UninitializedPropertyAccessException) {
+            null // sessão recém-conectada que ainda não criou o messenger: cai no caminho do banco
+        }
+        if (onlineMessenger != null) {
+            val consoleId = UserInformationDao.serverConsoleUserInformation.id
+            val friends = onlineMessenger.friends.values.filter { it.userId != consoleId }
+            habboSession.sendHabboResponse(Outgoing.USER_RELATIONSHIPS, userId, friends)
+            return
+        }
+
+        // Usuário offline: consulta no banco FORA da thread do handler (round-trip ao banco não pode travar o pool de rede/quartos)
+        HabboServer.applicationScope.launch(Dispatchers.IO) {
+            habboSession.sendHabboResponse(Outgoing.USER_RELATIONSHIPS, userId, MessengerDao.getFriends(userId))
+        }
     }
 }

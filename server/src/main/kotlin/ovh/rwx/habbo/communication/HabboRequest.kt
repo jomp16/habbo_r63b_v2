@@ -30,6 +30,10 @@ import ovh.rwx.habbo.encryption.decoder.HabboVl64
 @Suppress("unused")
 class HabboRequest(val headerId: Int, val byteBuf: ByteBuf) : AutoCloseable {
     private val byteBufInputStream: ByteBufInputStream = ByteBufInputStream(byteBuf)
+
+    /** Quando o pedido nasceu (decoder do Netty). O handler mede aqui a espera até começar a rodar. */
+    val receivedNano: Long = System.nanoTime()
+
     lateinit var incoming: Incoming
     lateinit var incomingR63A: IncomingR63A
 

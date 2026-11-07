@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.pet.PetData
 
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.database.*
 import org.slf4j.LoggerFactory
 
@@ -38,7 +39,7 @@ object PetDao {
 
     fun insertPet(userId: Int, name: String, type: Int, race: Int, color: String): Int {
         val petId = petSequence.nextId()
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.pet(petId)) {
             db {
                 update(
                     "INSERT INTO `users_pets` (`id`, `user_id`, `name`, `type`, `race`, `color`) VALUES (:id, :user_id, :name, :type, :race, :color)",
@@ -70,7 +71,7 @@ object PetDao {
         ).map { it.toDomain() }
     }
 
-    fun savePet(pet: PetData) = WriteBehindManager.queue {
+    fun savePet(pet: PetData) = WriteBehindManager.queue(WriteKey.pet(pet.id)) {
         db {
         update(
             """UPDATE `users_pets` SET 

@@ -20,16 +20,23 @@
 package ovh.rwx.habbo.communication.outgoing.room
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomAdvertisementResponse {
+    @Response(Outgoing.ROOM_ADVERTISEMENT)
     @ResponseR63A(OutgoingR63A.ROOM_ADVERTISEMENT)
-    fun responseR63A(habboResponse: HabboResponse, imageUrl: String, clickUrl: String) {
+    fun response(habboResponse: HabboResponse, imageUrl: String, clickUrl: String) {
         habboResponse.apply {
             writeUTF(imageUrl)
             writeUTF(clickUrl)
         }
+    }
+
+    fun responseR63A(habboResponse: HabboResponse, imageUrl: String, clickUrl: String) {
+        response(habboResponse, imageUrl, clickUrl)
     }
 }

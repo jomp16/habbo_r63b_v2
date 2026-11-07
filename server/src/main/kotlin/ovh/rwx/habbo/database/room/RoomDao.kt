@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.room.RoomType
 import ovh.rwx.habbo.game.room.model.RoomModel
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.util.Vector3
 import ovh.rwx.habbo.database.*
 import java.util.Locale
@@ -35,6 +36,9 @@ import org.slf4j.LoggerFactory
 
 object RoomDao {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val updateRoomDataSql: String by lazy {
+        RoomDao::class.java.classLoader.getResource("sql/rooms/data/update_room_data.sql")!!.readText()
+    }
     val roomSequence = HiLoSequence("rooms", blockSize = 100)
     fun getRoomsData(): List<RoomData> = db {
         query<RoomDataDto>("SELECT * FROM `rooms`").map { it.toDomain() }
@@ -71,7 +75,8 @@ object RoomDao {
 
     fun createRoom(userId: Int, name: String, description: String, model: String, category: Int, maxUsers: Int, tradeSettings: Int): Int {
         val roomId = roomSequence.nextId()
-        WriteBehindManager.queue {
+        // linha-pai: itens, filtros, favoritos e grupos que apontam para esta sala declaram room(roomId) e rodam depois
+        WriteBehindManager.queue(WriteKey.room(roomId), WriteKey.user(userId)) {
             db {
                 update(
                     "INSERT INTO `rooms` (`id`, `name`, `description`, `owner_id`, `model_name`, `category`, `users_max`, `trade_state`) VALUES (:id, :name, :description, :owner_id, :model_name, :category, :users_max, :trade_state)",
@@ -115,7 +120,7 @@ object RoomDao {
 
     fun updateRoomData(roomData: RoomData) {
         db {
-            update(javaClass.classLoader.getResource("sql/rooms/data/update_room_data.sql")!!.readText(),
+            update(updateRoomDataSql,
                     mapOf(
                         "name" to roomData.name,
                         "description" to roomData.description,
@@ -158,7 +163,7 @@ object RoomDao {
         }
     }
 
-    fun addWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue {
+    fun addWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue(WriteKey.room(roomId)) {
         db {
             insertAndGetGeneratedKey("INSERT INTO `rooms_word_filter` (`room_id`, `word`) VALUES (:room_id, :word)",
                     mapOf(
@@ -169,7 +174,7 @@ object RoomDao {
         }
     }
 
-    fun removeWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue {
+    fun removeWordFilter(roomId: Int, wordFilter: String) = WriteBehindManager.queue(WriteKey.room(roomId)) {
         db {
             update("DELETE FROM `rooms_word_filter` WHERE `room_id` = :room_id AND `word` = :word",
                     mapOf(
@@ -200,7 +205,8 @@ object RoomDao {
         return RightData(id, userId)
     }
 
-    fun removeRights(ids: List<Int>) = WriteBehindManager.queue {
+    // as linhas de direito já existem no banco (addRight é síncrono): a chave é a própria linha
+    fun removeRights(ids: List<Int>) = WriteBehindManager.queue(ids.map { WriteKey("room-right", it.toLong()) }) {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/rooms/rights/delete_right.sql")!!.readText(),
                     ids.map {

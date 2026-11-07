@@ -34,11 +34,14 @@ class NavigatorManager {
     fun load() {
         log.info("Loading navigator...")
 
-        navigatorRoomCategories.clear()
-        navigatorEventCategories.clear()
+        // Lê tudo antes de mexer nos mapas ativos e troca sem nunca deixá-los vazios
+        val rooms = NavigatorDao.getNavigatorRoomCategories().associateBy { it.id }
+        val events = NavigatorDao.getNavigatorEventCategories().associateBy { it.id }
 
-        navigatorRoomCategories += NavigatorDao.getNavigatorRoomCategories().associateBy { it.id }
-        navigatorEventCategories += NavigatorDao.getNavigatorEventCategories().associateBy { it.id }
+        navigatorRoomCategories.putAll(rooms)
+        navigatorRoomCategories.keys.retainAll(rooms.keys)
+        navigatorEventCategories.putAll(events)
+        navigatorEventCategories.keys.retainAll(events.keys)
 
         log.info("Loaded {} navigator categories!", navigatorRoomCategories.size)
         log.info("Loaded {} navigator promo categories!", navigatorEventCategories.size)

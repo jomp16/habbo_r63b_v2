@@ -21,6 +21,7 @@ package ovh.rwx.habbo.database.room
 
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object RoomBanDao {
     fun getBansByRoomId(roomId: Int): List<RoomBanEntry> = db {
@@ -37,7 +38,7 @@ object RoomBanDao {
     }
 
     fun addBan(roomId: Int, userId: Int, expireTimestamp: Long) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.room(roomId)) {
             db {
                 update(
                     """
@@ -56,7 +57,7 @@ object RoomBanDao {
     }
 
     fun removeBan(roomId: Int, userId: Int) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.room(roomId)) {
             db {
                 update(
                     "DELETE FROM rooms_bans WHERE room_id = :room_id AND user_id = :user_id",
@@ -67,7 +68,8 @@ object RoomBanDao {
     }
 
     fun deleteExpiredBans() {
-        WriteBehindManager.queue {
+        // apaga por expiração calculada na execução: o estado final é o mesmo em qualquer ordem em relação aos bans
+        WriteBehindManager.queue(emptyList()) {
             db {
                 val now = System.currentTimeMillis() / 1000
                 update(

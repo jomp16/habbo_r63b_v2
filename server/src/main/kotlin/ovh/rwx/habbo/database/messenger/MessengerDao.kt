@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.user.messenger.MessengerRelationship
 import ovh.rwx.habbo.game.user.messenger.MessengerRequest
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -36,6 +37,15 @@ object MessengerDao {
 
     val friendshipSequence = HiLoSequence("messenger_friendships", blockSize = 500)
     val requestSequence = HiLoSequence("messenger_requests", blockSize = 500)
+
+    // Uma amizade são duas linhas (uma por direção), criadas e removidas juntas: a chave do par não depende da direção
+    private fun friendshipPair(a: Int, b: Int) =
+        WriteKey("friendship", (minOf(a, b).toLong() shl 32) or maxOf(a, b).toLong())
+
+    // A relação é atualizada pelo id da linha, então o INSERT dessa linha também declara o id dela
+    private fun friendshipRow(id: Int) = WriteKey("friendship-row", id.toLong())
+    private fun requestRow(id: Int) = WriteKey("friend-request-row", id.toLong())
+    private fun requestsTo(userId: Int) = WriteKey("friend-requests-to", userId.toLong())
     fun getFriends(userId: Int): List<MessengerFriend> = db {
         query<MessengerFriendDto>(
             "sql/messenger/select_friends.sql",
@@ -75,7 +85,8 @@ object MessengerDao {
         }
     }
 
-    fun removeFriendships(userId: Int, friendIds: List<Int>) = WriteBehindManager.queue {
+    fun removeFriendships(userId: Int, friendIds: List<Int>) =
+        WriteBehindManager.queue(friendIds.map { friendshipPair(userId, it) }) {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_friends.sql")!!.readText(),
                     friendIds.map {
@@ -94,7 +105,7 @@ object MessengerDao {
         }
     }
 
-    fun removeAllRequests(toUserId: Int) = WriteBehindManager.queue {
+    fun removeAllRequests(toUserId: Int) = WriteBehindManager.queue(requestsTo(toUserId)) {
         db {
             update(javaClass.classLoader.getResource("sql/messenger/delete_all_requests.sql")!!.readText(),
                     mapOf(
@@ -104,7 +115,7 @@ object MessengerDao {
         }
     }
 
-    fun removeRequests(requestIds: List<Int>) = WriteBehindManager.queue {
+    fun removeRequests(requestIds: List<Int>) = WriteBehindManager.queue(requestIds.map { requestRow(it) }) {
         db {
             batchUpdate(javaClass.classLoader.getResource("sql/messenger/delete_request.sql")!!.readText(),
                     requestIds.map {
@@ -128,7 +139,10 @@ object MessengerDao {
             inserts += mapOf("id" to id2, "user_one_id" to friendId, "user_two_id" to userId)
         }
 
-        WriteBehindManager.queue {
+        // declara o par (para o DELETE por par) e o id de cada linha (para o UPDATE de relação por id)
+        val keys = friendIds.map { friendshipPair(userId, it) } + inserts.map { friendshipRow(it["id"] as Int) }
+
+        WriteBehindManager.queue(keys) {
             db {
                 batchUpdate(
                     "INSERT INTO `messenger_friendships` (`id`, `user_one_id`, `user_two_id`) VALUES (:id, :user_one_id, :user_two_id)",
@@ -142,7 +156,7 @@ object MessengerDao {
     fun addRequest(fromUserId: Int, toUserId: Int): MessengerRequest {
         val id = requestSequence.nextId()
         val request = MessengerRequest(id, fromUserId)
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(requestRow(id), requestsTo(toUserId)) {
             db {
                 update(
                     "INSERT INTO `messenger_requests` (`id`, `to_id`, `from_id`) VALUES (:id, :to_id, :from_id)",
@@ -170,7 +184,8 @@ object MessengerDao {
     }
 
     fun addOfflineMessage(fromUserId: Int, toUserId: Int, message: String) {
-        WriteBehindManager.queue {
+        // o id sequencial define a ordem em que o destinatário lê as mensagens: mantém a ordem por destinatário
+        WriteBehindManager.queue(WriteKey("offline-messages", toUserId.toLong())) {
             db {
                 insertAndGetGeneratedKey(
                     javaClass.classLoader.getResource("sql/messenger/insert_offline_message.sql")!!.readText(),
@@ -184,7 +199,7 @@ object MessengerDao {
         }
     }
 
-    fun updateRelationship(messengerFriend: MessengerFriend) = WriteBehindManager.queue {
+    fun updateRelationship(messengerFriend: MessengerFriend) = WriteBehindManager.queue(friendshipRow(messengerFriend.id)) {
         db {
             update(javaClass.classLoader.getResource("sql/messenger/update_relationship.sql")!!.readText(),
                     mapOf(

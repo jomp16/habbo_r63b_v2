@@ -29,7 +29,8 @@ import java.time.LocalDateTime
 import ovh.rwx.habbo.database.db
 
 object UserInformationDao {
-    private val userInformationsList: MutableMap<Int, UserInformation> = LinkedHashMap()
+    // acessado por várias threads (handlers, login assíncrono, pré-carga do messenger): precisa ser concorrente
+    private val userInformationsList: MutableMap<Int, UserInformation> = java.util.concurrent.ConcurrentHashMap()
     val serverConsoleUserInformation: UserInformation = UserInformation(
         Int.MAX_VALUE, // max int, since Habbo doesn't show figures when id == 0
         "SERVER SCRIPTING CONSOLE", // name
@@ -64,11 +65,40 @@ object UserInformationDao {
         return userInformationsList[userId]
     }
 
-    fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? = db {
-        queryOne<Int>(
-            "sql/users/information/select_user_information_from_auth_ticket.sql",
-            mapOf("ticket" to ssoTicket)
-        )?.let { getUserInformationById(it) }
+    /**
+     * O SQL do ticket já devolve a linha completa do usuário (u.* + moedas): uma ida ao banco só,
+     * em vez de ler só o id e reler o usuário por [getUserInformationById] (2 idas).
+     */
+    fun getUserInformationByAuthTicket(ssoTicket: String): UserInformation? {
+        val dto = db {
+            queryOne<UserInformationDto>(
+                "sql/users/information/select_user_information_from_auth_ticket.sql",
+                mapOf("ticket" to ssoTicket)
+            )
+        } ?: return null
+
+        if (dto.id == serverConsoleUserInformation.id) return serverConsoleUserInformation
+
+        return userInformationsList.getOrPut(dto.id) { dto.toDomain() }
+    }
+
+    /** Carrega em UMA query os usuários que ainda não estão em cache (ex.: amigos do messenger), evitando N+1. */
+    fun prefetchUserInformations(userIds: Collection<Int>) {
+        val missing = userIds.filter { it != serverConsoleUserInformation.id && !userInformationsList.containsKey(it) }.distinct()
+        if (missing.isEmpty()) return
+
+        db {
+            query<UserInformationDto>(
+                """
+                SELECT u.*,
+                       COALESCE(GROUP_CONCAT(CONCAT(uc.type, ':', uc.points) SEPARATOR ';'), '') AS currencies_str
+                FROM users u
+                         LEFT JOIN users_currencies uc ON u.id = uc.user_id
+                WHERE u.id IN (${missing.joinToString(",")})
+                GROUP BY u.id
+                """.trimIndent()
+            )
+        }.forEach { userInformationsList.putIfAbsent(it.id, it.toDomain()) }
     }
 
     fun getUserInformationByUsername(username: String): UserInformation? {

@@ -33,12 +33,14 @@ import ovh.rwx.habbo.encryption.decoder.HabboBase64
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.metrics.ServerMetrics
 
 @ChannelHandler.Sharable
 class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun encode(ctx: ChannelHandlerContext, msg: HabboResponse, out: ByteBuf) {
+        ServerMetrics.recordPacketOut()
         try {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
             val username =

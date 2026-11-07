@@ -118,18 +118,18 @@ data class CatalogItem(
                 }
             }
 
-            // serializeItem R63A
-            writeInt(1) // items count
-            writeUTF(furnishing.type.type) // productType
-            writeInt(furnishing.spriteId) // furniClassId
-
-            if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape")
-                writeUTF(catalogName.split('_')[2]) // extraParam
-            else
-                writeUTF("") // extraParam
-
-            writeInt(amount) // productCount
-            writeInt(-1) // expiration
+            // Products: offer ← LOOP[product]; product = productType, furniClassId, extraParam, productCount, expiration
+            // (idêntico de RELEASE34 a RELEASE63-29876; deals carregam vários produtos)
+            if (dealId > 0) {
+                val deal = deal!!
+                writeInt(deal.furnishings.size)
+                deal.furnishings.forEachIndexed { i, dealFurnishing ->
+                    serializeProductR63A(dealFurnishing, deal.amounts[i])
+                }
+            } else {
+                writeInt(1)
+                serializeProductR63A(furnishing, amount)
+            }
 
             if (isVersionAtLeast(2011, 6, 1)) {
                 writeInt(if (clubOnly) 1 else 0) // clubLevel
@@ -164,5 +164,16 @@ data class CatalogItem(
                 }
             }
         }
+    }
+
+    private fun HabboResponse.serializeProductR63A(furnishing: Furnishing, amount: Int) {
+        writeUTF(furnishing.type.type) // productType ('i' item, 's' wall item, 'e' effect)
+        writeInt(furnishing.spriteId) // furniClassId
+        if (itemName == "wallpaper" || itemName == "floor" || itemName == "landscape")
+            writeUTF(catalogName.split('_')[2]) // extraParam
+        else
+            writeUTF("") // extraParam
+        writeInt(amount) // productCount
+        writeInt(-1) // expiration
     }
 }

@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.habbicon.HabbiconCollection
 import ovh.rwx.habbo.game.habbicon.UserHabbicon
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object HabbiconDao {
     fun getOrCreateCollection(name: String): Int = db {
@@ -36,9 +37,20 @@ object HabbiconDao {
         )
     }
 
-    fun upsertHabbicon(id: Int, collectionId: Int, name: String, purchasable: Boolean) {
+    /** Todas as coleções com o id e o habbicon-prêmio, numa query só (evita 2 consultas por coleção no boot). */
+    fun getCollectionRefs(): List<HabbiconCollectionRef> = db {
+        query<HabbiconCollectionRef>("SELECT id, name, reward_habbicon_id FROM habbicon_collections")
+    }
+
+    /**
+     * Insere/atualiza todos os habbicons numa ÚNICA ida ao banco. Antes era um INSERT por habbicon, em série: com um
+     * banco remoto (~125 ms por ida) 55 habbicons seguravam o carregamento do jogo por ~7 s a cada boot.
+     */
+    fun upsertHabbicons(rows: List<HabbiconUpsertRow>) {
+        if (rows.isEmpty()) return
+
         db {
-            update(
+            batchUpdate(
                 """
                 INSERT INTO habbicons
                     (id, collection_id, name, enabled, purchasable, price_credits, price_activity_points, activity_point_type)
@@ -49,24 +61,19 @@ object HabbiconDao {
                     enabled = 1,
                     purchasable = VALUES(purchasable)
                 """.trimIndent(),
-                mapOf(
-                    "id" to id,
-                    "collection_id" to collectionId,
-                    "name" to name,
-                    "purchasable" to purchasable
-                )
+                rows.map {
+                    mapOf(
+                        "id" to it.id,
+                        "collection_id" to it.collectionId,
+                        "name" to it.name,
+                        "purchasable" to it.purchasable
+                    )
+                }
             )
         }
     }
 
-    fun getCollectionRewardId(collectionId: Int): Int? = db {
-        queryOne<Int>(
-            "SELECT reward_habbicon_id FROM habbicon_collections WHERE id = :id",
-            mapOf("id" to collectionId)
-        )
-    }
-
-    fun setCollectionReward(collectionId: Int, habbiconId: Int) = WriteBehindManager.queue {
+    fun setCollectionReward(collectionId: Int, habbiconId: Int) = WriteBehindManager.queue(WriteKey("habbicon-collection", collectionId.toLong())) {
         db {
             update(
                 "UPDATE habbicon_collections SET reward_habbicon_id = :habbicon_id WHERE id = :collection_id",
@@ -103,7 +110,7 @@ object HabbiconDao {
         }
     }
 
-    fun updateUserHabbiconState(userId: Int, habbiconId: Int, state: Int) = WriteBehindManager.queue {
+    fun updateUserHabbiconState(userId: Int, habbiconId: Int, state: Int) = WriteBehindManager.queue(WriteKey.user(userId)) {
         db {
             update(
                 javaClass.classLoader.getResource("sql/habbicon/update_user_habbicon_state.sql").readText(),
@@ -116,7 +123,7 @@ object HabbiconDao {
         }
     }
 
-    fun updateUserHabbiconRecentIds(userId: Int, habbiconId: Int, recentIds: List<Int>) = WriteBehindManager.queue {
+    fun updateUserHabbiconRecentIds(userId: Int, habbiconId: Int, recentIds: List<Int>) = WriteBehindManager.queue(WriteKey.user(userId)) {
         db {
             update("DELETE FROM users_habbicon_recent WHERE user_id = :user_id", mapOf("user_id" to userId))
             recentIds.forEachIndexed { position, recentId ->
@@ -135,3 +142,9 @@ object HabbiconDao {
         )
     }
 }
+
+/** Coleção de habbicons como existe no banco, só o necessário para a sincronização dos assets. */
+data class HabbiconCollectionRef(val id: Int, val name: String, val rewardHabbiconId: Int?)
+
+/** Uma linha a inserir ou atualizar em `habbicons`. */
+data class HabbiconUpsertRow(val id: Int, val collectionId: Int, val name: String, val purchasable: Boolean)

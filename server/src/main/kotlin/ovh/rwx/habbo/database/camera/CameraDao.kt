@@ -22,13 +22,14 @@ package ovh.rwx.habbo.database.camera
 import ovh.rwx.habbo.database.sequence.HiLoSequence
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 object CameraDao {
     val cameraSequence = HiLoSequence("camera_pictures", blockSize = 100)
 
     fun savePictureDataToDatabase(userId: Int, fileName: String): Int {
         val id = cameraSequence.nextId()
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.user(userId)) {
             db {
                 update(
                     "INSERT INTO `camera_pictures` (`id`, `user_id`, `file_name`) VALUES (:id, :user_id, :file_name)",

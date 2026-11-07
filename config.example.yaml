@@ -10,6 +10,10 @@ database:
   password: root
   name: habbo
   timeout: '30000'
+  # Opcionais (úteis só com banco REMOTO): evitam o ping de validação do Hikari em conexões ociosas há mais de 500ms,
+  # que custa 1 ida extra ao banco por query. Sem estas chaves, o comportamento padrão do Hikari é mantido.
+  # alive_bypass_window_ms: 30000
+  # keepalive_time_ms: 15000
 encryption:
   diffie_hellman:
     key_size: '256'
@@ -100,3 +104,12 @@ stress_test: false
 #    - 192.168.0.0/16
 bot_ticket_prefix: "bot-"
 debug: false
+# Segredo JWT compartilhado com a CMS (mesmo valor do server.jwt_secret da CMS).
+# Habilita a API administrativa (/api/v1/admin/*) e o login unificado. Vazio = API admin desligada.
+jwt_secret: ""
+# Rank mínimo para acessar a API administrativa do webapp
+webapp_admin_min_rank: 4
+# Intervalo de amostragem das métricas do servidor em ms (padrão 1000); o histórico guarda 1 hora
+metrics_sample_interval_ms: 1000
+# Rank mínimo para executar ações na API admin (recarregar catálogo, alerta ao hotel etc.); padrão 7
+webapp_admin_action_min_rank: 7

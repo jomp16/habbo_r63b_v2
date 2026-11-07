@@ -79,6 +79,17 @@ data class HabboConfig(
     val botTicketPrefix: String = "bot-",
     @param:JsonProperty("debug")
     val debug: Boolean = false,
+    // Segredo JWT compartilhado com a CMS; vazio = API admin do webapp desligada
+    @param:JsonProperty("jwt_secret")
+    val jwtSecret: String = "",
+    @param:JsonProperty("webapp_admin_min_rank")
+    val webappAdminMinRank: Int = 4,
+    // Rank mínimo para executar AÇÕES na API admin (recarregar catálogo, alerta etc.)
+    @param:JsonProperty("webapp_admin_action_min_rank")
+    val webappAdminActionMinRank: Int = 7,
+    // Intervalo de amostragem das métricas do servidor (ms); o histórico guarda 1 h
+    @param:JsonProperty("metrics_sample_interval_ms")
+    val metricsSampleIntervalMs: Long = 1000,
     @param:JsonProperty("dynamic_dns")
     val dynamicDnsConfig: DynamicDnsConfig? = null,
 ) {

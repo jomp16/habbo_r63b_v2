@@ -19,6 +19,9 @@
 
 package ovh.rwx.habbo.communication.incoming.messenger
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -37,9 +40,10 @@ class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
     @HandlerR63A(IncomingR63A.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        // o messenger carrega em paralelo ao login; poll curto (antes 500ms por tentativa somava até 500ms de ociosidade)
         var attempts = 0
-        while (!habboSession.habboMessenger.initialized && attempts < 10) {
-            Thread.sleep(500)
+        while (!habboSession.habboMessenger.initialized && attempts < 200) {
+            Thread.sleep(25)
             attempts++
         }
         if (!habboSession.habboMessenger.initialized) return
@@ -61,16 +65,19 @@ class MessengerInitializeHandler {
             habboSession.sendHabboResponse(Outgoing.MESSENGER_FRIENDS, habboSession.habboMessenger.friends.values)
         }
 
-        MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
-            habboSession.sendResponse(
-                Outgoing.MESSENGER_CHAT,
-                OutgoingR63A.MESSENGER_CHAT,
-                MessengerChatData(
-                    id = it.first,
-                    message = it.second,
-                    diffTimestamp = it.third,
+        // lê e apaga as mensagens offline no banco: fora da thread do handler, para o init não esperar essa ida
+        HabboServer.applicationScope.launch(Dispatchers.IO) {
+            MessengerDao.getOfflineMessages(habboSession.userInformation.id).forEach {
+                habboSession.sendResponse(
+                    Outgoing.MESSENGER_CHAT,
+                    OutgoingR63A.MESSENGER_CHAT,
+                    MessengerChatData(
+                        id = it.first,
+                        message = it.second,
+                        diffTimestamp = it.third,
+                    )
                 )
-            )
+            }
         }
 
         habboSession.habboMessenger.notifyFriends()

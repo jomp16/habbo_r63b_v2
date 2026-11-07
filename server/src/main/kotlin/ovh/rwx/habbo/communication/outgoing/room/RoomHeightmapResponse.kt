@@ -39,4 +39,14 @@ class RoomHeightmapResponse {
             }
         }
     }
+
+    /**
+     * Heightmap antigo (cliente pós-shuffle de 2011, ex. RELEASE63-201110051250): em vez de int largura, int tamanho e
+     * shorts, o parser lê uma única string, uma fileira por linha (o R63A escreve esse mesmo corpo para o heightmap).
+     * Selecionado pelo override_method 'responseR63A' da linha ROOM_HEIGHTMAP da release.
+     */
+    @Response(Outgoing.ROOM_HEIGHTMAP)
+    fun responseR63A(habboResponse: HabboResponse, room: Room) {
+        habboResponse.writeUTF(room.roomModel.floorPlanString())
+    }
 }

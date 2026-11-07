@@ -23,7 +23,9 @@ import io.netty.channel.Channel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.game.FastFoodSession
@@ -40,6 +42,7 @@ import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.encryption.IHabboEncryption
 import ovh.rwx.habbo.game.habbicon.HabboHabbicon
 import ovh.rwx.habbo.game.misc.NotificationType
@@ -81,6 +84,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         internal set
     lateinit var userPreferences: UserPreferences
         internal set
+    /** Últimos pedidos de página do catálogo atendidos (chave -> nanoTime), para ignorar duplicatas em rajada do cliente. */
+    val recentCatalogPageRequests: MutableMap<String, Long> = ConcurrentHashMap()
     lateinit var habboSubscription: HabboSubscription
         internal set
     lateinit var habboBadge: HabboBadge
@@ -225,18 +230,32 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         userInformation = userInformation1
-        userStats = UserStatsDao.getUserStats(userInformation.id)
-        userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
+
+        // Estas leituras são independentes entre si: em paralelo custam 1 ida ao banco em vez de 4 em série
+        // (a thread do handler espera o lote; clothings é lazy e o handler do SSO a lê logo em seguida)
+        val userId = userInformation1.id
+        habboSubscription = HabboSubscription(this@HabboSession)
+        val (loadedStats, loadedPreferences, loadedFavorites) = runBlocking(Dispatchers.IO) {
+            val stats = async { UserStatsDao.getUserStats(userId) }
+            val preferences = async { UserPreferencesDao.getUserPreferences(userId) }
+            val favorites = async { RoomDao.getFavoritesRooms(userId).toMutableList() }
+            val clothings = async { userInformation1.clothings }
+            // o handler do SSO lê a assinatura (BUILDERS_SUBSCRIPTION_STATUS) logo em seguida: aquece aqui, em paralelo
+            val subscription = async { habboSubscription.buildersClubSubscription }
+            clothings.await()
+            subscription.await()
+            Triple(stats.await(), preferences.await(), favorites.await())
+        }
+        userStats = loadedStats
+        userPreferences = loadedPreferences
+        favoritesRooms = loadedFavorites
 
         if (userStats.lastOnline.toLocalDate().isBefore(LocalDate.now())) userStats.firstLoginOfDay = true
 
         userStats.lastOnline = LocalDateTime.now()
         userStats.lastOnlineDatabase = userStats.lastOnline
 
-        favoritesRooms = RoomDao.getFavoritesRooms(userInformation.id).toMutableList()
-
         habboMessenger = HabboMessenger(this@HabboSession)
-        habboSubscription = HabboSubscription(this@HabboSession)
         habboBadge = HabboBadge(this@HabboSession)
         habboInventory = HabboInventory(this@HabboSession)
         habboHabbicon = HabboHabbicon(this@HabboSession)
@@ -246,6 +265,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             launch { habboBadge.load() }
             launch { habboMessenger.load() }
             launch { habboHabbicon.load() }
+            // aquece as estatísticas do SnowWar (cacheadas) para o GAME_2_GET_ACCOUNT_GAME_STATUS não pagar a ida ao banco
+            launch { HabboServer.habboGame.snowWarManager.getPlayerStats(userId) }
             launch {
                 habboInventory.load()
 
@@ -256,8 +277,12 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         processLoginAchievements()
 
         // UserInformationDao.updateAuthTicket(userInformation, null)
-        UserInformationDao.saveInformation(userInformation, true, ip)
-        UserStatsDao.saveStats(userStats)
+        // write-behind por chave do usuário: login e logout do MESMO usuário rodam em ordem (o logout vem depois),
+        // enquanto usuários diferentes são persistidos em paralelo
+        WriteBehindManager.queue(WriteKey.user(userInformation1.id)) {
+            UserInformationDao.saveInformation(userInformation1, true, ip)
+            UserStatsDao.saveStats(userStats)
+        }
 
         HabboServer.pluginManager.executeEventAsync(UserLoginEvent(this))
 
@@ -285,8 +310,14 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             if (!isBot) {
                 userStats.lastOnlineDatabase = LocalDateTime.now()
 
-                BadgeDao.saveBadges(habboBadge.badges.values)
-                WriteBehindManager.flushSession(this, online = false, ip = channel.ip())
+                // close() roda na thread de I/O do Netty: nada de JDBC síncrono aqui (travava o event loop ~500ms).
+                // Enfileirado em ordem após o save do login; o snapshot dos badges é tirado agora.
+                val badgesSnapshot = habboBadge.badges.values.toList()
+                val closeIp = channel.ip()
+                WriteBehindManager.queue(WriteKey.user(userInformation.id)) {
+                    BadgeDao.saveBadges(badgesSnapshot)
+                    WriteBehindManager.flushSession(this, online = false, ip = closeIp)
+                }
 
                 habboMessenger.notifyFriends()
             }

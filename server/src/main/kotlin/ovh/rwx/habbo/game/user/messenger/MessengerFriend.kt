@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -36,69 +37,89 @@ data class MessengerFriend(val id: Int, val userId: Int, var relationship: Messe
     val userInformation: UserInformation?
         get() = UserInformationDao.getUserInformationById(userId)
 
-    @Suppress("DuplicatedCode")
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
+        val username: String
+        val gender: Int
+        val isOnline: Boolean
+        val followingAllowed: Boolean
+        val figure: String
+        val categoryId: Int
+        val motto: String
+        val lastAccess: String
+        val realName: String
+        val relType: Int
+
+        if (userId > 0) {
+            val info = userInformation ?: return
+            username = info.username
+            gender = if (info.gender == "M") 0 else 1
+            isOnline = online
+            followingAllowed = isOnline && habboSession?.currentRoom != null
+            figure = info.figure
+            categoryId = 0 // todo: add ability to add friend on custom category
+            motto = info.motto
+            lastAccess = if (isOnline) "" else UserStatsDao.getLastOnline(userId).format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS)
+            realName = info.realname
+            relType = relationship.type
+        } else {
+            // Grupo / stub legado
+            username = "GRUPO TESTE #1"
+            gender = 1
+            isOnline = true
+            followingAllowed = false
+            figure = "b0513s48104"
+            categoryId = 1
+            motto = ""
+            lastAccess = ""
+            realName = ""
+            relType = 0
+        }
+
         habboResponse.apply {
             writeInt(userId)
+            writeUTF(username)
+            writeInt(gender)
+            writeBoolean(isOnline)
+            writeBoolean(followingAllowed)
+            writeUTF(figure)
+            writeInt(categoryId)
+            writeUTF(motto)
 
-            if (userId > 0) {
-                userInformation?.let {
-                    writeUTF(it.username)
-                    writeInt(if (it.gender == "M") 0 else 1)
-                    writeBoolean(online)
-                    writeBoolean(online && habboSession?.currentRoom != null) // followingAllowed
-                    writeUTF(it.figure)
-                    writeInt(0) // todo: add ability to add friend on custom category
-                    writeUTF(it.motto)
-                    writeUTF(if (online) "" else UserStatsDao.getUserStats(userId).lastOnline.format(HabboServer.DATE_TIME_FORMATTER_WITH_HOURS))
-                    writeUTF(it.realname)
-                    writeBoolean(true) // allows offline messaging
-                    writeBoolean(false) // useless
-                    writeBoolean(false) // uses phone
-                    writeShort(relationship.type) // relationship type
-                }
-            } else {
-                // todo: group, this is a stub
-                writeUTF("GRUPO TESTE #1")
-                writeInt(1)
+            // 1) lastAccess: exibido até 2012-02-21 (removido no BUILD 201202211117)
+            if (isVersionBefore(2012, 2, 21)) {
+                writeUTF(lastAccess)
+            }
+
+            // 2) realName: adicionado em 2009-11-13 (BUILD 200911131255)
+            if (isVersionAtLeast(2009, 11, 13)) {
+                writeUTF(realName)
+            }
+
+            // 3) facebookId: adicionado em 2011-05-09 (BUILD 201105092307)
+            if (isVersionAtLeast(2011, 5, 9)) {
+                writeUTF("") // facebookId
+            }
+
+            // 4) persistedMessageUser (allows offline messaging): adicionado em 2012-04-18 (BUILD 201204181558)
+            if (isVersionAtLeast(2012, 4, 18)) {
                 writeBoolean(true)
-                writeBoolean(false)
-                writeUTF("b0513s48104")
-                writeInt(1)
-                writeUTF("")
-                writeUTF("")
-                writeUTF("")
-                writeBoolean(true) // allows offline messaging
-                writeBoolean(false) // useless
-                writeBoolean(false) // uses phone
-                writeShort(0) // relationship type
+            }
+
+            // 5) vipMember & pocketHabboUser: adicionados em 2012-11-05 (BUILD 201211051241)
+            if (isVersionAtLeast(2012, 11, 5)) {
+                writeBoolean(false) // vipMember
+                writeBoolean(false) // pocketHabboUser
+            }
+
+            // 6) relationshipStatus: adicionado em 2013-02-04 (BUILD 201302042303)
+            if (isVersionAtLeast(2013, 2, 4)) {
+                writeShort(relType)
             }
         }
     }
 
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            userInformation?.let {
-                writeInt(it.id)
-                writeUTF(it.username)
-                writeInt(if (it.gender == "M") 0 else 1)
-                writeBoolean(online)
-                writeBoolean(online && habboSession?.currentRoom != null)
-                writeUTF(it.figure)
-                writeInt(0) // category
-                writeUTF(it.motto)
-                writeUTF(if (online) "" else "Último login...") // formatar data
-
-                if (isVersionAtLeast(2009, 11, 13)) {
-                    writeUTF(it.realname)
-                }
-
-                // Só envia o Facebook ID (11º campo) se for build de Maio de 2011 em diante
-                if (isVersionAtLeast(2011, 5, 9)) {
-                    writeUTF("") // facebookId
-                }
-            }
-        }
+        serializeHabboResponse(habboResponse, *params)
     }
 
     fun serializeHabboResponseSearch(habboResponse: HabboResponse) {

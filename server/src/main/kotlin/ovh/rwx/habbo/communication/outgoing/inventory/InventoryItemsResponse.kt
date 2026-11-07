@@ -23,37 +23,28 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.item.user.UserItem
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class InventoryItemsResponse {
+    // type: categoria do lote (S = floor, I = wall); só trafega de 2011-02-25 até 2013-05-22
     @Response(Outgoing.INVENTORY_ITEMS)
-    fun response(habboResponse: HabboResponse, items: Collection<UserItem>) {
-        habboResponse.apply {
-            writeInt(1) // totalFragments
-            writeInt(0) // fragmentNo
-            writeInt(items.size)
-
-            items.forEach { habboResponse.serialize(it) }
-        }
-    }
-
     @ResponseR63A(OutgoingR63A.INVENTORY_ITEMS)
-    fun responseR63A(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
-        // ["logError(Error in update receiver \"com.sulake.bootstrap::CoreCommunicationManager\": Unknown inventory item category: \"IIM\")"]
+    fun response(habboResponse: HabboResponse, type: String, items: Collection<UserItem>) {
         habboResponse.apply {
             // Na build 201102252317, os fragments entraram oficialmente no cliente!
             if (isVersionAtLeast(2011, 2, 25)) {
-                writeUTF(type) // S = floor, I = wall - categoryType
+                if (isVersionBefore(2013, 5, 22)) writeUTF(type)
                 writeInt(1) // totalFragments
                 writeInt(0) // fragmentNo
             }
 
             writeInt(items.size)
 
-            items.forEach { habboResponse.serialize(it) }
+            items.forEach { serialize(it) }
         }
     }
 }

@@ -143,6 +143,15 @@ class HabboResponse(
         }
     }
 
+    /**
+     * Layout do R63A explícito, para os métodos `responseR63A` usados como override_method em clients pós-shuffle que
+     * ainda lêem o formato antigo (RELEASE63-201110051250): neles a resposta sai pelo enum Outgoing, `outgoingR63A` é nulo e
+     * `serialize` escolheria o layout moderno.
+     */
+    fun serializeR63A(habboResponseSerialize: IHabboResponseSerialize, vararg params: Any = arrayOf()) {
+        habboResponseSerialize.serializeHabboResponseR63A(this, *params)
+    }
+
     override fun toString(): String {
         return debugString.toString()
     }

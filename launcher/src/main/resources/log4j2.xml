@@ -20,10 +20,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <Configuration shutdownHook="disable" status="WARN">
     <Appenders>
-        <!-- The TUI owns the terminal. The appender sends plain text over its Unix socket. -->
-        <!--<UnixSocket name="TuiLog" path="${sys:habbo.tui.socket:-/tmp/habbo-r63b.sock}"
-                    pattern="%d{dd/MM/yyyy HH:mm:ss:SSS}"/>-->
-
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
                     pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss:SSS} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
@@ -32,6 +28,11 @@
         <!-- Plain-text stress-test metrics file (truncated on each start) -->
         <File name="StressTestFile" fileName="stress-test.log" append="false">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} [%-5level] %msg%n"/>
+        </File>
+
+        <!-- Dedicated slow-tick log file for room latency profiling -->
+        <File name="SlowTickFile" fileName="room-slow-ticks.log" append="true">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} [%-5level] (%t) %msg%n"/>
         </File>
     </Appenders>
     <loggers>
@@ -47,9 +48,14 @@
             <AppenderRef ref="StressTestFile"/>
         </Logger>
 
+        <!-- Dedicated slow-tick watchdog file (spikes > 5ms) -->
+        <Logger name="ovh.rwx.habbo.room.slowtick" level="debug" additivity="false">
+            <AppenderRef ref="SlowTickFile"/>
+        </Logger>
+
         <!-- Suppress per-packet incoming/outgoing TRACE flood on the console -->
         <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>-->
-        <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>-->
+        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>
 
         <Logger name="ovh.rwx.habbo.camera" level="debug"/>
         <Logger name="io.netty" level="error"/>

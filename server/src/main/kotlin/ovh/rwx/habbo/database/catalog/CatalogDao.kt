@@ -29,6 +29,7 @@ import ovh.rwx.habbo.game.user.subscription.ClubType
 import java.util.concurrent.atomic.AtomicInteger
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 
 private val jsonMapper = jacksonObjectMapper()
 
@@ -58,7 +59,7 @@ object CatalogDao {
             .map { it.level to it.itemName.trim() }
     }
 
-    fun updateLimitedSells(catalogItem: CatalogItem) = WriteBehindManager.queue {
+    fun updateLimitedSells(catalogItem: CatalogItem) = WriteBehindManager.queue(WriteKey("catalog-item", catalogItem.id.toLong())) {
         db {
             update(
                 "UPDATE `catalog_items` SET `limited_sells` = :limited_sells WHERE `id` = :id",

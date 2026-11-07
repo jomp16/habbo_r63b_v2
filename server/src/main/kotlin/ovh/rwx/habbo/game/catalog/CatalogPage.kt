@@ -24,7 +24,6 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
-import ovh.rwx.habbo.communication.isVersionBetween
 
 data class CatalogPage(
     val id: Int,
@@ -64,12 +63,14 @@ data class CatalogPage(
             val club = params[1] as Boolean
 
             // Evolução do CatalogIndexMessageEvent (nó = NodeData):
-            //  - 2011-08-17..2012-02-08: bool + int color + int icon + int pageId + 1 string + filhos
+            //  - 2009-06-16..2011-03-24 (WEDGIE VL64): bool + int color + int icon + int pageId + 1 string
+            //    + bool "disabled" (lido APÓS a localization e ANTES da contagem de filhos) + filhos
+            //  - 2011-03-25..2012-02-08: idem, sem o bool "disabled" (primeiro build: RELEASE63-32433-32405-201103252315)
             //  - 2012-02-08..2014-01-30: idem, porém 2 strings (pageName + localization)
             //  - >= 2014-01-30: bool + int icon + int pageId + 2 strings + LOOP[Int] itemIds + filhos
             writeBoolean(visible)
-            if (isVersionBetween(2011, 8, 17, 2014, 1, 30)) {
-                writeInt(0) // icon color (era 2011-08-17..2014-01-30)
+            if (isVersionBefore(2014, 1, 30)) {
+                writeInt(0) // icon color (NodeData.color: lido em todos os builds de 2009 até 2014-01-30; índice 0..11)
             }
             writeInt(iconImage)
             writeInt(if (isVersionAtLeast(2012, 2, 8) && pageLayout == "category") -1 else id)
@@ -84,6 +85,10 @@ data class CatalogPage(
                 writeUTF(displayName)
             } else {
                 writeUTF(displayName)
+            }
+
+            if (isVersionBefore(2011, 3, 25)) {
+                writeBoolean(false) // NodeData.disabled (RELEASE34..RELEASE63-32374-32364-201103232308)
             }
 
             if (isVersionAtLeast(2014, 1, 30)) {

@@ -23,12 +23,31 @@ import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
+import ovh.rwx.habbo.metrics.ServerMetrics
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
 object DatabaseManager {
     lateinit var jdbi: Jdbi
         private set
+
+    private val slowDbLog = org.slf4j.LoggerFactory.getLogger("ovh.rwx.habbo.room.slowtick")
+    const val SLOW_DB_NANOS = 20_000_000L
+
+    /**
+     * Chamado ao fim de toda db { } / dbTransaction { }: alimenta a métrica de latência do banco (inclui a espera por
+     * uma conexão do pool) e, acima do limite, registra no log de lentidão com os dois frames de quem a originou.
+     */
+    fun onQueryFinished(startNano: Long) {
+        val elapsed = System.nanoTime() - startNano
+        ServerMetrics.recordDbQuery(elapsed)
+        if (elapsed < SLOW_DB_NANOS || !slowDbLog.isWarnEnabled) return
+        val callers = Throwable().stackTrace.asSequence()
+            .filter { it.className.startsWith("ovh.rwx") && !it.className.contains("DatabaseManager") && !it.className.contains("JdbiExtensions") }
+            .take(2)
+            .joinToString(" <- ") { "${it.className.substringAfterLast('.')}.${it.methodName}" }
+        slowDbLog.warn("[slow-db] {}ms {} (thread {})", "%.1f".format(elapsed / 1_000_000.0), callers, Thread.currentThread().name)
+    }
 
     private val sqlCache = ConcurrentHashMap<String, String>()
 
@@ -53,16 +72,28 @@ object DatabaseManager {
 /**
  * Executes a block of database operations within a Jdbi handle.
  */
-inline fun <R> db(crossinline task: DbSession.() -> R): R =
-    DatabaseManager.jdbi.withHandle<R, Exception> { handle ->
-        DbSession(handle).task()
+inline fun <R> db(crossinline task: DbSession.() -> R): R {
+    val start = System.nanoTime()
+    try {
+        return DatabaseManager.jdbi.withHandle<R, Exception> { handle ->
+            DbSession(handle).task()
+        }
+    } finally {
+        DatabaseManager.onQueryFinished(start)
     }
+}
 
 /**
  * Executes a block of database operations within a transactional Jdbi handle.
  */
-inline fun <R> dbTransaction(crossinline task: DbSession.() -> R): R =
-    DatabaseManager.jdbi.inTransaction<R, Exception> { handle ->
-        DbSession(handle).task()
+inline fun <R> dbTransaction(crossinline task: DbSession.() -> R): R {
+    val start = System.nanoTime()
+    try {
+        return DatabaseManager.jdbi.inTransaction<R, Exception> { handle ->
+            DbSession(handle).task()
+        }
+    } finally {
+        DatabaseManager.onQueryFinished(start)
     }
+}
 

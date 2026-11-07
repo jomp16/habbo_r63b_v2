@@ -78,16 +78,14 @@ class UserChatTask(
             if (shouldHide) return
 
             // Se o wired não esconde, ele vira um sussurro privado por padrão em muitas builds
-            roomUser.habboSession.let {
-                sendResponse(
-                    it,
-                    RoomChatType.WHISPER,
-                    roomUser.virtualID,
-                    filterMessage,
-                    speechEmotion,
-                    bubble
-                )
-            }
+            sendResponse(
+                roomUser.habboSession,
+                RoomChatType.WHISPER,
+                roomUser.virtualID,
+                filterMessage,
+                speechEmotion,
+                bubble
+            )
             return
         }
 

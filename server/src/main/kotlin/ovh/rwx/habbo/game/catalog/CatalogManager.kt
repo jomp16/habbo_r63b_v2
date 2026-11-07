@@ -25,8 +25,6 @@ import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.subscription.ClubType
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Gerenciador central do Catálogo do Habbo.
@@ -41,17 +39,32 @@ class CatalogManager {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     // Coleções compatíveis para acesso público externo
-    val catalogPages: MutableList<CatalogPage> = CopyOnWriteArrayList()
-    val catalogItems: MutableList<CatalogItem> = CopyOnWriteArrayList()
-    val catalogClubOffers: MutableList<CatalogClubOffer> = CopyOnWriteArrayList()
-    val catalogDeals: MutableList<CatalogDeal> = CopyOnWriteArrayList()
-    val recyclerRewards: ConcurrentHashMap<Int, List<String>> = ConcurrentHashMap()
+    // Snapshots imutáveis trocados atomicamente no load(): leitores nunca veem estado vazio/parcial
+    @Volatile
+    var catalogPages: List<CatalogPage> = emptyList()
+        private set
+    @Volatile
+    var catalogItems: List<CatalogItem> = emptyList()
+        private set
+    @Volatile
+    var catalogClubOffers: List<CatalogClubOffer> = emptyList()
+        private set
+    @Volatile
+    var catalogDeals: List<CatalogDeal> = emptyList()
+        private set
+    @Volatile
+    var recyclerRewards: Map<Int, List<String>> = emptyMap()
+        private set
 
     // Índices de busca O(1) de alta performance
-    private val pagesById: ConcurrentHashMap<Int, CatalogPage> = ConcurrentHashMap()
-    private val itemsById: ConcurrentHashMap<Int, CatalogItem> = ConcurrentHashMap()
-    private val itemsByPageId: ConcurrentHashMap<Int, List<CatalogItem>> = ConcurrentHashMap()
-    private val dealsById: ConcurrentHashMap<Int, CatalogDeal> = ConcurrentHashMap()
+    @Volatile
+    private var pagesById: Map<Int, CatalogPage> = emptyMap()
+    @Volatile
+    private var itemsById: Map<Int, CatalogItem> = emptyMap()
+    @Volatile
+    private var itemsByPageId: Map<Int, List<CatalogItem>> = emptyMap()
+    @Volatile
+    private var dealsById: Map<Int, CatalogDeal> = emptyMap()
 
     val purchaseService: CatalogPurchaseService = CatalogPurchaseService()
     val clubService: CatalogClubService = CatalogClubService(this)
@@ -76,36 +89,20 @@ class CatalogManager {
             .groupBy { it.first }
             .mapValues { it.value.map { pair -> pair.second } }
 
-        // Atualiza índices O(1)
-        pagesById.clear()
-        loadedPages.forEach { pagesById[it.id] = it }
+        // Constrói os índices O(1) fora das referências ativas e troca de uma vez (sem clear/refill)
+        val newItemsByPageId = loadedItems.groupBy { it.pageId }
+            .mapValues { (_, items) -> items.sortedBy { it.id }.sortedBy { it.orderNum } }
 
-        itemsById.clear()
-        loadedItems.forEach { itemsById[it.id] = it }
+        pagesById = loadedPages.associateBy { it.id }
+        itemsById = loadedItems.associateBy { it.id }
+        itemsByPageId = newItemsByPageId
+        dealsById = loadedDeals.associateBy { it.id }
 
-        itemsByPageId.clear()
-        loadedItems.groupBy { it.pageId }.forEach { (pageId, items) ->
-            itemsByPageId[pageId] = items.sortedBy { it.id }.sortedBy { it.orderNum }
-        }
-
-        dealsById.clear()
-        loadedDeals.forEach { dealsById[it.id] = it }
-
-        // Atualiza coleções públicas thread-safe
-        catalogPages.clear()
-        catalogPages.addAll(loadedPages)
-
-        catalogItems.clear()
-        catalogItems.addAll(loadedItems)
-
-        catalogClubOffers.clear()
-        catalogClubOffers.addAll(loadedClubOffers)
-
-        catalogDeals.clear()
-        catalogDeals.addAll(loadedDeals)
-
-        recyclerRewards.clear()
-        recyclerRewards.putAll(loadedRewards)
+        catalogPages = loadedPages.toList()
+        catalogItems = loadedItems.toList()
+        catalogClubOffers = loadedClubOffers.toList()
+        catalogDeals = loadedDeals.toList()
+        recyclerRewards = loadedRewards
 
         log.info("Loaded {} catalog pages!", catalogPages.size - 2)
         log.info("Loaded {} catalog items!", catalogItems.size)

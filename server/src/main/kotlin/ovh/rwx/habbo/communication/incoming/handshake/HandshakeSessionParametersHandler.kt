@@ -20,15 +20,19 @@
 package ovh.rwx.habbo.communication.incoming.handshake
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class HandshakeSessionParametersHandler {
+    @Handler(Incoming.HANDSHAKE_SESSION_PARAMS, requiredAuth = false)
     @HandlerR63A(IncomingR63A.HANDSHAKE_SESSION_PARAMS, requiredAuth = false)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(Outgoing.HANDSHAKE_SESSION_PARAMS, OutgoingR63A.HANDSHAKE_SESSION_PARAMS)
     }
 }

@@ -24,6 +24,7 @@ import ovh.rwx.habbo.game.user.subscription.Subscription
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import java.time.LocalDateTime
 
 object SubscriptionDao {
@@ -109,7 +110,7 @@ object SubscriptionDao {
     fun updateBuildersClubSubscription(subscription: Subscription?) {
         if (subscription == null) return
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey("subscription", subscription.id.toLong())) {
             db {
                 update(
                     javaClass.classLoader.getResource("sql/subscription/update_subscription_expire_with_limit.sql")
@@ -130,7 +131,7 @@ object SubscriptionDao {
 
         subscription.itemsUsed = itemsUsed // estado em memória permanece síncrono
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey("subscription", subscription.id.toLong())) {
             db {
                 update(
                     javaClass.classLoader.getResource("sql/subscription/update_builders_items_used.sql").readText(),

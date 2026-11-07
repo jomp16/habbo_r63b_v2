@@ -20,15 +20,27 @@
 package ovh.rwx.habbo.communication.incoming.room
 
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
+import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomAdvertisementHandler {
+    @Handler(Incoming.ROOM_ADVERTISEMENT)
     @HandlerR63A(IncomingR63A.ROOM_ADVERTISEMENT)
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
+        habboSession.sendResponse(
+            Outgoing.ROOM_ADVERTISEMENT,
+            OutgoingR63A.ROOM_ADVERTISEMENT,
+            "", ""
+        )
+    }
+
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        habboSession.sendHabboResponse(OutgoingR63A.ROOM_ADVERTISEMENT, "", "")
+        handle(habboSession, habboRequest)
     }
 }

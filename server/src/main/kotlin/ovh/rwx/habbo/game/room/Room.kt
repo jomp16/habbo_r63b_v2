@@ -19,10 +19,13 @@
 
 package ovh.rwx.habbo.game.room
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
@@ -32,10 +35,13 @@ import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.database.group.GroupDao
+import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.database.room.RoomBanDao
 import ovh.rwx.habbo.database.room.RoomBanEntry
 import ovh.rwx.habbo.database.room.RoomDao
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.RoomGameKind
@@ -71,6 +77,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val slowTickLog = LoggerFactory.getLogger("ovh.rwx.habbo.room.slowtick")
 
     // region Managers
     val networkDispatcher = RoomNetworkDispatcher(this)
@@ -144,13 +151,31 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val loadedGroups: MutableSet<Group> by lazy { CopyOnWriteArraySet() }
 
     // region Initialization
+    @Synchronized
     fun initialize() {
         if (initialized) return
 
-        itemManager.loadItems()
+        // Leituras de banco independentes em paralelo (antes eram 7 idas em série na thread do handler):
+        // fase 1 = itens(+wired) ‖ variáveis da sala ‖ bans ‖ pets; fase 2 = variáveis dos mobis (precisam dos ids dos itens)
+        val loadPets = roomData.allowPets
+        val (roomVariables, furniVariables, pets) = runBlocking(Dispatchers.IO) {
+            val itemsJob = async { itemManager.loadItems() }
+            val roomVarsJob = async { wiredVariableManager.fetchRoomVariables() }
+            val bansJob = async { bannedUsers.size }
+            val petsJob = async { if (loadPets) PetDao.getPetsByRoomId(roomData.id) else emptyList() }
+
+            itemsJob.await()
+            val furniVarsJob = async { wiredVariableManager.fetchFurniVariables() }
+            val wiredJob = async { itemManager.preloadWiredData() }
+
+            bansJob.await()
+            wiredJob.await()
+            Triple(roomVarsJob.await(), furniVarsJob.await(), petsJob.await())
+        }
+
         roomGamemap = RoomGamemap(this)
         itemManager.triggerItems()
-        wiredVariableManager.loadPersistentVariables()
+        wiredVariableManager.loadPersistentVariables(roomVariables, furniVariables)
 
         if (itemManager.items.values.any { it.furnishing.interactionType.roomGameKind == RoomGameKind.BATTLE_BANZAI }) {
             gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
@@ -158,8 +183,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         group?.let { loadedGroups.add(it) }
 
-        if (roomData.allowPets) {
-            userManager.loadPets()
+        if (loadPets) {
+            userManager.loadPets(pets)
         }
 
         initialized = true
@@ -207,9 +232,14 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 val elapsedNanos = System.nanoTime() - startNano
                 val elapsedMs = elapsedNanos / 1_000_000
 
-                tickMonitor.onTick(elapsedMs, isMajorTick)
+                tickMonitor.onTick(startNano, elapsedNanos, isMajorTick)
 
-                delay((50L - elapsedMs).coerceAtLeast(1L).milliseconds)
+                val delayMs = (50L - elapsedMs).coerceAtLeast(1L)
+                val delayStartNano = System.nanoTime()
+                delay(delayMs.milliseconds)
+
+                // quanto acordou depois do que pediu: pool ocupado, GC ou safepoint (o tick em si não entra nessa conta)
+                tickMonitor.onSchedulingLag((System.nanoTime() - delayStartNano - delayMs * 1_000_000L).coerceAtLeast(0L))
             }
         }
     }
@@ -250,20 +280,68 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     // region Tick Processing
     private fun processRoomTick(isMajorTick: Boolean) {
+        val t0 = System.nanoTime()
+
         // High-frequency tasks run every tick (50ms)
         drainQueue(highFrequencyQueue)
+        val t1 = System.nanoTime()
 
         // Major tick tasks run every 10th tick (500ms)
         if (isMajorTick) drainQueue(majorTickQueue)
+        val t2 = System.nanoTime()
 
         processWiredsAndGames(isMajorTick)
-        processItems(isMajorTick)
+        val t3 = System.nanoTime()
 
+        processItems(isMajorTick)
+        val t4 = System.nanoTime()
+
+        var t5 = t4
+        var t6 = t4
+        var t7 = t4
         if (isMajorTick) {
             roomTimer.incrementAndGet()
             processHostingAchievement()
+            t5 = System.nanoTime()
+
             processEntities()
+            t6 = System.nanoTime()
+
             checkEmptyRoomUnload()
+            t7 = System.nanoTime()
+        }
+
+        val totalNanos = t7 - t0
+        if (totalNanos > 5_000_000L && slowTickLog.isWarnEnabled) {
+            val totalMs = totalNanos / 1_000_000.0
+            val highMs = (t1 - t0) / 1_000_000.0
+            val majorMs = (t2 - t1) / 1_000_000.0
+            val wiredMs = (t3 - t2) / 1_000_000.0
+            val itemsMs = (t4 - t3) / 1_000_000.0
+            val hostingMs = (t5 - t4) / 1_000_000.0
+            val entitiesMs = (t6 - t5) / 1_000_000.0
+            val unloadMs = (t7 - t6) / 1_000_000.0
+            slowTickLog.warn(
+                "[slow-tick] room={} tick={} isMajor={} total={}ms (highQueue={}ms, majorQueue={}ms, wireds={}ms, items={}ms, hosting={}ms, entities={}ms, unload={}ms)",
+                roomData.id,
+                tickCounter,
+                isMajorTick,
+                "%.2f".format(totalMs),
+                "%.2f".format(highMs),
+                "%.2f".format(majorMs),
+                "%.2f".format(wiredMs),
+                "%.2f".format(itemsMs),
+                "%.2f".format(hostingMs),
+                "%.2f".format(entitiesMs),
+                "%.2f".format(unloadMs)
+            )
+        }
+    }
+
+    private fun logSlowSection(label: String, startNano: Long) {
+        val elapsed = System.nanoTime() - startNano
+        if (elapsed > 5_000_000L && slowTickLog.isWarnEnabled) {
+            slowTickLog.warn("[slow-section] room={} {} took {}ms", roomData.id, label, "%.2f".format(elapsed / 1_000_000.0))
         }
     }
 
@@ -271,7 +349,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         val count = queue.size
         repeat(count) {
             val task = queue.poll() ?: return
+            val start = System.nanoTime()
             task.executeTask(this)
+            logSlowSection("task ${task.javaClass.simpleName}", start)
         }
     }
 
@@ -337,7 +417,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 continue
             }
 
+            val tickStart = System.nanoTime()
             entity.processTick()
+            logSlowSection("entity.processTick ${entity.javaClass.simpleName}#${entity.virtualID}", tickStart)
 
             if (entity.updateNeeded) {
                 needingUpdate.add(entity)
@@ -346,7 +428,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         if (needingUpdate.isNotEmpty()) {
+            val sendStart = System.nanoTime()
             sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, needingUpdate)
+            logSlowSection("sendResponse ROOM_USERS_STATUSES (${needingUpdate.size} entities)", sendStart)
             needingUpdate.forEach { it.updateNeeded = false }
         }
     }
@@ -405,15 +489,31 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     }
 
     fun saveRoom() {
-        RoomDao.updateRoomData(roomData)
-        group?.let { GroupDao.updateGroupData(it.groupData) }
-        itemManager.savePendingItems()
-        wiredVariableManager.savePersistentVariables()
+        val pendingItems = itemManager.drainItemsToSave()
+        val dimmer = itemManager.roomDimmer?.takeIf { pendingItems.contains(it.roomItem) }
+        dimmer?.let { ItemDao.saveDimmer(it) }
 
-        // Save pet positions
-        userManager.entities.values.filterIsInstance<RoomPet>().forEach { roomPet ->
-            roomPet.syncPosition()
-            PetDao.savePet(roomPet.petData)
+        val petsToSave = userManager.entities.values.filterIsInstance<RoomPet>().map {
+            it.syncPosition()
+            it.petData
+        }
+
+        group?.let { GroupDao.updateGroupData(it.groupData) }
+        wiredVariableManager.savePersistentVariables()
+        petsToSave.forEach { PetDao.savePet(it) }
+
+        // grava a linha da sala e as linhas dos itens (que apontam para a sala via room_id): declara ambos
+        WriteBehindManager.queue(WriteKey.items(pendingItems.map { it.id }) + WriteKey.room(roomData.id)) {
+            try {
+                RoomDao.updateRoomData(roomData)
+                if (pendingItems.isNotEmpty()) {
+                    RoomDao.saveItems(roomData.id, pendingItems)
+                    val wiredsToSave = pendingItems.filter { it.furnishing.interactionType.isWired && it.wiredData != null }
+                    if (wiredsToSave.isNotEmpty()) ItemDao.saveWireds(wiredsToSave)
+                }
+            } catch (e: Exception) {
+                log.error("Failed to save room data asynchronously for room ${roomData.id}", e)
+            }
         }
     }
 
@@ -423,6 +523,51 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             val enterRoom = params.getOrNull(1) as? Boolean ?: false
             val userCount = userManager.entities.values.filterIsInstance<RoomUser>().size
             val groupData = group?.groupData
+
+            if (isVersionBefore(2012, 10, 15)) {
+                // GuestRoomData de 2009-06 a 2012-10, uma só função para o pré-shuffle (R63A) e o pós-shuffle (habbo-timeline
+                // ROOM_INFO incoming; RELEASE63-201110051250 _SafeStr_1994 e RELEASE63-201207040943 _SafeStr_2328, verificados no AS3).
+                // Transições: 2009-08-21 category + string, 2009-11-13 allowPets, 2010-12-03 (wrapper), 2011-04-18 allowPetsEat,
+                // 2011-09-22 groupId, 2011-10-03 groupName + badge, 2011-10-24 ownerId, 2011-11-16 allowTrading Boolean ->
+                // tradeState Int, 2012-05-14 showOwnerName, 2012-10-15 o "event" sai e o nome passa a vir antes do Boolean (abaixo).
+                writeInt(roomData.id)
+                writeBoolean(false) // event
+                writeUTF(roomData.name)
+                if (isVersionAtLeast(2012, 5, 14)) writeBoolean(true) // showOwnerName
+                if (isVersionAtLeast(2011, 10, 24)) writeInt(roomData.ownerId)
+                writeUTF(roomData.ownerName)
+                writeInt(roomData.state.state) // doorMode: 1=doorbell, 2=password
+                writeInt(userCount)
+                writeInt(roomData.usersMax)
+                writeUTF(roomData.description)
+                if (isVersionAtLeast(2011, 11, 16)) {
+                    writeInt(0) // srchSpecPrm
+                    writeInt(roomData.tradeState)
+                } else {
+                    writeInt(roomData.tradeState) // srchSpecPrm
+                    writeBoolean(roomData.tradeState == 1) // allowTrading
+                }
+                writeInt(roomData.score)
+                if (isVersionAtLeast(2009, 8, 21)) writeInt(roomData.category)
+                if (isVersionAtLeast(2011, 9, 22)) writeInt(groupData?.id ?: 0) // >0 faz o cliente pedir os dados do grupo
+                if (isVersionAtLeast(2011, 10, 3)) {
+                    writeUTF(groupData?.name ?: "")
+                    writeUTF(groupData?.badge ?: "")
+                }
+                if (isVersionAtLeast(2009, 8, 21)) writeUTF("") // eventCreationTime, depois sem uso na UI
+
+                writeInt(roomData.tags.size)
+                roomData.tags.forEach { writeUTF(it) }
+
+                // miniatura (ícone de quarto antigo): bg, fg, quantidade
+                writeInt(1)
+                writeInt(0)
+                writeInt(0)
+                if (isVersionAtLeast(2009, 11, 13)) writeBoolean(roomData.allowPets)
+                if (isVersionAtLeast(2011, 4, 18)) writeBoolean(roomData.allowPetsEat)
+                return@apply
+            }
+
             // GuestRoomData antigo (2013-05-22 _SafeStr_1749 == 2014-12-10 _SafeStr_2293, verificado no AS3);
             // o layout morre antes de PRODUCTION-201512012203, que já lê o bitmask condicional moderno
             val oldLayout = isVersionBefore(2015, 12, 1)
@@ -487,45 +632,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
     }
 
-    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
-        habboResponse.apply {
-            writeInt(roomData.id)
-            writeBoolean(false) // is event
-            writeUTF(roomData.name)
-            writeUTF(roomData.ownerName)
-            writeInt(roomData.state.state)
-            writeInt(userManager.entities.values.filterIsInstance<RoomUser>().size)
-            writeInt(roomData.usersMax)
-            writeUTF(roomData.description)
-            writeInt(roomData.tradeState) // srchSpecPrm
-            writeBoolean(roomData.tradeState == 1) // allowTrading
-            writeInt(roomData.score)
-
-            // Revelação R37: Categoria e Tempo de Evento entraram em Agosto de 2009!
-            if (isVersionAtLeast(2009, 8, 21)) {
-                writeInt(roomData.category)
-                writeUTF("") // eventCreationTime
-            }
-
-            writeInt(roomData.tags.size)
-            roomData.tags.forEach { writeUTF(it) }
-
-            // A Classe de Miniaturas (Ícones de Quarto antigos do Shockwave)
-            // Isso existe em todas as versões (O LOOP de Int/Int dentro do trace)
-            // Mandar '0' no bg_count aborta a classe lindamente.
-            writeInt(1) // bg
-            writeInt(0) // fg
-            writeInt(0) // count
-
-            // Revelação R40: Animais foram liberados nos quartos em Nov/2009
-            if (isVersionAtLeast(2009, 11, 13)) {
-                writeBoolean(roomData.allowPets)
-            }
-
-            if (isVersionAtLeast(2011, 4, 18)) {
-                writeBoolean(roomData.allowPetsEat)
-            }
-        }
-    }
+    // O GuestRoomData tem um só layout versionado (serializeHabboResponse): o pré-shuffle usa o mesmo corpo.
+    override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) =
+        serializeHabboResponse(habboResponse, *params)
     // endregion
 }

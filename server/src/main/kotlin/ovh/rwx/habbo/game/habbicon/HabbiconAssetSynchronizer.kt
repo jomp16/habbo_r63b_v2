@@ -25,6 +25,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
+import ovh.rwx.habbo.database.habbicon.HabbiconUpsertRow
 import java.net.URI
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -63,13 +64,19 @@ object HabbiconAssetSynchronizer {
                 .filter { it.id > 0 && !it.name.isNullOrBlank() }
                 .groupBy { it.name!!.substringBefore('_') }
 
+            // Uma consulta para todas as coleções e um lote para todos os habbicons: cada ida ao banco custa ~125 ms
+            // com banco remoto, e isto roda a cada boot, dentro do carregamento do jogo (antes: ~60 idas em série)
+            val knownCollections = HabbiconDao.getCollectionRefs().associateBy { it.name }
+            val rows = ArrayList<HabbiconUpsertRow>()
+
             grouped.forEach { (collectionName, entries) ->
-                val collectionId = HabbiconDao.getOrCreateCollection(collectionName)
-                val rewardId = HabbiconDao.getCollectionRewardId(collectionId)
+                val known = knownCollections[collectionName]
+                val collectionId = known?.id ?: HabbiconDao.getOrCreateCollection(collectionName)
+                val rewardId = known?.rewardHabbiconId
                     ?: entries.random().id.also { HabbiconDao.setCollectionReward(collectionId, it) }
 
-                entries.forEach { asset ->
-                    HabbiconDao.upsertHabbicon(
+                entries.mapTo(rows) { asset ->
+                    HabbiconUpsertRow(
                         id = asset.id,
                         collectionId = collectionId,
                         name = asset.name!!,
@@ -77,6 +84,8 @@ object HabbiconAssetSynchronizer {
                     )
                 }
             }
+
+            HabbiconDao.upsertHabbicons(rows)
 
             log.info("Synchronized {} Habbicons from {}", grouped.values.sumOf { it.size }, metadataUrl)
         }.onFailure { error ->

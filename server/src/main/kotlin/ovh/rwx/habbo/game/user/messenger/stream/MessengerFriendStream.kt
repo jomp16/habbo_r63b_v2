@@ -85,6 +85,13 @@ data class MessengerFriendStream(
                 writeBoolean(canLike)
             }
 
+            // A partir de RELEASE63-36096 (2011-09-21; a 35977 de 2011-09-14 ainda lia só o canLike) o parser lê mais dois
+            // booleans por entrada, que o client não usa em lugar nenhum
+            if (isVersionAtLeast(2011, 9, 21)) {
+                writeBoolean(false)
+                writeBoolean(false)
+            }
+
             // Processamento do ExtraData conforme o actionId/type
             when (type) {
                 StreamType.FRIEND -> {

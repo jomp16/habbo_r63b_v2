@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
@@ -50,7 +51,7 @@ class RoomUserChatResponse {
             writeInt(data.virtualId)
             writeUTF(data.message)
             writeInt(data.emotion)
-            if (outgoingR63A == null) {
+            if (isVersionAtLeast(2012, 10, 2)) {
                 writeInt(data.bubble.type)
             }
             writeInt(0) // todo: linkRefs / string / string / integer

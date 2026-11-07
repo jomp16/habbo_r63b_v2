@@ -35,6 +35,10 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
 
     currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
 
+    // Carrega a sala (itens, wired, bans, variáveis, pets) em paralelo ANTES dos checks abaixo: eles tocam
+    // itens e bans, que antes eram buscados em série na thread do handler. initialize() é idempotente/sincronizado.
+    room.initialize()
+
     if (room.itemManager.hiddenBuildersClub && userInformation.id != room.roomData.ownerId) {
         if (!isPreShuffle) {
             sendHabboResponse(Outgoing.ROOM_EXIT)

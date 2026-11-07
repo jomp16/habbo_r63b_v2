@@ -20,6 +20,8 @@
 package ovh.rwx.habbo.game.room.wired
 
 import org.slf4j.LoggerFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.wired.WiredVariableDao
 import ovh.rwx.habbo.game.item.InteractionType
@@ -680,7 +682,9 @@ class WiredVariableManager(private val room: Room) {
     }
 
     fun onUserEnter(userId: Int) {
-        loadUserVariables(userId)
+        // Query JDBC fora da thread do quarto: o join não pode esperar round-trip ao banco.
+        // Os mapas de valores são concorrentes, então o merge tardio é seguro.
+        HabboServer.applicationScope.launch(Dispatchers.IO) { loadUserVariables(userId) }
     }
 
     fun onUserLeave(userId: Int) {
@@ -790,23 +794,33 @@ class WiredVariableManager(private val room: Room) {
         }
     }
 
-    fun loadPersistentVariables() {
+    /** Leitura (só banco) das variáveis da sala; separada de [loadPersistentVariables] para rodar em paralelo com outras leituras. */
+    fun fetchRoomVariables() = WiredVariableDao.getVariablesForOwner(room.roomData.id, VariableOwnerType.ROOM)
+
+    /** Leitura (só banco) das variáveis dos mobis; depende dos ids dos itens já carregados. */
+    fun fetchFurniVariables(): List<Pair<WiredVariable, WiredVariableValue>> {
+        val furniIds = room.itemManager.items.keys
+        return if (furniIds.isEmpty()) emptyList()
+        else WiredVariableDao.getVariablesForOwners(furniIds, VariableOwnerType.FURNI)
+    }
+
+    fun loadPersistentVariables(
+        prefetchedRoom: List<Pair<WiredVariable, WiredVariableValue>>? = null,
+        prefetchedFurni: List<Pair<WiredVariable, WiredVariableValue>>? = null
+    ) {
         try {
-            val loaded = WiredVariableDao.getVariablesForOwner(room.roomData.id, VariableOwnerType.ROOM)
+            val loaded = prefetchedRoom ?: fetchRoomVariables()
             loaded.forEach { (variable, value) ->
                 definitions[variable.variableId] = variable
                 roomValues[variable.variableId] = value
                 variableHashes[variable.variableId] = computeSingleVariableHash(variable)
             }
 
-            val furniIds = room.itemManager.items.keys
-            if (furniIds.isNotEmpty()) {
-                val furniLoaded = WiredVariableDao.getVariablesForOwners(furniIds, VariableOwnerType.FURNI)
-                furniLoaded.forEach { (variable, value) ->
-                    definitions.putIfAbsent(variable.variableId, variable)
-                    furniValues.computeIfAbsent(value.ownerId) { ConcurrentHashMap() }[variable.variableId] = value
-                    variableHashes.putIfAbsent(variable.variableId, computeSingleVariableHash(variable))
-                }
+            val furniLoaded = prefetchedFurni ?: fetchFurniVariables()
+            furniLoaded.forEach { (variable, value) ->
+                definitions.putIfAbsent(variable.variableId, variable)
+                furniValues.computeIfAbsent(value.ownerId) { ConcurrentHashMap() }[variable.variableId] = value
+                variableHashes.putIfAbsent(variable.variableId, computeSingleVariableHash(variable))
             }
 
             markDirty()

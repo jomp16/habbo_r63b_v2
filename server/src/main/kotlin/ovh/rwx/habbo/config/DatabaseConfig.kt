@@ -34,11 +34,26 @@ data class DatabaseConfig(
         @param:JsonProperty("name", required = true)
         private val name: String,
         @param:JsonProperty("timeout", required = true)
-        private val timeout: Long
+        private val timeout: Long,
+        /**
+         * Opcional. Janela (ms) em que uma conexão usada recentemente é emprestada SEM validação (ping).
+         * O padrão do Hikari é 500ms: com um banco remoto, toda conexão ociosa há mais que isso custa 1 ida extra
+         * por query. Valores altos eliminam esse ping; combine com [keepaliveTimeMs] para detectar conexões mortas.
+         * Ausente = comportamento atual do Hikari.
+         */
+        @param:JsonProperty("alive_bypass_window_ms", required = false)
+        private val aliveBypassWindowMs: Long? = null,
+        /** Opcional. Intervalo (ms, mínimo 10000) em que o Hikari valida conexões ociosas em segundo plano. Ausente/0 = desligado. */
+        @param:JsonProperty("keepalive_time_ms", required = false)
+        private val keepaliveTimeMs: Long? = null
 ) {
     val hikariConfig: HikariConfig
         get() {
+            // lida uma única vez, no carregamento da classe HikariPool: precisa ser definida antes de o pool ser criado
+            aliveBypassWindowMs?.let { System.setProperty("com.zaxxer.hikari.aliveBypassWindowMs", it.toString()) }
+
             val config = HikariConfig()
+            keepaliveTimeMs?.takeIf { it > 0 }?.let { config.keepaliveTime = it }
 
             config.jdbcUrl = "jdbc:mariadb://$host:$port/$name"
             config.username = user

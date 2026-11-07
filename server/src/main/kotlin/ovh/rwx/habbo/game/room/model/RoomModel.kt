@@ -47,6 +47,33 @@ data class RoomModel(var id: String, val roomId: Int, var doorVector3: Vector3, 
         if (doorVector3.z == (-1).toDouble()) doorVector3 = Vector3(doorVector3.vector2, floorHeight[doorVector3.x][doorVector3.y].toDouble())
     }
 
+    /**
+     * Plano do piso em texto: uma fileira por linha ('\r'), um caractere por casa (altura 0-9, depois a-w para 10+, 'x' =
+     * fechada; a casa da porta usa a altura da porta). É o corpo do FloorHeightMap e também o do heightmap antigo (R63A e
+     * clientes pós-shuffle de 2011), que lêem a mesma string.
+     */
+    fun floorPlanString(): String {
+        val stringBuilder = StringBuilder()
+
+        for (i in 0 until mapSizeY) {
+            for (j in 0 until mapSizeX) {
+                if (j == doorVector3.x && i == doorVector3.y) {
+                    if (doorVector3.z > 9) stringBuilder.append(letters.toCharArray()[doorVector3.z.toInt() - 10])
+                    else stringBuilder.append(doorVector3.z.toInt())
+                } else if (squareStates[j][i] == SquareState.CLOSED) {
+                    stringBuilder.append("x")
+                } else {
+                    if (floorHeight[j][i] > 9) stringBuilder.append(letters.toCharArray()[floorHeight[j][i] - 10])
+                    else stringBuilder.append(floorHeight[j][i].toInt())
+                }
+            }
+
+            stringBuilder.append('\r')
+        }
+
+        return stringBuilder.toString()
+    }
+
     companion object {
         const val letters = "abcdefghijklmnopqrstuvw"
     }

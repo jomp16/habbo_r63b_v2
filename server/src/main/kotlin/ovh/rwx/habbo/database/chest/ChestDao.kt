@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.chest.ChestEntry
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import java.time.LocalDateTime
 
 private val jsonMapper = jacksonObjectMapper()
@@ -65,7 +66,8 @@ object ChestDao {
     fun insertChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        WriteBehindManager.queue {
+        // chest_items aponta para o baú (= o mobi do baú) e para cada item guardado
+        WriteBehindManager.queue(WriteKey.items(itemIds + chestItemId)) {
             db {
                 batchUpdate(
                     sql("insert_chest_item"),
@@ -78,7 +80,7 @@ object ChestDao {
     fun deleteChestItems(chestItemId: Int, itemIds: List<Int>) {
         if (itemIds.isEmpty()) return
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.items(itemIds + chestItemId)) {
             db {
                 batchUpdate(
                     sql("delete_chest_items"),
@@ -89,7 +91,7 @@ object ChestDao {
     }
 
     fun updateChest(chest: ChestData) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.item(chest.itemId)) {
             db {
                 update(
                     sql("update_chest"),
@@ -120,7 +122,7 @@ object ChestDao {
     }
 
     fun deleteChest(chestItemId: Int) {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.item(chestItemId)) {
             db {
                 update("DELETE FROM `chest_items` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))
                 update("DELETE FROM `chest_logs` WHERE `chest_item_id` = :item_id", mapOf("item_id" to chestItemId))

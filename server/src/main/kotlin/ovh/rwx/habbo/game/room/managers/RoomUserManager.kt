@@ -115,8 +115,8 @@ class RoomUserManager(private val room: Room) {
         room.addTask(UserJoinRoomTask(newUser))
     }
 
-    fun loadPets() {
-        PetDao.getPetsByRoomId(room.roomData.id).forEach { addPet(it) }
+    fun loadPets(prefetched: List<PetData>? = null) {
+        (prefetched ?: PetDao.getPetsByRoomId(room.roomData.id)).forEach { addPet(it) }
     }
 
     fun addPet(petData: PetData) {

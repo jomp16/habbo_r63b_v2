@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.user.UserItem
@@ -38,7 +39,10 @@ object ItemDao {
 
     // cache in memory all the information about items fam
     private val limitedItemDatas: MutableMap<Int, LimitedItemData?> = mutableMapOf()
-    private val wiredDatas: MutableMap<Int, WiredData?> = mutableMapOf()
+    private val wiredDatas: MutableMap<Int, WiredData> = java.util.concurrent.ConcurrentHashMap()
+    private val selectWiredDataSql: String by lazy {
+        javaClass.classLoader.getResource("sql/items/wired/select_wired_data.sql")!!.readText()
+    }
     private val roomDimmers: MutableMap<Int, RoomDimmer?> = mutableMapOf()
 
     fun getFurnishings(furniXMLInfos: Map<String, FurniXMLInfo>): List<Furnishing> = db {
@@ -126,11 +130,24 @@ object ItemDao {
         return limitedItemDatas[itemId]
     }
 
+    /**
+     * Carrega em UMA query o wired_data de todos os itens informados, populando o cache.
+     * Evita o N+1 do `RoomItem.wiredData` (lazy) sendo resolvido na thread do quarto
+     * no primeiro acionamento de cada wired.
+     */
+    fun preloadWiredData(itemIds: Collection<Int>) {
+        if (itemIds.isEmpty()) return
+        val idsString = itemIds.joinToString(",")
+        db {
+            query<WiredRowDto>("SELECT * FROM `items_wired` WHERE `item_id` IN ($idsString)")
+        }.forEach { wiredDatas[it.itemId] = it.toDomain() }
+    }
+
     fun getWiredData(itemId: Int): WiredData? {
         if (!wiredDatas.containsKey(itemId)) {
             val wiredData = db {
                 queryOne<WiredRowDto>(
-                    javaClass.classLoader.getResource("sql/items/wired/select_wired_data.sql").readText(),
+                    selectWiredDataSql,
                     mapOf("item_id" to itemId)
                 )?.toDomain()
             }
@@ -156,7 +173,7 @@ object ItemDao {
         ).map { it.teleportId to (it.roomId ?: 0) }
     }
 
-    fun deleteItems(itemIds: List<Int>) = WriteBehindManager.queue {
+    fun deleteItems(itemIds: List<Int>) = WriteBehindManager.queue(WriteKey.items(itemIds)) {
         db {
             batchUpdate(
                 javaClass.classLoader.getResource("sql/items/item/delete_item.sql").readText(),
@@ -183,7 +200,7 @@ object ItemDao {
             )
         }
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.items(roomItemsToRemove.map { it.id })) {
             db {
                 batchUpdate(
                     javaClass.classLoader.getResource("sql/items/item/update_item_room.sql").readText(),
@@ -196,7 +213,7 @@ object ItemDao {
     fun updateItemsOwner(itemIds: List<Int>, userId: Int) {
         if (itemIds.isEmpty()) return
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.items(itemIds)) {
             db {
                 batchUpdate(
                     javaClass.classLoader.getResource("sql/items/item/update_item_owner.sql").readText(),
@@ -237,8 +254,10 @@ object ItemDao {
         val presetTwo = roomDimmer.presets[1].toString()
         val presetThree = roomDimmer.presets[2].toString()
         val id = roomDimmer.id
+        val itemId = roomDimmer.roomItem.id
 
-        WriteBehindManager.queue {
+        // a linha do dimmer pertence ao mobi: ordena com a inserção/remoção do próprio mobi
+        WriteBehindManager.queue(WriteKey.item(itemId)) {
             db {
                 update(
                     javaClass.classLoader.getResource("sql/items/dimmer/update_dimmer.sql").readText(),
@@ -261,7 +280,7 @@ object ItemDao {
 
         if (wiredData.isEmpty()) return
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.items(wireds.filter { it.wiredData != null }.map { it.id })) {
             db {
                 batchUpdate(
                     javaClass.classLoader.getResource("sql/items/wired/update_wired_data.sql").readText(),
@@ -310,7 +329,8 @@ object ItemDao {
             )
         }
 
-        WriteBehindManager.queue {
+        // cada item novo é uma linha: os filhos (wired, dimmer, teleporte, presente, limitado) declaram o mesmo item e rodam depois
+        WriteBehindManager.queue(WriteKey.items(userItems.map { it.id })) {
             batchInsertItems(userItems)
         }
 
@@ -340,7 +360,7 @@ object ItemDao {
 
         if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
 
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.item(giftUserItem.id)) {
             db {
                 update(
                     "INSERT INTO `items_gift` (`item_id`, `item_name`, `amount`, `extradata`) VALUES (:item_id, :item_name, :amount, :extradata)",
@@ -360,7 +380,7 @@ object ItemDao {
     }
 
     fun addLimitedItem(itemId: Int, limitedNumber: Int, limitedTotal: Int): Int {
-        WriteBehindManager.queue {
+        WriteBehindManager.queue(WriteKey.item(itemId)) {
             db {
                 update(
                     "INSERT INTO `items_limited` (`item_id`, `limited_num`, `limited_total`) VALUES (:item_id, :limited_num, :limited_total)",
@@ -371,7 +391,8 @@ object ItemDao {
         return itemId
     }
 
-    fun deleteGiftData(id: Int) = WriteBehindManager.queue {
+    /** [id] é a linha de `items_gift`; [itemId] o mobi-presente, que o chamador também apaga (a ordem entre os dois é preservada). */
+    fun deleteGiftData(id: Int, itemId: Int) = WriteBehindManager.queue(WriteKey.item(itemId)) {
         db {
             update(
                 javaClass.classLoader.getResource("sql/items/gift/delete_gift.sql").readText(),
@@ -413,7 +434,7 @@ object ItemDao {
                 HabboServer.habboGame.itemManager.getWiredDefaultData(userItem.furnishing.interactionType)
                     ?: WiredData(0, 0, emptyList(), "", emptyList(), "")
 
-            WriteBehindManager.queue {
+            WriteBehindManager.queue(WriteKey.item(userItem.id)) {
                 db {
                     update(
                         "INSERT INTO `items_wired` (`item_id`, `delay`, `items`, `message`, `options`, `extradata`) VALUES (:item_id, :delay, :items, :message, :options, :extradata)",
@@ -446,7 +467,8 @@ object ItemDao {
                     ignoreSpecialHandling = true
                 ).first()
 
-                WriteBehindManager.queue {
+                // o par de teleportes referencia os DOIS itens novos
+                WriteBehindManager.queue(WriteKey.item(userItem.id), WriteKey.item(teleporterItem.id)) {
                     db {
                         batchUpdate(
                             "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
@@ -465,7 +487,7 @@ object ItemDao {
             }
 
             InteractionType.DIMMER -> {
-                WriteBehindManager.queue {
+                WriteBehindManager.queue(WriteKey.item(userItem.id)) {
                     db {
                         update(
                             "INSERT INTO `items_dimmer` (`item_id`, `enabled`, `current_preset`, `preset_one`, `preset_two`, `preset_three`) VALUES (:item_id, :enabled, :current_preset, :preset_one, :preset_two, :preset_three)",
@@ -652,6 +674,7 @@ data class UserItemRowDto(
 
 data class WiredRowDto(
     val id: Int,
+    val itemId: Int = 0,
     val delay: Int,
     val items: String,
     val message: String,

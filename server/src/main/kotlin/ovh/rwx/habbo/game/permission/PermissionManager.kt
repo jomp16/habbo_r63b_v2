@@ -34,14 +34,22 @@ class PermissionManager {
     fun load() {
         log.info("Loading permissions...")
 
-        permissionsUser.clear()
-        permissionsRank.clear()
-        availablePermissions.clear()
+        // Constrói em estruturas locais e troca sem nunca deixar os mapas ativos vazios
+        val newUser = HashMap<Int, Set<String>>()
+        val newRank = HashMap<Int, Set<String>>()
+        val newAvailable = HashSet<String>()
 
         db {
-            loadPermissionsTable("SELECT * FROM `permissions_users`", "user_id", permissionsUser)
-            loadPermissionsTable("SELECT * FROM `permissions_ranks`", "rank", permissionsRank)
+            loadPermissionsTable("SELECT * FROM `permissions_users`", "user_id", newUser, newAvailable)
+            loadPermissionsTable("SELECT * FROM `permissions_ranks`", "rank", newRank, newAvailable)
         }
+
+        permissionsUser.putAll(newUser)
+        permissionsUser.keys.retainAll(newUser.keys)
+        permissionsRank.putAll(newRank)
+        permissionsRank.keys.retainAll(newRank.keys)
+        availablePermissions.addAll(newAvailable)
+        availablePermissions.retainAll(newAvailable)
 
         log.info("Loaded {} permissions for user!", permissionsUser.size)
         log.info("Loaded {} permissions for rank!", permissionsRank.size)
@@ -50,7 +58,8 @@ class PermissionManager {
     private fun DbSession.loadPermissionsTable(
         sql: String,
         idColumn: String,
-        targetMap: ConcurrentHashMap<Int, Set<String>>
+        targetMap: MutableMap<Int, Set<String>>,
+        available: MutableSet<String>
     ) {
         val rows = handle.createQuery(sql).mapToMap().list()
 
@@ -63,7 +72,7 @@ class PermissionManager {
                     continue
                 }
 
-                availablePermissions.add(column)
+                available.add(column)
 
                 val isGranted = when (value) {
                     is Boolean -> value

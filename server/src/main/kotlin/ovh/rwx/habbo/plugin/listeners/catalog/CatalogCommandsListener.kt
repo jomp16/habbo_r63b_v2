@@ -19,9 +19,8 @@
 
 package ovh.rwx.habbo.plugin.listeners.catalog
 
-import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.admin.ActionOutcome
+import ovh.rwx.habbo.admin.AdminActions
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.plugin.api.PluginListener
@@ -31,22 +30,21 @@ import ovh.rwx.habbo.plugin.event.events.room.annotation.Command
 class CatalogCommandsListener : PluginListener() {
     @Command(["update_catalog", "reload_catalog"], permissionName = "cmd_update_catalogue")
     fun updateCatalogue(room: Room, roomUser: RoomUser, args: List<String>) {
-        HabboServer.habboGame.catalogManager.load()
-
-        HabboServer.habboSessionManager.habboSessions.values.filter { it.authenticated }.forEach {
-            if (!it.isPreShuffle)
-                it.sendHabboResponse(Outgoing.CATALOG_UPDATE)
-            else
-                it.sendHabboResponse(OutgoingR63A.CATALOG_UPDATE)
-        }
-
-        roomUser.habboSession.sendNotification("Catalog reloaded!")
+        roomUser.habboSession.sendNotification(runAction("reload_catalog", roomUser))
     }
 
     @Command(["update_items", "reload_items"], permissionName = "cmd_update_items")
     fun updateItems(room: Room, roomUser: RoomUser, args: List<String>) {
-        HabboServer.habboGame.itemManager.load()
-
-        roomUser.habboSession.sendNotification("Items reloaded!")
+        roomUser.habboSession.sendNotification(runAction("reload_items", roomUser))
     }
+
+    // Mesma função da API admin (serializada, com log de auditoria)
+    private fun runAction(name: String, roomUser: RoomUser): String =
+        when (val r = AdminActions.run(name, emptyMap(), roomUser.habboSession.userInformation.username)) {
+            is ActionOutcome.Ok -> r.message
+            ActionOutcome.Busy -> "Outra ação administrativa em andamento."
+            is ActionOutcome.Failed -> r.message
+            is ActionOutcome.BadParam -> r.message
+            ActionOutcome.Unknown -> "Ação desconhecida."
+        }
 }

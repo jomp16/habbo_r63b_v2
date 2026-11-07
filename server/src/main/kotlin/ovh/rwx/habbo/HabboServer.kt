@@ -41,8 +41,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.Logger
@@ -55,7 +57,6 @@ import ovh.rwx.habbo.communication.HabboHandler
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.console.ServerConsole
-import ovh.rwx.habbo.console.ServerControlSocket
 import ovh.rwx.habbo.database.DatabaseManager
 import ovh.rwx.habbo.database.migration.FlywayMigration
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
@@ -102,7 +103,6 @@ object HabboServer : AutoCloseable {
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
     val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
     val serverConsole: ServerConsole = ServerConsole(this)
-    val serverControlSocket: ServerControlSocket = ServerControlSocket(this, serverConsole)
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val started: Boolean
@@ -250,6 +250,37 @@ object HabboServer : AutoCloseable {
             habboGame.awaitLoaded()
             log.info("Habbo game loaded!")
 
+            // Pré-reserva os blocos Hi-Lo para que a 1ª interação (conquistas, itens, etc.) não pague um round-trip ao banco.
+            // Cada reserva é uma transação (~5 idas ao banco, ~600 ms com banco remoto): 11 em série seguravam o bind do
+            // Netty por ~7 s. Rodam em segundo plano e em paralelo; se um usuário pedir um id antes, o próprio nextId()
+            // reserva o bloco (o lock do HiLoSequence impede reservar duas vezes).
+            val hiLoSequences = listOf(
+                ovh.rwx.habbo.database.achievement.AchievementDao.achievementSequence,
+                ovh.rwx.habbo.database.badge.BadgeDao.badgeSequence,
+                ovh.rwx.habbo.database.camera.CameraDao.cameraSequence,
+                ovh.rwx.habbo.database.group.GroupDao.groupSequence,
+                ovh.rwx.habbo.database.group.GroupDao.groupMemberSequence,
+                ovh.rwx.habbo.database.messenger.MessengerDao.friendshipSequence,
+                ovh.rwx.habbo.database.messenger.MessengerDao.requestSequence,
+                ovh.rwx.habbo.database.pet.PetDao.petSequence,
+                ovh.rwx.habbo.database.room.RoomDao.roomSequence,
+                ovh.rwx.habbo.database.wardrobe.WardrobeDao.wardrobeSequence,
+                habboGame.itemManager.itemSequence,
+            )
+            val hiLoWarmUpDispatcher = Dispatchers.IO.limitedParallelism(4)
+            hiLoSequences.forEach { sequence ->
+                applicationScope.launch(hiLoWarmUpDispatcher) {
+                    try {
+                        sequence.warmUp()
+                    } catch (e: Exception) {
+                        // não é fatal: o primeiro nextId() desta sequência tenta a reserva de novo
+                        log.warn("Falha ao pré-reservar o bloco Hi-Lo de '{}'", sequence.sequenceName, e)
+                    }
+                }
+            }
+
+            ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
+
             habboConfig.dynamicDnsConfig?.let { ovh.rwx.habbo.net.DynamicDnsUpdater.start(it) }
 
             val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
@@ -283,7 +314,7 @@ object HabboServer : AutoCloseable {
 
     override fun close() {
         if (started) {
-            serverControlSocket.close()
+            ovh.rwx.habbo.metrics.ServerMetrics.stop()
             log.info("Shutting down ${BuildConfig.NAME} server...")
             habboGame.close()
             // Start room

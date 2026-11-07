@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.item.wired.variable
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
 
 data class WiredVariable(
@@ -35,9 +36,11 @@ data class WiredVariable(
     val canWriteValue: Boolean = true,
     val canInterceptChanges: Boolean = true,
     val isInvisible: Boolean = false,
+    val requiresExecutionContext: Boolean = false,
     val canReadCreationTime: Boolean = true,
     val canReadLastUpdateTime: Boolean = true,
-    val textConnectors: Map<Int, String> = emptyMap()
+    val textConnectors: Map<Int, String> = emptyMap(),
+    val textConnectorFallback: String? = null
 ) : IHabboResponseSerialize {
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
@@ -46,7 +49,9 @@ data class WiredVariable(
             } else {
                 writeUTF(variableId)
             }
-            writeInt(variableType.code)
+            if (isVersionAtLeast(2024, 12, 12)) {
+                writeInt(variableType.code)
+            }
             writeUTF(variableName)
             writeInt(availabilityType.code)
             writeInt(variableTarget.code)
@@ -56,6 +61,9 @@ data class WiredVariable(
             writeBoolean(canWriteValue)
             writeBoolean(canInterceptChanges)
             writeBoolean(isInvisible)
+            if (isVersionAtLeast(2026, 10, 12)) {
+                writeBoolean(requiresExecutionContext)
+            }
             writeBoolean(canReadCreationTime)
             writeBoolean(canReadLastUpdateTime)
 
@@ -66,6 +74,13 @@ data class WiredVariable(
                 textConnectors.forEach { (connectorId, connectorValue) ->
                     writeInt(connectorId)
                     writeUTF(connectorValue)
+                }
+                if (isVersionAtLeast(2026, 10, 12)) {
+                    val hasFallback = !textConnectorFallback.isNullOrEmpty()
+                    writeBoolean(hasFallback)
+                    if (hasFallback) {
+                        writeUTF(textConnectorFallback)
+                    }
                 }
             }
         }

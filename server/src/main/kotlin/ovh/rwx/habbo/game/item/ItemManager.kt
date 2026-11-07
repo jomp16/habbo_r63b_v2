@@ -52,7 +52,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.SAXParserFactory
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.full.companionObject
 
 class ItemManager {
@@ -60,8 +59,12 @@ class ItemManager {
     val itemSequence = HiLoSequence("items", blockSize = 1000)
     val furniXMLInfos: ConcurrentHashMap<String, FurniXMLInfo> = ConcurrentHashMap()
     val furnishings: ConcurrentHashMap<String, Furnishing> = ConcurrentHashMap()
-    val oldGiftWrapper: MutableList<Furnishing> = CopyOnWriteArrayList()
-    val newGiftWrapper: MutableList<Furnishing> = CopyOnWriteArrayList()
+    @Volatile
+    var oldGiftWrapper: List<Furnishing> = emptyList()
+        private set
+    @Volatile
+    var newGiftWrapper: List<Furnishing> = emptyList()
+        private set
     val teleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
     val roomTeleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
     val furniInteractor: ConcurrentHashMap<InteractionType, ItemInteractor> = ConcurrentHashMap()
@@ -71,26 +74,23 @@ class ItemManager {
     private val wiredItems: ConcurrentHashMap<InteractionType, Constructor<out WiredItem>> = ConcurrentHashMap()
     private val wiredDefaultData: ConcurrentHashMap<InteractionType, WiredDefaultDataFactory> = ConcurrentHashMap()
 
+    /**
+     * (Re)carrega os itens. TODO o estado novo (inclusive o scan lento do ClassGraph) é construído em
+     * coleções locais e só depois publicado nas coleções ativas (putAll + retainAll, ou troca de
+     * referência @Volatile), então os leitores nunca veem estado vazio/parcial. Quem muta em runtime
+     * (teleportLinks/roomTeleportLinks, testes) continua usando os mesmos ConcurrentHashMap.
+     */
+    @Synchronized
     fun load() {
         log.info("Loading furnishings...")
 
-        oldGiftWrapper.clear()
-        newGiftWrapper.clear()
-        furniInteractor.clear()
-        furniLogic.clear()
-        furniLogicByName.clear()
-        teleportLinks.clear()
-        roomTeleportLinks.clear()
-        wiredItems.clear()
+        // furnidata.xml relido a cada load (boot e reload) num mapa local; se o download/parse falhar, o
+        // load lança antes de publicar qualquer coisa e o estado atual continua valendo
+        val newXml = fetchFurniXml()
 
-        loadFurniXml()
-
-        furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
-        oldGiftWrapper += furnishings.filterKeys { it.startsWith("present_gen") }.values
-        newGiftWrapper += furnishings.filterKeys { it.startsWith("present_wrap*") }.values
-        teleportLinks += ItemDao.getTeleportLinks()
-
-        roomTeleportLinks.putAll(ItemDao.getLinkedTeleport(teleportLinks.keys))
+        var newFurnishings = ItemDao.getFurnishings(newXml).associateBy { it.itemName }
+        val newTeleportLinks = ItemDao.getTeleportLinks().toMap()
+        val newRoomTeleportLinks = ItemDao.getLinkedTeleport(newTeleportLinks.keys).toMap()
 
         val interactors: List<ItemInteractor>
         val furnitureLogics: List<FurnitureLogic>
@@ -106,15 +106,20 @@ class ItemManager {
             wiredItemsInteractor = scanResult.getClassesWithAnnotation(WiredItemInteractor::class.java).loadClasses()
         }
 
+        val newInteractors = HashMap<InteractionType, ItemInteractor>()
         interactors.forEach { interactor ->
-            interactor.interactionType.forEach { furniInteractor[it] = interactor }
+            interactor.interactionType.forEach { newInteractors[it] = interactor }
         }
 
+        val newLogic = HashMap<InteractionType, FurnitureLogic>()
+        val newLogicByName = HashMap<String, FurnitureLogic>()
         furnitureLogics.forEach { logic ->
-            logic.interactionTypes.forEach { furniLogic[it] = logic }
-            logic.itemNames.forEach { furniLogicByName[it] = logic }
+            logic.interactionTypes.forEach { newLogic[it] = logic }
+            logic.itemNames.forEach { newLogicByName[it] = logic }
         }
 
+        val newWiredItems = HashMap<InteractionType, Constructor<out WiredItem>>()
+        val newWiredDefaultData = HashMap<InteractionType, WiredDefaultDataFactory>()
         wiredItemsInteractor.forEach { wiredItemClasses ->
             val annotation = wiredItemClasses.getAnnotation(WiredItemInteractor::class.java)
 
@@ -127,21 +132,40 @@ class ItemManager {
 
             annotation.interactionType.forEach {
                 @Suppress("UNCHECKED_CAST")
-                wiredItems[it] =
+                newWiredItems[it] =
                     (wiredItemClasses as Class<WiredItem>).getConstructor(Room::class.java, RoomItem::class.java)
-                defaultDataFactory?.let { factory -> wiredDefaultData[it] = factory }
+                defaultDataFactory?.let { factory -> newWiredDefaultData[it] = factory }
             }
         }
 
-        val missingItems = furniXMLInfos.keys.minus(furnishings.keys).sorted()
+        val missingItems = newXml.keys.minus(newFurnishings.keys).sorted()
         if (missingItems.isNotEmpty()) {
             recordMissingItems(missingItems)
-            insertMissingItems(missingItems)
-            log.info("Added more {} items to database!", furniXMLInfos.size - furnishings.size)
+            ItemDao.insertMissingFurnishings(newXml, missingItems)
+            log.info("Added more {} items to database!", newXml.size - newFurnishings.size)
 
-            furnishings.clear()
-            furnishings += ItemDao.getFurnishings(furniXMLInfos).associateBy { it.itemName }
+            newFurnishings = ItemDao.getFurnishings(newXml).associateBy { it.itemName }
         }
+
+        // ---- publicação: nenhum mapa ativo é esvaziado; tudo já está pronto ----
+        furniXMLInfos.putAll(newXml)
+        furniXMLInfos.keys.retainAll(newXml.keys)
+        furnishings.putAll(newFurnishings)
+        newInteractors.forEach { (k, v) -> furniInteractor[k] = v }
+        furniInteractor.keys.retainAll(newInteractors.keys)
+        furniLogic.putAll(newLogic)
+        furniLogic.keys.retainAll(newLogic.keys)
+        furniLogicByName.putAll(newLogicByName)
+        furniLogicByName.keys.retainAll(newLogicByName.keys)
+        wiredItems.putAll(newWiredItems)
+        wiredItems.keys.retainAll(newWiredItems.keys)
+        wiredDefaultData.putAll(newWiredDefaultData)
+        teleportLinks.putAll(newTeleportLinks)
+        teleportLinks.keys.retainAll(newTeleportLinks.keys)
+        roomTeleportLinks.putAll(newRoomTeleportLinks)
+        roomTeleportLinks.keys.retainAll(newRoomTeleportLinks.keys)
+        oldGiftWrapper = newFurnishings.filterKeys { it.startsWith("present_gen") }.values.toList()
+        newGiftWrapper = newFurnishings.filterKeys { it.startsWith("present_wrap*") }.values.toList()
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)
@@ -151,9 +175,7 @@ class ItemManager {
         log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
     }
 
-    private fun loadFurniXml() {
-        if (furniXMLInfos.isNotEmpty()) return
-
+    private fun fetchFurniXml(): Map<String, FurniXMLInfo> =
         urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use { rawStream ->
             var stream = rawStream
             for (replacement in XML_SANITIZATION_REPLACEMENTS) {
@@ -163,10 +185,9 @@ class ItemManager {
                 val saxParser = SAXParserFactory.newInstance().newSAXParser()
                 val handler = FurniXMLHandler()
                 saxParser.parse(bufferedStream, handler)
-                furniXMLInfos += handler.furniXMLInfos.associateBy { it.itemName }
+                handler.furniXMLInfos.associateBy { it.itemName }
             }
         }
-    }
 
     private fun recordMissingItems(missingItems: List<String>) {
         FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use { writer ->
@@ -179,10 +200,6 @@ class ItemManager {
             writer.appendLine("================")
             writer.flush()
         }
-    }
-
-    private fun insertMissingItems(missingItems: List<String>) {
-        ItemDao.insertMissingFurnishings(furniXMLInfos, missingItems)
     }
 
     fun getAffectedTiles(x: Int, y: Int, rotation: Int, width: Int, length: Int): List<Vector2> {

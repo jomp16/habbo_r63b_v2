@@ -227,12 +227,12 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         habboSession.sendResponse(
             Outgoing.ROOM_FLOOR_ITEMS,
             OutgoingR63A.ROOM_FLOOR_ITEMS,
-            RoomFloorItemsData(room, room.itemManager.floorItems.values)
+            RoomItemsData(room.itemManager.floorItems.values)
         )
         habboSession.sendResponse(
             Outgoing.ROOM_WALL_ITEMS,
             OutgoingR63A.ROOM_WALL_ITEMS,
-            RoomWallItemsData(room, room.itemManager.wallItems.values)
+            RoomItemsData(room.itemManager.wallItems.values)
         )
 
         room.userManager.entities.values.forEach {
