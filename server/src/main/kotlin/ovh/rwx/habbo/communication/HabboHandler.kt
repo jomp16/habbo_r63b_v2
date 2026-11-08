@@ -22,8 +22,6 @@ package ovh.rwx.habbo.communication
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import io.github.classgraph.ClassGraph
-import io.github.classgraph.ScanResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.metrics.ServerMetrics
@@ -36,6 +34,7 @@ import ovh.rwx.habbo.database.release.ReleaseDao
 import ovh.rwx.habbo.database.release.ReleaseHeaderInfo
 import ovh.rwx.habbo.database.release.ReleaseType
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.util.ClassIndex
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.WrongMethodTypeException
@@ -183,41 +182,35 @@ class HabboHandler {
         // instâncias dos handlers desta carga (local; cada carga cria as suas)
         val instances = ConcurrentHashMap<Class<*>, Any>()
 
-        ClassGraph()
-            .enableAllInfo()
-            .acceptPackages(javaClass.`package`.name)
-            .scan()
-            .use { scanResult ->
-                runBlocking {
-                    val jobHandlers = HabboServer.applicationScope.launch {
-                        loadAnnotated(lookup, scanResult, instances, Handler::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
-                            messageHandlers.getOrPut(incoming) { mutableMapOf() }[method.name] =
-                                HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
-                        }
-                        loadAnnotated(lookup, scanResult, instances, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
-                            messageHandlersR63A[incoming] =
-                                HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
-                        }
-                        log.info("Loaded {} Habbo request handlers", messageHandlers.size)
-                        log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
-                    }
-
-                    val jobResponses = HabboServer.applicationScope.launch {
-                        loadAnnotated(lookup, scanResult, instances, Response::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
-                            messageResponses.getOrPut(outgoing) { mutableMapOf() }[method.name] =
-                                RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
-                        }
-                        loadAnnotated(lookup, scanResult, instances, ResponseR63A::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
-                            messageResponsesR63A[outgoing] =
-                                RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
-                        }
-                        log.info("Loaded {} Habbo response handlers", messageResponses.size)
-                        log.info("Loaded {} Habbo R63A response handlers", messageResponsesR63A.size)
-                    }
-
-                    joinAll(jobHandlers, jobResponses)
+        runBlocking {
+            val jobHandlers = HabboServer.applicationScope.launch {
+                loadAnnotated(lookup, ClassIndex.Kind.HANDLER, instances, Handler::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                    messageHandlers.getOrPut(incoming) { mutableMapOf() }[method.name] =
+                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
                 }
+                loadAnnotated(lookup, ClassIndex.Kind.HANDLER_R63A, instances, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                    messageHandlersR63A[incoming] =
+                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
+                }
+                log.info("Loaded {} Habbo request handlers", messageHandlers.size)
+                log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
             }
+
+            val jobResponses = HabboServer.applicationScope.launch {
+                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE, instances, Response::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                    messageResponses.getOrPut(outgoing) { mutableMapOf() }[method.name] =
+                        RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
+                }
+                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE_R63A, instances, ResponseR63A::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                    messageResponsesR63A[outgoing] =
+                        RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
+                }
+                log.info("Loaded {} Habbo response handlers", messageResponses.size)
+                log.info("Loaded {} Habbo R63A response handlers", messageResponsesR63A.size)
+            }
+
+            joinAll(jobHandlers, jobResponses)
+        }
     }
 
     // Carga genérica de métodos anotados (Handler/HandlerR63A/Response/ResponseR63A):
@@ -225,16 +218,15 @@ class HabboHandler {
     // entram como lambdas tipados — E infere do retorno de headersOf, sem casts.
     private fun <A : Annotation, E> loadAnnotated(
         lookup: MethodHandles.Lookup,
-        scanResult: ScanResult,
+        kind: ClassIndex.Kind,
         instances: ConcurrentHashMap<Class<*>, Any>,
         annotationClass: Class<A>,
         headersOf: (A) -> Array<out E>,
         requiredAuthOf: (A) -> Boolean,
         register: (enumValue: E, method: Method, instance: Any, handle: MethodHandle, requiredAuth: Boolean) -> Unit
     ) {
-        scanResult.getClassesWithMethodAnnotation(annotationClass.name).forEach { classInfo ->
-            classInfo.methodInfo.filter { it.hasAnnotation(annotationClass) }.forEach { methodInfo ->
-                val method = methodInfo.loadClassAndGetMethod()
+        ClassIndex.classesOf(kind).forEach { clazz ->
+            clazz.declaredMethods.filter { it.isAnnotationPresent(annotationClass) }.sortedBy { it.name }.forEach { method ->
                 val annotation = method.getAnnotation(annotationClass) ?: return@forEach
                 val instance = getInstance(instances, method.declaringClass)
                 val handle = lookup.unreflect(method)
@@ -246,6 +238,20 @@ class HabboHandler {
     }
 
     // ---------------------------------------------------------------- dispatch (request)
+
+    /**
+     * true para os pacotes do handshake que fazem criptografia assimétrica (INIT_CRYPTO e SECRET_KEY, nas duas
+     * eras): são só CPU e vão para o dispatcher limitado ([HabboServer.handshakeDispatcher]). Só faz sentido
+     * perguntar antes da autenticação; o chamador já checa isso para não pagar o lookup nos demais pacotes.
+     */
+    fun isHandshakeCrypto(habboSession: HabboSession, headerId: Int): Boolean {
+        val s = snapshot
+        return if (habboSession.isPreShuffle) {
+            s.incomingEnumR63AByReleaseAndHeader[habboSession.release to headerId] in HANDSHAKE_CRYPTO_R63A
+        } else {
+            s.incomingEnumByReleaseAndHeader[habboSession.release to headerId] in HANDSHAKE_CRYPTO
+        }
+    }
 
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val s = snapshot
@@ -453,6 +459,8 @@ class HabboHandler {
         instances.computeIfAbsent(clazz) { it.getDeclaredConstructor().newInstance() }
 
     private companion object {
+        val HANDSHAKE_CRYPTO = setOf(Incoming.INIT_CRYPTO, Incoming.SECRET_KEY)
+        val HANDSHAKE_CRYPTO_R63A = setOf(IncomingR63A.HANDSHAKE_INIT_CRYPTO, IncomingR63A.SECRET_KEY)
         const val DISABLED = "DISABLED"
         const val DEFAULT_METHOD = "response"
         const val R63A_RELEASE = "R63A"

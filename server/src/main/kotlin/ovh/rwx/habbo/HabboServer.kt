@@ -64,7 +64,9 @@ import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.netty.*
+import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.core.PluginManager
+import ovh.rwx.habbo.util.ClassIndex
 import java.io.File
 import java.security.Security
 import java.time.ZoneId
@@ -101,6 +103,16 @@ object HabboServer : AutoCloseable {
     val serverScheduledExecutor: ScheduledExecutorService =
         Executors.newScheduledThreadPool(3 + if (habboConfig.roomTaskConfig.threads == 0) 1 else habboConfig.roomTaskConfig.threads)
     val cachedExecutorDispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
+
+    /**
+     * Handshake criptográfico (RSA/DH: BigInteger.modPow, só CPU) em poucas threads dedicadas. No pool cacheado
+     * uma enxurrada de logins (ex.: todos reconectando após uma queda) vira centenas de threads disputando os
+     * núcleos com os ticks das salas, que travavam por segundos; aqui o excesso espera na fila e os ticks mantêm
+     * CPU. Tamanho: 1/3 dos núcleos (mín. 1: numa VPS de 2 núcleos, 2 threads de handshake ocupariam a máquina toda).
+     */
+    val handshakeDispatcher = Executors.newFixedThreadPool(
+        maxOf(1, Runtime.getRuntime().availableProcessors() / 3)
+    ) { runnable -> Thread(runnable, "handshake-crypto").apply { isDaemon = true } }.asCoroutineDispatcher()
     val applicationScope = CoroutineScope(cachedExecutorDispatcher + SupervisorJob())
     val serverConsole: ServerConsole = ServerConsole(this)
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -168,7 +180,7 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
 
         log.info("Loading plugins...")
-        pluginManager.loadPlugins()
+        pluginManager.loadPlugins(ClassIndex.classesOf(ClassIndex.Kind.PLUGIN_LISTENER).map { it.asSubclass(PluginListener::class.java) })
         pluginManager.loadPluginsFromDir(File("plugins"))
         log.info("Done!")
 
@@ -280,6 +292,7 @@ object HabboServer : AutoCloseable {
             }
 
             ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
+            if (habboConfig.stressTest) ovh.rwx.habbo.database.writebehind.WriteBehindStressLog.start()
 
             habboConfig.dynamicDnsConfig?.let { ovh.rwx.habbo.net.DynamicDnsUpdater.start(it) }
 

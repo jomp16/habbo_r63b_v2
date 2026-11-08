@@ -25,6 +25,8 @@ plugins {
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.testcontainers.mariadb)
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlin.coroutines)
@@ -42,7 +44,6 @@ dependencies {
     implementation(libs.flyway.mysql)
     implementation(libs.mariadb.driver)
     implementation(libs.hikari)
-    implementation(libs.classgraph)
     implementation(libs.commons.lang)
     implementation(libs.jasypt)
     implementation(libs.bouncycastle)
@@ -121,6 +122,39 @@ val verifySessionReleaseAccess = tasks.register<VerifySessionReleaseAccessTask>(
         )
     )
     dependsOn("compileKotlin")
+}
+
+// Índice estático de handlers/interactors (substitui o scan de classpath no boot e no reload_handlers).
+// Vira resource do módulo: vai no jar e, em dev, é relido do disco a cada reload.
+val generateClassIndex = tasks.register<GenerateClassIndexTask>("generateClassIndex") {
+    classesDirs.from(tasks.named("compileKotlin"))
+    outputDir.set(layout.buildDirectory.dir("generated/class-index"))
+    methodAnnotations.putAll(
+        mapOf(
+            "HANDLER" to "Lovh/rwx/habbo/communication/Handler;",
+            "HANDLER_R63A" to "Lovh/rwx/habbo/communication/HandlerR63A;",
+            "RESPONSE" to "Lovh/rwx/habbo/communication/Response;",
+            "RESPONSE_R63A" to "Lovh/rwx/habbo/communication/ResponseR63A;",
+            "FF_HANDLER" to "Lovh/rwx/fastfood/communication/FFHandler;",
+            "FF_RESPONSE" to "Lovh/rwx/fastfood/communication/FFResponse;",
+        )
+    )
+    classAnnotations.put("WIRED_ITEM", "Lovh/rwx/habbo/game/item/wired/WiredItemInteractor;")
+    subclassesOf.putAll(
+        mapOf(
+            "ITEM_INTERACTOR" to "ovh/rwx/habbo/game/item/ItemInteractor",
+            "FURNITURE_LOGIC" to "ovh/rwx/habbo/game/item/logic/FurnitureLogic",
+            "PLUGIN_LISTENER" to "ovh/rwx/habbo/plugin/api/PluginListener",
+        )
+    )
+    requiredKinds.addAll(
+        "HANDLER", "HANDLER_R63A", "RESPONSE", "RESPONSE_R63A", "FF_HANDLER", "FF_RESPONSE",
+        "WIRED_ITEM", "ITEM_INTERACTOR", "FURNITURE_LOGIC", "PLUGIN_LISTENER",
+    )
+}
+
+sourceSets.named("main") {
+    resources.srcDir(generateClassIndex.flatMap { it.outputDir })
 }
 
 tasks.named("classes") {

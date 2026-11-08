@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Habbo R63B retro server written in Kotlin (Java 17 toolchain, Kotlin 2.3.0). Multi-module Gradle build; runs on Netty with a MySQL/MariaDB backend and a hot-load plugin system.
+Habbo R63B retro server written in Kotlin (Java 25 toolchain, Kotlin 2.4.20). Multi-module Gradle build; runs on Netty with a MySQL/MariaDB backend and a hot-load plugin system.
 
 ## Build & run
 
@@ -37,7 +37,7 @@ Habbo R63B retro server written in Kotlin (Java 17 toolchain, Kotlin 2.3.0). Mul
 ## Architecture
 
 - `server/src/main/kotlin/ovh/rwx/habbo/HabboServer.kt` is the singleton root. It wires HikariCP → Kwery (MySQL) → Netty → handlers → game state → plugin manager.
-- Handler discovery uses **Reflections8** (`HabboServer.reflections`) to scan the classpath for `@Handler`, `@Response`, `@Task`, etc. — keep annotations on classes; reflection caches won't pick up Kotlin metadata-only files.
+- Handler/interactor discovery is **static, generated at build time** by `:server:generateClassIndex` (`build-logic/.../GenerateClassIndexTask.kt`, ASM over the compiled classes) into `META-INF/habbo/class-index.txt`, read at runtime by `ovh.rwx.habbo.util.ClassIndex` — there is NO classpath scan (ClassGraph) in `:server`. The index covers `@Handler`/`@HandlerR63A`/`@Response`/`@ResponseR63A`, `@FFHandler`/`@FFResponse`, `@WiredItemInteractor`, and concrete subclasses of `ItemInteractor`/`FurnitureLogic`. **A new kind of discoverable class must be added to the task registration in `server/build.gradle.kts` AND to `ClassIndex.Kind`.** The file is re-read on every call, so compile (Gradle) + `reload_handlers` picks up new handlers; compiling outside Gradle (IDE-native build) does not regenerate it. ClassGraph is no longer a dependency anywhere. Built-in `PluginListener`s come from the same index (`PLUGIN_LISTENER`); for plugin JARs, `habbo.plugin-conventions` runs `generatePluginDescriptor` (ASM) which writes the final `plugin.json` = hand-written descriptor in `src/main/resources/plugin.json` (name/version/authors) + `entryPoints` (concrete `PluginListener` subclasses). The source descriptor is excluded from the JAR; `PluginManager.addPluginJar` loads exactly the `entryPoints` and rejects JARs without them (rebuild the plugin).
 - Packets: `communication/incoming/` (handlers, registered by `@Handler(Incoming.X)`) and `communication/outgoing/` (responses, registered by `@Response(Outgoing.X)`). New client messages require both an `Incoming` enum entry and a handler.
 - DB: DAOs in `server/.../database/` use `.sql` files from `server/src/main/resources/sql/`. Kwery (`com.github.andrewoma.kwery`) is the session layer; SQL files are loaded by path with `:name` named parameters.
 - Game state: `game/room/`, `game/item/`, `game/user/`, `game/achievement/`, `game/camera/`, `game/wired/`. Room tasks (`IRoomTask`) run on the room scheduler pool (`room_task.threads`).

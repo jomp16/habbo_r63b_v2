@@ -19,8 +19,6 @@
 
 package ovh.rwx.fastfood.communication
 
-import io.github.classgraph.ClassGraph
-import io.github.classgraph.ScanResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
@@ -32,6 +30,7 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.RequestInvoker
 import ovh.rwx.habbo.communication.ResponseInvoker
+import ovh.rwx.habbo.util.ClassIndex
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method
@@ -48,33 +47,27 @@ class FastFoodHandler {
     init {
         val lookup = MethodHandles.lookup()
 
-        ClassGraph()
-            .enableAllInfo()
-            .acceptPackages(javaClass.`package`.name)
-            .scan()
-            .use { scanResult ->
-                annotatedMethods(scanResult, FFHandler::class.java).forEach { method ->
-                    val handler = method.getAnnotation(FFHandler::class.java) ?: return@forEach
-                    val instance = getInstance(method.declaringClass)
-                    val invoker = HabboInvokers.buildRequestInvoker(lookup, instance, method, FastFoodSession::class.java)
-                    val handle = lookup.unreflect(method)
+        annotatedMethods(ClassIndex.Kind.FF_HANDLER, FFHandler::class.java).forEach { method ->
+            val handler = method.getAnnotation(FFHandler::class.java) ?: return@forEach
+            val instance = getInstance(method.declaringClass)
+            val invoker = HabboInvokers.buildRequestInvoker(lookup, instance, method, FastFoodSession::class.java)
+            val handle = lookup.unreflect(method)
 
-                    handler.headers.forEach { incoming ->
-                        if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers[incoming] = invoker to handle
-                    }
-                }
-
-                annotatedMethods(scanResult, FFResponse::class.java).forEach { method ->
-                    val response = method.getAnnotation(FFResponse::class.java) ?: return@forEach
-                    val instance = getInstance(method.declaringClass)
-                    val invoker = HabboInvokers.buildResponseInvoker(instance, method)
-                    val handle = lookup.unreflect(method)
-
-                    response.headers.forEach { outgoing ->
-                        if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] = invoker to handle
-                    }
-                }
+            handler.headers.forEach { incoming ->
+                if (!fastFoodMessageHandlers.containsKey(incoming)) fastFoodMessageHandlers[incoming] = invoker to handle
             }
+        }
+
+        annotatedMethods(ClassIndex.Kind.FF_RESPONSE, FFResponse::class.java).forEach { method ->
+            val response = method.getAnnotation(FFResponse::class.java) ?: return@forEach
+            val instance = getInstance(method.declaringClass)
+            val invoker = HabboInvokers.buildResponseInvoker(instance, method)
+            val handle = lookup.unreflect(method)
+
+            response.headers.forEach { outgoing ->
+                if (!fastFoodMessageResponses.containsKey(outgoing)) fastFoodMessageResponses[outgoing] = invoker to handle
+            }
+        }
 
         largestNameSize = FFIncoming.values().map { it.name }.plus(FFOutgoing.values().map { it.name })
             .maxByOrNull { it.length }!!.length
@@ -83,10 +76,9 @@ class FastFoodHandler {
         log.info("Loaded {} FastFood response handlers", fastFoodMessageResponses.size)
     }
 
-    private fun annotatedMethods(scanResult: ScanResult, annotation: Class<out Annotation>): Sequence<Method> =
-        scanResult.getClassesWithMethodAnnotation(annotation.name).asSequence()
-            .flatMap { classInfo -> classInfo.methodInfo.asSequence().filter { it.hasAnnotation(annotation) } }
-            .map { it.loadClassAndGetMethod() }
+    private fun annotatedMethods(kind: ClassIndex.Kind, annotation: Class<out Annotation>): Sequence<Method> =
+        ClassIndex.classesOf(kind).asSequence()
+            .flatMap { clazz -> clazz.declaredMethods.asSequence().filter { it.isAnnotationPresent(annotation) }.sortedBy { it.name } }
 
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         fastFoodSession.incomingExecutor.execute {

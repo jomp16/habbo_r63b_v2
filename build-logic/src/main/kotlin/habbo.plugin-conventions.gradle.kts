@@ -32,7 +32,27 @@ val pluginLibs = configurations.named("runtimeClasspath").map { pluginRuntimeCla
         .filter { !it.name.startsWith("server-") }
 }
 
+// plugin.json final = descritor do src (nome/versão/autores) + entryPoints detectados no bytecode.
+// O descritor do src NÃO vai no jar: a versão gerada o substitui (o servidor não varre classpath).
+val sourceDescriptor = layout.projectDirectory.file("src/main/resources/plugin.json")
+val sourceDescriptorFile = sourceDescriptor.asFile
+
+val generatePluginDescriptor = tasks.register<GeneratePluginDescriptorTask>("generatePluginDescriptor") {
+    pluginName.set(pluginProjectName)
+    descriptor.set(sourceDescriptor)
+    classesDirs.from(tasks.named("compileKotlin"))
+    compileClasspath.from(configurations.named("compileClasspath"))
+    outputDir.set(layout.buildDirectory.dir("generated/plugin-descriptor"))
+}
+
+extensions.getByType<SourceSetContainer>().named("main") {
+    resources.srcDir(generatePluginDescriptor.flatMap { it.outputDir })
+}
+
 tasks.named<ProcessResources>("processResources") {
+    // variável local: a lambda não pode capturar o objeto do script (configuration cache)
+    val descriptorSource = sourceDescriptorFile
+    exclude { it.file == descriptorSource }
     eachFile(ExpandPluginResources(mapOf("project_name" to pluginProjectName, "version" to pluginVersion)))
 }
 

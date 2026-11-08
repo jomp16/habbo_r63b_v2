@@ -70,7 +70,7 @@ abstract class VerifySessionReleaseAccessTask : DefaultTask() {
                     ClassNode().also { reader.accept(it, 0) }
                 }
             } catch (e: Exception) {
-                continue
+                throw GradleException("Não foi possível ler a classe ${classFile.path} (ASM desatualizado para este JDK?)", e)
             }
 
             val callerInternal = node.name

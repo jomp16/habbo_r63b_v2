@@ -86,7 +86,7 @@ abstract class VerifyPacketSignaturesTask : DefaultTask() {
                 cr.accept(cn, ClassReader.SKIP_FRAMES)
                 classNodes.add(cn)
             } catch (e: Exception) {
-                logger.warn("Não foi possível ler classe: ${file.path}", e)
+                throw GradleException("Não foi possível ler a classe ${file.path} (ASM desatualizado para este JDK?)", e)
             }
         }
 

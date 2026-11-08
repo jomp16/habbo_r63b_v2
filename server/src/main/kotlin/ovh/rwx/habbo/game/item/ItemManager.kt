@@ -21,7 +21,6 @@ package ovh.rwx.habbo.game.item
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import io.github.classgraph.ClassGraph
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isVersionAtLeast
@@ -43,6 +42,7 @@ import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.kotlin.urlUserAgent
+import ovh.rwx.habbo.util.ClassIndex
 import ovh.rwx.habbo.util.ReplacingInputStream
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
@@ -75,7 +75,7 @@ class ItemManager {
     private val wiredDefaultData: ConcurrentHashMap<InteractionType, WiredDefaultDataFactory> = ConcurrentHashMap()
 
     /**
-     * (Re)carrega os itens. TODO o estado novo (inclusive o scan lento do ClassGraph) é construído em
+     * (Re)carrega os itens. TODO o estado novo (inclusive a instanciação dos interactors via [ClassIndex]) é construído em
      * coleções locais e só depois publicado nas coleções ativas (putAll + retainAll, ou troca de
      * referência @Volatile), então os leitores nunca veem estado vazio/parcial. Quem muta em runtime
      * (teleportLinks/roomTeleportLinks, testes) continua usando os mesmos ConcurrentHashMap.
@@ -92,19 +92,13 @@ class ItemManager {
         val newTeleportLinks = ItemDao.getTeleportLinks().toMap()
         val newRoomTeleportLinks = ItemDao.getLinkedTeleport(newTeleportLinks.keys).toMap()
 
-        val interactors: List<ItemInteractor>
-        val furnitureLogics: List<FurnitureLogic>
-        val wiredItemsInteractor: List<Class<*>>
+        val interactors: List<ItemInteractor> = ClassIndex.classesOf(ClassIndex.Kind.ITEM_INTERACTOR)
+            .map { it.asSubclass(ItemInteractor::class.java).getConstructor().newInstance() }
 
-        ClassGraph().enableAllInfo().acceptPackages("ovh.rwx.habbo").scan().use { scanResult ->
-            interactors = scanResult.getSubclasses(ItemInteractor::class.java).loadClasses()
-                .map { it.asSubclass(ItemInteractor::class.java).getConstructor().newInstance() }
+        val furnitureLogics: List<FurnitureLogic> = ClassIndex.classesOf(ClassIndex.Kind.FURNITURE_LOGIC)
+            .map { it.asSubclass(FurnitureLogic::class.java).getConstructor().newInstance() }
 
-            furnitureLogics = scanResult.getSubclasses(FurnitureLogic::class.java).loadClasses()
-                .map { it.asSubclass(FurnitureLogic::class.java).getConstructor().newInstance() }
-
-            wiredItemsInteractor = scanResult.getClassesWithAnnotation(WiredItemInteractor::class.java).loadClasses()
-        }
+        val wiredItemsInteractor: List<Class<*>> = ClassIndex.classesOf(ClassIndex.Kind.WIRED_ITEM)
 
         val newInteractors = HashMap<InteractionType, ItemInteractor>()
         interactors.forEach { interactor ->
