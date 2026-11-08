@@ -62,7 +62,12 @@ class RoomData(
     idleSleepTimeoutSeconds: Int = 1200,
     idleAutokickEnabled: Boolean = false,
     idleAutokickTimeoutSeconds: Int = 1800,
-    muteAllPets: Boolean = false
+    muteAllPets: Boolean = false,
+    /**
+     * Quarto virtual de stress test: existe só na memória (não tem linha no banco, nunca é gravado
+     * nem lê itens/direitos/bans). Ver [ovh.rwx.habbo.game.room.virtual.VirtualRooms].
+     */
+    val virtual: Boolean = false
 ) : AbstractDirtyEntity() {
     var name: String = name; set(v) { if (field != v) { field = v; markDirty() } }
     var description: String = description; set(v) { if (field != v) { field = v; markDirty() } }
@@ -101,10 +106,14 @@ class RoomData(
     var idleAutokickTimeoutSeconds: Int = idleAutokickTimeoutSeconds; set(v) { if (field != v) { field = v; markDirty() } }
     var muteAllPets: Boolean = muteAllPets; set(v) { if (field != v) { field = v; markDirty() } }
 
-    val ownerName: String by lazy { UserInformationDao.getUserInformationById(ownerId)?.username ?: "null" }
+    val ownerName: String by lazy {
+        if (virtual) ovh.rwx.habbo.game.room.virtual.VirtualRooms.OWNER_NAME
+        else UserInformationDao.getUserInformationById(ownerId)?.username ?: "null"
+    }
 
     override fun flush() {
-        RoomDao.updateRoomData(this)
+        // quarto virtual não tem linha no banco: UPDATE seria no-op, mas nem a ida ao banco é paga
+        if (!virtual) RoomDao.updateRoomData(this)
         markClean()
     }
 
@@ -117,7 +126,9 @@ class RoomData(
             model: String,
             category: Int,
             maxUsers: Int,
-            tradeSettings: Int
+            tradeSettings: Int,
+            tags: List<String> = emptyList(),
+            virtual: Boolean = false
         ): RoomData = RoomData(
             id = id,
             roomType = RoomType.PRIVATE,
@@ -130,7 +141,7 @@ class RoomData(
             usersMax = maxUsers,
             modelName = model,
             score = 0,
-            tags = emptyList(),
+            tags = tags,
             password = "",
             wallpaper = "0.0",
             floor = "0.0",
@@ -157,7 +168,8 @@ class RoomData(
             idleSleepTimeoutSeconds = 1200,
             idleAutokickEnabled = false,
             idleAutokickTimeoutSeconds = 1800,
-            muteAllPets = false
+            muteAllPets = false,
+            virtual = virtual
         )
     }
 }

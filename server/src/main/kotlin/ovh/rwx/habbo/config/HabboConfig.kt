@@ -69,6 +69,8 @@ data class HabboConfig(
     val petConfig: PetConfig = PetConfig(),
     @param:JsonProperty("stress_test")
     val stressTest: Boolean = false,
+    @param:JsonProperty("virtual_rooms")
+    val virtualRoomsConfig: VirtualRoomsConfig = VirtualRoomsConfig(),
     @param:JsonProperty("habbo_host")
     val habboHost: String? = null,
     @param:JsonProperty("games_url")

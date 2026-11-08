@@ -97,6 +97,11 @@ fun HabboSession.authenticateBot(ssoTicket: String): Boolean {
         friendStreamEnabled = false
     )
 
+    // Bot de stress não tem linha no banco (id sintético): suas entidades nunca entram no write-behind
+    userInformation.ephemeral = true
+    userStats.ephemeral = true
+    userPreferences.ephemeral = true
+
     favoritesRooms = mutableListOf()
 
     habboMessenger = HabboMessenger(this)

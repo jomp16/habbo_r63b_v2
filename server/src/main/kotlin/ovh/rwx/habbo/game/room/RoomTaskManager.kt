@@ -24,13 +24,22 @@ import java.util.concurrent.CopyOnWriteArraySet
 class RoomTaskManager {
     val rooms: MutableSet<Room> = CopyOnWriteArraySet()
 
+    // synchronized(room): quem chega enquanto OUTRA thread ainda está em startLoop() espera ela terminar, em vez de
+    // sair na hora de um `rooms.add` falso e seguir com a sala ainda "não rodando" — aí `RoomUserManager.addUser`
+    // descartava o usuário em silêncio (sem resposta), e ele ficava parado até o timeout de ociosidade. Com muitos
+    // usuários entrando juntos numa sala fria (ex.: reconexão em massa), alguns eram perdidos assim. Início e parada
+    // da mesma sala também não se intercalam mais. O monitor é o mesmo do `Room.initialize` (reentrante).
     fun addRoom(room: Room) {
-        if (!rooms.add(room)) return
-        room.startLoop()
+        synchronized(room) {
+            if (!rooms.add(room)) return
+            room.startLoop()
+        }
     }
 
     fun removeRoom(room: Room) {
-        if (!rooms.remove(room)) return
-        room.stopLoop()
+        synchronized(room) {
+            if (!rooms.remove(room)) return
+            room.stopLoop()
+        }
     }
 }

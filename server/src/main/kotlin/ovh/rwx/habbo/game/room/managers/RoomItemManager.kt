@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap
 class RoomItemManager(private val room: Room) {
     private val log = LoggerFactory.getLogger(javaClass)
     val items: MutableMap<Int, RoomItem> by lazy {
-        ConcurrentHashMap(ItemDao.getRoomItems(room.roomData.id))
+        if (room.roomData.virtual) ConcurrentHashMap() else ConcurrentHashMap(ItemDao.getRoomItems(room.roomData.id))
     }
     val wallItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.WALL }
     val floorItems: Map<Int, RoomItem> get() = items.filterValues { it.furnishing.type == ItemType.FLOOR }

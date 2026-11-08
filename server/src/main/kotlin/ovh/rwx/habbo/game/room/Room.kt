@@ -45,6 +45,9 @@ import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.RoomGameKind
+import ovh.rwx.habbo.game.item.wired.variable.WiredVariable
+import ovh.rwx.habbo.game.item.wired.variable.WiredVariableValue
+import ovh.rwx.habbo.game.pet.PetData
 import ovh.rwx.habbo.game.item.wired.trigger.EmptyTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.PeriodicTriggerData
 import ovh.rwx.habbo.game.item.wired.trigger.triggers.*
@@ -64,6 +67,7 @@ import ovh.rwx.habbo.game.room.wired.WiredPerformanceMonitor
 import ovh.rwx.habbo.game.room.wired.WiredRoomSettings
 import ovh.rwx.habbo.game.room.wired.WiredVariableManager
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.OutboxBatch
 import ovh.rwx.habbo.pathfinding.IFinder
 import ovh.rwx.habbo.pathfinding.core.DiagonalMovement
 import ovh.rwx.habbo.pathfinding.core.finders.AStarFinder
@@ -74,6 +78,17 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
+
+/** Leituras de banco da carga inicial da sala; [EMPTY] para quarto virtual (nada a ler). */
+private class RoomInitialData(
+    val roomVariables: List<Pair<WiredVariable, WiredVariableValue>>,
+    val furniVariables: List<Pair<WiredVariable, WiredVariableValue>>,
+    val pets: List<PetData>,
+) {
+    companion object {
+        val EMPTY = RoomInitialData(emptyList(), emptyList(), emptyList())
+    }
+}
 
 class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSerialize {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -118,9 +133,13 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     val gameManager: RoomGameManager by lazy { RoomGameManager(this) }
     // endregion
 
-    val wordFilter: MutableSet<String> by lazy { HashSet(RoomDao.getWordFilter(roomData.id)) }
+    // Quarto virtual: filtro e bans só em memória (não há linha no banco para referenciar)
+    val wordFilter: MutableSet<String> by lazy {
+        if (roomData.virtual) HashSet() else HashSet(RoomDao.getWordFilter(roomData.id))
+    }
     val bannedUsers: MutableMap<Int, RoomBanEntry> by lazy {
-        ConcurrentHashMap(RoomBanDao.getBansByRoomId(roomData.id).associateBy { it.userId })
+        if (roomData.virtual) ConcurrentHashMap()
+        else ConcurrentHashMap(RoomBanDao.getBansByRoomId(roomData.id).associateBy { it.userId })
     }
 
     fun isBanned(userId: Int): Boolean {
@@ -128,7 +147,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         val now = System.currentTimeMillis() / 1000
         if (ban.expireTimestamp <= now) {
             bannedUsers.remove(userId)
-            RoomBanDao.removeBan(roomData.id, userId)
+            if (!roomData.virtual) RoomBanDao.removeBan(roomData.id, userId)
             return false
         }
         return true
@@ -139,12 +158,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         val expireTimestamp = if (durationSeconds == Long.MAX_VALUE) Long.MAX_VALUE else now + durationSeconds
         val entry = RoomBanEntry(userId, username, expireTimestamp)
         bannedUsers[userId] = entry
-        RoomBanDao.addBan(roomData.id, userId, expireTimestamp)
+        if (!roomData.virtual) RoomBanDao.addBan(roomData.id, userId, expireTimestamp)
     }
 
     fun unbanUser(userId: Int) {
         bannedUsers.remove(userId)
-        RoomBanDao.removeBan(roomData.id, userId)
+        if (!roomData.virtual) RoomBanDao.removeBan(roomData.id, userId)
     }
 
     val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
@@ -157,8 +176,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
         // Leituras de banco independentes em paralelo (antes eram 7 idas em série na thread do handler):
         // fase 1 = itens(+wired) ‖ variáveis da sala ‖ bans ‖ pets; fase 2 = variáveis dos mobis (precisam dos ids dos itens)
-        val loadPets = roomData.allowPets
-        val (roomVariables, furniVariables, pets) = runBlocking(Dispatchers.IO) {
+        // Quarto virtual (stress test): nada a ler do banco — sem itens, variáveis, bans nem pets
+        val loadPets = roomData.allowPets && !roomData.virtual
+        val loaded = if (roomData.virtual) RoomInitialData.EMPTY else runBlocking(Dispatchers.IO) {
             val itemsJob = async { itemManager.loadItems() }
             val roomVarsJob = async { wiredVariableManager.fetchRoomVariables() }
             val bansJob = async { bannedUsers.size }
@@ -170,12 +190,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
             bansJob.await()
             wiredJob.await()
-            Triple(roomVarsJob.await(), furniVarsJob.await(), petsJob.await())
+            RoomInitialData(roomVarsJob.await(), furniVarsJob.await(), petsJob.await())
         }
 
         roomGamemap = RoomGamemap(this)
         itemManager.triggerItems()
-        wiredVariableManager.loadPersistentVariables(roomVariables, furniVariables)
+        wiredVariableManager.loadPersistentVariables(loaded.roomVariables, loaded.furniVariables)
 
         if (itemManager.items.values.any { it.furnishing.interactionType.roomGameKind == RoomGameKind.BATTLE_BANZAI }) {
             gameManager.registerGame(RoomGameType.BATTLE_BANZAI)
@@ -184,7 +204,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         group?.let { loadedGroups.add(it) }
 
         if (loadPets) {
-            userManager.loadPets(pets)
+            userManager.loadPets(loaded.pets)
         }
 
         initialized = true
@@ -222,7 +242,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     tickCounter = (tickCounter + 1) % 10
                     isMajorTick = tickCounter == 0
 
-                    processRoomTick(isMajorTick)
+                    // as mensagens do tick só agendam o drain das sessões ao fim dele (um por sessão, não um por rajada)
+                    OutboxBatch.collect { processRoomTick(isMajorTick) }
 
                     if (errorsCounter.get() > 0) errorsCounter.set(0)
                 } catch (e: Exception) {
@@ -366,6 +387,8 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     }
 
     private fun processHostingAchievement() {
+        // o "dono" de um quarto virtual não existe: nada a progredir
+        if (roomData.virtual) return
         if (hostingCounter.incrementAndGet() < 120) return
 
         hostingCounter.set(0)
@@ -489,6 +512,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     }
 
     fun saveRoom() {
+        // Quarto virtual nunca persiste (nem a linha da sala, nem itens, pets, grupo ou variáveis)
+        if (roomData.virtual) return
+
         val pendingItems = itemManager.drainItemsToSave()
         val dimmer = itemManager.roomDimmer?.takeIf { pendingItems.contains(it.roomItem) }
         dimmer?.let { ItemDao.saveDimmer(it) }

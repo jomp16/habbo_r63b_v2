@@ -45,7 +45,9 @@ import java.util.concurrent.ConcurrentHashMap
 class RoomUserManager(private val room: Room) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val rights: MutableSet<RightData> by lazy { HashSet(RoomDao.getRights(room.roomData.id)) }
+    val rights: MutableSet<RightData> by lazy {
+        if (room.roomData.virtual) HashSet() else HashSet(RoomDao.getRights(room.roomData.id))
+    }
     val entities: MutableMap<Int, RoomEntity> by lazy { ConcurrentHashMap() }
     val usersWithRights: Set<RoomEntity>
         get() = entities.values.filterIsInstance<RoomUser>().filter { hasRights(it) }.toSet()

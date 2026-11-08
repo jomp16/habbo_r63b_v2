@@ -21,8 +21,11 @@ package ovh.rwx.habbo.game.room
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.database.navigator.NavigatorDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.game.room.model.RoomModel
+import ovh.rwx.habbo.game.room.virtual.VirtualRooms
 import ovh.rwx.habbo.game.room.user.RoomUser
 import java.util.concurrent.ConcurrentHashMap
 
@@ -53,9 +56,32 @@ class RoomManager {
             }
         }
 
+        populateVirtualRooms()
+
         log.info("Loaded {} room models!", roomModels.size)
         log.info("Loaded {} custom room models!", customRoomModels.size)
         log.info("Loaded {} rooms!", rooms.size)
+    }
+
+    /**
+     * Quartos virtuais de stress test (config `virtual_rooms`): só em memória, ids determinísticos,
+     * modelos e categorias sorteados. Recriados a cada [load], que limpa [rooms].
+     */
+    private fun populateVirtualRooms() {
+        val config = HabboServer.habboConfig.virtualRoomsConfig
+        if (!config.enabled || config.count <= 0) return
+
+        val freeModels = roomModels.values.filter { !it.clubOnly }.sortedBy { it.id }
+        val categories = NavigatorDao.getNavigatorRoomCategories().filter { it.minRank <= 1 }.map { it.id }
+
+        val virtualRooms = VirtualRooms.create(config, freeModels, categories)
+        rooms.putAll(virtualRooms)
+
+        log.info(
+            "Created {} virtual stress rooms (ids {}..{}, {} models, max {} users each, nothing persisted)",
+            virtualRooms.size, VirtualRooms.ID_BASE + 1, VirtualRooms.ID_BASE + virtualRooms.size,
+            virtualRooms.values.map { it.roomData.modelName }.toSet().size, config.maxUsers
+        )
     }
 
     fun createRoom(

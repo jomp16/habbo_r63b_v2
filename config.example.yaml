@@ -93,6 +93,15 @@ pets:
   name_min_length: 2
   name_max_length: 15
 stress_test: false
+# Quartos virtuais de stress test: só em memória, NADA vai para o banco (sem itens, direitos, bans, salvamento).
+# Ids = 2100000001..2100000000+count; aparecem no navigator (busca por "stress", populares, categorias) e
+# aceitam entrada normal (cliente real ou bots do habbo_client_sdk). Para estressar o tick da sala.
+virtual_rooms:
+  enabled: false
+  count: 10          # quantos quartos criar no boot
+  max_users: 1000    # capacidade de cada quarto
+  name_prefix: "[STRESS] Sala"
+  seed: 1            # mesma semente = mesma distribuição de modelos/categorias a cada boot
 # Keeps habbo.server.local in the nginx box's /etc/hosts pointing at this
 # machine's LAN IP, so the habbo.rwx.ovh/websocket proxy always reaches the
 # emulator wherever it runs. Uncomment to enable.

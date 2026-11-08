@@ -44,7 +44,7 @@
         <Logger name="ovh.rwx" level="trace"/>
 
         <!-- Stress-test metrics -> file only (not console), avoids IDE truncation -->
-        <Logger name="ovh.rwx.habbo.stress" level="off" additivity="false">
+        <Logger name="ovh.rwx.habbo.stress" level="info" additivity="false">
             <AppenderRef ref="StressTestFile"/>
         </Logger>
 
@@ -54,7 +54,7 @@
         </Logger>
 
         <!-- Suppress per-packet incoming/outgoing TRACE flood on the console -->
-        <!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>-->
+        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>
         <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>
 
         <Logger name="ovh.rwx.habbo.camera" level="debug"/>

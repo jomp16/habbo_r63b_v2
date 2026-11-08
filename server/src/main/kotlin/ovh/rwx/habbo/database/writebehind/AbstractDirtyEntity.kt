@@ -25,7 +25,16 @@ abstract class AbstractDirtyEntity {
     var isDirty: Boolean = false
         protected set
 
+    /**
+     * Entidade só em memória (ex.: sessão de bot de stress test): nunca fica suja nem entra no conjunto
+     * de escrita do write-behind, então nada dela chega ao banco (o INSERT falharia por FK, aliás).
+     */
+    @Transient
+    @Volatile
+    var ephemeral: Boolean = false
+
     fun markDirty() {
+        if (ephemeral) return
         isDirty = true
         WriteBehindManager.markDirty(this)
     }

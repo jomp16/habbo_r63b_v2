@@ -682,6 +682,8 @@ class WiredVariableManager(private val room: Room) {
     }
 
     fun onUserEnter(userId: Int) {
+        // Quarto virtual: sem variáveis persistidas para ler
+        if (room.roomData.virtual) return
         // Query JDBC fora da thread do quarto: o join não pode esperar round-trip ao banco.
         // Os mapas de valores são concorrentes, então o merge tardio é seguro.
         HabboServer.applicationScope.launch(Dispatchers.IO) { loadUserVariables(userId) }

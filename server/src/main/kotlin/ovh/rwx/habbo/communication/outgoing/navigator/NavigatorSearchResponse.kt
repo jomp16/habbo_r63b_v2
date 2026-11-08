@@ -118,7 +118,7 @@ class NavigatorSearchResponse {
 
                 "popular" -> {
                     HabboServer.habboGame.roomManager.rooms.values.filter { it.running && it.userManager.entities.isNotEmpty() }
-                        .sortedBy { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
+                        .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
                             writeInt(it.size)
 
                             it.forEach { room -> habboResponse.serialize(room, false, false) }
@@ -176,7 +176,7 @@ class NavigatorSearchResponse {
 
             HabboServer.habboGame.roomManager.rooms.values.filter { it.running && it.userManager.entities.isNotEmpty() }
                 .filter { it.roomData.category == navigatorRoomCategory.id }
-                .sortedBy { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
+                .sortedByDescending { it.userManager.entities.values.filterIsInstance<RoomUser>().size }.take(8).let {
                     writeInt(it.size)
 
                     it.forEach { room -> habboResponse.serialize(room, false, false) }

@@ -29,9 +29,13 @@ import ovh.rwx.habbo.metrics.ServerMetrics
  */
 class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
     private val stressLog = LoggerFactory.getLogger("ovh.rwx.habbo.stress")
+    private val roomReservoir = ServerMetrics.roomTickReservoir(roomId)
 
     private val tickProcessingBuffer = LongArray(if (enabled) 200 else 0)
     private val majorTickIntervalBuffer = LongArray(if (enabled) 20 else 0)
+    private val schedulingLagBuffer = LongArray(if (enabled) 200 else 0)
+    private var schedulingLagIdx = 0
+    private var schedulingLagCount = 0
     private var stressTickIdx = 0
     private var stressMajorIdx = 0
     private var stressTickCount = 0
@@ -48,7 +52,7 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
         val elapsedMs = elapsedNanos / 1_000_000
 
         // métricas do servidor sempre recebem o tick; o log de stress só roda quando habilitado
-        ServerMetrics.recordRoomTick(roomId, elapsedNanos, isMajorTick)
+        ServerMetrics.recordRoomTick(roomReservoir, elapsedNanos, isMajorTick)
 
         // período real entre major ticks da MESMA sala (esperado 500 ms): enxerga também o atraso de agendamento,
         // que o tempo de processamento não mostra. Início a início, então inclui tudo que atrasou o ciclo.
@@ -91,9 +95,17 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
 
             val procInfo = "avg=%.1fms p95=%dms max=%dms".format(procAvg, procP95, procMax)
 
+            // Atraso de agendamento (loop acordou depois do pedido): separa "tick lento" de "thread não foi escalada"
+            val lagCount = minOf(schedulingLagCount, schedulingLagBuffer.size)
+            var lagInfo = "n/a"
+            if (lagCount >= 1) {
+                val (lagAvg, lagP95, lagMax) = computeStats(schedulingLagBuffer, lagCount)
+                lagInfo = "avg=%.1fms p95=%dms max=%dms".format(lagAvg, lagP95, lagMax)
+            }
+
             stressLog.info(
-                "[stress-test] room={} ticks={} proc: {} | major-interval: {}",
-                roomId, procCount, procInfo, majInfo
+                "[stress-test] room={} ticks={} proc: {} | major-interval: {} | sched-lag: {}",
+                roomId, procCount, procInfo, majInfo, lagInfo
             )
         }
     }
@@ -104,6 +116,12 @@ class RoomTickMonitor(private val roomId: Int, private val enabled: Boolean) {
      */
     fun onSchedulingLag(lagNanos: Long) {
         ServerMetrics.recordSchedulingLag(lagNanos)
+
+        if (!enabled) return
+
+        schedulingLagBuffer[schedulingLagIdx] = lagNanos / 1_000_000
+        schedulingLagIdx = (schedulingLagIdx + 1) % schedulingLagBuffer.size
+        schedulingLagCount++
     }
 
     private fun computeStats(buffer: LongArray, count: Int): Triple<Double, Long, Long> {
