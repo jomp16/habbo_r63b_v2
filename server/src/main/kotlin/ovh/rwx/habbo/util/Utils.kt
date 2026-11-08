@@ -28,6 +28,8 @@ import java.math.RoundingMode
 import java.net.URI
 import java.util.zip.Deflater
 import java.util.zip.Inflater
+import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
 
@@ -52,8 +54,23 @@ object Utils {
     fun round(value: Double, places: Int): Double {
         if (places < 0) throw IllegalArgumentException()
 
+        // Caminho rápido sem BigDecimal (era ~11% da alocação em carga): só vale longe de um empate .5, onde o
+        // arredondamento do double não pode divergir do HALF_UP exato; perto do empate, volta ao BigDecimal.
+        if (places <= 9 && value.isFinite() && abs(value) < 1e9) {
+            val factor = POW10[places]
+            val scaled = value * factor
+            val floor = floor(scaled)
+            val frac = scaled - floor
+            if (abs(frac - 0.5) > 1e-6) {
+                val rounded = if (frac > 0.5) floor + 1.0 else floor
+                return rounded / factor
+            }
+        }
+
         return BigDecimal(value).setScale(places, RoundingMode.HALF_UP).toDouble()
     }
+
+    private val POW10 = DoubleArray(10).also { var p = 1.0; for (i in it.indices) { it[i] = p; p *= 10.0 } }
 
     fun inflate(source: ByteArray): ByteArray {
         val inflater = Inflater()

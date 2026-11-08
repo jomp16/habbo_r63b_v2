@@ -39,22 +39,27 @@ class RoomGamemap(private val room: Room) {
     val roomItemMap: MutableMap<Vector2, MutableSet<RoomItem>> = ConcurrentHashMap()
 
     val grid: Grid = Grid(room.roomModel.mapSizeX, room.roomModel.mapSizeY) { _, x, y, overrideBlocking ->
-        !isBlocked(Vector2(x, y), overrideBlocking = overrideBlocking)
+        !isBlocked(x, y, overrideBlocking = overrideBlocking)
     }
 
     init {
         room.itemManager.floorItems.values.forEach { addRoomItem(it) }
     }
 
-    fun isBlocked(vector2: Vector2, ignoreUsers: Boolean = false, overrideBlocking: Boolean = false): Boolean {
-        if (!grid.isInside(vector2.x, vector2.y)) return true
+    fun isBlocked(vector2: Vector2, ignoreUsers: Boolean = false, overrideBlocking: Boolean = false): Boolean =
+        isBlocked(vector2.x, vector2.y, ignoreUsers, overrideBlocking)
+
+    /** Hot path do A*: só aloca a chave [Vector2] quando precisa consultar as entidades do tile. */
+    fun isBlocked(x: Int, y: Int, ignoreUsers: Boolean = false, overrideBlocking: Boolean = false): Boolean {
+        if (!grid.isInside(x, y)) return true
         if (overrideBlocking) return false
-        if (room.roomModel.doorVector3.x == vector2.x && room.roomModel.doorVector3.y == vector2.y) return false
-        if (room.roomModel.squareStates[vector2.x][vector2.y] == SquareState.CLOSED) return true
-        if (blockedItem[vector2.x][vector2.y]) return true
+        if (room.roomModel.doorVector3.x == x && room.roomModel.doorVector3.y == y) return false
+        if (room.roomModel.squareStates[x][y] == SquareState.CLOSED) return true
+        if (blockedItem[x][y]) return true
 
         if (!ignoreUsers && !room.roomData.allowWalkThrough) {
-            val usersOnTile = roomEntityMap[vector2]
+            if (roomEntityMap.isEmpty()) return false
+            val usersOnTile = roomEntityMap[Vector2(x, y)]
             return !usersOnTile.isNullOrEmpty()
         }
 
