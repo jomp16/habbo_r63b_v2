@@ -96,10 +96,11 @@ class HabboNettyRC4Decoder : ByteToMessageDecoder() {
             }
         } else {
             // Se for a versão RSA, segue normal (sem as insanidades de Base64)
-            var bytes = ByteArray(incomingByteBuf.readableBytes())
+            val bytes = ByteArray(incomingByteBuf.readableBytes())
             incomingByteBuf.readBytes(bytes)
 
-            if (habboSession.rc4Encryption != null) bytes = habboSession.rc4Encryption!!.parse(bytes)
+            // no lugar: o parse() devolvia uma cópia a mais por pacote recebido
+            habboSession.rc4Encryption?.parseInPlace(bytes, 0, bytes.size)
 
             out.add(PooledByteBufAllocator.DEFAULT.buffer(bytes.size, bytes.size).writeBytes(bytes))
         }

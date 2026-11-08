@@ -23,6 +23,7 @@ import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
+import java.security.spec.RSAPrivateCrtKeySpec
 import java.security.spec.RSAPrivateKeySpec
 import java.security.spec.RSAPublicKeySpec
 import javax.crypto.Cipher
@@ -38,7 +39,19 @@ class RSAEncryption(n: String, d: String, e: String) {
         val keyFactory = KeyFactory.getInstance("RSA", "BC")
 
         publicKey = keyFactory.generatePublic(RSAPublicKeySpec(n1, e1)) as RSAPublicKey
-        privateKey = keyFactory.generatePrivate(RSAPrivateKeySpec(n1, d1)) as RSAPrivateKey
+
+        // A config só traz N, D e E. Recuperamos p e q (N = p*q) para usar a forma CRT da chave privada: duas
+        // exponenciações de metade do tamanho em vez de uma inteira (~3-4x mais rápido; o resultado é idêntico).
+        // Se por algum motivo não for possível fatorar, cai na chave comum (N, D) — só mais lenta.
+        val crtKey = recoverPrimeFactors(n1, e1, d1)?.let { (p0, q0) ->
+            val p = maxOf(p0, q0)
+            val q = minOf(p0, q0)
+            keyFactory.generatePrivate(
+                RSAPrivateCrtKeySpec(n1, e1, d1, p, q, d1.mod(p - BigInteger.ONE), d1.mod(q - BigInteger.ONE), q.modInverse(p))
+            )
+        }
+
+        privateKey = (crtKey ?: keyFactory.generatePrivate(RSAPrivateKeySpec(n1, d1))) as RSAPrivateKey
     }
 
     // NOTE: Cipher is stateful and NOT thread-safe. A fresh instance is created
@@ -80,4 +93,43 @@ class RSAEncryption(n: String, d: String, e: String) {
     } catch (e: Exception) {
         byteArrayOf()
     }
+}
+
+/**
+ * Recupera os primos `p` e `q` (N = p*q) a partir de `(N, D, E)`, com o algoritmo clássico (NIST SP 800-56B, anexo C):
+ * `k = D*E - 1` é múltiplo de λ(N); escreve-se `k = 2^t * r` (r ímpar) e, para um `g` qualquer, a sequência
+ * `g^r, g^(2r), ... g^k = 1` passa por uma raiz quadrada não trivial de 1, cujo `gcd(x - 1, N)` é um fator de N.
+ * Cada `g` funciona com probabilidade >= 1/2; o gerador é determinístico (só há fatoração, nenhum segredo novo).
+ * Devolve `null` se não achar (chave inconsistente).
+ */
+internal fun recoverPrimeFactors(n: BigInteger, e: BigInteger, d: BigInteger): Pair<BigInteger, BigInteger>? {
+    val k = d.multiply(e).subtract(BigInteger.ONE)
+    if (k.signum() <= 0 || k.testBit(0)) return null
+
+    val t = k.lowestSetBit
+    val r = k.shiftRight(t)
+    val nMinusOne = n.subtract(BigInteger.ONE)
+    val random = java.util.Random(0x5EED)
+
+    repeat(256) {
+        val g = BigInteger(n.bitLength(), random).mod(n.subtract(BigInteger.valueOf(3))).add(BigInteger.TWO)
+        var x = g.modPow(r, n)
+
+        if (x == BigInteger.ONE || x == nMinusOne) return@repeat
+
+        for (i in 1..t) {
+            val y = x.multiply(x).mod(n)
+
+            if (y == BigInteger.ONE) {
+                val p = x.subtract(BigInteger.ONE).gcd(n)
+                if (p != BigInteger.ONE && p != n) return p to n.divide(p)
+                break
+            }
+            if (y == nMinusOne) break
+
+            x = y
+        }
+    }
+
+    return null
 }

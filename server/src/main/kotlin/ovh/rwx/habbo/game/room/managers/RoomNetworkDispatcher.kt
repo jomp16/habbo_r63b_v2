@@ -35,29 +35,70 @@ class RoomNetworkDispatcher(private val room: Room) {
     }
 
     fun sendResponseModern(outgoing: Outgoing, vararg args: Any?, excludeSession: HabboSession? = null) {
-        prototypeBroadcast(
-            roomSessions { !it.isPreShuffle && it != excludeSession },
-            // Serializa a lógica pesada (mapas, strings, iterações) APENAS UMA VEZ por release
-            { prototypeSession -> HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) }
-        ) { session, headerId, protocolEra ->
-            HabboResponse(headerId, outgoing = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
-        }
+        broadcastModern(roomSessions { !it.isPreShuffle && it != excludeSession }, outgoing, args)
     }
 
     fun sendResponseR63A(outgoing: OutgoingR63A, vararg args: Any?, excludeSession: HabboSession? = null) {
+        broadcastR63A(roomSessions { it.isPreShuffle && it != excludeSession }, outgoing, args)
+    }
+
+    /**
+     * Envia a mesma mensagem lógica só para [recipients] (ex.: quem alcança um chat pela distância): a resposta é
+     * serializada UMA vez por release e clonada por sessão, em vez de reexecutar o `@Response` para cada ouvinte.
+     */
+    fun sendResponseToSessions(
+        recipients: Collection<HabboSession>,
+        outgoing: Outgoing?,
+        outgoingR63A: OutgoingR63A?,
+        vararg args: Any?
+    ) {
+        if (outgoing != null) broadcastModern(recipients.filter { !it.isPreShuffle }, outgoing, args)
+        if (outgoingR63A != null) broadcastR63A(recipients.filter { it.isPreShuffle }, outgoingR63A, args)
+    }
+
+    private fun broadcastModern(sessions: List<HabboSession>, outgoing: Outgoing, args: Array<out Any?>) {
         prototypeBroadcast(
-            roomSessions { it.isPreShuffle && it != excludeSession },
+            sessions,
+            // Serializa a lógica pesada (mapas, strings, iterações) APENAS UMA VEZ por release
             { prototypeSession -> HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) }
-        ) { session, headerId, protocolEra ->
-            HabboResponse(headerId, outgoingR63A = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
+        ) { session, headerId, protocolEra, payload ->
+            HabboResponse.shared(headerId, payload, outgoing = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
         }
     }
 
-    private fun roomSessions(filter: (HabboSession) -> Boolean): List<HabboSession> =
-        room.userManager.entities.values
-            .filterIsInstance<RoomUser>()
-            .map { it.habboSession }
-            .filter(filter)
+    private fun broadcastR63A(sessions: List<HabboSession>, outgoing: OutgoingR63A, args: Array<out Any?>) {
+        prototypeBroadcast(
+            sessions,
+            { prototypeSession -> HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) }
+        ) { session, headerId, protocolEra, payload ->
+            HabboResponse.shared(headerId, payload, outgoingR63A = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
+        }
+    }
+
+    // Uma passada só, sem as 3 listas intermediárias (filterIsInstance/map/filter) que eram alocadas a CADA broadcast
+    private fun roomSessions(filter: (HabboSession) -> Boolean): List<HabboSession> {
+        val entities = room.userManager.entities.values
+        val sessions = ArrayList<HabboSession>(entities.size)
+
+        for (entity in entities) {
+            if (entity is RoomUser) {
+                val session = entity.habboSession
+                if (filter(session)) sessions.add(session)
+            }
+        }
+
+        return sessions
+    }
+
+    /** Agrupa por release; no caso comum (uma release só) devolve a própria lista, sem HashMap por broadcast. */
+    private fun groupByRelease(sessions: List<HabboSession>): Collection<List<HabboSession>> {
+        if (sessions.isEmpty()) return emptyList()
+
+        val first = sessions[0].release
+        if (sessions.all { it.release == first }) return listOf(sessions)
+
+        return sessions.groupBy { it.release }.values
+    }
 
     /**
      * Mecânica única de broadcast do quarto: agrupa por release (o wire temporal pode
@@ -68,9 +109,9 @@ class RoomNetworkDispatcher(private val room: Room) {
     private fun prototypeBroadcast(
         sessions: List<HabboSession>,
         serialize: (HabboSession) -> HabboResponse?,
-        clone: (session: HabboSession, headerId: Int, protocolEra: ProtocolEra) -> HabboResponse
+        clone: (session: HabboSession, headerId: Int, protocolEra: ProtocolEra, payload: ByteArray) -> HabboResponse
     ) {
-        for ((_, releaseSessions) in sessions.groupBy { it.release }) {
+        for (releaseSessions in groupByRelease(sessions)) {
             val prototypeResponse = serialize(releaseSessions.first()) ?: continue
 
             val payload = ByteArray(prototypeResponse.byteBuf.readableBytes())
@@ -79,10 +120,9 @@ class RoomNetworkDispatcher(private val room: Room) {
             val protocolEra = prototypeResponse.protocolEra
             prototypeResponse.close() // Libera a memória do Netty do protótipo
 
+            // o payload é compartilhado (somente leitura) por todos os ouvintes: cada um recebe só um objeto leve
             for (session in releaseSessions) {
-                val clonedResponse = clone(session, headerId, protocolEra)
-                clonedResponse.byteBuf.writeBytes(payload)
-                session.sendHabboResponse(clonedResponse)
+                session.sendHabboResponse(clone(session, headerId, protocolEra, payload))
             }
         }
     }

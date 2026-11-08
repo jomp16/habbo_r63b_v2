@@ -21,4 +21,13 @@ package ovh.rwx.habbo.encryption
 
 interface IHabboEncryption {
     fun parse(data: ByteArray): ByteArray
+
+    /**
+     * Processa `data[offset, offset+length)` NO LUGAR, sem alocar. A implementação padrão cai em [parse]
+     * (que aloca); as de caminho quente (RC4 de saída) sobrescrevem.
+     */
+    fun parseInPlace(data: ByteArray, offset: Int, length: Int) {
+        val result = parse(data.copyOfRange(offset, offset + length))
+        System.arraycopy(result, 0, data, offset, length)
+    }
 }

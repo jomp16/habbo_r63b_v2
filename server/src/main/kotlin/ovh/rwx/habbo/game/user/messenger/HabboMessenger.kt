@@ -62,6 +62,9 @@ class HabboMessenger(private val habboSession: HabboSession) {
     }
 
     fun notifyFriends() {
+        // sem amigos (todo bot, muitos usuários novos): não aloca as 2 listas intermediárias a cada entrada em sala
+        if (friends.isEmpty()) return
+
         friends.values.filter { it.userId > 0 }.filter { it.online && it.habboSession?.habboMessenger?.initialized == true }.forEach {
             if (!it.habboSession!!.isPreShuffle) {
                 it.habboSession!!.sendHabboResponse(

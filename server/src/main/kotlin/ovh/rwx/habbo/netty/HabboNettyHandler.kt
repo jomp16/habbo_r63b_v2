@@ -25,6 +25,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.timeout.IdleState
 import io.netty.handler.timeout.IdleStateEvent
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
@@ -63,7 +65,16 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HabboRequest) ServerMetrics.recordPacketIn()
-        HabboServer.applicationScope.launch {
+
+        // Handshake RSA/DH (só CPU) vai para poucas threads dedicadas; o resto segue no pool cacheado
+        val dispatcher: CoroutineContext = if (msg is HabboRequest) {
+            val session = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
+            if (session != null && !session.authenticated && HabboServer.habboHandler.isHandshakeCrypto(session, msg.headerId)) {
+                HabboServer.handshakeDispatcher
+            } else EmptyCoroutineContext
+        } else EmptyCoroutineContext
+
+        HabboServer.applicationScope.launch(dispatcher) {
             if (msg is HabboRequest) {
                 val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
 

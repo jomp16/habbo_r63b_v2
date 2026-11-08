@@ -39,14 +39,18 @@ import ovh.rwx.habbo.metrics.ServerMetrics
 class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
+    // Rascunho do RC4 de saída: o encoder é sharable, mas cada encode roda na thread do event loop do canal
+    private val rc4Scratch: ThreadLocal<ByteArray> = ThreadLocal.withInitial { ByteArray(4096) }
+
     override fun encode(ctx: ChannelHandlerContext, msg: HabboResponse, out: ByteBuf) {
         ServerMetrics.recordPacketOut()
         try {
             val habboSession: HabboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-            val username =
-                if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 
             if (log.isDebugEnabled) {
+                // só calculado quando o log de pacotes está ligado (antes era a cada pacote, inclusive o ip() de sessões não autenticadas)
+                val username =
+                    if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
                 val outgoing: String = if (!habboSession.isPreShuffle) {
                     HabboServer.habboHandler.outgoingNames[habboSession.release]?.find { it.first == msg.headerId }?.second?.name
                         ?: "null"
@@ -64,16 +68,15 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
                 )
             }
 
-            val byteBuf = msg.byteBuf
-
+            // o corpo vem do buffer próprio da resposta ou, num broadcast, do payload compartilhado (sem buffer por ouvinte)
             out.apply {
                 if (!habboSession.isPreShuffle || habboSession.protocolEra == ProtocolEra.PRE_SHUFFLE_MODERN) {
-                    writeInt(byteBuf.writerIndex() + 2)
+                    writeInt(msg.payloadLength + 2)
                     writeShort(msg.headerId)
-                    writeBytes(byteBuf)
+                    msg.writePayloadTo(this)
                 } else {
                     writeBytes(HabboBase64.encodeBytes(msg.headerId))
-                    writeBytes(byteBuf)
+                    msg.writePayloadTo(this)
                     writeByte(1)
                 }
             }
@@ -82,10 +85,18 @@ class HabboNettyEncoder : MessageToByteEncoder<HabboResponse>() {
             // header + corpo) com o keystream do cipher de saída — espelho do leitor AS3
             // `_SafeStr_8113`, que decripta length e corpo continuamente com `_SafeStr_8088`.
             habboSession.rc4EncryptionOut?.takeIf { !msg.plaintext }?.let { crypto ->
-                val plain = ByteArray(out.readableBytes())
-                out.readBytes(plain)
-                out.clear()
-                out.writeBytes(crypto.parse(plain))
+                // No lugar, com buffer de rascunho por thread: antes eram 2 ByteArray novos por pacote por sessão
+                // (a maior fonte de lixo do emulador sob carga). O frame é do tamanho de um pacote: cabe no rascunho.
+                val length = out.readableBytes()
+                var scratch = rc4Scratch.get()
+                if (scratch.size < length) {
+                    scratch = ByteArray(maxOf(length, scratch.size * 2))
+                    rc4Scratch.set(scratch)
+                }
+
+                out.getBytes(out.readerIndex(), scratch, 0, length)
+                crypto.parseInPlace(scratch, 0, length)
+                out.setBytes(out.readerIndex(), scratch, 0, length)
             }
         } finally {
             // Guaranteed to run, preventing the memory leak

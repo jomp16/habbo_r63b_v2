@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -89,8 +89,10 @@ object ServerMetrics {
     // por tipo de pacote, pelo nome semântico do enum (SSO_TICKET): o id do cabeçalho muda a cada release.
     // O mapa é limitado pelo número de handlers (centenas); cada reservatório é pequeno.
     private val perHandler = ConcurrentHashMap<String, Reservoir>()
-    private val packetsIn = AtomicLong()
-    private val packetsOut = AtomicLong()
+    // LongAdder (e não AtomicLong): incrementado a CADA pacote por dezenas de event loops; o CAS de um AtomicLong
+    // vira disputa de cache line sob carga. sumThenReset() mantém a semântica de "ler e zerar" do sampler.
+    private val packetsIn = LongAdder()
+    private val packetsOut = LongAdder()
 
     @Volatile
     var sampleIntervalMs: Long = DEFAULT_SAMPLE_INTERVAL_MS
@@ -115,10 +117,19 @@ object ServerMetrics {
      * animação, entidades e itens; o minor (a cada 50 ms) só roda os gatilhos periódicos do wired. Os dois têm
      * orçamentos diferentes, então são medidos em separado além do total.
      */
-    fun recordRoomTick(roomId: Int, elapsedNanos: Long, isMajor: Boolean) {
+    fun recordRoomTick(roomId: Int, elapsedNanos: Long, isMajor: Boolean) =
+        recordRoomTick(roomTickReservoir(roomId), elapsedNanos, isMajor)
+
+    /**
+     * Reservatório da sala. Quem faz tick a cada 50 ms guarda a referência e usa a sobrecarga abaixo: buscar no
+     * mapa por roomId boxeia o Int (ids de sala passam de 127) e alocava a cada tick de cada sala.
+     */
+    fun roomTickReservoir(roomId: Int): Reservoir = perRoom.computeIfAbsent(roomId) { Reservoir(256) }
+
+    fun recordRoomTick(roomReservoir: Reservoir, elapsedNanos: Long, isMajor: Boolean) {
         roomTicks.add(elapsedNanos)
         (if (isMajor) roomTicksMajor else roomTicksMinor).add(elapsedNanos)
-        perRoom.computeIfAbsent(roomId) { Reservoir(256) }.add(elapsedNanos)
+        roomReservoir.add(elapsedNanos)
     }
 
     /** Período real entre dois major ticks consecutivos da mesma sala (esperado 500 ms). */
@@ -144,11 +155,11 @@ object ServerMetrics {
     fun recordDbQuery(elapsedNanos: Long) = dbQuery.add(elapsedNanos)
 
     fun recordPacketIn() {
-        packetsIn.incrementAndGet()
+        packetsIn.increment()
     }
 
     fun recordPacketOut() {
-        packetsOut.incrementAndGet()
+        packetsOut.increment()
     }
 
     /** Registra um ouvinte chamado pela thread do sampler a cada nova amostra (não pode bloquear). */
@@ -272,8 +283,8 @@ object ServerMetrics {
             pings = p.count,
             pingAvgMs = p.avgMs,
             pingP95Ms = p.p95Ms,
-            packetsIn = packetsIn.getAndSet(0),
-            packetsOut = packetsOut.getAndSet(0),
+            packetsIn = packetsIn.sumThenReset(),
+            packetsOut = packetsOut.sumThenReset(),
             roomTickMinorCount = rtMinor.count,
             roomTickMinorAvgMs = rtMinor.avgMs,
             roomTickMinorP95Ms = rtMinor.p95Ms,

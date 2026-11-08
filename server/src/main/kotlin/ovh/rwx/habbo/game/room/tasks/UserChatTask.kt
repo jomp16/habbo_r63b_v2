@@ -109,11 +109,7 @@ class UserChatTask(
         emotion: Int,
         bubble: RoomChatMessageBubbles
     ) {
-        val (outgoing, outgoingR63A) = when (chatType) {
-            RoomChatType.WHISPER -> Outgoing.ROOM_USER_WHISPER to OutgoingR63A.ROOM_USER_WHISPER
-            RoomChatType.SHOUT -> Outgoing.ROOM_USER_SHOUT to OutgoingR63A.ROOM_USER_SHOUT
-            else -> Outgoing.ROOM_USER_CHAT to OutgoingR63A.ROOM_USER_CHAT
-        }
+        val (outgoing, outgoingR63A) = chatOutgoing(chatType)
 
         habboSession.sendResponse(
             outgoing,
@@ -127,10 +123,15 @@ class UserChatTask(
         )
     }
 
+    private fun chatOutgoing(chatType: RoomChatType): Pair<Outgoing, OutgoingR63A> = when (chatType) {
+        RoomChatType.WHISPER -> Outgoing.ROOM_USER_WHISPER to OutgoingR63A.ROOM_USER_WHISPER
+        RoomChatType.SHOUT -> Outgoing.ROOM_USER_SHOUT to OutgoingR63A.ROOM_USER_SHOUT
+        else -> Outgoing.ROOM_USER_CHAT to OutgoingR63A.ROOM_USER_CHAT
+    }
+
     private fun turnHeadTowardsSpeaker(listener: RoomEntity, speaker: RoomUser) {
         val listenerUser = listener as? RoomUser ?: return
         if (listener == speaker || listener.walking || listenerUser.idle || listener.kicked) return
-        if (listener.statusMap.containsKey("sit") || listener.statusMap.containsKey("lay")) return
 
         val targetRotation = Direction.calculate(
             listener.currentVector3.x,
@@ -139,17 +140,24 @@ class UserChatTask(
             speaker.currentVector3.y
         )
 
-        if (Direction.rotationDistance(listener.bodyRotation, targetRotation) <= 1) {
-            listenerUser.headRotation = targetRotation
-            listenerUser.headResetTick = 4 // 2 segundos (4 ciclos de 500ms)
-            listenerUser.updateNeeded = true
-        }
+        // aritmética primeiro: a maioria dos ouvintes está de costas para quem fala e sai aqui, sem tocar no mapa de
+        // status (2 lookups em ConcurrentHashMap por ouvinte por fala eram ~26% do custo de um chat em quarto cheio)
+        if (Direction.rotationDistance(listener.bodyRotation, targetRotation) > 1) return
+        if (listener.statusMap.containsKey("sit") || listener.statusMap.containsKey("lay")) return
+
+        listenerUser.headRotation = targetRotation
+        listenerUser.headResetTick = 4 // 2 segundos (4 ciclos de 500ms)
+        listenerUser.updateNeeded = true
     }
 
     private fun broadcastMessage(room: Room, filterMessage: String, speechEmotion: Int) {
         if (type == RoomChatType.WHISPER) {
             sendResponse(roomUser.habboSession, type, virtualID, filterMessage, speechEmotion, bubble)
         } else {
+            // Primeiro decide QUEM ouve; depois serializa a mensagem uma vez por release e clona (antes o @Response
+            // era reexecutado para cada ouvinte — ~18% da CPU do tick num quarto cheio)
+            val listeners = ArrayList<HabboSession>(room.userManager.entities.size)
+
             room.userManager.entities.values.forEach { targetUser ->
                 // Adicionado check para não enviar para quem foi desconectado/kicked no meio do loop
                 if (targetUser.kicked) return@forEach
@@ -165,11 +173,20 @@ class UserChatTask(
                 }
 
                 if (canHear) {
-                    (targetUser as? RoomUser)?.habboSession?.let {
-                        sendResponse(it, type, virtualID, filterMessage, speechEmotion, bubble)
-                    }
+                    (targetUser as? RoomUser)?.habboSession?.let { listeners += it }
                     turnHeadTowardsSpeaker(targetUser, roomUser)
                 }
+            }
+
+            if (listeners.isNotEmpty()) {
+                val (outgoing, outgoingR63A) = chatOutgoing(type)
+
+                room.networkDispatcher.sendResponseToSessions(
+                    listeners,
+                    outgoing,
+                    outgoingR63A,
+                    RoomUserChatData(virtualId = virtualID, message = filterMessage, emotion = speechEmotion, bubble = bubble)
+                )
             }
         }
     }

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.PooledByteBufAllocator
+import io.netty.buffer.Unpooled
 import io.netty.util.ReferenceCountUtil
 
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -36,6 +37,13 @@ class HabboResponse(
     val outgoingR63A: OutgoingR63A? = null,
     val protocolEra: ProtocolEra = ProtocolEra.SHUFFLED,
     val habboVersion: HabboVersion,
+    /**
+     * Payload já serializado e COMPARTILHADO entre os destinatários de um broadcast (ver [shared]). Quando não nulo,
+     * a resposta não aloca buffer pooled nem stream: é só um objeto leve, e o encoder copia o payload direto para o
+     * seu buffer de saída. Antes cada ouvinte recebia um clone com buffer próprio (alocado + copiado + liberado):
+     * ~21% da CPU de um quarto com 500 usuários.
+     */
+    private val sharedPayload: ByteArray? = null,
 ) : AutoCloseable {
     /** Se true, o encoder envia este pacote SEM o RC4 de saída — mesmo para sessões com
      *  [ovh.rwx.habbo.game.user.HabboSession.rc4EncryptionOut] ativo. É o caso da própria
@@ -43,16 +51,28 @@ class HabboResponse(
      *  DEPOIS de parseá-la. Decisão tomada no momento da criação (dentro do @Response),
      *  imune à corrida coroutine→event-loop do write. */
     var plaintext: Boolean = false
-    private val _byteBuf: ByteBuf = PooledByteBufAllocator.DEFAULT.buffer()
-    private val byteBufOutputStream: ByteBufOutputStream = ByteBufOutputStream(_byteBuf)
-    private val debugString = StringBuilder()
+    // Modo compartilhado: buffer/stream vazios e imutáveis (EMPTY_BUFFER lança em qualquer escrita: falha rápido)
+    private val _byteBuf: ByteBuf = if (sharedPayload == null) PooledByteBufAllocator.DEFAULT.buffer() else Unpooled.EMPTY_BUFFER
+    private val byteBufOutputStream: ByteBufOutputStream = if (sharedPayload == null) ByteBufOutputStream(_byteBuf) else EMPTY_STREAM
+    // Só existe com o debug de pacotes ligado: antes cada resposta (uma por destinatário num broadcast) alocava um
+    // StringBuilder inútil — 54% de todos os byte[] alocados sob carga.
+    private val debugString: StringBuilder? = if (debugEnabled) StringBuilder() else null
     val byteBuf: ByteBuf
         get() = if (keepCopy) _byteBuf.duplicate() else _byteBuf
+
+    /** Tamanho do corpo (sem length nem header), seja pelo buffer próprio ou pelo payload compartilhado. */
+    val payloadLength: Int
+        get() = sharedPayload?.size ?: _byteBuf.writerIndex()
+
+    /** Copia o corpo para [out]: do payload compartilhado ou do buffer próprio (consome-o, como o `writeBytes` antigo). */
+    fun writePayloadTo(out: ByteBuf) {
+        if (sharedPayload != null) out.writeBytes(sharedPayload) else out.writeBytes(byteBuf)
+    }
 
     fun writeUTF(s: String, breakChar: Int = 2) {
         if (debugEnabled) {
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
-            debugString.append("{s:\"$debugStr\"}")
+            debugString?.append("{s:\"$debugStr\"}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
@@ -67,7 +87,7 @@ class HabboResponse(
     fun writeUTFWithoutBreak(s: String) {
         if (debugEnabled) {
             val debugStr = s.replace("\n", "\\n").replace("\r", "\\r")
-            debugString.append("{s:\"$debugStr\"}")
+            debugString?.append("{s:\"$debugStr\"}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             // Pré-shuffle (WedgieDecoder.readString): bytes até o terminador, decodificados com
@@ -78,14 +98,14 @@ class HabboResponse(
 
     fun writeShort(i: Int) {
         if (debugEnabled) {
-            debugString.append("{sh:\"$i\"}")
+            debugString?.append("{sh:\"$i\"}")
         }
         byteBufOutputStream.writeShort(i)
     }
 
     fun writeInt(i: Int) {
         if (debugEnabled) {
-            debugString.append("{i:$i}")
+            debugString?.append("{i:$i}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             HabboVl64.encodeBytes(i)?.let {
@@ -98,28 +118,28 @@ class HabboResponse(
 
     fun writeDouble(d: Double) {
         if (debugEnabled) {
-            debugString.append("{dl:$d}")
+            debugString?.append("{dl:$d}")
         }
         byteBufOutputStream.writeDouble(d)
     }
 
     fun writeFloat(d: Float) {
         if (debugEnabled) {
-            debugString.append("{f:$d}")
+            debugString?.append("{f:$d}")
         }
         byteBufOutputStream.writeFloat(d)
     }
 
     fun writeLong(l: Long) {
         if (debugEnabled) {
-            debugString.append("{l:$l}")
+            debugString?.append("{l:$l}")
         }
         byteBufOutputStream.writeLong(l)
     }
 
     fun writeBoolean(b: Boolean) {
         if (debugEnabled) {
-            debugString.append("{b:$b}")
+            debugString?.append("{b:$b}")
         }
         if (outgoingR63A != null && protocolEra == ProtocolEra.WEDGIE_PRE_SHUFFLE) {
             byteBufOutputStream.writeByte((if (b) 73 else 72))
@@ -130,7 +150,7 @@ class HabboResponse(
 
     fun writeByte(b: Int) {
         if (debugEnabled) {
-            debugString.append("{by:$b}")
+            debugString?.append("{by:$b}")
         }
         byteBufOutputStream.writeByte(b)
     }
@@ -153,10 +173,13 @@ class HabboResponse(
     }
 
     override fun toString(): String {
-        return debugString.toString()
+        return debugString?.toString() ?: ""
     }
 
     override fun close() {
+        // modo compartilhado: nada a liberar (o payload é um ByteArray comum, o buffer é o EMPTY_BUFFER global)
+        if (sharedPayload != null) return
+
         byteBufOutputStream.close()
 
         _byteBuf.readerIndex(_byteBuf.readableBytes())
@@ -166,6 +189,28 @@ class HabboResponse(
     }
 
     companion object {
+        private val EMPTY_STREAM = ByteBufOutputStream(Unpooled.EMPTY_BUFFER)
+
+        /**
+         * Resposta leve que reutiliza um [payload] já serializado (broadcast: o mesmo corpo para todos os ouvintes
+         * de uma release). O array NÃO pode ser alterado depois de compartilhado.
+         */
+        fun shared(
+            headerId: Int,
+            payload: ByteArray,
+            outgoing: Outgoing? = null,
+            outgoingR63A: OutgoingR63A? = null,
+            protocolEra: ProtocolEra = ProtocolEra.SHUFFLED,
+            habboVersion: HabboVersion,
+        ): HabboResponse = HabboResponse(
+            headerId = headerId,
+            outgoing = outgoing,
+            outgoingR63A = outgoingR63A,
+            protocolEra = protocolEra,
+            habboVersion = habboVersion,
+            sharedPayload = payload,
+        )
+
         /** Flag de debug de pacotes — copiada do config no boot (HabboServer.start) para
          *  desacoplar o write path do singleton (e permitir teste headless do writer). */
         @JvmField

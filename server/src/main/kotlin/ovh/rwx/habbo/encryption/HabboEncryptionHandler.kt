@@ -25,6 +25,7 @@ import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.KeyAgreement
 import javax.crypto.interfaces.DHPublicKey
 import javax.crypto.spec.DHParameterSpec
@@ -109,5 +110,30 @@ class HabboEncryptionHandler(n: String, d: String, e: String) {
         }
     }
 
-    fun getRsaStringEncrypted(bytes: ByteArray): String = Hex.toHexString(rsaEncryption.sign(bytes))
+    // Assinaturas já feitas, por bytes de entrada (ISO-8859-1 mapeia 1:1, então serve de chave sem colisão)
+    private val signatureCache = ConcurrentHashMap<String, String>()
+
+    /**
+     * Assina [bytes] com a chave privada RSA do servidor (hex).
+     *
+     * Com chaves DH fixas (`always_generate_new_keys: false`) os três valores assinados num handshake — primo,
+     * gerador e chave pública do servidor — são SEMPRE os mesmos, e a assinatura PKCS#1 v1.5 é determinística:
+     * o resultado é idêntico, então só a primeira conexão paga o modPow da chave privada. Antes eram 3 por
+     * handshake (~39% da CPU numa enxurrada de 2000 logins). Com chaves novas por sessão cada entrada é única:
+     * aí não se cacheia (o mapa cresceria sem limite). Falha (assinatura vazia) também não é cacheada.
+     */
+    fun getRsaStringEncrypted(bytes: ByteArray): String {
+        if (HabboServer.habboConfig.encryptionConfig.diffieHellmanConfig.alwaysGenerateNewKeys) {
+            return Hex.toHexString(rsaEncryption.sign(bytes))
+        }
+
+        val key = String(bytes, Charsets.ISO_8859_1)
+        signatureCache[key]?.let { return it }
+
+        val signature = rsaEncryption.sign(bytes)
+        val hex = Hex.toHexString(signature)
+        if (signature.isNotEmpty()) signatureCache[key] = hex
+
+        return hex
+    }
 }

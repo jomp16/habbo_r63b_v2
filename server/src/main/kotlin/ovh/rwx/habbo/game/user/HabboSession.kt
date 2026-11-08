@@ -62,6 +62,9 @@ import ovh.rwx.habbo.plugin.event.events.user.UserLoginEvent
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.DHParameterSpec
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -168,16 +171,58 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
     }
 
+    // Fila de saída da sessão. Cada `channel.writeAndFlush` vindo de fora do event loop cria uma tarefa de escrita +
+    // promise e pode acordar o loop (syscall): num quarto com 500 usuários isso é por mensagem POR ouvinte
+    // (~75 mil/s por sala). Aqui o produtor só enfileira; UMA tarefa por rajada drena no event loop e dá UM flush.
+    // A ordem é preservada (fila única por sessão, drenada pela thread do canal).
+    private val outbox = ConcurrentLinkedQueue<HabboResponse>()
+    private val outboxDrainScheduled = AtomicBoolean(false)
+    private val outboxDrain = Runnable { drainOutbox() }
+
     fun sendHabboResponse(habboResponse: HabboResponse?) {
-        habboResponse?.let {
+        habboResponse ?: return
+
+        if (!channel.isActive) {
+            // Channel already closed/disconnecting: release the pooled
+            // ByteBuf ourselves, otherwise it leaks (the encoder never runs).
+            habboResponse.close()
+            return
+        }
+
+        outbox.offer(habboResponse)
+
+        // Dentro de um OutboxBatch (tick de sala) o agendamento do drain é adiado para o fim do bloco: UM por sessão
+        // por tick, em vez de um por rajada (cada um pode custar uma syscall de wakeup do event loop).
+        if (outboxDrainScheduled.compareAndSet(false, true) && !OutboxBatch.defer(this)) scheduleOutboxDrain()
+    }
+
+    internal fun scheduleOutboxDrain() {
+        try {
+            channel.eventLoop().execute(outboxDrain)
+        } catch (_: RejectedExecutionException) {
+            // event loop já encerrado: o drain cai no ramo "canal inativo" e só libera os buffers
+            drainOutbox()
+        }
+    }
+
+    private fun drainOutbox() {
+        // O flag é limpo ANTES de esvaziar: um offer concorrente posterior agenda outro drain; um anterior é
+        // enxergado pelo poll abaixo (o offer acontece antes do compareAndSet que falhou)
+        outboxDrainScheduled.set(false)
+
+        var wrote = false
+        while (true) {
+            val response = outbox.poll() ?: break
+
             if (channel.isActive) {
-                channel.writeAndFlush(it)
+                channel.write(response)
+                wrote = true
             } else {
-                // Channel already closed/disconnecting: release the pooled
-                // ByteBuf ourselves, otherwise it leaks (the encoder never runs).
-                it.close()
+                response.close()
             }
         }
+
+        if (wrote) channel.flush()
     }
 
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
