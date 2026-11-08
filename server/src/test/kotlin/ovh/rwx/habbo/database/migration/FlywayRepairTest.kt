@@ -25,10 +25,19 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.junit.Ignore
 import org.junit.Test
 import ovh.rwx.habbo.config.HabboConfig
 import java.io.File
 
+/**
+ * DESLIGADO por padrão. Este teste NÃO é isolado: lê o `config.yaml` da raiz e roda contra o banco REAL
+ * (apaga de `flyway_schema_history` as versões >= 16, depois `repair()` + `migrate()`), então cada
+ * `./gradlew test`/`check` mexia no banco configurado e gastava CPU/rede à toa. Para usá-lo de propósito
+ * (ex.: reaplicar a V17 após editá-la), remova o `@Ignore` temporariamente — e só com o config.yaml
+ * apontando para um banco de desenvolvimento.
+ */
+@Ignore("Roda contra o banco real do config.yaml (DELETE em flyway_schema_history + repair + migrate); habilitar só sob demanda")
 class FlywayRepairTest {
 
     @Test
