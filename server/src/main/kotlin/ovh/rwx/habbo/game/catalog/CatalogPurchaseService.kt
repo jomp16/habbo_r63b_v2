@@ -28,7 +28,7 @@ import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseOkData
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
-import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
 
@@ -131,38 +131,45 @@ class CatalogPurchaseService {
         extraData: String,
         amount: Int,
     ): List<CatalogPurchaseData> {
-        val result = mutableListOf<CatalogPurchaseData>()
         val itemManager = HabboServer.habboGame.itemManager
+        return buildPurchaseDataList(catalogItem, amount) { furnishing ->
+            itemManager.correctExtradataCatalog(habboSession, extraData, furnishing)
+        }
+    }
+
+    /**
+     * Uma entrada por UNIDADE comprada. Não duplica teletransportes: o parceiro do par é criado por
+     * `ItemDao.addItems` (ver `planNewItems`); duplicar aqui entregaria 4 itens por unidade.
+     *
+     * @param correctExtraData extra data corrigido para o mobi, ou null se o pedido é inválido.
+     */
+    internal fun buildPurchaseDataList(
+        catalogItem: CatalogItem,
+        amount: Int,
+        correctExtraData: (Furnishing) -> String?,
+    ): List<CatalogPurchaseData> {
+        val result = mutableListOf<CatalogPurchaseData>()
 
         val deal = catalogItem.deal
         if (catalogItem.dealId > 0 && deal != null) {
             deal.furnishings.forEachIndexed { i, furnishing ->
-                val correctedExtraData =
-                    itemManager.correctExtradataCatalog(habboSession, extraData, furnishing) ?: return@forEachIndexed
+                val correctedExtraData = correctExtraData(furnishing) ?: return@forEachIndexed
                 val count = deal.amounts[i]
 
                 repeat(count) {
                     val limitedNumber = if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
+                    // teleporte: o parceiro do par é criado (e devolvido) por ItemDao.addItems
                     result += CatalogPurchaseData(furnishing, correctedExtraData, limitedNumber)
-
-                    if (furnishing.interactionType == InteractionType.TELEPORT) {
-                        result += result.last()
-                    }
                 }
             }
         } else {
-            val correctedExtraData =
-                itemManager.correctExtradataCatalog(habboSession, extraData, catalogItem.furnishing)
-                    ?: return emptyList()
+            val correctedExtraData = correctExtraData(catalogItem.furnishing) ?: return emptyList()
             val totalCount = catalogItem.amount * amount
 
             repeat(totalCount) {
                 val limitedNumber = if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
+                // teleporte: o parceiro do par é criado (e devolvido) por ItemDao.addItems
                 result += CatalogPurchaseData(catalogItem.furnishing, correctedExtraData, limitedNumber)
-
-                if (catalogItem.furnishing.interactionType == InteractionType.TELEPORT) {
-                    result += result.last()
-                }
             }
         }
 

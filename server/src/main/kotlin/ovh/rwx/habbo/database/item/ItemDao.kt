@@ -26,7 +26,9 @@ import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.room.RoomItem
+import ovh.rwx.habbo.game.item.user.NewItemSpec
 import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.user.planNewItems
 import ovh.rwx.habbo.game.item.wired.WiredFurniSource
 import ovh.rwx.habbo.game.item.wired.WiredUserSource
 import ovh.rwx.habbo.game.item.xml.FurniXMLInfo
@@ -317,30 +319,62 @@ object ItemDao {
             if (sanitizedExtraData != data.extraData) data.copy(extraData = sanitizedExtraData) else data
         }
 
-        val userItems = sanitizedPurchaseDatas.map { data ->
-            val newId = HabboServer.habboGame.itemManager.itemSequence.nextId()
-            UserItem(
-                newId,
-                userId,
-                data.furnishing.itemName,
-                data.extraData,
-                data.limited,
-                data.buildersClub
-            )
-        }
+        // A regra de criação (inclusive o par de teletransporte) é pura e testada em NewItemPlanTest: o parceiro nasce
+        // aqui, uma vez, e volta no fim da lista (não desloca os índices dos pedidos) para entrar no inventário em
+        // memória e na resposta da compra — senão existiria só no banco até o jogador relogar.
+        val itemManager = HabboServer.habboGame.itemManager
+        val plan = planNewItems(
+            userId,
+            sanitizedPurchaseDatas.map { NewItemSpec(it.furnishing.itemName, it.extraData, it.limited, it.buildersClub) },
+            isTeleport = { name ->
+                !ignoreSpecialHandling && itemManager.furnishings[name]?.interactionType == InteractionType.TELEPORT
+            },
+            nextId = { itemManager.itemSequence.nextId() },
+        )
+        val userItems = plan.all
 
         // cada item novo é uma linha: os filhos (wired, dimmer, teleporte, presente, limitado) declaram o mesmo item e rodam depois
         WriteBehindManager.queue(WriteKey.items(userItems.map { it.id })) {
             batchInsertItems(userItems)
         }
 
+        if (plan.teleportLinks.isNotEmpty()) {
+            // o par de teleportes referencia os DOIS itens novos
+            WriteBehindManager.queue(plan.teleportLinks.flatMap { listOf(WriteKey.item(it.first), WriteKey.item(it.second)) }) {
+                insertTeleportLinks(plan.teleportLinks)
+            }
+            plan.teleportLinks.forEach { (one, two) ->
+                itemManager.teleportLinks[one] = two
+                itemManager.roomTeleportLinks[one] = 0
+                itemManager.teleportLinks[two] = one
+                itemManager.roomTeleportLinks[two] = 0
+            }
+        }
+
         if (!ignoreSpecialHandling) {
-            userItems.forEach { userItem ->
-                addSpecialItemData(userItem)
+            // teletransportes já foram tratados acima (par); o resto tem dado especial (wired, dimmer, presente...)
+            plan.requested.forEach { userItem ->
+                if (userItem.furnishing.interactionType != InteractionType.TELEPORT) addSpecialItemData(userItem)
             }
         }
 
         return userItems
+    }
+
+    /** Liga cada par em `items_teleport` (uma linha por sentido). Os dois itens de cada par já precisam existir. */
+    fun insertTeleportLinks(links: List<Pair<Int, Int>>) {
+        if (links.isEmpty()) return
+        db {
+            batchUpdate(
+                "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
+                links.flatMap { (one, two) ->
+                    listOf(
+                        mapOf("teleport_one_id" to one, "teleport_two_id" to two),
+                        mapOf("teleport_one_id" to two, "teleport_two_id" to one)
+                    )
+                }
+            )
+        }
     }
 
     fun addGiftItem(
@@ -453,38 +487,7 @@ object ItemDao {
         }
 
         when (userItem.furnishing.interactionType) {
-            InteractionType.TELEPORT -> {
-                val teleporterItem = addItems(
-                    userItem.userId,
-                    listOf(
-                        ItemPurchaseData(
-                            userItem.furnishing,
-                            userItem.extraData,
-                            limited = false,
-                            buildersClub = false
-                        )
-                    ),
-                    ignoreSpecialHandling = true
-                ).first()
-
-                // o par de teleportes referencia os DOIS itens novos
-                WriteBehindManager.queue(WriteKey.item(userItem.id), WriteKey.item(teleporterItem.id)) {
-                    db {
-                        batchUpdate(
-                            "INSERT INTO `items_teleport` (`teleport_one_id`, `teleport_two_id`) VALUES (:teleport_one_id, :teleport_two_id)",
-                            listOf(
-                                mapOf("teleport_one_id" to userItem.id, "teleport_two_id" to teleporterItem.id),
-                                mapOf("teleport_one_id" to teleporterItem.id, "teleport_two_id" to userItem.id)
-                            )
-                        )
-                    }
-                }
-
-                HabboServer.habboGame.itemManager.teleportLinks[userItem.id] = teleporterItem.id
-                HabboServer.habboGame.itemManager.roomTeleportLinks[userItem.id] = 0
-                HabboServer.habboGame.itemManager.teleportLinks[teleporterItem.id] = userItem.id
-                HabboServer.habboGame.itemManager.roomTeleportLinks[teleporterItem.id] = 0
-            }
+            // TELEPORT: tratado em addItems/addTeleportPartner (o parceiro precisa voltar na lista devolvida)
 
             InteractionType.DIMMER -> {
                 WriteBehindManager.queue(WriteKey.item(userItem.id)) {
