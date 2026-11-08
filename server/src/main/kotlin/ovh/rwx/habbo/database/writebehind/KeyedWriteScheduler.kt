@@ -40,6 +40,7 @@ import kotlin.concurrent.withLock
 class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Throwable) -> Unit) {
     private class Task(val keys: List<Any>, val action: () -> Unit) {
         var started = false
+        val submittedNanos = System.nanoTime()
     }
 
     private val lock = Any()
@@ -61,6 +62,7 @@ class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Th
             if (task.keys.isEmpty()) independent.addLast(task)
             else task.keys.forEach { lanes.getOrPut(it) { ArrayDeque() }.addLast(task) }
             pending++
+            WriteBehindStats.onSubmit(pending)
         }
     }
 
@@ -81,12 +83,18 @@ class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Th
                 fun launchReady() {
                     for (task in takeReady()) {
                         inFlight++
+                        val inFlightNow = inFlight
                         launch {
+                            val startNanos = System.nanoTime()
+                            WriteBehindStats.onStart(startNanos - task.submittedNanos, inFlightNow)
+                            var failedAction = false
                             try {
                                 task.action()
                             } catch (e: Throwable) {
+                                failedAction = true
                                 onError(e)
                             } finally {
+                                WriteBehindStats.onFinish(System.nanoTime() - startNanos, failedAction)
                                 finished.send(task)
                             }
                         }

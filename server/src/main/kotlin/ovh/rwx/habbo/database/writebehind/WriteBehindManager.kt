@@ -92,6 +92,9 @@ object WriteBehindManager {
         }
     }
 
+    /** Fecha a janela de estatísticas do log de stress ([WriteBehindStressLog]). */
+    fun drainStats(): WriteBehindStats.Window = WriteBehindStats.drain(writes.pendingCount())
+
     // --- Entity & Write Action Registration ---
 
     fun markDirty(entity: AbstractDirtyEntity) {
@@ -189,7 +192,9 @@ object WriteBehindManager {
         writes.drain()
         flushDirtySet()
 
-        val elapsedMs = (System.nanoTime() - start) / 1_000_000
+        val elapsedNanos = System.nanoTime() - start
+        WriteBehindStats.onCycle(elapsedNanos, dirty)
+        val elapsedMs = elapsedNanos / 1_000_000
         if (elapsedMs > SLOW_CYCLE_MS && slowLog.isWarnEnabled) {
             slowLog.warn(
                 "[write-behind] flush cycle took {}ms (before it: dirty={}, queued writes={})",
@@ -219,6 +224,7 @@ object WriteBehindManager {
             snapshot.add(iter.next())
             iter.remove()
         }
+        WriteBehindStats.onDirtyFlushed(snapshot.size)
 
         // RoomItems in the same room are batched for efficiency; all other entities self-flush polymorphically
         val (items, others) = snapshot.partition { it is RoomItem }
