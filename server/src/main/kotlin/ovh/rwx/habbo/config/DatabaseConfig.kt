@@ -55,9 +55,14 @@ data class DatabaseConfig(
             val config = HikariConfig()
             keepaliveTimeMs?.takeIf { it > 0 }?.let { config.keepaliveTime = it }
 
+            // Sobrescritas por propriedade de sistema (-Dhabbo.db.host=...): apontam o emulador para um banco local
+            // descartável (scripts/stress/db) sem editar o config.yaml nem arriscar o banco de produção.
+            val host = System.getProperty("habbo.db.host") ?: host
+            val port = System.getProperty("habbo.db.port")?.toIntOrNull() ?: port
+            val name = System.getProperty("habbo.db.name") ?: name
             config.jdbcUrl = "jdbc:mariadb://$host:$port/$name"
-            config.username = user
-            config.password = password
+            config.username = System.getProperty("habbo.db.user") ?: user
+            config.password = System.getProperty("habbo.db.password") ?: password
             config.connectionTimeout = timeout
             config.maximumPoolSize = (Runtime.getRuntime().availableProcessors() * 2) + 1
 

@@ -37,6 +37,11 @@ log4j2.private.xml
 .pi/
 
 *.log
+# GC log rotacionado (gc.log.0, gc.log.1...), heap dump em OOM e artefatos do run-stress-server.sh
+gc.log.*
+*.hprof
+stress-server.out
+.stress-server.pid
 
 codemap.md
 .slim/
