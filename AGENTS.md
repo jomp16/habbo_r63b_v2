@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Habbo R63B retro server written in Kotlin (Java 25 toolchain, Kotlin 2.4.20). Multi-module Gradle build; runs on Netty with a MySQL/MariaDB backend and a hot-load plugin system.
+Habbo R63B retro server written in Kotlin (Java 25 toolchain, Kotlin 2.4.21). Multi-module Gradle build; runs on Netty with a MySQL/MariaDB backend and a hot-load plugin system.
 
 ## Build & run
 
