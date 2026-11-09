@@ -33,9 +33,10 @@ val pluginLibs = configurations.named("runtimeClasspath").map { pluginRuntimeCla
 }
 
 // plugin.json final = descritor do src (nome/versão/autores) + entryPoints detectados no bytecode.
-// O descritor do src NÃO vai no jar: a versão gerada o substitui (o servidor não varre classpath).
-val sourceDescriptor = layout.projectDirectory.file("src/main/resources/plugin.json")
-val sourceDescriptorFile = sourceDescriptor.asFile
+// O descritor-fonte fica em src/main/plugin/ (FORA de resources/) de propósito: o IntelliJ copia
+// resources/ cru para out/production/resources e o rebel.xml põe essa pasta antes do JAR, então o
+// JRebel serviria o plugin.json com ${...} e sem entryPoints no lugar do gerado.
+val sourceDescriptor = layout.projectDirectory.file("src/main/plugin/plugin.json")
 
 val generatePluginDescriptor = tasks.register<GeneratePluginDescriptorTask>("generatePluginDescriptor") {
     pluginName.set(pluginProjectName)
@@ -50,9 +51,7 @@ extensions.getByType<SourceSetContainer>().named("main") {
 }
 
 tasks.named<ProcessResources>("processResources") {
-    // variável local: a lambda não pode capturar o objeto do script (configuration cache)
-    val descriptorSource = sourceDescriptorFile
-    exclude { it.file == descriptorSource }
+    // expande ${project_name}/${version} do plugin.json gerado (e de outros recursos)
     eachFile(ExpandPluginResources(mapOf("project_name" to pluginProjectName, "version" to pluginVersion)))
 }
 

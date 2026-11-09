@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--suppress XmlUnboundNsPrefix -->
+<Configuration shutdownHook="disable" status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%highlight{%d{dd/MM/yyyy HH:mm:ss:SSS} - [%-5level] --> (%logger{1}/%t) -> %msg%n}"/>
+        </Console>
+
+        <RollingFile name="AppLogFile" fileName="logs/habbo.log" filePattern="logs/habbo-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} [%-5level] (%logger{1}/%t) - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="50MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <File name="SlowTickFile" fileName="logs/room-slow-ticks.log" append="true">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} [%-5level] (%t) %msg%n"/>
+        </File>
+    </Appenders>
+    <loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppLogFile"/>
+        </Root>
+
+        <!-- ovh.rwx em info: startup, shutdown, estatísticas e erros (sem flood de debug/trace) -->
+        <Logger name="ovh.rwx" level="info"/>
+
+        <!-- Suprime trace por pacote (GOT/SENT) no console e nos arquivos de log -->
+        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>
+        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>
+        <Logger name="ovh.rwx.habbo.communication" level="info"/>
+        <Logger name="ovh.rwx.habbo.camera" level="info"/>
+
+        <!-- Watchdog de slow ticks de quarto em arquivo dedicado -->
+        <Logger name="ovh.rwx.habbo.room.slowtick" level="warn" additivity="false">
+            <AppenderRef ref="SlowTickFile"/>
+        </Logger>
+
+        <Logger name="io.netty" level="warn"/>
+        <Logger name="com.zaxxer" level="warn"/>
+        <Logger name="org.mariadb" level="warn"/>
+        <Logger name="org.jdbi" level="warn"/>
+        <Logger name="org.reflections8" level="error"/>
+        <Logger name="org.hibernate" level="error"/>
+    </loggers>
+</Configuration>

@@ -1,0 +1,119 @@
+# Server configuration (Production Template)
+---
+port: 35000
+ws_port: 35001
+web_port: 30003
+
+database:
+  host: 127.0.0.1
+  port: 3306
+  user: habbo
+  password: "<production_password>"
+  name: habbo
+  timeout: 60000
+  alive_bypass_window_ms: 30000
+  keepalive_time_ms: 15000
+
+encryption:
+  diffie_hellman:
+    N: 8d9d08a2da768e323ba401f17ff4dfbfe9e1c11c797d1bcb8b258dcaa36c5cccad34bb2d127236f7990c843785b4f710c83bc792cc685494bd10f8cbf9044506810fa09347c91d7691e718962582b7653d070c54545ef035de866311e161a60332f807a52a72592c7e445a7e404fdecf5c2cb17ff5831ed980a77a7423d7f2a8d71f0f4d5f7e852195193a2ff9e207f1fb2348ea45ea3fc76254f743a1558dfc51d9e95efb03536f122379344040ee65a8c5fa657d91f973bbe95fd9e03b103be2cbdfd0af15695c70e7955a8d93ff45e369e38f24389a0e1a725d62c716a22d4a5c6cb8f0c85a6e66b4e8b567da062ad804504cd855097aca01147cc23f54c7
+    D: 1a6610ab132090a76a98cb47f2bb7a4e73520346c49afee875bafd70ae005058535d861b03da48c6e5400111bc9a1c88835b297c0320dbcb92672c8a1194ab2d6837ba8e5a0e72b09cc840bc14a8067a17e34d7816f64fbf2b09504490083d0351a80cfccc29ded7bd7e0e8484869f1976ac5a366955151624b693cc3cb64fe4c496f9b42a008862e0b252fb6f10c42f5d7dfa165ac940710fc9feb007e86163e3ebb48070b5f4f31685d553a81ce79004ffef9d57bf9a3a4211151ce196c99c36ecee320e20c14e2896cc7a309aef8cc5a708e50e971e9ed97ceb28c393dc37378c886154fd92a9fa45b721a6553fb5542163118aa6183a2a13504cb3edb581
+    E: 10001
+  rc4: true
+
+habbo_host: 127.0.0.1
+c_images_url: https://example.com/c_images
+games_url: https://example.com/games
+
+external_variables_txt: https://example.com/gamedata/external_variables/0
+furnidata_xml: https://example.com/gamedata/furnidata_xml/0
+figuredata_xml: https://example.com/gamedata/figuredata/0
+
+reward:
+  credits: 10
+  credits_max: -1
+  pixels: 10
+  pixels_max: -1
+  vip_points: 10
+  vip_points_max: -1
+
+auto_join_room: true
+
+timer:
+  credits_seconds: 10
+  room_idle_seconds: 150
+  roller: 3
+
+room_task:
+  threads: 5
+  max_room_per_thread: 100
+  delay_milliseconds: 500
+  error_threshold: 3
+  save_item_seconds: 300
+  empty_room_seconds: 120
+
+camera:
+  prices:
+    credits: 100
+    pixels: 100
+    pixels_publish_web: 10
+  preview_timeout_minutes: 5
+  assets_path: camera_data/assets_renderer_v2
+
+catalog:
+  show_how_many_items_title: false
+
+recycler:
+  open: true
+  slots: 8
+  odds:
+    '1': 1
+    '2': 25
+    '3': 50
+    '4': 75
+    '5': 100
+  gift_box: matic_box
+
+motd_enabled: false
+motd_file_path: motd/welcome.txt
+
+server_console_figure: plg-280-82.hd-209-1.ch-255-85.hr-155-61.sh-906-78
+
+analytics:
+  unique_id: false
+  ip:
+    enabled: false
+
+game:
+  banzai:
+    strict: true
+  snowwar:
+    enabled: true
+    min_players: 1
+    max_players: 10
+    fill_with_bots: true
+    countdown_seconds: 10
+    stage_starting_seconds: 5
+    game_duration_seconds: 120
+    free_games_daily_regular: 3
+    free_games_daily_hc: 30
+    forced_arena_id: 0
+
+pets:
+  name_min_length: 2
+  name_max_length: 15
+
+stress_test: false
+virtual_rooms:
+  enabled: false
+  count: 100
+  max_users: 1000
+  name_prefix: "[STRESS] Sala"
+  seed: 1
+
+bot_ticket_prefix: "bot-"
+debug: false
+jwt_secret: ""
+webapp_admin_min_rank: 4
+webapp_admin_action_min_rank: 7
+metrics_sample_interval_ms: 1000

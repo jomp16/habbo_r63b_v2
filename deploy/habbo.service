@@ -1,0 +1,47 @@
+[Unit]
+Description=Habbo Emulator R63B
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=habbo
+Group=habbo
+WorkingDirectory=/opt/habbo
+ExecStart=/usr/lib/jvm/java-25-openjdk/bin/java \
+    -Xms768m -Xmx1024m \
+    -XX:+UseG1GC \
+    -XX:MaxGCPauseMillis=20 \
+    -XX:G1ReservePercent=15 \
+    -XX:InitiatingHeapOccupancyPercent=45 \
+    -XX:+ParallelRefProcEnabled \
+    -Djava.awt.headless=true \
+    -Dfile.encoding=UTF-8 \
+    -Dkotlinx.coroutines.debug=off \
+    -Dlog4j2.configurationFile=log4j2-prod.xml \
+    -jar launcher-0.1.0-SNAPSHOT.jar
+
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+
+# Hardening / Least privilege
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+ReadWritePaths=/opt/habbo /mnt/HDD_EXTERNO2/Habbo/camera_data
+
+# Resource limits (file descriptors for player sockets)
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -11,6 +11,7 @@ out/
 # Config, they contains sensitive info about my stuffs
 config.json
 config.yaml
+deploy/config.prod.yaml
 
 # MOTD
 motd/

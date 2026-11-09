@@ -54,8 +54,8 @@
         </Logger>
 
         <!-- Suppress per-packet incoming/outgoing TRACE flood on the console -->
-        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>
-        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>
+<!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyDecoder" level="info"/>-->
+<!--        <Logger name="ovh.rwx.habbo.netty.HabboNettyEncoder" level="info"/>-->
 
         <Logger name="ovh.rwx.habbo.camera" level="debug"/>
         <Logger name="io.netty" level="error"/>

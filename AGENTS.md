@@ -18,6 +18,26 @@ Habbo R63B retro server written in Kotlin (Java 25 toolchain, Kotlin 2.4.21). Mu
 - Encryption keys (`encryption.rsa.N/D/E`) in `config.example.yaml` are sample values. Real values belong in `config.yaml` only.
 - `motd_enabled` + `motd_file_path`: lines starting with `#` are stripped from the MOTD file.
 
+## Deployment & Production (`scripts/deploy.sh`)
+
+- Service: systemd unit `habbo.service` running as least-privileged system user `habbo:habbo`.
+- Paths on remote:
+  - Application: `/opt/habbo/` (binaries, lib, plugins, config.yaml, log4j2-prod.xml).
+  - Camera & renderer assets: `/mnt/HDD_EXTERNO2/Habbo/camera_data` (symlinked as `/opt/habbo/camera_data` to preserve root partition disk space).
+  - MariaDB: hosted externally on dedicated database server.
+- Deployment script: `./scripts/deploy.sh` (compiles locally with Java 25, runs incremental `rsync` of jars/plugins, auto-generates `deploy/config.prod.yaml` if missing with `debug: false`, updates unit, and reloads/restarts service). Target can be customized via `DEPLOY_TARGET`.
+  - Use `./scripts/deploy.sh --skip-build` to deploy immediately when already compiled.
+  - Use `./scripts/deploy.sh --sync-camera` when renderer assets/photos in `camera_data/` change.
+  - Use `./scripts/deploy.sh --status` to inspect remote systemd status and recent journal logs.
+
+## Local Development Database (`scripts/dev_db.sh`)
+
+- To develop locally without touching production MariaDB:
+  - `./scripts/dev_db.sh sync`: downloads database dump from production (via `mariadb-dump` with `--single-transaction --skip-lock-tables`) and restores it into a local Docker MariaDB container (`habbo-dev-mariadb` at `127.0.0.1:3306`).
+  - `./scripts/dev_db.sh sync --baseline`: downloads only schema and static tables (catalog, furnishings, achievements, headers) without player data.
+  - `./scripts/dev_db.sh reset`: quickly re-creates local database from the cached dump without re-downloading from prod.
+  - `./scripts/dev_db.sh up|down|status|cli`: container lifecycle and interactive SQL console.
+
 ## Module layout (`settings.gradle`)
 
 | Project | Real path | Notes |
@@ -37,7 +57,7 @@ Habbo R63B retro server written in Kotlin (Java 25 toolchain, Kotlin 2.4.21). Mu
 ## Architecture
 
 - `server/src/main/kotlin/ovh/rwx/habbo/HabboServer.kt` is the singleton root. It wires HikariCP → Kwery (MySQL) → Netty → handlers → game state → plugin manager.
-- Handler/interactor discovery is **static, generated at build time** by `:server:generateClassIndex` (`build-logic/.../GenerateClassIndexTask.kt`, ASM over the compiled classes) into `META-INF/habbo/class-index.txt`, read at runtime by `ovh.rwx.habbo.util.ClassIndex` — there is NO classpath scan (ClassGraph) in `:server`. The index covers `@Handler`/`@HandlerR63A`/`@Response`/`@ResponseR63A`, `@FFHandler`/`@FFResponse`, `@WiredItemInteractor`, and concrete subclasses of `ItemInteractor`/`FurnitureLogic`. **A new kind of discoverable class must be added to the task registration in `server/build.gradle.kts` AND to `ClassIndex.Kind`.** The file is re-read on every call, so compile (Gradle) + `reload_handlers` picks up new handlers; compiling outside Gradle (IDE-native build) does not regenerate it. ClassGraph is no longer a dependency anywhere. Built-in `PluginListener`s come from the same index (`PLUGIN_LISTENER`); for plugin JARs, `habbo.plugin-conventions` runs `generatePluginDescriptor` (ASM) which writes the final `plugin.json` = hand-written descriptor in `src/main/resources/plugin.json` (name/version/authors) + `entryPoints` (concrete `PluginListener` subclasses). The source descriptor is excluded from the JAR; `PluginManager.addPluginJar` loads exactly the `entryPoints` and rejects JARs without them (rebuild the plugin).
+- Handler/interactor discovery is **static, generated at build time** by `:server:generateClassIndex` (`build-logic/.../GenerateClassIndexTask.kt`, ASM over the compiled classes) into `META-INF/habbo/class-index.txt`, read at runtime by `ovh.rwx.habbo.util.ClassIndex` — there is NO classpath scan (ClassGraph) in `:server`. The index covers `@Handler`/`@HandlerR63A`/`@Response`/`@ResponseR63A`, `@FFHandler`/`@FFResponse`, `@WiredItemInteractor`, and concrete subclasses of `ItemInteractor`/`FurnitureLogic`. **A new kind of discoverable class must be added to the task registration in `server/build.gradle.kts` AND to `ClassIndex.Kind`.** The file is re-read on every call, so compile (Gradle) + `reload_handlers` picks up new handlers; compiling outside Gradle (IDE-native build) does not regenerate it. ClassGraph is no longer a dependency anywhere. Built-in `PluginListener`s come from the same index (`PLUGIN_LISTENER`); for plugin JARs, `habbo.plugin-conventions` runs `generatePluginDescriptor` (ASM) which writes the final `plugin.json` = hand-written descriptor in `src/main/plugin/plugin.json` (name/version/authors; kept OUTSIDE `resources/` on purpose — IntelliJ copies `resources/` raw to `out/production/resources`, which the JRebel `rebel.xml` puts before the JAR, so JRebel would serve the un-generated file) + `entryPoints` (concrete `PluginListener` subclasses). `PluginManager.addPluginJar` loads exactly the `entryPoints` and rejects JARs without them (rebuild the plugin).
 - Packets: `communication/incoming/` (handlers, registered by `@Handler(Incoming.X)`) and `communication/outgoing/` (responses, registered by `@Response(Outgoing.X)`). New client messages require both an `Incoming` enum entry and a handler.
 - DB: DAOs in `server/.../database/` use `.sql` files from `server/src/main/resources/sql/`. Kwery (`com.github.andrewoma.kwery`) is the session layer; SQL files are loaded by path with `:name` named parameters.
 - Game state: `game/room/`, `game/item/`, `game/user/`, `game/achievement/`, `game/camera/`, `game/wired/`. Room tasks (`IRoomTask`) run on the room scheduler pool (`room_task.threads`).

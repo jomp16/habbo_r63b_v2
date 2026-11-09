@@ -54,7 +54,7 @@ object DynamicDnsUpdater {
                 return
             }
 
-            val current = ssh(config, "awk '/[[:space:]]${config.hostname}([[:space:]]|$)/ {print $1}' /etc/hosts")
+            val current = ssh(config, "awk '/[[:space:]]${config.hostname}([[:space:]]|$)/ {print $1}' /etc/hosts")?.takeIf { it.isNotEmpty() }
             if (current == ip) return // nothing to do
 
             val changed = ssh(
@@ -97,15 +97,13 @@ object DynamicDnsUpdater {
             remoteCommand
         ).redirectErrorStream(true).start()
 
-        p.inputStream.bufferedReader().use { r ->
-            val out = r.readText()
-            p.waitFor()
-            if (p.exitValue() != 0) {
-                log.warn("[dynamic-dns] ssh exited {}: {}", p.exitValue(), out.trim())
-                return null
-            }
-            return out.trim().takeIf { it.isNotEmpty() }
+        val out = p.inputStream.bufferedReader().use { it.readText() }
+        p.waitFor()
+        if (p.exitValue() != 0) {
+            log.warn("[dynamic-dns] ssh exited {}: {}", p.exitValue(), out.trim())
+            return null
         }
+        return out.trim()
     }
 
     private class Subnet(cidr: String) {
