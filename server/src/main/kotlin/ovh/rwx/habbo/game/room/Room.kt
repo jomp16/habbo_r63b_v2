@@ -42,6 +42,7 @@ import ovh.rwx.habbo.database.room.RoomBanEntry
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.database.writebehind.WriteKey
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.RoomGameKind
@@ -107,7 +108,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
 
     // region Game Loop
     private var loopJob: Job? = null
-    private var tickCounter = 0
+    internal var tickCounter = 0
     private val highFrequencyQueue = ConcurrentLinkedQueue<IRoomTask>()
     private val majorTickQueue = ConcurrentLinkedQueue<IRoomTask>()
 
@@ -166,7 +167,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         if (!roomData.virtual) RoomBanDao.removeBan(roomData.id, userId)
     }
 
-    val group: Group? get() = if (roomData.groupId == 0) null else HabboServer.habboGame.groupManager.groups[roomData.groupId]
+    val group: Group? get() = if (roomData.groupId == 0) null else HabboGame.instance?.groupManager?.groups?.get(roomData.groupId)
     val loadedGroups: MutableSet<Group> by lazy { CopyOnWriteArraySet() }
 
     // region Initialization
@@ -236,14 +237,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         loopJob = HabboServer.applicationScope.launch {
             while (isActive) {
                 val startNano = System.nanoTime()
-                var isMajorTick = false
 
                 try {
-                    tickCounter = (tickCounter + 1) % 10
-                    isMajorTick = tickCounter == 0
-
                     // as mensagens do tick só agendam o drain das sessões ao fim dele (um por sessão, não um por rajada)
-                    OutboxBatch.collect { processRoomTick(isMajorTick) }
+                    OutboxBatch.collect { tick() }
 
                     if (errorsCounter.get() > 0) errorsCounter.set(0)
                 } catch (e: Exception) {
@@ -253,7 +250,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 val elapsedNanos = System.nanoTime() - startNano
                 val elapsedMs = elapsedNanos / 1_000_000
 
-                tickMonitor.onTick(startNano, elapsedNanos, isMajorTick)
+                tickMonitor.onTick(startNano, elapsedNanos, tickCounter == 0)
 
                 val delayMs = (50L - elapsedMs).coerceAtLeast(1L)
                 val delayStartNano = System.nanoTime()
@@ -277,7 +274,7 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         // Baús: encerra trades de depósito pendentes (estado aberto é efêmero, banco sempre fechado)
-        HabboServer.habboGame.chestManager.onRoomUnload(this)
+        HabboGame.instance?.chestManager?.onRoomUnload(this)
 
         loopJob?.cancel()
         loopJob = null
@@ -300,7 +297,12 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     // endregion
 
     // region Tick Processing
-    private fun processRoomTick(isMajorTick: Boolean) {
+    internal fun tick() {
+        tickCounter = (tickCounter + 1) % 10
+        processRoomTick(tickCounter == 0)
+    }
+
+    internal fun processRoomTick(isMajorTick: Boolean) {
         val t0 = System.nanoTime()
 
         // High-frequency tasks run every tick (50ms)
@@ -314,12 +316,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         processWiredsAndGames(isMajorTick)
         val t3 = System.nanoTime()
 
-        processItems(isMajorTick)
-        val t4 = System.nanoTime()
-
-        var t5 = t4
-        var t6 = t4
-        var t7 = t4
+        var t5 = t3
+        var t6 = t3
+        var t7 = t3
         if (isMajorTick) {
             roomTimer.incrementAndGet()
             processHostingAchievement()
@@ -332,18 +331,21 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
             t7 = System.nanoTime()
         }
 
-        val totalNanos = t7 - t0
+        processItems(isMajorTick)
+        val t4 = System.nanoTime()
+
+        val totalNanos = maxOf(t7, t4) - t0
         if (totalNanos > 5_000_000L && slowTickLog.isWarnEnabled) {
             val totalMs = totalNanos / 1_000_000.0
             val highMs = (t1 - t0) / 1_000_000.0
             val majorMs = (t2 - t1) / 1_000_000.0
             val wiredMs = (t3 - t2) / 1_000_000.0
-            val itemsMs = (t4 - t3) / 1_000_000.0
-            val hostingMs = (t5 - t4) / 1_000_000.0
+            val hostingMs = (t5 - t3) / 1_000_000.0
             val entitiesMs = (t6 - t5) / 1_000_000.0
             val unloadMs = (t7 - t6) / 1_000_000.0
+            val itemsMs = (t4 - (if (isMajorTick) t7 else t3)) / 1_000_000.0
             slowTickLog.warn(
-                "[slow-tick] room={} tick={} isMajor={} total={}ms (highQueue={}ms, majorQueue={}ms, wireds={}ms, items={}ms, hosting={}ms, entities={}ms, unload={}ms)",
+                "[slow-tick] room={} tick={} isMajor={} total={}ms (highQueue={}ms, majorQueue={}ms, wireds={}ms, hosting={}ms, entities={}ms, unload={}ms, items={}ms)",
                 roomData.id,
                 tickCounter,
                 isMajorTick,
@@ -351,10 +353,10 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 "%.2f".format(highMs),
                 "%.2f".format(majorMs),
                 "%.2f".format(wiredMs),
-                "%.2f".format(itemsMs),
                 "%.2f".format(hostingMs),
                 "%.2f".format(entitiesMs),
-                "%.2f".format(unloadMs)
+                "%.2f".format(unloadMs),
+                "%.2f".format(itemsMs)
             )
         }
     }
@@ -398,8 +400,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         if (guestCount > 0) {
-            val ownerSession = HabboServer.habboSessionManager.getHabboSessionById(roomData.ownerId)
-            HabboServer.habboGame.achievementManager.progress(
+            val game = HabboGame.instance ?: return
+            val ownerSession = game.sessionManager?.getHabboSessionById(roomData.ownerId)
+            game.achievementManager.progress(
                 ownerSession, roomData.ownerId, "ACH_RoomDecoHosting", 1, accumulate = true
             )
         }
@@ -408,8 +411,9 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     private fun processItems(isMajorTick: Boolean) {
         val items = itemManager.items.values
 
+        val rollerInterval = HabboGame.instance?.config?.timerConfig?.roller ?: 4
         val isRollerTick = isMajorTick &&
-                rollerCounter.incrementAndGet() >= HabboServer.habboConfig.timerConfig.roller
+                rollerCounter.incrementAndGet() >= rollerInterval
         if (isRollerTick) {
             rollerCounter.set(0)
             rolledItemsThisTick.clear()
@@ -465,22 +469,24 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         }
 
         val emptySeconds = TimeUnit.MILLISECONDS.toSeconds(emptyCounter.incrementAndGet() * 500L)
+        val emptyThreshold = HabboGame.instance?.config?.roomTaskConfig?.emptyRoomSeconds ?: 60
 
-        if (emptySeconds >= HabboServer.habboConfig.roomTaskConfig.emptyRoomSeconds) {
-            HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(this)
+        if (emptySeconds >= emptyThreshold) {
+            HabboGame.instance?.roomManager?.roomTaskManager?.removeRoom(this)
         }
     }
 
     private fun handleException(e: Exception) {
         log.error("An exception happened on room n° ${roomData.id}. Cause: {}", e.message, e)
 
-        if (errorsCounter.incrementAndGet() > HabboServer.habboConfig.roomTaskConfig.errorThreshold) {
+        val threshold = HabboGame.instance?.config?.roomTaskConfig?.errorThreshold ?: 10
+        if (errorsCounter.incrementAndGet() > threshold) {
             log.error(
                 "Forcing close of room n° {} since it crashed over {} times!",
                 roomData.id,
-                HabboServer.habboConfig.roomTaskConfig.errorThreshold
+                threshold
             )
-            HabboServer.habboGame.roomManager.roomTaskManager.removeRoom(this)
+            HabboGame.instance?.roomManager?.roomTaskManager?.removeRoom(this)
         }
     }
     // endregion

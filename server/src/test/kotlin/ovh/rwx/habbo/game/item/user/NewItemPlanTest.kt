@@ -94,4 +94,19 @@ class NewItemPlanTest {
         assertEquals(3, plan.all.size)
         assertTrue(plan.teleportLinks.isEmpty())
     }
+
+    @Test
+    fun `confirmacao de compra do catalogo recebe apenas os itens pedidos sem parceiro duplicado`() {
+        val specs = listOf(spec("tele_a"))
+        val plan = plan(specs)
+
+        // No inventário entram todos (2 itens: pedido + parceiro)
+        assertEquals(2, plan.all.size)
+
+        // Na confirmação CATALOG_PURCHASE_OK, pegamos apenas os pedidos (specs.size)
+        val purchaseOkItems = plan.all.take(specs.size)
+        assertEquals(1, purchaseOkItems.size)
+        assertEquals("tele_a", purchaseOkItems.first().itemName)
+        assertEquals(plan.requested.first().id, purchaseOkItems.first().id)
+    }
 }

@@ -72,6 +72,7 @@ abstract class WiredHarness {
             dimensions = Dimensions(1.0, 1.0, 1.0),
             assets = emptyMap()
         )
+        every { game.habboHandler } returns null
         HabboGame.instance = game
 
         mockkObject(ItemDao)
@@ -133,7 +134,32 @@ abstract class WiredHarness {
      * userManager — broadcasts de sala iteram zero sessões e nunca tocam o HabboServer.
      */
     protected fun roomUser(virtualId: Int, x: Int, y: Int): RoomUser =
-        RoomUser(HabboSession(EmbeddedChannel()), room, virtualId, Vector3(x, y, 0.0), 2, 2)
+        RoomUser(
+            HabboSession(EmbeddedChannel()).apply {
+                release = "RELEASE63-201305221112-286302280"
+                userInformation = ovh.rwx.habbo.game.user.information.UserInformation(
+                    id = virtualId,
+                    username = "testUser$virtualId",
+                    email = "test@test.com",
+                    accountCreated = java.time.LocalDateTime.now(),
+                    realname = "test",
+                    rank = 1,
+                    credits = 100,
+                    figure = "-",
+                    gender = "M",
+                    motto = "",
+                    homeRoom = 1,
+                    vip = false,
+                    password = "",
+                    activityPointsCurrencies = mutableMapOf()
+                )
+            },
+            room,
+            virtualId,
+            Vector3(x, y, 0.0),
+            2,
+            2
+        )
 
     /**
      * Inicializa o roomGamemap (lateinit) com os itens JÁ registrados — destrava os

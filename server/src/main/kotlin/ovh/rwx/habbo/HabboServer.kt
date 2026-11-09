@@ -77,7 +77,10 @@ import kotlin.system.exitProcess
 
 object HabboServer : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    val habboConfig: HabboConfig = ObjectMapper(YAMLFactory()).registerKotlinModule().readValue(File("config.yaml"))
+    val habboConfig: HabboConfig by lazy {
+        val file = listOf(File("config.yaml"), File("../config.yaml")).firstOrNull { it.exists() } ?: File("config.yaml")
+        ObjectMapper(YAMLFactory()).registerKotlinModule().readValue(file)
+    }
     val pluginManager: PluginManager = PluginManager()
 
     // SQL
@@ -163,7 +166,10 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
 
         log.info("Loading Habbo game...")
-        HabboGame.instance = HabboGame()
+        HabboGame.instance = HabboGame().apply {
+            habboHandler = this@HabboServer.habboHandler
+            config = this@HabboServer.habboConfig
+        }
         log.info("Done!")
         log.info("Loading FastFood handler...")
         fastFoodHandler = FastFoodHandler()
@@ -171,6 +177,7 @@ object HabboServer : AutoCloseable {
 
         log.info("Loading Netty...")
         habboSessionManager = HabboSessionManager()
+        HabboGame.instance?.sessionManager = habboSessionManager
         habboServerBootstrap = ServerBootstrap()
         habboWebSocketServerBootstrap = ServerBootstrap()
         fastFoodServerBootstrap = ServerBootstrap()

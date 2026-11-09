@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.item.interactors
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.ItemInteractor
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -40,7 +40,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
         roomItem.extraData = "0"
 
-        HabboServer.habboGame.itemManager.roomTeleportLinks[roomItem.id] = room.roomData.id
+        HabboGame.instance!!.itemManager.roomTeleportLinks[roomItem.id] = room.roomData.id
     }
 
     override fun onRemove(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem) {
@@ -48,7 +48,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
         roomItem.extraData = "0"
 
-        HabboServer.habboGame.itemManager.roomTeleportLinks.remove(roomItem.id)
+        HabboGame.instance!!.itemManager.roomTeleportLinks.remove(roomItem.id)
     }
 
     override fun onTrigger(room: Room, roomEntity: RoomEntity?, roomItem: RoomItem, hasRights: Boolean, request: Int) {
@@ -98,7 +98,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
                 roomItem.interactingUsers.remove(1)
             } else {
-                val teleportTwoId = HabboServer.habboGame.itemManager.teleportLinks[roomItem.id] ?: return
+                val teleportTwoId = HabboGame.instance!!.itemManager.teleportLinks[roomItem.id] ?: return
                 var targetRoomItem: RoomItem? = null
                 var showUpdate = false
 
@@ -107,7 +107,7 @@ class TeleportItemInteractor : ItemInteractor() {
 
                     targetRoomItem = room.itemManager.items[teleportTwoId] ?: return
                 } else {
-                    HabboServer.habboGame.roomManager.rooms[HabboServer.habboGame.itemManager.roomTeleportLinks[teleportTwoId]]?.let {
+                    HabboGame.instance!!.roomManager.rooms[HabboGame.instance!!.itemManager.roomTeleportLinks[teleportTwoId]]?.let {
                         showUpdate = true
 
                         outgoingUser.habboSession.targetTeleportId = teleportTwoId
@@ -117,9 +117,13 @@ class TeleportItemInteractor : ItemInteractor() {
 
                 when {
                     outgoingUser.currentVector3.vector2 != roomItem.position.vector2 -> {
-                        outgoingUser.walkingBlocked = false
+                        if (outgoingUser.nextStepVector != null || outgoingUser.objectiveVector2 == roomItem.position.vector2) {
+                            roomItem.requestTicks(1)
+                        } else {
+                            outgoingUser.walkingBlocked = false
 
-                        roomItem.interactingUsers.remove(1)
+                            roomItem.interactingUsers.remove(1)
+                        }
                     }
 
                     showUpdate -> {

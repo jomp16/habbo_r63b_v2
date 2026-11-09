@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.room.user
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -243,14 +243,14 @@ abstract class RoomEntity(
         }
 
         val target = objectiveVector2
-        if (target != null) {
+        if (target != null && !ignoreBlocking) {
             // Se há um mobi como objetivo, a parada só é válida se estiver colado de frente/lado (ortogonal)
             val requiresOrthogonal = objectiveItem != null
             if (isAdjacentToObjective(target, strictOrthogonal = requiresOrthogonal)) {
                 val isTargetBlocked = room.roomGamemap.isBlocked(
                     target,
                     ignoreUsers = ignoreBlocking,
-                    overrideBlocking = overrideBlocking
+                    overrideBlocking = overrideBlocking || ignoreBlocking
                 )
                 if (isTargetBlocked) {
                     stopWalking()
@@ -274,7 +274,7 @@ abstract class RoomEntity(
         if (room.roomGamemap.isBlocked(
                 stepVector2,
                 ignoreUsers = ignoreBlocking,
-                overrideBlocking = overrideBlocking
+                overrideBlocking = overrideBlocking || ignoreBlocking
             )
         ) {
             blockedTicks++
@@ -356,7 +356,7 @@ abstract class RoomEntity(
         var destinationVector2 = Vector2(x, y)
 
         if (currentUserItem != null) {
-            val affectedTiles = HabboServer.habboGame.itemManager.getAffectedTiles(
+            val affectedTiles = HabboGame.instance!!.itemManager.getAffectedTiles(
                 currentUserItem.position.x,
                 currentUserItem.position.y,
                 currentUserItem.rotation,

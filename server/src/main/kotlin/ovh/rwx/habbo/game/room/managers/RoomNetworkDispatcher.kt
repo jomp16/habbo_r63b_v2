@@ -19,11 +19,11 @@
 
 package ovh.rwx.habbo.game.room.managers
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.ProtocolEra
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
@@ -57,19 +57,21 @@ class RoomNetworkDispatcher(private val room: Room) {
     }
 
     private fun broadcastModern(sessions: List<HabboSession>, outgoing: Outgoing, args: Array<out Any?>) {
+        val handler = HabboGame.instance?.habboHandler ?: return
         prototypeBroadcast(
             sessions,
             // Serializa a lógica pesada (mapas, strings, iterações) APENAS UMA VEZ por release
-            { prototypeSession -> HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) }
+            { prototypeSession -> handler.invokeResponse(prototypeSession, outgoing, *args) }
         ) { session, headerId, protocolEra, payload ->
             HabboResponse.shared(headerId, payload, outgoing = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
         }
     }
 
     private fun broadcastR63A(sessions: List<HabboSession>, outgoing: OutgoingR63A, args: Array<out Any?>) {
+        val handler = HabboGame.instance?.habboHandler ?: return
         prototypeBroadcast(
             sessions,
-            { prototypeSession -> HabboServer.habboHandler.invokeResponse(prototypeSession, outgoing, *args) }
+            { prototypeSession -> handler.invokeResponse(prototypeSession, outgoing, *args) }
         ) { session, headerId, protocolEra, payload ->
             HabboResponse.shared(headerId, payload, outgoingR63A = outgoing, protocolEra = protocolEra, habboVersion = session.habboVersion)
         }
@@ -94,10 +96,10 @@ class RoomNetworkDispatcher(private val room: Room) {
     private fun groupByRelease(sessions: List<HabboSession>): Collection<List<HabboSession>> {
         if (sessions.isEmpty()) return emptyList()
 
-        val first = sessions[0].release
-        if (sessions.all { it.release == first }) return listOf(sessions)
+        val first = if (sessions[0].releaseInitialized) sessions[0].release else ""
+        if (sessions.all { (if (it.releaseInitialized) it.release else "") == first }) return listOf(sessions)
 
-        return sessions.groupBy { it.release }.values
+        return sessions.groupBy { if (it.releaseInitialized) it.release else "" }.values
     }
 
     /**

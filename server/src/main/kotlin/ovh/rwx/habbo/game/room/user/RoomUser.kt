@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.room.user
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isAir
 import ovh.rwx.habbo.communication.isVersionAtLeast
@@ -42,9 +42,9 @@ class RoomUser(
 ) : RoomHumanoid(room, virtualID, currentVector3, headRotation, bodyRotation) {
 
     override fun onMovementStepCommitted() {
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_LegDay", 1, accumulate = true)
+        HabboGame.instance?.achievementManager?.progress(habboSession, "ACH_LegDay", 1, accumulate = true)
         // Por dar uma volta pelo Hotel (primeiro passo em um quarto)
-        HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_Tutorial1", 1)
+        HabboGame.instance?.achievementManager?.progress(habboSession, "ACH_Tutorial1", 1)
     }
 
     fun chat(

@@ -24,6 +24,8 @@ import org.jasypt.util.password.PasswordEncryptor
 import org.jasypt.util.password.StrongPasswordEncryptor
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.communication.HabboHandler
+import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.game.achievement.AchievementManager
 import ovh.rwx.habbo.game.badge.BadgeManager
 import ovh.rwx.habbo.game.camera.CameraManager
@@ -43,11 +45,16 @@ import ovh.rwx.habbo.game.pet.PetManager
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomManager
 import ovh.rwx.habbo.game.snowwar.SnowWarManager
+import ovh.rwx.habbo.game.user.HabboSessionManager
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 class HabboGame : AutoCloseable {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    var habboHandler: HabboHandler? = null
+    var sessionManager: HabboSessionManager? = null
+    var config: HabboConfig? = null
 
     val gameJob = SupervisorJob()
     val gameScope = CoroutineScope(Dispatchers.Default + gameJob)

@@ -241,16 +241,16 @@ object ServerMetrics {
         val lag = schedLag.drain()
         val w = wired.drain()
         val p = ping.drain()
-        val handlers = handlerTime.drain()
-        val queueWait = handlerQueueWait.drain()
-        val db = dbQuery.drain()
         val hikari = hikariGauges()
-
         val (users, rooms) = try {
             HabboServer.habboSessionManager.sessionsCount to HabboServer.habboGame.roomManager.roomTaskManager.rooms.size
         } catch (e: Throwable) {
             0 to 0
         }
+
+        val handlers = handlerTime.drain()
+        val queueWait = handlerQueueWait.drain()
+        val db = dbQuery.drain()
 
         // Amostra de CPU a cada no mínimo 2.5s para evitar I/O repetitivo em cgroups no Linux
         if (now - lastCpuSampleTime >= 2_500L) {

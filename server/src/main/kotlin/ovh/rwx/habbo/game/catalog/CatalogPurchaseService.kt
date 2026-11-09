@@ -108,10 +108,14 @@ class CatalogPurchaseService {
 
         // 7. Atualização do inventário e resposta ao cliente
         habboSession.habboInventory.addItems(userItems)
+        // Teleportes: o parceiro do par nasce em ItemDao.addItems e entra no inventário,
+        // mas na confirmação de compra (CATALOG_PURCHASE_OK) só enviamos os itens pedidos
+        // (furnishingsToPurchase.size) para evitar notificações duplicadas de "item comprado".
+        val purchaseOkItems = userItems.take(furnishingsToPurchase.size)
         habboSession.sendResponse(
             Outgoing.CATALOG_PURCHASE_OK,
             OutgoingR63A.CATALOG_PURCHASE_OK,
-            CatalogPurchaseOkData(catalogItem, userItems)
+            CatalogPurchaseOkData(catalogItem, purchaseOkItems)
         )
 
         // 8. Dedução de saldos

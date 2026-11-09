@@ -19,9 +19,9 @@
 
 package ovh.rwx.habbo.game.room.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.tasks.*
 import ovh.rwx.habbo.util.Vector3
@@ -46,14 +46,16 @@ abstract class RoomHumanoid(
     var idle: Boolean = false
         set(newValue) {
             idleCount = if (newValue) {
+                val idleSeconds = HabboGame.instance?.config?.timerConfig?.roomIdleSeconds ?: 600
+                val delayMs = HabboGame.instance?.config?.roomTaskConfig?.delayMilliseconds ?: 500
                 val sleepTimeout = if (room.roomData.idleSleepEnabled && room.roomData.idleSleepTimeoutSeconds > 0) {
                     room.roomData.idleSleepTimeoutSeconds
                 } else {
-                    HabboServer.habboConfig.timerConfig.roomIdleSeconds
+                    idleSeconds
                 }
                 maxOf(
                     idleCount,
-                    (TimeUnit.SECONDS.toMillis(sleepTimeout.toLong()) / HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toInt()
+                    (TimeUnit.SECONDS.toMillis(sleepTimeout.toLong()) / delayMs).toInt()
                 )
             } else 0
 
@@ -135,14 +137,16 @@ abstract class RoomHumanoid(
         if (this !is RoomUser) return
 
         idleCount++
+        val delayMs = HabboGame.instance?.config?.roomTaskConfig?.delayMilliseconds ?: 500
+        val idleSeconds = HabboGame.instance?.config?.timerConfig?.roomIdleSeconds ?: 600
         val secondsIdle =
-            TimeUnit.MILLISECONDS.toSeconds((idleCount * HabboServer.habboConfig.roomTaskConfig.delayMilliseconds).toLong())
+            TimeUnit.MILLISECONDS.toSeconds((idleCount * delayMs).toLong())
 
         if (!idle && room.roomData.idleSleepEnabled) {
             val sleepTimeout = if (room.roomData.idleSleepTimeoutSeconds > 0) {
                 room.roomData.idleSleepTimeoutSeconds
             } else {
-                HabboServer.habboConfig.timerConfig.roomIdleSeconds
+                idleSeconds
             }
             if (sleepTimeout > 0 && secondsIdle >= sleepTimeout) {
                 idle = true

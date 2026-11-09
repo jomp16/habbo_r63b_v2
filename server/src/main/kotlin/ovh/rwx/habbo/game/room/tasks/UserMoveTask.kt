@@ -28,12 +28,15 @@ import ovh.rwx.habbo.util.Vector2
 
 class UserMoveTask(
     private val roomEntity: RoomEntity,
-        private val objectiveVector2: Vector2,
-        private val rotation: Int,
-        private val actingItem: RoomItem?,
-        private val ignoreBlocking: Boolean,
-        private val rollerId: Int
+    private val objectiveVector2: Vector2,
+    private val rotation: Int,
+    private val actingItem: RoomItem?,
+    private val ignoreBlocking: Boolean,
+    private val rollerId: Int
 ) : IRoomTask {
+    override val highFrequency: Boolean
+        get() = true
+
     override fun executeTask(room: Room) {
         (roomEntity as? RoomHumanoid)?.idle = false
 
