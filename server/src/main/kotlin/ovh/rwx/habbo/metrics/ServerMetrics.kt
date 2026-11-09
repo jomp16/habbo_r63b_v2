@@ -209,10 +209,13 @@ object ServerMetrics {
 
     /** Pool de conexões no instante da amostra: (ativas, ociosas, total, esperando, máximo); -1 se indisponível. */
     private fun hikariGauges(): IntArray = try {
-        val ds = HabboServer.hikariDataSource
-        val pool = ds.hikariPoolMXBean
-        if (pool == null) intArrayOf(-1, -1, -1, -1, -1)
-        else intArrayOf(pool.activeConnections, pool.idleConnections, pool.totalConnections, pool.threadsAwaitingConnection, ds.maximumPoolSize)
+        if (!HabboServer.started) intArrayOf(-1, -1, -1, -1, -1)
+        else {
+            val ds = HabboServer.hikariDataSource
+            val pool = ds.hikariPoolMXBean
+            if (pool == null) intArrayOf(-1, -1, -1, -1, -1)
+            else intArrayOf(pool.activeConnections, pool.idleConnections, pool.totalConnections, pool.threadsAwaitingConnection, ds.maximumPoolSize)
+        }
     } catch (e: Throwable) {
         intArrayOf(-1, -1, -1, -1, -1)
     }
@@ -243,7 +246,8 @@ object ServerMetrics {
         val p = ping.drain()
         val hikari = hikariGauges()
         val (users, rooms) = try {
-            HabboServer.habboSessionManager.sessionsCount to HabboServer.habboGame.roomManager.roomTaskManager.rooms.size
+            if (!HabboServer.started) 0 to 0
+            else HabboServer.habboSessionManager.sessionsCount to HabboServer.habboGame.roomManager.roomTaskManager.rooms.size
         } catch (e: Throwable) {
             0 to 0
         }

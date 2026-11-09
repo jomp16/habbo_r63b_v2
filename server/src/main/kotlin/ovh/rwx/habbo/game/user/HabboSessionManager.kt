@@ -22,16 +22,55 @@ package ovh.rwx.habbo.game.user
 import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 import io.netty.util.AttributeKey
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.game.FastFoodSession
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 class HabboSessionManager {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
     val habboSessions: ConcurrentHashMap<ChannelId, HabboSession> = ConcurrentHashMap()
     @Suppress("MemberVisibilityCanBePrivate")
     val fastFoodSessions: ConcurrentHashMap<ChannelId, FastFoodSession> = ConcurrentHashMap()
+    private var heartbeatFuture: ScheduledFuture<*>? = null
 
     val sessionsCount: Int
         get() = habboSessions.size
+
+    fun startHeartbeat(executor: ScheduledExecutorService, intervalSeconds: Long = 20L) {
+        if (heartbeatFuture != null) return
+        log.info("Iniciando heartbeat ativo de sessões a cada {}s...", intervalSeconds)
+        heartbeatFuture = executor.scheduleWithFixedDelay({
+            try {
+                heartbeat()
+            } catch (t: Throwable) {
+                log.error("Erro no heartbeat periódico das sessões", t)
+            }
+        }, intervalSeconds, intervalSeconds, TimeUnit.SECONDS)
+    }
+
+    fun stopHeartbeat() {
+        heartbeatFuture?.cancel(false)
+        heartbeatFuture = null
+    }
+
+    fun heartbeat() {
+        val now = System.nanoTime()
+        for (session in habboSessions.values) {
+            if (!session.authenticated || !session.channel.isActive) continue
+            if (session.fastFoodSession != null) continue
+
+            if (session.ping == 0L) {
+                session.ping = now
+                session.sendResponse(Outgoing.MISC_PING, OutgoingR63A.MISC_PING)
+            }
+        }
+    }
 
     fun makeHabboSession(channel: Channel): Boolean {
         val habboSession = HabboSession(channel)

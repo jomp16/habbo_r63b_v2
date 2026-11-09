@@ -38,6 +38,13 @@ class HandshakeClientLocalizationHandler {
     }
 
     companion object {
-        val localizations: Map<String, String> = jacksonObjectMapper().readValue(File("fastfood_localization.json"), object : TypeReference<Map<String, String>>() {})
+        val localizations: Map<String, String> by lazy {
+            val file = listOf(File("fastfood_localization.json"), File("../fastfood_localization.json")).firstOrNull { it.exists() }
+            if (file != null && file.exists()) {
+                jacksonObjectMapper().readValue(file, object : TypeReference<Map<String, String>>() {})
+            } else {
+                emptyMap()
+            }
+        }
     }
 }

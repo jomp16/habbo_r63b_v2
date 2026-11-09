@@ -120,8 +120,10 @@ object HabboServer : AutoCloseable {
     val serverConsole: ServerConsole = ServerConsole(this)
     val DATE_TIME_FORMATTER_WITH_HOURS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    @Volatile
+    private var isRunning: Boolean = false
     val started: Boolean
-        get() = !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
+        get() = isRunning && !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
     init {
         Security.addProvider(BouncyCastleProvider())
@@ -211,7 +213,7 @@ object HabboServer : AutoCloseable {
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(30, 10, 0))
+                            addLast(IdleStateHandler(60, 0, 0))
 
                             addLast(stringEncoder)
                             addLast(habboNettyEncoder)
@@ -231,7 +233,7 @@ object HabboServer : AutoCloseable {
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(30, 10, 0))
+                            addLast(IdleStateHandler(60, 0, 0))
                             addLast(HttpServerCodec())
                             addLast(HttpObjectAggregator(65536))
                             addLast(WebSocketServerProtocolHandler("/"))
@@ -254,7 +256,7 @@ object HabboServer : AutoCloseable {
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(30, 10, 0))
+                            addLast(IdleStateHandler(60, 0, 0))
 
                             addLast(stringEncoder)
                             addLast(fastFoodNettyEncoder)
@@ -298,6 +300,7 @@ object HabboServer : AutoCloseable {
                 }
             }
 
+            habboSessionManager.startHeartbeat(serverScheduledExecutor, habboConfig.heartbeatIntervalSeconds)
             ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
             if (habboConfig.stressTest) ovh.rwx.habbo.database.writebehind.WriteBehindStressLog.start()
 
@@ -310,6 +313,7 @@ object HabboServer : AutoCloseable {
             habboWebSocketChannelFuture.sync()
             fastFoodChannelFuture.sync()
             if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
+                isRunning = true
                 log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
                 log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
                 log.info("FastFood server started on port {}!", habboConfig.port + 10)
@@ -334,6 +338,8 @@ object HabboServer : AutoCloseable {
 
     override fun close() {
         if (started) {
+            isRunning = false
+            habboSessionManager.stopHeartbeat()
             ovh.rwx.habbo.metrics.ServerMetrics.stop()
             log.info("Shutting down ${BuildConfig.NAME} server...")
             habboGame.close()

@@ -79,6 +79,8 @@ data class HabboConfig(
     val cImagesUrl: String? = null,
     @param:JsonProperty("bot_ticket_prefix")
     val botTicketPrefix: String = "bot-",
+    @param:JsonProperty("heartbeat_interval_seconds")
+    val heartbeatIntervalSeconds: Long = 20L,
     @param:JsonProperty("debug")
     val debug: Boolean = false,
     // Segredo JWT compartilhado com a CMS; vazio = API admin do webapp desligada
