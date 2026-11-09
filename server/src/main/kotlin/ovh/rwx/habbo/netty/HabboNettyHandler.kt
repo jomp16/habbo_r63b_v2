@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.HabboSessionManager
 import ovh.rwx.habbo.kotlin.ip
@@ -104,16 +105,16 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
 
                 // game SWF aberto (BaseJump etc.) pausa o socket principal: o cliente
                 // nao responde o ping mas continua conectado via socket do jogo
-                if (evt.state() == IdleState.READER_IDLE && !habboSession.isPreShuffle && !habboSession.handshaking
+                if (evt.state() == IdleState.READER_IDLE && !habboSession.handshaking
                         && habboSession.fastFoodSession == null) {
                     log.error("User $username didn't reply ping! Disconnecting it.")
 
                     ctx.close()
-                } else if (evt.state() == IdleState.WRITER_IDLE && !habboSession.isPreShuffle && (habboSession.authenticated || !habboSession.handshaking)) {
+                } else if (evt.state() == IdleState.WRITER_IDLE && (habboSession.authenticated || !habboSession.handshaking)) {
                     log.trace("Didn't send any message to user $username, pinging it.")
 
                     habboSession.ping = System.nanoTime()
-                    habboSession.sendHabboResponse(Outgoing.MISC_PING)
+                    habboSession.sendResponse(Outgoing.MISC_PING, OutgoingR63A.MISC_PING)
                 }
             }
         }

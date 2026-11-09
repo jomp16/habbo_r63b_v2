@@ -23,8 +23,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.kotlin.ip
 import ovh.rwx.habbo.metrics.ServerMetrics
 import java.util.concurrent.TimeUnit
 
@@ -33,12 +36,16 @@ class MiscPongHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     @Handler(Incoming.MISC_PONG)
+    @HandlerR63A(IncomingR63A.MISC_PONG)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val timeElapsed = System.nanoTime() - habboSession.ping
+        if (habboSession.ping > 0L) {
+            val timeElapsed = System.nanoTime() - habboSession.ping
 
-        habboSession.ping = 0.toLong()
-        ServerMetrics.recordPing(timeElapsed)
+            habboSession.ping = 0L
+            ServerMetrics.recordPing(timeElapsed)
 
-        log.info("User ${habboSession.userInformation.username} replied to ping! Time elapsed: ${TimeUnit.NANOSECONDS.toMillis(timeElapsed)}ms")
+            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+            log.info("User $username replied to ping! Time elapsed: ${TimeUnit.NANOSECONDS.toMillis(timeElapsed)}ms")
+        }
     }
 }

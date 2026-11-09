@@ -23,4 +23,7 @@ import io.netty.channel.Channel
 import io.netty.util.NetUtil
 import java.net.InetSocketAddress
 
-fun Channel.ip(): String = NetUtil.toAddressString((remoteAddress() as InetSocketAddress).address)
+fun Channel.ip(): String = when (val addr = remoteAddress()) {
+    is InetSocketAddress -> NetUtil.toAddressString(addr.address)
+    else -> addr?.toString() ?: "127.0.0.1"
+}

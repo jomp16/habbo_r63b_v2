@@ -19,23 +19,33 @@
 
 package ovh.rwx.habbo.communication.incoming.misc
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.kotlin.ip
+import ovh.rwx.habbo.metrics.ServerMetrics
+import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class MiscLatencyTrackerHandler {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     @Handler(Incoming.MISC_LATENCY_TRACKER)
     @HandlerR63A(IncomingR63A.MISC_LATENCY_TRACKER)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val int1 = habboRequest.readInt() // what the
-        val int2 = habboRequest.readInt() // fuck the
-        val int3 = habboRequest.readInt() // values is?
-        // 727 41 3
-        // 44 44 3
-        // 354 354 3
+        val averageLatencyMs = habboRequest.readInt()
+        val filteredAverageMs = habboRequest.readInt()
+        val sampleCount = habboRequest.readInt()
+
+        if (averageLatencyMs >= 0) {
+            ServerMetrics.recordPing(TimeUnit.MILLISECONDS.toNanos(averageLatencyMs.toLong()))
+            val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
+            log.debug("User $username reported latency: avg={}ms filtered={}ms samples={}", averageLatencyMs, filteredAverageMs, sampleCount)
+        }
     }
 }

@@ -21,11 +21,14 @@ package ovh.rwx.habbo.communication.outgoing.misc
 
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MiscPingResponse {
     @Response(Outgoing.MISC_PING)
+    @ResponseR63A(OutgoingR63A.MISC_PING)
     fun response(habboResponse: HabboResponse) {
     }
 }
