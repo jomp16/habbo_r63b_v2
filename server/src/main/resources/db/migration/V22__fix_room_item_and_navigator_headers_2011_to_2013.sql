@@ -408,3 +408,6 @@ UPDATE `releases_incoming_headers` SET `header` = 2391, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `header` IN (410, 2691);
 UPDATE `releases_incoming_headers` SET `header` = 410, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'MODERATION_KICK_USER';
 UPDATE `releases_incoming_headers` SET `header` = 2691, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'MODERATION_WARN_USER';
+
+-- 6d) -- MODERATION_INIT 20120704: 3242, handler le ModeratorInitData (issues + templates) e mostra a ferramenta de moderacao.
+UPDATE `releases_outgoing_headers` SET `header` = 3242, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'MODERATION_INIT';
