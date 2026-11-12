@@ -173,6 +173,11 @@ class HabboResponse(
     }
 
     override fun toString(): String {
+        // Resposta compartilhada (broadcast) não tem debugString: só mostra os bytes crus do corpo no debug
+        if (sharedPayload != null) {
+            return if (debugEnabled) sharedPayload.joinToString("") { "[${it.toInt() and 0xFF}]" } else ""
+        }
+
         return debugString?.toString() ?: ""
     }
 
