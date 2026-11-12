@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.outgoing.catalog
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -31,7 +32,11 @@ class CatalogPurchaseErrorResponse {
     @ResponseR63A(OutgoingR63A.CATALOG_PURCHASE_ERROR)
     fun response(habboResponse: HabboResponse, errorCode: Int) {
         habboResponse.apply {
-            writeInt(errorCode)
+            // PurchaseErrorMessageParser: parse vazio de 2009 (estático 65) até o pós-shuffle (md5 a5c6bea2);
+            // lê errorCode desde 201210081113 (md5 233f804a). O estático 296 é o PurchaseNotAllowed.
+            if (isVersionAtLeast(2012, 10, 8)) {
+                writeInt(errorCode)
+            }
         }
     }
 }

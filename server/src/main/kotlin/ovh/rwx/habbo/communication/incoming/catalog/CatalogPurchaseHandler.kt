@@ -21,6 +21,8 @@ package ovh.rwx.habbo.communication.incoming.catalog
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
@@ -40,7 +42,16 @@ class CatalogPurchaseHandler {
         val pageId = habboRequest.readInt()
         val itemId = habboRequest.readInt()
         val extraData = habboRequest.readUTF()
-        var amount = habboRequest.readInt()
+        // PurchaseFromCatalogComposer (habbo-timeline): 2011-09-08 (int,int,String,Boolean);
+        // 2012-01-19 +amount (int,int,String,int,Boolean); 2013-03-06 sem o Boolean.
+        // O Boolean não tem semântica comprovada: só drenado para alinhar o buffer.
+        var amount = 1
+        if (habboSession.isVersionAtLeast(2012, 1, 19)) {
+            amount = habboRequest.readInt()
+            if (habboSession.isVersionBefore(2013, 3, 6)) habboRequest.readBoolean()
+        } else {
+            habboRequest.readBoolean()
+        }
         val catalogPage = HabboServer.habboGame.catalogManager.catalogPages.find { it.id == pageId }
 
         if (catalogPage != null && (!catalogPage.enabled || !catalogPage.visible || habboSession.userInformation.rank < catalogPage.minRank || catalogPage.clubOnly && !habboSession.habboSubscription.validUserSubscription)) {

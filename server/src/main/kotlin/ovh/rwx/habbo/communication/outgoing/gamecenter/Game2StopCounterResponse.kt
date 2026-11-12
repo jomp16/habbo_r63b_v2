@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.outgoing.gamecenter
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 
@@ -27,5 +28,13 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 class Game2StopCounterResponse {
     @Response(Outgoing.GAME_2_STOP_COUNTER)
     fun response(habboResponse: HabboResponse) {
+        // Game2StopCounterMessageEvent usa o Game2InArenaQueueMessageParser (lê 1 int; o handler ignora o valor).
+        // Até 2011-12-12 o corpo era (Int, Int).
+        habboResponse.apply {
+            writeInt(0)
+            if (isVersionBefore(2011, 12, 12)) {
+                writeInt(0)
+            }
+        }
     }
 }

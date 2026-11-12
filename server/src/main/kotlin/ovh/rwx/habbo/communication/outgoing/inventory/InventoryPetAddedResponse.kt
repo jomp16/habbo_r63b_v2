@@ -20,6 +20,8 @@
 package ovh.rwx.habbo.communication.outgoing.inventory
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
@@ -33,7 +35,10 @@ class InventoryPetAddedResponse {
     fun response(habboResponse: HabboResponse, pet: PetData, openInventory: Boolean) {
         habboResponse.apply {
             serialize(pet)
-            writeBoolean(openInventory)
+            // PetAddedToInventory: boolean ausente entre 2011-08-17 e 2012-02-07 (habbo-timeline)
+            if (isVersionBefore(2011, 8, 17) || isVersionAtLeast(2012, 2, 7)) {
+                writeBoolean(openInventory)
+            }
         }
     }
 }

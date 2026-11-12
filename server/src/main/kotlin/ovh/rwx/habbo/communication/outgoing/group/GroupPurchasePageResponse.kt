@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.communication.outgoing.group
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.room.Room
@@ -35,7 +36,10 @@ class GroupPurchasePageResponse {
             rooms.forEach {
                 writeInt(it.roomData.id)
                 writeUTF(it.roomData.name)
-                writeBoolean(false) // ?
+                // GuildCreationInfo: boolean por sala desde 2011-11-03 (habbo-timeline)
+                if (isVersionAtLeast(2011, 11, 3)) {
+                    writeBoolean(false)
+                }
             }
 
             writeInt(5)
