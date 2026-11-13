@@ -28,7 +28,6 @@ import ovh.rwx.habbo.database.writebehind.AbstractDirtyEntity
 import ovh.rwx.habbo.game.achievement.AchievementUser
 import ovh.rwx.habbo.game.group.Group
 import ovh.rwx.habbo.game.user.wardrobe.Wardrobe
-import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 
 class UserInformation(
@@ -45,8 +44,11 @@ class UserInformation(
     homeRoom: Int,
     vip: Boolean,
     val password: String,
-    val activityPointsCurrencies: MutableMap<ActivityPointType, Int>
+    activityPointsCurrencies: Map<Int, Int> = emptyMap()
 ) : AbstractDirtyEntity() {
+    /** Saldos das moedas alternativas (pixels/duckets, conchas, diamantes...) por código de tipo; cada alteração suja só o tipo mexido. */
+    val activityPointsCurrencies = UserCurrencies(activityPointsCurrencies, ::markDirty)
+
     var rank: Int = rank; set(v) { if (field != v) { field = v; markDirty() } }
     var credits: Int = credits; set(v) { if (field != v) { field = v; markDirty() } }
     var figure: String = figure; set(v) { if (field != v) { field = v; markDirty() } }

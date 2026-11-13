@@ -28,6 +28,7 @@ import ovh.rwx.habbo.game.room.RoomChatMessageBubbles
 import ovh.rwx.habbo.game.room.RoomChatType
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomUserWhisperHandler {
@@ -47,6 +48,11 @@ class RoomUserWhisperHandler {
                 ?: return
 
         habboSession.roomUser!!.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
+        // o cliente não filtra: quem ignora o remetente não recebe o sussurro (o remetente vê o próprio)
+        if (targetRoomUser.habboSession.habboIgnores.isIgnoring(habboSession.userInformation.id)) return
+        // bloqueio nos dois sentidos: o remetente continua vendo o próprio sussurro
+        if (!BlockPolicy.canWhisper(habboSession.habboBlocks, targetRoomUser.habboSession.userInformation.id)) return
+
         targetRoomUser.chat(habboSession.roomUser!!.virtualID, message, bubble, RoomChatType.WHISPER, true)
     }
 

@@ -22,6 +22,9 @@ package ovh.rwx.habbo.game.catalog
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.catalog.CatalogDao
+import ovh.rwx.habbo.database.catalog.GiftWrappingTypeDao
+import ovh.rwx.habbo.game.catalog.gift.CatalogGiftService
+import ovh.rwx.habbo.game.catalog.gift.GiftWrappingType
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.subscription.ClubType
@@ -55,6 +58,9 @@ class CatalogManager {
     @Volatile
     var recyclerRewards: Map<Int, List<String>> = emptyMap()
         private set
+    @Volatile
+    var giftWrappingTypes: List<GiftWrappingType> = emptyList()
+        private set
 
     // Índices de busca O(1) de alta performance
     @Volatile
@@ -67,6 +73,7 @@ class CatalogManager {
     private var dealsById: Map<Int, CatalogDeal> = emptyMap()
 
     val purchaseService: CatalogPurchaseService = CatalogPurchaseService()
+    val giftService: CatalogGiftService = CatalogGiftService(purchaseService)
     val clubService: CatalogClubService = CatalogClubService(this)
     val petService: CatalogPetService = CatalogPetService()
     val voucherService: CatalogVoucherService = CatalogVoucherService()
@@ -85,6 +92,7 @@ class CatalogManager {
         val loadedItems = CatalogDao.getCatalogItems()
         val loadedClubOffers = CatalogDao.getCatalogClubOffers()
         val loadedDeals = CatalogDao.getCatalogDeals()
+        val loadedWrappingTypes = GiftWrappingTypeDao.getAll()
         val loadedRewards = CatalogDao.getRecyclerRewards()
             .groupBy { it.first }
             .mapValues { it.value.map { pair -> pair.second } }
@@ -103,10 +111,12 @@ class CatalogManager {
         catalogClubOffers = loadedClubOffers.toList()
         catalogDeals = loadedDeals.toList()
         recyclerRewards = loadedRewards
+        giftWrappingTypes = loadedWrappingTypes
 
         log.info("Loaded {} catalog pages!", catalogPages.size - 2)
         log.info("Loaded {} catalog items!", catalogItems.size)
         log.info("Loaded {} club offers!", catalogClubOffers.size)
+        log.info("Loaded {} gift wrapping types!", giftWrappingTypes.size)
         log.info("Loaded {} catalog deals!", catalogDeals.size)
         log.info(
             "Loaded {} recycler levels and {} recycler rewards!",
@@ -157,7 +167,7 @@ class CatalogManager {
     // Recycler / Ecotron
     // ------------------------------------------------------------------
 
-    fun getRandomRecyclerReward(): Furnishing? =
+    fun getRandomRecyclerReward(): RecyclerDraw? =
         recyclerService.getRandomRecyclerReward(recyclerRewards)
 
     fun getRandomRecyclerLevel(): Int =

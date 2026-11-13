@@ -40,9 +40,16 @@ class CatalogPurchaseDataListTest {
         every { itemName } returns type.name.lowercase()
     }
 
+    private fun dealOffer(vararg products: CatalogDealProduct, limitedTotal: Int = 0) = mockk<CatalogItem> {
+        every { dealId } returns 1
+        every { dealProducts } returns products.toList()
+        every { limited } returns (limitedTotal > 0)
+        every { limitedSells } returns AtomicInteger(0)
+    }
+
     private fun offer(furnishing: Furnishing, amount: Int = 1, limitedTotal: Int = 0) = mockk<CatalogItem> {
         every { dealId } returns 0
-        every { deal } returns null
+        every { dealProducts } returns null
         every { this@mockk.furnishing } returns furnishing
         every { this@mockk.amount } returns amount
         every { limited } returns (limitedTotal > 0)
@@ -71,6 +78,70 @@ class CatalogPurchaseDataListTest {
 
         assertEquals(4, purchases.size)
         assertTrue(purchases.all { it.extraData == "x" })
+    }
+
+    @Test
+    fun `pacote entrega cada produto na ordem do pacote, com a quantidade dele`() {
+        val chair = furnishing(InteractionType.DEFAULT)
+        val table = furnishing(InteractionType.TELEPORT)
+        val purchases = service.buildPurchaseDataList(
+            dealOffer(CatalogDealProduct(chair, 3), CatalogDealProduct(table, 2)), amount = 1
+        ) { "x" }
+
+        assertEquals(listOf(chair, chair, chair, table, table), purchases.map { it.furnishing })
+    }
+
+    @Test
+    fun `a quantidade comprada multiplica o pacote inteiro, nao so a cobranca`() {
+        val chair = furnishing(InteractionType.DEFAULT)
+        val table = furnishing(InteractionType.TELEPORT)
+        val purchases = service.buildPurchaseDataList(
+            dealOffer(CatalogDealProduct(chair, 3), CatalogDealProduct(table, 1)), amount = 4
+        ) { "x" }
+
+        assertEquals(12, purchases.count { it.furnishing === chair })
+        assertEquals(4, purchases.count { it.furnishing === table })
+    }
+
+    @Test
+    fun `produto do pacote com extra data invalido invalida o pacote inteiro`() {
+        val chair = furnishing(InteractionType.DEFAULT)
+        val table = furnishing(InteractionType.TELEPORT)
+        val purchases = service.buildPurchaseDataList(
+            dealOffer(CatalogDealProduct(chair, 2), CatalogDealProduct(table, 2)), amount = 1
+        ) { if (it === table) null else "x" }
+
+        assertTrue(purchases.isEmpty())
+    }
+
+    @Test
+    fun `montar a lista nao mexe no contador LTD e deixa numero 0`() {
+        val sells = AtomicInteger(5)
+        val ltd = mockk<CatalogItem> {
+            every { dealId } returns 0
+            every { dealProducts } returns null
+            every { furnishing } returns furnishing(InteractionType.DEFAULT)
+            every { amount } returns 1
+            every { limited } returns true
+            every { limitedSells } returns sells
+        }
+
+        val purchases = service.buildPurchaseDataList(ltd, amount = 3) { "x" }
+
+        assertEquals(3, purchases.size)
+        assertEquals(5, sells.get())
+        assertTrue(purchases.all { it.limitedNumber == 0 })
+    }
+
+    @Test
+    fun `produtos do pacote resolvem pela ordem dos itens e pulam mobi que nao existe mais`() {
+        val chair = furnishing(InteractionType.DEFAULT)
+        val table = furnishing(InteractionType.DEFAULT)
+        val deal = CatalogDeal(7, "Sala", listOf(CatalogDealItem("table", 1), CatalogDealItem("gone", 5), CatalogDealItem("chair", 4)))
+
+        val products = deal.products { name -> mapOf("chair" to chair, "table" to table)[name] }
+
+        assertEquals(listOf(CatalogDealProduct(table, 1), CatalogDealProduct(chair, 4)), products)
     }
 
     @Test

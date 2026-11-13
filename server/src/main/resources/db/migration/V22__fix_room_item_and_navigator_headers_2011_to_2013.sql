@@ -7,7 +7,8 @@
 UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `header` IN (
     2774, 3747, 3500, 2901, 686, 1079, 1923, 651, 2587, 442, 2689, 1433, 681, 2130, 1274, 1249, 1973, 1676, 648, 1113, 3050, 2601, 1021,
     274, 1393, 2468, 3052, 74, 2324, 2723, 1385, 3633, 2942, 3003, 2301, 2435, 2947, 756, 1144, 58, 257, 2595, 310,
-    3708, 2747, 1204, 1257, 2687, 825, 3776, 2528, 3771, 3800, 2928, 151, 3393, 2244, 3362, 3070, 2250, 1528, 1600, 2304
+    3708, 2747, 1204, 1257, 2687, 825, 3776, 2528, 3771, 3800, 2928, 151, 3393, 2244, 3362, 3070, 2250, 1528, 1600, 2304,
+    2841, 2684, 2703
 );
 UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `header` IN (
     1781, 1157, 473, 3445, 3701, 2079, 3848, 3979,
@@ -32,9 +33,16 @@ UPDATE `releases_incoming_headers` SET `header` = 2130, `override_method` = NULL
 -- md5 b0f80f.../00f645..., chamado com (-1,-1,query,-1)); o real e o purchaseFromCatalog do HabboCatalog.
 UPDATE `releases_incoming_headers` SET `header` = 742, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_PURCHASE';
 UPDATE `releases_incoming_headers` SET `header` = 1249, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_PURCHASE_GIFT';
-UPDATE `releases_incoming_headers` SET `header` = 1973, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_GIFT_WRAPPING';
-UPDATE `releases_incoming_headers` SET `header` = 1676, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_RECYCLER_STATUS';
-UPDATE `releases_incoming_headers` SET `header` = 648, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_RECYCLER_REWARDS';
+-- CATALOG_GIFT_WRAPPING: o pedido da config de embrulho de presentes e `_-0tQ()` = Outgoing[2841] (HabboCatalog.init -> _SafeStr_5370; a resposta
+-- 3039 monta a config em `_SafeStr_5407`). Mesmo hash c6b82e1e do header estatico 473 (CATALOG_GIFT_WRAPPING no R63A) ate RELEASE63-201111031102.
+-- O 1973 (`_-3bY()`, hash e6485695 = estatico 3019) e um pedido do Marketplace (`_-0pn._SafeStr_1285._SafeStr_5298`, chamado ao montar as janelas marketplace_*).
+UPDATE `releases_incoming_headers` SET `header` = 2841, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_GIFT_WRAPPING';
+-- (STATUS e REWARDS trocam de header entre si: o bloco de pre-anulacao no topo da secao 1 ja libera 648 e 1676.)
+-- CATALOG_RECYCLER_STATUS = 648 (`_-vZ()`, chamado no init() do controlador do reciclador; a resposta 280 vai para `_SafeStr_5487` = status/tempo) e
+-- CATALOG_RECYCLER_REWARDS = 1676 (`_-1ZH()`, pedido por `_SafeStr_6380()` quando a lista de premios e null; a resposta 3347 vai para `_SafeStr_5492`).
+-- Casa com o pre-shuffle (hash do 648 = estatico 413 RECYCLER_STATUS; hash do 1676 = estatico 412 RECYCLER_REWARDS).
+UPDATE `releases_incoming_headers` SET `header` = 648, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_RECYCLER_STATUS';
+UPDATE `releases_incoming_headers` SET `header` = 1676, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_RECYCLER_REWARDS';
 UPDATE `releases_incoming_headers` SET `header` = 1113, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'MESSENGER_FOLLOW_FRIEND';
 UPDATE `releases_incoming_headers` SET `header` = 3050, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'INVENTORY_UNSEEN_ITEMS_TRACKER';
 UPDATE `releases_incoming_headers` SET `header` = 2601, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'WIRED_SAVE_TRIGGER';
@@ -83,7 +91,10 @@ UPDATE `releases_incoming_headers` SET `header` = 3070, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = 2250, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_MANNEQUIN_CHANGE_NAME';
 UPDATE `releases_incoming_headers` SET `header` = 1528, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'SETTINGS_SAVE_VOLUME';
 UPDATE `releases_incoming_headers` SET `header` = 1600, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'USER_SETTINGS';
-UPDATE `releases_incoming_headers` SET `header` = 2304, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
+-- CATALOG_HABBO_CLUB_PAGE: o pedido das ofertas do HC em 20111005 e `_-1yq()` = Outgoing[2684], SEM parametros
+-- (ClubBuyCatalogWidget -> HabboCatalog._SafeStr_5304; resposta 3681). O 2304 (`_-1vj(int offerId)`) e o `buy_button` de um popup
+-- de oferta, nao o pedido de ofertas. Sem parametros ate RELEASE63-201111031102; de 201111071158 em diante e `_-1GA(int windowId)`.
+UPDATE `releases_incoming_headers` SET `header` = 2684, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
 
 -- Pacotes inexistentes na era de outubro/2011 (DISABLED)
 UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' 
@@ -94,7 +105,7 @@ WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` IN (
     'GROUP_ACCEPT_MEMBERSHIP', 'GROUP_ADD_ADMIN', 'GROUP_DECLINE_MEMBERSHIP', 'GROUP_FAVORITE', 'GROUP_FURNISHING_SETTINGS', 'GROUP_FURNISHINGS', 'GROUP_MANAGE', 'GROUP_MEMBERS', 'GROUP_PURCHASE_PAGE', 'GROUP_REMOVE_ADMIN', 'GROUP_REMOVE_FAVORITE', 'GROUP_REQUEST_JOIN', 'GROUP_UPDATE_COLORS', 'GROUP_UPDATE_SETTINGS',
     'GUIDE_TOOL_OPEN', 'INVENTORY_BOTS',
     'LANDING_IS_BADGE_REQUEST_FULFILLED', 'LANDING_PROMO_ARTICLES', 'LANDING_REQUEST_BADGE', 'LANDING_REWARD', 'LANDING_SECONDS_UNTIL',
-    'MESSENGER_SET_RELATIONSHIP', 'MISC_GET_MOTD', 'MISC_UNSEEN_ITEMS_TRACKER',
+    'MESSENGER_SET_RELATIONSHIP', 'MISC_UNSEEN_ITEMS_TRACKER',
     'MODERATION_MUTE_USER', 'MODERATION_WARN_USER', 'MODERATION_TOUR_REQUEST', 'MODERATION_USER_CHATLOG',
     'NAVIGATOR_GO_TO_BY_NAME', 'PET_COMMANDS', 'PET_SELECTED', 'ROOM_COMPETITION_INIT', 'ROOM_ITEM_USE_CLOTHING', 'ROOM_MANNEQUIN_CHANGE_FIGURE', 'ROOM_MUTE_ALL', 'ROOM_PLACE_BOT', 'ROOM_TAKE_BOT', 'ROOM_UNBAN_USER',
     'SANCTION_STATUS', 'SETTINGS_SAVE_CHAT', 'SETTINGS_SAVE_INVITES', 'SETTINGS_SAVE_FOCUS', 'TALENT_STATUS', 'TALENT_TRACK_OPEN', 'USER_RELATIONSHIPS'
@@ -124,7 +135,7 @@ UPDATE `releases_outgoing_headers` SET `header` = 2068, `override_method` = NULL
 -- 2) RELEASE63-201112130905-713192101
 -- Nula previamente os headers alvos nesta release para evitar colisao de unicidade (release_name, header)
 UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `header` IN (
-    2161, 1129, 2526, 3879, 3058, 1445, 1045, 3848, 1079, 2024, 3061, 162, 1495, 895, 1311, 3836, 2610, 882, 1712
+    2161, 1129, 2526, 3879, 3058, 1445, 1045, 3848, 1079, 2024, 3061, 162, 1495, 895, 1311, 3836, 2610, 882, 1712, 1345, 3727
 );
 UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `header` IN (881);
 
@@ -148,14 +159,21 @@ UPDATE `releases_incoming_headers` SET `header` = 3836, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = 2610, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'TRADING_OPEN';
 UPDATE `releases_incoming_headers` SET `header` = 882, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'TRADING_UNACCEPT';
 UPDATE `releases_incoming_headers` SET `header` = 1712, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'PET_INFO';
+-- ACTIVITY_POINTS_BALANCE existe na 20111213 (header 2052 -> parser com Dictionary points: int count, [int type, int amount]); estava DISABLED por engano na V16
+UPDATE `releases_outgoing_headers` SET `header` = 2052, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'ACTIVITY_POINTS_BALANCE';
 UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'SETTINGS_SAVE_FOCUS';
 
 UPDATE `releases_incoming_headers` SET `header` = 1040, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'CATALOG_PURCHASE';
 
+-- CATALOG_PAGE (GetCatalogPage int,int; MD5 c03cc33890b7ce1eb24d01b5e277559b, o mesmo da 20130522/1732) = 2913 na 20111213 (Messages.txt);
+-- a V16 atribuiu 2913 a MISC_UNSEEN_ITEMS_TRACKER (inexistente na era) e deixou CATALOG_PAGE DISABLED: o catalogo nao carregava
+UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MISC_UNSEEN_ITEMS_TRACKER';
+UPDATE `releases_incoming_headers` SET `header` = 2913, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'CATALOG_PAGE';
+
 -- 3) RELEASE63-201204021456-654375178
 -- Nula previamente os headers alvos nesta release para evitar colisao de unicidade (release_name, header)
 UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `header` IN (
-    2484, 1580, 1592, 2486, 2801, 2650, 226, 3697, 1483, 636, 729, 2767, 1166, 741, 3672, 3848, 3111, 3950
+    2484, 1580, 1592, 2486, 2801, 2650, 226, 3697, 1483, 636, 729, 2767, 1166, 741, 3672, 3848, 3111, 3950, 3918
 );
 
 UPDATE `releases_incoming_headers` SET `header` = 2484, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'ROOM_PLACE_ITEM';
@@ -180,12 +198,16 @@ UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DIS
 
 UPDATE `releases_incoming_headers` SET `header` = 3163, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'CATALOG_PURCHASE';
 
+-- CATALOG_PAGE = 3125 na 20120402 (mesmo MD5 c03cc338...); V16 o atribuiu a MISC_UNSEEN_ITEMS_TRACKER (inexistente na era)
+UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'MISC_UNSEEN_ITEMS_TRACKER';
+UPDATE `releases_incoming_headers` SET `header` = 3125, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'CATALOG_PAGE';
+
 -- 4) RELEASE63-201207040943-767851649
 -- Nula previamente os headers alvos nesta release para evitar colisao de unicidade (release_name, header)
 UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `header` IN (
     1871, 720, 30, 3897, 2030, 1874, 315, 2223, 1264, 2599, 3575, 2468, 3436, 2144, 2591, 2578, 2504, 305, 682, 632, 3854,
     1530, 2370, 1305, 1682, 1221, 3689, 2703, 867, 338, 208, 763, 3631, 858, 2264, 2899, 3271, 1783, 610, 62, 2134,
-    2252, 1749, 1163, 2165, 3144, 2770, 2103, 1128, 405, 50, 1704, 424
+    2252, 1749, 1163, 2165, 3144, 2770, 2103, 1128, 405, 50, 1704, 424, 3841, 3622
 );
 UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `header` IN (
     105, 3761, 2016, 3734, 661, 3321, 1715, 1765, 3771, 2358
@@ -206,7 +228,9 @@ UPDATE `releases_incoming_headers` SET `header` = 2468, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = 3436, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ACHIEVEMENT_LIST';
 UPDATE `releases_incoming_headers` SET `header` = 2144, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'AVATAR_EFFECT';
 UPDATE `releases_incoming_headers` SET `header` = 979, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_PURCHASE';
-UPDATE `releases_incoming_headers` SET `header` = 2578, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_GIFT_WRAPPING';
+-- CATALOG_GIFT_WRAPPING 20120704 = 3841 (`_-1UQ()`, enviado no HabboCatalog.init como 2o pedido sem parametros depois do indice; mesmo hash 083228a5 do 1540 de 20111213 e do 984 de 20120402).
+-- O 2578 e um pedido do Marketplace (enviado por `_-2r9._SafeStr_1619`, a mesma classe que pede a config do Marketplace 1163).
+UPDATE `releases_incoming_headers` SET `header` = 3841, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_GIFT_WRAPPING';
 UPDATE `releases_incoming_headers` SET `header` = 2504, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_RECYCLER_STATUS';
 UPDATE `releases_incoming_headers` SET `header` = 305, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'MESSENGER_FOLLOW_FRIEND';
 UPDATE `releases_incoming_headers` SET `header` = 682, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'INVENTORY_UNSEEN_ITEMS_TRACKER';
@@ -248,7 +272,9 @@ WHERE `release_name` = 'RELEASE63-201207040943-767851649'
 UPDATE `releases_incoming_headers` SET `header` = 405, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_IGNORE_USER';
 UPDATE `releases_incoming_headers` SET `header` = 50, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_LOAD_BY_DOORBELL';
 UPDATE `releases_incoming_headers` SET `header` = 1704, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'SETTINGS_SAVE_VOLUME';
-UPDATE `releases_incoming_headers` SET `header` = 424, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
+-- CATALOG_HABBO_CLUB_PAGE 20120704 = 3622 (`_-Fw(int)`: ClubBuyCatalogWidget.init -> controlador `_SafeStr_12446` -> HabboCatalog._SafeStr_6765).
+-- O 424 (`_-3ht(int)`) e a compra no Marketplace (confirmacao `catalog.marketplace.confirm_*`).
+UPDATE `releases_incoming_headers` SET `header` = 3622, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
 
 -- Pacotes inexistentes na era de julho/2012 (DISABLED)
 UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' 
@@ -268,6 +294,62 @@ UPDATE `releases_outgoing_headers` SET `header` = 2016, `override_method` = NULL
 UPDATE `releases_outgoing_headers` SET `header` = 3734, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'TRADING_COMPLETED';
 UPDATE `releases_outgoing_headers` SET `header` = 661, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'TRADING_CLOSE';
 UPDATE `releases_outgoing_headers` SET `header` = 3321, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'TRADING_ITEM_LIST';
+-- GROUP_BADGE_EDITOR (GuildEditorDataMessageEvent, parser _-395) existe na 20120704 (Messages.txt: Incoming[2286], MD5 3dac01ab... = o da 20130522/3285;
+-- habbo-timeline: sem mudanca estrutural desde 201108251106); estava DISABLED por engano e o editor de emblema do grupo nao recebia dados
+UPDATE `releases_outgoing_headers` SET `header` = 2286, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'GROUP_BADGE_EDITOR';
+-- idem nas builds anteriores (o hash muda entre builds, entao o parser foi achado pela forma no AS3: parser que faz `new <GuildEditorData>(k)`,
+-- cujo construtor le 5 listas: 2x (int, string, string) = bases/simbolos e 3x (int, string hex) = cores; Messages.txt: Incoming[h] ... [Parser: x])
+UPDATE `releases_outgoing_headers` SET `header` = 2450, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'GROUP_BADGE_EDITOR';
+UPDATE `releases_outgoing_headers` SET `header` = 1929, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'GROUP_BADGE_EDITOR';
+UPDATE `releases_outgoing_headers` SET `header` = 2337, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'GROUP_BADGE_EDITOR';
+
+-- ROOM_ERROR (CantConnectMessageEvent: int reason [+ string parameter se reason == 3]). Achado pela ancora `navigator.guestroomfull.title`
+-- (handler do CantConnect no navigator) -> evento -> Messages.txt: 20111005=455, 20111213=3482 (ok), 20120402=3205 (ok), 20120704=1783, 20130522=1014.
+-- O 2979 da 20130522 era o MD5 69d268... = GuildEditFailedMessageEvent (int), nao o erro de entrada em quarto; 20111005/20120704 estavam DISABLED por engano
+UPDATE `releases_outgoing_headers` SET `header` = 455, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_ERROR';
+UPDATE `releases_outgoing_headers` SET `header` = 1783, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_ERROR';
+UPDATE `releases_outgoing_headers` SET `header` = 1014, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'ROOM_ERROR';
+
+-- ROOM_DECORATION (RoomPropertyMessageEvent: string tipo floor/wallpaper/landscape/landscapeanim + string valor) = 3854 na 20111213
+-- (mesmo MD5 8cc2e1b9... do 3522 da 20111005; parser _-0T8 le 2 strings e faz switch em floor/wallpaper/landscape); estava DISABLED e o quarto
+-- entrava sem a cor do piso/parede/paisagem
+UPDATE `releases_outgoing_headers` SET `header` = 3854, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'ROOM_DECORATION';
+
+-- Pacotes DISABLED por engano numa release mas ligados nas vizinhas (auditoria cruzada 2011-2013). Em cada caso o MD5 do pacote da release vizinha
+-- reaparece no Messages.txt da release alvo, com a mesma assinatura e o header livre (flash Incoming = outgoing do emulador, Outgoing = incoming).
+-- 20111213 (outgoing): MESSENGER_INVITE, MISC_BROADCAST_NOTIFICATION, MISC_MOTD_NOTIFICATION, ROOM_ITEM_ALIASES (MD5 da 20111005)
+UPDATE `releases_outgoing_headers` SET `header` = 1591, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MESSENGER_INVITE';
+UPDATE `releases_outgoing_headers` SET `header` = 1386, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MISC_BROADCAST_NOTIFICATION';
+UPDATE `releases_outgoing_headers` SET `header` = 6, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MISC_MOTD_NOTIFICATION';
+UPDATE `releases_outgoing_headers` SET `header` = 3954, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'ROOM_ITEM_ALIASES';
+-- NAVIGATOR_CAN_CREATE_ROOM (outgoing) em 20111213 e 20120402 (MD5 da 20120704, header 1526)
+UPDATE `releases_outgoing_headers` SET `header` = 3617, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'NAVIGATOR_CAN_CREATE_ROOM';
+UPDATE `releases_outgoing_headers` SET `header` = 518, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'NAVIGATOR_CAN_CREATE_ROOM';
+-- 20120704 (incoming): ROOM_ITEM_USE_CLOTHING (MD5 da 20120402 e da 20130522, int+int) e SANCTION_STATUS (MD5 da 20111213 e da 20120402, string)
+UPDATE `releases_incoming_headers` SET `header` = 1204, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_ITEM_USE_CLOTHING';
+UPDATE `releases_incoming_headers` SET `header` = 2069, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'SANCTION_STATUS';
+-- CATALOG_PURCHASE_OK (PurchaseOKMessageEvent) = 1134 na 20111213: o unico parser "embrulho" de oferta (new <Offer>(k), como 1021 na 20111005 e 883 na 20120402);
+-- o handler do evento loga "[HabboNotifications] purchase ok" e usa `notifications.text.purchase.ok` (HabboNotifications); estava DISABLED
+UPDATE `releases_outgoing_headers` SET `header` = 1134, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'CATALOG_PURCHASE_OK';
+-- GUIDE_TOOLS nao existe na 20120402 (sem literais `guide.help.guide.tool*` no AS3, como ja provado para 2011-10 e 2012-07): o 2412 era o evento (int, string) do
+-- mensageiro (RoomInviteEvent, MD5 e022fbe0...), nao a contagem de guias; o Kotlin escreve bool+3 int
+UPDATE `releases_outgoing_headers` SET `header` = NULL, `override_method` = 'DISABLED' WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'GUIDE_TOOLS';
+
+-- MESSENGER_CHAT (NewConsoleMessageEvent: int senderId + string texto) estava num header errado em 2011-10..2012-07 (so a 20130522 acertava).
+-- Ancora: o handler do HabboMessenger loga "Received console msg: " e o evento e registrado logo antes do RoomInvite (handler com o literal
+-- `messenger.invitation`, que ja bate com o MESSENGER_INVITE do banco em todas as builds) e do InstantMessageError (MESSENGER_CHAT_ERROR):
+-- 20111005 = 3993 (era 182), 20111213 = 1166 (era 1323), 20120402 = 2412 (era 1130 = "Got public space cast libs" do navegador; antes GUIDE_TOOLS), 20120704 = 1746 (era 1409)
+UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` IN ('RELEASE63-201110051250-692472661', 'RELEASE63-201112130905-713192101', 'RELEASE63-201204021456-654375178', 'RELEASE63-201207040943-767851649') AND `name` = 'MESSENGER_CHAT';
+UPDATE `releases_outgoing_headers` SET `header` = 3993, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'MESSENGER_CHAT';
+UPDATE `releases_outgoing_headers` SET `header` = 1166, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MESSENGER_CHAT';
+UPDATE `releases_outgoing_headers` SET `header` = 2412, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'MESSENGER_CHAT';
+UPDATE `releases_outgoing_headers` SET `header` = 1746, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'MESSENGER_CHAT';
+
+-- ROOM_RIGHTS_REMOVED (FlatControllerRemoved): o handler do cliente loga "Flat controller removed: " logo apos o de "Flat controller added: " (ROOM_RIGHTS_GIVEN, que ja bate
+-- com o banco: 495 e 880). Header real: 20111213 = 75 (era 2616), 20120402 = 3465 (era 3403); 20111005/20120704/20130522 ja estavam certos
+UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` IN ('RELEASE63-201112130905-713192101', 'RELEASE63-201204021456-654375178') AND `name` = 'ROOM_RIGHTS_REMOVED';
+UPDATE `releases_outgoing_headers` SET `header` = 75, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'ROOM_RIGHTS_REMOVED';
+UPDATE `releases_outgoing_headers` SET `header` = 3465, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'ROOM_RIGHTS_REMOVED';
 UPDATE `releases_outgoing_headers` SET `header` = 1715, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'TRADING_NOT_OPEN';
 UPDATE `releases_outgoing_headers` SET `header` = 1765, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'TRADING_OPEN_FAILED';
 UPDATE `releases_outgoing_headers` SET `header` = 3771, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'INVENTORY_REMOVE_OBJECT';
@@ -648,3 +730,49 @@ SET `header`          = NULL,
 WHERE `release_name` = 'RELEASE63-201207040943-767851649'
   AND `name` IN
       ('GAME_CENTER_ACHIEVEMENTS', 'GUIDE_TOOLS', 'TALENT_STATUS', 'LANDING_IS_BADGE_REQUEST_FULFILLED', 'CAMPAIGN');
+
+-- 6g) Pedidos do catalogo (cliente -> servidor) confirmados no AS3 (quem envia + quem chama) nas demais releases de 2011 a 2013.
+-- CATALOG_HABBO_CLUB_PAGE 20111213 = 1345 (`_-49A()`, sem parametros: ClubBuyCatalogWidget.init -> controlador `_SafeStr_8089` -> HabboCatalog._SafeStr_8090).
+-- O 1811 (`_-1GA(int)`) e a compra no Marketplace (confirmacao `catalog.marketplace.confirm_*`, buy_button).
+UPDATE `releases_incoming_headers` SET `header` = 1345, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
+-- CATALOG_GIFT_WRAPPING 20130522 = 1287 (`_-2Q2()`, HabboCatalog.init, 2o pedido sem parametros depois do indice 2170, como em 2011/2012).
+-- O 2947 e enviado por toggleCatalog() quando o aviso de itens novos esta ativo (CATALOG_NEW_ITEMS_HIDE), nao e a config de embrulho.
+UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `header` IN (1287);
+UPDATE `releases_incoming_headers` SET `header` = 1287, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'CATALOG_GIFT_WRAPPING';
+
+-- 6h) MISC_GET_MOTD (pedido da mensagem do dia): existe em TODAS as releases, nao e DISABLED. E o unico pedido do componente
+-- HabboNotifications (no AS3 da WIN63 2026 e `GetMOTDMessageComposer`, enviado por HabboNotifications.activate(); a resposta e o
+-- `onMOTD` -> MOTDNotification, que o servidor ja atende com MISC_MOTD_NOTIFICATION). Em 20120704 (851) e 20130522 (3170) o banco ja estava certo.
+-- 20111005 = 2703 (`_-294()`, HabboNotifications `_-9l._SafeStr_54`); 20111213 = 3727 (`_-39Q()`, `_-1Sk._SafeStr_82`; mesmo hash 32252773 do 2703);
+-- 20120402 = 3918 (`_-0HG()`, `_-0li._SafeStr_97.activate()`, a classe que instancia as telas de notificacao `_-kN`).
+UPDATE `releases_incoming_headers` SET `header` = 2703, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'MISC_GET_MOTD';
+UPDATE `releases_incoming_headers` SET `header` = 3727, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'MISC_GET_MOTD';
+UPDATE `releases_incoming_headers` SET `header` = 3918, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'MISC_GET_MOTD';
+
+-- 6i) ROOM_IGNORE_USER (pedido de ignorar usuario): o banco guardava o header do UNIGNORE nestas 3 releases.
+-- O servico de ignorar do cliente envia o composer de ignore e o de unignore, cada um com seu header:
+-- 20111213 ignore = 1822 (`_-nn(String)`, md5 5e0bb8a8 = o mesmo do 3362 da 20111005); unignore = 1610 (md5 aa15483d = 1629 da 20111005).
+-- 20120402 ignore = 3662 (`_-4KV(String,String)`); unignore = 1129 (md5 aa15483d).
+-- 20130522 ignore = 2406 (`_-00q(String)`, RWUAM_IGNORE_USER); unignore = 3934 (md5 17c2a249 = o 256 da 20120704).
+UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `header` IN (1822);
+UPDATE `releases_incoming_headers` SET `header` = 1822, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'ROOM_IGNORE_USER';
+UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `header` IN (3662);
+UPDATE `releases_incoming_headers` SET `header` = 3662, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201204021456-654375178' AND `name` = 'ROOM_IGNORE_USER';
+UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `header` IN (2406);
+UPDATE `releases_incoming_headers` SET `header` = 2406, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'ROOM_IGNORE_USER';
+
+-- 6j) MESSENGER_BLOCKED_USERS (pedido da lista de bloqueados) nao existe nas releases PRODUCTION: o AS3 delas nao tem
+-- BlockedUsersManager / isBlocked / blockedUsers. O recurso de bloquear usuarios so aparece na WIN63-202512101753.
+UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED'
+WHERE `name` = 'MESSENGER_BLOCKED_USERS' AND `release_name` IN (
+'PRODUCTION-201611291003-338511768',
+'PRODUCTION-202104091531-593308026',
+'PRODUCTION-202111191349-636893688',
+'PRODUCTION-202311200305-397722618');
+
+-- 6k) Presentes: ROOM_ITEM_OPEN_GIFT (abrir presente) em 20111005.
+-- `_SafeStr_13929[2016] = _SafeStr_1939;` enviado pelo metodo de abrir presente da sessao da sala; md5 84650fcb35dba724ac1dd82296301763
+-- = o 78 (OpenPresent) estatico do R63A. O banco tinha 1433.
+-- (O CATALOG_GIFT_WRAPPING da WIN63-202610271147 foi corrigido na propria V24, que cria a linha e roda depois desta.)
+UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `header` IN (2016);
+UPDATE `releases_incoming_headers` SET `header` = 2016, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_ITEM_OPEN_GIFT';

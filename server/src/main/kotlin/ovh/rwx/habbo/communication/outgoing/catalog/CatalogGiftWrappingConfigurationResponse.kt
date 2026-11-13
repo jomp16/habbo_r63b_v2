@@ -26,14 +26,17 @@ import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
+/**
+ * GiftWrappingConfiguration. [stuffTypes] = sprites `present_wrap*N` (pagos), [defaultStuffTypes] = sprites
+ * `present_gen1..6` (caixa padrão grátis), [boxTypes]/[ribbonTypes] = ids disponíveis para o client da sessão.
+ */
 data class CatalogGiftWrappingConfigurationData(
     val enabled: Boolean,
-    val cost: Int,
-    val newWrapperCount: Int,
-    val newWrapper: List<Int>,
-    val ribbons: List<Int>,
-    val oldWrapperCount: Int,
-    val oldWrapper: List<Int>
+    val price: Int,
+    val stuffTypes: List<Int>,
+    val boxTypes: List<Int>,
+    val ribbonTypes: List<Int>,
+    val defaultStuffTypes: List<Int>,
 )
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -43,21 +46,21 @@ class CatalogGiftWrappingConfigurationResponse {
     fun response(habboResponse: HabboResponse, data: CatalogGiftWrappingConfigurationData) {
         habboResponse.apply {
             writeBoolean(data.enabled) // isWrappingEnabled
-            writeInt(data.cost) // wrappingPrice
+            writeInt(data.price) // wrappingPrice
 
-            writeInt(data.newWrapperCount)
-            data.newWrapper.forEach { writeInt(it) }
+            writeIntList(data.stuffTypes)
+            writeIntList(data.boxTypes)
+            writeIntList(data.ribbonTypes)
 
-            writeInt(8) // boxTypes count
-            repeat(8) { writeInt(it) }
-
-            writeInt(11) // ribbonTypes count
-            repeat(11) { writeInt(it) }
-
-            if (isVersionAtLeast(2011, 11, 3)) {
-                writeInt(data.oldWrapperCount)
-                data.oldWrapper.forEach { writeInt(it) }
+            // defaultStuffTypes só existe a partir de 2011-12-13 (R63A e 20111005 terminam nos ribbonTypes)
+            if (isVersionAtLeast(2011, 12, 13)) {
+                writeIntList(data.defaultStuffTypes)
             }
         }
+    }
+
+    private fun HabboResponse.writeIntList(values: List<Int>) {
+        writeInt(values.size)
+        values.forEach { writeInt(it) }
     }
 }

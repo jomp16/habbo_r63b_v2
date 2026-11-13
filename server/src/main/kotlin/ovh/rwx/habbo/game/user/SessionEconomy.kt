@@ -22,80 +22,76 @@ package ovh.rwx.habbo.game.user
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.currency.CurrencyService
 import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 
 fun HabboSession.rewardUserImpl() {
-    val localDateTime =
-        userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
+    val rewardConfig = HabboServer.habboConfig.rewardConfig
+    val currencies = userInformation.activityPointsCurrencies
+    val localDateTime = userStats.creditsLastUpdate.plusSeconds(HabboServer.habboConfig.timerConfig.creditsSeconds.toLong())
     var update = false
+    var grantCredits = 0
+    val grantPoints = mutableMapOf<Int, Int>()
 
     if (LocalDateTime.now().isAfter(localDateTime)) {
-        if (HabboServer.habboConfig.rewardConfig.creditsMax < 0 && HabboServer.habboConfig.rewardConfig.credits > 0
-            && userInformation.credits < Int.MAX_VALUE
-        ) {
-            userInformation.credits += HabboServer.habboConfig.rewardConfig.credits
+        if (rewardConfig.creditsMax < 0 && rewardConfig.credits > 0 && userInformation.credits < Int.MAX_VALUE) {
+            grantCredits = rewardConfig.credits
             update = true
         }
 
-        val currentPixels = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
-        if (HabboServer.habboConfig.rewardConfig.pixelsMax < 0 && HabboServer.habboConfig.rewardConfig.pixels > 0
-            && currentPixels < Int.MAX_VALUE
-        ) {
-            userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.PIXELS,
-                HabboServer.habboConfig.rewardConfig.pixels,
-                Int::plus
-            )
+        if (rewardConfig.pixelsMax < 0 && rewardConfig.pixels > 0 && currencies[ActivityPointType.PIXELS] < Int.MAX_VALUE) {
+            grantPoints.merge(ActivityPointType.PIXELS.code, rewardConfig.pixels, Int::plus)
             update = true
         }
 
-        val currentVipPoints = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
-        if (userInformation.vip && HabboServer.habboConfig.rewardConfig.vipPointsMax < 0
-            && HabboServer.habboConfig.rewardConfig.vipPoints > 0
-            && currentVipPoints < Int.MAX_VALUE
+        if (userInformation.vip && rewardConfig.vipPointsMax < 0 && rewardConfig.vipPoints > 0
+            && currencies[ActivityPointType.DIAMONDS] < Int.MAX_VALUE
         ) {
-            userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.DIAMONDS,
-                HabboServer.habboConfig.rewardConfig.vipPoints,
-                Int::plus
-            )
+            grantPoints.merge(ActivityPointType.DIAMONDS.code, rewardConfig.vipPoints, Int::plus)
+            update = true
+        }
+
+        // Outras moedas (duckets, conchas...) configuradas em reward.extra_currencies
+        for (extra in rewardConfig.extraCurrencies) {
+            if (extra.amount <= 0 || (extra.vipOnly && !userInformation.vip)) continue
+            val current = currencies[extra.type]
+            if (extra.max >= 0 && current >= extra.max) continue
+
+            grantPoints.merge(extra.type, extra.amount, Int::plus)
             update = true
         }
     }
 
     if (update) {
         userStats.creditsLastUpdate = LocalDateTime.now()
-        updateAllCurrenciesImpl()
+        // Crédito sob o lock do CurrencyService; ele reenvia os saldos (já aplicando os tetos)
+        CurrencyService.grantAll(this, grantCredits, grantPoints)
     }
 }
 
 fun HabboSession.updateAllCurrenciesImpl() {
-    // === CREDITS ===
-    if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
-    if (HabboServer.habboConfig.rewardConfig.creditsMax >= 0 && userInformation.credits > HabboServer.habboConfig.rewardConfig.creditsMax) {
-        userInformation.credits = HabboServer.habboConfig.rewardConfig.creditsMax
-    }
+    val rewardConfig = HabboServer.habboConfig.rewardConfig
+    val currencies = userInformation.activityPointsCurrencies
 
-    // === PIXELS / DUCKETS ===
-    var currentPixels = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
-    if (currentPixels < 0) currentPixels = Int.MAX_VALUE
-    if (HabboServer.habboConfig.rewardConfig.pixelsMax >= 0 && currentPixels > HabboServer.habboConfig.rewardConfig.pixelsMax) {
-        currentPixels = HabboServer.habboConfig.rewardConfig.pixelsMax
-    }
-    userInformation.activityPointsCurrencies[ActivityPointType.PIXELS] = currentPixels
-
-    // === VIP POINTS / DIAMANTES ===
-    var currentVipPoints = userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
-    if (userInformation.vip) {
-        if (currentVipPoints < 0) currentVipPoints = Int.MAX_VALUE
-        if (HabboServer.habboConfig.rewardConfig.vipPointsMax >= 0 && currentVipPoints > HabboServer.habboConfig.rewardConfig.vipPointsMax) {
-            currentVipPoints = HabboServer.habboConfig.rewardConfig.vipPointsMax
+    // Tetos de configuração: normalização sob o mesmo lock das operações do CurrencyService
+    synchronized(userInformation) {
+        if (userInformation.credits < 0) userInformation.credits = Int.MAX_VALUE
+        if (rewardConfig.creditsMax >= 0 && userInformation.credits > rewardConfig.creditsMax) {
+            userInformation.credits = rewardConfig.creditsMax
         }
-        userInformation.activityPointsCurrencies[ActivityPointType.DIAMONDS] = currentVipPoints
+
+        capCurrency(ActivityPointType.PIXELS.code, rewardConfig.pixelsMax)
+        if (userInformation.vip) capCurrency(ActivityPointType.DIAMONDS.code, rewardConfig.vipPointsMax)
+        rewardConfig.extraCurrencies.forEach { capCurrency(it.type, it.max) }
     }
 
-    // === ENVIAR PACOTES ===
     sendResponse(Outgoing.CREDITS_BALANCE, OutgoingR63A.CREDITS_BALANCE, userInformation.credits)
-    sendResponse(Outgoing.ACTIVITY_POINTS_BALANCE, OutgoingR63A.ACTIVITY_POINTS_BALANCE, userInformation.activityPointsCurrencies)
+    sendResponse(Outgoing.ACTIVITY_POINTS_BALANCE, OutgoingR63A.ACTIVITY_POINTS_BALANCE, currencies)
+}
+
+/** Aplica o teto de uma moeda (max < 0 = sem teto). */
+private fun HabboSession.capCurrency(type: Int, max: Int) {
+    val currencies = userInformation.activityPointsCurrencies
+    if (max >= 0 && currencies[type] > max) currencies[type] = max
 }

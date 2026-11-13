@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerAcceptRequestHandler {
@@ -44,6 +45,7 @@ class MessengerAcceptRequestHandler {
             val userId = habboRequest.readInt()
 
             if (habboSession.habboMessenger.friends.containsKey(userId)) return@repeat
+            if (!BlockPolicy.canAcceptFriendRequest(habboSession.habboBlocks, userId)) return@repeat
             val messengerRequest = habboSession.habboMessenger.requests.remove(userId) ?: return@repeat
 
             friendIds += userId

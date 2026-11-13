@@ -30,6 +30,7 @@ import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.withoutBlockedOwners
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchHandler {
@@ -46,7 +47,7 @@ class NavigatorSearchHandler {
     @HandlerR63A(IncomingR63A.NAVIGATOR_SEARCH)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
         val searchTerm = habboRequest.readUTF()
-        val rooms = HabboServer.habboGame.roomManager.searchRooms(searchTerm)
+        val rooms = habboSession.withoutBlockedOwners(HabboServer.habboGame.roomManager.searchRooms(searchTerm))
 
         habboSession.sendResponse(
             Outgoing.NAVIGATOR_LIST_ROOMS, OutgoingR63A.NAVIGATOR_LIST_ROOMS,

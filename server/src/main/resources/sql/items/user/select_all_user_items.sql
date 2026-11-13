@@ -27,3 +27,6 @@ SELECT `i`.`id`,
 FROM `items` `i`
          left join `items_limited` `il` on `i`.`id` = `il`.`item_id`
 WHERE `i`.`user_id` = :user_id
+  AND NOT EXISTS (SELECT 1
+                  FROM `items_gift_contents` `gc`
+                  WHERE `gc`.`item_id` = `i`.`id`)

@@ -4,5 +4,5 @@ SELECT `ig`.`id`,
        `ig`.`extradata`,
        (`il`.`id` is not null) as `is_limited`
 FROM `items_gift` `ig`
-         left join `items_limited` `il` on `il`.`item_id` = `ig`.`id`
+         left join `items_limited` `il` on `il`.`item_id` = `ig`.`item_id`
 WHERE `ig`.`item_id` = :item_id

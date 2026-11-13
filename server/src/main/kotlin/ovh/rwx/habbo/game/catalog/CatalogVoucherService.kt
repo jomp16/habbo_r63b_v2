@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.catalog
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogVoucherRedeemErrorResponse
+import ovh.rwx.habbo.game.currency.CurrencyService
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
 
@@ -29,13 +30,11 @@ class CatalogVoucherService {
 
     fun redeemVoucher(habboSession: HabboSession, voucherCode: String) {
         if (voucherCode == "full" && habboSession.hasPermission("acc_catalog_voucher_full")) {
-            habboSession.userInformation.credits = Int.MAX_VALUE
-            habboSession.userInformation.activityPointsCurrencies[ActivityPointType.PIXELS] = Int.MAX_VALUE
-            if (habboSession.userInformation.vip) {
-                habboSession.userInformation.activityPointsCurrencies[ActivityPointType.DIAMONDS] = Int.MAX_VALUE
-            }
+            // Concede o máximo (grant satura em Int.MAX_VALUE) e reenvia os saldos
+            val points = mutableMapOf(ActivityPointType.PIXELS.code to Int.MAX_VALUE)
+            if (habboSession.userInformation.vip) points[ActivityPointType.DIAMONDS.code] = Int.MAX_VALUE
+            CurrencyService.grantAll(habboSession, Int.MAX_VALUE, points)
 
-            habboSession.updateAllCurrencies()
             habboSession.sendResponse(Outgoing.CATALOG_VOUCHER_REDEEMED, OutgoingR63A.CATALOG_VOUCHER_REDEEMED, "", "")
             return
         }

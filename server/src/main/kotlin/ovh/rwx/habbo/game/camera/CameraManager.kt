@@ -30,6 +30,8 @@ import ovh.rwx.habbo.camera.json.HabboCamera
 import ovh.rwx.habbo.database.camera.CameraDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
@@ -210,55 +212,56 @@ class CameraManager {
 
         val creditPrice = HabboServer.habboConfig.cameraConfig.prices.credits
         val pixelPrice = HabboServer.habboConfig.cameraConfig.prices.pixels
-        val currentPixels = habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
+        // O pacote de preço da câmera não traz o tipo da moeda: o client assume o tipo 0 (pixels/duckets)
+        val price = Price(creditPrice, ActivityPointType.PIXELS.code, pixelPrice)
 
-        if (habboSession.userInformation.credits < creditPrice || currentPixels < pixelPrice) {
+        if (Files.notExists(previewPicturePath) || Files.exists(purchasedPicturePath)) return false
+        if (Files.notExists(purchasedPicturePath.parent)) Files.createDirectory(purchasedPicturePath.parent)
+
+        // Cobrança atômica (confere e debita sob o mesmo lock); sem saldo, descarta a prévia
+        if (!CurrencyService.tryCharge(habboSession, price).ok) {
             Files.deleteIfExists(previewPicturePath)
             Files.deleteIfExists(previewJsonPath)
             return false
         }
 
-        if (Files.notExists(previewPicturePath) || Files.exists(purchasedPicturePath)) return false
-        if (Files.notExists(purchasedPicturePath.parent)) Files.createDirectory(purchasedPicturePath.parent)
-
-        habboSession.userInformation.credits -= creditPrice
-        habboSession.userInformation.activityPointsCurrencies.merge(
-            ActivityPointType.PIXELS,
-            -pixelPrice,
-            Int::plus
-        )
-
-        Files.move(previewPicturePath, purchasedPicturePath)
-        Files.deleteIfExists(previewJsonPath)
-
-        val originalImage = ImageIO.read(purchasedPicturePath.toFile())
-        val thumbnailWidth = originalImage.width / 2
-        val thumbnailHeight = originalImage.height / 2
-        val thumbnailImage = BufferedImage(thumbnailWidth, thumbnailHeight, BufferedImage.TYPE_INT_ARGB)
-
-        val graphics = thumbnailImage.createGraphics()
         try {
-            graphics.drawImage(originalImage.getScaledInstance(thumbnailWidth, thumbnailHeight, Image.SCALE_SMOOTH), 0, 0, null)
-        } finally {
-            graphics.dispose()
+            Files.move(previewPicturePath, purchasedPicturePath)
+            Files.deleteIfExists(previewJsonPath)
+
+            val originalImage = ImageIO.read(purchasedPicturePath.toFile())
+            val thumbnailWidth = originalImage.width / 2
+            val thumbnailHeight = originalImage.height / 2
+            val thumbnailImage = BufferedImage(thumbnailWidth, thumbnailHeight, BufferedImage.TYPE_INT_ARGB)
+
+            val graphics = thumbnailImage.createGraphics()
+            try {
+                graphics.drawImage(originalImage.getScaledInstance(thumbnailWidth, thumbnailHeight, Image.SCALE_SMOOTH), 0, 0, null)
+            } finally {
+                graphics.dispose()
+            }
+
+            ImageIO.write(thumbnailImage, "png", File(cameraPurchasedDirectory.toFile(), "${tmpPath}_small.png"))
+            val pictureId = CameraDao.savePictureDataToDatabase(habboSession.userInformation.id, picName)
+            val cameraInfoMap = mapOf(
+                "w" to "purchased/$tmpPath.png",
+                "s" to habboSession.userInformation.id,
+                "n" to habboSession.userInformation.username,
+                "u" to "$pictureId",
+                "t" to "${TimeUnit.SECONDS.toMillis(createdAt.atZone(ZoneOffset.systemDefault()).toEpochSecond())}"
+            )
+            val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
+            val userItem = ItemDao.addItems(
+                habboSession.userInformation.id,
+                listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, limited = false, buildersClub = false)),
+            ).first()
+
+            habboSession.habboInventory.addItems(listOf(userItem))
+        } catch (e: Throwable) {
+            // Falhou depois da cobrança: devolve o valor
+            CurrencyService.refund(habboSession, price)
+            throw e
         }
-
-        ImageIO.write(thumbnailImage, "png", File(cameraPurchasedDirectory.toFile(), "${tmpPath}_small.png"))
-        val pictureId = CameraDao.savePictureDataToDatabase(habboSession.userInformation.id, picName)
-        val cameraInfoMap = mapOf(
-            "w" to "purchased/$tmpPath.png",
-            "s" to habboSession.userInformation.id,
-            "n" to habboSession.userInformation.username,
-            "u" to "$pictureId",
-            "t" to "${TimeUnit.SECONDS.toMillis(createdAt.atZone(ZoneOffset.systemDefault()).toEpochSecond())}"
-        )
-        val jsonExtradata = jacksonJson.writeValueAsString(cameraInfoMap)
-        val userItem = ItemDao.addItems(
-            habboSession.userInformation.id,
-            listOf(ItemPurchaseData(photoFurnishing, jsonExtradata, limited = false, buildersClub = false)),
-        ).first()
-
-        habboSession.habboInventory.addItems(listOf(userItem))
 
         // ACH_CameraPhotoCount: revelar fotos
         HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_CameraPhotoCount", 1, accumulate = true)

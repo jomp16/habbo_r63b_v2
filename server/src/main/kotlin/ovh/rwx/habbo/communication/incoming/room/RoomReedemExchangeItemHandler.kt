@@ -23,6 +23,7 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.game.currency.CurrencyService
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -39,12 +40,14 @@ class RoomReedemExchangeItemHandler {
 
         if (!roomItem.itemName.startsWith("CF_") && !roomItem.itemName.startsWith("CFC_")) return
         val split = roomItem.itemName.split('_')
-        val credits = if (split[1] == "diamond") split[2].toInt() else split[1].toInt()
+        val credits = (if (split[1] == "diamond") split.getOrNull(2) else split.getOrNull(1))?.toIntOrNull() ?: return
+        if (credits <= 0) return
 
-        habboSession.userInformation.credits += credits
-        habboSession.updateAllCurrencies()
-
-        habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, roomItem)
+        // Só paga quem de fato tirou o mobi do quarto: `removeItem` é atômico, então dois resgates do mesmo mobi
+        // (clique duplo, dois usuários com direitos) pagam uma vez só
+        if (!habboSession.currentRoom!!.itemManager.removeItem(habboSession.roomUser, roomItem)) return
         ItemDao.deleteItems(listOf(itemId))
+
+        CurrencyService.grant(habboSession, credits = credits)
     }
 }

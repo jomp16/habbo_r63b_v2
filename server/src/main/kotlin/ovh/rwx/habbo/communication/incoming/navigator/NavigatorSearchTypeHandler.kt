@@ -34,6 +34,7 @@ import ovh.rwx.habbo.game.room.navigator.NavigatorGuestRoomsMode
 import ovh.rwx.habbo.game.room.navigator.NavigatorListPayload
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.withoutBlockedOwners
 
 /**
  * Buscas do old navigator (2013 R63B legado, RELEASE63-201305221112) por searchType.
@@ -115,9 +116,11 @@ class NavigatorSearchTypeHandler {
             Outgoing.NAVIGATOR_LIST_ROOMS,
             OutgoingR63A.NAVIGATOR_LIST_ROOMS,
             NavigatorListPayload(
-                rooms = HabboServer.habboGame.roomManager.rooms.values
-                    .filter { it.roomData.roomType == RoomType.PRIVATE && it.roomData.tags.any { t -> t.equals(tag, ignoreCase = true) } }
-                    .sortedByDescending { it.userManager.entities.values.count { e -> e is RoomUser } },
+                rooms = habboSession.withoutBlockedOwners(
+                    HabboServer.habboGame.roomManager.rooms.values
+                        .filter { it.roomData.roomType == RoomType.PRIVATE && it.roomData.tags.any { t -> t.equals(tag, ignoreCase = true) } }
+                        .sortedByDescending { it.userManager.entities.values.count { e -> e is RoomUser } }
+                ),
                 mode = mode,
                 query = tag
             )
@@ -132,7 +135,10 @@ class NavigatorSearchTypeHandler {
          * // ponytail: MY_HISTORY/LATEST_EVENTS/OFFICIAL/PROMO retornam vazio (histórico de
          * visitas e sistema de eventos/promos 2013 ainda não modelados); ligar quando existirem.
          */
-        fun roomsForMode(habboSession: HabboSession, mode: NavigatorGuestRoomsMode): List<Room> {
+        fun roomsForMode(habboSession: HabboSession, mode: NavigatorGuestRoomsMode): List<Room> =
+            habboSession.withoutBlockedOwners(unfilteredRoomsForMode(habboSession, mode))
+
+        private fun unfilteredRoomsForMode(habboSession: HabboSession, mode: NavigatorGuestRoomsMode): List<Room> {
             val roomManager = HabboServer.habboGame.roomManager
 
             return when (mode) {

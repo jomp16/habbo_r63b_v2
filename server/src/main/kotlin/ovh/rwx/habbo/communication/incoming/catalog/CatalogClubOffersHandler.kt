@@ -33,6 +33,7 @@ class CatalogClubOffersHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendHabboResponse(
             Outgoing.CATALOG_HABBO_CLUB_PAGE,
+            // windowId: o pedido só o leva a partir de RELEASE63-201111071158; antes não há bytes e readInt() devolve 0
             habboRequest.readInt(),
             HabboServer.habboGame.catalogManager.catalogClubOffers,
             habboSession.habboSubscription.habboClubSubscription?.expire

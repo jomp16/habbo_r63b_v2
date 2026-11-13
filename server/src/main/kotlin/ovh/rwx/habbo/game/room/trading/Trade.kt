@@ -129,7 +129,7 @@ class Trade(
         }
 
         // Verifica se o item pode ser trocado (allowTrade)
-        if (!item.furnishing.allowTrade) {
+        if (!item.furnishing.canTrade) {
             return@withLock AddItemResult.NotTradable
         }
 
@@ -164,7 +164,7 @@ class Trade(
             if (targetItems.containsKey(item.id)) continue
             if (!inventory.containsKey(item.id)) continue
             if (room.tradeManager.isItemInTrade(item.id, roomUser)) continue
-            if (!item.furnishing.allowTrade) continue
+            if (!item.furnishing.canTrade) continue
 
             targetItems[item.id] = TradeItem(userItem = item, locked = true)
             addedCount++

@@ -42,6 +42,7 @@ class CatalogOfferHandler {
         
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogOfferId }
                 ?: return
+        if (!catalogItem.isAvailableFor(habboSession.habboVersion)) return
 
         habboSession.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem)
     }

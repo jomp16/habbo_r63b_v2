@@ -19,7 +19,9 @@
 
 package ovh.rwx.habbo.game.item
 
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.HabboGame
+import ovh.rwx.habbo.game.catalog.gift.GiftRules
 import ovh.rwx.habbo.camera.Dimensions
 import ovh.rwx.habbo.camera.SwfInfo
 import kotlin.math.max
@@ -43,6 +45,21 @@ data class Furnishing(
     val vendingIds: List<Int>
 ) {
     val stackMultiple: Boolean = stackHeight.size > 1
+
+    /** Caixa de presente/Ecotron: nunca trocável nem vendável (o conteúdo é, depois de aberto). */
+    val isGiftBox: Boolean by lazy {
+        GiftRules.isGiftBox(
+            itemName,
+            interactionType,
+            runCatching { HabboServer.habboConfig.recyclerConfig.giftBox }.getOrNull()
+        )
+    }
+
+    /** `allow_trade` do banco, exceto presentes. */
+    val canTrade: Boolean get() = allowTrade && !isGiftBox
+
+    /** `allow_marketplace_sell` do banco, exceto presentes. */
+    val canSellOnMarketplace: Boolean get() = allowMarketplaceSell && !isGiftBox
 
     val interactor: ItemInteractor?
         get() = HabboGame.instance!!.itemManager.furniInteractor[interactionType]

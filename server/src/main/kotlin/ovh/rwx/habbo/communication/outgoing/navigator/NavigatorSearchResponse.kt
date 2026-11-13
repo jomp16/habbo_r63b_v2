@@ -28,13 +28,14 @@ import ovh.rwx.habbo.game.navigator.NavigatorRoomCategory
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.withoutBlockedOwners
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class NavigatorSearchResponse {
     @Response(Outgoing.NAVIGATOR_SEARCH)
     fun response(habboResponse: HabboResponse, habboSession: HabboSession, category: String, searchTerm: String) {
         val rooms = if (searchTerm.isNotBlank()) {
-            HabboServer.habboGame.roomManager.searchRooms(searchTerm)
+            habboSession.withoutBlockedOwners(HabboServer.habboGame.roomManager.searchRooms(searchTerm))
         } else {
             emptyList()
         }

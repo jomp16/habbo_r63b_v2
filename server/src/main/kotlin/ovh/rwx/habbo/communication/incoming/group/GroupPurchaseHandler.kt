@@ -26,6 +26,8 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomInfoData
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -36,8 +38,10 @@ class GroupPurchaseHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         // [0][4]aaaa[0][4]aaaa[0][0][0][2][0][0][0]�[0][0][0][1][0][0][0][6][0][0][0][8][0][0][0][1][0][0][0][4][0][0][0][26][0][0][0][11][0][0][0][4]
 
-        // how much credits to remove from user?
-        if (habboSession.userInformation.credits < credits) return
+        val price = Price(credits, 0, 0)
+
+        // pré-checagem rápida; a cobrança de verdade é o tryCharge abaixo
+        if (!CurrencyService.canAfford(habboSession, price)) return
 
         val name = habboRequest.readUTF()
         val description = habboRequest.readUTF()
@@ -55,12 +59,17 @@ class GroupPurchaseHandler {
 
         val groupBadge = HabboServer.habboGame.groupManager.generateBadge(badgeParts)
 
-        val group = HabboServer.habboGame.groupManager.createGroup(name, description, groupBadge, habboSession.userInformation.id, roomId, symbolColor, backgroundColor)
+        if (!CurrencyService.tryCharge(habboSession, price).ok) return
+
+        val group = try {
+            HabboServer.habboGame.groupManager.createGroup(name, description, groupBadge, habboSession.userInformation.id, roomId, symbolColor, backgroundColor)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
+        }
 
         room.roomData.groupId = group.groupData.id
         habboSession.userStats.favoriteGroupId = group.groupData.id
-        habboSession.userInformation.credits -= credits
-        habboSession.updateAllCurrencies()
 
         habboSession.sendHabboResponse(Outgoing.GROUP_PURCHASED, roomId, group.groupData.id)
 

@@ -30,3 +30,6 @@ WHERE `i`.`room_id` IS NULL
   AND NOT EXISTS (SELECT 1
                   FROM `chest_items` `ci`
                   WHERE `ci`.`item_id` = `i`.`id`)
+  AND NOT EXISTS (SELECT 1
+                  FROM `items_gift_contents` `gc`
+                  WHERE `gc`.`item_id` = `i`.`id`)

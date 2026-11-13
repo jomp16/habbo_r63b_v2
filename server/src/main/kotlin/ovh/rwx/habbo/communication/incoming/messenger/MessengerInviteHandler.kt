@@ -24,6 +24,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInviteHandler {
@@ -39,7 +40,9 @@ class MessengerInviteHandler {
         if (message.isBlank()) return
         if (message.length > Byte.MAX_VALUE) message = message.substring(0, Byte.MAX_VALUE.toInt())
 
-        habboSession.habboMessenger.friends.filterKeys { friendsId.contains(it) }.values.filter { it.online && it.habboSession != null }.forEach {
+        habboSession.habboMessenger.friends.filterKeys { friendsId.contains(it) }.values.filter { it.online && it.habboSession != null }
+            .filter { BlockPolicy.canInvite(it.habboSession!!.habboBlocks, habboSession.userInformation.id) }
+            .forEach {
             it.habboSession?.sendHabboResponse(Outgoing.MESSENGER_INVITE, habboSession.userInformation.id, message)
         }
     }

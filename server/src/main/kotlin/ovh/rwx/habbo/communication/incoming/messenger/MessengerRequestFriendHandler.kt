@@ -24,10 +24,12 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.messenger.MessengerErrorResponse
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRequestFriendHandler {
@@ -38,6 +40,22 @@ class MessengerRequestFriendHandler {
 
         if (username.isBlank()) return
         val userInformation = UserInformationDao.getUserInformationByUsername(username) ?: return
+
+        // bloqueio: o solicitante é avisado do motivo (7 = bloqueado por ele, 8 = bloqueado por você)
+        val blockError = BlockPolicy.friendRequestError(habboSession.habboBlocks, userInformation.id)
+
+        if (blockError != null) {
+            habboSession.sendHabboResponse(
+                Outgoing.MESSENGER_ERROR, 0,
+                if (blockError == BlockPolicy.FRIEND_REQUEST_BLOCKED_BY_THEM) {
+                    MessengerErrorResponse.MessengerError.BLOCKED_BY_THEM
+                } else {
+                    MessengerErrorResponse.MessengerError.BLOCKED_BY_YOU
+                }
+            )
+            return
+        }
+
         val userPreferences = UserPreferencesDao.getUserPreferences(userInformation.id)
 
         if (userPreferences.blockNewFriends) return

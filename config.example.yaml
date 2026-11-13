@@ -33,6 +33,9 @@ reward:
   pixels_max: -1
   vip_points: 10
   vip_points_max: -1
+  # Opcional: outras moedas pagas no mesmo ciclo (type = código em activity_point_types; max < 0 = sem teto)
+  # extra_currencies:
+  #   - { type: 4, amount: 1, max: 100, vip_only: false }
 habbo_host: 127.0.0.1
 games_url: https://swf.habbo.rwx.ovh/games
 c_images_url: https://swf.habbo.rwx.ovh/c_images
@@ -57,6 +60,11 @@ camera:
   assets_path: assets_renderizador
 catalog:
   show_how_many_items_title: false
+  # Embrulho de presentes: preço em créditos (a caixa padrão é sempre grátis). Os tipos de caixa/fita ficam na
+  # tabela catalog_gift_wrapping_types (com janela de release).
+  gift_wrapping:
+    enabled: true
+    price: 1
 recycler:
   open: true
   slots: 8

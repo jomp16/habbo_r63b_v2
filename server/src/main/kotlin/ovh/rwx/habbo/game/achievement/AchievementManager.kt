@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.achievement.AchievementListData
 import ovh.rwx.habbo.database.achievement.AchievementDao
+import ovh.rwx.habbo.game.currency.CurrencyService
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.util.ActivityPointType
 import java.util.concurrent.ConcurrentHashMap
@@ -160,10 +161,10 @@ class AchievementManager {
                 habboSession.userStats.achievementScore += nextLevelData.rewardAchievementPoints
 
                 if (nextLevelData.rewardActivityPoints > 0) {
-                    habboSession.userInformation.activityPointsCurrencies.merge(
-                        ActivityPointType.PIXELS,
-                        nextLevelData.rewardActivityPoints,
-                        Int::plus
+                    CurrencyService.grant(
+                        habboSession,
+                        points = nextLevelData.rewardActivityPoints,
+                        pointType = ActivityPointType.PIXELS.code
                     )
                 }
             } else {

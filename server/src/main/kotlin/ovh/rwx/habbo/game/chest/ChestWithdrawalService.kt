@@ -23,6 +23,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.chest.ChestCoinsData
 import ovh.rwx.habbo.database.chest.ChestDao
+import ovh.rwx.habbo.game.currency.CurrencyService
 import ovh.rwx.habbo.database.chest.ChestLogItemEntry
 import ovh.rwx.habbo.database.chest.ChestLogItemsData
 import ovh.rwx.habbo.database.item.ItemDao
@@ -134,7 +135,7 @@ class ChestWithdrawalService(private val chestManager: ChestManager) {
         chest.coins -= withdrawAmount
         ChestDao.updateChest(chest)
 
-        habboSession.userInformation.credits += withdrawAmount
+        CurrencyService.grant(habboSession, credits = withdrawAmount)
 
         ChestAuditLog.logTransaction(room, chest, habboSession, withdrawCoinsCount = withdrawAmount)
 
@@ -147,6 +148,5 @@ class ChestWithdrawalService(private val chestManager: ChestManager) {
             Outgoing.CHEST_COINS,
             ChestCoinsData(chestItemId = chest.itemId, coins = chest.coins, isUpdate = true)
         )
-        ChestNotifier.sendCurrencyBalances(habboSession)
     }
 }

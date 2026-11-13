@@ -162,6 +162,24 @@ diagnosis). Typed enums only, never raw ints.
   `RoomItem`) extend `AbstractDirtyEntity` and implement `flush()`. `WriteBehindManager` only collects the dirty set and
   calls `flush()` polymorphically (no type maps, no `when`, no DAO imports).
 
+## Currencies & bundles (`docs/CURRENCIES.md`)
+
+- **An offer is credits + ONE alternate currency** (`catalog_items.price_points` + `point_type`); the client reads
+  exactly one `activityPointType` per offer. Silver (AIR 2024+ `priceInSilver`) is another currency (Collector Wallet),
+  sent as 0: never fold it into activity points.
+- **Charge through `CurrencyService`** (`check`/`charge`/`canAfford`), never by touching balances: catalog, pets, club,
+  camera and habbicon do. Balances are `UserInformation.activityPointsCurrencies` (`UserCurrencies`, keyed by the type
+  CODE, not the enum: unknown codes survive load/save); each change dirties only that type.
+- **Which types a release's client understands** is data: `activity_point_types` (`available_from/until`, `enabled`),
+  from the first original flash texts that carry each type. `ActivityPointTypes.isSupported(version, code)` filters the
+  balance packet and the catalog (`CatalogItem.isAvailableFor`); pixels (0) is always supported.
+- **Bundles (deals)**: `catalog_deals (id, name)` + `catalog_deal_items (deal_id, position, item_name, amount)`, in
+  offer order. Use `CatalogItem.dealProducts` (ordered, unknown furnishings dropped), never scan `furnishings`. Buying
+  `N` bundles delivers `amount × N` of each product (the charge is per `N`). A bundle with no valid furnishing hides
+  the offer. `catalog_items.deal_id` is `ON DELETE RESTRICT`.
+- **Hotel `ready`**: `plugin_webapp` `GET /api/v1/status` (public) has `ready` = `HabboServer.started` (game loaded, ports
+  bound). The webapp loads before that, so the API answering is not readiness. The CMS popup waits on it.
+
 ## Packet reverse engineering (2011–2013)
 
 - Always consult `AGENTS_FINDING_PACKET.md` (4-step pipeline + anchor table).

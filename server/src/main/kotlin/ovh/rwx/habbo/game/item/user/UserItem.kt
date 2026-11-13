@@ -61,9 +61,9 @@ data class UserItem(
             HabboGame.instance!!.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
 
             writeBoolean(furnishing.allowRecycle)
-            writeBoolean(furnishing.allowTrade)
+            writeBoolean(furnishing.canTrade)
             writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
-            writeBoolean(furnishing.allowMarketplaceSell)
+            writeBoolean(furnishing.canSellOnMarketplace)
             writeInt(-1) // milliseconds to expire rental
 
             writeBoolean(true)
@@ -102,11 +102,11 @@ data class UserItem(
             }
 
             writeBoolean(furnishing.allowRecycle)
-            writeBoolean(furnishing.allowTrade)
+            writeBoolean(furnishing.canTrade)
             writeBoolean(limitedItemData == null && furnishing.allowInventoryStack)
 
             if (isVersionAtLeast(2009, 12, 11)) {
-                writeBoolean(furnishing.allowMarketplaceSell)
+                writeBoolean(furnishing.canSellOnMarketplace)
             }
 
             writeInt(-1) // milliseconds to expire rental

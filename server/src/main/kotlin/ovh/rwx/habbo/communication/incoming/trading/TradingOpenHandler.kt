@@ -24,8 +24,12 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.trading.TradingOpenFailedResponse
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 @Suppress("unused")
 class TradingOpenHandler {
@@ -41,6 +45,19 @@ class TradingOpenHandler {
 
         val targetUser = room.userManager.entities[targetVirtualId] as? RoomUser ?: return
         if (targetUser.habboSession.userInformation.id == habboSession.userInformation.id) return
+
+        if (!BlockPolicy.canTrade(habboSession.habboBlocks, targetUser.habboSession.userInformation.id)) {
+            if (habboSession.isPreShuffle) {
+                habboSession.sendHabboResponse(OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
+            } else {
+                habboSession.sendHabboResponse(
+                    Outgoing.TRADING_OPEN_FAILED,
+                    TradingOpenFailedResponse.TradingOpenFailedStatus.TARGET_TRADING_NOT_ALLOWED,
+                    targetUser.habboSession.userInformation.username
+                )
+            }
+            return
+        }
 
         room.tradeManager.startTrade(roomUser, targetUser)
     }

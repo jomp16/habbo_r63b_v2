@@ -21,9 +21,11 @@ package ovh.rwx.habbo.game.catalog
 
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.*
+import ovh.rwx.habbo.game.catalog.gift.GiftRules
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.ActivityPointTypes
+import ovh.rwx.habbo.game.currency.Price
 import java.util.concurrent.atomic.AtomicInteger
 
 data class CatalogItem(
@@ -35,8 +37,9 @@ data class CatalogItem(
     val catalogName: String,
     val badge: String,
     val costCredits: Int,
-    val costPixels: Int,
-    val costVip: Int,
+    /** Quantidade da moeda alternativa (o client lê UMA por oferta); o tipo está em [pointType]. */
+    val pricePoints: Int,
+    val pointType: Int,
     val amount: Int,
     val clubOnly: Boolean,
     val limitedSells: AtomicInteger,
@@ -47,50 +50,100 @@ data class CatalogItem(
     val furnishing: Furnishing
         get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
     val deal: CatalogDeal?
-        get() = HabboServer.habboGame.catalogManager.getDeal(dealId)
-            ?: HabboServer.habboGame.catalogManager.catalogDeals.find { it.id == dealId }
+        get() = if (dealId > 0) HabboServer.habboGame.catalogManager.getDeal(dealId) else null
+
+    /** Os produtos do pacote na ordem da oferta; null se a oferta não é um pacote (vazio = pacote sem mobi válido). */
+    val dealProducts: List<CatalogDealProduct>?
+        get() = if (dealId > 0) deal?.products.orEmpty() else null
+
+    /** O nome da oferta no client: o `catalog_name`; em branco, o nome do pacote ou o classname do mobi. */
+    val offerName: String
+        get() = catalogName.ifBlank { if (dealId > 0) deal?.name.orEmpty() else furnishing.itemName }
     val limited = limitedTotal > 0
+
+    /** Regra de presente (ver [GiftRules]): só mobi, só créditos, `allow_gift` em todos os produtos. */
+    val isGiftable: Boolean
+        get() = GiftRules.isGiftable(
+            offerActive,
+            clubOnly,
+            pricePoints,
+            badge,
+            HabboServer.habboGame.catalogManager.getPage(pageId)?.pageLayout?.startsWith("pets") == true,
+            dealProducts?.map { it.furnishing } ?: listOf(furnishing)
+        )
+
+    val price = Price(costCredits, pointType, pricePoints)
+
+    /** Trava por oferta LTD (só é usada em [withLimitedReservation]; ofertas comuns nunca a pegam). */
+    private val limitedLock = Any()
+
+    /**
+     * Seção crítica da numeração LTD, sem buracos e sem repetição: com o lock desta oferta, confere o estoque
+     * (`limitedSells + count <= limitedTotal`) e chama [block] com os números `atual+1..atual+count`. O contador só
+     * avança (para `atual+count`) se [block] devolver true; se devolver false ou lançar, não avança e o próximo
+     * comprador recebe os mesmos números. [block] roda com o lock preso (inclui o insert síncrono dos itens).
+     */
+    fun withLimitedReservation(count: Int, block: (IntRange) -> Boolean): LimitedOutcome = synchronized(limitedLock) {
+        val current = limitedSells.get()
+        if (!limited || count <= 0 || current.toLong() + count > limitedTotal) return@synchronized LimitedOutcome.SOLD_OUT
+
+        if (!block((current + 1)..(current + count))) return@synchronized LimitedOutcome.DECLINED
+
+        limitedSells.set(current + count)
+        LimitedOutcome.COMMITTED
+    }
+
+    /**
+     * A oferta só existe para clients que entendem a moeda dela (senão o preço sairia com um tipo desconhecido) e,
+     * sendo um pacote, enquanto ele tiver ao menos um mobi válido (senão o pacote sairia vazio ou não sairia).
+     */
+    fun isAvailableFor(version: HabboVersion): Boolean =
+        (pricePoints <= 0 || ActivityPointTypes.isSupported(version, pointType)) && dealProducts?.isEmpty() != true
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         val habboAir = params.isNotEmpty() && params[0] as? Boolean == true
+        val wire = CatalogOfferWire(habboResponse.habboVersion)
 
         habboResponse.apply {
             writeInt(id) // offerId
-            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
+            writeUTF(offerName) // localizationId
             if (isVersionAtLeast(2013, 2, 26)) {
                 writeBoolean(false) // isRent
             }
             writeInt(costCredits) // priceInCredits
-            writeInt(costPixels) // priceInActivityPoints
-            writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else ActivityPointType.PIXELS.code) // activityPointType
+            writeInt(pricePoints) // priceInActivityPoints
+            writeInt(pointType) // activityPointType
 
             if (isVersionAtLeast(2024, 1, 22)) {
-                writeInt(costVip) // priceInSilver
+                writeInt(0) // priceInSilver (moeda à parte, ainda sem saldo/cobrança no emulador)
             }
 
-            writeBoolean(dealId > 0 || furnishing.canGift) // giftable
+            // cada campo só existe a partir da build que o introduz (ver CatalogOfferWire: um byte a mais desalinha tudo)
+            if (wire.giftable) {
+                writeBoolean(isGiftable) // giftable
+            }
 
             // products count and array
-            writeInt(if (dealId > 0) deal!!.furnishings.size else 1 + if (badge.isNotBlank()) 1 else 0)
+            val products = dealProducts
+            val badgeProduct = badge.isNotBlank() && wire.badgeProduct
+            writeInt((products?.size ?: 1) + if (badgeProduct) 1 else 0)
 
-            if (badge.isNotBlank()) {
+            if (badgeProduct) {
                 writeUTF("b")
                 writeUTF(badge)
             }
 
-            if (dealId > 0) {
-                deal!!.let { deal ->
-                    deal.furnishings.forEachIndexed { i, furnishing ->
-                        serializeItem(habboResponse, furnishing, deal.amounts[i])
-                    }
-                }
+            if (products != null) {
+                products.forEach { serializeItem(habboResponse, it.furnishing, it.amount, wire) }
             } else {
-                serializeItem(habboResponse, furnishing, amount)
+                serializeItem(habboResponse, furnishing, amount, wire)
             }
 
             // Campos que vêm APÓS o array de produtos
             writeInt(if (clubOnly) 1 else 0) // clubLevel
-            writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
+            if (wire.bundlePurchaseAllowed) {
+                writeBoolean(offerActive && !limited) // bundlePurchaseAllowed
+            }
 
             // isPet + previewImage nasceram em 2016-07-26 (CatalogPageMessageOfferData);
             // antes o offer termina no bundlePurchaseAllowed — campos extras desalinham o stream
@@ -104,27 +157,20 @@ data class CatalogItem(
     override fun serializeHabboResponseR63A(habboResponse: HabboResponse, vararg params: Any) {
         habboResponse.apply {
             writeInt(id) // offerId
-            writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
+            writeUTF(offerName) // localizationId
             writeInt(costCredits) // priceInCredits
-            writeInt(if (costVip > 0) costVip else costPixels) // priceInActivityPoints
+            writeInt(pricePoints) // priceInActivityPoints
 
             if (isVersionAtLeast(2010, 12, 3)) {
-                // Se for muito antigo (Dez 2010), evitamos mandar Shells para não dar o erro #1009 do ícone nulo
-                if (isVersionBefore(2011, 2, 1)) {
-                    writeInt(if (costVip > 0) ActivityPointType.SNOWFLAKES.code else ActivityPointType.PIXELS.code)
-                } else {
-                    writeInt(if (costVip > 0) ActivityPointType.SHELLS.code else ActivityPointType.PIXELS.code)
-                }
+                writeInt(pointType) // activityPointType
             }
 
             // Products: offer ← LOOP[product]; product = productType, furniClassId, extraParam, productCount, expiration
             // (idêntico de RELEASE34 a RELEASE63-29876; deals carregam vários produtos)
-            if (dealId > 0) {
-                val deal = deal!!
-                writeInt(deal.furnishings.size)
-                deal.furnishings.forEachIndexed { i, dealFurnishing ->
-                    serializeProductR63A(dealFurnishing, deal.amounts[i])
-                }
+            val products = dealProducts
+            if (products != null) {
+                writeInt(products.size)
+                products.forEach { serializeProductR63A(it.furnishing, it.amount) }
             } else {
                 writeInt(1)
                 serializeProductR63A(furnishing, amount)
@@ -139,7 +185,8 @@ data class CatalogItem(
     private fun serializeItem(
         habboResponse: HabboResponse,
         furnishing: Furnishing,
-        amount: Int
+        amount: Int,
+        wire: CatalogOfferWire
     ) {
         habboResponse.apply {
             writeUTF(furnishing.type.type) // productType
@@ -155,14 +202,17 @@ data class CatalogItem(
                     )[2] else ""
                 ) // extraParam
                 writeInt(amount) // productCount
-                if (isVersionBetween(2012, 3, 20, 2013, 1, 30)) {
-                    writeInt(-1) // expiration
+                if (wire.productExpiration) {
+                    writeInt(-1) // expiration (do início do protocolo até 2013-01-29)
                 }
-                writeBoolean(limited) // isUnique (limited)
+                // isUnique e a série limitada só existem a partir de 2012-03-20; antes o produto termina na expiração
+                if (wire.productUniqueFlag) {
+                    writeBoolean(limited) // isUnique (limited)
 
-                if (limited) {
-                    writeInt(limitedTotal) // uniqueLimitedItemSeriesSize
-                    writeInt(limitedTotal - limitedSells.get()) // uniqueLimitedItemsLeft
+                    if (limited) {
+                        writeInt(limitedTotal) // uniqueLimitedItemSeriesSize
+                        writeInt(limitedTotal - limitedSells.get()) // uniqueLimitedItemsLeft
+                    }
                 }
             }
         }
@@ -179,3 +229,6 @@ data class CatalogItem(
         writeInt(-1) // expiration
     }
 }
+
+/** Resultado de [CatalogItem.withLimitedReservation]: o contador só avança em [COMMITTED]. */
+enum class LimitedOutcome { COMMITTED, SOLD_OUT, DECLINED }

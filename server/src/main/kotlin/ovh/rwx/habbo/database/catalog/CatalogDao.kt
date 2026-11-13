@@ -23,9 +23,12 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import ovh.rwx.habbo.game.catalog.CatalogDeal
+import ovh.rwx.habbo.game.catalog.CatalogDealItem
 import ovh.rwx.habbo.game.catalog.CatalogItem
+import ovh.rwx.habbo.game.catalog.CatalogLayoutWindow
 import ovh.rwx.habbo.game.catalog.CatalogPage
 import ovh.rwx.habbo.game.user.subscription.ClubType
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 import ovh.rwx.habbo.database.*
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
@@ -49,9 +52,23 @@ object CatalogDao {
             .map { it.toDomain() }
     }
 
+    /** Os pacotes com seus produtos, na ordem (`position`) em que aparecem na oferta. */
     fun getCatalogDeals(): List<CatalogDeal> = db {
+        val items = query<CatalogDealItemDto>("SELECT * FROM `catalog_deal_items` ORDER BY `deal_id`, `position`")
+            .groupBy { it.dealId }
         query<CatalogDealDto>("SELECT * FROM `catalog_deals`")
-            .map { it.toDomain() }
+            .map { it.toDomain(items[it.id].orEmpty()) }
+    }
+
+    /** Os layouts de página por faixa de build do client, com imagens e textos que cada um comporta (ver V27). */
+    fun getCatalogLayouts(): List<CatalogLayoutWindow> = db {
+        query<CatalogLayoutDto>("SELECT * FROM `catalog_layouts`").map { it.toDomain() }
+    }
+
+    /** Layout pedido -> layout que o substitui quando a release não o tem. */
+    fun getCatalogLayoutFallbacks(): Map<String, String> = db {
+        query<CatalogLayoutFallbackDto>("SELECT * FROM `catalog_layout_fallbacks`")
+            .associate { it.layoutCode to it.fallbackLayout }
     }
 
     fun getRecyclerRewards(): List<Pair<Int, String>> = db {
@@ -112,8 +129,8 @@ data class CatalogItemDto(
     val catalogName: String,
     val badge: String,
     val costCredits: Int,
-    val costPixels: Int,
-    val costVip: Int,
+    val pricePoints: Int,
+    val pointType: Int,
     val amount: Int,
     val clubOnly: Boolean,
     val limitedSells: Int = 0,
@@ -123,7 +140,7 @@ data class CatalogItemDto(
 ) {
     fun toDomain(): CatalogItem = CatalogItem(
         id, pageId, itemName.trim(), orderNum, dealId ?: 0, catalogName.trim(), badge.trim(),
-        costCredits, costPixels, costVip, amount, clubOnly, AtomicInteger(limitedSells),
+        costCredits, pricePoints, pointType, amount, clubOnly, AtomicInteger(limitedSells),
         limitedStack, offerActive, jsonMapper.readValue(extraData)
     )
 }
@@ -148,14 +165,39 @@ data class CatalogClubOfferDto(
 
 data class CatalogDealDto(
     val id: Int,
-    val itemName: String,
-    val amount: String
+    val name: String
 ) {
-    fun toDomain() = CatalogDeal(
+    fun toDomain(items: List<CatalogDealItemDto>) = CatalogDeal(
         id,
-        itemName.split(',').map(String::trim),
-        amount.split(',').map(String::toInt)
+        name.trim(),
+        items.map { CatalogDealItem(it.itemName.trim(), it.amount) }
     )
 }
+
+data class CatalogDealItemDto(
+    val dealId: Int,
+    val position: Int,
+    val itemName: String,
+    val amount: Int
+)
+
+data class CatalogLayoutDto(
+    val layoutCode: String,
+    val availableFrom: LocalDateTime,
+    val availableUntil: LocalDateTime,
+    /** Coluna SET do MariaDB: os nomes dos elementos separados por vírgula ("" = nenhum). */
+    val imageElements: String = "",
+    val textCount: Int = 3
+) {
+    fun toDomain() = CatalogLayoutWindow(
+        layoutCode = layoutCode,
+        availableFrom = availableFrom,
+        availableUntil = availableUntil,
+        imageElements = imageElements.split(',').filter { it.isNotEmpty() }.toSet(),
+        textCount = textCount
+    )
+}
+
+data class CatalogLayoutFallbackDto(val layoutCode: String, val fallbackLayout: String)
 
 data class RecyclerRewardDto(val level: Int, val itemName: String)

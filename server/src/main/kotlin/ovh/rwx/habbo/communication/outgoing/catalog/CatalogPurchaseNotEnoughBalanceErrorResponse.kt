@@ -24,7 +24,6 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.util.ActivityPointType
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogPurchaseNotEnoughBalanceErrorResponse {
@@ -34,12 +33,12 @@ class CatalogPurchaseNotEnoughBalanceErrorResponse {
         habboResponse: HabboResponse,
         notEnoughCredits: Boolean,
         notEnoughPixels: Boolean,
-        activityPointType: ActivityPointType
+        activityPointType: Int
     ) {
         habboResponse.apply {
             writeInt(if (notEnoughCredits) 1 else 0)
             writeInt(if (notEnoughPixels) 1 else 0)
-            writeInt(activityPointType.code)
+            writeInt(activityPointType)
         }
     }
 }

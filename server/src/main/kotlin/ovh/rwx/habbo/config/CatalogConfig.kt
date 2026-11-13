@@ -23,5 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CatalogConfig(
         @param:JsonProperty("show_how_many_items_title", required = true)
-        val showHowManyItemsInTitle: Boolean
+        val showHowManyItemsInTitle: Boolean,
+        @param:JsonProperty("gift_wrapping")
+        val giftWrapping: GiftWrappingConfig = GiftWrappingConfig()
 )

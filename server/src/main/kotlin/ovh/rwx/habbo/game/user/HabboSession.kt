@@ -55,6 +55,8 @@ import ovh.rwx.habbo.game.user.information.UserInformation
 import ovh.rwx.habbo.game.user.information.UserPreferences
 import ovh.rwx.habbo.game.user.information.UserStats
 import ovh.rwx.habbo.game.user.inventory.HabboInventory
+import ovh.rwx.habbo.game.user.block.HabboBlocks
+import ovh.rwx.habbo.game.user.ignore.HabboIgnores
 import ovh.rwx.habbo.game.user.messenger.HabboMessenger
 import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
@@ -98,6 +100,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         internal set
     lateinit var habboMessenger: HabboMessenger
         internal set
+
+    // criada vazia junto da sessão (bots e sessões sem login nunca ignoram ninguém); carregada no authenticate
+    val habboIgnores: HabboIgnores = HabboIgnores(this)
+    val habboBlocks: HabboBlocks = HabboBlocks(this)
     lateinit var habboInventory: HabboInventory
         internal set
     lateinit var habboHabbicon: HabboHabbicon
@@ -307,7 +313,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             // a assinatura HC precisa estar carregada antes de responder: clientes 2011 pedem o status do clube
             // (SUBSCRIPTION_STATUS) e leem USER_RIGHTS logo no login; um load() assíncrono respondia "0 dias" ("Seja HC")
             val subscription = async { habboSubscription.load() }
+            // o cliente pede a lista de ignorados logo após o login
+            val ignores = async { habboIgnores.load() }
+            // bloqueios (meus e de quem me bloqueou): aplicados em chat, salas, mensageiro e trocas
+            val blocks = async { habboBlocks.load() }
             clothings.await()
+            ignores.await()
+            blocks.await()
             subscription.await()
             Triple(stats.await(), preferences.await(), favorites.await())
         }

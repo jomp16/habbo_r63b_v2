@@ -28,6 +28,7 @@ import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
+import ovh.rwx.habbo.game.catalog.CatalogLayouts
 import ovh.rwx.habbo.game.catalog.CatalogPage
 import ovh.rwx.habbo.game.user.subscription.ClubType
 
@@ -106,8 +107,10 @@ class CatalogPageResponse {
                 writeInt(buildersOffers.size)
                 buildersOffers.forEach { serializeBuildersClubOffer(this, it) }
             } else {
-                writeInt(page.catalogItems.size)
-                page.catalogItems.forEach { serialize(it) }
+                // só as ofertas cuja moeda o client dessa release entende (ver ActivityPointTypes)
+                val availableItems = page.catalogItems.filter { it.isAvailableFor(habboVersion) }
+                writeInt(availableItems.size)
+                availableItems.forEach { serialize(it) }
             }
 
             // Campo #6: offerId (chosenOfferId) (Adicionado na build 201109301501 / R63A)
@@ -132,13 +135,32 @@ class CatalogPageResponse {
         private val NEWLINE_SPLIT_REGEX = Regex("[\\r\\n]+")
 
         fun resolvePresentation(habboResponse: HabboResponse, page: CatalogPage): CatalogPagePresentation {
-            return if (habboResponse.isVersionAtLeast(2016, 7, 26)) {
-                resolveModernPresentation(page)
-            } else if (habboResponse.isVersionBefore(2010, 11, 12)) {
-                resolveLegacyPresentation(habboResponse, page)
-            } else {
-                resolveR63APresentation(page)
-            }
+            if (habboResponse.isVersionAtLeast(2016, 7, 26)) return resolveModernPresentation(page)
+            if (page.pageLayout in FRONT_PAGE_LAYOUTS) return resolveFrontPagePresentation(page)
+            return resolveFlashPresentation(habboResponse, page)
+        }
+
+        /**
+         * Era Flash (2009..2016): o client só monta a página se existir o asset `ctlg_<layout>` (layout desconhecido =
+         * página em branco), lê as imagens e os textos por posição e não checa null no elemento da imagem. Qual layout a
+         * release tem, quantos textos ele lê e quais imagens comporta vem de `catalog_layouts` (ver [CatalogLayouts]).
+         * Fora da faixa dessa tabela (clients de 2014 em diante, que carregam os layouts de fora e já checam null) a
+         * página vai como está.
+         */
+        private fun resolveFlashPresentation(habboResponse: HabboResponse, page: CatalogPage): CatalogPagePresentation {
+            val images = listOf(page.pageHeadline, page.pageTeaser, page.pageSpecial)
+            val layout = CatalogLayouts.resolve(habboResponse.habboVersion, page.pageLayout)
+                ?: return CatalogPagePresentation(
+                    layoutCode = page.pageLayout,
+                    images = images,
+                    texts = listOf(page.pageText1, page.pageTextDetails, page.pageTextTeaser)
+                )
+
+            return CatalogPagePresentation(
+                layoutCode = layout.layoutCode,
+                images = layout.pruneImages(images),
+                texts = layout.pickTexts(page.pageText1, page.pageText2, page.pageTextDetails, page.pageTextTeaser)
+            )
         }
 
         fun resolveModernPresentation(page: CatalogPage): CatalogPagePresentation {
@@ -204,81 +226,31 @@ class CatalogPageResponse {
             return CatalogPagePresentation(layout, images, texts, frontPageItems)
         }
 
-        /**
-         * Era 2009..2010-11-11 (RELEASE34..RELEASE54): o cliente só monta a página se existir o asset
-         * `ctlg_<layoutCode>` (HabboCatalog / CatalogPageViewer.createWindow); layout desconhecido = página em branco.
-         * Layouts de DB das eras modernas são mapeados para o equivalente existente (ou default_3x3).
-         * Conjunto de layouts presente por build (extraído dos XML do Habbo.swf):
-         *  - `pets`: só até RELEASE35 (2009-07-13); depois apenas `pets2`
-         *  - `recycler_prizes`: desde RELEASE38 (2009-09-21); `bots`: desde RELEASE39 (2009-10-15)
-         */
-        private fun resolveLegacyPresentation(habboResponse: HabboResponse, page: CatalogPage): CatalogPagePresentation {
-            val layout = when (page.pageLayout) {
-                "frontpage", "frontpage4", "frontpage3" -> "frontpage3"
-                "spaces_new", "spaces" -> "spaces"
-                "pets", "pets3" -> if (habboResponse.isVersionBefore(2009, 7, 27)) "pets" else "pets2"
-                "pets2" -> "pets2"
-                "recycler_prizes" -> if (habboResponse.isVersionAtLeast(2009, 9, 21)) "recycler_prizes" else "default_3x3"
-                "default_3x3", "camera1", "camera2", "cars", "club1", "club2", "collectibles", "info_credits",
-                "info_pixels", "infopage1", "infopage2", "norares", "pixeldeals", "pixeleffects", "pixelrent",
-                "pixelsdeals", "plasto", "presents", "productpage1", "productpage2", "productpage2b",
-                "productpage3", "productpage3b", "purse", "recycler", "soundmachine", "trophies" -> page.pageLayout
-                // vip_buy/club_buy/marketplace*/guild_*/badge_display/roomads/recycler_info/builders_club*/category/empty...
-                // dependem de widgets/pacotes que não existem na era
-                else -> "default_3x3"
-            }
+        /** `frontpage3` tem nomes e textos próprios no client (ctlg_txt1..7, frontpage_promotion): fica fora de `catalog_layouts`. */
+        private val FRONT_PAGE_LAYOUTS = setOf("frontpage", "frontpage3", "frontpage4")
 
-            if (layout == "frontpage3") return resolveR63APresentation(page)
+        fun resolveFrontPagePresentation(page: CatalogPage): CatalogPagePresentation {
+            val custom = page.customData
+            val color1and2 = custom.getOrDefault("color_ctlg_txt1_ctlg_txt2", "#FAF8CC").toString()
+            val color3 = custom.getOrDefault("color_ctlg_txt3", "#FAF8CC").toString()
 
-            // Tabelas de campos do cliente (LocalizationCatalogWidget): default texts = header_text, description,
-            // special_txt, text_1, text_2; default images = header_img, teaserimg_1, special_img, teaserimg_2/3
-            val texts = when (layout) {
-                "pets", "pets2", "club1", "club2", "info_credits", "info_pixels" ->
-                    listOf(page.pageText1, page.pageText2, page.pageTextDetails, page.pageTextTeaser)
-
-                "camera1", "presents", "collectibles", "purse" ->
-                    listOf(page.pageText1, page.pageTextDetails)
-
-                else -> listOf(page.pageText1, page.pageTextDetails, page.pageTextTeaser)
-            }
-
-            return CatalogPagePresentation(
-                layoutCode = layout,
-                images = listOf(page.pageHeadline, page.pageTeaser, page.pageSpecial),
-                texts = texts
+            val texts = listOf(
+                custom.getOrDefault("ctlg_txt1", "").toString(),
+                custom.getOrDefault("ctlg_txt2", "").toString(),
+                custom.getOrDefault("ctlg_txt3", "").toString(),
+                custom.getOrDefault("ctlg_txt4", "").toString(),
+                custom.getOrDefault("ctlg_txt5", "").toString(),
+                custom.getOrDefault("ctlg_txt6", "").toString(),
+                custom.getOrDefault("ctlg_txt3_link", "").toString(),
+                color1and2,
+                color3,
+                custom.getOrDefault("ctlg_txt7", "").toString(),
+                custom.getOrDefault("ctlg_txt7_link", "").toString()
             )
-        }
-
-        fun resolveR63APresentation(page: CatalogPage): CatalogPagePresentation {
-            if (page.pageLayout == "frontpage" || page.pageLayout == "frontpage3" || page.pageLayout == "frontpage4") {
-                val custom = page.customData
-                val color1and2 = custom.getOrDefault("color_ctlg_txt1_ctlg_txt2", "#FAF8CC").toString()
-                val color3 = custom.getOrDefault("color_ctlg_txt3", "#FAF8CC").toString()
-
-                val texts = listOf(
-                    custom.getOrDefault("ctlg_txt1", "").toString(),
-                    custom.getOrDefault("ctlg_txt2", "").toString(),
-                    custom.getOrDefault("ctlg_txt3", "").toString(),
-                    custom.getOrDefault("ctlg_txt4", "").toString(),
-                    custom.getOrDefault("ctlg_txt5", "").toString(),
-                    custom.getOrDefault("ctlg_txt6", "").toString(),
-                    custom.getOrDefault("ctlg_txt3_link", "").toString(),
-                    color1and2,
-                    color3,
-                    custom.getOrDefault("ctlg_txt7", "").toString(),
-                    custom.getOrDefault("ctlg_txt7_link", "").toString()
-                )
-                return CatalogPagePresentation(
-                    layoutCode = "frontpage3",
-                    images = listOf(page.pageHeadline, page.pageSpecial),
-                    texts = texts
-                )
-            }
-
             return CatalogPagePresentation(
-                layoutCode = page.pageLayout,
-                images = listOf(page.pageHeadline, page.pageTeaser, page.pageSpecial),
-                texts = listOf(page.pageText1, page.pageTextDetails, page.pageTextTeaser)
+                layoutCode = "frontpage3",
+                images = listOf(page.pageHeadline, page.pageSpecial),
+                texts = texts
             )
         }
 

@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.game.catalog.gift.GiftWrapping
 import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
 import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -59,11 +60,13 @@ class ItemManager {
     val itemSequence = HiLoSequence("items", blockSize = 1000)
     val furniXMLInfos: ConcurrentHashMap<String, FurniXMLInfo> = ConcurrentHashMap()
     val furnishings: ConcurrentHashMap<String, Furnishing> = ConcurrentHashMap()
+    /** `present_gen1..N` em ordem numérica (defaultStuffTypes: o presente padrão grátis). */
     @Volatile
-    var oldGiftWrapper: List<Furnishing> = emptyList()
+    var giftDefaultWrapper: List<Furnishing> = emptyList()
         private set
+    /** `present_wrap*N` em ordem numérica (stuffTypes: os papéis de embrulho pagos). */
     @Volatile
-    var newGiftWrapper: List<Furnishing> = emptyList()
+    var giftWrapWrapper: List<Furnishing> = emptyList()
         private set
     val teleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
     val roomTeleportLinks: ConcurrentHashMap<Int, Int> = ConcurrentHashMap()
@@ -158,8 +161,8 @@ class ItemManager {
         teleportLinks.keys.retainAll(newTeleportLinks.keys)
         roomTeleportLinks.putAll(newRoomTeleportLinks)
         roomTeleportLinks.keys.retainAll(newRoomTeleportLinks.keys)
-        oldGiftWrapper = newFurnishings.filterKeys { it.startsWith("present_gen") }.values.toList()
-        newGiftWrapper = newFurnishings.filterKeys { it.startsWith("present_wrap*") }.values.toList()
+        giftDefaultWrapper = GiftWrapping.sortedDefaultItems(newFurnishings.values) { it.itemName }
+        giftWrapWrapper = GiftWrapping.sortedWrapItems(newFurnishings.values) { it.itemName }
 
         log.info("Loaded {} furnishings from XML!", furniXMLInfos.size)
         log.info("Loaded {} furnishings!", furnishings.size)

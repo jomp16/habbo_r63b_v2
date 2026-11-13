@@ -76,15 +76,6 @@ object ChestNotifier {
         )
     }
 
-    fun sendCurrencyBalances(habboSession: HabboSession) {
-        habboSession.sendResponse(Outgoing.CREDITS_BALANCE, OutgoingR63A.CREDITS_BALANCE, habboSession.userInformation.credits)
-        habboSession.sendResponse(
-            Outgoing.ACTIVITY_POINTS_BALANCE,
-            OutgoingR63A.ACTIVITY_POINTS_BALANCE,
-            habboSession.userInformation.activityPointsCurrencies
-        )
-    }
-
     fun progressFurniOrganizer(room: Room, chest: ChestData, chests: Map<Int, ChestData>) {
         if (chest.type != ChestType.FURNI) return
 

@@ -27,7 +27,7 @@ import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemCategory
 import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.pet.PetDao
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.CurrencyService
 
 class CatalogPetService {
 
@@ -48,46 +48,24 @@ class CatalogPetService {
         // Extract pet type from item name: "a0 pet0" → 0
         val petType = HabboServer.habboGame.petManager.extractPetType(catalogItem.catalogName) ?: return
 
-        val currentPixels =
-            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
-        val currentVip =
-            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
-
-        // Check balances
-        if (catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
-            return
-        }
-        if (catalogItem.costPixels > 0 && currentPixels < catalogItem.costPixels) {
-            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
-            return
-        }
-        if (catalogItem.costVip > 0 && currentVip < catalogItem.costVip) {
+        // Moeda precisa existir para o client e ter saldo; cobra de forma atômica (o saldo é reenviado pelo CurrencyService)
+        val price = catalogItem.price
+        if (!CurrencyService.isSupported(habboSession, price) || !CurrencyService.tryCharge(habboSession, price).ok) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
             return
         }
 
-        // Deduct currencies
-        if (catalogItem.costCredits > 0) {
-            habboSession.userInformation.credits -= catalogItem.costCredits
+        // Falhou depois da cobrança: devolve o valor
+        val petId = try {
+            PetDao.insertPet(habboSession.userInformation.id, petName, petType, petRace, petColor)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
         }
-        if (catalogItem.costPixels > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.PIXELS,
-                -catalogItem.costPixels,
-                Int::plus
-            )
+        val petData = PetDao.getPetById(petId) ?: run {
+            CurrencyService.refund(habboSession, price)
+            return
         }
-        if (catalogItem.costVip > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.DIAMONDS,
-                -catalogItem.costVip,
-                Int::plus
-            )
-        }
-
-        val petId = PetDao.insertPet(habboSession.userInformation.id, petName, petType, petRace, petColor)
-        val petData = PetDao.getPetById(petId) ?: return
 
         habboSession.habboInventory.addPet(petData, openInventory = true)
 
@@ -104,7 +82,5 @@ class CatalogPetService {
             OutgoingR63A.CATALOG_PURCHASE_OK,
             CatalogPurchaseOkData(catalogItem, emptyList())
         )
-
-        habboSession.updateAllCurrencies()
     }
 }

@@ -22,7 +22,8 @@ package ovh.rwx.habbo.game.catalog
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.user.subscription.ClubType
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 
 class CatalogClubService(private val catalogManager: CatalogManager) {
 
@@ -34,18 +35,15 @@ class CatalogClubService(private val catalogManager: CatalogManager) {
             return
         }
 
-        val pointType = if (clubOffer.pointsType == 0) ActivityPointType.PIXELS else ActivityPointType.DIAMONDS
-        val currentPoints = habboSession.userInformation.activityPointsCurrencies.getOrDefault(pointType, 0)
+        val price = Price(clubOffer.credits, clubOffer.pointsType, clubOffer.points)
+        if (!CurrencyService.isSupported(habboSession, price) || !CurrencyService.tryCharge(habboSession, price).ok) return
 
-        if (habboSession.userInformation.credits < clubOffer.credits || currentPoints < clubOffer.points) return
-
-        habboSession.userInformation.credits -= clubOffer.credits
-        if (clubOffer.points > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(pointType, -clubOffer.points, Int::plus)
+        try {
+            habboSession.habboSubscription.addOrExtendHabboClub(clubOffer.months)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
         }
-
-        habboSession.habboSubscription.addOrExtendHabboClub(clubOffer.months)
-        habboSession.updateAllCurrencies()
     }
 
     fun purchaseBuildersClub(habboSession: HabboSession, itemId: Int) {
@@ -62,22 +60,19 @@ class CatalogClubService(private val catalogManager: CatalogManager) {
             return
         }
 
-        val pointType = if (clubOffer.pointsType == 0) ActivityPointType.PIXELS else ActivityPointType.DIAMONDS
-        val currentPoints = habboSession.userInformation.activityPointsCurrencies.getOrDefault(pointType, 0)
+        val price = Price(clubOffer.credits, clubOffer.pointsType, clubOffer.points)
+        if (!CurrencyService.isSupported(habboSession, price) || !CurrencyService.tryCharge(habboSession, price).ok) return
 
-        if (habboSession.userInformation.credits < clubOffer.credits || currentPoints < clubOffer.points) return
-
-        habboSession.userInformation.credits -= clubOffer.credits
-        if (clubOffer.points > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(pointType, -clubOffer.points, Int::plus)
+        try {
+            // Ao extender, usar o maior itemsLimit entre atual e novo
+            val newItemsLimit = maxOf(
+                habboSession.habboSubscription.buildersClubSubscription.itemsLimit,
+                clubOffer.itemsLimit
+            )
+            habboSession.habboSubscription.addOrExtendBuildersClub(clubOffer.months, newItemsLimit)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
         }
-
-        // Ao extender, usar o maior itemsLimit entre atual e novo
-        val newItemsLimit = maxOf(
-            habboSession.habboSubscription.buildersClubSubscription.itemsLimit,
-            clubOffer.itemsLimit
-        )
-        habboSession.habboSubscription.addOrExtendBuildersClub(clubOffer.months, newItemsLimit)
-        habboSession.updateAllCurrencies()
     }
 }

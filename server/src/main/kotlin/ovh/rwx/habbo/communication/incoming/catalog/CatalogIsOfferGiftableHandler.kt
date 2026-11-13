@@ -32,8 +32,7 @@ class CatalogIsOfferGiftableHandler {
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val offerId = habboRequest.readInt()
 
-        val item = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == offerId }
-        val giftable = item != null && (item.dealId > 0 || item.furnishing.canGift)
+        val giftable = HabboServer.habboGame.catalogManager.getItem(offerId)?.isGiftable == true
 
         habboSession.sendHabboResponse(OutgoingR63A.CATALOG_IS_OFFER_GIFTABLE, offerId, giftable)
     }

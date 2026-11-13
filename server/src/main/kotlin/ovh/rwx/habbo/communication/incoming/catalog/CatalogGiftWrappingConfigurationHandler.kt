@@ -28,9 +28,10 @@ import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.CatalogGiftWrappingConfigurationData
+import ovh.rwx.habbo.game.catalog.gift.GiftWrappingService
 import ovh.rwx.habbo.game.user.HabboSession
 
-@Suppress("unused")
+@Suppress("unused", "UNUSED_PARAMETER")
 class CatalogGiftWrappingConfigurationHandler {
     @Handler(Incoming.CATALOG_GIFT_WRAPPING)
     @HandlerR63A(IncomingR63A.CATALOG_GIFT_WRAPPING)
@@ -38,15 +39,7 @@ class CatalogGiftWrappingConfigurationHandler {
         habboSession.sendResponse(
             Outgoing.CATALOG_GIFT_WRAPPING,
             OutgoingR63A.CATALOG_GIFT_WRAPPING,
-            CatalogGiftWrappingConfigurationData(
-                enabled = true,
-                cost = 1,
-                newWrapperCount = HabboServer.habboGame.itemManager.newGiftWrapper.size,
-                newWrapper = HabboServer.habboGame.itemManager.newGiftWrapper.map { it.spriteId },
-                ribbons = listOf(8, 11),
-                oldWrapperCount = HabboServer.habboGame.itemManager.oldGiftWrapper.size,
-                oldWrapper = HabboServer.habboGame.itemManager.oldGiftWrapper.map { it.spriteId }
-            )
+            GiftWrappingService.configuration(habboSession.habboVersion.buildDate)
         )
     }
 }

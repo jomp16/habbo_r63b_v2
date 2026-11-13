@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2021 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,15 +19,10 @@
 
 package ovh.rwx.habbo.communication.incoming.messenger
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
-import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.game.user.messenger.MessengerFriend
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerRemoveFriendHandler {
@@ -38,35 +33,8 @@ class MessengerRemoveFriendHandler {
 
         if (amount < 0) return
         if (amount > 100) amount = 100
-        val messengerFriends: MutableList<MessengerFriend> = mutableListOf()
+        val userIds = List(amount) { habboRequest.readInt() }
 
-        repeat(amount) {
-            val userId = habboRequest.readInt()
-            val messengerFriend = habboSession.habboMessenger.friends.remove(userId) ?: return@repeat
-
-            messengerFriends += messengerFriend
-        }
-
-        habboSession.sendHabboResponse(
-            Outgoing.MESSENGER_FRIENDS_UPDATE,
-            messengerFriends,
-            MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
-        )
-
-        messengerFriends.forEach {
-            val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
-
-            if (!friendHabboSession.habboMessenger.initialized) return@forEach
-            val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id)
-                    ?: return@forEach
-
-            friendHabboSession.sendHabboResponse(
-                Outgoing.MESSENGER_FRIENDS_UPDATE,
-                listOf(messengerFriend),
-                MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
-            )
-        }
-
-        MessengerDao.removeFriendships(habboSession.userInformation.id, messengerFriends.map { it.userId })
+        habboSession.habboMessenger.removeFriends(userIds)
     }
 }

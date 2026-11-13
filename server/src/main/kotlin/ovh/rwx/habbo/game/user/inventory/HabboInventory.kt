@@ -76,19 +76,63 @@ class HabboInventory(private val habboSession: HabboSession) {
         )
     }
 
-    fun removeItems(itemIds: List<Int>, delete: Boolean = false) {
-        if (!items.keys.any { itemId -> itemIds.any { it == itemId } }) return
+    /**
+     * Remove do inventário SÓ o que a sessão possui (ids repetidos/alheios/inexistentes são ignorados: `remove` atômico
+     * do [ConcurrentHashMap]). O DELETE no banco e o INVENTORY_REMOVE_OBJECT valem apenas para os itens de fato
+     * removidos, nunca para ids soltos do cliente. Devolve os itens removidos.
+     */
+    fun removeItems(itemIds: List<Int>, delete: Boolean = false): List<UserItem> {
+        val removed = itemIds.distinct().mapNotNull { items.remove(it) }
 
-        itemIds.forEach {
-            items.remove(it)
+        sendRemoved(removed)
 
+        if (delete && removed.isNotEmpty()) ItemDao.deleteItems(removed.map { it.id })
+
+        return removed
+    }
+
+    /**
+     * Retira da memória, "tudo ou nada", os itens pedidos: devolve-os (na ordem do pedido) ou null SEM remover nada se
+     * algum id se repete, não pertence ao inventário ou reprova no [predicate]. NÃO apaga no banco nem avisa o cliente:
+     * o chamador decide depois ([confirmTaken] ou [restoreTaken]). Atômico contra outras remoções (trade, colocar no
+     * quarto) pelo `remove` do [ConcurrentHashMap], com reinserção se alguém levou um item no meio.
+     */
+    fun takeItemsExactly(itemIds: Collection<Int>, predicate: (UserItem) -> Boolean = { true }): List<UserItem>? {
+        val ids = itemIds.toList()
+        InventorySelection.select(items, ids, predicate) ?: return null
+
+        val taken = ArrayList<UserItem>(ids.size)
+        for (id in ids) {
+            val item = items.remove(id)
+            if (item == null) {
+                taken.forEach { items.putIfAbsent(it.id, it) }
+                return null
+            }
+            taken += item
+        }
+
+        return taken
+    }
+
+    /** Conclui uma retirada de [takeItemsExactly]: avisa o cliente e (se [delete]) enfileira o DELETE dos itens. */
+    fun confirmTaken(taken: List<UserItem>, delete: Boolean) {
+        sendRemoved(taken)
+
+        if (delete && taken.isNotEmpty()) ItemDao.deleteItems(taken.map { it.id })
+    }
+
+    /** Desfaz uma retirada de [takeItemsExactly] (nada foi enviado ao cliente nem ao banco). */
+    fun restoreTaken(taken: List<UserItem>) {
+        taken.forEach { items.putIfAbsent(it.id, it) }
+    }
+
+    private fun sendRemoved(removed: List<UserItem>) {
+        removed.forEach {
             // O stripId trafega NEGATIVO em ambas as eras (convenção oficial desde R62/2010-11):
             // as listas de inventário mandam -id (UserItem), o cliente indexa por essa chave e
             // faz abs/Math.abs ao colocar no quarto — o remove manda o mesmo -id da lista.
-            habboSession.sendResponse(Outgoing.INVENTORY_REMOVE_OBJECT, OutgoingR63A.INVENTORY_REMOVE_OBJECT, -it)
+            habboSession.sendResponse(Outgoing.INVENTORY_REMOVE_OBJECT, OutgoingR63A.INVENTORY_REMOVE_OBJECT, -it.id)
         }
-
-        if (delete) ItemDao.deleteItems(itemIds)
     }
 
     fun removePet(petId: Int): PetData? {

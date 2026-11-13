@@ -24,7 +24,6 @@ import org.bouncycastle.crypto.generators.OpenBSDBCrypt
 import ovh.rwx.habbo.BuildConfig
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.user.information.UserInformation
-import ovh.rwx.habbo.util.ActivityPointType
 import java.time.LocalDateTime
 import ovh.rwx.habbo.database.db
 
@@ -151,6 +150,23 @@ object UserInformationDao {
     }
 
     fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
+        // só as moedas alteradas desde a última gravação; se a escrita falhar elas voltam para a lista de sujas
+        val changedCurrencies = userInformation.activityPointsCurrencies.drainDirty()
+
+        try {
+            writeInformation(userInformation, online, ip, changedCurrencies)
+        } catch (e: Throwable) {
+            userInformation.activityPointsCurrencies.restoreDirty(changedCurrencies.keys)
+            throw e
+        }
+    }
+
+    private fun writeInformation(
+        userInformation: UserInformation,
+        online: Boolean,
+        ip: String,
+        changedCurrencies: Map<Int, Int>
+    ) {
         db {
             update(
                 javaClass.classLoader.getResource("sql/users/information/update_user_information.sql")!!.readText(),
@@ -166,16 +182,18 @@ object UserInformationDao {
                 )
             )
 
-            batchUpdate(
-                javaClass.classLoader.getResource("sql/users/information/update_user_currencies.sql")!!.readText(),
-                userInformation.activityPointsCurrencies.map {
-                    mapOf(
-                        "user_id" to userInformation.id,
-                        "type" to it.key.code,
-                        "points" to it.value
-                    )
-                }
-            )
+            if (changedCurrencies.isNotEmpty()) {
+                batchUpdate(
+                    javaClass.classLoader.getResource("sql/users/information/update_user_currencies.sql")!!.readText(),
+                    changedCurrencies.map {
+                        mapOf(
+                            "user_id" to userInformation.id,
+                            "type" to it.key,
+                            "points" to it.value
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -213,17 +231,14 @@ data class UserInformationDto(
     val currenciesStr: String = ""
 ) {
     fun toDomain(): UserInformation {
-        val currenciesMap = mutableMapOf<ActivityPointType, Int>()
+        // formato "tipo:pontos;tipo:pontos" (GROUP_CONCAT); tipos desconhecidos do enum são mantidos como estão
+        val currenciesMap = mutableMapOf<Int, Int>()
         if (currenciesStr.isNotEmpty()) {
             currenciesStr.split(";").forEach { pair ->
                 val parts = pair.split(":")
                 if (parts.size == 2) {
                     val typeInt = parts[0].toIntOrNull() ?: return@forEach
-                    val points = parts[1].toIntOrNull() ?: 0
-                    val typeEnum = ActivityPointType.fromType(typeInt)
-                    if (typeEnum != null) {
-                        currenciesMap[typeEnum] = points
-                    }
+                    currenciesMap[typeInt] = parts[1].toIntOrNull() ?: 0
                 }
             }
         }

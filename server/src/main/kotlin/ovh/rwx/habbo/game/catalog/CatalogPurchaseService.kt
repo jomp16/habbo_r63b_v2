@@ -28,64 +28,121 @@ import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseOkData
 import ovh.rwx.habbo.database.catalog.CatalogDao
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
+import ovh.rwx.habbo.game.currency.BalanceCheck
+import ovh.rwx.habbo.game.currency.Price
 import ovh.rwx.habbo.game.item.Furnishing
+import ovh.rwx.habbo.game.item.user.CreatedItems
+import ovh.rwx.habbo.game.item.user.UserItem
+import ovh.rwx.habbo.game.item.user.isLimitedEarlyBird
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.CurrencyService
+
+/** Resultado de uma compra criada: o que [CatalogPurchaseService.chargeAndCreate] devolveu + os números LTD DESTA compra. */
+internal data class ChargedCreation<T>(val result: T, val limitedNumbers: List<Int>)
 
 class CatalogPurchaseService {
 
     fun purchase(habboSession: HabboSession, catalogItem: CatalogItem, extraData: String, amount: Int) {
-        // 1. Checagem de disponibilidade e assinatura HC
+        // 2. Cálculo do total com desconto em lote (bulk discount)
+        val totalAmountToPurchase = CatalogDiscount.calculateTotalToPay(amount)
+
+        // 1, 3 e 4. Disponibilidade/HC, saldo e estoque LTD (responde o erro ao client quando recusa)
+        if (!ensurePurchasable(habboSession, catalogItem, catalogItem.price, totalAmountToPurchase)) return
+
+        // 5. Construção (pura) das instâncias de mobílias a comprar; pedido inválido não cobra nem reserva nada
+        val requested = buildPurchaseDataList(habboSession, catalogItem, extraData, amount)
+        if (requested.isEmpty()) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+            return
+        }
+
+        // 5b, 6. Estoque LTD + cobrança atômica + persistência dos itens (estorna se criar falhar); se algo recusa,
+        // a resposta de erro já foi enviada
+        val charged = chargeAndCreate(
+            habboSession, catalogItem, catalogItem.price, totalAmountToPurchase, requested
+        ) { numbered, created -> createItems(habboSession.userInformation.id, catalogItem, numbered, created) } ?: return
+        val userItems = charged.result
+
+        // 7. Inventário e resposta
+        habboSession.habboInventory.addItems(userItems)
+        // Teleportes: o parceiro do par nasce em ItemDao.addItems e entra no inventário,
+        // mas na confirmação de compra (CATALOG_PURCHASE_OK) só enviamos os itens pedidos
+        // (requested.size) para evitar notificações duplicadas de "item comprado".
+        val purchaseOkItems = userItems.take(requested.size)
+        habboSession.sendResponse(
+            Outgoing.CATALOG_PURCHASE_OK,
+            OutgoingR63A.CATALOG_PURCHASE_OK,
+            CatalogPurchaseOkData(catalogItem, purchaseOkItems)
+        )
+
+        // 8. (a cobrança já foi feita em 5b)
+
+        // 9. Efeitos colaterais (LTD, emblemas, conquistas)
+        processPurchaseSideEffects(habboSession, catalogItem, charged.limitedNumbers)
+
+        HabboServer.pluginManager.executeEventAsync(
+            CatalogPurchaseEvent(habboSession, catalogItem, extraData, amount, userItems)
+        )
+    }
+
+    /**
+     * Checagens comuns de compra e presente (a ordem importa: as respostas de erro são as do client):
+     * oferta ativa e HC, moeda suportada, saldo para [price] × [times] e estoque LTD. Responde o erro e devolve false.
+     */
+    internal fun ensurePurchasable(
+        habboSession: HabboSession,
+        catalogItem: CatalogItem,
+        price: Price,
+        times: Int
+    ): Boolean {
         if (!catalogItem.offerActive || (catalogItem.clubOnly && !habboSession.habboSubscription.validUserSubscription)) {
             habboSession.sendResponse(
                 Outgoing.CATALOG_PURCHASE_NOT_ALLOWED_ERROR,
                 OutgoingR63A.CATALOG_PURCHASE_NOT_ALLOWED_ERROR,
                 CatalogPurchaseNotAllowedErrorResponse.CatalogPurchaseNotAllowedError.NOT_HC
             )
-            return
+            return false
         }
 
-        // 2. Cálculo do total com desconto em lote (bulk discount)
-        val totalAmountToPurchase = CatalogDiscount.calculateTotalToPay(amount)
+        // A moeda precisa existir para o client dessa sessão e um pacote precisa ter mobi válido (a oferta nem aparece
+        // no catálogo quando não)
+        if (!catalogItem.isAvailableFor(habboSession.habboVersion)) {
+            habboSession.sendHabboResponse(Outgoing.CATALOG_PURCHASE_ERROR, 0)
+            return false
+        }
 
-        // 3. Verificação de saldos
-        val currentPixels =
-            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.PIXELS, 0)
-        val currentVipPoints =
-            habboSession.userInformation.activityPointsCurrencies.getOrDefault(ActivityPointType.DIAMONDS, 0)
-
-        val notEnoughCredits =
-            catalogItem.costCredits > 0 && habboSession.userInformation.credits < catalogItem.costCredits * totalAmountToPurchase
-        val notEnoughPixels =
-            catalogItem.costPixels > 0 && currentPixels < catalogItem.costPixels * totalAmountToPurchase
-        val notEnoughVipPoints =
-            catalogItem.costVip > 0 && currentVipPoints < catalogItem.costVip * totalAmountToPurchase
-
-        if (notEnoughCredits || notEnoughPixels || notEnoughVipPoints) {
-            val missingPointType = if (notEnoughVipPoints) ActivityPointType.DIAMONDS else ActivityPointType.PIXELS
-
+        val balance = CurrencyService.check(habboSession, price, times)
+        if (!balance.ok) {
             habboSession.sendResponse(
                 Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
                 OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
-                notEnoughCredits,
-                notEnoughPixels || notEnoughVipPoints,
-                missingPointType
+                balance.notEnoughCredits,
+                balance.notEnoughPoints,
+                balance.pointType
             )
-            return
+            return false
         }
 
-        // 4. Checagem de estoque LTD
         if (catalogItem.limited && catalogItem.limitedSells.get() >= catalogItem.limitedTotal) {
             habboSession.sendHabboResponse(Outgoing.CATALOG_LIMITED_SOLD_OUT)
-            return
+            return false
         }
 
-        // 5. Construção das instâncias de mobílias a comprar
-        val furnishingsToPurchase = buildPurchaseDataList(habboSession, catalogItem, extraData, amount)
+        return true
+    }
 
-        // 6. Persistência no banco de dados
+    /**
+     * Cria os itens da compra para [ownerId] (sem sala) e a numeração LTD; NÃO mexe em inventário nem em resposta.
+     * Tudo que for criado é registrado em [created] para o chamador desfazer se a tentativa falhar adiante.
+     */
+    internal fun createItems(
+        ownerId: Int,
+        catalogItem: CatalogItem,
+        furnishingsToPurchase: List<CatalogPurchaseData>,
+        created: CreatedItems,
+    ): List<UserItem> {
         val userItems = ItemDao.addItems(
-            habboSession.userInformation.id,
+            ownerId,
             furnishingsToPurchase.map {
                 ItemPurchaseData(
                     it.furnishing,
@@ -95,6 +152,7 @@ class CatalogPurchaseService {
                 )
             },
         )
+        created.record(userItems)
 
         furnishingsToPurchase.forEachIndexed { index, purchaseData ->
             if (purchaseData.limitedNumber > 0) {
@@ -106,30 +164,10 @@ class CatalogPurchaseService {
             }
         }
 
-        // 7. Atualização do inventário e resposta ao cliente
-        habboSession.habboInventory.addItems(userItems)
-        // Teleportes: o parceiro do par nasce em ItemDao.addItems e entra no inventário,
-        // mas na confirmação de compra (CATALOG_PURCHASE_OK) só enviamos os itens pedidos
-        // (furnishingsToPurchase.size) para evitar notificações duplicadas de "item comprado".
-        val purchaseOkItems = userItems.take(furnishingsToPurchase.size)
-        habboSession.sendResponse(
-            Outgoing.CATALOG_PURCHASE_OK,
-            OutgoingR63A.CATALOG_PURCHASE_OK,
-            CatalogPurchaseOkData(catalogItem, purchaseOkItems)
-        )
-
-        // 8. Dedução de saldos
-        deductCurrencies(habboSession, catalogItem, totalAmountToPurchase)
-
-        // 9. Efeitos colaterais (LTD, emblemas, conquistas)
-        processPurchaseSideEffects(habboSession, catalogItem)
-
-        HabboServer.pluginManager.executeEventAsync(
-            CatalogPurchaseEvent(habboSession, catalogItem, extraData, amount, userItems)
-        )
+        return userItems
     }
 
-    private fun buildPurchaseDataList(
+    internal fun buildPurchaseDataList(
         habboSession: HabboSession,
         catalogItem: CatalogItem,
         extraData: String,
@@ -144,6 +182,7 @@ class CatalogPurchaseService {
     /**
      * Uma entrada por UNIDADE comprada. Não duplica teletransportes: o parceiro do par é criado por
      * `ItemDao.addItems` (ver `planNewItems`); duplicar aqui entregaria 4 itens por unidade.
+     * Função pura: `limitedNumber` sai 0 (a numeração LTD é atribuída por [chargeAndCreate]); lista vazia = recusar.
      *
      * @param correctExtraData extra data corrigido para o mobi, ou null se o pedido é inválido.
      */
@@ -154,16 +193,18 @@ class CatalogPurchaseService {
     ): List<CatalogPurchaseData> {
         val result = mutableListOf<CatalogPurchaseData>()
 
-        val deal = catalogItem.deal
-        if (catalogItem.dealId > 0 && deal != null) {
-            deal.furnishings.forEachIndexed { i, furnishing ->
-                val correctedExtraData = correctExtraData(furnishing) ?: return@forEachIndexed
-                val count = deal.amounts[i]
+        val dealProducts = catalogItem.dealProducts
+        if (dealProducts != null) {
+            // Pacote: cada produto na ordem dele, `quantidade do produto × quantidade comprada` (a cobrança já é por
+            // `amount`, com o desconto em lote; entregar 1 pacote só seria cobrar por N)
+            // null = pedido inválido (as lógicas só devolvem null para cancelar a compra): um produto inválido
+            // invalida o pacote inteiro, nunca se entrega pacote parcial cobrando o preço cheio
+            dealProducts.forEach { (furnishing, productAmount) ->
+                val correctedExtraData = correctExtraData(furnishing) ?: return emptyList()
 
-                repeat(count) {
-                    val limitedNumber = if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
+                repeat(productAmount * amount) {
                     // teleporte: o parceiro do par é criado (e devolvido) por ItemDao.addItems
-                    result += CatalogPurchaseData(furnishing, correctedExtraData, limitedNumber)
+                    result += CatalogPurchaseData(furnishing, correctedExtraData, 0)
                 }
             }
         } else {
@@ -171,43 +212,111 @@ class CatalogPurchaseService {
             val totalCount = catalogItem.amount * amount
 
             repeat(totalCount) {
-                val limitedNumber = if (catalogItem.limited) catalogItem.limitedSells.incrementAndGet() else 0
                 // teleporte: o parceiro do par é criado (e devolvido) por ItemDao.addItems
-                result += CatalogPurchaseData(catalogItem.furnishing, correctedExtraData, limitedNumber)
+                result += CatalogPurchaseData(catalogItem.furnishing, correctedExtraData, 0)
             }
         }
 
         return result
     }
 
-    private fun deductCurrencies(
+    /**
+     * Cobra ([CurrencyService.tryCharge]) e cria ([create], recebe as unidades já numeradas) como uma unidade só: se
+     * criar lançar, estorna e relança. Em oferta LTD tudo roda dentro de [CatalogItem.withLimitedReservation] (lock por
+     * oferta, preso durante o insert síncrono em `ItemDao.addItems`): o contador só avança depois do sucesso, então não
+     * há número perdido nem repetido; o novo total é gravado logo em seguida. Ofertas comuns não pegam lock.
+     * Se [create] lançar, tudo que registrou no [CreatedItems] é removido pela fila de escrita (sem linha órfã), a
+     * cobrança é estornada e a exceção é relançada.
+     * Devolve o resultado de [create] com os números LTD atribuídos a ESTA compra, ou null depois de responder o erro
+     * (esgotado / saldo) sem escrever nem cobrar.
+     */
+    internal fun <T : Any> chargeAndCreate(
         habboSession: HabboSession,
         catalogItem: CatalogItem,
-        totalAmountToPurchase: Int
-    ) {
-        if (catalogItem.costCredits > 0) {
-            habboSession.userInformation.credits -= catalogItem.costCredits * totalAmountToPurchase
-        }
-        if (catalogItem.costPixels > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.PIXELS,
-                -(catalogItem.costPixels * totalAmountToPurchase),
-                Int::plus
-            )
-        }
-        if (catalogItem.costVip > 0) {
-            habboSession.userInformation.activityPointsCurrencies.merge(
-                ActivityPointType.DIAMONDS,
-                -(catalogItem.costVip * totalAmountToPurchase),
-                Int::plus
-            )
+        price: Price,
+        times: Int,
+        units: List<CatalogPurchaseData>,
+        create: (List<CatalogPurchaseData>, CreatedItems) -> T,
+    ): ChargedCreation<T>? {
+        var created: ChargedCreation<T>? = null
+        var balance: BalanceCheck? = null
+
+        fun attempt(numbered: List<CatalogPurchaseData>): Boolean {
+            val check = CurrencyService.tryCharge(habboSession, price, times)
+            if (!check.ok) {
+                balance = check
+                return false
+            }
+            val scope = CreatedItems()
+            try {
+                created = ChargedCreation(create(numbered, scope), numbered.map { it.limitedNumber }.filter { it > 0 })
+            } catch (e: Exception) {
+                scope.rollback()
+                CurrencyService.refund(habboSession, price, times)
+                throw e
+            }
+            return true
         }
 
-        habboSession.updateAllCurrencies()
+        if (catalogItem.limited) {
+            val outcome = catalogItem.withLimitedReservation(units.size) { range ->
+                attempt(units.mapIndexed { i, u -> u.copy(limitedNumber = range.first + i) })
+            }
+            when (outcome) {
+                LimitedOutcome.SOLD_OUT -> {
+                    habboSession.sendHabboResponse(Outgoing.CATALOG_LIMITED_SOLD_OUT)
+                    return null
+                }
+                // monotônico: a fila lê o valor atual do contador na execução
+                LimitedOutcome.COMMITTED -> CatalogDao.updateLimitedSells(catalogItem)
+                LimitedOutcome.DECLINED -> Unit
+            }
+        } else {
+            attempt(units)
+        }
+
+        balance?.let { check ->
+            habboSession.sendResponse(
+                Outgoing.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
+                OutgoingR63A.CATALOG_PURCHASE_ERROR_NOT_ENOUGH_BALANCE,
+                check.notEnoughCredits,
+                check.notEnoughPoints,
+                check.pointType
+            )
+            return null
+        }
+        return created
     }
 
-    private fun processPurchaseSideEffects(habboSession: HabboSession, catalogItem: CatalogItem) {
+    /** [limitedNumbers]: os números LTD atribuídos a esta compra (de [ChargedCreation]); vazio para oferta comum. */
+    internal fun processPurchaseSideEffects(
+        habboSession: HabboSession,
+        catalogItem: CatalogItem,
+        limitedNumbers: List<Int>,
+    ) {
         // Achievements de LTD
+        if (catalogItem.limited) {
+            progressLimitedAchievements(habboSession, catalogItem, limitedNumbers)
+        }
+
+        if (catalogItem.badge.isNotEmpty()) {
+            habboSession.habboBadge.addBadge(catalogItem.badge)
+        }
+
+        processLimitedSales(catalogItem)
+    }
+
+    /** Contagem de vendas LTD: avisa os clients conectados (o total já foi gravado na reserva; o comprador de presente também passa aqui). */
+    internal fun processLimitedSales(catalogItem: CatalogItem) {
+        if (catalogItem.limited) {
+            // Notifica todos os usuários autenticados conectados
+            HabboServer.habboSessionManager.habboSessions.values
+                .filter { it.authenticated && !it.isPreShuffle }
+                .forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
+        }
+    }
+
+    private fun progressLimitedAchievements(habboSession: HabboSession, catalogItem: CatalogItem, limitedNumbers: List<Int>) {
         if (catalogItem.limited) {
             HabboServer.habboGame.achievementManager.progress(
                 habboSession,
@@ -216,8 +325,8 @@ class CatalogPurchaseService {
                 accumulate = true
             )
 
-            val earlyBirdThreshold = (catalogItem.limitedTotal * 0.1).toInt()
-            if (catalogItem.limitedSells.get() <= earlyBirdThreshold) {
+            // pelo número que ESTE comprador recebeu na reserva, nunca pelo contador vivo (outro comprador já pode ter avançado)
+            if (isLimitedEarlyBird(limitedNumbers, catalogItem.limitedTotal)) {
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
                     "ACH_LTDEarlyBird",
@@ -225,19 +334,6 @@ class CatalogPurchaseService {
                     accumulate = true
                 )
             }
-        }
-
-        if (catalogItem.badge.isNotEmpty()) {
-            habboSession.habboBadge.addBadge(catalogItem.badge)
-        }
-
-        if (catalogItem.limited) {
-            // Notifica todos os usuários autenticados conectados
-            HabboServer.habboSessionManager.habboSessions.values
-                .filter { it.authenticated && !it.isPreShuffle }
-                .forEach { it.sendHabboResponse(Outgoing.CATALOG_OFFER, catalogItem) }
-
-            CatalogDao.updateLimitedSells(catalogItem)
         }
     }
 }

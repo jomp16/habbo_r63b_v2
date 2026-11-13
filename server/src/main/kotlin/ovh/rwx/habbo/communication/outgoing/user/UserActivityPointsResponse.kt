@@ -24,18 +24,22 @@ import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.ActivityPointTypes
+import ovh.rwx.habbo.game.user.information.UserCurrencies
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserActivityPointsResponse {
     @Response(Outgoing.ACTIVITY_POINTS_BALANCE)
     @ResponseR63A(OutgoingR63A.ACTIVITY_POINTS_BALANCE)
-    fun response(habboResponse: HabboResponse, currencies: Map<ActivityPointType, Int>) {
-        habboResponse.apply {
-            writeInt(currencies.size)
+    fun response(habboResponse: HabboResponse, currencies: UserCurrencies) {
+        // Só os tipos que o client dessa release conhece: um tipo desconhecido pode quebrar a UI dele (ver ActivityPointTypes)
+        val supported = ActivityPointTypes.supportedBalances(habboResponse.habboVersion, currencies.snapshot())
 
-            currencies.forEach { (type, amount) ->
-                writeInt(type.code)
+        habboResponse.apply {
+            writeInt(supported.size)
+
+            supported.forEach { (type, amount) ->
+                writeInt(type)
                 writeInt(amount)
             }
         }

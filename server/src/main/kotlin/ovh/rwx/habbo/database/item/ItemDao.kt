@@ -24,6 +24,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.database.writebehind.WriteKey
+import ovh.rwx.habbo.game.catalog.gift.GiftContentsStore
 import ovh.rwx.habbo.game.item.*
 import ovh.rwx.habbo.game.item.room.RoomItem
 import ovh.rwx.habbo.game.item.user.NewItemSpec
@@ -338,27 +339,54 @@ object ItemDao {
             batchInsertItems(userItems)
         }
 
-        if (plan.teleportLinks.isNotEmpty()) {
-            // o par de teleportes referencia os DOIS itens novos
-            WriteBehindManager.queue(plan.teleportLinks.flatMap { listOf(WriteKey.item(it.first), WriteKey.item(it.second)) }) {
-                insertTeleportLinks(plan.teleportLinks)
+        try {
+            if (plan.teleportLinks.isNotEmpty()) {
+                // o par de teleportes referencia os DOIS itens novos
+                WriteBehindManager.queue(plan.teleportLinks.flatMap { listOf(WriteKey.item(it.first), WriteKey.item(it.second)) }) {
+                    insertTeleportLinks(plan.teleportLinks)
+                }
+                plan.teleportLinks.forEach { (one, two) ->
+                    itemManager.teleportLinks[one] = two
+                    itemManager.roomTeleportLinks[one] = 0
+                    itemManager.teleportLinks[two] = one
+                    itemManager.roomTeleportLinks[two] = 0
+                }
             }
-            plan.teleportLinks.forEach { (one, two) ->
-                itemManager.teleportLinks[one] = two
-                itemManager.roomTeleportLinks[one] = 0
-                itemManager.teleportLinks[two] = one
-                itemManager.roomTeleportLinks[two] = 0
-            }
-        }
 
-        if (!ignoreSpecialHandling) {
-            // teletransportes já foram tratados acima (par); o resto tem dado especial (wired, dimmer, presente...)
-            plan.requested.forEach { userItem ->
-                if (userItem.furnishing.interactionType != InteractionType.TELEPORT) addSpecialItemData(userItem)
+            if (!ignoreSpecialHandling) {
+                // teletransportes já foram tratados acima (par); o resto tem dado especial (wired, dimmer, presente...)
+                plan.requested.forEach { userItem ->
+                    if (userItem.furnishing.interactionType != InteractionType.TELEPORT) addSpecialItemData(userItem)
+                }
             }
+        } catch (e: Exception) {
+            // os ids nunca chegam ao chamador: ninguém mais consegue desfazer, então remove tudo que já entrou na fila
+            rollbackCreated(userItems.map { it.id })
+            throw e
         }
 
         return userItems
+    }
+
+    /**
+     * Desfaz uma criação: tira da memória (vínculos de teleporte, conteúdo de caixa pendente) e enfileira a remoção das
+     * linhas de `items` com as MESMAS `WriteKey.item(id)` dos inserts (e dos filhos), então o delete roda depois de
+     * cada insert enfileirado para o mesmo item. Os filhos (`items_limited`, `items_gift_contents`, `items_teleport`,
+     * `items_wired`, `items_dimmer`) saem por `ON DELETE CASCADE`. Os ids vêm da sequência em memória e nunca se
+     * repetem, e `items_limited` só tem UNIQUE em `item_id` (não em `limited_num`): reaproveitar o número LTD de uma
+     * tentativa falha por outro comprador não colide, mesmo que o delete ainda esteja na fila.
+     */
+    fun rollbackCreated(itemIds: Collection<Int>) {
+        if (itemIds.isEmpty()) return
+
+        val itemManager = HabboServer.habboGame.itemManager
+        itemIds.forEach { id ->
+            GiftContentsStore.remove(id)
+            itemManager.teleportLinks.remove(id)
+            itemManager.roomTeleportLinks.remove(id)
+        }
+
+        deleteItems(itemIds.toList())
     }
 
     /** Liga cada par em `items_teleport` (uma linha por sentido). Os dois itens de cada par já precisam existir. */
@@ -377,33 +405,65 @@ object ItemDao {
         }
     }
 
-    fun addGiftItem(
-        userId: Int,
-        giftFurnishing: Furnishing,
-        amount: Int,
-        giftExtradata: String,
-        furnishing: Furnishing,
-        extraData: String,
-        limitedNumber: Int = 0,
-        limitedTotal: Int = 0
-    ): UserItem {
-        val giftUserItem = addItems(
-            userId,
-            listOf(ItemPurchaseData(giftFurnishing, giftExtradata, limitedNumber > 0, buildersClub = false)),
-        ).first()
+    /**
+     * Cria a caixa de presente [boxFurnishing] (dono [ownerId]) com o conteúdo REAL dentro: os itens de [contents] já
+     * existem (mesmos ids) e ficam escondidos do inventário enquanto ligados à caixa em `items_gift_contents`.
+     * O conteúdo fica também em [GiftContentsStore] até o vínculo ser gravado (a abertura nunca lê um banco defasado).
+     */
+    fun addGiftBox(ownerId: Int, boxFurnishing: Furnishing, boxExtraData: String, contents: List<UserItem>): UserItem {
+        val box = addItems(ownerId, listOf(ItemPurchaseData(boxFurnishing, boxExtraData, false, buildersClub = false))).first()
 
-        if (limitedNumber > 0 && limitedTotal > 0) addLimitedItem(giftUserItem.id, limitedNumber, limitedTotal)
+        try {
+            linkGiftContents(box.id, contents)
+        } catch (e: Exception) {
+            // a caixa é desta função (o chamador não a conhece): desfaz só ela; os conteúdos são do chamador
+            rollbackCreated(listOf(box.id))
+            throw e
+        }
 
-        WriteBehindManager.queue(WriteKey.item(giftUserItem.id)) {
+        return box
+    }
+
+    /** Liga a caixa aos itens de conteúdo. Declara a caixa e todos os conteúdos (FKs para os dois lados). */
+    fun linkGiftContents(boxId: Int, contents: List<UserItem>) {
+        if (contents.isEmpty()) return
+
+        GiftContentsStore.register(boxId, contents)
+
+        val contentIds = contents.map { it.id }
+
+        WriteBehindManager.queue(WriteKey.items(contentIds + boxId)) {
+            db {
+                batchUpdate(
+                    javaClass.classLoader.getResource("sql/items/gift/insert_gift_contents.sql").readText(),
+                    contentIds.map { mapOf("gift_item_id" to boxId, "item_id" to it) }
+                )
+            }
+
+            GiftContentsStore.persisted(boxId)
+        }
+    }
+
+    /** Conteúdo da caixa: da memória enquanto o vínculo não foi gravado; senão do banco (bloqueante, fora das threads de jogo). */
+    fun getGiftContents(boxId: Int): List<UserItem> = GiftContentsStore.peek(boxId) ?: db {
+        query<UserItemRowDto>(
+            javaClass.classLoader.getResource("sql/items/gift/select_gift_content_items.sql").readText(),
+            mapOf("gift_item_id" to boxId)
+        ).map { it.toDomain() }
+    }
+
+    /** Solta o conteúdo da caixa (os itens voltam a aparecer no inventário/sala). Ordenado com a caixa e os conteúdos. */
+    fun releaseGiftContents(boxId: Int, contentIds: List<Int>) {
+        GiftContentsStore.remove(boxId)
+
+        WriteBehindManager.queue(WriteKey.items(contentIds + boxId)) {
             db {
                 update(
-                    "INSERT INTO `items_gift` (`item_id`, `item_name`, `amount`, `extradata`) VALUES (:item_id, :item_name, :amount, :extradata)",
-                    mapOf("item_id" to giftUserItem.id, "item_name" to furnishing.itemName, "amount" to amount, "extradata" to extraData)
+                    javaClass.classLoader.getResource("sql/items/gift/delete_gift_contents.sql").readText(),
+                    mapOf("gift_item_id" to boxId)
                 )
             }
         }
-
-        return giftUserItem
     }
 
     fun getGiftData(itemId: Int): GiftData? = db {

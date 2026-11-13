@@ -33,7 +33,8 @@ import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.game.user.HabboSession
-import ovh.rwx.habbo.util.ActivityPointType
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 import java.util.concurrent.ConcurrentHashMap
 
 data class HabbiconChatContent(val habbiconId: Int)
@@ -72,13 +73,15 @@ class HabbiconManager {
         val userHabbicons = habboSession.habboHabbicon.userHabbicons
         if (userHabbicons.containsKey(habbiconId)) return false
 
-        if (!canAfford(habboSession, habbicon.priceCredits, habbicon.priceActivityPoints, habbicon.activityPointType)) {
-            return false
+        val price = Price(habbicon.priceCredits, habbicon.activityPointType, habbicon.priceActivityPoints)
+        if (!CurrencyService.tryCharge(habboSession, price).ok) return false
+
+        val id = try {
+            HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
         }
-
-        deductCurrency(habboSession, habbicon.priceCredits, habbicon.priceActivityPoints, habbicon.activityPointType)
-
-        val id = HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
         val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
         habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
 
@@ -106,28 +109,22 @@ class HabbiconManager {
 
         if (habbiconsToBuy.isEmpty()) return false
 
-        if (!canAfford(
-                habboSession,
-                collection.priceCredits,
-                collection.priceActivityPoints,
-                collection.activityPointType
-            )
-        ) return false
-
-        deductCurrency(
-            habboSession,
-            collection.priceCredits,
-            collection.priceActivityPoints,
-            collection.activityPointType
-        )
+        val price = Price(collection.priceCredits, collection.activityPointType, collection.priceActivityPoints)
+        if (!CurrencyService.tryCharge(habboSession, price).ok) return false
 
         val newHabbiconIds = mutableListOf<Int>()
-        for ((habbiconId) in habbiconsToBuy) {
-            val id = HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
-            val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
-            habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
-            newHabbiconIds.add(habbiconId)
-            progressCollectedAchievement(habboSession)
+        try {
+            for ((habbiconId) in habbiconsToBuy) {
+                val id = HabbiconDao.addUserHabbicon(habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
+                val userHabbicon = UserHabbicon(id, habboSession.userInformation.id, habbiconId, UserHabbicon.STATE_OWNED)
+                habboSession.habboHabbicon.userHabbicons[habbiconId] = userHabbicon
+                newHabbiconIds.add(habbiconId)
+                progressCollectedAchievement(habboSession)
+            }
+        } catch (e: Throwable) {
+            // Só devolve se nada foi entregue (entrega parcial mantém a cobrança)
+            if (newHabbiconIds.isEmpty()) CurrencyService.refund(habboSession, price)
+            throw e
         }
 
         habboSession.sendHabboResponse(
@@ -292,40 +289,5 @@ class HabbiconManager {
             habboSession.habboHabbicon.userHabbicons.size,
             accumulate = false
         )
-    }
-
-    private fun canAfford(
-        habboSession: HabboSession,
-        priceCredits: Int,
-        priceActivityPoints: Int,
-        activityPointType: Int
-    ): Boolean {
-        if (priceCredits > habboSession.userInformation.credits) return false
-
-        if (priceActivityPoints > 0) {
-            val pointType = ActivityPointType.fromType(activityPointType) ?: ActivityPointType.PIXELS
-            val currentPoints = habboSession.userInformation.activityPointsCurrencies.getOrDefault(pointType, 0)
-            if (priceActivityPoints > currentPoints) return false
-        }
-
-        return true
-    }
-
-    private fun deductCurrency(
-        habboSession: HabboSession,
-        priceCredits: Int,
-        priceActivityPoints: Int,
-        activityPointType: Int
-    ) {
-        if (priceCredits > 0) {
-            habboSession.userInformation.credits -= priceCredits
-        }
-
-        if (priceActivityPoints > 0) {
-            val pointType = ActivityPointType.fromType(activityPointType) ?: ActivityPointType.PIXELS
-            habboSession.userInformation.activityPointsCurrencies.merge(pointType, -priceActivityPoints, Int::plus)
-        }
-
-        habboSession.updateAllCurrencies()
     }
 }

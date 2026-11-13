@@ -105,6 +105,17 @@ object MessengerDao {
         }
     }
 
+    /** Pedidos pendentes entre os dois, nos dois sentidos (o INSERT declara requestsTo(destino), então as duas chaves cobrem). */
+    fun removeRequestsBetween(userId: Int, otherUserId: Int) =
+        WriteBehindManager.queue(listOf(requestsTo(userId), requestsTo(otherUserId))) {
+            db {
+                update(
+                    "sql/messenger/delete_requests_between.sql",
+                    mapOf("user_id" to userId, "other_user_id" to otherUserId)
+                )
+            }
+        }
+
     fun removeAllRequests(toUserId: Int) = WriteBehindManager.queue(requestsTo(toUserId)) {
         db {
             update(javaClass.classLoader.getResource("sql/messenger/delete_all_requests.sql")!!.readText(),

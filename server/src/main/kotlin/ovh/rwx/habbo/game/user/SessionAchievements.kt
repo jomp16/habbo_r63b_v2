@@ -172,6 +172,20 @@ fun HabboSession.processLoginAchievements() {
             }
         }
 
+        // Presentes: o contador persistido também cobre os presentes recebidos com o usuário offline
+        launch {
+            if (userStats.giftsGiven > 0) {
+                HabboServer.habboGame.achievementManager.progress(
+                    this@processLoginAchievements, "ACH_GiftGiver", userStats.giftsGiven, accumulate = false
+                )
+            }
+            if (userStats.giftsReceived > 0) {
+                HabboServer.habboGame.achievementManager.progress(
+                    this@processLoginAchievements, "ACH_GiftReceiver", userStats.giftsReceived, accumulate = false
+                )
+            }
+        }
+
         // Registration, Daily Login, Friends, Respect
         launch {
             val daysRegistered =

@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.database.user
 
+import ovh.rwx.habbo.database.writebehind.WriteBehindManager
+import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.game.user.information.UserStats
 import java.time.LocalDateTime
 import ovh.rwx.habbo.database.db
@@ -103,6 +105,19 @@ object UserStatsDao {
         return userStats
     }
 
+    /**
+     * Presente recebido por quem está OFFLINE: soma 1 direto na linha (write-behind). No próximo login o contador
+     * carregado alimenta o ACH_GiftReceiver (ver processLoginAchievements).
+     */
+    fun addGiftReceived(userId: Int) = WriteBehindManager.queue(WriteKey.user(userId)) {
+        db {
+            update(
+                "sql/users/stats/increment_gifts_received.sql",
+                mapOf("user_id" to userId)
+            )
+        }
+    }
+
     fun saveStats(userStats: UserStats) {
         db {
             update(javaClass.classLoader.getResource("sql/users/stats/update_user_stats.sql").readText(),
@@ -117,6 +132,8 @@ object UserStatsDao {
                             "respect_last_update" to userStats.respectLastUpdate,
                             "marketplace_tickets" to userStats.marketplaceTickets,
                             "room_visits" to userStats.roomVisits,
+                            "gifts_given" to userStats.giftsGiven,
+                            "gifts_received" to userStats.giftsReceived,
                             "id" to userStats.id
                     )
             )

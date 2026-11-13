@@ -55,7 +55,7 @@ class FlywayRepairTest {
             // Clean up migration ranks >= 5 to cleanly re-apply V5..V10
             dataSource.connection.use { conn ->
                 conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("DELETE FROM `flyway_schema_history` WHERE CAST(`version` AS UNSIGNED) >= 16")
+                    stmt.executeUpdate("DELETE FROM `flyway_schema_history` WHERE CAST(`version` AS UNSIGNED) >= 22")
                 }
             }
 

@@ -22,6 +22,7 @@ package ovh.rwx.habbo.game.user.messenger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerFriendUpdateResponse
@@ -59,6 +60,54 @@ class HabboMessenger(private val habboSession: HabboSession) {
 
             initialized = true
         }
+    }
+
+    /**
+     * Remove amizades nos dois sentidos: memória das duas sessões (a do outro, se online), pacotes de atualização da
+     * lista e banco. Fluxo único do "remover amigo" e do bloqueio. Devolve os amigos removidos.
+     */
+    fun removeFriends(userIds: Collection<Int>): List<MessengerFriend> {
+        val removed = userIds.mapNotNull { friends.remove(it) }
+
+        if (removed.isEmpty()) return removed
+
+        habboSession.sendResponse(
+            Outgoing.MESSENGER_FRIENDS_UPDATE,
+            OutgoingR63A.MESSENGER_FRIENDS_UPDATE,
+            removed,
+            MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
+        )
+
+        removed.forEach {
+            val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.userId) ?: return@forEach
+
+            if (!friendHabboSession.habboMessenger.initialized) return@forEach
+            val messengerFriend = friendHabboSession.habboMessenger.friends.remove(habboSession.userInformation.id)
+                ?: return@forEach
+
+            friendHabboSession.sendResponse(
+                Outgoing.MESSENGER_FRIENDS_UPDATE,
+                OutgoingR63A.MESSENGER_FRIENDS_UPDATE,
+                listOf(messengerFriend),
+                MessengerFriendUpdateResponse.MessengerFriendUpdateMode.REMOVE
+            )
+        }
+
+        MessengerDao.removeFriendships(habboSession.userInformation.id, removed.map { it.userId })
+
+        return removed
+    }
+
+    /** Descarta os pedidos de amizade pendentes entre os dois, nos dois sentidos (memória das duas sessões e banco). */
+    fun removeRequestsWith(userId: Int) {
+        val ownId = habboSession.userInformation.id
+
+        requests.remove(userId)
+        HabboServer.habboSessionManager.getHabboSessionById(userId)
+            ?.takeIf { it.habboMessenger.initialized }
+            ?.habboMessenger?.requests?.remove(ownId)
+
+        MessengerDao.removeRequestsBetween(ownId, userId)
     }
 
     fun notifyFriends() {

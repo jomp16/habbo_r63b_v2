@@ -92,8 +92,9 @@ data class CatalogPage(
             }
 
             if (isVersionAtLeast(2014, 1, 30)) {
-                writeInt(catalogItems.size)
-                catalogItems.forEach {
+                val availableItems = catalogItems.filter { it.isAvailableFor(habboVersion) }
+                writeInt(availableItems.size)
+                availableItems.forEach {
                     writeInt(it.id)
                 }
             }

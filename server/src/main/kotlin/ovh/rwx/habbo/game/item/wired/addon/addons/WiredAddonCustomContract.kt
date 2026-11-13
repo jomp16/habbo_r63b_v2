@@ -19,6 +19,8 @@
 
 package ovh.rwx.habbo.game.item.wired.addon.addons
 
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.WiredData
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -54,13 +56,10 @@ class WiredAddonCustomContract(room: Room, roomItem: RoomItem) : WiredAddon(room
                 }
                 wiredContext.setVariable(paymentVarId, currentVal - paymentCost)
             } else if (user != null) {
-                val userCredits = user.habboSession.userInformation.credits
-                if (userCredits < paymentCost) {
+                if (!CurrencyService.tryCharge(user.habboSession, Price(paymentCost, 0, 0)).ok) {
                     wiredContext.cancelled = true
                     return
                 }
-                user.habboSession.userInformation.credits -= paymentCost
-                user.habboSession.updateAllCurrencies()
             } else {
                 wiredContext.cancelled = true
                 return
@@ -76,8 +75,7 @@ class WiredAddonCustomContract(room: Room, roomItem: RoomItem) : WiredAddon(room
                 val currentVal = (wiredContext.getVariable(rewardVarId) as? Number)?.toLong() ?: 0L
                 wiredContext.setVariable(rewardVarId, currentVal + rewardAmount)
             } else if (user != null) {
-                user.habboSession.userInformation.credits += rewardAmount
-                user.habboSession.updateAllCurrencies()
+                CurrencyService.grant(user.habboSession, credits = rewardAmount)
             }
         }
     }

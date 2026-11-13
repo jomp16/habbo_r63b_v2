@@ -22,11 +22,25 @@ package ovh.rwx.habbo.game.catalog
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.item.Furnishing
 
+/** Uma linha do pacote: [amount] unidades do mobi [itemName]. A ordem da lista é a ordem dos produtos na oferta. */
+data class CatalogDealItem(val itemName: String, val amount: Int)
+
+/** Um produto do pacote já com o mobi resolvido. */
+data class CatalogDealProduct(val furnishing: Furnishing, val amount: Int)
+
+/**
+ * Pacote (deal): uma oferta do catálogo que entrega vários mobis de uma vez (`catalog_items.deal_id`).
+ * [name] é o nome mostrado no CMS e usado como nome da oferta; [items] vem de `catalog_deal_items`, em ordem.
+ */
 data class CatalogDeal(
-        val id: Int,
-        val items: List<String>,
-        val amounts: List<Int>
+    val id: Int,
+    val name: String,
+    val items: List<CatalogDealItem>
 ) {
-    val furnishings: List<Furnishing>
-        get() = HabboServer.habboGame.itemManager.furnishings.values.filter { items.contains(it.itemName) }
+    /** Os produtos na ordem do pacote. Um mobi que não existe mais em `furnishings` fica de fora. */
+    val products: List<CatalogDealProduct>
+        get() = products(HabboServer.habboGame.itemManager.furnishings::get)
+
+    fun products(resolve: (String) -> Furnishing?): List<CatalogDealProduct> =
+        items.mapNotNull { item -> resolve(item.itemName)?.let { CatalogDealProduct(it, item.amount) } }
 }

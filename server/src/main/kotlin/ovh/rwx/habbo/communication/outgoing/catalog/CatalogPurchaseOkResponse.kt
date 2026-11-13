@@ -36,7 +36,7 @@ data class CatalogPurchaseOkData(
     val itemId: Int = 0,
     val itemName: String = "",
     val costCredits: Int = 0,
-    val costPixels: Int = 0,
+    val costPoints: Int = 0,
     val activityPointType: Int = 0,
     val clubLevel: Int = 0,
     val isRentable: Boolean = false,
@@ -47,8 +47,8 @@ data class CatalogPurchaseOkData(
         itemId = catalogItem.id,
         itemName = catalogItem.catalogName.ifEmpty { catalogItem.furnishing.itemName },
         costCredits = catalogItem.costCredits,
-        costPixels = catalogItem.costPixels,
-        activityPointType = if (catalogItem.costPixels > 0) 0 else 5,
+        costPoints = catalogItem.pricePoints,
+        activityPointType = catalogItem.pointType,
         clubLevel = if (catalogItem.clubOnly) 1 else 0,
         userItems = userItems,
     )
@@ -66,7 +66,7 @@ class CatalogPurchaseOkResponse {
                 writeBoolean(data.isRentable)
             }
             writeInt(data.costCredits)
-            writeInt(data.costPixels)
+            writeInt(data.costPoints)
             writeInt(data.activityPointType)
             if (isVersionAtLeast(2011, 11, 10)) {
                 writeBoolean(data.isGift)

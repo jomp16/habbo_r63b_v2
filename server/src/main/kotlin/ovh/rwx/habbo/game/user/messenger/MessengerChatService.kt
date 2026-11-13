@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatErrorResponse
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 object MessengerChatService {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -84,6 +85,9 @@ object MessengerChatService {
             }
             return
         }
+
+        // 3.1 Bloqueio nos dois sentidos: descarta em silêncio (inclui a mensagem offline)
+        if (targetUserId > 0 && !BlockPolicy.canMessage(habboSession.habboBlocks, targetUserId)) return
 
         // 4. Envio para Amigo (Online ou Offline)
         val messengerBuddy = habboSession.habboMessenger.friends[targetUserId] ?: return

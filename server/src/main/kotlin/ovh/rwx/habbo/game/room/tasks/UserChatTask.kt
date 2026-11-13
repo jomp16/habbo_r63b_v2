@@ -34,6 +34,7 @@ import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 import ovh.rwx.habbo.kotlin.containsAny
 import ovh.rwx.habbo.plugin.event.events.room.RoomUserChatEvent
 import ovh.rwx.habbo.util.Direction
@@ -157,6 +158,7 @@ class UserChatTask(
             // Primeiro decide QUEM ouve; depois serializa a mensagem uma vez por release e clona (antes o @Response
             // era reexecutado para cada ouvinte — ~18% da CPU do tick num quarto cheio)
             val listeners = ArrayList<HabboSession>(room.userManager.entities.size)
+            val speakerId = roomUser.habboSession.userInformation.id
 
             room.userManager.entities.values.forEach { targetUser ->
                 // Adicionado check para não enviar para quem foi desconectado/kicked no meio do loop
@@ -173,7 +175,12 @@ class UserChatTask(
                 }
 
                 if (canHear) {
-                    (targetUser as? RoomUser)?.habboSession?.let { listeners += it }
+                    // o cliente não filtra o chat de ignorados: quem ignora o falante não o recebe
+                    (targetUser as? RoomUser)?.habboSession
+                        ?.takeUnless { it.habboIgnores.isIgnoring(speakerId) }
+                        // bloqueio nos dois sentidos (o cliente só esconde para quem bloqueou)
+                        ?.takeIf { BlockPolicy.canHearChat(it.habboBlocks, speakerId) }
+                        ?.let { listeners += it }
                     turnHeadTowardsSpeaker(targetUser, roomUser)
                 }
             }

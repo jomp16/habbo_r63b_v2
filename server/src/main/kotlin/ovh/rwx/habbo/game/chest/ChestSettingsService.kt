@@ -24,6 +24,8 @@ import ovh.rwx.habbo.communication.outgoing.chest.ChestPreferencesUpdateSuccessD
 import ovh.rwx.habbo.communication.outgoing.chest.ChestUpgradeResult
 import ovh.rwx.habbo.communication.outgoing.chest.ChestUpgradeResultData
 import ovh.rwx.habbo.database.chest.ChestDao
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
@@ -178,39 +180,31 @@ class ChestSettingsService(private val chestManager: ChestManager) {
         val activityPointType = if (currencyType == ActivityPointType.DIAMONDS.code) ActivityPointType.DIAMONDS else null
         val cost = ChestConstants.UPGRADE_COST
 
-        if (activityPointType != null) {
-            val balance = habboSession.userInformation.activityPointsCurrencies.getOrDefault(activityPointType, 0)
+        val price = if (activityPointType != null) Price(0, activityPointType.code, cost) else Price(cost, 0, 0)
 
-            if (balance < cost) {
-                habboSession.sendHabboResponse(
-                    Outgoing.CHEST_UPGRADE_RESULT,
-                    ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.MAX_CAPACITY_REACHED)
+        if (!CurrencyService.tryCharge(habboSession, price).ok) {
+            habboSession.sendHabboResponse(
+                Outgoing.CHEST_UPGRADE_RESULT,
+                ChestUpgradeResultData(
+                    chest.itemId,
+                    if (activityPointType != null) ChestUpgradeResult.MAX_CAPACITY_REACHED else ChestUpgradeResult.INSUFFICIENT_VIP
                 )
+            )
 
-                return
-            }
-
-            habboSession.userInformation.activityPointsCurrencies.merge(activityPointType, -cost, Int::plus)
-        } else {
-            if (habboSession.userInformation.credits < cost) {
-                habboSession.sendHabboResponse(
-                    Outgoing.CHEST_UPGRADE_RESULT,
-                    ChestUpgradeResultData(chest.itemId, ChestUpgradeResult.INSUFFICIENT_VIP)
-                )
-
-                return
-            }
-
-            habboSession.userInformation.credits -= cost
+            return
         }
 
         val capacityStep = if (chest.type == ChestType.COINS) ChestConstants.COINS_CAPACITY_STEP else ChestConstants.FURNI_CAPACITY_STEP
 
-        chest.capacity = (chest.capacity + capacityStep).coerceAtMost(maxCap)
+        try {
+            chest.capacity = (chest.capacity + capacityStep).coerceAtMost(maxCap)
 
-        ChestDao.updateChest(chest)
-        ChestVisuals.updateChestExtraData(room, chest)
-        ChestNotifier.sendCurrencyBalances(habboSession)
+            ChestDao.updateChest(chest)
+            ChestVisuals.updateChestExtraData(room, chest)
+        } catch (e: Throwable) {
+            CurrencyService.refund(habboSession, price)
+            throw e
+        }
 
         habboSession.sendHabboResponse(
             Outgoing.CHEST_UPGRADE_RESULT,

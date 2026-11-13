@@ -25,6 +25,8 @@ import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.fastfood.game.PowerUpEventData
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.communication.HabboRequest
+import ovh.rwx.habbo.game.currency.CurrencyService
+import ovh.rwx.habbo.game.currency.Price
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GamePurchasePowerUpHandler {
@@ -51,8 +53,7 @@ class GamePurchasePowerUpHandler {
         val typeId = typeIds[powerUpId] ?: return
 
         val userInformation = habboSession.userInformation
-        if (userInformation.credits < price) return
-        userInformation.credits -= price
+        if (!CurrencyService.tryCharge(habboSession, Price(price, 0, 0)).ok) return
 
         fastFoodSession.sendHabboResponse(FFOutgoing.USER_CREDITS, userInformation.credits)
         fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UP_GAINED, PowerUpEventData(count = 3, type = typeId))

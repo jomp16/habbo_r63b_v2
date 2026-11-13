@@ -29,6 +29,7 @@ import ovh.rwx.habbo.communication.outgoing.room.RoomDoorbellDeniedData
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.RoomState
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.game.user.block.BlockPolicy
 
 fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Boolean = false) {
     if (!bypassAuth && room == currentRoom) return
@@ -56,6 +57,18 @@ fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Bo
             sendHabboResponse(Outgoing.ROOM_EXIT)
         } else {
             sendHabboResponse(OutgoingR63A.ROOM_ERROR, 4)
+            sendHabboResponse(OutgoingR63A.ROOM_EXIT)
+        }
+        return
+    }
+
+    // o dono bloqueou este usuário (o bloqueio vale mesmo para clientes antigos); staff ignora como no ban
+    if (BlockPolicy.roomEntryDenied(habboBlocks, room.roomData.ownerId, hasPermission("acc_any_room_owner"))) {
+        if (!isPreShuffle) {
+            sendHabboResponse(Outgoing.ROOM_ERROR, 5, "")
+            sendHabboResponse(Outgoing.ROOM_EXIT)
+        } else {
+            sendHabboResponse(OutgoingR63A.ROOM_ERROR, 5)
             sendHabboResponse(OutgoingR63A.ROOM_EXIT)
         }
         return
