@@ -36,6 +36,13 @@ hot-load plugin system.
 Docker MariaDB `habbo-dev-mariadb` at `127.0.0.1:3306`. `sync` (prod dump → local), `sync --baseline` (schema + static
 tables only), `reset` (from cached dump), `up|down|status|cli`.
 
+## Local dev stack (`scripts/dev_stack.sh`, `scripts/dev_swf_proxy.go`)
+
+Runs MariaDB + local SWF/API proxy (`127.0.0.1:8081` → `/api/v1` & `/api/camera` to `web_port`, rewrites `hotelview.banner.url`
+in `external_override_variables`, proxies static SWF/gamedata read-only) + emulator + local CMS (`CMS_DIR`, default
+`/home/jomp16/Downloads/Habbo/cms`, isolated config in `build/dev-stack/cms.config.local.json`). Aborts if `config.yaml`
+defines `dynamic_dns` (never touch prod `/etc/hosts`). Commands: `setup|start|stop|status|logs [proxy|emulator|cms]`.
+
 ## Modules
 
 `:launcher`, `:server` (bulk of the code), `:plugin_manager`/`:pathfinding`/`:habbo_imaging` (submodules), `:camera`
