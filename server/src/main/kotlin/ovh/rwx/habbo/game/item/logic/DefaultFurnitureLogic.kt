@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.item.logic
 
+import ovh.rwx.habbo.game.item.FurniCategory
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.LimitedItemData
@@ -35,4 +36,12 @@ class DefaultFurnitureLogic : FurnitureLogic() {
         magicRemove: Boolean
     ): StuffData =
         LegacyStuffData(extraData)
+
+    override fun getFurniCategory(furnishing: Furnishing): FurniCategory = when {
+        furnishing.itemName.contains("poster") -> FurniCategory.POSTER
+        furnishing.itemName.contains("post.it") || furnishing.itemName.contains("postit") -> FurniCategory.POST_IT
+        furnishing.itemName.contains("a1") -> FurniCategory.WALL_PAPER
+        furnishing.itemName.contains("a2") -> FurniCategory.FLOOR
+        else -> FurniCategory.DEFAULT
+    }
 }

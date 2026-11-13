@@ -147,6 +147,38 @@ class Trade(
     }
 
     /**
+     * Adiciona múltiplos itens à grade de troca de um usuário em lote (Habbo AIR / Moderno).
+     *
+     * @return Quantidade de itens adicionados com sucesso
+     */
+    fun addItems(roomUser: RoomUser, items: List<UserItem>): Int = tradeLock.withLock {
+        if (state != TradeState.OPEN) {
+            return@withLock 0
+        }
+
+        val targetItems = if (isUser1(roomUser)) user1Items else user2Items
+        val inventory = roomUser.habboSession.habboInventory.items
+        var addedCount = 0
+
+        for (item in items) {
+            if (targetItems.containsKey(item.id)) continue
+            if (!inventory.containsKey(item.id)) continue
+            if (room.tradeManager.isItemInTrade(item.id, roomUser)) continue
+            if (!item.furnishing.allowTrade) continue
+
+            targetItems[item.id] = TradeItem(userItem = item, locked = true)
+            addedCount++
+        }
+
+        if (addedCount > 0) {
+            resetAcceptState(roomUser)
+            sendItemListToBoth()
+        }
+
+        return@withLock addedCount
+    }
+
+    /**
      * Remove um item da grade de troca de um usuário.
      * 
      * REGRAS DE SEGURANÇA:

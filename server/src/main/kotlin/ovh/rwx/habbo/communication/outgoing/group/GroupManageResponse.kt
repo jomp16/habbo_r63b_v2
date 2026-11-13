@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.group
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.group.Group
 
@@ -72,8 +73,11 @@ class GroupManageResponse {
                 }
             }
 
-            writeUTF(group.groupData.badge)
-            writeInt(group.members.size)
+            // badge e total de membros: desde 2011-11-07 (habbo-timeline; AS3 RELEASE63-201110051250 termina nas badge settings)
+            if (isVersionAtLeast(2011, 11, 7)) {
+                writeUTF(group.groupData.badge)
+                writeInt(group.members.size)
+            }
         }
     }
 }

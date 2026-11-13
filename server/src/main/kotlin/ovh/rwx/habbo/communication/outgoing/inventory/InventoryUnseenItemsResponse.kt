@@ -22,8 +22,10 @@ package ovh.rwx.habbo.communication.outgoing.inventory
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.user.UserItem
 
 enum class UnseenItemCategory(val code: Int) {
@@ -44,7 +46,8 @@ enum class UnseenItemCategory(val code: Int) {
 }
 
 data class UnseenItemsData(
-    val items: Map<UnseenItemCategory, Collection<Int>>
+    val items: Map<UnseenItemCategory, Collection<Int>>,
+    val userItems: Collection<UserItem>? = null,
 ) {
     companion object {
         fun single(category: UnseenItemCategory, ids: Collection<Int>): UnseenItemsData {
@@ -58,8 +61,7 @@ data class UnseenItemsData(
         fun fromUserItems(userItems: Collection<UserItem>): UnseenItemsData {
             if (userItems.isEmpty()) return UnseenItemsData(emptyMap())
 
-            // Tanto chão quanto parede notificam a aba principal de mobis (OWNED_FURNI)
-            return UnseenItemsData(mapOf(UnseenItemCategory.OWNED_FURNI to userItems.map { it.id }))
+            return UnseenItemsData(emptyMap(), userItems = userItems)
         }
     }
 }
@@ -70,10 +72,29 @@ class InventoryUnseenItemsResponse {
     @ResponseR63A(OutgoingR63A.INVENTORY_UNSEEN_ITEMS)
     fun response(habboResponse: HabboResponse, data: UnseenItemsData) {
         habboResponse.apply {
-            writeInt(data.items.size)
+            val categoriesToSend: Map<Int, Collection<Int>> = if (data.userItems != null) {
+                if (isVersionBefore(2013, 5, 22)) {
+                    // Pré-2013-05-22 (R63A e R63B antigo): abas Floor (1) e Wall (2) separadas
+                    val floorIds = data.userItems.filter { it.furnishing.type == ItemType.FLOOR }.map { it.id }
+                    val wallIds = data.userItems.filter { it.furnishing.type != ItemType.FLOOR }.map { it.id }
+                    buildMap {
+                        if (floorIds.isNotEmpty()) put(1, floorIds)
+                        if (wallIds.isNotEmpty()) put(2, wallIds)
+                    }
+                } else {
+                    // Pós-2013-05-22 (Moderno/AIR): aba única de mobis (OWNED_FURNI = 1).
+                    // O client moderno indexa o inventário e o grid (GroupItem.getFurniIds)
+                    // pelo stripId NEGATIVO (-id). Para o slot ficar verde (isUnseen), o id trafega negativo.
+                    mapOf(UnseenItemCategory.OWNED_FURNI.code to data.userItems.map { -it.id })
+                }
+            } else {
+                data.items.mapKeys { it.key.code }
+            }
 
-            data.items.forEach { (category, itemIds) ->
-                writeInt(category.code)
+            writeInt(categoriesToSend.size)
+
+            categoriesToSend.forEach { (categoryCode, itemIds) ->
+                writeInt(categoryCode)
                 writeInt(itemIds.size)
                 itemIds.forEach { id ->
                     writeInt(id)

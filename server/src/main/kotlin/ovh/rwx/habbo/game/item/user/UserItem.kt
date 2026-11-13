@@ -19,12 +19,12 @@
 
 package ovh.rwx.habbo.game.item.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.IHabboResponseSerialize
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.game.item.LimitedItemData
@@ -42,7 +42,7 @@ data class UserItem(
 ) : IHabboResponseSerialize, Serializable {
     val limitedItemData: LimitedItemData? by lazy { if (limited) ItemDao.getLimitedData(id) else null }
     val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+        get() = HabboGame.instance!!.itemManager.furnishings[itemName]!!
 
     override fun serializeHabboResponse(habboResponse: HabboResponse, vararg params: Any) {
         // Clients pós-shuffle até 2013-05-22 (R63 de 2011-2012) ainda lêem o item no layout antigo
@@ -58,7 +58,7 @@ data class UserItem(
             writeUTF(furnishing.type.type.uppercase(Locale.getDefault()))
             writeInt(id)
             writeInt(furnishing.spriteId)
-            HabboServer.habboGame.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
+            HabboGame.instance!!.itemManager.writeExtradata(habboResponse, extraData, furnishing, limitedItemData)
 
             writeBoolean(furnishing.allowRecycle)
             writeBoolean(furnishing.allowTrade)
@@ -90,13 +90,8 @@ data class UserItem(
             writeInt(id)
             writeInt(furnishing.spriteId)
 
-            val typeId =
-                if (furnishing.itemName.contains("a2")) 3
-                else if (furnishing.itemName.contains("wallpaper")) 2
-                else if (furnishing.itemName.contains("landscape")) 4
-                else 1
-
-            writeInt(typeId)
+            val category = HabboGame.instance!!.itemManager.getFurnitureLogic(furnishing).getFurniCategory(furnishing)
+            writeInt(category.id)
 
             if (isVersionAtLeast(2011, 9, 8)) {
                 // StuffData tipado a partir de RELEASE63-35846 (08/09/2011): tipo 0 (legado) e a string. No

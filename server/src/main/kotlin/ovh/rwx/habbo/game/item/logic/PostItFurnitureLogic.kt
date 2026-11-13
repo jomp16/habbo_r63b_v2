@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.item.logic
 
+import ovh.rwx.habbo.game.item.FurniCategory
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.LimitedItemData
@@ -48,4 +49,6 @@ class PostItFurnitureLogic : FurnitureLogic() {
         if (extraData.isBlank()) return extraData
         return PostItData.parse(extraData).toExtraData()
     }
+
+    override fun getFurniCategory(furnishing: Furnishing): FurniCategory = FurniCategory.POST_IT
 }

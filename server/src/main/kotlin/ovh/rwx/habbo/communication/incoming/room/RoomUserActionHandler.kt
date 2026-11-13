@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.game.room.tasks.UserAction
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -36,13 +37,18 @@ class RoomUserActionHandler {
     @Handler(Incoming.ROOM_USER_ACTION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         if (habboSession.currentRoom == null) return
-        val action = habboRequest.readInt()
 
-        if (action > 7) {
-            log.error("Unmmaped action: $action")
+        val userAction = if (habboSession.isVersionBefore(2011, 12, 13)) {
+            UserAction.WAVE
+        } else {
+            val action = habboRequest.readInt()
+            if (action > 7) {
+                log.error("Unmapped action: $action")
+            }
+            UserAction.fromValue(action)
         }
 
-        habboSession.roomUser?.action(UserAction.fromValue(action))
+        habboSession.roomUser?.action(userAction)
     }
 
     @HandlerR63A(IncomingR63A.ROOM_USER_WAVE)

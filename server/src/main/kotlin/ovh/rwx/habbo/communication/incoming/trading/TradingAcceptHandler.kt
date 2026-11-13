@@ -31,29 +31,14 @@ import ovh.rwx.habbo.game.user.HabboSession
 @Suppress("unused")
 class TradingAcceptHandler {
     @Handler(Incoming.TRADING_ACCEPT)
+    @HandlerR63A(IncomingR63A.TRADING_ACCEPT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val room = habboSession.currentRoom ?: return
         val roomUser = habboSession.roomUser ?: return
 
-
         val trade = room.tradeManager.getTrade(roomUser)
         if (trade == null) {
-            habboSession.sendHabboResponse(Outgoing.TRADING_NOT_OPEN)
-            return
-        }
-
-        trade.acceptTrade(roomUser)
-    }
-
-    @HandlerR63A(IncomingR63A.TRADING_ACCEPT)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val room = habboSession.currentRoom ?: return
-        val roomUser = habboSession.roomUser ?: return
-
-
-        val trade = room.tradeManager.getTrade(roomUser)
-        if (trade == null) {
-            habboSession.sendHabboResponse(OutgoingR63A.TRADING_NOT_OPEN)
+            habboSession.sendResponse(Outgoing.TRADING_NOT_OPEN, OutgoingR63A.TRADING_NOT_OPEN)
             return
         }
 

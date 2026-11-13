@@ -29,8 +29,6 @@ import ovh.rwx.habbo.database.subscription.SubscriptionDao
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.localDateTimeNowWithoutSecondsAndNanos
-import java.time.LocalDate
-import java.time.Period
 import java.time.temporal.ChronoUnit
 
 class HabboSubscription(private val habboSession: HabboSession) {
@@ -165,16 +163,20 @@ class HabboSubscription(private val habboSession: HabboSession) {
         if (active) {
             val currentTime = localDateTimeNowWithoutSecondsAndNanos()
 
-            days = ChronoUnit.DAYS.between(currentTime, habboClubSubscription?.expire).toInt()
-            months = ChronoUnit.MONTHS.between(currentTime, habboClubSubscription?.expire).toInt()
             elapsedDays = ChronoUnit.DAYS.between(habboClubSubscription?.activated, currentTime).toInt()
             minutes = ChronoUnit.MINUTES.between(currentTime, habboClubSubscription?.expire).toInt()
-            days = Period.between(
-                LocalDate.now(),
-                LocalDate.now().plusDays(days.toLong()).minusMonths(months.toLong())
-            ).days
 
-            if (days == 0) days = 1
+            // Em todos os clientes (2011 → WIN63 2026) o total de dias exibido é `clubPeriods * 31 + clubDays`
+            // e o status "ativo" exige `clubDays > 0`: enviar o total real dividido em períodos de 31 dias
+            // (meses de calendário têm ~30,4 d e subcontavam). Datas/tempo restante vêm de `minutes`.
+            val totalDays = ChronoUnit.DAYS.between(currentTime, habboClubSubscription?.expire).toInt().coerceAtLeast(1)
+            months = totalDays / 31
+            days = totalDays % 31
+
+            if (days == 0) {
+                days = 31
+                months -= 1
+            }
         }
 
         habboSession.sendResponse(
@@ -184,7 +186,7 @@ class HabboSubscription(private val habboSession: HabboSession) {
                 clubType = CLUB_TYPE,
                 active = active,
                 days = days,
-                months = if (months >= 1) months - 1 else months,
+                months = months,
                 elapsedDays = elapsedDays,
                 minutes = minutes
             )

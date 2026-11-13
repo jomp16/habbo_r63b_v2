@@ -40,19 +40,13 @@ class TradingConfirmAcceptHandler {
         val result = trade.confirmAccept(roomUser)
 
         when (result) {
-            is ConfirmResult.Success -> {
+            is ConfirmResult.Success,
+            is ConfirmResult.ItemNotFound,
+            is ConfirmResult.DatabaseError -> {
                 room.tradeManager.removeTrade(trade)
             }
 
-            is ConfirmResult.NotConfirming -> {
-            }
-
-            is ConfirmResult.ItemNotFound -> {
-            }
-
-            is ConfirmResult.DatabaseError -> {
-            }
-
+            is ConfirmResult.NotConfirming,
             is ConfirmResult.WaitingOther -> {
             }
         }

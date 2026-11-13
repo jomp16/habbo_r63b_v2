@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.catalog
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.catalog.CatalogClubOffer
 import java.time.LocalDateTime
@@ -39,25 +40,49 @@ class CatalogClubOffersResponse {
 
                 writeInt(it.itemId)
                 writeUTF(it.name)
-                writeBoolean(false) // useless
-                writeInt(it.credits) // credits
-                writeInt(it.points) // points
-                writeInt(it.pointsType) // type: 0 - pixel, > 0 - vip points (5 = diamonds)
+
+                // evolucao do offer no wire (habbo-timeline; AS3 confere): booleano lido e descartado desde 2013-02-26;
+                // preco em 3 campos desde 2012-10-02 (antes, 1 Int); `upgrade` ate 2011-12-18; `months` desde 2011-12-19
+                if (isVersionAtLeast(2013, 2, 26)) {
+                    writeBoolean(false) // o cliente le e descarta (AS3 2013: `k.readBoolean();` sem atribuir)
+                }
+
+                if (isVersionAtLeast(2012, 10, 2)) {
+                    writeInt(it.credits) // credits
+                    writeInt(it.points) // points
+                    writeInt(it.pointsType) // type: 0 - pixel, > 0 - vip points (5 = diamonds)
+                } else {
+                    writeInt(it.credits) // price
+                }
+
+                if (isVersionBefore(2011, 12, 19)) {
+                    writeBoolean(false) // upgrade
+                }
+
                 writeBoolean(true)
-                writeInt(ChronoUnit.MONTHS.between(lastExpireOffer, localDateTime).toInt())
+
+                if (isVersionAtLeast(2011, 12, 19)) {
+                    writeInt(ChronoUnit.MONTHS.between(lastExpireOffer, localDateTime).toInt())
+                }
+
                 writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
                 // giftable nasce entre RELEASE63-201406121205 e RELEASE63-201407091214;
                 // antes disso o offer do wire tem só 2 bools (AS3: _SafeStr_2838@0522 = 13 reads)
                 if (isVersionAtLeast(2014, 7, 9)) {
                     writeBoolean(it.giftable)
                 }
-                writeInt(ChronoUnit.DAYS.between(lastExpireOffer, localDateTime).toInt())
+                // daysLeftAfterPurchase: total de dias de HC restantes após a compra (hoje → nova expiração),
+                // na mesma base `periods * 31 + days` do SUBSCRIPTION_STATUS ("antes" vs "depois" no confirm)
+                writeInt(ChronoUnit.DAYS.between(LocalDateTime.now(), localDateTime).toInt().coerceAtLeast(0))
                 writeInt(localDateTime.year)
                 writeInt(localDateTime.monthValue)
                 writeInt(localDateTime.dayOfMonth)
             }
 
-            writeInt(windowId)
+            // source/windowId: desde 2011-12-19
+            if (isVersionAtLeast(2011, 12, 19)) {
+                writeInt(windowId)
+            }
         }
     }
 }

@@ -40,11 +40,7 @@ import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.timeout.IdleStateHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.Logger
@@ -67,6 +63,7 @@ import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.core.PluginManager
 import ovh.rwx.habbo.util.ClassIndex
+import ovh.rwx.habbo.util.Utils
 import java.io.File
 import java.security.Security
 import java.time.ZoneId
@@ -126,6 +123,10 @@ object HabboServer : AutoCloseable {
         get() = isRunning && !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
     init {
+        check(!Utils.isTestEnvironment()) {
+            "HabboServer não pode ser inicializado dentro de um ambiente de testes! " +
+                    "Testes unitários devem usar seams (HabboGame.instance, mocks) e testes com banco devem usar Testcontainers."
+        }
         Security.addProvider(BouncyCastleProvider())
 
         javaClass.classLoader.getResourceAsStream("ascii_art.txt")?.bufferedReader()?.forEachLine { log.info(it) }

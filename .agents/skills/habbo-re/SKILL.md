@@ -36,9 +36,63 @@ Playbook para localizar pacotes de rede do Habbo e comparar sua estrutura entre 
   ```
 - Nomes de negócio no banco não usam prefixo `GET_` (ex: `USER_BADGES`, `BADGE_LEADERBOARD`).
 
-## Encontrar um pacote
+## Encontrar um pacote rapidamente (Zero Desvios e Alta Performance)
 
-Quatro etapas fundamentais em ordem de uso:
+### ⚠️ Regras Anti-Desvio e Performance
+
+1. **NUNCA use scripts com `re.DOTALL` ou regex `.*` sobre `Habbo_codigo_completo.txt`**: O arquivo tem 30 MB+. Regex
+   multiline trava o processo e gera timeouts. Use sempre **`rg` (ripgrep)**.
+2. **NUNCA confunda In/Out do dump do Flash**:
+    - `Outgoing[header, md5]`: Envio cliente→servidor = **`releases_incoming_headers`** no emulador.
+    - `Incoming[header, md5]`: Envio servidor→cliente = **`releases_outgoing_headers`** no emulador.
+3. **Cuidado com Hexadecimal**: Compiladores Flash exportam índices de array em hex (ex: `[0x0600] = 1536`,
+   `[0x0101] = 257`). Ao buscar classes no ActionScript, use:
+   `rg "\[(0x[0-9a-fA-F]+|\d+)\]\s*=\s*<Classe>;" <arquivo>`
+
+### O Pipeline em 4 Passos
+
+1. **Nome real e assinatura (Era Pré-Shuffle: 2009 R34 a 2011 R63A)**:
+    - **No `Messages.txt` de qualquer release pré-shuffle (em `dumps_repo/releases/`)**:
+      ```bash
+      rg "^Outgoing\[<HEADER_ESTATICO>," /mnt/DADOS/Downloads/Habbo/dumps_repo/releases/<RELEASE_PRE_SHUFFLE>/Messages.txt
+      ```
+      *(Ex: em `RELEASE34-18054-...` de 2009 até `RELEASE63-20111004...` de 2011; devolve imediatamente a classe, hash
+      MD5 e a lista de tipos do construtor).*
+    - **No AS3 limpo de 2011 (para obter o nome oficial Sulake)**:
+      ```bash
+      rg "\[<HEADER_ESTATICO>\]\s*=" /home/jomp16/Downloads/Habbo/RELEASE63-35255-34886-201108111108/src/com/sulake/habbo/communication/HabboMessages.as
+      ```
+    - **Via `habbo-timeline`**:
+      ```bash
+      habbo-timeline <HEADER_ESTATICO> incoming|outgoing
+      ```
+      *(Rastreia automaticamente as 275+ builds pré-shuffle e obtém o nome canônico).*
+2. **Busca direta por assinatura em `Messages.txt` da release alvo**:
+   Se o construtor tiver 2+ argumentos ou tipos específicos (`String`, `Boolean`):
+   ```bash
+   rg "= _-.*\(param1:int, param2:int, param3:String\)" /mnt/DADOS/Downloads/Habbo/dumps_repo/releases/<RELEASE>/Messages.txt
+   ```
+3. **Propagação instantânea por MD5**:
+   O hash MD5 da classe costuma ser idêntico entre releases da mesma era:
+   ```bash
+   rg "<HASH_MD5>" /mnt/DADOS/Downloads/Habbo/dumps_repo/releases/<RELEASE_IRMA>/Messages.txt
+   ```
+4. **Assinatura genérica (`param1:int` ou vazia)? Use Âncoras Diretas**:
+    - **Trading**: `rg "inventory.trading.warning.others_account_disabled"` no `Habbo_codigo_completo.txt` → entrega
+      todos os 8 pacotes de trading agrupados no mesmo package (`_-BK`, `_-2sQ`, `_-008`, `_-499`).
+    - **Dados, Roda, Porta, Stickie**: `rg "ROFCAE_DICE_OFF"` → entrega o `switch` dentro de `useObject` no `RoomEngine`
+      com todos os 5 pacotes.
+    - **Resgate de Câmbios**: `rg "RWFCRM_REDEEM"` → entrega `CreditFurniRedeemMessageComposer`
+      (`ROOM_REEDEM_EXCHANGE_ITEM`).
+    - **Moderação e Pets**: `rg "function assignRights"` ou `banUser` → entrega `RoomSession`, onde ban, mute, rights,
+      pet pickup e câmbios estão sequenciais.
+    - **Deletar Quarto**: `rg "deleteroom.confirm.message"` → entrega `DeleteRoomMessageComposer` em `RoomSettingsCtrl`.
+    - **Colocar Pet**: `rg "param1:int, param2:int, param3:int, param4:int = 0, param5:int = 0"` no `Messages.txt` →
+      construtor exclusivo de `PlacePetMessageComposer`.
+
+---
+
+## Encontrar um pacote (Ferramentas de Suporte)
 
 1. **Do erro do cliente** — o erro mostra a classe do PARSER (não o evento):
    ```

@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.game.user.HabboSession
+import kotlin.math.abs
 
 @Suppress("unused")
 class TradingRemoveItemHandler {
@@ -38,9 +39,6 @@ class TradingRemoveItemHandler {
 
         val trade = room.tradeManager.getTrade(roomUser) ?: return
 
-        val removed = trade.removeItem(roomUser, itemId)
-
-        if (!removed) {
-        }
+        trade.removeItem(roomUser, abs(itemId))
     }
 }

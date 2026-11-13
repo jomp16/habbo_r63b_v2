@@ -73,7 +73,11 @@ UPDATE `releases_incoming_headers` SET `header` = 3800, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = 2928, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'PET_INFO';
 UPDATE `releases_incoming_headers` SET `header` = 151, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'PET_RESPECT';
 UPDATE `releases_incoming_headers` SET `header` = 3393, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'REFRESH_CAMPAIGN';
-UPDATE `releases_incoming_headers` SET `header` = 2244, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_BANNED_USERS';
+UPDATE `releases_incoming_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'ROOM_BANNED_USERS';
 UPDATE `releases_incoming_headers` SET `header` = 3362, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_IGNORE_USER';
 UPDATE `releases_incoming_headers` SET `header` = 3070, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_LOAD_BY_DOORBELL';
 UPDATE `releases_incoming_headers` SET `header` = 2250, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201110051250-692472661' AND `name` = 'ROOM_MANNEQUIN_CHANGE_NAME';
@@ -236,7 +240,11 @@ UPDATE `releases_incoming_headers` SET `header` = 2165, `override_method` = NULL
 UPDATE `releases_incoming_headers` SET `header` = 3144, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'MODERATION_ROOM_CHATLOG';
 UPDATE `releases_incoming_headers` SET `header` = 2770, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'PET_INFO';
 UPDATE `releases_incoming_headers` SET `header` = 2103, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'PET_RESPECT';
-UPDATE `releases_incoming_headers` SET `header` = 1128, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_BANNED_USERS';
+UPDATE `releases_incoming_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_BANNED_USERS';
 UPDATE `releases_incoming_headers` SET `header` = 405, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_IGNORE_USER';
 UPDATE `releases_incoming_headers` SET `header` = 50, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'ROOM_LOAD_BY_DOORBELL';
 UPDATE `releases_incoming_headers` SET `header` = 1704, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'SETTINGS_SAVE_VOLUME';
@@ -267,9 +275,22 @@ UPDATE `releases_outgoing_headers` SET `header` = NULL, `override_method` = 'DIS
 
 -- 5) RELEASE63-201305221112-286302280
 -- Nula previamente os headers alvos nesta release para evitar colisao de unicidade (release_name, header)
-UPDATE `releases_incoming_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `header` IN (2177, 241);
+UPDATE `releases_incoming_headers`
+SET `header` = NULL
+WHERE `release_name` = 'RELEASE63-201305221112-286302280'
+  AND `header` IN (2177, 241, 2375, 1171);
 UPDATE `releases_incoming_headers` SET `header` = 2177, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'TRADING_OPEN';
-UPDATE `releases_incoming_headers` SET `header` = 241, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'PET_INFO';
+UPDATE `releases_incoming_headers`
+SET `header`          = 241,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201305221112-286302280'
+  AND `name` = 'ROOM_TRIGGER_ITEM';
+-- PET_INFO 20130522 = 2375: composer (int) com md5 d876d416... identico a 2011-12/2012-04/2012-07 (2928/1712/3950/2770); 241/1171 sao (int,int=0) de RoomObjectEventHandler (uso de furni de chao)
+UPDATE `releases_incoming_headers`
+SET `header`          = 2375,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201305221112-286302280'
+  AND `name` = 'PET_INFO';
 UPDATE `releases_incoming_headers` SET `header` = NULL, `override_method` = 'DISABLED' WHERE `release_name` = 'RELEASE63-201305221112-286302280' AND `name` = 'SETTINGS_SAVE_FOCUS';
 
 -- =========================================================================
@@ -349,7 +370,18 @@ UPDATE `releases_outgoing_headers` SET `header` = 1925, `override_method` = NULL
 -- Correcoes RELEASE63-201112130905-713192101: Game2 pelos nomes reais de classe no Messages.txt; trading pelos logs do dispatcher do TradingModel
 -- (TRADING::*Event, others/own_account_disabled), ItemList/Open pelos handlers (mapas de itens / "Trading open - inventory is null!").
 UPDATE `releases_outgoing_headers` SET `header` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `header` IN (911, 879, 1355);
-UPDATE `releases_outgoing_headers` SET `header` = NULL, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'PET_REMOVED_FROM_INVENTORY';  -- 1355 e TradingCloseEvent; header real nao provado
+-- PET_REMOVED_FROM_INVENTORY: o 1355 e TradingCloseEvent. Real = parser de 1 Int cujo handler faz remove(petId) no mapa de pets do inventario
+-- (par do PET_ADDED: add(pet) no mesmo mapa); mesma forma do 670 de 2012-07 (md5 5abcf941...). 2011-12: _SafeStr_2607 = 1849; 2011-10: _SafeStr_2440 = 2319.
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1849,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201112130905-713192101'
+  AND `name` = 'PET_REMOVED_FROM_INVENTORY';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 2319,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'PET_REMOVED_FROM_INVENTORY';
 UPDATE `releases_outgoing_headers` SET `header` = 1198, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'GAME_2_IN_ARENA_QUEUE';
 UPDATE `releases_outgoing_headers` SET `header` = 911, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'GAME_2_USER_BLOCKED';
 UPDATE `releases_outgoing_headers` SET `header` = 17, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201112130905-713192101' AND `name` = 'GAME_2_GAME_CANCELLED';
@@ -411,3 +443,208 @@ UPDATE `releases_incoming_headers` SET `header` = 2691, `override_method` = NULL
 
 -- 6d) -- MODERATION_INIT 20120704: 3242, handler le ModeratorInitData (issues + templates) e mostra a ferramenta de moderacao.
 UPDATE `releases_outgoing_headers` SET `header` = 3242, `override_method` = NULL WHERE `release_name` = 'RELEASE63-201207040943-767851649' AND `name` = 'MODERATION_INIT';
+
+-- 6e) Correcoes de propagacao (2016->2013->2011/2012): evidencias no AS3 de cada release
+-- ROOM_OWNER = md5 e6bf0b4c... (flag owner: `owner || level >= controller`, igual a 2013). O md5 6200c929... (antigo 1318/2663/3836) e outro evento.
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3601,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'ROOM_OWNER';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3421,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201112130905-713192101'
+  AND `name` = 'ROOM_OWNER';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1843,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201204021456-654375178'
+  AND `name` = 'ROOM_OWNER';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1500,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_OWNER';
+-- PET_EXPERIENCE: md5 f3bdd4a6... continuo 2011-12 -> 2012-04 -> 2012-07 (mesmo consumidor do widget de pet: roomId, petId, tipo, amount).
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1694,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'PET_EXPERIENCE';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1125,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'PET_EXPERIENCE';
+-- GAME_2_WEEKLY_COMPETITIVE_LEADERBOARD 20120704: 4 eventos com Game2WeeklyLeaderboardParser (438/2269/2651 ja nomeados); o 2530 (_-hT) e o restante.
+UPDATE `releases_outgoing_headers`
+SET `header`          = 2530,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'GAME_2_WEEKLY_COMPETITIVE_LEADERBOARD';
+-- GROUP_ID: md5 1f05cb... (parser groupId) igual ao de 20120704 (1665); registrado no HabboGroupsManager de 2011-12 e 2012-04.
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3496,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201112130905-713192101'
+  AND `name` = 'GROUP_ID';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1243,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201204021456-654375178'
+  AND `name` = 'GROUP_ID';
+-- Lista de banidos da sala + unban (RoomSettingsCtrl 'moderation_banned_users', ROOM_UNBAN_USER) so existem a partir de 2013: ausentes em 2011-2012.
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'ROOM_BANNED_USERS';
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_BANNED_USERS';
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_USER_UNBANNED';
+-- Mystery box: nenhuma referencia no dump de 20120704 (existe so em 2013).
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'MYSTERY_BOX_CHALLENGE';
+-- ROOM_BANNED_USERS (cliente->servidor) 2011-2012: o md5 95839b... e o clique 'remover todos' (navigator.flatctrls.removeconfirm), nao a lista de banidos.
+UPDATE `releases_incoming_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201112130905-713192101'
+  AND `name` = 'ROOM_BANNED_USERS';
+UPDATE `releases_incoming_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201204021456-654375178'
+  AND `name` = 'ROOM_BANNED_USERS';
+-- INVENTORY_BOTS (servidor->cliente) 2011-10: bots so existem a partir de 2012 (sem classe de inventario de bots nos dumps de 2011-10/2011-12; confirmado pelo usuario).
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'INVENTORY_BOTS';
+
+-- 6f) Grupos e catalogo em 2011-10 (outgoing). Grupos foram redesenhados no fim de 2011: em 2011-10 ainda vale o sistema antigo.
+-- Alinhamento do bloco de registro do gerenciador de grupos 2011-10 x 2011-12 (ordem + assinatura do parser) e handlers/literais iguais:
+-- GROUP_INFO 1121 (objeto de grupo groupId/groupName, mesmos 13 campos iniciais do 1764); GROUP_MANAGE 2499 (janela edit_guild_tab_context, mesmos arrays/flags do 2528);
+-- GROUP_MEMBERS 304 (janela guild_members_item_list; lista de membros do 2314); GROUP_UPDATE_MEMBER_STATUS 1200 (handler `groupId == x.groupId; update(data)` identico ao do 1219; o `data` e exatamente a classe do ELEMENTO da lista de membros nas duas releases: 2011-10 [Int,String,Bool,Bool], 2011-12 [Int,Int,String,String,String] - mesmo evento, membro versionado por data);
+-- GROUP_MEMBER_MANAGEMENT_ERROR 3389 (alerta group.membermgmt.fail.<codigo>, igual ao 1223); GROUP_PURCHASED 3872 (mostra group_created_window, fecha a janela de criacao e manda o navegador para a sala: wire 2011-10 = [roomId Int]; 2011-12 = [roomId Int, groupId Int] - groupId e campo novo, versionar por data);
+-- CATALOG_HABBO_CLUB_PAGE 3681 (assinatura identica a do 3008: Int, lista de elementos de 10 campos).
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1121,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_INFO';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 2499,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_MANAGE';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 304,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_MEMBERS';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1200,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_UPDATE_MEMBER_STATUS';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3389,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_MEMBER_MANAGEMENT_ERROR';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3872,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'GROUP_PURCHASED';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3681,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` = 'CATALOG_HABBO_CLUB_PAGE';
+-- Sem evento correspondente em 2011-10 (ausentes tambem em 2011-12 no banco; sem assinatura/literal nos dumps de 2011-10/12):
+-- GROUP_ID (refetch de grupo, sistema novo), GROUP_FURNISHING_SETTINGS (so aparece em 2012-07), CATALOG_OFFER (2012-04), CATALOG_OFFER_CONFIGURATION (2012-07), GUIDE_TOOLS (sem literais de guia ate 2012-04), CAMPAIGN (so 2013).
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201110051250-692472661'
+  AND `name` IN ('GROUP_ID', 'GROUP_FURNISHING_SETTINGS', 'CATALOG_OFFER', 'CATALOG_OFFER_CONFIGURATION', 'GUIDE_TOOLS',
+                 'CAMPAIGN');
+
+-- 6g) 2012-07 (outgoing = servidor->cliente). Provas no AS3 do dump de 2012-07:
+-- ROOM_PET/BOT_ERROR_NOTIFICATION: handlers com switch(errorCode) que referenciam RSEME_PETS_FORBIDDEN_IN_HOTEL (1896) e RSEME_BOTS_FORBIDDEN_IN_HOTEL (408).
+-- GAME_CENTER_CAN_PLAY_GAME 3412: handler identico ao do 2424 de 2013 (gameTypeId == jogo atual; habilita/desabilita os botoes de jogar), registrado logo apos Game2AccountGameStatus.
+-- ROOM_COMPETITION 972: RoomCompetitionController trata exatamente 972, ROOM_COMPETITION_DATA (237) e GUEST_ROOM_RESULT; handler com o mesmo corpo do 2006 de 2013.
+-- REFRESH_CAMPAIGN (incoming) 1546: refresh() do widget do Hall da Fama da meta comunitaria (UserListWidget; CommunityGoalHallOfFameWidget em 2013) envia 1 String (em 2012-07 `landing.view.communitygoalhof.goalcode`; em 2013 o slot `landing.view.dynamic.slot.N.conf`, composer 573) e recebe o Hall da Fama - mesmo composer, semantica do argumento generalizada.
+-- GET_SNOWWAR_GAME_TOKENS_OFFER (incoming) 2701: composer sem parametros enviado no clique do icone de jogos do HabboGameManager (iguais 1169 em 2012-04 e 876 em 2013).
+UPDATE `releases_outgoing_headers`
+SET `header`          = 408,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_BOT_ERROR_NOTIFICATION';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 1896,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_PET_ERROR_NOTIFICATION';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 3412,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'GAME_CENTER_CAN_PLAY_GAME';
+UPDATE `releases_outgoing_headers`
+SET `header`          = 972,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'ROOM_COMPETITION';
+UPDATE `releases_incoming_headers`
+SET `header`          = 1546,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'REFRESH_CAMPAIGN';
+UPDATE `releases_incoming_headers`
+SET `header`          = 2701,
+    `override_method` = NULL
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` = 'GET_SNOWWAR_GAME_TOKENS_OFFER';
+/*
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
+ *
+ * This file is part of habbo_r63b_v2.
+ *
+ * habbo_r63b_v2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * habbo_r63b_v2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+-- Inexistentes em 2012-07 (provado no AS3): GAME_CENTER_ACHIEVEMENTS (a janela do Game Center reaproveita ACHIEVEMENT_LIST 2157; o evento proprio so em 2013), GUIDE_TOOLS (contagem de guias/ajudantes/guardioes em servico:
+-- sem registerParameter de guide.help.guide.tool.*onduty; guardioes entram no fim de 2012), TALENT_STATUS (TalentTrackController registra so TALENT_TRACK e 1 evento de grupo),
+-- LANDING_IS_BADGE_REQUEST_FULFILLED (RequestBadgeButtonElementHandler sem eventos nem pedido), CAMPAIGN (resposta do widget de meta comunitaria: so 2013).
+UPDATE `releases_outgoing_headers`
+SET `header`          = NULL,
+    `override_method` = 'DISABLED'
+WHERE `release_name` = 'RELEASE63-201207040943-767851649'
+  AND `name` IN
+      ('GAME_CENTER_ACHIEVEMENTS', 'GUIDE_TOOLS', 'TALENT_STATUS', 'LANDING_IS_BADGE_REQUEST_FULFILLED', 'CAMPAIGN');

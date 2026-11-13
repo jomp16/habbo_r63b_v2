@@ -89,7 +89,7 @@ class TradeManager(private val room: Room) {
                 if (session.isPreShuffle) {
                     session.sendHabboResponse(OutgoingR63A.TRADING_ALREADY_OPEN)
                 } else {
-                    session.sendAnyResponse(
+                    session.sendHabboResponse(
                         Outgoing.TRADING_OPEN_FAILED,
                         TradingOpenFailedResponse.TradingOpenFailedStatus.TARGET_ALREADY_TRADING,
                         target.habboSession.userInformation.username
@@ -102,6 +102,52 @@ class TradeManager(private val room: Room) {
         // Verifica se ambos estão na room
         if (initiator.room != room || target.room != room) {
             return TradeStartResult.NotInRoom
+        }
+
+        // Verifica permissões de troca da sala
+        if (room.roomData.tradeState == 0) {
+            initiator.habboSession.let { session ->
+                if (session.isPreShuffle) {
+                    session.sendResponse(Outgoing.TRADING_YOU_ARE_NOT_ALLOWED, OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
+                } else {
+                    session.sendHabboResponse(
+                        Outgoing.TRADING_OPEN_FAILED,
+                        TradingOpenFailedResponse.TradingOpenFailedStatus.ROOM_TRADING_NOT_ALLOWED,
+                        initiator.habboSession.userInformation.username
+                    )
+                }
+            }
+            return TradeStartResult.RoomTradingNotAllowed
+        }
+
+        if (!canTrade(initiator)) {
+            initiator.habboSession.let { session ->
+                if (session.isPreShuffle) {
+                    session.sendResponse(Outgoing.TRADING_YOU_ARE_NOT_ALLOWED, OutgoingR63A.TRADING_YOU_ARE_NOT_ALLOWED)
+                } else {
+                    session.sendHabboResponse(
+                        Outgoing.TRADING_OPEN_FAILED,
+                        TradingOpenFailedResponse.TradingOpenFailedStatus.YOU_TRADING_OFF,
+                        initiator.habboSession.userInformation.username
+                    )
+                }
+            }
+            return TradeStartResult.YouNotAllowed
+        }
+
+        if (!canTrade(target)) {
+            initiator.habboSession.let { session ->
+                if (session.isPreShuffle) {
+                    session.sendResponse(Outgoing.TRADING_OTHER_NOT_ALLOWED, OutgoingR63A.TRADING_OTHER_NOT_ALLOWED)
+                } else {
+                    session.sendHabboResponse(
+                        Outgoing.TRADING_OPEN_FAILED,
+                        TradingOpenFailedResponse.TradingOpenFailedStatus.TARGET_TRADING_NOT_ALLOWED,
+                        target.habboSession.userInformation.username
+                    )
+                }
+            }
+            return TradeStartResult.TargetNotAllowed
         }
 
         // Determina usuário 1 e 2 baseado no menor virtualID (para consistência)
@@ -211,16 +257,12 @@ class TradeManager(private val room: Room) {
      * Aqui você pode adicionar verificações de mute, ban, etc.
      */
     private fun canTrade(roomUser: RoomUser): Boolean {
-        // Verificações básicas:
-        // - Usuário não está mute
-        // - Usuário não está ban
-        // - Usuário tem inventário carregado
-
         val session = roomUser.habboSession
-
-        return session.authenticated &&
-                session.habboInventory.items.isNotEmpty()
-        // Adicione mais verificações conforme necessário
+        return session.authenticated && when (room.roomData.tradeState) {
+            0 -> false
+            1 -> room.userManager.hasRights(roomUser)
+            else -> true
+        }
     }
 
     /**
@@ -249,5 +291,8 @@ sealed class TradeStartResult {
     object AlreadyInTrade : TradeStartResult()
     object TargetAlreadyInTrade : TradeStartResult()
     object NotInRoom : TradeStartResult()
+    object RoomTradingNotAllowed : TradeStartResult()
+    object YouNotAllowed : TradeStartResult()
+    object TargetNotAllowed : TradeStartResult()
     data class Success(val trade: Trade) : TradeStartResult()
 }

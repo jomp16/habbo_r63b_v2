@@ -22,28 +22,35 @@ package ovh.rwx.habbo.communication.incoming.room
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
+import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
+import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomDecorationData
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.user.HabboSession
+import kotlin.math.abs
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomApplyDecorationHandler {
     @Handler(Incoming.ROOM_APPLY_DECORATION)
+    @HandlerR63A(IncomingR63A.ROOM_APPLY_DECORATION)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        if (habboSession.currentRoom == null) return
-        val itemId = habboRequest.readInt()
+        val room = habboSession.currentRoom ?: return
+        if (!room.userManager.hasRights(habboSession, ownerRight = true)) return
+
+        val itemId = abs(habboRequest.readInt())
         val userItem = habboSession.habboInventory.items[itemId] ?: return
 
-        if (userItem.furnishing.interactionType != InteractionType.ROOM_EFFECT && (userItem.furnishing.itemName != "floor" || userItem.furnishing.itemName != "wallpaper" || userItem.furnishing.itemName != "landscape")) return
+        if (userItem.furnishing.interactionType != InteractionType.ROOM_EFFECT) return
+
         val key = userItem.furnishing.itemName
         val value = userItem.extraData
 
         when (key) {
             "floor" -> {
-                habboSession.currentRoom?.roomData?.floor = value
+                room.roomData.floor = value
                 // ACH_RoomDecoFloor: mudar piso
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
@@ -54,7 +61,7 @@ class RoomApplyDecorationHandler {
             }
 
             "wallpaper" -> {
-                habboSession.currentRoom?.roomData?.wallpaper = value
+                room.roomData.wallpaper = value
                 // ACH_RoomDecoWallpaper: mudar papel de parede
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
@@ -65,7 +72,7 @@ class RoomApplyDecorationHandler {
             }
 
             "landscape" -> {
-                habboSession.currentRoom?.roomData?.landscape = value
+                room.roomData.landscape = value
                 // ACH_RoomDecoLandscape: mudar fundo
                 HabboServer.habboGame.achievementManager.progress(
                     habboSession,
@@ -74,11 +81,13 @@ class RoomApplyDecorationHandler {
                     accumulate = true
                 )
             }
+
+            else -> return
         }
 
-        habboSession.currentRoom?.roomData?.markDirty()
+        room.roomData.markDirty()
 
-        habboSession.currentRoom?.sendResponse(
+        room.sendResponse(
             Outgoing.ROOM_DECORATION,
             OutgoingR63A.ROOM_DECORATION,
             RoomDecorationData(key, value)

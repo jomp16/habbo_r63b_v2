@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 #
+# Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
+#
+# This file is part of habbo_r63b_v2.
+#
+# habbo_r63b_v2 is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# habbo_r63b_v2 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with habbo_r63b_v2. If not, see <http://www.gnu.org/licenses/>.
+#
+
+#
 # deploy.sh — Compila localmente e publica o Habbo Emulator no servidor de produção.
 #
 # Uso:
@@ -8,6 +27,7 @@
 #   ./scripts/deploy.sh --sync-camera    # Sincroniza também a pasta camera_data/ (1.5 GB)
 #   ./scripts/deploy.sh --restart-only   # Apenas reinicia o serviço remoto
 #   ./scripts/deploy.sh --status         # Verifica o status e logs recentes do emulador remoto
+#   ./scripts/deploy.sh --tail [N]       # Acompanha logs do emulador em tempo real (ou --status --tail)
 #
 set -euo pipefail
 
@@ -50,6 +70,8 @@ SKIP_BUILD=0
 SYNC_CAMERA=0
 RESTART_ONLY=0
 CHECK_STATUS=0
+TAIL_LOGS=0
+TAIL_LINES=50
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -57,6 +79,19 @@ while [[ $# -gt 0 ]]; do
     --sync-camera)  SYNC_CAMERA=1; shift ;;
     --restart-only) RESTART_ONLY=1; shift ;;
     --status)       CHECK_STATUS=1; shift ;;
+    --tail=*|--lines=*)
+      TAIL_LOGS=1
+      TAIL_LINES="${1#*=}"
+      shift
+      ;;
+    --tail|-t|-f|--follow)
+      TAIL_LOGS=1
+      if [[ $# -gt 1 ]] && [[ "$2" =~ ^[0-9]+$ ]]; then
+        TAIL_LINES="$2"
+        shift
+      fi
+      shift
+      ;;
     -h|--help)
       cat <<EOF
 Uso: $0 [opções]
@@ -66,6 +101,7 @@ Opções:
   --sync-camera    Sincroniza camera_data/ (assets do renderizador) para o HDD remoto
   --restart-only   Apenas reinicia o serviço habbo remoto
   --status         Mostra status e logs recentes do emulador no servidor
+  --tail [N]       Acompanha os logs em tempo real (journalctl -f, default: 50 linhas)
 EOF
       exit 0
       ;;
@@ -76,15 +112,31 @@ EOF
   esac
 done
 
+SSH_INTERACTIVE_FLAG=""
+if [[ -t 0 ]]; then
+  SSH_INTERACTIVE_FLAG="-t"
+fi
+
 # -------------------------------------------------------------
-# Status check
+# Status check & log tailing
 # -------------------------------------------------------------
 if [[ $CHECK_STATUS -eq 1 ]]; then
   echo "== Status do serviço remoto $SERVICE_NAME =="
   ssh "$SSH_TARGET" "systemctl status $SERVICE_NAME --no-pager -l" || true
   echo ""
-  echo "== Últimas 30 linhas do log =="
-  ssh "$SSH_TARGET" "journalctl -u $SERVICE_NAME -n 30 --no-pager" || true
+  if [[ $TAIL_LOGS -eq 1 ]]; then
+    echo "== Acompanhando logs em tempo real ($SERVICE_NAME, últimas $TAIL_LINES linhas) [Ctrl+C para sair] =="
+    ssh $SSH_INTERACTIVE_FLAG "$SSH_TARGET" "journalctl -u $SERVICE_NAME -f -n $TAIL_LINES" || true
+  else
+    echo "== Últimas 30 linhas do log (use --tail para acompanhar em tempo real) =="
+    ssh "$SSH_TARGET" "journalctl -u $SERVICE_NAME -n 30 --no-pager" || true
+  fi
+  exit 0
+fi
+
+if [[ $TAIL_LOGS -eq 1 ]]; then
+  echo "== Acompanhando logs em tempo real ($SERVICE_NAME, últimas $TAIL_LINES linhas) [Ctrl+C para sair] =="
+  ssh $SSH_INTERACTIVE_FLAG "$SSH_TARGET" "journalctl -u $SERVICE_NAME -f -n $TAIL_LINES" || true
   exit 0
 fi
 

@@ -20,10 +20,7 @@
 package ovh.rwx.habbo.game.catalog
 
 import ovh.rwx.habbo.HabboServer
-import ovh.rwx.habbo.communication.HabboResponse
-import ovh.rwx.habbo.communication.IHabboResponseSerialize
-import ovh.rwx.habbo.communication.isVersionAtLeast
-import ovh.rwx.habbo.communication.isVersionBefore
+import ovh.rwx.habbo.communication.*
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.ItemType
 import ovh.rwx.habbo.util.ActivityPointType
@@ -60,7 +57,9 @@ data class CatalogItem(
         habboResponse.apply {
             writeInt(id) // offerId
             writeUTF(if (catalogName.isNotBlank() || dealId > 0) catalogName else furnishing.itemName) // localizationId
-            writeBoolean(false) // isRent
+            if (isVersionAtLeast(2013, 2, 26)) {
+                writeBoolean(false) // isRent
+            }
             writeInt(costCredits) // priceInCredits
             writeInt(costPixels) // priceInActivityPoints
             writeInt(if (costVip > 0) ActivityPointType.DIAMONDS.code else ActivityPointType.PIXELS.code) // activityPointType
@@ -156,6 +155,9 @@ data class CatalogItem(
                     )[2] else ""
                 ) // extraParam
                 writeInt(amount) // productCount
+                if (isVersionBetween(2012, 3, 20, 2013, 1, 30)) {
+                    writeInt(-1) // expiration
+                }
                 writeBoolean(limited) // isUnique (limited)
 
                 if (limited) {

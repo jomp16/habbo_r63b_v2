@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -23,6 +23,8 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.incoming.group.GroupMembersHandler
+import ovh.rwx.habbo.communication.isVersionAtLeast
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.group.Group
 
@@ -35,6 +37,25 @@ class GroupMembersResponse {
         val chunkedMembers = members.chunked(membersPerPage)
 
         habboResponse.apply {
+            // layout antigo ate 2011-11-03 (AS3 RELEASE63-201110051250, md5 b7cd21f5): sem sala, badge, paginacao nem pendentes;
+            // membro = [userId, nome, admin, dono]
+            if (isVersionBefore(2011, 11, 3)) {
+                val accepted = members.filter { it.rank != 3 }
+
+                writeInt(group.groupData.id)
+                writeUTF(group.groupData.name)
+                writeInt(accepted.size)
+
+                accepted.forEach {
+                    writeInt(it.userId)
+                    writeUTF(it.userName)
+                    writeBoolean(it.rank == 1)
+                    writeBoolean(it.rank == 2)
+                }
+
+                return@apply
+            }
+
             writeInt(group.groupData.id)
             writeUTF(group.groupData.name)
             writeInt(group.groupData.roomId)
@@ -53,7 +74,11 @@ class GroupMembersResponse {
                         writeInt(groupMemberInfo.userId)
                         writeUTF(groupMemberInfo.userName)
                         writeUTF(groupMemberInfo.figure)
-                        writeUTF(groupMemberInfo.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
+
+                        // data de entrada do membro: desde 2011-11-07 (md5 ad34b5ea; 201111031102 ainda tem [Int, Int, String, String])
+                        if (isVersionAtLeast(2011, 11, 7)) {
+                            writeUTF(groupMemberInfo.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
+                        }
                     }
                 }
             }

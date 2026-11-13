@@ -117,4 +117,21 @@ object Utils {
             return jacksonObjectMapper().readValue(it)
         }
     }
+
+    fun isTestEnvironment(): Boolean {
+        if (System.getProperty("habbo.allow.test.server") == "true") return false
+        if (System.getProperty("org.gradle.test.worker") != null) return true
+        if (System.getProperty("idea.test.cyclic.buffer.size") != null) return true
+        return Thread.getAllStackTraces().values.any { stackTrace ->
+            stackTrace.any { frame ->
+                val c = frame.className
+                c.startsWith("org.junit.") ||
+                        c.startsWith("org.testng.") ||
+                        c.startsWith("com.intellij.rt.junit.") ||
+                        c.startsWith("com.intellij.rt.execution.junit.") ||
+                        c.startsWith("org.gradle.api.internal.tasks.testing.")
+            }
+        }
+    }
 }
+

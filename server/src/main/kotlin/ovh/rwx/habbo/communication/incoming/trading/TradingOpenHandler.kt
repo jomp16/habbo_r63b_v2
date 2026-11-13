@@ -24,7 +24,6 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.game.room.trading.TradeStartResult
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.HabboSession
 
@@ -36,28 +35,13 @@ class TradingOpenHandler {
         val room = habboSession.currentRoom ?: return
         val roomUser = habboSession.roomUser ?: return
 
-        val userId = habboRequest.readInt()
+        val targetVirtualId = habboRequest.readInt()
 
-        if (userId == habboSession.userInformation.id) {
-            return
-        }
+        if (targetVirtualId == roomUser.virtualID) return
 
-        val targetUser = room.userManager.entities[userId] as? RoomUser ?: return
+        val targetUser = room.userManager.entities[targetVirtualId] as? RoomUser ?: return
+        if (targetUser.habboSession.userInformation.id == habboSession.userInformation.id) return
 
-        val result = room.tradeManager.startTrade(roomUser, targetUser)
-
-        when (result) {
-            is TradeStartResult.AlreadyInTrade -> {
-            }
-
-            is TradeStartResult.TargetAlreadyInTrade -> {
-            }
-
-            is TradeStartResult.NotInRoom -> {
-            }
-
-            is TradeStartResult.Success -> {
-            }
-        }
+        room.tradeManager.startTrade(roomUser, targetUser)
     }
 }

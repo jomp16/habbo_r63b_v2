@@ -33,22 +33,22 @@ import kotlin.math.abs
 @Suppress("unused")
 class TradingAddItemHandler {
     @Handler(Incoming.TRADING_ADD_ITEM)
+    @HandlerR63A(IncomingR63A.TRADING_ADD_ITEM)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val room = habboSession.currentRoom ?: return
         val roomUser = habboSession.roomUser ?: return
 
         val itemId = habboRequest.readInt()
 
-
         val trade = room.tradeManager.getTrade(roomUser)
         if (trade == null) {
-            habboSession.sendHabboResponse(Outgoing.TRADING_NOT_OPEN)
+            habboSession.sendResponse(Outgoing.TRADING_NOT_OPEN, OutgoingR63A.TRADING_NOT_OPEN)
             return
         }
 
         val item = habboSession.habboInventory.items[abs(itemId)]
         if (item == null) {
-//            habboSession.sendHabboResponse(Outgoing.TRADING_NO_SUCH_ITEM)
+            habboSession.sendResponse(null, OutgoingR63A.TRADING_NO_SUCH_ITEM)
             return
         }
 
@@ -59,67 +59,21 @@ class TradingAddItemHandler {
             }
 
             is AddItemResult.NotOpen -> {
-                habboSession.sendHabboResponse(Outgoing.TRADING_NOT_OPEN)
+                habboSession.sendResponse(Outgoing.TRADING_NOT_OPEN, OutgoingR63A.TRADING_NOT_OPEN)
             }
 
             is AddItemResult.AlreadyInTrade -> {
             }
 
             is AddItemResult.ItemNotOwned -> {
-//                habboSession.sendHabboResponse(Outgoing.TRADING_NO_SUCH_ITEM)
+                habboSession.sendResponse(null, OutgoingR63A.TRADING_NO_SUCH_ITEM)
             }
 
             is AddItemResult.ItemLocked -> {
             }
 
             is AddItemResult.NotTradable -> {
-//                habboSession.sendHabboResponse(Outgoing.TRADING_NO_SUCH_ITEM)
-            }
-        }
-    }
-
-    @HandlerR63A(IncomingR63A.TRADING_ADD_ITEM)
-    fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val room = habboSession.currentRoom ?: return
-        val roomUser = habboSession.roomUser ?: return
-
-        val itemId = habboRequest.readInt()
-
-
-        val trade = room.tradeManager.getTrade(roomUser)
-        if (trade == null) {
-            habboSession.sendHabboResponse(OutgoingR63A.TRADING_NOT_OPEN)
-            return
-        }
-
-        val item = habboSession.habboInventory.items[itemId]
-        if (item == null) {
-            habboSession.sendHabboResponse(OutgoingR63A.TRADING_NO_SUCH_ITEM)
-            return
-        }
-
-        val result = trade.addItem(roomUser, item)
-
-        when (result) {
-            is AddItemResult.Success -> {
-            }
-
-            is AddItemResult.NotOpen -> {
-                habboSession.sendHabboResponse(OutgoingR63A.TRADING_NOT_OPEN)
-            }
-
-            is AddItemResult.AlreadyInTrade -> {
-            }
-
-            is AddItemResult.ItemNotOwned -> {
-                habboSession.sendHabboResponse(OutgoingR63A.TRADING_NO_SUCH_ITEM)
-            }
-
-            is AddItemResult.ItemLocked -> {
-            }
-
-            is AddItemResult.NotTradable -> {
-                habboSession.sendHabboResponse(OutgoingR63A.TRADING_NO_SUCH_ITEM)
+                habboSession.sendResponse(null, OutgoingR63A.TRADING_NO_SUCH_ITEM)
             }
         }
     }

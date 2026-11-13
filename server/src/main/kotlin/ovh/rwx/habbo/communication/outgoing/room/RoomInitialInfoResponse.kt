@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.room
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
 import ovh.rwx.habbo.communication.ResponseR63A
+import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 
@@ -42,7 +43,11 @@ class RoomInitialInfoResponse {
     @ResponseR63A(OutgoingR63A.ROOM_INITIAL_INFO)
     fun response(habboResponse: HabboResponse, data: RoomInitialInfoData) {
         habboResponse.apply {
-            val modelStr = if (outgoingR63A != null) {
+            // Até 24/04/2013 (RELEASE63-201304241145), RoomReadyMessageParser no Flash AS3 checava:
+            // if (roomType.indexOf("model_") < 0) roomCategory = 1 (quarto público).
+            // A ausência do prefixo "model_" fazia o Flash classificar o quarto privado como público,
+            // disparando o alerta do Recycler ("recycler.alert.privateroom") ao trocar de sala.
+            val modelStr = if (isVersionBefore(2013, 4, 24)) {
                 if (data.modelName.startsWith("model_")) data.modelName else "model_${data.modelName}"
             } else {
                 data.modelName

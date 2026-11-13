@@ -44,6 +44,7 @@ import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.database.writebehind.WriteKey
 import ovh.rwx.habbo.encryption.IHabboEncryption
+import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.habbicon.HabboHabbicon
 import ovh.rwx.habbo.game.misc.NotificationType
 import ovh.rwx.habbo.game.room.Room
@@ -59,6 +60,8 @@ import ovh.rwx.habbo.game.user.subscription.HabboSubscription
 import ovh.rwx.habbo.kotlin.ip
 import ovh.rwx.habbo.plugin.event.events.user.UserDisconnectEvent
 import ovh.rwx.habbo.plugin.event.events.user.UserLoginEvent
+import ovh.rwx.habbo.util.Utils
+import java.lang.Runnable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -100,7 +103,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     lateinit var habboHabbicon: HabboHabbicon
         internal set
     val rooms: List<Room>
-        get() = HabboServer.habboGame.roomManager.ownedBy(userInformation.id)
+        get() {
+            val roomManager = HabboGame.instance?.roomManager
+                ?: if (Utils.isTestEnvironment()) null else HabboServer.habboGame.roomManager
+            return roomManager?.ownedBy(userInformation.id) ?: emptyList()
+        }
     lateinit var favoritesRooms: MutableList<Pair<Int, Int>>
         internal set
     val scriptEngine: ScriptEngine by lazy { ScriptEngineManager().getEngineByName("JavaScript") }
@@ -138,7 +145,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun sendHabboResponse(outgoing: Outgoing, vararg args: Any?) {
         if (!isPreShuffle) {
-            HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
+            val handler = HabboGame.instance?.habboHandler
+                ?: if (Utils.isTestEnvironment()) null else HabboServer.habboHandler
+            handler?.invokeResponse(this@HabboSession, outgoing, *args)?.let {
                 sendHabboResponse(it)
             }
         } else {
@@ -148,7 +157,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     fun sendHabboResponse(outgoing: OutgoingR63A, vararg args: Any?) {
         if (isPreShuffle) {
-            HabboServer.habboHandler.invokeResponse(this@HabboSession, outgoing, *args)?.let {
+            val handler = HabboGame.instance?.habboHandler
+                ?: if (Utils.isTestEnvironment()) null else HabboServer.habboHandler
+            handler?.invokeResponse(this@HabboSession, outgoing, *args)?.let {
                 sendHabboResponse(it)
             }
         } else {
@@ -250,12 +261,19 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         sendHabboResponse(OutgoingR63A.MISC_USER_NOTIFICATION, title, message, parameters)
     }
 
-    fun hasPermission(permission: String) =
-        if (HabboServer.habboGame.permissionManager.userHasCustomPermission(userInformation.id)) HabboServer.habboGame.permissionManager.userHasPermission(
-            userInformation.id,
-            permission
-        )
-        else HabboServer.habboGame.permissionManager.rankHasPermission(userInformation.rank, permission)
+    fun hasPermission(permission: String): Boolean {
+        val permManager = HabboGame.instance?.permissionManager
+            ?: if (Utils.isTestEnvironment()) null else HabboServer.habboGame.permissionManager
+        return when {
+            permManager == null -> false
+            permManager.userHasCustomPermission(userInformation.id) -> permManager.userHasPermission(
+                userInformation.id,
+                permission
+            )
+
+            else -> permManager.rankHasPermission(userInformation.rank, permission)
+        }
+    }
 
     internal fun authenticate(ssoTicket: String): Boolean {
         val botPrefix = HabboServer.habboConfig.botTicketPrefix
@@ -286,7 +304,9 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             val favorites = async { RoomDao.getFavoritesRooms(userId).toMutableList() }
             val clothings = async { userInformation1.clothings }
             // o handler do SSO lê a assinatura (BUILDERS_SUBSCRIPTION_STATUS) logo em seguida: aquece aqui, em paralelo
-            val subscription = async { habboSubscription.buildersClubSubscription }
+            // a assinatura HC precisa estar carregada antes de responder: clientes 2011 pedem o status do clube
+            // (SUBSCRIPTION_STATUS) e leem USER_RIGHTS logo no login; um load() assíncrono respondia "0 dias" ("Seja HC")
+            val subscription = async { habboSubscription.load() }
             clothings.await()
             subscription.await()
             Triple(stats.await(), preferences.await(), favorites.await())
@@ -306,7 +326,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         habboHabbicon = HabboHabbicon(this@HabboSession)
 
         sessionScope.launch {
-            launch { habboSubscription.load() }
             launch { habboBadge.load() }
             launch { habboMessenger.load() }
             launch { habboHabbicon.load() }

@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.item.logic
 
+import ovh.rwx.habbo.game.item.FurniCategory
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.LimitedItemData
@@ -61,6 +62,11 @@ abstract class FurnitureLogic {
      * ocupação temporária, etc.) para o estado estável/inicial de persistência.
      */
     open fun sanitizeForDatabase(extraData: String): String = extraData
+
+    /**
+     * Categoria da mobília no inventário (com.sulake.habbo.inventory.enum.FurniCategory).
+     */
+    open fun getFurniCategory(furnishing: Furnishing): FurniCategory = FurniCategory.DEFAULT
 
     companion object {
         // Formato interno do servidor para extraData multi-campo no banco.

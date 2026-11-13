@@ -34,32 +34,49 @@ Inverter isso faz um header colidir com outro pacote real na mesma tabela
 (unique key `(release_name, header)`). O `HeaderMapper` do patcher e o
 `release.sh search-class` usam essa convenção — é a prova de verdade.
 
-## Fase 1 — RE no AS3 (estrutura dos pacotes)
+## Fase 1 — RE no AS3 (estrutura dos pacotes de maneira rápida e direta)
 
-1. **Estrutura e Nomes com `habbo-timeline` (Recomendado)**:
-   Execute o `habbo-timeline` para o evento/composer alvo:
+### ⚠️ Regras Anti-Desvio
+
+1. **NUNCA use scripts Python com `re.DOTALL` sobre `Habbo_codigo_completo.txt`**: O arquivo tem 30 MB+. Use sempre
+   **ripgrep (`rg`)** no terminal.
+2. **Direções no `Messages.txt`**:
+    - `Outgoing[header, md5]` no Flash = **`releases_incoming_headers`** no emulador.
+    - `Incoming[header, md5]` no Flash = **`releases_outgoing_headers`** no emulador.
+3. **Índices Hexadecimais**: Compiladores Flash exportam índices em hex (ex: `[0x0600] = 1536`). Busque sempre com
+   `\[(0x[0-9a-fA-F]+|\d+)\]\s*=\s*<Classe>;`.
+
+### Pipeline Rápido de RE
+
+1. **Histórico e Tipos com `habbo-timeline` (Recomendado)**:
    ```bash
-   habbo-timeline NomeDoMessageEvent
-   # ou
-   habbo-timeline NomeDoMessageComposer
+   habbo-timeline NomeDoMessageEvent # ou NomeDoMessageComposer
    ```
-   Isso extrai a sequência de tipos (`Int`, `String`, `Boolean`, `Long`), desofusca os nomes reais de variáveis analisando getters, logs e construtores DTOs, mapeia delegações (ex: `ItemDataParser`, `parseObjectData`) e gera o esqueleto de código Kotlin pronto.
-
-2. **Inspeção no AS3 decompilado (`HabboAir.cracked_scripts.txt` ou `habbo-timeline inspect`)**:
-   - **Events** (server→client): classe do evento `extends MessageEvent` → parser `IMessageParser`.
-     A ordem dos `read*` no `parse()` = ordem no wire. Getters do parser = nomes dos campos.
-   - **Composers** (client→server): `implements IMessageComposer`; os `push()` do construtor
-     = campos que o **handler do emulador lê, nessa ordem**. `new _SafeStr_XXXX(a, b, c)`
-     no código de uso do client mostra o significado de cada argumento.
-3. Ache quem **envia** e quem **escuta** cada mensagem (ex: `WiredChestController` registra
-   os events e dispara os composers) — isso define o fluxo da feature, não só os pacotes.
-4. Dados derivados do **modelo do objeto** (ex: `object.getModel().getNumber("furniture_...")`)
-   indicam chaves que o servidor precisa mandar dentro do stuff data / serialização do item.
-5. Constantes do parser (ex: `SUCCESS = 0`) mapeiam os result codes que o emulador devolve.
-6. External texts (`wiredchests.*`, `notification.*`) revelam regras de negócio, limites e
-   códigos de erro nomeados (`wiredchests.upgrade.result.error.N`).
-7. **Defaults reais no AS3**: Para novos campos persistíveis, inspecione a declaração dos atributos privados da classe DTO no AS3 (`private var _field:Type = default;`). Mocks estáticos em handlers/responses antigos não representam o default real do protocolo.
-8. **Mapeamento de UI e Inversões**: Inspecione o controller de interface correspondente (`*Ctrl.as`). Verifique se checkboxes têm prefixo negativo (`_doNot...`, `_disable...`) que invertem o valor na atribuição do composer (`data.featureEnabled = !checkBox.isSelected`). Garanta que o default adotado na migration preserve o comportamento histórico esperado do Habbo.
+   Extrai sequência de tipos (`Int`, `String`, `Boolean`), nomes reais de variáveis por getters/logs e gera o esqueleto
+   Kotlin pronto com `isVersionAtLeast`.
+2. **Era Pré-Shuffle (2009 R34 a 2011 R63A)**:
+    - Em qualquer release pré-shuffle:
+      `rg "^Outgoing\[<HEADER_ESTATICO>," /mnt/DADOS/Downloads/Habbo/dumps_repo/releases/<RELEASE_PRE_SHUFFLE>/Messages.txt`.
+    - No source limpo de 2011:
+      `rg "\[<HEADER_ESTATICO>\]\s*=" /home/jomp16/Downloads/Habbo/RELEASE63-35255-34886-201108111108/src/com/sulake/habbo/communication/HabboMessages.as`.
+3. **Busca Rápida por Âncoras no `Habbo_codigo_completo.txt`**:
+    - **Trading**: `rg "inventory.trading.warning.others_account_disabled"` → entrega o package com todos os 8 pacotes
+      de trocas.
+    - **Interatores**: `rg "ROFCAE_DICE_OFF"` → entrega `useObject` no `RoomEngine` com Dados, Roda, Porta e Stickie.
+    - **Resgate de Câmbios**: `rg "RWFCRM_REDEEM"` → entrega `CreditFurniRedeemMessageComposer`.
+    - **Moderação e Pets**: `rg "function assignRights"` → entrega `RoomSession` com ban, mute, rights, pet pickup e
+      câmbios contíguos.
+    - **Deletar Quarto**: `rg "deleteroom.confirm.message"` → entrega `DeleteRoomMessageComposer` em `RoomSettingsCtrl`.
+4. **Verificação de Disponibilidade Histórica**:
+    - Nunca assuma que uma feature sempre existiu. Se um recurso (ex: `DROP_HANDITEM`, `SIT`, `Habbicons`, `Chests`) não
+      existia na release alvo (ex: 2011), registre como `NULL, override_method = 'DISABLED'` na migration.
+5. **Defaults reais no AS3**: Para novos campos persistíveis, inspecione a declaração dos atributos privados da classe
+   DTO no AS3 (`private var _field:Type = default;`). Mocks estáticos antigos não representam o default real do
+   protocolo.
+6. **Mapeamento de UI e Inversões**: Inspecione o controller de interface correspondente (`*Ctrl.as`). Verifique se
+   checkboxes têm prefixo negativo (`_doNot...`, `_disable...`) que invertem o valor na atribuição do composer
+   (`data.featureEnabled = !checkBox.isSelected`). Garanta que o default adotado na migration preserve o comportamento
+   histórico esperado do Habbo.
 
 ## Fase 2 — Headers multi-release
 

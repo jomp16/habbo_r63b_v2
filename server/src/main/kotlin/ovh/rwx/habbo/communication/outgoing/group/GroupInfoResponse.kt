@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -22,6 +22,7 @@ package ovh.rwx.habbo.communication.outgoing.group
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.Response
+import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.game.group.Group
 
@@ -42,13 +43,32 @@ class GroupInfoResponse {
             writeInt(group.members.size)
             writeBoolean(favoriteGroup)
             writeUTF(group.groupData.createdAt.format(HabboServer.DATE_TIME_FORMATTER_ONLY_DAYS))
-            writeBoolean(userId == group.groupData.ownerId) // is owner
-            writeBoolean(false) // todo: is admin
+            val isOwner = userId == group.groupData.ownerId
+
+            // flag de dono nasce em 2011-10-11; antes (AS3 RELEASE63-201110051250, 15 campos) so existe o de admin,
+            // e o dono e admin
+            if (isVersionAtLeast(2011, 10, 11)) {
+                writeBoolean(isOwner) // is owner
+                writeBoolean(false) // todo: is admin
+            } else {
+                writeBoolean(isOwner) // is admin
+            }
+
             writeUTF(group.groupData.ownerName)
             writeBoolean(newWindow)
-            writeBoolean(group.groupData.onlyAdminCanDecorateRoom)
-            writeInt(0) // todo: requests
-            writeBoolean(false) // todo: group forum
+
+            // campos acrescentados ao fim (habbo-timeline): membersCanDecorate 2011-10-27, requests 2011-11-07, forum 2014-02-20
+            if (isVersionAtLeast(2011, 10, 27)) {
+                writeBoolean(group.groupData.onlyAdminCanDecorateRoom)
+            }
+
+            if (isVersionAtLeast(2011, 11, 7)) {
+                writeInt(0) // todo: requests
+            }
+
+            if (isVersionAtLeast(2014, 2, 20)) {
+                writeBoolean(false) // todo: group forum
+            }
         }
     }
 }

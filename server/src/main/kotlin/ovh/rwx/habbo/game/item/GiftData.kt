@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 jomp16 <root@rwx.ovh>
+ * Copyright (C) 2015-2026 jomp16 <root@rwx.ovh>
  *
  * This file is part of habbo_r63b_v2.
  *
@@ -19,7 +19,7 @@
 
 package ovh.rwx.habbo.game.item
 
-import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.HabboGame
 
 data class GiftData(
         val id: Int,
@@ -29,5 +29,5 @@ data class GiftData(
         val limited: Boolean
 ) {
     val furnishing: Furnishing
-        get() = HabboServer.habboGame.itemManager.furnishings[itemName]!!
+        get() = HabboGame.instance!!.itemManager.furnishings[itemName]!!
 }

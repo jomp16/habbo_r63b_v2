@@ -19,18 +19,20 @@
 
 package ovh.rwx.habbo.game.item.logic
 
+import ovh.rwx.habbo.game.item.FurniCategory
 import ovh.rwx.habbo.game.item.Furnishing
 import ovh.rwx.habbo.game.item.InteractionType
 import ovh.rwx.habbo.game.item.LimitedItemData
 import ovh.rwx.habbo.game.item.stuff.LegacyStuffData
 import ovh.rwx.habbo.game.item.stuff.StuffData
+import ovh.rwx.habbo.game.user.HabboSession
 
 /**
- * Espelho de FurnitureInternalLinkLogic + papéis de parede:
- * o roomExtra carrega o paperId (2 = wallpaper, 3 = floor, 4 = landscape).
+ * Espelho de FurnitureInternalLinkLogic + papéis de parede/piso/fundo:
+ * o roomExtra carrega o paperId/categoria (2 = wallpaper, 3 = floor, 4 = landscape).
  */
 class WallpaperFurnitureLogic : FurnitureLogic() {
-    override val interactionTypes: List<InteractionType> = emptyList()
+    override val interactionTypes: List<InteractionType> = listOf(InteractionType.ROOM_EFFECT)
     override val itemNames: List<String> = listOf("wallpaper", "floor", "landscape")
 
     override fun parseStuffData(
@@ -39,13 +41,29 @@ class WallpaperFurnitureLogic : FurnitureLogic() {
         limitedItemData: LimitedItemData?,
         magicRemove: Boolean
     ): StuffData {
-        val roomExtra = when (furnishing.itemName) {
-            "wallpaper" -> 2
-            "floor" -> 3
-            "landscape" -> 4
-            else -> 0
-        }
-
+        val roomExtra = getFurniCategory(furnishing).id
         return LegacyStuffData(extraData, roomExtra)
+    }
+
+    override fun correctCatalogExtraData(
+        habboSession: HabboSession,
+        extraData: String,
+        furnishing: Furnishing
+    ): String =
+        extraData.toDoubleOrNull()?.let { extraData.trim() } ?: "0"
+
+    override fun sanitizeForDatabase(extraData: String): String =
+        extraData.toDoubleOrNull()?.let { extraData.trim() } ?: "0"
+
+    override fun getFurniCategory(furnishing: Furnishing): FurniCategory = when (furnishing.itemName) {
+        "wallpaper" -> FurniCategory.WALL_PAPER
+        "floor" -> FurniCategory.FLOOR
+        "landscape" -> FurniCategory.LANDSCAPE
+        else -> when {
+            furnishing.itemName.contains("a1") -> FurniCategory.WALL_PAPER
+            furnishing.itemName.contains("a2") -> FurniCategory.FLOOR
+            furnishing.itemName.contains("landscape") -> FurniCategory.LANDSCAPE
+            else -> FurniCategory.DEFAULT
+        }
     }
 }

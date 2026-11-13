@@ -34,7 +34,6 @@ class TradingUnacceptHandler {
         val room = habboSession.currentRoom ?: return
         val roomUser = habboSession.roomUser ?: return
 
-
         val trade = room.tradeManager.getTrade(roomUser) ?: return
 
         trade.unacceptTrade(roomUser)
