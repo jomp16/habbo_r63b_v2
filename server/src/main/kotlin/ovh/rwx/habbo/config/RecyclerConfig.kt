@@ -19,13 +19,14 @@
 
 package ovh.rwx.habbo.config
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+/** Os slots não ficam aqui: vêm do `external_variables` (`RecyclerSettings`); um `slots` antigo no YAML é ignorado. */
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class RecyclerConfig(
         @param:JsonProperty("open", required = true)
         val open: Boolean,
-        @param:JsonProperty("slots", required = true)
-        val slots: Int,
         @param:JsonProperty("odds", required = true)
         val odds: Map<Int, Int>,
         @param:JsonProperty("gift_box", required = true)

@@ -133,6 +133,7 @@ class HabboHandler {
     // ---------------------------------------------------------------- load
 
     private fun buildSnapshot(): Snapshot {
+        val t0 = System.nanoTime()
         val headers = ReleaseDao.getHeaders().groupBy { it.type }
         val incoming = headers[ReleaseType.INCOMING] ?: error("Couldn't find the incoming headers!")
         val outgoing = headers[ReleaseType.OUTGOING] ?: error("Couldn't find the outgoing headers!")
@@ -143,6 +144,7 @@ class HabboHandler {
         val outgoingHeadersR63A = outgoing.filter { it.release == R63A_RELEASE }
 
         val releases: Set<String> = HashSet(ReleaseDao.getReleases())
+        val t1 = System.nanoTime()
 
         val incomingNames = HashMap<String, List<Pair<Int, Incoming>>>()
         val outgoingNames = HashMap<String, List<Pair<Int, Outgoing>>>()
@@ -161,7 +163,12 @@ class HabboHandler {
         val handlersR63A = HashMap<IncomingR63A, HabboMethodInfo>()
         val responsesR63A = HashMap<OutgoingR63A, RegisteredResponse>()
 
+        val t2 = System.nanoTime()
         loadAnnotatedMethods(handlers, responses, handlersR63A, responsesR63A)
+        log.info(
+            "Handler load timings: db headers/releases={}ms, header mapping={}ms, annotated methods={}ms",
+            (t1 - t0) / 1_000_000, (t2 - t1) / 1_000_000, (System.nanoTime() - t2) / 1_000_000
+        )
 
         return Snapshot(
             handlers, responses, incomingHeaders, outgoingHeaders, handlersR63A, responsesR63A,

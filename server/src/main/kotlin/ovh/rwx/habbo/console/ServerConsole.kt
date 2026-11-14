@@ -21,6 +21,7 @@ package ovh.rwx.habbo.console
 
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import ovh.rwx.habbo.game.snowwar.SnowWarArenaMaps
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarFieldType
 import java.io.BufferedReader
@@ -93,7 +94,11 @@ class ServerConsole(private val server: HabboServer) {
                         server.habboGame.itemManager.load()
                         "[Items] Reloaded items."
                     }
-                    else -> "Usage: reload <arenas|catalog|items>"
+                    "external_variables", "variables" -> {
+                        if (ExternalVariables.reload()) "[ExternalVariables] Reloaded ${ExternalVariables.snapshot()?.size ?: 0} variables."
+                        else "[ExternalVariables] Reload failed (unreachable, or missing/invalid keys; see log); kept the previous values."
+                    }
+                    else -> "Usage: reload <arenas|catalog|items|external_variables>"
                 }
             }
             "help", "?" -> {
@@ -101,7 +106,7 @@ class ServerConsole(private val server: HabboServer) {
                 === Console Commands ===
                 arena [id|name|random|reload] : View or force SnowWar arena
                 status                        : View server status
-                reload <arenas|catalog|items> : Reload server components
+                reload <arenas|catalog|items|external_variables> : Reload server components
                 stop / exit                   : Gracefully stop the server
                 help                          : Show this help menu
                 """.trimIndent()

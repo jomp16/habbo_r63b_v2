@@ -19,6 +19,7 @@
 
 package ovh.rwx.habbo.game.catalog
 
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import java.time.LocalDate
 
 /**
@@ -28,16 +29,26 @@ import java.time.LocalDate
  * `RELEASE63-201204162302` o número vem do `external_variables` (`catalog.recycler.number.of.slots`, depois
  * `recycler.number_of_slots`, padrão 5). O código do cliente nunca fixa 8: o 8 é o valor que o hotel serve.
  *
- * Por isso, a partir do corte vale [configuredSlots] (`recycler.slots` do `config.yaml`), que PRECISA ser igual ao
- * `recycler.number_of_slots` (ou `catalog.recycler.number.of.slots`) do `external_variables` servido a esses clientes;
- * se divergirem, o client manda N itens e o servidor recusa (o client só tem o alerta "fechado" como falha).
+ * Por isso, a partir do corte vale o que o servidor lê do mesmo `external_variables` ([fromExternalVariables]), a
+ * única fonte (não há valor no `config.yaml`). Se divergirem do client, ele manda N itens e o servidor recusa (o
+ * client só tem o alerta "fechado" como falha).
  */
 object RecyclerSlots {
-    /** Slots fixos no cliente antes de virarem configuráveis. */
+    /** Slots fixos no cliente antes de virarem configuráveis; também o padrão do client sem a variável. */
     const val FIXED = 5
 
     private val CONFIGURABLE_FROM: LocalDate = LocalDate.of(2012, 4, 16)
 
     fun forBuildDate(buildDate: LocalDate, configuredSlots: Int): Int =
         if (buildDate.isBefore(CONFIGURABLE_FROM)) FIXED else configuredSlots
+
+    /**
+     * Slots dos clients configuráveis: `recycler.number_of_slots`, senão `catalog.recycler.number.of.slots`; valores
+     * não positivos ou não numéricos contam como ausentes. O boot exige um dos dois válido
+     * ([ExternalVariables.REQUIREMENTS]); o [FIXED] final é só o padrão do client, por segurança.
+     */
+    fun fromExternalVariables(variables: Map<String, String>?): Int =
+        sequenceOf(ExternalVariables.RECYCLER_SLOTS, ExternalVariables.RECYCLER_SLOTS_LEGACY)
+            .mapNotNull { variables?.get(it)?.trim()?.toIntOrNull()?.takeIf { slots -> slots > 0 } }
+            .firstOrNull() ?: FIXED
 }

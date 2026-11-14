@@ -22,9 +22,9 @@ package ovh.rwx.habbo.game.figure
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.figure.xml.FigureXMLHandler
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.kotlin.urlUserAgent
-import java.net.URI
 import java.util.concurrent.ThreadLocalRandom
 import javax.xml.parsers.SAXParserFactory
 
@@ -42,8 +42,10 @@ class FigureManager {
         figurePalette.clear()
         figureSetTypes.clear()
 
-        val figureUrl = resolveFigureDataUrl()
+        var figureUrl: String? = null
         try {
+            // a mesma figuredata que os clients carregam
+            figureUrl = ExternalVariables.require(ExternalVariables.FIGUREDATA)
             log.info("Loading figuredata from: {}", figureUrl)
             urlUserAgent(figureUrl).inputStream.buffered().use {
                 val saxParser = SAXParserFactory.newInstance().newSAXParser()
@@ -60,31 +62,8 @@ class FigureManager {
             log.info("Loaded {} figure set types!", figureSetTypes.size)
             log.info("Loaded {} figure sets!", figureSets.size)
         } catch (e: Exception) {
-            log.error("Failed to load figure data from $figureUrl: ${e.message}", e)
+            log.error("Failed to load figure data from ${figureUrl ?: "external variables"}: ${e.message}", e)
         }
-    }
-
-    fun resolveFigureDataUrl(): String {
-        val configured = HabboServer.habboConfig.figuredataXml
-        if (configured.isNotBlank()) return configured
-
-        val extVarsUrl = HabboServer.habboConfig.externalVariablesTxt
-        if (extVarsUrl.isNotBlank()) {
-            runCatching {
-                URI.create(extVarsUrl)
-                    .toURL()
-                    .openStream()
-                    .bufferedReader()
-                    .useLines { lines ->
-                        lines.mapNotNull { line ->
-                            val idx = line.indexOf('=')
-                            if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim() else null
-                        }.toMap()
-                    }["external.figurepartlist.txt"]
-            }.getOrNull()?.takeIf { it.isNotBlank() }?.let { return it }
-        }
-
-        return "https://swf.habbo.rwx.ovh/gamedata/figuredata/0"
     }
 
     fun generateRandomFigure(

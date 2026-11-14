@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import java.util.concurrent.locks.ReentrantLock
 
 /** Parâmetro aceito por uma ação. */
@@ -62,6 +63,7 @@ object AdminActions {
         ActionInfo("reload_navigator", "Recarregar navegador", "Recarrega as categorias do navegador.", emptyList()),
         ActionInfo("reload_permissions", "Recarregar permissões", "Recarrega as permissões por rank e por usuário.", emptyList()),
         ActionInfo("reload_landing", "Recarregar landing", "Recarrega as promoções e a recompensa da página inicial do cliente.", emptyList()),
+        ActionInfo("reload_external_variables", "Recarregar external_variables", "Relê o external_variables servido aos clientes (slots e estado do reciclador). Não recarrega figuredata nem Habbicons.", emptyList()),
         ActionInfo(
             "hotel_alert", "Alerta para o hotel", "Envia um alerta a todos os usuários logados.",
             listOf(ActionParam("message", "Mensagem", true, MAX_ALERT_LENGTH))
@@ -145,6 +147,11 @@ object AdminActions {
             "reload_landing" -> {
                 game.landingManager.load()
                 "Landing recarregada (${game.landingManager.landingPromos.size} promoções)"
+            }
+
+            "reload_external_variables" -> {
+                check(ExternalVariables.reload()) { "external_variables inválido ou inacessível (mantidos os valores anteriores)" }
+                "external_variables recarregado (${ExternalVariables.snapshot()?.size ?: 0} variáveis)"
             }
 
             "hotel_alert" -> {

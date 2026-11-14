@@ -23,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.habbicon.HabbiconDao
 import ovh.rwx.habbo.database.habbicon.HabbiconUpsertRow
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import java.net.URI
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,20 +40,8 @@ object HabbiconAssetSynchronizer {
 
     fun syncAssets() {
         runCatching {
-            val variables = URI.create(HabboServer.habboConfig.externalVariablesTxt)
-                .toURL()
-                .openStream()
-                .bufferedReader()
-                .useLines { lines ->
-                    lines.mapNotNull { line ->
-                        val separator = line.indexOf('=')
-                        if (separator <= 0) null else line.substring(0, separator) to line.substring(separator + 1)
-                    }.toMap()
-                }
-
-            val hash = variables["habbicons.hash"]?.takeIf { it.isNotBlank() }
-                ?: error("habbicons.hash was not found in external variables")
-            val assetRoot = (variables["habbicons.url"] ?: "https://images.habbo.com/habbicons").trimEnd('/')
+            val hash = ExternalVariables.require(ExternalVariables.HABBICONS_HASH)
+            val assetRoot = ExternalVariables.require(ExternalVariables.HABBICONS_URL).trimEnd('/')
             val metadataUrl = URI.create("$assetRoot/$hash/habbicons.json").toURL()
 
             val assets: HabbiconAssetFile = metadataUrl.openStream().bufferedReader().use {

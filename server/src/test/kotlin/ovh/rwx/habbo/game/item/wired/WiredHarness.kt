@@ -69,8 +69,7 @@ abstract class WiredHarness {
             checksum = "test",
             directions = listOf(0),
             states = listOf(0, 1), // interactionModesCount = 2 -> toggle 0 <-> 1
-            dimensions = Dimensions(1.0, 1.0, 1.0),
-            assets = emptyMap()
+            dimensions = Dimensions(1.0, 1.0, 1.0)
         )
         every { game.habboHandler } returns null
         HabboGame.instance = game

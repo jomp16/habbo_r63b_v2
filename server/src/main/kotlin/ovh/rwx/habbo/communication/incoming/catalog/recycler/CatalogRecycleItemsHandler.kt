@@ -32,7 +32,7 @@ import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.item.ItemPurchaseData
 import ovh.rwx.habbo.game.catalog.RecyclerAchievements
 import ovh.rwx.habbo.game.catalog.RecyclerDraw
-import ovh.rwx.habbo.game.catalog.RecyclerSlots
+import ovh.rwx.habbo.game.catalog.RecyclerSettings
 import ovh.rwx.habbo.game.item.user.CreatedItems
 import ovh.rwx.habbo.game.item.user.UserItem
 import ovh.rwx.habbo.game.user.HabboSession
@@ -46,22 +46,19 @@ class CatalogRecycleItemsHandler {
     /**
      * A caixa do Ecotron segue o modelo dos presentes: o prêmio é criado agora como item real e fica escondido dentro
      * da caixa (`items_gift_contents`); abrir a caixa o revela com o mesmo id. Um só handler para todas as eras: a
-     * quantidade de slots sai da data da build ([RecyclerSlots]), nunca do transporte.
+     * quantidade de slots sai da data da build e do `external_variables` ([RecyclerSettings]), nunca do transporte.
      */
     @Handler(Incoming.CATALOG_RECYCLE_ITEMS)
     @HandlerR63A(IncomingR63A.CATALOG_RECYCLE_ITEMS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val room = habboSession.currentRoom ?: return
-        val expectedAmount = RecyclerSlots.forBuildDate(
-            habboSession.habboVersion.buildDate.toLocalDate(),
-            HabboServer.habboConfig.recyclerConfig.slots
-        )
+        val expectedAmount = RecyclerSettings.slotsFor(habboSession.habboVersion.buildDate.toLocalDate())
         val amount = habboRequest.readInt()
         val ecotronBoxFurnishing =
             HabboServer.habboGame.itemManager.furnishings[HabboServer.habboConfig.recyclerConfig.giftBox]
 
         // reciclador fechado recusa também no servidor (o fechamento na UI não basta)
-        if (!HabboServer.habboConfig.recyclerConfig.open || amount != expectedAmount || ecotronBoxFurnishing == null) {
+        if (!RecyclerSettings.open || amount != expectedAmount || ecotronBoxFurnishing == null) {
             sendResult(habboSession, CatalogRecycleItemsResultResponse.CatalogRecycleItemsResult.FAILURE, 0)
 
             return

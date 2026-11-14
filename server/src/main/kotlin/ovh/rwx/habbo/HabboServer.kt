@@ -55,6 +55,8 @@ import ovh.rwx.habbo.config.HabboConfig
 import ovh.rwx.habbo.console.ServerConsole
 import ovh.rwx.habbo.database.DatabaseManager
 import ovh.rwx.habbo.database.migration.FlywayMigration
+import ovh.rwx.habbo.game.BootPrefetch
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
@@ -145,7 +147,17 @@ object HabboServer : AutoCloseable {
         log.info("Credits for developers of IDK, Phoenix, Butterfly, Uber, Azure, Nova and probably other niggas for code and packets.")
         log.info("Licensed under GPLv3. See https://www.gnu.org/licenses/gpl-3.0.en.html")
         log.info("")
-        log.info("Loading ${BuildConfig.NAME} server...")
+        log.info("Loading ${BuildConfig.NAME} server... (JVM up for {}ms)", java.lang.management.ManagementFactory.getRuntimeMXBean().uptime)
+
+        // furnidata, figuredata, Habbicons e reciclador saem daqui: sem as variables (ou sem uma chave lida), não
+        // sobe. Antes do banco, para falhar sem nenhum pool/thread aberto segurando a JVM
+        log.info("Loading external variables...")
+        ExternalVariables.loadOrFail()
+        log.info("Done!")
+
+        // asset mapping (disco) e furnidata (HTTP) não dependem do banco: carregam enquanto o pool/Flyway esperam
+        BootPrefetch.start(habboConfig.cameraConfig.assetsPath)
+
         // Initialize database
         log.info("Initializing database...")
 
@@ -318,6 +330,7 @@ object HabboServer : AutoCloseable {
                 log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
                 log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
                 log.info("FastFood server started on port {}!", habboConfig.port + 10)
+                log.info("Cold start finished: JVM up for {}ms", java.lang.management.ManagementFactory.getRuntimeMXBean().uptime)
                 habboChannelFuture.channel().closeFuture().await()
                 habboWebSocketChannelFuture.channel().closeFuture().await()
                 fastFoodChannelFuture.channel().closeFuture().sync()

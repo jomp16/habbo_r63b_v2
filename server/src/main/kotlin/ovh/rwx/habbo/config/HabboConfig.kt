@@ -35,10 +35,7 @@ data class HabboConfig(
     val databaseConfig: DatabaseConfig,
     @param:JsonProperty("encryption", required = true)
     val encryptionConfig: EncryptionConfig,
-    @param:JsonProperty("furnidata_xml", required = true)
-    val furnidataXml: String,
-    @param:JsonProperty("figuredata_xml", required = true)
-    val figuredataXml: String,
+    /** O mesmo `external_variables` (com override) dos clients; dele saem também furnidata e figuredata. */
     @param:JsonProperty("external_variables_txt", required = true)
     val externalVariablesTxt: String,
     @param:JsonProperty("reward", required = true)

@@ -82,6 +82,7 @@ class HabboGame : AutoCloseable {
     private val loadJobs = mutableListOf<Job>()
 
     init {
+        // o external_variables (furnidata, figuredata, Habbicons) já foi lido pelo HabboServer antes daqui
         loadJobs += gameScope.launch { landingManager.load() }
         loadJobs += gameScope.launch { itemManager.load() }
         loadJobs += gameScope.launch { catalogManager.load() }

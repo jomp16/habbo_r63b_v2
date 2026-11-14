@@ -40,4 +40,33 @@ class RecyclerSlotsTest {
         // segue o que o hotel serve no external_variables
         assertEquals(5, RecyclerSlots.forBuildDate(LocalDate.of(2026, 5, 18), 5))
     }
+
+    @Test
+    fun clientDefaultWithoutVariables() {
+        // não lido ou lido sem nenhuma das variáveis: padrão do client
+        assertEquals(5, RecyclerSlots.fromExternalVariables(null))
+        assertEquals(5, RecyclerSlots.fromExternalVariables(emptyMap()))
+    }
+
+    @Test
+    fun prefersCurrentNameOverLegacyName() {
+        assertEquals(
+            8,
+            RecyclerSlots.fromExternalVariables(
+                mapOf("recycler.number_of_slots" to "8", "catalog.recycler.number.of.slots" to "7")
+            )
+        )
+        assertEquals(7, RecyclerSlots.fromExternalVariables(mapOf("catalog.recycler.number.of.slots" to "7")))
+    }
+
+    @Test
+    fun invalidValuesCountAsAbsent() {
+        assertEquals(
+            7,
+            RecyclerSlots.fromExternalVariables(
+                mapOf("recycler.number_of_slots" to "oito", "catalog.recycler.number.of.slots" to "7")
+            )
+        )
+        assertEquals(5, RecyclerSlots.fromExternalVariables(mapOf("recycler.number_of_slots" to "0")))
+    }
 }

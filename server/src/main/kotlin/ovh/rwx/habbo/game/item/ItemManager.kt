@@ -21,12 +21,13 @@ package ovh.rwx.habbo.game.item
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.isVersionAtLeast
 import ovh.rwx.habbo.database.item.ItemDao
 import ovh.rwx.habbo.database.sequence.HiLoSequence
+import ovh.rwx.habbo.game.BootPrefetch
 import ovh.rwx.habbo.game.catalog.gift.GiftWrapping
+import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import ovh.rwx.habbo.game.item.logic.DefaultFurnitureLogic
 import ovh.rwx.habbo.game.item.logic.FurnitureLogic
 import ovh.rwx.habbo.game.item.room.RoomItem
@@ -44,7 +45,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.database.db
 import ovh.rwx.habbo.kotlin.urlUserAgent
 import ovh.rwx.habbo.util.ClassIndex
-import ovh.rwx.habbo.util.ReplacingInputStream
+import ovh.rwx.habbo.util.BytePatterns
 import ovh.rwx.habbo.util.Vector2
 import ovh.rwx.habbo.util.Vector3
 import java.io.FileOutputStream
@@ -86,14 +87,19 @@ class ItemManager {
     @Synchronized
     fun load() {
         log.info("Loading furnishings...")
+        val t0 = System.nanoTime()
 
         // furnidata.xml relido a cada load (boot e reload) num mapa local; se o download/parse falhar, o
-        // load lança antes de publicar qualquer coisa e o estado atual continua valendo
-        val newXml = fetchFurniXml()
+        // load lança antes de publicar qualquer coisa e o estado atual continua valendo. No boot ela já vem
+        // baixada em paralelo com o banco (BootPrefetch); no reload, ou se o prefetch falhou, é baixada aqui
+        val newXml = BootPrefetch.takeFurnidata() ?: fetchFurniXml()
+        val t1 = System.nanoTime()
 
         var newFurnishings = ItemDao.getFurnishings(newXml).associateBy { it.itemName }
+        val t2 = System.nanoTime()
         val newTeleportLinks = ItemDao.getTeleportLinks().toMap()
         val newRoomTeleportLinks = ItemDao.getLinkedTeleport(newTeleportLinks.keys).toMap()
+        val t3 = System.nanoTime()
 
         val interactors: List<ItemInteractor> = ClassIndex.classesOf(ClassIndex.Kind.ITEM_INTERACTOR)
             .map { it.asSubclass(ItemInteractor::class.java).getConstructor().newInstance() }
@@ -135,6 +141,7 @@ class ItemManager {
             }
         }
 
+        val t4 = System.nanoTime()
         val missingItems = newXml.keys.minus(newFurnishings.keys).sorted()
         if (missingItems.isNotEmpty()) {
             recordMissingItems(missingItems)
@@ -170,21 +177,13 @@ class ItemManager {
         log.info("Loaded {} item interactors!", furniInteractor.size)
         log.info("Loaded {} item furniture logics!", furnitureLogics.size)
         log.info("Loaded {} wired interactors!", wiredItemsInteractor.size)
+        log.info(
+            "Furnishings load timings: furnidata(download+parse)={}ms, db furnishings={}ms, db teleports={}ms, classes={}ms, rest={}ms",
+            ms(t0, t1), ms(t1, t2), ms(t2, t3), ms(t3, t4), ms(t4, System.nanoTime())
+        )
     }
 
-    private fun fetchFurniXml(): Map<String, FurniXMLInfo> =
-        urlUserAgent(HabboServer.habboConfig.furnidataXml).inputStream.use { rawStream ->
-            var stream = rawStream
-            for (replacement in XML_SANITIZATION_REPLACEMENTS) {
-                stream = ReplacingInputStream(stream, replacement, "")
-            }
-            stream.buffered().use { bufferedStream ->
-                val saxParser = SAXParserFactory.newInstance().newSAXParser()
-                val handler = FurniXMLHandler()
-                saxParser.parse(bufferedStream, handler)
-                handler.furniXMLInfos.associateBy { it.itemName }
-            }
-        }
+    private fun ms(from: Long, to: Long): Long = (to - from) / 1_000_000
 
     private fun recordMissingItems(missingItems: List<String>) {
         FileOutputStream("MISSING_ITEMS.txt", true).bufferedWriter().use { writer ->
@@ -284,6 +283,22 @@ class ItemManager {
     }
 
     companion object {
-        private val XML_SANITIZATION_REPLACEMENTS = listOf("&#25;", "&#28;", "&#29;")
+        /** Na mesma ordem das antigas camadas do `ReplacingInputStream`. */
+        private val XML_SANITIZATION_PATTERNS = listOf("&#25;", "&#28;", "&#29;").map { it.toByteArray(Charsets.UTF_8) }
+
+        /**
+         * Baixa e lê a mesma furnidata que os clients carregam (`furnidata.load.url` do external_variables). Corpo
+         * inteiro (~13 MB) de uma vez e as referências inválidas no XML 1.0 removidas numa passada só (o stream byte a
+         * byte antigo custava segundos de CPU no boot da VPS). Sem estado: o [BootPrefetch] chama antes do jogo existir.
+         */
+        fun fetchFurniXml(): Map<String, FurniXMLInfo> =
+            urlUserAgent(ExternalVariables.require(ExternalVariables.FURNIDATA)).inputStream.use { it.readBytes() }
+                .let { BytePatterns.removeAll(it, XML_SANITIZATION_PATTERNS) }
+                .let { xml ->
+                    val saxParser = SAXParserFactory.newInstance().newSAXParser()
+                    val handler = FurniXMLHandler()
+                    saxParser.parse(xml.inputStream(), handler)
+                    handler.furniXMLInfos.associateBy { it.itemName }
+                }
     }
 }

@@ -25,6 +25,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.camera.HabboCameraRenderer
+import ovh.rwx.habbo.camera.AssetMapping
+import ovh.rwx.habbo.game.BootPrefetch
 import ovh.rwx.habbo.camera.SwfInfo
 import ovh.rwx.habbo.camera.json.HabboCamera
 import ovh.rwx.habbo.database.camera.CameraDao
@@ -61,9 +63,16 @@ class CameraManager {
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
     private val currentPictureForUsers: ConcurrentHashMap<String, Pair<LocalDateTime, String>> = ConcurrentHashMap()
     private val jacksonJson = jacksonObjectMapper()
-    private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath)
+    private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath) {
+        // no boot o mapping já vem carregado em paralelo com o banco
+        BootPrefetch.takeAssetMapping() ?: AssetMapping.load(HabboServer.habboConfig.cameraConfig.assetsPath)
+    }
 
     fun getSwfInfo(swfName: String): SwfInfo? = habboCameraRenderer.getSwfInfo(swfName)
+
+    /** O `asset_mapping.json` lido uma vez (no [load]); o `avatarimage` do webapp usa os sprites de avatar daqui. */
+    val assetMapping: AssetMapping
+        get() = habboCameraRenderer.assetMapping
 
     fun load() {
         log.info("Loading camera...")

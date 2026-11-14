@@ -23,8 +23,8 @@ encryption:
     D: 59ae13e243392e89ded305764bdd9e92e4eafa67bb6dac7e1415e8c645b0950bccd26246fd0d4af37145af5fa026c0ec3a94853013eaae5ff1888360f4f9449ee023762ec195dff3f30ca0b08b8c947e3859877b5d7dced5c8715c58b53740b84e11fbc71349a27c31745fcefeeea57cff291099205e230e0c7c27e8e1c0512b
     E: '3'
   rc4: true
-furnidata_xml: https://swf.habbo.rwx.ovh/gamedata/furnidata_xml/01_07_2018
-figuredata_xml: https://swf.habbo.rwx.ovh/gamedata/figuredata/01_07_2018
+# o mesmo external_variables (com override) dos clients; furnidata (furnidata.load.url) e figuredata
+# (external.figurepartlist.txt) saem dele
 external_variables_txt: https://swf.habbo.rwx.ovh/gamedata/external_variables/0
 reward:
   credits: 10
@@ -66,8 +66,8 @@ catalog:
     enabled: true
     price: 1
 recycler:
+  # os slots vêm do external_variables (recycler.number_of_slots)
   open: true
-  slots: 8
   odds:
     '1': 1
     '2': 25

@@ -64,6 +64,10 @@ Escrito em 2026-11-13. Nada commitado.
 - Base `gamedata/external_variables.txt`: `recycler.ducket_cost=10`, `recycler.enabled=true`,
   `recycler.number_of_slots=8`, `recycler.timeout_seconds=10` (taxa e cooldown de 2025 vêm do client config; o
   servidor precisa aplicar os mesmos valores).
+- Conferido no AS3 (varredura das 1599 builds, 2026-11-13): **nenhum client lê `recycler.enabled`** (está no txt, mas
+  é letra morta; aberto/fechado vem só do pacote de status). `catalog.recycler.number.of.slots` só na
+  `RELEASE63-201204162302`; `recycler.number_of_slots` (padrão 5) de `RELEASE63-201204181558` até hoje;
+  `recycler.ducket_cost` (padrão 0) e `recycler.timeout_seconds` (padrão 10) no AIR 2025+.
 - Override `gamedata/override_rwx/external_override_variables{,_fastfood}.txt` (2026-11-13):
   `catalog.recycler.number.of.slots=8` + `recycler.number_of_slots=8`. Local → servidor: ver a memória
   `swf-gamedata-location-and-sync`.
@@ -72,6 +76,20 @@ Escrito em 2026-11-13. Nada commitado.
   anteriores a 2012-04-16 têm 5 fixo e dependem só do emulador (`RecyclerSlots`).
 
 ## Ideia futura: o emulador ler o reciclador do `external_variables` (fonte única)
+
+**Implementado em 2026-11-13** (nada commitado): `game/gamedata/ExternalVariables.kt` (busca no boot antes de
+figuredata/Habbicons, cache, `parse` puro, testado em `ExternalVariablesTest`; recarga por `reload external_variables`
+no console e pela ação `reload_external_variables` no admin/CMS), substitui os dois parsers inline.
+`game/catalog/RecyclerSettings.kt`: slots = `RecyclerSlots.fromExternalVariables`, fonte única (`recycler.slots` saiu
+do `config.yaml`; sem variables, padrão 5 do client); aberto = só `recycler.open` do config. `ducket_cost`/`timeout_seconds`
+ainda não aplicados (dependem do log de 2025). A URL `external_variables_txt` atual já vem com o override.
+Também saíram do `config.yaml` `furnidata_xml` e `figuredata_xml`: o `ItemManager` lê `furnidata.load.url` e o
+`FigureManager` lê `external.figurepartlist.txt` do `external_variables` (sem fallback; chaves antigas no YAML são
+ignoradas). O boot falha (`ExternalVariables.loadOrFail`, no `HabboServer` antes do banco) se a URL não responder ou
+faltar/for inválida alguma chave lida (`ExternalVariables.REQUIREMENTS`: furnidata, figuredata, `habbicons.hash/url`,
+slots do reciclador); o reload recusa conteúdo inválido e mantém o anterior. Chave nova lida pelo
+servidor = entrada nova em `REQUIREMENTS`.
+Texto original abaixo.
 
 Hoje `recycler.slots/open/odds` ficam no `config.yaml` e podem divergir do que o client lê (foi a causa do alerta
 "fechado"). O emulador já lê o `external_variables` em dois lugares, cada um com seu parser `chave=valor` inline:
@@ -84,7 +102,7 @@ Desenho sugerido (não implementado):
   parsers inline. Usar a URL **com o override** que os clients recebem (`external_variables.php` mescla
   `override_rwx/`), senão o servidor lê valores diferentes dos do client.
 - Ler `recycler.number_of_slots` (fallback `catalog.recycler.number.of.slots`, depois padrão 5 = padrão do client),
-  `recycler.enabled`, `recycler.ducket_cost`, `recycler.timeout_seconds`; o `config.yaml` vira só fallback quando a
+  `recycler.enabled` (depois visto que nenhum client lê), `recycler.ducket_cost`, `recycler.timeout_seconds`; o `config.yaml` vira só fallback quando a
   URL falhar.
 - Atenção: o client lê UM `external_variables` por release (`MiscClientVariablesHandler` recebe a URL que o client
   usou); se algum dia releases diferentes receberem variables diferentes, a leitura precisa ser por URL/release, não

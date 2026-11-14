@@ -25,9 +25,8 @@ habbo_host: 127.0.0.1
 c_images_url: https://example.com/c_images
 games_url: https://example.com/games
 
+# furnidata (furnidata.load.url) e figuredata (external.figurepartlist.txt) saem do external_variables
 external_variables_txt: https://example.com/gamedata/external_variables/0
-furnidata_xml: https://example.com/gamedata/furnidata_xml/0
-figuredata_xml: https://example.com/gamedata/figuredata/0
 
 reward:
   credits: 10
@@ -64,8 +63,8 @@ catalog:
   show_how_many_items_title: false
 
 recycler:
+  # os slots vêm do external_variables (recycler.number_of_slots)
   open: true
-  slots: 8
   odds:
     '1': 1
     '2': 25

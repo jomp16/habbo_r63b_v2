@@ -19,7 +19,6 @@
 
 package ovh.rwx.habbo.communication.incoming.catalog.recycler
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
@@ -28,27 +27,23 @@ import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.catalog.recycler.CatalogRecyclerStatusResponse
+import ovh.rwx.habbo.game.catalog.RecyclerSettings
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogRecyclerStatusHandler {
     @Handler(Incoming.CATALOG_RECYCLER_STATUS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // todo: add recycler closed with timeout
-        val result =
-            if (HabboServer.habboConfig.recyclerConfig.open) CatalogRecyclerStatusResponse.CatalogRecyclerStatus.OPEN
-            else CatalogRecyclerStatusResponse.CatalogRecyclerStatus.CLOSED
-
-        habboSession.sendHabboResponse(Outgoing.CATALOG_RECYCLER_STATUS, result, 0)
+        habboSession.sendHabboResponse(Outgoing.CATALOG_RECYCLER_STATUS, currentStatus(), 0)
     }
 
     @HandlerR63A(IncomingR63A.CATALOG_RECYCLER_STATUS)
     fun handleR63A(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // todo: add recycler closed with timeout
-        val result =
-            if (HabboServer.habboConfig.recyclerConfig.open) CatalogRecyclerStatusResponse.CatalogRecyclerStatus.OPEN
-            else CatalogRecyclerStatusResponse.CatalogRecyclerStatus.CLOSED
-
-        habboSession.sendHabboResponse(OutgoingR63A.CATALOG_RECYCLER_STATUS, result, 0)
+        habboSession.sendHabboResponse(OutgoingR63A.CATALOG_RECYCLER_STATUS, currentStatus(), 0)
     }
+
+    // todo: add recycler closed with timeout
+    private fun currentStatus(): CatalogRecyclerStatusResponse.CatalogRecyclerStatus =
+        if (RecyclerSettings.open) CatalogRecyclerStatusResponse.CatalogRecyclerStatus.OPEN
+        else CatalogRecyclerStatusResponse.CatalogRecyclerStatus.CLOSED
 }
