@@ -25,6 +25,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.zaxxer.hikari.HikariDataSource
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
@@ -61,6 +62,7 @@ import ovh.rwx.habbo.database.writebehind.WriteBehindManager
 import ovh.rwx.habbo.encryption.HabboEncryptionHandler
 import ovh.rwx.habbo.game.HabboGame
 import ovh.rwx.habbo.game.user.HabboSessionManager
+import ovh.rwx.habbo.kotlin.ip
 import ovh.rwx.habbo.netty.*
 import ovh.rwx.habbo.plugin.api.PluginListener
 import ovh.rwx.habbo.plugin.core.PluginManager
@@ -70,6 +72,7 @@ import java.io.File
 import java.security.Security
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.system.exitProcess
@@ -121,6 +124,16 @@ object HabboServer : AutoCloseable {
     val DATE_TIME_FORMATTER_ONLY_DAYS: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     @Volatile
     private var isRunning: Boolean = false
+
+    /**
+     * Ligado por [close]: a partir daí o desligamento é dele. O `finally` de [start] (acordado quando [close] fecha os
+     * listeners) não derruba os event loops sozinho, senão os canais caíam em paralelo com o flush do write-behind.
+     */
+    @Volatile
+    private var closing: Boolean = false
+
+    /** Canais de escuta (TCP, WebSocket, FastFood), fechados primeiro no [close] para parar de aceitar conexões. */
+    private val serverChannels = CopyOnWriteArrayList<Channel>()
     val started: Boolean
         get() = isRunning && !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
@@ -326,6 +339,11 @@ object HabboServer : AutoCloseable {
             habboWebSocketChannelFuture.sync()
             fastFoodChannelFuture.sync()
             if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
+                serverChannels += listOf(
+                    habboChannelFuture.channel(),
+                    habboWebSocketChannelFuture.channel(),
+                    fastFoodChannelFuture.channel()
+                )
                 isRunning = true
                 log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
                 log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
@@ -345,40 +363,67 @@ object HabboServer : AutoCloseable {
         } catch (e: Exception) {
             log.error("An exception happened!", e)
         } finally {
-            workerGroup.shutdownGracefully()
-            bossGroup.shutdownGracefully()
+            if (!closing) {
+                workerGroup.shutdownGracefully()
+                bossGroup.shutdownGracefully()
+            }
         }
     }
 
+    /**
+     * Ordem importa: tudo que enfileira escrita (salas, sessões, conquistas) tem que rodar ANTES do flush final do
+     * write-behind. Antes os canais só caíam no shutdown do Netty, depois de [WriteBehindManager.stop]; o
+     * `HabboSession.close()` enfileirava badges/online=false/último acesso num worker já parado e tudo se perdia.
+     */
     override fun close() {
         if (started) {
+            closing = true
             isRunning = false
             habboSessionManager.stopHeartbeat()
             ovh.rwx.habbo.metrics.ServerMetrics.stop()
             log.info("Shutting down ${BuildConfig.NAME} server...")
+            // 1. Para de aceitar conexões (o finally de start() acorda, mas não derruba os event loops: closing)
+            log.debug("Closing listeners...")
+            serverChannels.forEach { it.close().awaitUninterruptibly() }
+            log.debug("Done!")
             habboGame.close()
-            // Start room
+            // 2. Salas: stopLoop() tira as entidades (avisando o cliente) e salva sala, itens e pets
             log.debug("Closing all loaded rooms...")
             habboGame.roomManager.roomTaskManager.rooms.toList().forEach {
                 habboGame.roomManager.roomTaskManager.removeRoom(it)
             }
             log.debug("Done!")
-            // End room
-            // Start achievements
+            // 3. Sessões: removeHabboSession() chama HabboSession.close(), que enfileira badges, online=false e
+            // último acesso. Os canais ficam abertos até o fim (o channelUnregistered depois não acha mais a sessão)
+            log.debug("Closing all sessions...")
+            habboSessionManager.habboSessions.values.toList().forEach { session ->
+                try {
+                    habboSessionManager.removeHabboSession(session.channel)
+                } catch (e: Exception) {
+                    log.error("Error closing session of {}", session.channel.ip(), e)
+                }
+            }
+            habboSessionManager.fastFoodSessions.values.toList().forEach { session ->
+                try {
+                    habboSessionManager.removeFastFoodSession(session.channel)
+                } catch (e: Exception) {
+                    log.error("Error closing FastFood session", e)
+                }
+            }
+            log.debug("Done!")
+            // 4. Conquistas
             log.debug("Saving queued achievements...")
             habboGame.achievementManager.saveQueuedAchievements()
             log.debug("Done!")
-            // End achievements
-            // Flush Write-Behind before shutdown
+            // 5. Flush final do write-behind: nada mais enfileira depois daqui
             log.debug("Flushing write-behind persistence...")
             WriteBehindManager.stop()
             log.debug("Done!")
-            // Start Netty
+            // 6. Netty (derruba os canais dos clientes)
             log.debug("Shutting down Netty server...")
             bossGroup.shutdownGracefully().awaitUninterruptibly()
             workerGroup.shutdownGracefully().awaitUninterruptibly()
             log.debug("Done!")
-            // End Netty
             // Start database
             log.debug("Closing database connection pool...")
             hikariDataSource.close()

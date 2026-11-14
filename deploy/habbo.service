@@ -24,7 +24,7 @@ ExecStart=/usr/lib/jvm/java-25-openjdk/bin/java \
 Restart=on-failure
 RestartSec=5
 KillMode=mixed
-TimeoutStopSec=30
+TimeoutStopSec=60
 
 # Hardening / Least privilege
 NoNewPrivileges=yes

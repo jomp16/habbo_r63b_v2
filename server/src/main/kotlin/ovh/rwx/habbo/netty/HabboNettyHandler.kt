@@ -61,7 +61,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
         log.info("Disconnecting user {}", username)
 
         if (HabboServer.habboSessionManager.removeHabboSession(ctx.channel())) log.info("User {} disconnected with success!", username)
-        else log.warn("Disconnection of {} unsuccessful!", username)
+        // No desligamento o HabboServer.close() já removeu (e fechou) a sessão antes de derrubar os canais
+        else if (HabboServer.started) log.warn("Disconnection of {} unsuccessful!", username)
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
