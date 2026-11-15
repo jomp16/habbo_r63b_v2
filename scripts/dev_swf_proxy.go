@@ -20,6 +20,7 @@ func main() {
 	listenAddr := flag.String("listen", "127.0.0.1:8081", "address to listen on")
 	emulatorRaw := flag.String("emulator", "http://127.0.0.1:30003", "local emulator web_port URL")
 	upstreamRaw := flag.String("upstream", "https://swf.habbo.rwx.ovh", "upstream SWF/gamedata URL")
+	wsAddr := flag.String("ws", "127.0.0.1:35001", "local emulator ws_port host:port (target of /game)")
 	flag.Parse()
 
 	emuURL, err := url.Parse(*emulatorRaw)
@@ -36,6 +37,15 @@ func main() {
 
 	emuProxy := httputil.NewSingleHostReverseProxy(emuURL)
 	upProxy := httputil.NewSingleHostReverseProxy(upURL)
+
+	// WebSocket do client AIR (?relay=ws://<este proxy>): /game?host=..&port=.. -> WS do emulador local em "/".
+	wsProxy := &httputil.ReverseProxy{Director: func(req *http.Request) {
+		req.URL.Scheme = "http"
+		req.URL.Host = *wsAddr
+		req.URL.Path = "/"
+		req.URL.RawQuery = ""
+		req.Host = *wsAddr
+	}}
 
 	origUpDirector := upProxy.Director
 	upProxy.Director = func(req *http.Request) {
@@ -58,6 +68,12 @@ func main() {
 		// 1. Local emulator API (banner supersecret, habbo-imaging, status, admin, camera)
 		if strings.HasPrefix(p, "/api/v1/") || p == "/api/v1" || strings.HasPrefix(p, "/api/camera/") {
 			emuProxy.ServeHTTP(w, r)
+			return
+		}
+
+		// 1b. WebSocket relay for the AIR client
+		if p == "/game" {
+			wsProxy.ServeHTTP(w, r)
 			return
 		}
 

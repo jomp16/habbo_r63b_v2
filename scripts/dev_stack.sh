@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 #
-# dev_stack.sh — Sobe a stack local completa de desenvolvimento sem tocar em produção:
+# dev_stack.sh — Sobe a stack local de desenvolvimento (sem o emulador) sem tocar em produção:
 #   1) MariaDB local (habbo-dev-mariadb via dev_db.sh)
-#   2) Proxy leve local (dev_swf_proxy.go em 127.0.0.1:8081) dividindo /api/v1 + banner pro emulador local
-#   3) Emulador habbo_r63b_v2 (portas 35000/35001/30003)
-#   4) CMS local (/home/jomp16/Downloads/Habbo/cms) com config isolada em build/dev-stack/
+#   2) Proxy leve local (dev_swf_proxy.go em 127.0.0.1:8081) dividindo /api/v1 + banner pro emulador
+#   3) CMS local (/home/jomp16/Downloads/Habbo/cms) com config isolada em build/dev-stack/
+#
+# O EMULADOR NÃO é iniciado por este script: rode-o pelo IntelliJ (portas conforme config.yaml,
+# padrão 35000/35001/30003). O proxy e a CMS apontam para essas portas.
 #
 # Uso:
-#   ./scripts/dev_stack.sh setup    # Prepara DB, build do proxy/emulador/CMS e gera config.local.json
-#   ./scripts/dev_stack.sh start    # Sobe todos os serviços em background
-#   ./scripts/dev_stack.sh stop     # Para proxy, emulador e CMS (mantém MariaDB; use dev_db.sh down p/ parar)
+#   ./scripts/dev_stack.sh setup    # Prepara DB, build do proxy/CMS e gera config.local.json
+#   ./scripts/dev_stack.sh start    # Sobe proxy e CMS em background
+#   ./scripts/dev_stack.sh stop     # Para proxy e CMS (mantém MariaDB; use dev_db.sh down p/ parar)
 #   ./scripts/dev_stack.sh status   # Mostra o status dos processos
-#   ./scripts/dev_stack.sh logs [proxy|emulator|cms]  # Acompanha logs
+#   ./scripts/dev_stack.sh logs [proxy|cms]  # Acompanha logs
 #
 set -euo pipefail
 
@@ -26,8 +28,6 @@ PROXY_BIN="$STATE_DIR/dev_swf_proxy"
 CMS_BIN="$STATE_DIR/habbo-cms"
 CMS_CONFIG="$STATE_DIR/cms.config.local.json"
 
-EMU_JAR="$REPO_DIR/launcher/build/distributions/launcher-0.1.0-SNAPSHOT.jar"
-
 mkdir -p "$STATE_DIR"
 
 die() {
@@ -37,14 +37,8 @@ die() {
 
 check_safety() {
   [[ -f "$REPO_DIR/config.yaml" ]] || die "config.yaml não encontrado em $REPO_DIR"
-  if command -v yq >/dev/null 2>&1; then
-    if [[ "$(yq 'has("dynamic_dns")' "$REPO_DIR/config.yaml")" == "true" ]]; then
-      die "config.yaml contém 'dynamic_dns'! Remova/comente antes de rodar em dev local para não alterar o /etc/hosts de produção."
-    fi
-  else
-    if grep -qE '^[[:space:]]*dynamic_dns:' "$REPO_DIR/config.yaml"; then
-      die "config.yaml contém 'dynamic_dns'! Remova/comente antes de rodar em dev local."
-    fi
+  if grep -qE '^[[:space:]]*dynamic_dns:' "$REPO_DIR/config.yaml"; then
+    echo "AVISO: config.yaml contém 'dynamic_dns'. Ao rodar o emulador pelo IntelliJ isso altera o /etc/hosts; remova/comente." >&2
   fi
 }
 
@@ -105,21 +99,14 @@ do_setup() {
   check_safety
   read_emu_ports
 
-  echo "--> 1/4 Garantindo MariaDB local..."
+  echo "--> 1/3 Garantindo MariaDB local..."
   "$REPO_DIR/scripts/dev_db.sh" up
 
-  echo "--> 2/4 Compilando proxy leve local (dev_swf_proxy)..."
+  echo "--> 2/3 Compilando proxy leve local (dev_swf_proxy)..."
   go build -o "$PROXY_BIN" "$REPO_DIR/scripts/dev_swf_proxy.go"
 
-  if [[ ! -f "$EMU_JAR" ]] || [[ "${FORCE_BUILD:-0}" == "1" ]]; then
-    echo "--> 3/4 Compilando emulador (:assembleDist)..."
-    (cd "$REPO_DIR" && ./gradlew assembleDist --no-daemon)
-  else
-    echo "--> 3/4 Emulador já compilado ($EMU_JAR). Use FORCE_BUILD=1 para recompilar."
-  fi
-
   [[ -d "$CMS_DIR/backend" ]] || die "CMS não encontrada em $CMS_DIR"
-  echo "--> 4/4 Preparando CMS local em $CMS_DIR..."
+  echo "--> 3/3 Preparando CMS local em $CMS_DIR..."
   if [[ ! -d "$CMS_DIR/frontend/dist" ]] || [[ "${FORCE_BUILD:-0}" == "1" ]]; then
     (cd "$CMS_DIR/frontend" && npm run build)
   fi
@@ -156,6 +143,7 @@ cfg["emulator"] = {
     "tcp_port": int(tcp_port),
     "ws_port": int(ws_port),
     "socket_proxy": f"ws://127.0.0.1:{ws_port}",
+    "relay": f"ws://{proxy_addr}",
 }
 
 cfg["emulator_api"] = {"url": f"http://127.0.0.1:{web_port}/api/v1"}
@@ -178,14 +166,8 @@ PY
 do_start() {
   do_setup
 
-  local emu_dist_dir="$REPO_DIR/launcher/build/distributions"
-  [[ -f "$emu_dist_dir/config.yaml" ]] || cp "$REPO_DIR/config.yaml" "$emu_dist_dir/config.yaml"
-
   start_bg "dev_swf_proxy" "$STATE_DIR/proxy.pid" "$STATE_DIR/proxy.log" "$REPO_DIR" \
-    "$PROXY_BIN" -listen "$PROXY_ADDR" -emulator "http://127.0.0.1:${EMU_WEB_PORT}" -upstream "$UPSTREAM_SWF"
-
-  start_bg "habbo-emulator" "$STATE_DIR/emulator.pid" "$STATE_DIR/emulator.log" "$emu_dist_dir" \
-    java -jar "$EMU_JAR"
+    "$PROXY_BIN" -listen "$PROXY_ADDR" -emulator "http://127.0.0.1:${EMU_WEB_PORT}" -ws "127.0.0.1:${EMU_WS_PORT}" -upstream "$UPSTREAM_SWF"
 
   start_bg "habbo-cms" "$STATE_DIR/cms.pid" "$STATE_DIR/cms.log" "$CMS_DIR/backend" \
     "$CMS_BIN" -config "$CMS_CONFIG"
@@ -197,23 +179,22 @@ do_start() {
   echo "=== Stack local de dev ativa (isolada de produção) ==="
   echo "  • MariaDB:    127.0.0.1:3306 (habbo-dev-mariadb)"
   echo "  • SWF Proxy:  http://$PROXY_ADDR  (/api/v1 & /api/camera -> 127.0.0.1:$EMU_WEB_PORT)"
-  echo "  • Emulador:   TCP :$EMU_PORT | WS :$EMU_WS_PORT | Web :$EMU_WEB_PORT"
   echo "  • CMS:        http://127.0.0.1:$cms_port"
-  echo "  • Logs:       ./scripts/dev_stack.sh logs [proxy|emulator|cms]"
+  echo "  • Emulador:   rode pelo IntelliJ (TCP :$EMU_PORT | WS :$EMU_WS_PORT | Web :$EMU_WEB_PORT)"
+  echo "  • Logs:       ./scripts/dev_stack.sh logs [proxy|cms]"
   echo "  • Parar:      ./scripts/dev_stack.sh stop"
 }
 
 do_stop() {
   stop_proc "habbo-cms" "$STATE_DIR/cms.pid"
-  stop_proc "habbo-emulator" "$STATE_DIR/emulator.pid"
   stop_proc "dev_swf_proxy" "$STATE_DIR/proxy.pid"
-  echo "--> Stack parada. (MariaDB continua rodando; use ./scripts/dev_db.sh down se quiser parar.)"
+  echo "--> Proxy e CMS parados. (MariaDB continua rodando; use ./scripts/dev_db.sh down se quiser parar.)"
 }
 
 do_status() {
   "$REPO_DIR/scripts/dev_db.sh" status || true
   echo ""
-  for pair in "dev_swf_proxy:$STATE_DIR/proxy.pid" "habbo-emulator:$STATE_DIR/emulator.pid" "habbo-cms:$STATE_DIR/cms.pid"; do
+  for pair in "dev_swf_proxy:$STATE_DIR/proxy.pid" "habbo-cms:$STATE_DIR/cms.pid"; do
     local name="${pair%%:*}" pidfile="${pair#*:}"
     if is_running "$pidfile"; then
       echo "  ✓ $name: rodando (PID $(cat "$pidfile"))"
@@ -224,13 +205,13 @@ do_status() {
 }
 
 do_logs() {
-  local target="${1:-emulator}"
+  local target="${1:-cms}"
   case "$target" in
-    proxy|emulator|cms)
+    proxy|cms)
       tail -n 50 -f "$STATE_DIR/${target}.log"
       ;;
     *)
-      die "Alvo inválido: $target (use proxy, emulator ou cms)"
+      die "Alvo inválido: $target (use proxy ou cms)"
       ;;
   esac
 }
@@ -240,6 +221,6 @@ case "${1:-start}" in
   start)  do_start ;;
   stop)   do_stop ;;
   status) do_status ;;
-  logs)   do_logs "${2:-emulator}" ;;
-  *)      die "Uso: $0 {setup|start|stop|status|logs [proxy|emulator|cms]}" ;;
+  logs)   do_logs "${2:-cms}" ;;
+  *)      die "Uso: $0 {setup|start|stop|status|logs [proxy|cms]}" ;;
 esac

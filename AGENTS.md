@@ -39,9 +39,14 @@ tables only), `reset` (from cached dump), `up|down|status|cli`.
 ## Local dev stack (`scripts/dev_stack.sh`, `scripts/dev_swf_proxy.go`)
 
 Runs MariaDB + local SWF/API proxy (`127.0.0.1:8081` → `/api/v1` & `/api/camera` to `web_port`, rewrites `hotelview.banner.url`
-in `external_override_variables`, proxies static SWF/gamedata read-only) + emulator + local CMS (`CMS_DIR`, default
-`/home/jomp16/Downloads/Habbo/cms`, isolated config in `build/dev-stack/cms.config.local.json`). Aborts if `config.yaml`
-defines `dynamic_dns` (never touch prod `/etc/hosts`). Commands: `setup|start|stop|status|logs [proxy|emulator|cms]`.
+in `external_override_variables`, proxies static SWF/gamedata read-only) + local CMS (`CMS_DIR`, default
+`/home/jomp16/Downloads/Habbo/cms`, isolated config in `build/dev-stack/cms.config.local.json`). The script does **not**
+start the emulator: the user runs it from IntelliJ. Warns if `config.yaml` defines `dynamic_dns` (never touch prod
+`/etc/hosts`). Commands: `setup|start|stop|status|logs [proxy|cms]`.
+The proxy also tunnels `/game` (WebSocket) to the emulator `ws_port`: the AIR client has its host baked in
+(`habbo.rwx.ovh:443`) and only honours `?relay=ws://...`, which the CMS sends from `emulator.relay` in the generated
+local config. The AIR client's cross-origin fetches to `swf.habbo.rwx.ovh` rely on the edge nginx CORS allowlist
+(`nginx.local.rwx.ovh`, `location /`), which includes `http://127.0.0.1:<port>`.
 
 ## Modules
 
