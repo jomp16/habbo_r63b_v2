@@ -43,8 +43,10 @@ class GameCenterManager {
 
     fun findById(gameTypeId: Int): GameCenterGame? = games[gameTypeId]
 
+    // com a barra final: o cliente concatena direto `assetUrl + name + "_icon.png"` (GameConfigurations do
+    // RELEASE63-201305 em diante), como a Habbo mandava ("…/c_images/gamecenter_snowwar/")
     fun assetsBaseUrl(game: GameCenterGame): String =
-        "${HabboServer.habboConfig.cImagesUrl?.trimEnd('/')}/${game.dir}"
+        "${HabboServer.habboConfig.cImagesUrl?.trimEnd('/')}/${game.dir}/"
 
     fun swfUrl(game: GameCenterGame): String =
         "${HabboServer.habboConfig.gamesUrl?.trimEnd('/')}/${game.dir}/${game.swf}"
