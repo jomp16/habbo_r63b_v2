@@ -31,6 +31,13 @@ data class HabboConfig(
     val wsPort: Int,
     @param:JsonProperty("web_port", required = true)
     val webPort: Int,
+    // WebSocket do FastFood (BaseJump) para os clientes de navegador; ausente = ws_port + 10 (o TCP fica em port + 10)
+    @param:JsonProperty("fast_food_ws_port")
+    private val fastFoodWsPortConfig: Int? = null,
+    // endereço público do WebSocket do FastFood atrás do proxy web (ex.: wss://habbo.rwx.ovh/fastfood): vai como
+    // gameServerHost aos clientes de navegador, que usam a URL como está; ausente = habbo_host + fast_food_ws_port
+    @param:JsonProperty("fast_food_ws_url")
+    val fastFoodWsUrl: String? = null,
     @param:JsonProperty("database", required = true)
     val databaseConfig: DatabaseConfig,
     @param:JsonProperty("encryption", required = true)
@@ -94,6 +101,8 @@ data class HabboConfig(
     @param:JsonProperty("dynamic_dns")
     val dynamicDnsConfig: DynamicDnsConfig? = null,
 ) {
+    val fastFoodWsPort: Int get() = fastFoodWsPortConfig ?: (wsPort + 10)
+
     val motdContents: String by lazy {
         val f = File(motdFilePath)
 

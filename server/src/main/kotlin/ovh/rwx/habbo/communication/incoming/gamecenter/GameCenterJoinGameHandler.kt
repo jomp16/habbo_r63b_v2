@@ -63,8 +63,11 @@ class GameCenterJoinGameHandler {
                 mapOf(
                         "accessToken" to ssoToken,
                         "habboHost" to (HabboServer.habboConfig.habboHost ?: "127.0.0.1"),
-                        "gameServerHost" to (HabboServer.habboConfig.habboHost ?: "127.0.0.1"),
-                        "gameServerPort" to (HabboServer.habboConfig.port + 10).toString(),
+                        // navegador atrás de um proxy web: a URL pública do WebSocket (o runtime PIXI a usa como está)
+                        "gameServerHost" to (HabboServer.habboConfig.fastFoodWsUrl?.takeIf { habboSession.isWebSocket }
+                                ?: HabboServer.habboConfig.habboHost ?: "127.0.0.1"),
+                        // navegador só abre WebSocket: manda o listener WS do FastFood (o policy file ele ignora)
+                        "gameServerPort" to (if (habboSession.isWebSocket) HabboServer.habboConfig.fastFoodWsPort else HabboServer.habboConfig.port + 10).toString(),
                         "socketPolicyPort" to (HabboServer.habboConfig.port + 10).toString(),
                         "assetUrl" to (gameCenterManager.gameAssetsUrl(game) ?: gameCenterManager.swfUrl(game))
                 )

@@ -93,6 +93,7 @@ object HabboServer : AutoCloseable {
     private val habboServerBootstrap: ServerBootstrap
     private val habboWebSocketServerBootstrap: ServerBootstrap
     private val fastFoodServerBootstrap: ServerBootstrap
+    private val fastFoodWebSocketServerBootstrap: ServerBootstrap
     private val workerGroup: EventLoopGroup
     private val bossGroup: EventLoopGroup
 
@@ -132,7 +133,7 @@ object HabboServer : AutoCloseable {
     @Volatile
     private var closing: Boolean = false
 
-    /** Canais de escuta (TCP, WebSocket, FastFood), fechados primeiro no [close] para parar de aceitar conexões. */
+    /** Canais de escuta (TCP, WebSocket, FastFood TCP e WebSocket), fechados primeiro no [close] para parar de aceitar conexões. */
     private val serverChannels = CopyOnWriteArrayList<Channel>()
     val started: Boolean
         get() = isRunning && !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
@@ -209,6 +210,7 @@ object HabboServer : AutoCloseable {
         habboServerBootstrap = ServerBootstrap()
         habboWebSocketServerBootstrap = ServerBootstrap()
         fastFoodServerBootstrap = ServerBootstrap()
+        fastFoodWebSocketServerBootstrap = ServerBootstrap()
         val ioHandlerFactory = if (Epoll.isAvailable()) EpollIoHandler.newFactory() else NioIoHandler.newFactory()
         workerGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
         bossGroup = MultiThreadIoEventLoopGroup(ioHandlerFactory)
@@ -293,6 +295,28 @@ object HabboServer : AutoCloseable {
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
+            // Mesmo protocolo do TCP acima, em frames binários (clientes de navegador só abrem WebSocket); o
+            // HabboNettyWebSocketHandler entrega o conteúdo dos frames como stream ao FastFoodNettyDecoder
+            fastFoodWebSocketServerBootstrap.group(bossGroup, workerGroup)
+                .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
+                .childHandler(object : ChannelInitializer<SocketChannel>() {
+                    override fun initChannel(socketChannel: SocketChannel) {
+                        socketChannel.pipeline().apply {
+                            addLast(IdleStateHandler(60, 0, 0))
+                            addLast(HttpServerCodec())
+                            addLast(HttpObjectAggregator(65536))
+                            addLast(WebSocketServerProtocolHandler("/"))
+                            addLast(habboNettyWebSocketHandler)
+
+                            addLast(stringEncoder)
+                            addLast(fastFoodNettyEncoder)
+                            addLast(FastFoodNettyDecoder())
+                            addLast(fastFoodNettyHandler)
+                        }
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
             log.info("Waiting for Habbo game to finish loading...")
             habboGame.awaitLoaded()
             log.info("Habbo game loaded!")
@@ -335,27 +359,33 @@ object HabboServer : AutoCloseable {
             val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
             val habboWebSocketChannelFuture = habboWebSocketServerBootstrap.bind(habboConfig.wsPort)
             val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 10)
+            val fastFoodWebSocketChannelFuture = fastFoodWebSocketServerBootstrap.bind(habboConfig.fastFoodWsPort)
             habboChannelFuture.sync()
             habboWebSocketChannelFuture.sync()
             fastFoodChannelFuture.sync()
-            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess) {
+            fastFoodWebSocketChannelFuture.sync()
+            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess && fastFoodWebSocketChannelFuture.isSuccess) {
                 serverChannels += listOf(
                     habboChannelFuture.channel(),
                     habboWebSocketChannelFuture.channel(),
-                    fastFoodChannelFuture.channel()
+                    fastFoodChannelFuture.channel(),
+                    fastFoodWebSocketChannelFuture.channel()
                 )
                 isRunning = true
                 log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
                 log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
                 log.info("FastFood server started on port {}!", habboConfig.port + 10)
+                log.info("FastFood WebSocket server started on port {}!", habboConfig.fastFoodWsPort)
                 log.info("Cold start finished: JVM up for {}ms", java.lang.management.ManagementFactory.getRuntimeMXBean().uptime)
                 habboChannelFuture.channel().closeFuture().await()
                 habboWebSocketChannelFuture.channel().closeFuture().await()
-                fastFoodChannelFuture.channel().closeFuture().sync()
+                fastFoodChannelFuture.channel().closeFuture().await()
+                fastFoodWebSocketChannelFuture.channel().closeFuture().sync()
             } else {
                 log.error(
                     "Error starting ${BuildConfig.NAME} server!",
-                    habboChannelFuture.cause() ?: habboWebSocketChannelFuture.cause()
+                    habboChannelFuture.cause() ?: habboWebSocketChannelFuture.cause() ?: fastFoodChannelFuture.cause()
+                        ?: fastFoodWebSocketChannelFuture.cause()
                 )
 
                 exitProcess(1)

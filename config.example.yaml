@@ -3,6 +3,12 @@
 port: 30000
 ws_port: 30001
 web_port: 30002
+# FastFood (BaseJump, Game Center): o TCP (clientes Flash) escuta em port + 10; o WebSocket (clientes de navegador,
+# mesmo protocolo em frames binários) escuta aqui. Opcional: sem a chave, ws_port + 10
+# fast_food_ws_port: 30011
+# Atrás de um proxy web (TLS), o endereço público desse WebSocket, mandado aos clientes de navegador no lugar de
+# habbo_host:fast_food_ws_port. Opcional.
+# fast_food_ws_url: wss://habbo.example.com/fastfood
 database:
   host: localhost
   port: 3306

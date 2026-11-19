@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,6 +77,8 @@ import javax.script.ScriptEngineManager
 
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+    /** Conexão pelo listener WebSocket (cliente de navegador) em vez do TCP (Flash/AIR). */
+    val isWebSocket: Boolean get() = channel.pipeline().get(WebSocketServerProtocolHandler::class.java) != null
     val sessionJob = SupervisorJob()
     val sessionScope = CoroutineScope(Dispatchers.Default + sessionJob)
     lateinit var release: String
