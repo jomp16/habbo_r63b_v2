@@ -111,7 +111,7 @@ class CmsMinimailMigrationContainerTest {
 
     @Test
     fun `a V31 cria as tres tabelas do Minimail`() {
-        assertEquals(31L, scalar("SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1"))
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '31' AND success = 1"))
         assertEquals(
             3L,
             scalar("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('cms_minimail_messages', 'cms_minimail_recipients', 'cms_minimail_reports')"),
