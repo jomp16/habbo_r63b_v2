@@ -7,7 +7,9 @@
 #   ./scripts/dev_db.sh sync --baseline  # Baixa apenas estrutura + tabelas estáticas (catálogo/mobis/headers)
 #   ./scripts/dev_db.sh reset            # Recria o banco local a partir do último dump baixado (sem refazer download)
 #   ./scripts/dev_db.sh up               # Inicia o container Docker local
-#   ./scripts/dev_db.sh down             # Para e remove o container Docker
+#   ./scripts/dev_db.sh down             # Para e REMOVE o container: apaga o banco local (sem volume);
+#                                        # para só parar: docker stop habbo-dev-mariadb
+#   (depois de sync/reset: ./scripts/dev_smoke_users.sh recria os usuários do smoke test)
 #   ./scripts/dev_db.sh status           # Mostra status do container e contagem de itens
 #   ./scripts/dev_db.sh cli              # Abre o client interativo mariadb no banco local
 #

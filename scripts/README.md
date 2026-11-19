@@ -42,10 +42,24 @@ Gerencia o container Docker `habbo-dev-mariadb` (`mariadb:13.0`) em `127.0.0.1:3
 ./scripts/dev_db.sh sync --baseline  # Apenas estrutura + tabelas estáticas (catálogo/mobis/headers)
 ./scripts/dev_db.sh reset            # Recria a partir do último dump em build/dev-db/
 ./scripts/dev_db.sh up               # Inicia o container local
-./scripts/dev_db.sh down             # Para e remove o container
+./scripts/dev_db.sh down             # Para e REMOVE o container: o banco local é apagado (não tem volume)
 ./scripts/dev_db.sh status           # Status e contagens
 ./scripts/dev_db.sh cli              # Abre o client mariadb no banco local
 ```
+
+Para só parar o banco sem perder os dados: `docker stop habbo-dev-mariadb` (e `./scripts/dev_db.sh up` para voltar).
+
+### Usuários de smoke test (`dev_smoke_users.sh`)
+
+Um dump de produção não traz os usuários com que o smoke test dos clientes PIXI loga (`smoke-all.mjs` do
+habbo-as3-transpiler, `SMOKE_USERS=4,5,6,7`). Depois de `sync`/`reset`:
+
+```bash
+./scripts/dev_smoke_users.sh                 # smoke1..smoke6 (ids 4..9), rank 1, quarto inicial 14
+SMOKE_COUNT=8 SMOKE_HOME_ROOM=11 ./scripts/dev_smoke_users.sh
+```
+
+Idempotente; só toca no container local. O login do smoke é por token da CMS, a senha não é usada.
 
 ---
 
