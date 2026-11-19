@@ -22,6 +22,15 @@ hot-load plugin system.
 - `port` (TCP) and `ws_port` (WebSocket) are bound; `web_port` is parsed but **not bound** (add any HTTP listener in
   `HabboServer.start()` beside the TCP/WS bootstraps).
 - MOTD file (`motd_enabled`, `motd_file_path`): lines starting with `#` are stripped.
+- **Asset index**: `AssetMapping` (`camera_renderer`) compiles `asset_mapping.json` into `cache/asset_mapping.idx`
+  (CWD; mmap, binary search; ~2 MB of heap instead of ~120 MB) and rebuilds it when the JSON's size or mtime (ms)
+  changes. The JSON stays the source of truth (`extract_assets.py` unchanged). Same v3 format as the Go
+  [habbo-render](https://git.rwx.ovh/Habbo/habbo-render) (`internal/assets/index.go`): in production both share
+  `/opt/habbo/cache/asset_mapping.idx`; a layout change must bump the magic in both. A rebuild parses the 60 MB JSON
+  (memory peak): on the VPS, prefer shipping a locally built index (`habbo-render`'s `deploy.sh --index`).
+- **habbo-render**: in production, nginx routes `/api/v1/habbo-imaging/avatarimage` and `/badge/` to the Go service
+  (`127.0.0.1:8090`); the emulator's `HabboImagingApiV1Controller` stays as fallback. Rendering changes in
+  `habbo_imaging`/`camera_renderer` must keep pixel parity with it (its `scripts/parity.sh --regen`).
 
 ## Deploy (`scripts/deploy.sh`)
 
