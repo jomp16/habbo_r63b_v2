@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ovh.rwx.fastfood.game.FastFoodPowerUpInventory
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
@@ -141,6 +142,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
     var fastFoodSession: FastFoodSession? = null
+
+    /** Os turbos do Fast Food, carregados na primeira vez que o jogo os pede (FastFoodPowerUpInventory.of). */
+    @Volatile
+    var fastFoodPowerUps: FastFoodPowerUpInventory? = null
     var cryptoToken: String = ""
     var isBot: Boolean = false
 

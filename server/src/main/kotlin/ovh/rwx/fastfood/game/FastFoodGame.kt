@@ -43,7 +43,11 @@ class FastFoodGame(
 ) {
     companion object {
         const val WIN_SCORE = 6 // Player.§_-LC§
-        const val POWER_UPS_PER_GAME = 1
+        const val BOT_POWER_UPS = 1 // um de cada por partida (os humanos: o estoque, até 3)
+
+        /** Chance (em 100) de um humano que terminou a partida ganhar turbos, e quantos (1 a 3 de um tipo sorteado). */
+        const val PRIZE_PERCENT = 30
+        val PRIZE_AMOUNT = 1..3
         const val COUNTDOWN_TICKS = 188 // BaseJumpEngine.§_-M0§: 3, 2, 1, já! antes do jogo aceitar ações
         const val MISSILE_TICKS = 45 // §_-Hy§.§_-D§: o voo do míssil até o prato
 
@@ -68,12 +72,15 @@ class FastFoodGame(
     init {
         val humanPlayers = humans.mapNotNull { session ->
             val user = session.habboSession ?: return@mapNotNull null
+            val inventory = FastFoodPowerUpInventory.of(user) // já carregado no JOIN_LOBBY
             FastFoodGamePlayer(
                 session = session,
                 id = user.userInformation.id,
                 name = user.userInformation.username,
                 figure = user.userInformation.figure,
-                gender = user.userInformation.gender
+                gender = user.userInformation.gender,
+                allowance = inventory.allowance(),
+                inventory = inventory
             )
         }
         players = humanPlayers + FastFoodBot.fill(humanPlayers, FastFoodGameManager.PLAYERS_PER_GAME)
@@ -91,7 +98,7 @@ class FastFoodGame(
                 false,
                 foods[0].id, // o tipo do primeiro prato (§_-JJ§)
                 foods.map { it.wire() },
-                FastFoodPowerUp.entries.associate { it.wire to POWER_UPS_PER_GAME },
+                player.powerUpsWire(), // os turbos que esta partida libera para ele (§_-DQ§, decrementados pelo §_-4p§)
                 players
             )
             player.session?.sendHabboResponse(FFOutgoing.FRIENDS_IN_GAME, FriendsInGameData(noFriendButton(player)))
@@ -230,8 +237,28 @@ class FastFoodGame(
 
         if (winner != null) {
             broadcast(FFOutgoing.END_GAME, EndGameData(endGameScores(players, winner)))
+            awardPrizes()
         }
         onEnd(this)
+    }
+
+    /**
+     * Quem terminou a partida às vezes ganha turbos ([PRIZE_PERCENT]); todos recebem o estoque atualizado, que o lobby
+     * mostra (o cliente só o pede ao abrir o jogo, e a partida gastou turbos dele).
+     */
+    private fun awardPrizes() {
+        val rnd = java.util.concurrent.ThreadLocalRandom.current()
+        for (player in players) {
+            val session = player.session?.takeIf { !player.left } ?: continue
+            val inventory = session.habboSession?.let { FastFoodPowerUpInventory.of(it) } ?: continue
+            if (rnd.nextInt(100) < PRIZE_PERCENT) {
+                val type = FastFoodPowerUp.entries[rnd.nextInt(FastFoodPowerUp.entries.size)]
+                val amount = rnd.nextInt(PRIZE_AMOUNT.first, PRIZE_AMOUNT.last + 1)
+                inventory.add(type, amount)
+                session.sendHabboResponse(FFOutgoing.POWER_UP_GAINED, PowerUpEventData(count = amount, type = type.wire))
+            }
+            session.sendHabboResponse(FFOutgoing.POWER_UPS_INVENTORY, inventory.snapshot())
+        }
     }
 
     /** O mesmo pacote para todos os humanos ainda na partida: serializado uma vez, payload compartilhado. */

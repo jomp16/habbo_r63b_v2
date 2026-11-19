@@ -21,13 +21,23 @@ package ovh.rwx.fastfood.game
 
 import ovh.rwx.fastfood.game.bot.FastFoodBot
 
-/** Os power-ups, com o tipo do wire (§_-DQ§). */
-enum class FastFoodPowerUp(val wire: Int) {
-    BIG_PARACHUTE(0),
-    MISSILE(1),
-    SHIELD(2),
+/** Os turbos, com o tipo do wire e o nome (§_-DQ§) que o cliente usa na loja e o banco guarda. */
+enum class FastFoodPowerUp(val wire: Int, val code: String) {
+    BIG_PARACHUTE(0, "bigparachute"),
+    MISSILE(1, "missile"),
+    SHIELD(2, "shield");
+
+    companion object {
+        fun fromCode(code: String) = entries.firstOrNull { it.code == code }
+    }
 }
 
+/**
+ * Um lugar na partida.
+ *
+ * @param allowance quantos turbos de cada tipo a partida libera (o GAME_STARTING manda isso ao cliente).
+ * @param inventory o estoque de onde sai cada turbo usado; null num bot.
+ */
 class FastFoodGamePlayer(
     val session: FastFoodSession?,
     val id: Int,
@@ -35,7 +45,9 @@ class FastFoodGamePlayer(
     val figure: String,
     val gender: String,
     /** O cérebro de um bot; null num humano. */
-    val bot: FastFoodBot? = null
+    val bot: FastFoodBot? = null,
+    allowance: Map<FastFoodPowerUp, Int> = FastFoodPowerUp.entries.associateWith { FastFoodGame.BOT_POWER_UPS },
+    private val inventory: FastFoodPowerUpInventory? = null
 ) {
     val isBot get() = bot != null
 
@@ -48,13 +60,17 @@ class FastFoodGamePlayer(
     /** O temporizador vermelho (§_-BL§): soltar com ticks restantes é largada antecipada. */
     internal var timerTicks = 0
 
-    private val powerUps = FastFoodPowerUp.entries.associateWithTo(mutableMapOf()) { FastFoodGame.POWER_UPS_PER_GAME }
+    private val powerUps = allowance.toMutableMap()
+
+    /** O que ainda resta liberado nesta partida, no formato do GAME_STARTING (tipo do wire → quantidade). */
+    fun powerUpsWire(): Map<Int, Int> = FastFoodPowerUp.entries.associate { it.wire to powerUps.getValue(it) }
 
     fun hasPowerUp(type: FastFoodPowerUp) = powerUps.getValue(type) > 0
 
-    /** Gasta um power-up; false se não tem. */
+    /** Gasta um turbo: da cota da partida e, num humano, do estoque. False se não tem. */
     fun usePowerUp(type: FastFoodPowerUp): Boolean {
         if (!hasPowerUp(type)) return false
+        if (inventory != null && !inventory.take(type)) return false
         powerUps[type] = powerUps.getValue(type) - 1
         return true
     }

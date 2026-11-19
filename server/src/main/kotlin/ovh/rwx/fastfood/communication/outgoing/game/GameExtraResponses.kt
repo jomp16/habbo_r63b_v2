@@ -39,8 +39,10 @@ class GameExtraResponses {
     @FFResponse(FFOutgoing.POWER_UP_GAINED)
     fun powerUpGained(habboResponse: HabboResponse, data: PowerUpEventData) {
         habboResponse.apply {
-            writeInt(data.count) // wire: count ANTES do type (parser §_-9Y§)
+            // parser §_-9Y§: o TIPO primeiro (§_-Gt§ = type), depois a quantidade (§_-Ch§ = count). Invertido, o
+            // aviso procura o ícone de um tipo que não existe e a exceção derruba os pacotes seguintes do cliente.
             writeInt(data.type)
+            writeInt(data.count)
         }
     }
 

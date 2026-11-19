@@ -58,7 +58,7 @@ data class NextPlateData(
     val platePos: Int
 )
 
-/** POWER_UP_GAINED: count vem ANTES do type no wire (parser §_-9Y§). */
+/** POWER_UP_GAINED (o aviso "você ganhou"): no wire vai o type e depois o count (parser §_-9Y§). */
 data class PowerUpEventData(
     val count: Int,
     val type: Int

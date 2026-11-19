@@ -22,6 +22,7 @@ package ovh.rwx.fastfood.communication.outgoing.game
 import ovh.rwx.fastfood.communication.FFResponse
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.database.fastfood.FastFoodPowerUpOffer
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GamePowerUpsResponse {
@@ -36,15 +37,16 @@ class GamePowerUpsResponse {
         }
     }
 
+    /** As ofertas do "Comprar mais" (parser §_-Es§ → §_-FP§: id, tipo, quantidade, preço); a compra manda o id. */
     @FFResponse(FFOutgoing.POWER_UPS_PRICE)
-    fun responsePowerUpsPrice(habboResponse: HabboResponse, powerUps: List<Pair<String, Int>>) {
+    fun responsePowerUpsPrice(habboResponse: HabboResponse, offers: List<FastFoodPowerUpOffer>) {
         habboResponse.apply {
-            writeInt(powerUps.size)
-            powerUps.forEach { (type, price) ->
-                writeUTF(type)
-                writeUTF(type)
-                writeInt(3)
-                writeInt(price)
+            writeInt(offers.size)
+            offers.forEach { offer ->
+                writeUTF(offer.id)
+                writeUTF(offer.type)
+                writeInt(offer.amount)
+                writeInt(offer.priceCredits)
             }
         }
     }

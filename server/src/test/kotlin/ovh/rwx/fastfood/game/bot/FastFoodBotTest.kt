@@ -58,7 +58,7 @@ class FastFoodBotTest {
         repeat(games) {
             var score = 0
             var timer = FastFoodPhysics.FOODS[0].timerTicks
-            var bigChutes = FastFoodGame.POWER_UPS_PER_GAME
+            var bigChutes = FastFoodGame.BOT_POWER_UPS
             while (score < FastFoodGame.WIN_SCORE) {
                 val food = FastFoodPhysics.foodFor(score)
                 val p = plan(food, bigChutes > 0)

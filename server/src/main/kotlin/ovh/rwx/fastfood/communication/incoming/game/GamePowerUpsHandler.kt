@@ -22,28 +22,23 @@ package ovh.rwx.fastfood.communication.incoming.game
 import ovh.rwx.fastfood.communication.FFHandler
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
+import ovh.rwx.fastfood.game.FastFoodPowerUpInventory
+import ovh.rwx.fastfood.game.FastFoodPowerUpShop
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.communication.HabboRequest
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GamePowerUpsHandler {
+    /** O estoque de turbos do lobby (o "x N" ao lado de cada um). */
     @FFHandler(FFIncoming.GET_POWER_UPS)
     fun handleGetPowerUps(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
-        if (!fastFoodSession.authenticated) return
-
-        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UPS_INVENTORY, emptyMap<Int, Int>())
+        val habboSession = fastFoodSession.habboSession ?: return
+        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UPS_INVENTORY, FastFoodPowerUpInventory.of(habboSession).snapshot())
     }
 
     @FFHandler(FFIncoming.GET_POWER_UPS_PRICE)
     fun handleGetPowerUpsPrice(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         if (!fastFoodSession.authenticated) return
-
-        val powerUps = listOf(
-            "missile" to 1,
-            "bigparachute" to 1,
-            "shield" to 1
-        )
-
-        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UPS_PRICE, powerUps)
+        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UPS_PRICE, FastFoodPowerUpShop.offers)
     }
 }

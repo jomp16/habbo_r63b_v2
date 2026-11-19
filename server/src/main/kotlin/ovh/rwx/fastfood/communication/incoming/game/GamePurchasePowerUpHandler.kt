@@ -22,40 +22,22 @@ package ovh.rwx.fastfood.communication.incoming.game
 import ovh.rwx.fastfood.communication.FFHandler
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
-import ovh.rwx.fastfood.game.PowerUpEventData
+import ovh.rwx.fastfood.game.FastFoodPowerUpInventory
+import ovh.rwx.fastfood.game.FastFoodPowerUpShop
 import ovh.rwx.fastfood.game.FastFoodSession
+import ovh.rwx.fastfood.game.PowerUpEventData
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.game.currency.CurrencyService
-import ovh.rwx.habbo.game.currency.Price
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GamePurchasePowerUpHandler {
-    // ids do cliente: 0 = bigparachute, 1 = missile, 2 = shield (constantes §_-DQ§)
-    private val powerUpPrices = mapOf(
-        "bigparachute" to 1,
-        "missile" to 1,
-        "shield" to 1
-    )
-    private val typeIds = mapOf(
-        "bigparachute" to 0,
-        "missile" to 1,
-        "shield" to 2
-    )
-
+    /** "Comprar mais": o id da oferta (POWER_UPS_PRICE). Cobra, guarda no estoque e mostra o que ganhou. */
     @FFHandler(FFIncoming.PURCHASE_POWER_UP)
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
-        if (!fastFoodSession.authenticated) return
-
         val habboSession = fastFoodSession.habboSession ?: return
-        val powerUpId = habboRequest.readUTF()
+        val (type, amount) = FastFoodPowerUpShop.purchase(habboSession, habboRequest.readUTF()) ?: return
 
-        val price = powerUpPrices[powerUpId] ?: return
-        val typeId = typeIds[powerUpId] ?: return
-
-        val userInformation = habboSession.userInformation
-        if (!CurrencyService.tryCharge(habboSession, Price(price, 0, 0)).ok) return
-
-        fastFoodSession.sendHabboResponse(FFOutgoing.USER_CREDITS, userInformation.credits)
-        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UP_GAINED, PowerUpEventData(count = 3, type = typeId))
+        fastFoodSession.sendHabboResponse(FFOutgoing.USER_CREDITS, habboSession.userInformation.credits)
+        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UP_GAINED, PowerUpEventData(count = amount, type = type.wire))
+        fastFoodSession.sendHabboResponse(FFOutgoing.POWER_UPS_INVENTORY, FastFoodPowerUpInventory.of(habboSession).snapshot())
     }
 }
