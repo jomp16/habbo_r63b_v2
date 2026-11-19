@@ -24,6 +24,19 @@ package ovh.rwx.fastfood.game
  * O seq SEMPRE vem antes do playerId no wire (getters §_-Jq§/§_-1q§ dos parsers).
  */
 
+/**
+ * Física da comida no GAME_STARTING (FallingObjectType AS3): gravidade, decel do paraquedas, velocidade mínima de
+ * queda (normal / paraquedas grande) e ticks do temporizador do prato (16 ms cada). Ver FastFoodFood.
+ */
+data class FastFoodFallingObjectType(
+    val id: Int,
+    val gravity: String,
+    val parachuteDecel: String,
+    val minFallSpeed: String,
+    val bigParachuteMinFallSpeed: String,
+    val plateTimerTicks: Int
+)
+
 data class DropFoodData(
     val seq: Int,
     val playerId: Int,
@@ -51,7 +64,7 @@ data class PowerUpEventData(
     val type: Int
 )
 
-/** END_GAME: vencedor é o ÚLTIMO entry (parser §_-FL§ sobrescreve §_-I3§ a cada iteração). */
+/** END_GAME: o vencedor é a PRIMEIRA entrada (parser §_-FL§ guarda §_-I3§ só no índice 0). */
 data class EndGameData(
     val scores: List<Pair<Int, Int>>
 )

@@ -28,19 +28,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Física da comida (FallingObjectType AS3): gravidade (px/s²), decel do paraquedas,
- * velocidade mínima de queda (normal / bigparachute) e ticks do timer do prato (16ms cada).
- */
-data class FastFoodFallingObjectType(
-    val id: Int,
-    val gravity: String,
-    val parachuteDecel: String,
-    val minFallSpeed: String,
-    val bigParachuteMinFallSpeed: String,
-    val plateTimerTicks: Int
-)
-
-/**
  * Uma arena por vez (BaseJump original: 3 jogadores por partida).
  * Humanos entram na hora; bots completam os 3 lugares.
  */
