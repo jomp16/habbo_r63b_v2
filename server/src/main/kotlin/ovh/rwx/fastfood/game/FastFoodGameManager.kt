@@ -19,80 +19,92 @@
 
 package ovh.rwx.fastfood.game
 
-import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
-import java.util.concurrent.CopyOnWriteArrayList
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
- * Uma arena por vez (BaseJump original: 3 jogadores por partida).
- * Humanos entram na hora; bots completam os 3 lugares.
+ * As partidas de Fast Food, várias ao mesmo tempo, de 3 jogadores cada (BaseJump original). Quem entra espera no
+ * lobby (FastFoodLobby) até a mesa encher ou a espera vencer; os bots completam os lugares vazios.
+ *
+ * Uma thread só, daemon, roda o lobby e TODAS as partidas num tick de 16 ms: o tick de uma partida é aritmética de
+ * microssegundos (3 pratos), sem I/O, então uma thread aguenta dezenas de partidas, e o estado fica confinado a
+ * ela, sem locks. As ações das sessões (event loop do Netty) entram por [run]. Sem ninguém no lobby nem jogando, o
+ * tick para.
  */
 object FastFoodGameManager {
     const val PLAYERS_PER_GAME = 3
+    const val LOBBY_WAIT_MILLIS = 8_000L
+
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val scheduler = Executors.newSingleThreadScheduledExecutor()
-    private val waiters = CopyOnWriteArrayList<FastFoodSession>()
-
-    @Volatile
-    private var game: FastFoodGame? = null
+    private val scheduler = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("fastfood-games").daemon().factory())
+    private val lobby = FastFoodLobby<FastFoodSession>(PLAYERS_PER_GAME, LOBBY_WAIT_MILLIS / FastFoodPhysics.TICK_MILLIS)
+    private val games = mutableListOf<FastFoodGame>()
+    private val gameBySession = HashMap<FastFoodSession, FastFoodGame>()
+    private var ticker: ScheduledFuture<*>? = null
+    private var now = 0L
 
     fun joinGame(session: FastFoodSession) = run {
-        val current = game
-        if (current != null && !current.ended.get()) {
-            // já tem partida rolando: espera a próxima
-            if (!waiters.contains(session)) waiters.add(session)
-            return@run
+        if (session in gameBySession || !lobby.join(session, now)) return@run
+        startReadyGames() // a mesa encheu: sai na hora
+        if (ticker == null) {
+            ticker = scheduler.scheduleAtFixedRate(guarded(::onTick), FastFoodPhysics.TICK_MILLIS, FastFoodPhysics.TICK_MILLIS, TimeUnit.MILLISECONDS)
         }
-
-        startGame(listOf(session))
     }
 
     fun playerAction(session: FastFoodSession, action: (FastFoodGame, FastFoodGamePlayer) -> Unit) = run {
-        val g = game ?: return@run
-        val player = g.players.find { it.session == session } ?: return@run
-
-        action(g, player)
+        val game = gameBySession[session] ?: return@run
+        val player = game.playerOf(session) ?: return@run
+        action(game, player)
     }
 
     fun leave(session: FastFoodSession) = run {
-        waiters.remove(session)
-        game?.removePlayer(session)
+        lobby.leave(session)
+        gameBySession.remove(session)?.removePlayer(session)
     }
 
-    private fun startGame(humans: List<FastFoodSession>) {
-        val newGame = FastFoodGame(humans, this::gameEnded)
-        game = newGame
-        newGame.start()
-    }
-
-    private fun gameEnded(endedGame: FastFoodGame) {
-        if (game === endedGame) game = null
-
-        // próximos na fila viram a próxima partida
-        val next = waiters.toList()
-        if (next.isNotEmpty()) {
-            waiters.clear()
-            startGame(next)
+    private fun onTick() {
+        now++
+        startReadyGames()
+        for (game in games.toList()) {
+            try {
+                game.tick()
+            } catch (e: Exception) {
+                // uma partida quebrada não derruba as outras nem repete o erro a cada 16 ms
+                log.error("FastFood: erro na partida, encerrada", e)
+                game.abort()
+            }
+        }
+        if (games.isEmpty() && lobby.isEmpty()) {
+            ticker?.cancel(false)
+            ticker = null
         }
     }
 
-    // Tudo o que mexe numa partida (ações das sessões Netty, o tick, os bots) roda nesta thread única: o estado
-    // da partida não tem sincronização. Uma exceção é registrada e não derruba o executor (nem o tick periódico).
+    private fun startReadyGames() {
+        while (true) {
+            val table = lobby.takeReady(now) ?: return
+            val humans = table.filter { it.authenticated && it.channel.isActive }
+            if (humans.isEmpty()) continue
+            val game = FastFoodGame(humans, ::gameEnded)
+            games += game
+            humans.forEach { gameBySession[it] = game }
+            game.start()
+        }
+    }
+
+    private fun gameEnded(game: FastFoodGame) {
+        games -= game
+        gameBySession.values.removeIf { it === game }
+    }
+
+    /** Roda [task] na thread das partidas. Uma exceção é registrada e não derruba a thread. */
     fun run(task: () -> Unit) {
         scheduler.execute(guarded(task))
     }
-
-    fun schedule(delayMillis: Long, task: () -> Unit) {
-        scheduler.schedule(guarded(task), delayMillis, TimeUnit.MILLISECONDS)
-    }
-
-    fun scheduleAtFixedRate(periodMillis: Long, task: () -> Unit): ScheduledFuture<*> =
-        scheduler.scheduleAtFixedRate(guarded(task), periodMillis, periodMillis, TimeUnit.MILLISECONDS)
 
     private fun guarded(task: () -> Unit) = Runnable {
         try {
@@ -100,9 +112,5 @@ object FastFoodGameManager {
         } catch (e: Exception) {
             log.error("FastFood: erro na partida", e)
         }
-    }
-
-    fun broadcast(outgoing: FFOutgoing, vararg args: Any?) {
-        game?.broadcast(outgoing, *args)
     }
 }

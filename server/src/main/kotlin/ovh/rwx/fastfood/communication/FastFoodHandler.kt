@@ -19,6 +19,7 @@
 
 package ovh.rwx.fastfood.communication
 
+import io.netty.buffer.ByteBufUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
@@ -38,7 +39,13 @@ import java.lang.invoke.WrongMethodTypeException
 import java.time.LocalDateTime
 
 class FastFoodHandler {
+    companion object {
+        /** O BaseJump não tem releases: uma versão fixa para todas as respostas. */
+        val VERSION = HabboVersion(LocalDateTime.of(2013, 1, 1, 0, 0), 63)
+    }
+
     private val log: Logger = LoggerFactory.getLogger(javaClass)
+    private val incomingById = FFIncoming.entries.associateBy { it.headerId }
     private val fastFoodMessageHandlers: MutableMap<FFIncoming, Pair<RequestInvoker, MethodHandle>> = mutableMapOf()
     private val fastFoodMessageResponses: MutableMap<FFOutgoing, Pair<ResponseInvoker, MethodHandle>> = mutableMapOf()
     private val instances: MutableMap<Class<*>, Any> = mutableMapOf()
@@ -80,38 +87,42 @@ class FastFoodHandler {
         ClassIndex.classesOf(kind).asSequence()
             .flatMap { clazz -> clazz.declaredMethods.asSequence().filter { it.isAnnotationPresent(annotation) }.sortedBy { it.name } }
 
+    /**
+     * Trata o pacote no próprio event loop do Netty, como o HabboHandler: os handlers do Fast Food só leem memória
+     * e o que mexe numa partida vai para a thread das partidas (FastFoodGameManager.run).
+     */
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
-        fastFoodSession.incomingExecutor.execute {
-            habboRequest.use {
-                val ffIncoming: FFIncoming? = FFIncoming.values().firstOrNull { ffIncoming -> ffIncoming.headerId == habboRequest.headerId }
+        habboRequest.use {
+            val ffIncoming = incomingById[habboRequest.headerId]
+            val (invoker, methodHandle) = ffIncoming?.let { fastFoodMessageHandlers[it] } ?: run {
+                log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, ffIncoming)
+                return@use
+            }
 
-                if (ffIncoming != null && fastFoodMessageHandlers.containsKey(ffIncoming)) {
-                    val (invoker, methodHandle) = fastFoodMessageHandlers[ffIncoming] ?: return@use
+            try {
+                invoker.invoke(fastFoodSession, habboRequest)
+            } catch (e: Exception) {
+                log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
 
-                    try {
-                        invoker.invoke(fastFoodSession, habboRequest)
-                    } catch (e: Exception) {
-                        log.error("Error when invoking HabboRequest for headerID: ${habboRequest.headerId} - $ffIncoming!", e)
-
-                        if (e is ClassCastException || e is WrongMethodTypeException || e is ArrayIndexOutOfBoundsException) {
-                            log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
-                            log.error("Received parameters: {}", listOf(FastFoodSession::class.java.simpleName, HabboRequest::class.java))
-                        }
-                    }
-                } else {
-                    log.warn("Non existent request header ID: {} - {}", habboRequest.headerId, ffIncoming)
+                if (e is ClassCastException || e is WrongMethodTypeException || e is ArrayIndexOutOfBoundsException) {
+                    log.error("Excepted parameters: {}", methodHandle.type().parameterList().drop(1).map { clazz1 -> clazz1.simpleName })
+                    log.error("Received parameters: {}", listOf(FastFoodSession::class.java.simpleName, HabboRequest::class.java))
                 }
             }
         }
     }
 
-    fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
+    /** O corpo de uma resposta, serializado uma vez para ir a um ou mais destinatários (FastFoodSession.send). */
+    fun serialize(ffOutgoing: FFOutgoing, vararg args: Any?): ByteArray? =
+        invokeResponse(ffOutgoing, *args)?.use { ByteBufUtil.getBytes(it.byteBuf) }
+
+    private fun invokeResponse(ffOutgoing: FFOutgoing, vararg args: Any?): HabboResponse? {
         if (fastFoodMessageResponses.containsKey(ffOutgoing)) {
             val (invoker, methodHandle) = fastFoodMessageResponses[ffOutgoing] ?: return null
             val habboResponse = HabboResponse(
                 headerId = ffOutgoing.headerId,
                 outgoing = null,
-                habboVersion = HabboVersion(LocalDateTime.now(), 63)
+                habboVersion = VERSION
             )
 
             try {

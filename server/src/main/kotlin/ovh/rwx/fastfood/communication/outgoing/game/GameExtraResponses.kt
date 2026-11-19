@@ -21,11 +21,21 @@ package ovh.rwx.fastfood.communication.outgoing.game
 
 import ovh.rwx.fastfood.communication.FFResponse
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
+import ovh.rwx.fastfood.game.FriendsInGameData
 import ovh.rwx.fastfood.game.PowerUpEventData
 import ovh.rwx.habbo.communication.HabboResponse
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GameExtraResponses {
+    /** Quem da partida não ganha o botão de amizade na tela de resultado (parser §_-LI§: count + ids). */
+    @FFResponse(FFOutgoing.FRIENDS_IN_GAME)
+    fun friendsInGame(habboResponse: HabboResponse, data: FriendsInGameData) {
+        habboResponse.apply {
+            writeInt(data.playerIds.size)
+            data.playerIds.forEach { writeInt(it) }
+        }
+    }
+
     @FFResponse(FFOutgoing.POWER_UP_GAINED)
     fun powerUpGained(habboResponse: HabboResponse, data: PowerUpEventData) {
         habboResponse.apply {

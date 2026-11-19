@@ -29,6 +29,9 @@ enum class FFIncoming(val headerId: Int) {
     GET_POWER_UPS_PRICE(9),
     PURCHASE_POWER_UP(10),
     GET_GAME_COUNTS(11),
-    GET_GLOBAL_SCORES(13),
-    GET_USER_CREDITS(14)
+    GAME_ENDED_ACK(12), // vazio: o cliente o manda ao processar o END_GAME (BaseJumpEngine.§_-Du§)
+    FRIEND_REQUEST(13), // nome do adversário: o botão de amizade da tela de resultado (§_-EQ§, BaseJumpEngine.§_-Mx§)
+    GET_USER_CREDITS(14),
+    GET_GLOBAL_SCORES(15), // vazio: ao abrir o placar global no lobby (BaseJumpEngine.§_-BH§)
+    // o 4 (§_-Aq§, vazio) só sairia de BaseJumpEngine.§var§(true), que nada no cliente chama: sem handler
 }

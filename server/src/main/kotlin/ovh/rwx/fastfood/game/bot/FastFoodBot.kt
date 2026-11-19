@@ -21,7 +21,6 @@ package ovh.rwx.fastfood.game.bot
 
 import ovh.rwx.fastfood.game.FastFoodFood
 import ovh.rwx.fastfood.game.FastFoodGame
-import ovh.rwx.fastfood.game.FastFoodGameManager
 import ovh.rwx.fastfood.game.FastFoodGamePlayer
 import ovh.rwx.fastfood.game.FastFoodPhysics
 import ovh.rwx.fastfood.game.FastFoodPowerUp
@@ -103,16 +102,22 @@ class FastFoodBot(val style: BotStyle) {
 
     private var dropAt = -1
     private var current: BotPlan? = null
+    private var shieldAt = -1 // tick em que ergue o escudo contra um míssil a caminho
 
-    /** Um prato novo nasceu no alto: o plano é refeito no próximo tick. */
+    /** Um prato novo nasceu no alto: o plano é refeito no próximo tick (e o escudo do prato anterior fica). */
     fun onNewPlate() {
         dropAt = -1
         current = null
+        shieldAt = -1
     }
 
     fun tick(game: FastFoodGame, self: FastFoodGamePlayer) {
         val rnd = ThreadLocalRandom.current()
         val plate = self.plate
+        if (shieldAt in 0..game.currentTick) {
+            shieldAt = -1
+            game.shield(self)
+        }
         when (plate.state) {
             PlateState.IDLE -> {
                 if (current == null) {
@@ -140,6 +145,6 @@ class FastFoodBot(val style: BotStyle) {
     fun onMissileIncoming(game: FastFoodGame, self: FastFoodGamePlayer) {
         val rnd = ThreadLocalRandom.current()
         if (!self.hasPowerUp(FastFoodPowerUp.SHIELD) || rnd.nextInt(100) >= 50) return
-        FastFoodGameManager.schedule(rnd.nextLong(100, 500)) { if (!game.ended.get()) game.shield(self) }
+        shieldAt = game.currentTick + rnd.nextInt(6, 32)
     }
 }

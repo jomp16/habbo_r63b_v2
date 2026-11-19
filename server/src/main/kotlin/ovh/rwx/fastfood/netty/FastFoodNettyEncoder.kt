@@ -39,21 +39,19 @@ class FastFoodNettyEncoder : MessageToByteEncoder<HabboResponse>() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun encode(ctx: ChannelHandlerContext, msg: HabboResponse, out: ByteBuf) {
-        val fastFoodSession: FastFoodSession = ctx.channel().attr(HabboSessionManager.fastFoodAttributeKey).get()
-        val username = if (fastFoodSession.authenticated) fastFoodSession.habboSession!!.userInformation.username else fastFoodSession.channel.ip()
-
         if (log.isDebugEnabled) {
+            val fastFoodSession: FastFoodSession = ctx.channel().attr(HabboSessionManager.fastFoodAttributeKey).get()
+            val username = if (fastFoodSession.authenticated) fastFoodSession.habboSession!!.userInformation.username else fastFoodSession.channel.ip()
             log.trace("({}) - SENT --> [{}][{}] -- {}", username, msg.headerId.toString().padEnd(2), FFOutgoing.values().firstOrNull { it.headerId == msg.headerId }?.name?.padEnd(HabboServer.fastFoodHandler.largestNameSize), msg.toString())
         }
-        val byteBuf = msg.byteBuf
-
         out.apply {
-            writeInt(byteBuf.writerIndex() + 2)
+            writeInt(msg.payloadLength + 2)
             writeShort(msg.headerId)
-            writeBytes(byteBuf)
         }
+        // payload compartilhado (FastFoodSession.send): close() não libera nada
+        msg.writePayloadTo(out)
 
         if (!msg.keepCopy) msg.close()
-        else ReferenceCountUtil.release(byteBuf)
+        else ReferenceCountUtil.release(msg.byteBuf)
     }
 }

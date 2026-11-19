@@ -27,14 +27,12 @@ import ovh.rwx.habbo.communication.HabboRequest
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GameGlobalScoresHandler {
+    /** O placar global do lobby (mensagem 15, sem corpo). */
     @FFHandler(FFIncoming.GET_GLOBAL_SCORES)
     fun handle(fastFoodSession: FastFoodSession, habboRequest: HabboRequest) {
         if (!fastFoodSession.authenticated) return
 
-        @Suppress("UNUSED_VARIABLE")
-        val playerName = habboRequest.readUTF()
-
-        // ponytail: sem persistência de high scores ainda; lista vazia
+        // sem placar persistido ainda: lista vazia
         fastFoodSession.sendHabboResponse(FFOutgoing.GLOBAL_SCORES, emptyList<Pair<String, Int>>())
     }
 }

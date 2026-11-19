@@ -21,8 +21,7 @@ package ovh.rwx.fastfood.game
 
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.fastfood.game.bot.FastFoodBot
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.atomic.AtomicBoolean
+import ovh.rwx.habbo.HabboServer
 
 /**
  * Uma partida de BaseJump (Fast Food): o servidor simula a queda de cada prato tick a tick, com a mesma integração
@@ -36,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * comida pesada pede o paraquedas mais alto; o paraquedas grande freia 10× (abre "no último segundo"); o escudo só
  * protege de mísseis; o míssil vai no adversário que lidera. Os bots (FastFoodBot) usam as mesmas ações.
  *
- * Tudo roda na thread única do FastFoodGameManager: ações das sessões, o tick e os bots.
+ * Tudo roda na thread única do FastFoodGameManager (ações das sessões, o tick e os bots): sem sincronização.
  */
 class FastFoodGame(
     humans: List<FastFoodSession>,
@@ -60,10 +59,10 @@ class FastFoodGame(
     private class Missile(val target: FastFoodGamePlayer, val plateSerial: Int, val hitTick: Int)
 
     val players: List<FastFoodGamePlayer>
-    val ended = AtomicBoolean(false)
+    var ended = false
+        private set
     var currentTick = 0
         private set
-    private var ticker: ScheduledFuture<*>? = null
     private val missiles = mutableListOf<Missile>()
 
     init {
@@ -95,18 +94,27 @@ class FastFoodGame(
                 FastFoodPowerUp.entries.associate { it.wire to POWER_UPS_PER_GAME },
                 players
             )
+            player.session?.sendHabboResponse(FFOutgoing.FRIENDS_IN_GAME, FriendsInGameData(noFriendButton(player)))
         }
-        ticker = FastFoodGameManager.scheduleAtFixedRate(FastFoodPhysics.TICK_MILLIS) { onTick() }
     }
 
-    private val playing get() = !ended.get() && currentTick >= COUNTDOWN_TICKS
+    /** Para quem a tela de resultado de [viewer] não oferece amizade: quem já é amigo dele e os bots. */
+    private fun noFriendButton(viewer: FastFoodGamePlayer): List<Int> {
+        val friends = viewer.session?.habboSession?.habboMessenger?.friends ?: return emptyList()
+        return players.filter { it !== viewer && (it.isBot || friends.containsKey(it.id)) }.map { it.id }
+    }
 
-    private fun onTick() {
-        if (ended.get()) return
+    fun playerOf(session: FastFoodSession) = players.find { it.session == session }
+
+    private val playing get() = !ended && currentTick >= COUNTDOWN_TICKS
+
+    /** Um passo de 16 ms, chamado pelo FastFoodGameManager. */
+    internal fun tick() {
+        if (ended) return
         currentTick++
         for (player in players) {
             if (player.plate.step()) touchdown(player)
-            if (ended.get()) return
+            if (ended) return
             // o temporizador corre enquanto o prato não for de largada antecipada (§_-BL§.update)
             if (player.timerTicks > 0 && !player.plate.falseStarted) player.timerTicks--
         }
@@ -204,30 +212,33 @@ class FastFoodGame(
         player.bot?.onNewPlate()
     }
 
+    /** Um humano saiu: o prato dele para onde está; sem humanos restantes, a partida acaba em silêncio. */
     fun removePlayer(session: FastFoodSession) {
-        players.find { it.session == session } ?: return
-
-        // sem humanos restantes, encerra a arena em silêncio
-        if (players.none { !it.isBot && it.session != null && it.session != session }) {
-            endGame(null)
-        }
+        val player = playerOf(session) ?: return
+        player.left = true
+        if (players.all { it.isBot || it.left }) endGame(null)
     }
 
-    /** Encerra a partida; sem vencedor (todos os humanos saíram), sem END_GAME. */
+    /** Encerra sem vencedor (erro na partida). */
+    internal fun abort() = endGame(null)
+
+    /** Encerra a partida; sem vencedor (todos os humanos saíram, ou erro), sem END_GAME. */
     private fun endGame(winner: FastFoodGamePlayer?) {
-        if (!ended.compareAndSet(false, true)) return
-        ticker?.cancel(false)
+        if (ended) return
+        ended = true
         missiles.clear()
 
         if (winner != null) {
             broadcast(FFOutgoing.END_GAME, EndGameData(endGameScores(players, winner)))
         }
-
-        players.forEach { it.session?.let { s -> FastFoodGameManager.leave(s) } }
         onEnd(this)
     }
 
+    /** O mesmo pacote para todos os humanos ainda na partida: serializado uma vez, payload compartilhado. */
     fun broadcast(outgoing: FFOutgoing, vararg args: Any?) {
-        players.forEach { p -> p.session?.sendHabboResponse(outgoing, *args) }
+        val recipients = players.mapNotNull { p -> p.session?.takeIf { !p.left } }
+        if (recipients.isEmpty()) return
+        val payload = HabboServer.fastFoodHandler.serialize(outgoing, *args) ?: return
+        recipients.forEach { it.send(outgoing, payload) }
     }
 }

@@ -64,6 +64,14 @@ data class PowerUpEventData(
     val type: Int
 )
 
+/**
+ * FRIENDS_IN_GAME: os jogadores da partida que já são amigos (Player.§_-2B§) e os bots: a tela de resultado não
+ * oferece o botão de amizade para eles.
+ */
+data class FriendsInGameData(
+    val playerIds: List<Int>
+)
+
 /** END_GAME: o vencedor é a PRIMEIRA entrada (parser §_-FL§ guarda §_-I3§ só no índice 0). */
 data class EndGameData(
     val scores: List<Pair<Int, Int>>

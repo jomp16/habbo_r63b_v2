@@ -42,6 +42,9 @@ class FastFoodGamePlayer(
     var score = 0
     internal val plate = FastFoodPlate()
 
+    /** Um humano que saiu no meio da partida: não recebe mais pacotes. */
+    internal var left = false
+
     /** O temporizador vermelho (§_-BL§): soltar com ticks restantes é largada antecipada. */
     internal var timerTicks = 0
 

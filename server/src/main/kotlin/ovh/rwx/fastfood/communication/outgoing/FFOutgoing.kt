@@ -33,6 +33,7 @@ enum class FFOutgoing(val headerId: Int) {
     POWER_UPS_INVENTORY(14),
     POWER_UPS_PRICE(15),
     USER_CREDITS(16),
+    FRIENDS_IN_GAME(17),
     POWER_UP_GAINED(18),
     GAME_COUNT(19),
     GLOBAL_SCORES(20),
