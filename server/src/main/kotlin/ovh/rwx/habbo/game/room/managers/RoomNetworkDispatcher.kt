@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.room.managers
 
 import ovh.rwx.habbo.communication.HabboResponse
+import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.ProtocolEra
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
@@ -92,14 +93,26 @@ class RoomNetworkDispatcher(private val room: Room) {
         return sessions
     }
 
-    /** Agrupa por release; no caso comum (uma release só) devolve a própria lista, sem HashMap por broadcast. */
+    /**
+     * O que decide os bytes de uma resposta: a release (os headers), a era (o formato do fio: o `writeUTF` da
+     * WEDGIE_PRE_SHUFFLE termina com 0x02, o das outras leva o tamanho) e a versão (os `isVersionAtLeast` dos
+     * serializadores). Só a release não basta: a beta de 2009 (init crypto 206, WEDGIE) e o client que manda
+     * "development" (2011, PRE_SHUFFLE_MODERN) têm os dois `release = "R63A"`, e um payload WEDGIE clonado para o
+     * client de 2011 quebra a leitura dele ("End of file" no ROOM_USER_REMOVE).
+     */
+    private data class WireKey(val release: String, val era: ProtocolEra, val version: HabboVersion)
+
+    private fun wireKey(session: HabboSession) =
+        WireKey(if (session.releaseInitialized) session.release else "", session.protocolEra, session.habboVersion)
+
+    /** Agrupa pelo formato do fio; no caso comum (um formato só) devolve a própria lista, sem HashMap por broadcast. */
     private fun groupByRelease(sessions: List<HabboSession>): Collection<List<HabboSession>> {
         if (sessions.isEmpty()) return emptyList()
 
-        val first = if (sessions[0].releaseInitialized) sessions[0].release else ""
-        if (sessions.all { (if (it.releaseInitialized) it.release else "") == first }) return listOf(sessions)
+        val first = wireKey(sessions[0])
+        if (sessions.all { wireKey(it) == first }) return listOf(sessions)
 
-        return sessions.groupBy { if (it.releaseInitialized) it.release else "" }.values
+        return sessions.groupBy(::wireKey).values
     }
 
     /**
