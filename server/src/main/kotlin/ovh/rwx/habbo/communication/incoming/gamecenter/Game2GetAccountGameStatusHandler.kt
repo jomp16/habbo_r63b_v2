@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2AccountStatusData
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -32,7 +33,8 @@ class Game2GetAccountGameStatusHandler {
     @Handler(Incoming.GAME_2_GET_ACCOUNT_GAME_STATUS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val gameTypeId = habboRequest.readInt()
-        val freeGames = HabboServer.habboGame.snowWarManager.getFreeGamesLeft(habboSession)
+        // as partidas grátis de hoje NESTE jogo (o cliente pede por gameTypeId)
+        val freeGames = GameDailyPlaysService.freeGamesLeft(habboSession, gameTypeId)
         val stats = HabboServer.habboGame.snowWarManager.getPlayerStats(habboSession.userInformation.id)
         habboSession.sendHabboResponse(
             Outgoing.GAME_2_ACCOUNT_GAME_STATUS,

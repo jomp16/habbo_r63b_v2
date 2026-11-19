@@ -19,29 +19,18 @@
 
 package ovh.rwx.habbo.communication.incoming.gamecenter
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2AccountStatusData
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class GameCenterInitializeHandler {
+    /**
+     * O Game Center abriu (997 `_-0-e()`, sem corpo, 2013). Não responde: a tela pede o status de cada jogo ela mesma
+     * (GAME_2_GET_ACCOUNT_GAME_STATUS, com as partidas grátis de hoje). Ler um id aqui dava 0, que desde a V33 é o
+     * SnowWar: o servidor mandava "SnowWar ilimitado" por cima do contador do dia.
+     */
     @Handler(Incoming.INITIALIZE_GAME_CENTER)
-    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val manager = HabboServer.habboGame.gameCenterManager
-        val requested = habboRequest.readInt()
-        // 997 (vazio) drena 0 e nao pede status de jogo nenhum: o layout
-        // pede explicitamente via 3548. Chutar um jogo aqui manda status do
-        // snowwar e confunde o cliente.
-        val game = manager.findById(requested) ?: return
-
-        // ponytail: gamesLeft/promote fixos (-1 = ilimitado); contagem semanal fica pro game loop
-        habboSession.sendHabboResponse(
-            Outgoing.GAME_2_ACCOUNT_GAME_STATUS,
-            Game2AccountStatusData(game.gameTypeId, -1, 1)
-        )
-    }
+    fun handle(habboSession: HabboSession, habboRequest: HabboRequest) = Unit
 }

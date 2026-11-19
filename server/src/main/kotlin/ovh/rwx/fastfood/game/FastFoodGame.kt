@@ -22,6 +22,8 @@ package ovh.rwx.fastfood.game
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.fastfood.game.bot.FastFoodBot
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.game.gamecenter.GameCenterManager
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 
 /**
  * Uma partida de BaseJump (Fast Food): o servidor simula a queda de cada prato tick a tick, com a mesma integração
@@ -89,6 +91,8 @@ class FastFoodGame(
 
     fun start() {
         val foods = FastFoodPhysics.FOODS
+        // cada humano gasta uma partida grátis do dia (o "Jogue agora! N" do Game Center)
+        players.filter { !it.isBot }.forEach { GameDailyPlaysService.record(it.id, GameCenterManager.BASEJUMP) }
         players.forEach { player ->
             player.session?.sendHabboResponse(
                 FFOutgoing.GAME_STARTING,

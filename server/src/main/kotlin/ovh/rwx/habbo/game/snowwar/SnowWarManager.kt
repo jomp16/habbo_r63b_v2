@@ -59,29 +59,21 @@ class SnowWarManager {
     }
 
     fun getPlayerStats(userId: Int): SnowWarPlayerStats {
-        return playerStatsCache.computeIfAbsent(userId) {
-            val stats = SnowWarDao.getStats(userId) ?: SnowWarPlayerStats(userId)
-            val (year, week) = getCurrentYearAndWeek()
-            if (stats.lastYear != year || stats.lastWeekNumber != week) {
-                stats.weeklyScore = 0
-                stats.weeklyGamesPlayed = 0
-                stats.lastYear = year
-                stats.lastWeekNumber = week
-            }
-            stats
+        val stats = playerStatsCache.computeIfAbsent(userId) { SnowWarDao.getStats(userId) ?: SnowWarPlayerStats(userId) }
+        // a semana vira a cada acesso, não só ao carregar do banco: com o servidor no ar o cache nunca zerava
+        val (year, week) = getCurrentYearAndWeek()
+        if (stats.lastYear != year || stats.lastWeekNumber != week) {
+            stats.weeklyScore = 0
+            stats.weeklyGamesPlayed = 0
+            stats.lastYear = year
+            stats.lastWeekNumber = week
         }
+        return stats
     }
 
     fun savePlayerStats(stats: SnowWarPlayerStats) {
         playerStatsCache[stats.userId] = stats
         SnowWarDao.saveStats(stats)
-    }
-
-    fun getFreeGamesLeft(session: HabboSession): Int {
-        val cfg = HabboServer.habboConfig.gameConfig.snowwar
-        val maxFree = if (session.habboSubscription.hasHabboClub) cfg.freeGamesDailyHc else cfg.freeGamesDailyRegular
-        val stats = getPlayerStats(session.userInformation.id)
-        return (maxFree - stats.weeklyGamesPlayed).coerceAtLeast(0)
     }
 
     fun quickJoin(session: HabboSession) {

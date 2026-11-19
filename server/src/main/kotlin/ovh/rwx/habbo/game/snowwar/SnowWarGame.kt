@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.gamecenter.*
+import ovh.rwx.habbo.game.gamecenter.GameCenterManager
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 import ovh.rwx.habbo.game.snowwar.bot.SnowWarBotAI
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarFieldType
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarResultType
@@ -388,6 +390,7 @@ class SnowWarGame(
             stats.weeklyScore += scoreVal
             stats.gamesPlayed += 1
             stats.weeklyGamesPlayed += 1
+            GameDailyPlaysService.record(uid, GameCenterManager.SNOWWAR)
             stats.skillLevel = (stats.totalScore / 100).coerceAtLeast(1)
             HabboServer.habboGame.snowWarManager.savePlayerStats(stats)
 

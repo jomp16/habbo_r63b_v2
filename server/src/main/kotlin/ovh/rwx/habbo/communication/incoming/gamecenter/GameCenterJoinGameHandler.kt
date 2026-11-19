@@ -24,6 +24,9 @@ import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
+import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2AccountStatusData
+import ovh.rwx.habbo.communication.outgoing.gamecenter.GameCenterCanPlayGameResponse
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
 
@@ -37,6 +40,21 @@ class GameCenterJoinGameHandler {
     private fun sendLoadGame(habboSession: HabboSession, gameId: Int) {
         val gameCenterManager = HabboServer.habboGame.gameCenterManager
         val game = gameCenterManager.findById(gameId) ?: return
+
+        // sem partidas grátis hoje: o cliente já troca o botão pela compra do HC com 0, mas não confia nele. O botão
+        // que ele desabilitou ao clicar volta (CAN_PLAY) e o contador mostra 0.
+        if (GameDailyPlaysService.freeGamesLeft(habboSession, game.gameTypeId) == 0) {
+            habboSession.sendHabboResponse(
+                Outgoing.GAME_2_ACCOUNT_GAME_STATUS,
+                Game2AccountStatusData(gameTypeId = game.gameTypeId, freeGamesLeft = 0)
+            )
+            habboSession.sendHabboResponse(
+                Outgoing.GAME_CENTER_CAN_PLAY_GAME,
+                game.gameTypeId,
+                GameCenterCanPlayGameResponse.GameCenterCanPlayGameStatus.OK
+            )
+            return
+        }
 
         if (game.swf.isBlank()) {
             // Jogo embutido no Habbo.swf (SnowWar): roda via GAME_2_* na conexão principal;

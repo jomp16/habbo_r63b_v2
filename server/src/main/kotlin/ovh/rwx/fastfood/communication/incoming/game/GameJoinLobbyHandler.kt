@@ -23,6 +23,8 @@ import ovh.rwx.fastfood.communication.FFHandler
 import ovh.rwx.fastfood.communication.incoming.FFIncoming
 import ovh.rwx.fastfood.game.FastFoodGameManager
 import ovh.rwx.fastfood.game.FastFoodPowerUpInventory
+import ovh.rwx.habbo.game.gamecenter.GameCenterManager
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 import ovh.rwx.fastfood.game.FastFoodSession
 import ovh.rwx.habbo.communication.HabboRequest
 
@@ -34,6 +36,7 @@ class GameJoinLobbyHandler {
 
         // o estoque de turbos carrega aqui (event loop), não na thread das partidas quando a mesa sai
         FastFoodPowerUpInventory.of(habboSession)
+        GameDailyPlaysService.playedToday(habboSession.userInformation.id, GameCenterManager.BASEJUMP)
         FastFoodGameManager.joinGame(fastFoodSession)
     }
 }

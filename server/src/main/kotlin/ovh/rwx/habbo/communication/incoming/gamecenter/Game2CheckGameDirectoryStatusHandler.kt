@@ -25,13 +25,16 @@ import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.gamecenter.Game2DirectoryStatusData
+import ovh.rwx.habbo.game.gamecenter.GameCenterManager
+import ovh.rwx.habbo.game.gamecenter.GameDailyPlaysService
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class Game2CheckGameDirectoryStatusHandler {
     @Handler(Incoming.GAME_2_CHECK_DIRECTORY_STATUS)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val freeGames = HabboServer.habboGame.snowWarManager.getFreeGamesLeft(habboSession)
+        // o diretório do Game2 é o do SnowWar
+        val freeGames = GameDailyPlaysService.freeGamesLeft(habboSession, GameCenterManager.SNOWWAR)
         val stats = HabboServer.habboGame.snowWarManager.getPlayerStats(habboSession.userInformation.id)
         habboSession.sendHabboResponse(
             Outgoing.GAME_2_DIRECTORY_STATUS,

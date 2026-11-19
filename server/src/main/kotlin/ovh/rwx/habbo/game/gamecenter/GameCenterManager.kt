@@ -26,6 +26,12 @@ import ovh.rwx.habbo.database.gamecenter.GameCenterDao
 import java.util.concurrent.ConcurrentHashMap
 
 class GameCenterManager {
+    companion object {
+        /** Os ids da Sulake (V33); ver findById. */
+        const val SNOWWAR = 0
+        const val BASEJUMP = 3
+    }
+
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     private val games = ConcurrentHashMap<Int, GameCenterGame>()
