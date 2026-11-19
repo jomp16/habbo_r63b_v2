@@ -47,7 +47,9 @@ class FastFoodGamePlayer(
     /** O cérebro de um bot; null num humano. */
     val bot: FastFoodBot? = null,
     allowance: Map<FastFoodPowerUp, Int> = FastFoodPowerUp.entries.associateWith { FastFoodGame.BOT_POWER_UPS },
-    private val inventory: FastFoodPowerUpInventory? = null
+    private val inventory: FastFoodPowerUpInventory? = null,
+    /** Nível de cada conquista que o cliente lê no GAME_STARTING (nome sem `ACH_` → nível); vazio num bot. */
+    val achievementLevels: List<Pair<String, Int>> = emptyList()
 ) {
     val isBot get() = bot != null
 

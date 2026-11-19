@@ -71,7 +71,13 @@ class GameStartingResponse {
                 writeUTF("")            // §_-9v§: URL de retrato custom — vazio usa o sprite do BasicAssets
                 writeUTF(player.gender) // §_-ME§: M/F → male_normal_png / female_normal_png
                 writeUTF("br")           // §_-Hd§: código do país (bandeira ff_flag_XX_png)
-                writeInt(0)              // powerups
+                // conquistas (§_-0N§): nome sem ACH_, nível, url; BaseJumpWins define a cor do paraquedas
+                writeInt(player.achievementLevels.size)
+                player.achievementLevels.forEach { (name, level) ->
+                    writeUTF(name)
+                    writeInt(level)
+                    writeUTF("")
+                }
             }
         }
     }

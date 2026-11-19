@@ -82,7 +82,8 @@ class FastFoodGame(
                 figure = user.userInformation.figure,
                 gender = user.userInformation.gender,
                 allowance = inventory.allowance(),
-                inventory = inventory
+                inventory = inventory,
+                achievementLevels = FastFoodAchievements.levelsOf(user)
             )
         }
         players = humanPlayers + FastFoodBot.fill(humanPlayers, FastFoodGameManager.PLAYERS_PER_GAME)
@@ -92,14 +93,20 @@ class FastFoodGame(
     fun start() {
         val foods = FastFoodPhysics.FOODS
         // cada humano gasta uma partida grátis do dia (o "Jogue agora! N" do Game Center)
-        players.filter { !it.isBot }.forEach { GameDailyPlaysService.record(it.id, GameCenterManager.BASEJUMP) }
+        players.filter { !it.isBot }.forEach {
+            // a primeira partida do dia conta um dia jogado
+            if (GameDailyPlaysService.playedToday(it.id, GameCenterManager.BASEJUMP) == 0) {
+                FastFoodAchievements.progress(it, FastFoodAchievements.DAYS_PLAYED)
+            }
+            GameDailyPlaysService.record(it.id, GameCenterManager.BASEJUMP)
+        }
         players.forEach { player ->
             player.session?.sendHabboResponse(
                 FFOutgoing.GAME_STARTING,
                 player.id,
                 false,
                 false,
-                false,
+                true, // §_-Hh§: liga o kit do paraquedas por nível (L5_/L10_/L15_/L20_) de BaseJumpWins
                 foods[0].id, // o tipo do primeiro prato (§_-JJ§)
                 foods.map { it.wire() },
                 player.powerUpsWire(), // os turbos que esta partida libera para ele (§_-DQ§, decrementados pelo §_-4p§)
@@ -167,6 +174,7 @@ class FastFoodGame(
             .sortedWith(compareByDescending<FastFoodGamePlayer> { it.score }.thenByDescending { it.plate.inAir })
             .firstOrNull() ?: return
         if (!shooter.usePowerUp(FastFoodPowerUp.MISSILE)) return
+        FastFoodAchievements.progress(shooter, FastFoodAchievements.MISSILE)
         broadcast(FFOutgoing.LAUNCH_MISSILE, currentTick, shooter.id, target.id)
         missiles.add(Missile(target, target.plate.serial, currentTick + MISSILE_TICKS))
         target.bot?.onMissileIncoming(this, target)
@@ -194,6 +202,7 @@ class FastFoodGame(
             endPlate(player, PlateState.SMASHED)
             return
         }
+        if (player.plate.bigChute) FastFoodAchievements.progress(player, FastFoodAchievements.BIG_PARACHUTE)
         player.score++
         if (player.score >= WIN_SCORE) {
             // o END_GAME pousa o último prato do vencedor e soma o ponto (BaseJumpEngine.§_-5c§): sem NEXT_PLATE
@@ -205,7 +214,11 @@ class FastFoodGame(
 
     private fun missileHit(missile: Missile) {
         val plate = missile.target.plate
-        if (plate.serial != missile.plateSerial || !plate.inAir || plate.shielded) return
+        if (plate.serial != missile.plateSerial || !plate.inAir) return
+        if (plate.shielded) {
+            FastFoodAchievements.progress(missile.target, FastFoodAchievements.SHIELD) // míssil desviado pelo escudo
+            return
+        }
         endPlate(missile.target, PlateState.DESTROYED)
     }
 
@@ -240,6 +253,7 @@ class FastFoodGame(
         missiles.clear()
 
         if (winner != null) {
+            if (!winner.left) FastFoodAchievements.progress(winner, FastFoodAchievements.WINS)
             broadcast(FFOutgoing.END_GAME, EndGameData(endGameScores(players, winner)))
             awardPrizes()
         }
