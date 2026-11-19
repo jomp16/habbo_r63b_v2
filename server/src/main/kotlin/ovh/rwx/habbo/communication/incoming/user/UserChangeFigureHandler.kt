@@ -19,77 +19,22 @@
 
 package ovh.rwx.habbo.communication.incoming.user
 
-import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
-import ovh.rwx.habbo.communication.isVersionAtLeast
-import ovh.rwx.habbo.communication.isVersionBefore
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.HandlerR63A
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
-import ovh.rwx.habbo.communication.outgoing.Outgoing
-import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
-import ovh.rwx.habbo.communication.outgoing.room.RoomUpdateUserData
-import ovh.rwx.habbo.communication.outgoing.user.UserUpdateFigureData
 import ovh.rwx.habbo.game.user.HabboSession
-import java.util.*
+import ovh.rwx.habbo.game.user.UserFigureChanger
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class UserChangeFigureHandler {
     @Handler(Incoming.USER_CHANGE_FIGURE)
     @HandlerR63A(IncomingR63A.USER_CHANGE_FIGURE)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        val gender = habboRequest.readUTF().uppercase(Locale.getDefault())
+        val gender = habboRequest.readUTF()
         val figure = habboRequest.readUTF()
 
-        if (figure == habboSession.userInformation.figure && gender == habboSession.userInformation.gender) return
-
-        if (HabboServer.habboGame.figureManager.isValidFigure(figure, gender, habboSession)) {
-            habboSession.userInformation.figure = figure
-            habboSession.userInformation.gender = gender
-            habboSession.userInformation.markDirty()
-
-            // ACH_AvatarLooks: mudar visual
-            HabboServer.habboGame.achievementManager.progress(habboSession, "ACH_AvatarLooks", 1, accumulate = true)
-        }
-
-        val currentFigure = habboSession.userInformation.figure
-        val currentGender = habboSession.userInformation.gender
-
-        if (habboSession.isVersionBefore(2015, 12, 1)) {
-            habboSession.sendResponse(
-                Outgoing.USER_UPDATE,
-                OutgoingR63A.USER_UPDATE,
-                RoomUpdateUserData(
-                    virtualId = -1,
-                    figure = currentFigure,
-                    gender = currentGender,
-                    motto = habboSession.userInformation.motto,
-                    achievementScore = habboSession.userStats.achievementScore
-                )
-            )
-        } else {
-            habboSession.sendHabboResponse(
-                Outgoing.USER_UPDATE_FIGURE,
-                UserUpdateFigureData(
-                    figure = currentFigure,
-                    gender = currentGender,
-                )
-            )
-        }
-
-        habboSession.roomUser?.let { roomUser ->
-            habboSession.currentRoom?.sendResponse(
-                Outgoing.USER_UPDATE,
-                OutgoingR63A.USER_UPDATE,
-                RoomUpdateUserData(
-                    virtualId = roomUser.virtualID,
-                    figure = currentFigure,
-                    gender = currentGender,
-                    motto = habboSession.userInformation.motto,
-                    achievementScore = habboSession.userStats.achievementScore
-                )
-            )
-        }
+        UserFigureChanger.change(habboSession, figure, gender)
     }
 }

@@ -197,6 +197,16 @@ object UserInformationDao {
         }
     }
 
+    /** O visual de um usuário offline (o online passa pelo [ovh.rwx.habbo.game.user.UserFigureChanger]). */
+    fun updateFigure(userId: Int, figure: String, gender: String) {
+        db {
+            update(
+                javaClass.classLoader.getResource("sql/users/information/update_user_figure.sql")!!.readText(),
+                mapOf("figure" to figure, "gender" to gender, "id" to userId)
+            )
+        }
+    }
+
     fun updateAuthTicket(userInformation: UserInformation, authTicket: String? = null) {
         db {
             update(
