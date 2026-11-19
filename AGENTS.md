@@ -99,6 +99,21 @@ local config. The AIR client's cross-origin fetches to `swf.habbo.rwx.ovh` rely 
 **Read `AGENTS_SNOWWAR.md` before touching any SnowWar code** (lifecycle, AS3-parity invariants, collisions, checksum
 diagnosis). Typed enums only, never raw ints.
 
+## FastFood (BaseJump)
+
+- `ovh.rwx.fastfood`: authoritative server (physics in `FastFoodPhysics`, match in `FastFoodGame`, bots in
+  `game/bot/FastFoodBot`). The client (`BaseJump.swf`, transpiled to PIXI) only renders the server's verdicts.
+- Threads: packets are handled on the Netty event loop (no per-session executors); ONE daemon thread
+  (`FastFoodGameManager`) ticks the lobby and every match at 16 ms, so match state needs no locks. Anything touching a
+  match goes through `FastFoodGameManager.run`. Broadcasts serialize once (`FastFoodHandler.serialize`) and share the
+  payload.
+- 3 seats per match and 6 plates to win are fixed in the client (`Player.§_-LC§`); END_GAME's FIRST entry is the
+  winner.
+- Game Center ids (`game_center_games.game_type_id`) are Sulake's: snowwar 0, basejump 3 (V33). Up to
+  RELEASE63-201208142302 the client has them hard-coded (no GAME_CENTER_LIST; a game shows only with
+  `game.center.<name>.enabled=true`, set in the gamedata `fastfood` override), and even 2013 treats 0 as SnowWar. Never
+  renumber them.
+
 ## Packet responses & MethodHandles
 
 - `HabboHandler.invokeResponse` calls `@Response` methods via `MethodHandle.invokeWithArguments`: **no Kotlin default

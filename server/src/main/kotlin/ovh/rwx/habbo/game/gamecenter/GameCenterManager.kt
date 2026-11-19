@@ -41,6 +41,11 @@ class GameCenterManager {
 
     fun all(): List<GameCenterGame> = games.values.sortedBy { it.gameTypeId }
 
+    /**
+     * Pelo id da Sulake (game_type_id: snowwar 0, basejump 3, slotcar 4, onedraw 5, V33). Até RELEASE63-201208142302
+     * o cliente tem esses ids fixos (sem GAME_CENTER_LIST) e o de 2013 ainda trata o 0 como SnowWar: o mesmo id serve
+     * a todas as eras.
+     */
     fun findById(gameTypeId: Int): GameCenterGame? = games[gameTypeId]
 
     // com a barra final: o cliente concatena direto `assetUrl + name + "_icon.png"` (GameConfigurations do
