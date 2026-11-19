@@ -22,6 +22,10 @@ package ovh.rwx.fastfood.game
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Física da comida (FallingObjectType AS3): gravidade (px/s²), decel do paraquedas,
@@ -42,6 +46,7 @@ data class FastFoodFallingObjectType(
  */
 object FastFoodGameManager {
     const val PLAYERS_PER_GAME = 3
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
     private val waiters = CopyOnWriteArrayList<FastFoodSession>()
@@ -49,25 +54,25 @@ object FastFoodGameManager {
     @Volatile
     private var game: FastFoodGame? = null
 
-    fun joinGame(session: FastFoodSession) {
+    fun joinGame(session: FastFoodSession) = run {
         val current = game
         if (current != null && !current.ended.get()) {
             // já tem partida rolando: espera a próxima
             if (!waiters.contains(session)) waiters.add(session)
-            return
+            return@run
         }
 
         startGame(listOf(session))
     }
 
-    fun playerAction(session: FastFoodSession, action: (FastFoodGame, FastFoodGamePlayer) -> Unit) {
-        val g = game ?: return
-        val player = g.players.find { it.session == session } ?: return
+    fun playerAction(session: FastFoodSession, action: (FastFoodGame, FastFoodGamePlayer) -> Unit) = run {
+        val g = game ?: return@run
+        val player = g.players.find { it.session == session } ?: return@run
 
         action(g, player)
     }
 
-    fun leave(session: FastFoodSession) {
+    fun leave(session: FastFoodSession) = run {
         waiters.remove(session)
         game?.removePlayer(session)
     }
@@ -89,8 +94,25 @@ object FastFoodGameManager {
         }
     }
 
+    // Tudo o que mexe numa partida (ações das sessões Netty, o tick, os bots) roda nesta thread única: o estado
+    // da partida não tem sincronização. Uma exceção é registrada e não derruba o executor (nem o tick periódico).
+    fun run(task: () -> Unit) {
+        scheduler.execute(guarded(task))
+    }
+
     fun schedule(delayMillis: Long, task: () -> Unit) {
-        scheduler.schedule(task, delayMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
+        scheduler.schedule(guarded(task), delayMillis, TimeUnit.MILLISECONDS)
+    }
+
+    fun scheduleAtFixedRate(periodMillis: Long, task: () -> Unit): ScheduledFuture<*> =
+        scheduler.scheduleAtFixedRate(guarded(task), periodMillis, periodMillis, TimeUnit.MILLISECONDS)
+
+    private fun guarded(task: () -> Unit) = Runnable {
+        try {
+            task()
+        } catch (e: Exception) {
+            log.error("FastFood: erro na partida", e)
+        }
     }
 
     fun broadcast(outgoing: FFOutgoing, vararg args: Any?) {

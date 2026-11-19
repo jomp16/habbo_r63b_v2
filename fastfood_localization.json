@@ -33,5 +33,18 @@
   "basejump.site.name.hhit": "Habbo.IT",
   "basejump.site.name.hhfr": "Habbo.FR",
   "basejump.site.name.hhfi": "Habbo.FI",
-  "basejump.site.name.hhus": "Habbo.COM"
+  "basejump.site.name.hhus": "Habbo.COM",
+  "basejump.scores.title": "Resultado",
+  "basejump.winner": "Vencedor!",
+  "basejump.globalscores.title": "Ranking da semana",
+  "basejump.globalscores.description": "Os melhores jogadores de Fast Food desta semana.",
+  "basejump.games.played.thisweek": "Jogos nesta semana: %played%/%max%",
+  "basejump.powerup_gained": "Você ganhou um turbo!",
+  "basejump.purchase.confirmation": "Tem certeza de que quer comprar?",
+  "basejump.purchase.confirmation.yes": "Sim",
+  "basejump.purchase.confirmation.no": "Não",
+  "basejump.purchase.not_enough_credits": "Você não tem moedas suficientes.",
+  "basejump.friend.request": "Adicionar como amigo",
+  "basejump.friend.request.sent": "Pedido de amizade enviado",
+  "basejump.habbo.maintenance": "O Habbo está em manutenção. Tente de novo mais tarde."
 }

@@ -39,16 +39,13 @@ class GameExecuteActionHandler {
                 game.parachute(player, big = false)
             }
             2 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
-                game.bigParachute(player)
+                game.parachute(player, big = true)
             }
             3 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
-                // míssil num adversário aleatório
-                game.players.filter { it.id != player.id }.randomOrNull()?.let { target ->
-                    game.missile(player, target)
-                }
+                game.missile(player) // o alvo é o adversário que lidera
             }
             4 -> FastFoodGameManager.playerAction(fastFoodSession) { game, player ->
-                game.shield(player, true)
+                game.shield(player)
             }
         }
     }

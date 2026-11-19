@@ -34,6 +34,7 @@ class GameStartingResponse {
         boolA: Boolean,
         boolB: Boolean,
         boolC: Boolean,
+        firstFoodTypeId: Int,
         fallingObjectTypes: List<FastFoodFallingObjectType>,
         plateTargets: Map<Int, Int>,
         players: List<FastFoodGamePlayer>
@@ -44,7 +45,7 @@ class GameStartingResponse {
             writeBoolean(boolB)
             writeBoolean(boolC)
 
-            writeInt(0) // §_-An§/§_-JJ§: int reservado do parser (sem uso visível no engine)
+            writeInt(firstFoodTypeId) // §_-An§/§_-JJ§: o tipo do primeiro prato (BaseJumpEngine.§_-64§ param3)
 
             writeInt(fallingObjectTypes.size)
             fallingObjectTypes.forEach {
@@ -56,7 +57,7 @@ class GameStartingResponse {
                 writeInt(it.plateTimerTicks)
             }
 
-            // pratos restantes por tipo (decrementados pelo §_-4p§ do engine)
+            // powerups da partida por tipo (0 paraquedas grande, 1 míssil, 2 escudo: §_-DQ§), decrementados pelo §_-4p§
             writeInt(plateTargets.size)
             plateTargets.forEach { (type, count) ->
                 writeInt(type)

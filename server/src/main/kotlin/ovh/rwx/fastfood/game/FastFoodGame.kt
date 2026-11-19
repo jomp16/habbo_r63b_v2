@@ -22,11 +22,11 @@ package ovh.rwx.fastfood.game
 import ovh.rwx.fastfood.communication.outgoing.FFOutgoing
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.game.snowwar.bot.BotNameGenerator
+import java.util.Locale
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
-import kotlin.math.sqrt
 
 data class FastFoodGamePlayer(
     val session: FastFoodSession?,
@@ -36,60 +36,143 @@ data class FastFoodGamePlayer(
     val gender: String,
     val isBot: Boolean = false
 ) {
-    val score = AtomicInteger(0)
+    var score = 0
+    internal val plate = FastFoodGame.Plate()
+    internal var timerTicks = 0 // o temporizador vermelho (§_-BL§): soltar com ticks restantes é largada antecipada
+    internal val powerUps = IntArray(3) { FastFoodGame.POWER_UPS_PER_GAME } // 0 paraquedas grande, 1 míssil, 2 escudo
+    internal var botDropAt = -1
+    internal var botOpenAt = 0.0
+    internal var botBigChute = false
 }
 
 /**
- * Loop do BaseJump: o cliente simula a física da comida (queda, paraquedas);
- * o servidor é autoritativo no que importa — quem derrubou o quê (lockstep
- * seq compartilhado), prato entregue (NEXT_PLATE), mísseis e o placar final.
+ * Uma partida de BaseJump (Fast Food): o servidor simula a queda de cada prato tick a tick, com a mesma integração
+ * do cliente (§_-HF§.§_-MD§, um passo a cada 16 ms), e decide o que o cliente não decide sozinho: se o prato que
+ * tocou a mesa pousou inteiro (NEXT_PLATE estado 3) ou espatifou (estado 4), se um míssil o destruiu (estado 5) e
+ * quem venceu. O cliente só mostra: um prato que toca a mesa fica no estado 6 até o veredito chegar.
+ *
+ * Regras (o próprio cliente e as páginas da época): 3 jogadores; 6 pratos para vencer (Player.§_-LC§), um por curso
+ * (sopa, pizza, hambúrguer, bandeja, bolo, bandeja: FallingObjectType); o próximo prato só pode ser solto quando o
+ * temporizador vermelho enche, e soltar antes é largada antecipada (o prato cai sem paraquedas e espatifa, e o
+ * temporizador não recomeça: §_-A-§.§_-Lp§/§_-A5§); comida pesada pede o paraquedas mais alto; o paraquedas grande
+ * freia 10× (abre "no último segundo"); o escudo só protege de mísseis; o míssil vai no adversário que lidera.
+ *
+ * Tudo roda na thread única do FastFoodGameManager: ações das sessões, o tick e os bots.
  */
 class FastFoodGame(
     humans: List<FastFoodSession>,
     private val onEnd: (FastFoodGame) -> Unit
 ) {
     companion object {
-        const val WIN_SCORE = 5
-        const val FOOD_TYPE_ID = 0
+        const val WIN_SCORE = 6 // Player.§_-LC§
+        const val POWER_UPS_PER_GAME = 1
+        const val TICK_MILLIS = 16L // BaseJumpEngine.§_-DG§
+        const val COUNTDOWN_TICKS = 188 // BaseJumpEngine.§_-M0§: 3, 2, 1, já! antes do jogo aceitar ações
+        const val MISSILE_TICKS = 45 // §_-Hy§.§_-D§: o voo do míssil até o prato
+        const val SAFE_LANDING_FACTOR = 1.3 // pousa inteiro tocando a mesa a até 1,3× a velocidade mínima do paraquedas
 
-        // escala: §_-BT§.update faz y = 200 + 620*(1-locY), ou seja, 1 unidade de locY = 620px de tela.
-        // Queda visível: locY 1.0 (y=200px, topo da janela) → 0 (y=820, mesa). Física do §_-MD§ em unidades/s.
-        const val FOOD_START_LOC_Y = 1.0
-        const val FOOD_GRAVITY = 0.22 // queda livre ~3s: sqrt(2*1.0/0.22)
-        const val FOOD_PARACHUTE_DECEL = 0.5
-        const val FOOD_BIG_PARACHUTE_DECEL = 5.0 // §_-KL§: decel ×10 no bigparachute
-        const val FOOD_MIN_FALL = 0.3 // ≈186 px/s de tela: pouso suave
-        const val FOOD_BIG_PARACHUTE_MIN_FALL = 0.15
-        const val FOOD_FREE_FALL_MILLIS = 3020L // sqrt(2*1.0/0.22) ≈ 3.02s: espatifa (state 6 no cliente)
-        const val PLATE_NEXT_MILLIS = 70L * 16 // plateTimerTicks (§_-C-§=70 subturns): prato assenta antes do próximo nascer
-        const val FOOD_STATE_FALLING = 1 // §_-L4§
-        const val FOOD_STATE_PARACHUTE = 2 // §_-2q§: clamp em minFallSpeed, decel em vez de g
-        const val FOOD_STATE_ON_PLATE = 3 // §_-0w§: §_-0L§ zera locY/speed (comida pousa) e inicia o timer do prato
-        const val FOOD_STATE_DELIVERED = 4 // §_-DO§: state inicial do prato no GAME_STARTING
+        // estados do prato (§_-HF§)
+        const val IDLE = 0 // §_-DR§: no alto, esperando o soltar
+        const val FALLING = 1 // §_-L4§
+        const val PARACHUTE = 2 // §_-2q§
+        const val LANDED = 3 // §_-0w§: pousou inteiro (ponto)
+        const val SMASHED = 4 // §_-DO§: espatifou na mesa
+        const val DESTROYED = 5 // §_-CX§: míssil
 
-        private val FALLING_TYPES = listOf(
-            // gravidade, decel do paraquedas, velocidade mínima (bigparachute) e timer do prato em ticks de 16ms
-            FastFoodFallingObjectType(
-                0, "${FOOD_GRAVITY}", "-${FOOD_PARACHUTE_DECEL}", "${FOOD_MIN_FALL}", "${FOOD_BIG_PARACHUTE_MIN_FALL}", 70
-            )
+        private const val DT = TICK_MILLIS / 1000.0
+
+        /**
+         * Os seis cursos, na ordem do FallingObjectType (soup, pizza, burger, tray, cake, tray). Gravidade e
+         * paraquedas em unidades de locY/s (1 = do alto da janela à mesa); o temporizador em ticks de 16 ms.
+         * Os leves aguentam o paraquedas perto da mesa; os pesados pedem abrir lá pelo meio; o bolo demora mais.
+         */
+        val FOODS = listOf(
+            Food(0, gravity = 0.32, decel = 1.6, minFall = 0.15, bigMinFall = 0.08, timerTicks = 150),
+            Food(1, gravity = 0.32, decel = 1.5, minFall = 0.15, bigMinFall = 0.08, timerTicks = 170),
+            Food(2, gravity = 0.34, decel = 1.0, minFall = 0.16, bigMinFall = 0.08, timerTicks = 200),
+            Food(3, gravity = 0.36, decel = 0.65, minFall = 0.17, bigMinFall = 0.09, timerTicks = 240),
+            Food(4, gravity = 0.38, decel = 0.55, minFall = 0.18, bigMinFall = 0.09, timerTicks = 290),
+            Food(5, gravity = 0.36, decel = 0.65, minFall = 0.17, bigMinFall = 0.09, timerTicks = 240),
         )
 
+        private fun num(v: Double) = String.format(Locale.ROOT, "%.6f", v)
+
+        /** A altura mínima em que o paraquedas normal ainda pousa o prato inteiro (para os bots). */
+        internal val SAFE_OPEN_HEIGHT: Map<Int, Double> = FOODS.associate { food ->
+            var h = 0.0
+            while (h < 1.0 && !landsSafely(food, h)) h += 0.01
+            food.id to h
+        }
+
+        /** Se o prato, solto do alto, pousa inteiro com o paraquedas aberto em openAt (o grande, se big). */
+        internal fun landsSafely(food: Food, openAt: Double, big: Boolean = false): Boolean {
+            val p = Plate().apply { reset(food) }
+            p.state = FALLING
+            while (true) {
+                if (p.state == FALLING && p.locY <= openAt) {
+                    p.state = PARACHUTE
+                    p.bigChute = big
+                }
+                if (p.step()) return p.state == PARACHUTE && p.speed <= p.minFall() * SAFE_LANDING_FACTOR
+            }
+        }
     }
+
+    data class Food(
+        val id: Int,
+        val gravity: Double,
+        val decel: Double,
+        val minFall: Double,
+        val bigMinFall: Double,
+        val timerTicks: Int
+    ) {
+        fun wire() = FastFoodFallingObjectType(id, num(gravity), num(-decel), num(minFall), num(bigMinFall), timerTicks)
+    }
+
+    /** O prato corrente de um jogador, com a física de §_-HF§.§_-MD§. */
+    class Plate {
+        lateinit var food: Food
+        var state = IDLE
+        var locY = 1.0
+        var speed = 0.0
+        var falseStarted = false
+        var bigChute = false
+        var shielded = false
+        var serial = 0 // muda a cada prato: um míssil só acerta o prato que mirou
+
+        fun reset(food: Food) {
+            this.food = food
+            state = IDLE
+            locY = 1.0
+            speed = 0.0
+            falseStarted = false
+            bigChute = false
+            shielded = false
+            serial++
+        }
+
+        val inAir get() = state == FALLING || state == PARACHUTE
+
+        fun minFall() = if (bigChute) food.bigMinFall else food.minFall
+
+        /** Um tick; true quando o prato toca a mesa. */
+        fun step(): Boolean {
+            if (!inAir) return false
+            val accel = if (state == FALLING) food.gravity else -food.decel * (if (bigChute) 10 else 1)
+            speed += DT * accel
+            if (state == PARACHUTE) speed = max(speed, minFall())
+            locY -= DT * speed
+            return locY < 0
+        }
+    }
+
+    private class Missile(val target: FastFoodGamePlayer, val plateSerial: Int, val hitTick: Int)
 
     val players: List<FastFoodGamePlayer>
     val ended = AtomicBoolean(false)
-    private val foodToken = AtomicInteger(0)
-    private val falls = mutableMapOf<Int, Fall>()
-    private var startTime = 0L
-
-    /** seq = nº do subturn (clock de 16ms do engine, §_-4n§), não índice de evento:
-     *  o cliente faz fast-forward/catchup da física em subturns via (counter - event.seq). */
-    private fun nextSeq() = ((System.currentTimeMillis() - startTime) / 16L).toInt() + 2
-
-    private class Fall(val token: Int, val dropTime: Long) {
-        var chuteDecel: Double? = null // null = queda livre; aberto = paraquedas
-        var minFall = 0.0
-    }
+    private var tick = 0
+    private var ticker: ScheduledFuture<*>? = null
+    private val missiles = mutableListOf<Missile>()
 
     init {
         val list = humans.mapNotNull { session ->
@@ -122,10 +205,10 @@ class FastFoodGame(
         }
 
         players = list
+        players.forEach { it.plate.reset(FOODS[0]) }
     }
 
     fun start() {
-        startTime = System.currentTimeMillis()
         players.forEach { player ->
             player.session?.sendHabboResponse(
                 FFOutgoing.GAME_STARTING,
@@ -133,142 +216,143 @@ class FastFoodGame(
                 false,
                 false,
                 false,
-                FALLING_TYPES,
-                mapOf(0 to 1, 1 to 1, 2 to 1), // powerups iniciais: 0=bigparachute, 1=missile, 2=shield
+                FOODS[0].id, // o tipo do primeiro prato (§_-JJ§)
+                FOODS.map { it.wire() },
+                mapOf(0 to POWER_UPS_PER_GAME, 1 to POWER_UPS_PER_GAME, 2 to POWER_UPS_PER_GAME),
                 players
             )
         }
-
-        players.filter { it.isBot }.forEach { scheduleBot(it) }
+        ticker = FastFoodGameManager.scheduleAtFixedRate(TICK_MILLIS) { onTick() }
     }
 
-    // ---- ações (humanas via EXECUTE_ACTION, bots via scheduleBot) ----
+    private val playing get() = !ended.get() && tick >= COUNTDOWN_TICKS
+
+    private fun onTick() {
+        if (ended.get()) return
+        tick++
+        for (player in players) {
+            if (player.plate.step()) touchdown(player)
+            if (ended.get()) return
+            // o temporizador corre enquanto o prato não for de largada antecipada (§_-BL§.update)
+            if (player.timerTicks > 0 && !player.plate.falseStarted) player.timerTicks--
+        }
+        val hits = missiles.filter { it.hitTick <= tick }
+        missiles.removeAll(hits)
+        hits.forEach { missileHit(it) }
+        if (playing) players.filter { it.isBot }.forEach { botTick(it) }
+    }
+
+    // ---- ações (humanas via EXECUTE_ACTION, bots via botTick) ----
 
     fun dropFood(player: FastFoodGamePlayer) {
-        if (ended.get() || player.id in falls) return
+        val plate = player.plate
+        if (!playing || plate.state != IDLE) return
 
-        // o prato já foi armado (NEXT_PLATE(4,type) do ciclo anterior ou do §_-64§ do GAME_STARTING);
-        // o drop é só o DROP_FOOD de queda — NEXT_PLATE aqui resetaria o widget do jogador local
-        // (engine.nextPlate põe §_-7D§ em §_-0C§) e mataria o botão-vermelho de paraquedas.
-        val token = foodToken.incrementAndGet()
-        falls[player.id] = Fall(token, System.currentTimeMillis())
-        broadcast(
-            FFOutgoing.DROP_FOOD,
-            DropFoodData(nextSeq(), player.id, "$FOOD_START_LOC_Y", "0", FOOD_STATE_FALLING, false)
-        )
+        plate.state = FALLING
+        plate.falseStarted = player.timerTicks > 0
+        sendPlate(player)
+    }
 
-        // sem paraquedas até o fim da queda livre: espatifa na mesa (state 6 anima sozinho no cliente)
-        FastFoodGameManager.schedule(FOOD_FREE_FALL_MILLIS) { resolveFall(player, token) }
+    fun parachute(player: FastFoodGamePlayer, big: Boolean) {
+        val plate = player.plate
+        if (!playing || !plate.inAir || plate.falseStarted) return
+        if (big) {
+            if (plate.bigChute || !usePowerUp(player, 0)) return
+            plate.bigChute = true
+            broadcast(FFOutgoing.USE_BIG_PARACHUTE, tick, player.id)
+        } else if (plate.state == PARACHUTE) {
+            return
+        }
+        plate.state = PARACHUTE
+        sendPlate(player)
+    }
+
+    /** O míssil vai no adversário que lidera (no empate, num que tenha prato no ar). */
+    fun missile(shooter: FastFoodGamePlayer) {
+        if (!playing) return
+        val target = players.filter { it.id != shooter.id }
+            .sortedWith(compareByDescending<FastFoodGamePlayer> { it.score }.thenByDescending { it.plate.inAir })
+            .firstOrNull() ?: return
+        if (!usePowerUp(shooter, 1)) return
+        broadcast(FFOutgoing.LAUNCH_MISSILE, tick, shooter.id, target.id)
+        missiles.add(Missile(target, target.plate.serial, tick + MISSILE_TICKS))
+        if (target.isBot) botMaybeShield(target)
+    }
+
+    fun shield(player: FastFoodGamePlayer) {
+        val plate = player.plate
+        if (!playing || !plate.inAir || plate.shielded || !usePowerUp(player, 2)) return
+        plate.shielded = true
+        broadcast(FFOutgoing.ENABLE_SHIELD, tick, player.id, true)
+    }
+
+    private fun usePowerUp(player: FastFoodGamePlayer, index: Int): Boolean {
+        if (player.powerUps[index] <= 0) return false
+        player.powerUps[index]--
+        return true
+    }
+
+    private fun sendPlate(player: FastFoodGamePlayer) {
+        val p = player.plate
+        broadcast(FFOutgoing.DROP_FOOD, DropFoodData(tick, player.id, num(p.locY), num(p.speed), p.state, p.falseStarted))
+    }
+
+    // ---- vereditos ----
+
+    private fun touchdown(player: FastFoodGamePlayer) {
+        val plate = player.plate
+        val safe = plate.state == PARACHUTE && plate.speed <= plate.minFall() * SAFE_LANDING_FACTOR
+        if (!safe) {
+            endPlate(player, SMASHED)
+            return
+        }
+        player.score++
+        if (player.score >= WIN_SCORE) {
+            // o END_GAME pousa o último prato do vencedor e soma o ponto (BaseJumpEngine.§_-5c§): sem NEXT_PLATE
+            endGame(player)
+            return
+        }
+        endPlate(player, LANDED)
+    }
+
+    private fun missileHit(missile: Missile) {
+        val plate = missile.target.plate
+        if (plate.serial != missile.plateSerial || !plate.inAir || plate.shielded) return
+        endPlate(missile.target, DESTROYED)
     }
 
     /**
-     * Abre o paraquedas em plena queda: DROP_FOOD state 2 com locY/speed atuais
-     * (o cliente troca a aceleração g pela decel e clampa em minFallSpeed).
+     * O prato termina (pousou, espatifou ou foi destruído) e o próximo nasce no alto: o do curso seguinte depois de
+     * um ponto, o mesmo curso depois de um prato perdido. O temporizador recomeça como no Player.nextPlate do
+     * cliente: depois de um ponto, ou de um prato perdido que não era de largada antecipada; senão continua.
      */
-    fun parachute(player: FastFoodGamePlayer, big: Boolean) {
-        val fall = falls[player.id] ?: return
-        if (fall.chuteDecel != null) return
-
-        val t = (System.currentTimeMillis() - fall.dropTime) / 1000.0
-        val locY = FOOD_START_LOC_Y - 0.5 * FOOD_GRAVITY * t * t
-        if (locY <= 0) return // já bateu na mesa
-
-        val decel = if (big) FOOD_BIG_PARACHUTE_DECEL else FOOD_PARACHUTE_DECEL
-        val minFall = if (big) FOOD_BIG_PARACHUTE_MIN_FALL else FOOD_MIN_FALL
-        fall.chuteDecel = decel
-        fall.minFall = minFall
-
-        if (big) broadcast(FFOutgoing.USE_BIG_PARACHUTE, nextSeq(), player.id)
-        val speed = max(FOOD_GRAVITY * t, minFall)
-        broadcast(
-            FFOutgoing.DROP_FOOD,
-            DropFoodData(nextSeq(), player.id, locY.toString(), speed.toString(), FOOD_STATE_PARACHUTE, false)
-        )
-
-        // pouso suave: desacelera até minFall, depois desce a minFall px/s
-        val t1 = (speed - minFall) / decel
-        val d1 = speed * t1 - 0.5 * decel * t1 * t1
-        val landSec = if (locY <= d1) {
-            (speed - sqrt(speed * speed - 2 * decel * locY)) / decel
-        } else {
-            t1 + (locY - d1) / minFall
-        }
-        FastFoodGameManager.schedule((landSec * 1000).toLong()) { resolveFall(player, fall.token) }
-    }
-
-    private fun resolveFall(player: FastFoodGamePlayer, token: Int) {
-        if (ended.get()) return
-        val fall = falls[player.id] ?: return
-        if (fall.token != token) return
-        falls.remove(player.id)
-
-        val score: Int
-        if (fall.chuteDecel == null) {
-            // espatifou: state 6 (§_-6E§) o cliente anima sozinho, sem ponto
-            score = player.score.get()
-        } else {
-            score = player.score.incrementAndGet()
-            // type -1 → Map.getValue(-1) = null no AS3: só aplica §_-0L§(3) no prato corrente (pousa a comida), sem criar prato novo
-            broadcast(FFOutgoing.NEXT_PLATE, NextPlateData(nextSeq(), player.id, FOOD_STATE_ON_PLATE, -1, score))
-        }
-
-        if (score < WIN_SCORE) {
-            // o próximo prato só nasce depois do atual assentar na mesa (inteiro ou espatifado):
-            // plateTimerTicks do §_-6k§ — drop antes disso é "false start" no cliente (§_-Lp§)
-            FastFoodGameManager.schedule(PLATE_NEXT_MILLIS) {
-                if (ended.get()) return@schedule
-                broadcast(FFOutgoing.NEXT_PLATE, NextPlateData(nextSeq(), player.id, FOOD_STATE_DELIVERED, FOOD_TYPE_ID, player.score.get()))
-            }
-        } else {
-            endGame()
-        }
-    }
-
-    fun bigParachute(player: FastFoodGamePlayer) {
-        parachute(player, big = true)
-    }
-
-    fun missile(shooter: FastFoodGamePlayer, target: FastFoodGamePlayer) {
-        if (ended.get() || shooter.id == target.id) return
-
-        broadcast(FFOutgoing.LAUNCH_MISSILE, nextSeq(), shooter.id, target.id)
-
-        // míssil destrói a comida em queda do alvo
-        if (falls.remove(target.id) != null) {
-
-            // alvo bot às vezes reage com escudo (visual)
-            if (target.isBot && ThreadLocalRandom.current().nextInt(100) < 30) {
-                shield(target, true)
-            }
-        }
-    }
-
-    fun shield(player: FastFoodGamePlayer, active: Boolean) {
-        if (ended.get()) return
-
-        broadcast(FFOutgoing.ENABLE_SHIELD, nextSeq(), player.id, active)
+    private fun endPlate(player: FastFoodGamePlayer, how: Int) {
+        val lost = player.plate
+        val next = FOODS[player.score.coerceAtMost(FOODS.size - 1)]
+        if (how == LANDED || !lost.falseStarted) player.timerTicks = next.timerTicks
+        broadcast(FFOutgoing.NEXT_PLATE, NextPlateData(tick, player.id, how, next.id, player.score))
+        lost.reset(next)
+        player.botDropAt = -1
     }
 
     fun removePlayer(session: FastFoodSession) {
-        val player = players.find { it.session == session } ?: return
-
-        falls.remove(player.id)
+        players.find { it.session == session } ?: return
 
         // sem humanos restantes, encerra a arena em silêncio
-        if (players.none { !it.isBot && it.session != null }) {
-            endGame(silent = true)
+        if (players.none { !it.isBot && it.session != null && it.session != session }) {
+            endGame(null, silent = true)
         }
     }
 
-    private fun endGame(silent: Boolean = false) {
+    private fun endGame(winner: FastFoodGamePlayer?, silent: Boolean = false) {
         if (!ended.compareAndSet(false, true)) return
+        ticker?.cancel(false)
+        missiles.clear()
 
-        falls.clear()
-
-        if (!silent) {
-            // vencedor é o ÚLTIMO entry (parser §_-I3§ sobrescrito a cada iteração)
-            val scores = players.sortedBy { it.score.get() }
-                .map { it.id to it.score.get() }
+        if (!silent && winner != null) {
+            // o vencedor é o ÚLTIMO entry (o parser §_-FL§ sobrescreve §_-I3§ a cada iteração); o placar dele já
+            // conta o prato que o END_GAME pousa
+            val scores = (players.filter { it !== winner }.sortedBy { it.score } + winner).map { it.id to it.score }
             broadcast(FFOutgoing.END_GAME, EndGameData(scores))
         }
 
@@ -280,30 +364,42 @@ class FastFoodGame(
         players.forEach { p -> p.session?.sendHabboResponse(outgoing, *args) }
     }
 
-    // ---- bot AI: loop simples com cadência aleatória ----
+    // ---- bots: as mesmas ações de um humano, com reação e erros ----
 
-    private fun scheduleBot(bot: FastFoodGamePlayer) {
+    private fun botTick(bot: FastFoodGamePlayer) {
         val rnd = ThreadLocalRandom.current()
-        FastFoodGameManager.schedule(rnd.nextLong(3000, 6000)) {
-            if (ended.get()) return@schedule
-
-            dropFood(bot)
-
-            // bot abre o paraquedas (85%): sem isso, o prato espatifa e ele nunca pontua
-            if (rnd.nextInt(100) < 85) {
-                FastFoodGameManager.schedule(rnd.nextLong(300, 900)) {
-                    parachute(bot, big = rnd.nextInt(100) < 30)
+        val plate = bot.plate
+        when (plate.state) {
+            IDLE -> {
+                if (bot.botDropAt < 0) {
+                    // reação de 0,3 a 1,3 s depois do temporizador encher; às vezes uma largada antecipada
+                    val early = rnd.nextInt(100) < 4
+                    bot.botDropAt = tick + bot.timerTicks + (if (early) -rnd.nextInt(10, 30) else rnd.nextInt(20, 80))
+                    val safeAt = SAFE_OPEN_HEIGHT.getValue(plate.food.id)
+                    if (rnd.nextInt(100) < 15) {
+                        // atrasado: espatifa, a não ser que salve com o paraquedas grande
+                        bot.botOpenAt = safeAt * rnd.nextDouble(0.4, 0.85)
+                        bot.botBigChute = bot.powerUps[0] > 0 && rnd.nextBoolean()
+                    } else {
+                        bot.botOpenAt = (safeAt * rnd.nextDouble(1.05, 1.7)).coerceAtMost(0.95)
+                        bot.botBigChute = false
+                    }
                 }
+                if (tick >= bot.botDropAt) dropFood(bot)
             }
-
-            // às vezes um míssil num humano
-            if (rnd.nextInt(100) < 15) {
-                players.filter { !it.isBot }.randomOrNull()?.let { target ->
-                    missile(bot, target)
-                }
-            }
-
-            if (!ended.get()) scheduleBot(bot)
+            FALLING -> if (plate.locY <= bot.botOpenAt) parachute(bot, bot.botBigChute)
         }
+        // às vezes um míssil, quando alguém que já pontuou, à frente ou empatado, tem prato no ar
+        if (bot.powerUps[1] > 0 && rnd.nextInt(1000) < 3 &&
+            players.any { it.id != bot.id && it.score > 0 && it.score >= bot.score && it.plate.inAir && it.plate.locY > 0.3 }
+        ) {
+            missile(bot)
+        }
+    }
+
+    private fun botMaybeShield(bot: FastFoodGamePlayer) {
+        val rnd = ThreadLocalRandom.current()
+        if (bot.powerUps[2] <= 0 || rnd.nextInt(100) >= 50) return
+        FastFoodGameManager.schedule(rnd.nextLong(100, 500)) { if (!ended.get()) shield(bot) }
     }
 }
