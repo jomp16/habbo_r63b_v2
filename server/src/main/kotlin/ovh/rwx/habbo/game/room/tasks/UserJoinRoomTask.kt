@@ -212,6 +212,11 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
         )
         // todo: events
 
+        // A partir daqui o quarto está aberto no cliente (o ROOM_OPEN e o resto já estão na fila da sessão, em
+        // ordem): os broadcasts passam a chegar a ele. Liga ANTES do retrato abaixo, para que ninguém que entre
+        // no meio fique de fora (no pior caso chega duas vezes, pelo retrato e pelo broadcast).
+        roomUser.roomOpened = true
+
         habboSession.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, room.userManager.entities.values)
         habboSession.sendResponse(
             Outgoing.ROOM_USERS_STATUSES,

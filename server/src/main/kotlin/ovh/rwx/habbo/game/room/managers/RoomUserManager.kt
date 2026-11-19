@@ -107,7 +107,7 @@ class RoomUserManager(private val room: Room) {
                 room.roomModel.doorVector3,
                 room.roomModel.doorDir,
                 room.roomModel.doorDir
-            )
+            ).apply { roomOpened = false } // sem broadcasts até a carga inicial (UserJoinRoomTask)
 
         // Adiciona o usuário imediatamente ao mapa para permitir remoção em caso de disconnect
         // O estado pendingJoin=true indica que o join ainda não foi completado

@@ -41,6 +41,15 @@ class RoomUser(
     bodyRotation: Int
 ) : RoomHumanoid(room, virtualID, currentVector3, headRotation, bodyRotation) {
 
+    /**
+     * Se o cliente já tem o quarto aberto: só então recebe os broadcasts do quarto (RoomNetworkDispatcher). Quem
+     * entra (RoomUserManager.addUser) começa fechado até o UserJoinRoomTask enfileirar o ROOM_OPEN e o resto da
+     * carga inicial: um ROOM_USERS de outro usuário antes do ROOM_OPEN derruba o cliente (CoreCommunicationManager,
+     * `client.init.core.fail`), o que acontecia quando dois entravam juntos no mesmo quarto.
+     */
+    @Volatile
+    var roomOpened: Boolean = true
+
     override fun onMovementStepCommitted() {
         HabboGame.instance?.achievementManager?.progress(habboSession, "ACH_LegDay", 1, accumulate = true)
         // Por dar uma volta pelo Hotel (primeiro passo em um quarto)

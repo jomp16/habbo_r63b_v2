@@ -32,6 +32,7 @@ import ovh.rwx.habbo.game.user.HabboSession
 class RoomNetworkDispatcher(private val room: Room) {
     fun sendResponse(habboResponse: HabboResponse) {
         room.userManager.entities.values.filterIsInstance<RoomUser>()
+            .filter { it.roomOpened }
             .forEach { it.habboSession.sendHabboResponse(habboResponse) }
     }
 
@@ -84,7 +85,8 @@ class RoomNetworkDispatcher(private val room: Room) {
         val sessions = ArrayList<HabboSession>(entities.size)
 
         for (entity in entities) {
-            if (entity is RoomUser) {
+            // só quem já tem o quarto aberto: quem está entrando recebe o estado na carga inicial (RoomUser.roomOpened)
+            if (entity is RoomUser && entity.roomOpened) {
                 val session = entity.habboSession
                 if (filter(session)) sessions.add(session)
             }
