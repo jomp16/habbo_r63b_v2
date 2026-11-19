@@ -34,6 +34,7 @@ import ovh.rwx.habbo.communication.outgoing.messenger.MessengerChatData
 import ovh.rwx.habbo.communication.outgoing.messenger.MessengerInitData
 import ovh.rwx.habbo.database.messenger.MessengerDao
 import ovh.rwx.habbo.game.user.HabboSession
+import ovh.rwx.habbo.game.user.minimail.MinimailNotifier
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerInitializeHandler {
@@ -78,6 +79,8 @@ class MessengerInitializeHandler {
                     )
                 )
             }
+            // as não lidas do Minimail do CMS (o ícone da toolbar, 2012-02-29 →)
+            MinimailNotifier.sendUnreadCount(habboSession)
         }
 
         habboSession.habboMessenger.notifyFriends()
