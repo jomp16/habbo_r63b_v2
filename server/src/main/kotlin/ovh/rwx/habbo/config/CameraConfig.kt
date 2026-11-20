@@ -28,6 +28,13 @@ data class CameraConfig(
     val previewTimeoutMinutes: Long,
     @param:JsonProperty("assets_path", required = true)
     val assetsPath: String,
+    /**
+     * Opcional. A única origem aceita para imagens externas das fotos (sprites do JSON que vêm como URL), lidas direto de
+     * `camera_data/` sem HTTP; as de qualquer outra URL são ignoradas. Deve ser a mesma do `HR_PHOTO_URL_PREFIX` do
+     * habbo-render (ex.: `https://swf.habbo.rwx.ovh/api/camera/`). Ausente = nenhuma imagem externa é desenhada.
+     */
+    @param:JsonProperty("photo_url_prefix", required = false)
+    val photoUrlPrefix: String = "",
     /** Opcional. Ausente = render 100% local (Kotlin). */
     @param:JsonProperty("renderer", required = false)
     val renderer: CameraRendererConfig = CameraRendererConfig()

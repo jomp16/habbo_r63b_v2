@@ -70,7 +70,12 @@ class CameraManager {
     val cameraNavigatorThumbnailDirectory: Path = cameraDirectory.resolve("navigator-thumbnail")
     private val currentPictureForUsers: ConcurrentHashMap<String, Pair<LocalDateTime, String>> = ConcurrentHashMap()
     private val jacksonJson = jacksonObjectMapper()
-    private val habboCameraRenderer = HabboCameraRenderer(HabboServer.habboConfig.cameraConfig.assetsPath) {
+    // fotos externas (URL no JSON): só o prefixo configurado, lido de camera_data/ (ver HabboCameraRenderer)
+    private val habboCameraRenderer = HabboCameraRenderer(
+        HabboServer.habboConfig.cameraConfig.assetsPath,
+        HabboServer.habboConfig.cameraConfig.photoUrlPrefix,
+        cameraDirectory.toFile(),
+    ) {
         // no boot o mapping já vem carregado em paralelo com o banco
         BootPrefetch.takeAssetMapping() ?: AssetMapping.load(HabboServer.habboConfig.cameraConfig.assetsPath)
     }
@@ -152,7 +157,14 @@ class CameraManager {
         val jsonData = extractJsonData(cameraBytes)
         cameraPreviewJsonPath.writeText(jsonData)
 
-        val renderedBytes = renderCameraData(jsonData)
+        val renderedBytes = try {
+            renderCameraData(jsonData)
+        } catch (e: Exception) {
+            // sem fallback local o habbo-render é o único caminho: a falha vira "não publicou" para o cliente
+            log.error("Falha ao renderizar a foto de {}", habboSession.userInformation.username, e)
+            Files.deleteIfExists(cameraPreviewJsonPath)
+            return false to ""
+        }
         cameraPreviewPath.toFile().writeBytes(renderedBytes)
 
         currentPictureForUsers[habboSession.userInformation.username] =
@@ -166,7 +178,12 @@ class CameraManager {
         val roomThumbnailPath = cameraNavigatorThumbnailDirectory.resolve("$roomId.png")
 
         val jsonData = extractJsonData(roomThumbnailBytes)
-        val renderedBytes = renderCameraData(jsonData)
+        val renderedBytes = try {
+            renderCameraData(jsonData)
+        } catch (e: Exception) {
+            log.error("Falha ao renderizar a miniatura do quarto {}", roomId, e)
+            return false
+        }
         roomThumbnailPath.toFile().writeBytes(renderedBytes)
 
         return true

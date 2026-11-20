@@ -31,6 +31,16 @@ hot-load plugin system.
 - **habbo-render**: in production, nginx routes `/api/v1/habbo-imaging/avatarimage` and `/badge/` to the Go service
   (`127.0.0.1:8090`); the emulator's `HabboImagingApiV1Controller` stays as fallback. Rendering changes in
   `habbo_imaging`/`camera_renderer` must keep pixel parity with it (its `scripts/parity.sh --regen`).
+- **Camera render path**: with `camera.renderer.enabled` the emulator POSTs the camera JSON to the `habbo-render`
+  (`CameraManager.renderCameraData`); production runs `fallback_local: false` (a failure means "photo not published", logged),
+  the local Kotlin renderer runs only with `enabled: false`. `CameraManager.renderStats` (emulator side counters) +
+  the service's `/stats` feed the CMS "Renderização" tab (`GET /api/v1/admin/render`, pushed every 1 s on the admin WS).
+- **External images in a camera payload** (the wall photos arrive as `http(s)://…` sprite names) are accepted ONLY under
+  `camera.photo_url_prefix` (same as the service's `HR_PHOTO_URL_PREFIX`), read from `camera_data/` (PNG, ≤ 4 MB, no
+  `..`, no symlink out), never over HTTP. Both renderers ignore anything else (the payload is client-controlled:
+  arbitrary URLs would mean SSRF and third-party/NSFW images). The service counts ignored ones in `/stats`
+  (`camera_remote_skipped`) and the Kotlin one in `HabboCameraRenderer.externalImagesRejected`. Keep the rule identical
+  in `HabboCameraRenderer.readPhoto` and `habbo-render`'s `Remote.read`.
 
 ## Deploy (`scripts/deploy.sh`)
 

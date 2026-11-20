@@ -64,6 +64,10 @@ camera:
     pixels_publish_web: 10
   preview_timeout_minutes: 5
   assets_path: assets_renderizador
+  # Fotos penduradas na parede vêm no JSON da câmera como URL. É a ÚNICA origem aceita (lida direto de camera_data/,
+  # sem HTTP, só PNG); qualquer outra URL é ignorada (SSRF/imagem de terceiros). Use a mesma do HR_PHOTO_URL_PREFIX do
+  # habbo-render. Vazio = nenhuma imagem externa é desenhada.
+  photo_url_prefix: ""
   # Opcional: delega o render ao serviço habbo-render (fallback para o renderer Kotlin local em erro/timeout).
   renderer:
     enabled: false

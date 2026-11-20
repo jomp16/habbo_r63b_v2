@@ -58,13 +58,17 @@ camera:
     pixels_publish_web: 10
   preview_timeout_minutes: 5
   assets_path: camera_data/assets_renderer_v2
-  # Opcional: delega o render ao habbo-render (mesmo host); fallback para o renderer Kotlin em erro/timeout.
+  # A única origem aceita para as fotos penduradas na parede (lida de camera_data/, sem HTTP); o resto é ignorado.
+  # A mesma do HR_PHOTO_URL_PREFIX do habbo-render.
+  photo_url_prefix: https://swf.habbo.rwx.ovh/api/camera/
+  # Delega o render ao habbo-render (mesmo host). Sem fallback: o Kotlin local só roda com enabled: false. Se o
+  # serviço falhar, a foto não é publicada (o cliente recebe "falhou") e o erro vai ao log.
   renderer:
-    enabled: false
+    enabled: true
     url: http://127.0.0.1:8090/api/v1/camera/render
     token: ""
     timeout_ms: 5000
-    fallback_local: true
+    fallback_local: false
 
 catalog:
   show_how_many_items_title: false
