@@ -61,8 +61,7 @@ func main() {
 
 	httpClient := &http.Client{Timeout: 15 * time.Second}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
 
 		// 1. Local emulator API (banner supersecret, habbo-imaging, status, admin, camera)
@@ -131,7 +130,7 @@ func main() {
 	})
 
 	log.Printf("dev_swf_proxy listening on %s (api -> %s, static -> %s)", localBase, *emulatorRaw, *upstreamRaw)
-	if err := http.ListenAndServe(*listenAddr, mux); err != nil {
+	if err := http.ListenAndServe(*listenAddr, handler); err != nil {
 		log.Fatal(err)
 	}
 }
