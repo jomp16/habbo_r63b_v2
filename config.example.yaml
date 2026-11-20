@@ -64,6 +64,13 @@ camera:
     pixels_publish_web: 10
   preview_timeout_minutes: 5
   assets_path: assets_renderizador
+  # Opcional: delega o render ao serviço habbo-render (fallback para o renderer Kotlin local em erro/timeout).
+  renderer:
+    enabled: false
+    url: http://127.0.0.1:8090/api/v1/camera/render
+    token: ""
+    timeout_ms: 5000
+    fallback_local: true
 catalog:
   show_how_many_items_title: false
   # Embrulho de presentes: preço em créditos (a caixa padrão é sempre grátis). Os tipos de caixa/fita ficam na

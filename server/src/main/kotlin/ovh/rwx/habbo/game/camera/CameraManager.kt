@@ -41,6 +41,13 @@ import java.awt.Color
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.File
+import ovh.rwx.habbo.config.CameraRendererConfig
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
+import kotlin.math.roundToInt
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -175,7 +182,105 @@ class CameraManager {
     private fun renderCameraData(data: String): ByteArray {
         val habboCamera: HabboCamera = jacksonJson.readValue(data)
         val dimmer = extractDimmerSettings(habboCamera.roomId.toInt())
-        return habboCameraRenderer.renderToBytes(habboCamera, dimmer.color, dimmer.alpha, dimmer.type)
+        val rendererConfig = HabboServer.habboConfig.cameraConfig.renderer
+
+        if (rendererConfig.enabled) {
+            val start = System.nanoTime()
+
+            try {
+                val bytes = renderRemote(rendererConfig, data, dimmer)
+                renderStats.remoteOk.record(System.nanoTime() - start)
+                log.debug("Camera rendered by habbo-render ({} bytes)", bytes.size)
+                return bytes
+            } catch (e: Exception) {
+                renderStats.remoteFailed.record(System.nanoTime() - start)
+                renderStats.lastError = e.toString()
+                renderStats.lastErrorAt = System.currentTimeMillis()
+                if (!rendererConfig.fallbackLocal) throw e
+                log.warn("habbo-render failed ({}); using local renderer", e.toString())
+                renderStats.fallbacks.incrementAndGet()
+            }
+        }
+
+        val start = System.nanoTime()
+        val bytes = habboCameraRenderer.renderToBytes(habboCamera, dimmer.color, dimmer.alpha, dimmer.type)
+        renderStats.local.record(System.nanoTime() - start)
+        return bytes
+    }
+
+    /**
+     * Contadores do render da câmera vistos pelo emulador (desde o boot): quantos foram pelo `habbo-render`, quantos
+     * falharam, quantas vezes o fallback local entrou e quanto tempo levou cada caminho (o HTTP inclui a ida e volta).
+     */
+    class RenderStats {
+        class Timer {
+            private val count = java.util.concurrent.atomic.AtomicLong()
+            private val sumNs = java.util.concurrent.atomic.AtomicLong()
+            private val maxNs = java.util.concurrent.atomic.AtomicLong()
+
+            fun record(ns: Long) {
+                count.incrementAndGet()
+                sumNs.addAndGet(ns)
+                maxNs.accumulateAndGet(ns, Math::max)
+            }
+
+            fun snapshot(): Map<String, Any> {
+                val n = count.get()
+
+                return mapOf(
+                    "count" to n,
+                    "avg_ms" to if (n > 0) sumNs.get() / n / 1e6 else 0.0,
+                    "max_ms" to maxNs.get() / 1e6,
+                )
+            }
+        }
+
+        val remoteOk = Timer()
+        val remoteFailed = Timer()
+        val local = Timer()
+        val fallbacks = java.util.concurrent.atomic.AtomicLong()
+
+        @Volatile
+        var lastError: String? = null
+
+        @Volatile
+        var lastErrorAt: Long = 0
+
+        fun snapshot(enabled: Boolean, fallbackLocal: Boolean): Map<String, Any?> = mapOf(
+            "remote_enabled" to enabled,
+            "fallback_local" to fallbackLocal,
+            "remote_ok" to remoteOk.snapshot(),
+            "remote_failed" to remoteFailed.snapshot(),
+            "fallbacks" to fallbacks.get(),
+            "local" to local.snapshot(),
+            "last_error" to lastError,
+            "last_error_at" to lastErrorAt.takeIf { it > 0 },
+        )
+    }
+
+    val renderStats = RenderStats()
+
+    private val renderHttpClient: HttpClient by lazy {
+        HttpClient.newBuilder()
+            .connectTimeout(Duration.ofMillis(HabboServer.habboConfig.cameraConfig.renderer.timeoutMs))
+            .build()
+    }
+
+    private fun renderRemote(config: CameraRendererConfig, data: String, dimmer: DimmerSettings): ByteArray {
+        val query = dimmer.color?.let {
+            val hex = "%02X%02X%02X".format(it.red, it.green, it.blue)
+            "?dimmer_color=%23$hex&dimmer_alpha=${(dimmer.alpha * 255f).roundToInt().coerceIn(0, 255)}&dimmer_type=${dimmer.type}"
+        }.orEmpty()
+        val request = HttpRequest.newBuilder(URI.create(config.url + query))
+            .timeout(Duration.ofMillis(config.timeoutMs))
+            .header("Content-Type", "application/json")
+            .apply { if (config.token.isNotBlank()) header("Authorization", "Bearer ${config.token}") }
+            .POST(HttpRequest.BodyPublishers.ofString(data))
+            .build()
+        val response = renderHttpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
+
+        check(response.statusCode() == 200) { "habbo-render HTTP ${response.statusCode()}" }
+        return response.body()
     }
 
     private fun extractDimmerSettings(roomId: Int): DimmerSettings {

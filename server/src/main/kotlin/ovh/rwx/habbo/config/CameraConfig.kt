@@ -27,5 +27,26 @@ data class CameraConfig(
     @param:JsonProperty("preview_timeout_minutes", required = true)
     val previewTimeoutMinutes: Long,
     @param:JsonProperty("assets_path", required = true)
-    val assetsPath: String
+    val assetsPath: String,
+    /** Opcional. Ausente = render 100% local (Kotlin). */
+    @param:JsonProperty("renderer", required = false)
+    val renderer: CameraRendererConfig = CameraRendererConfig()
+)
+
+/**
+ * Delega a rasterização ao serviço `habbo-render` (`POST /api/v1/camera/render`), permitindo atualizá-lo sem
+ * reiniciar o emulador. Com [fallbackLocal], erro/timeout cai no renderer Kotlin (mesma imagem, paridade garantida).
+ */
+data class CameraRendererConfig(
+    @param:JsonProperty("enabled", required = false)
+    val enabled: Boolean = false,
+    @param:JsonProperty("url", required = false)
+    val url: String = "http://127.0.0.1:8090/api/v1/camera/render",
+    /** Bearer token (`HR_CAMERA_TOKEN` no habbo-render). Vazio = sem autenticação. */
+    @param:JsonProperty("token", required = false)
+    val token: String = "",
+    @param:JsonProperty("timeout_ms", required = false)
+    val timeoutMs: Long = 5000,
+    @param:JsonProperty("fallback_local", required = false)
+    val fallbackLocal: Boolean = true
 )
