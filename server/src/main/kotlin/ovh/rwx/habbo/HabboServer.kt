@@ -449,6 +449,8 @@ object HabboServer : AutoCloseable {
             log.debug("Flushing write-behind persistence...")
             WriteBehindManager.stop()
             log.debug("Done!")
+            // 5b. Hi-Lo: devolve os blocos reservados no boot e não usados (senão cada restart queima um por sequência)
+            ovh.rwx.habbo.database.sequence.HiLoSequence.releaseAllUnusedBlocks()
             // 6. Netty (derruba os canais dos clientes)
             log.debug("Shutting down Netty server...")
             bossGroup.shutdownGracefully().awaitUninterruptibly()

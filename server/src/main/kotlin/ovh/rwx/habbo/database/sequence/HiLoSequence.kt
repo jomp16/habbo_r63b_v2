@@ -21,22 +21,33 @@ package ovh.rwx.habbo.database.sequence
 
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.*
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Thread-safe Hi-Lo sequence ID generator.
  * Allocates blocks of IDs from database to generate unique integer IDs in memory at nanosecond speed.
+ *
+ * hi e lo vivem num único [AtomicLong] (hi nos 32 bits altos, lo nos baixos): cada `nextId()` lê os dois do MESMO
+ * estado. Antes eram dois campos, e uma thread que pegou o último lo de um bloco e foi pausada antes de ler o hi podia
+ * montar o id com o hi do bloco SEGUINTE, gerando um id que sairia de novo depois (INSERT duplicado, linha perdida).
  */
-class HiLoSequence(
+open class HiLoSequence(
     val sequenceName: String,
     val tableName: String = sequenceName,
     val idColumn: String = "id",
     val blockSize: Int = 1000
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private var currentHi: Int = 0
-    private val currentLo = AtomicInteger(blockSize) // Start exhausted to trigger initial fetch
     private val lock = Any()
+
+    // começa sem bloco (hi = NO_BLOCK): o primeiro nextId()/warmUp() reserva
+    private val state = AtomicLong(pack(NO_BLOCK, blockSize))
+
+    init {
+        require(blockSize > 0) { "blockSize must be positive" }
+        all += this
+    }
 
     /**
      * Reserva o primeiro bloco no boot, evitando uma transação síncrona (round-trip ao banco)
@@ -44,31 +55,51 @@ class HiLoSequence(
      */
     fun warmUp() {
         synchronized(lock) {
-            if (currentLo.get() >= blockSize) {
-                currentHi = fetchNextHi()
-                currentLo.set(0)
-            }
+            if (exhausted(state.get())) reserveBlock()
         }
     }
 
     fun nextId(): Int {
         while (true) {
-            val lo = currentLo.getAndIncrement()
-            if (lo < blockSize) {
-                return (currentHi * blockSize) + lo
-            }
+            // incrementa só o lo (32 bits baixos); hi e lo saem do mesmo valor lido
+            val s = state.getAndIncrement()
+            val hi = hiOf(s)
+            val lo = loOf(s)
+            if (hi != NO_BLOCK && lo < blockSize) return hi * blockSize + lo.toInt()
+
             synchronized(lock) {
-                if (currentLo.get() >= blockSize) {
-                    currentHi = fetchNextHi()
-                    currentLo.set(0)
-                    log.info("Reserved Hi-Lo block for '{}': hi={}, range=[{}..{}]",
-                        sequenceName, currentHi, currentHi * blockSize, (currentHi + 1) * blockSize - 1)
-                }
+                if (exhausted(state.get())) reserveBlock()
             }
         }
     }
 
-    private fun fetchNextHi(): Int {
+    /**
+     * Shutdown limpo: devolve o bloco atual se nenhum id dele saiu (lo = 0), para o próximo boot reusar o mesmo hi
+     * em vez de queimar um bloco por sequência a cada restart. Só devolve se ninguém reservou depois (o `UPDATE` exige
+     * `next_hi = hi + 1`). Depois disso a sequência fica sem bloco; um `nextId()` tardio reserva de novo.
+     */
+    fun releaseUnusedBlock(): Boolean = synchronized(lock) {
+        val s = state.get()
+        val hi = hiOf(s)
+        if (hi == NO_BLOCK || loOf(s) != 0L) return false
+        // nextId() incrementa fora do lock: se alguém pegou o lo 0 neste meio-tempo, o bloco já está em uso
+        if (!state.compareAndSet(s, pack(NO_BLOCK, blockSize))) return false
+
+        val released = returnBlock(hi)
+        if (released) log.info("Released unused Hi-Lo block for '{}': hi={}", sequenceName, hi)
+        released
+    }
+
+    private fun reserveBlock() {
+        val hi = fetchNextHi()
+        state.set(pack(hi, 0))
+        log.info("Reserved Hi-Lo block for '{}': hi={}, range=[{}..{}]", sequenceName, hi, hi * blockSize, (hi + 1) * blockSize - 1)
+    }
+
+    private fun exhausted(s: Long) = hiOf(s) == NO_BLOCK || loOf(s) >= blockSize
+
+    /** Reserva o próximo hi no banco (transação com `FOR UPDATE`). Aberto para os testes. */
+    protected open fun fetchNextHi(): Int {
         return dbTransaction {
             val existing = queryOne<Int>(
                 "SELECT `next_hi` FROM `sequences` WHERE `sequence_name` = :name FOR UPDATE",
@@ -93,6 +124,36 @@ class HiLoSequence(
                     mapOf("name" to sequenceName)
                 )
                 existing
+            }
+        }
+    }
+
+    /** Devolve [hi] ao banco se ele ainda é o último bloco reservado. Aberto para os testes. */
+    protected open fun returnBlock(hi: Int): Boolean = db {
+        update(
+            "UPDATE `sequences` SET `next_hi` = :hi WHERE `sequence_name` = :name AND `next_hi` = :next",
+            mapOf("hi" to hi, "next" to hi + 1, "name" to sequenceName)
+        ) > 0
+    }
+
+    companion object {
+        private const val NO_BLOCK = -1
+
+        private val all = CopyOnWriteArrayList<HiLoSequence>()
+
+        private fun pack(hi: Int, lo: Int): Long = (hi.toLong() shl 32) or (lo.toLong() and 0xFFFF_FFFFL)
+        private fun hiOf(s: Long): Int = (s ushr 32).toInt()
+        private fun loOf(s: Long): Long = s and 0xFFFF_FFFFL
+
+        /** Shutdown: devolve os blocos não usados de todas as sequências (falha de uma não impede as outras). */
+        fun releaseAllUnusedBlocks() {
+            val log = LoggerFactory.getLogger(HiLoSequence::class.java)
+            for (seq in all) {
+                try {
+                    seq.releaseUnusedBlock()
+                } catch (e: Exception) {
+                    log.warn("Failed to release Hi-Lo block of '{}'", seq.sequenceName, e)
+                }
             }
         }
     }
