@@ -42,6 +42,17 @@ class HabboSessionManager {
     val sessionsCount: Int
         get() = habboSessions.size
 
+    /**
+     * Quem está no hotel agora (autenticado, sem os bots de stress), sem repetição e em ordem. É a ÚNICA fonte de
+     * "online": não há coluna no banco (um flag gravado ficava preso em 1 quando o servidor caía ou era desligado com
+     * gente conectada). A CMS lê por `GET /api/v1/status/online`.
+     */
+    fun onlineUserIds(): List<Int> =
+        habboSessions.values.asSequence()
+            .filter { it.authenticated && !it.isBot }
+            .map { it.userInformation.id }
+            .distinct().sorted().toList()
+
     fun startHeartbeat(executor: ScheduledExecutorService, intervalSeconds: Long = 20L) {
         if (heartbeatFuture != null) return
         log.info("Iniciando heartbeat ativo de sessões a cada {}s...", intervalSeconds)

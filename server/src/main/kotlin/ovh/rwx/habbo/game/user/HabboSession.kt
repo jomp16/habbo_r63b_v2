@@ -376,7 +376,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         // write-behind por chave do usuário: login e logout do MESMO usuário rodam em ordem (o logout vem depois),
         // enquanto usuários diferentes são persistidos em paralelo
         WriteBehindManager.queue(WriteKey.user(userInformation1.id)) {
-            UserInformationDao.saveInformation(userInformation1, true, ip)
+            UserInformationDao.saveInformation(userInformation1, ip)
             UserStatsDao.saveStats(userStats)
         }
 
@@ -412,7 +412,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
                 val closeIp = channel.ip()
                 WriteBehindManager.queue(WriteKey.user(userInformation.id)) {
                     BadgeDao.saveBadges(badgesSnapshot)
-                    WriteBehindManager.flushSession(this, online = false, ip = closeIp)
+                    WriteBehindManager.flushSession(this, loggingOut = true, ip = closeIp)
                 }
 
                 habboMessenger.notifyFriends()
@@ -423,7 +423,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
     internal fun saveAllQueuedStuffs() {
         if (authenticated && !isBot) {
-            WriteBehindManager.flushSession(this, online = true, ip = channel.ip())
+            WriteBehindManager.flushSession(this, ip = channel.ip())
         }
     }
 }

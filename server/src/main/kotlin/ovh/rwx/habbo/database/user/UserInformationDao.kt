@@ -149,12 +149,16 @@ object UserInformationDao {
         return null
     }
 
-    fun saveInformation(userInformation: UserInformation, online: Boolean, ip: String) {
+    /**
+     * Grava os dados do usuário. Quem está online NÃO vai para o banco (a verdade é a memória do emulador:
+     * `GET /api/v1/status/online`). [ip] vazio mantém o `ip_last` gravado.
+     */
+    fun saveInformation(userInformation: UserInformation, ip: String) {
         // só as moedas alteradas desde a última gravação; se a escrita falhar elas voltam para a lista de sujas
         val changedCurrencies = userInformation.activityPointsCurrencies.drainDirty()
 
         try {
-            writeInformation(userInformation, online, ip, changedCurrencies)
+            writeInformation(userInformation, ip, changedCurrencies)
         } catch (e: Throwable) {
             userInformation.activityPointsCurrencies.restoreDirty(changedCurrencies.keys)
             throw e
@@ -163,7 +167,6 @@ object UserInformationDao {
 
     private fun writeInformation(
         userInformation: UserInformation,
-        online: Boolean,
         ip: String,
         changedCurrencies: Map<Int, Int>
     ) {
@@ -171,7 +174,6 @@ object UserInformationDao {
             update(
                 javaClass.classLoader.getResource("sql/users/information/update_user_information.sql")!!.readText(),
                 mapOf(
-                    "online" to online,
                     "ip_last" to ip,
                     "credits" to userInformation.credits,
                     "figure" to userInformation.figure,

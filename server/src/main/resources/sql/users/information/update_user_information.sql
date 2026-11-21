@@ -19,8 +19,7 @@
 
 UPDATE
     `users`
-SET `online`     = :online,
-    `ip_last`    = :ip_last,
+SET `ip_last`    = COALESCE(NULLIF(:ip_last, ''), `ip_last`),
     `credits`    = :credits,
     `figure`     = :figure,
     `gender`     = :gender,

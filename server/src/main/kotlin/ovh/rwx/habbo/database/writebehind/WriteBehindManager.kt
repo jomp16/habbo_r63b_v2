@@ -159,16 +159,17 @@ object WriteBehindManager {
 
     // --- Targeted Flush Methods ---
 
-    fun flushSession(session: HabboSession, online: Boolean = true, ip: String = "") {
+    /** [loggingOut]: grava informação e estatísticas mesmo sem estarem sujas (o último save da sessão). */
+    fun flushSession(session: HabboSession, loggingOut: Boolean = false, ip: String = "") {
         if (!session.authenticated) return
         try {
             val user = session.userInformation
-            if (dirtyEntities.remove(user) || !online) {
-                UserInformationDao.saveInformation(user, online, ip.ifBlank { session.uniqueID })
+            if (dirtyEntities.remove(user) || loggingOut) {
+                UserInformationDao.saveInformation(user, ip.ifBlank { session.uniqueID })
                 user.markClean()
             }
             val stats = session.userStats
-            if (dirtyEntities.remove(stats) || !online) {
+            if (dirtyEntities.remove(stats) || loggingOut) {
                 UserStatsDao.saveStats(stats)
                 stats.markClean()
             }

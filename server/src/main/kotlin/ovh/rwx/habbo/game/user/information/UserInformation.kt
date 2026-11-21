@@ -66,7 +66,7 @@ class UserInformation(
         get() = HabboServer.habboGame.groupManager.groups.values.filter { it.members.any { groupMember -> groupMember.userId == id } }
 
     override fun flush() {
-        UserInformationDao.saveInformation(this, online = true, ip = "")
+        UserInformationDao.saveInformation(this, ip = "")
         markClean()
     }
 }

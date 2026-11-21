@@ -403,7 +403,7 @@ object HabboServer : AutoCloseable {
     /**
      * Ordem importa: tudo que enfileira escrita (salas, sessões, conquistas) tem que rodar ANTES do flush final do
      * write-behind. Antes os canais só caíam no shutdown do Netty, depois de [WriteBehindManager.stop]; o
-     * `HabboSession.close()` enfileirava badges/online=false/último acesso num worker já parado e tudo se perdia.
+     * `HabboSession.close()` enfileirava badges/último acesso num worker já parado e tudo se perdia.
      */
     override fun close() {
         if (started) {
@@ -423,8 +423,7 @@ object HabboServer : AutoCloseable {
                 habboGame.roomManager.roomTaskManager.removeRoom(it)
             }
             log.debug("Done!")
-            // 3. Sessões: removeHabboSession() chama HabboSession.close(), que enfileira badges, online=false e
-            // último acesso. Os canais ficam abertos até o fim (o channelUnregistered depois não acha mais a sessão)
+            // 3. Sessões: removeHabboSession() chama HabboSession.close(), que enfileira badges e último acesso. Os canais ficam abertos até o fim (o channelUnregistered depois não acha mais a sessão)
             log.debug("Closing all sessions...")
             habboSessionManager.habboSessions.values.toList().forEach { session ->
                 try {
