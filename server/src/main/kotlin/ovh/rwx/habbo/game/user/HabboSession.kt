@@ -324,6 +324,7 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         // (a thread do handler espera o lote; clothings é lazy e o handler do SSO a lê logo em seguida)
         val userId = userInformation1.id
         habboSubscription = HabboSubscription(this@HabboSession)
+        habboHabbicon = HabboHabbicon(this@HabboSession)
         val (loadedStats, loadedPreferences, loadedFavorites) = runBlocking(Dispatchers.IO) {
             val stats = async { UserStatsDao.getUserStats(userId) }
             val preferences = async { UserPreferencesDao.getUserPreferences(userId) }
@@ -337,7 +338,11 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             val ignores = async { habboIgnores.load() }
             // bloqueios (meus e de quem me bloqueou): aplicados em chat, salas, mensageiro e trocas
             val blocks = async { habboBlocks.load() }
+            // o handler do SSO envia USER_HABBICONS/HABBICON_SHOP_DATA logo em seguida: com load() assíncrono
+            // o cliente recebia a lista vazia ("você não tem habbicons") até um clique forçar o estado
+            val habbicons = async { habboHabbicon.load() }
             clothings.await()
+            habbicons.await()
             ignores.await()
             blocks.await()
             subscription.await()
@@ -355,12 +360,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         habboMessenger = HabboMessenger(this@HabboSession)
         habboBadge = HabboBadge(this@HabboSession)
         habboInventory = HabboInventory(this@HabboSession)
-        habboHabbicon = HabboHabbicon(this@HabboSession)
 
         sessionScope.launch {
             launch { habboBadge.load() }
             launch { habboMessenger.load() }
-            launch { habboHabbicon.load() }
             // aquece as estatísticas do SnowWar (cacheadas) para o GAME_2_GET_ACCOUNT_GAME_STATUS não pagar a ida ao banco
             launch { HabboServer.habboGame.snowWarManager.getPlayerStats(userId) }
             launch {
