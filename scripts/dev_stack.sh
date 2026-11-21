@@ -115,12 +115,23 @@ do_setup() {
   local src_cfg="$CMS_DIR/backend/config.json"
   [[ -f "$src_cfg" ]] || src_cfg="$CMS_DIR/backend/config.example.json"
 
-  python3 - "$src_cfg" "$CMS_CONFIG" "$EMU_PORT" "$EMU_WS_PORT" "$EMU_WEB_PORT" "$EMU_JWT" "$PROXY_ADDR" "$CMS_DIR/frontend/dist" <<'PY'
-import json, sys
+  # As releases (flash_releases, pixi_releases, pixi_base) vêm do config de PRODUÇÃO da CMS quando existe, para o dev
+  # testar exatamente o que prod oferece; as URLs de swf.habbo.rwx.ovh passam pelo proxy local.
+  local prod_cfg="$CMS_DIR/deploy/config.prod.json"
 
-src_path, dst_path, tcp_port, ws_port, web_port, emu_jwt, proxy_addr, frontend_dist = sys.argv[1:]
+  python3 - "$src_cfg" "$CMS_CONFIG" "$EMU_PORT" "$EMU_WS_PORT" "$EMU_WEB_PORT" "$EMU_JWT" "$PROXY_ADDR" "$CMS_DIR/frontend/dist" "$prod_cfg" <<'PY'
+import json, os, sys
+
+src_path, dst_path, tcp_port, ws_port, web_port, emu_jwt, proxy_addr, frontend_dist, prod_path = sys.argv[1:]
 with open(src_path, "r", encoding="utf-8") as f:
     cfg = json.load(f)
+
+if os.path.isfile(prod_path):
+    with open(prod_path, "r", encoding="utf-8") as f:
+        prod = json.load(f)
+    for key in ("flash_releases", "pixi_releases", "pixi_base"):
+        if key in prod:
+            cfg[key] = prod[key]
 
 local_proxy = f"http://{proxy_addr}"
 
@@ -152,9 +163,17 @@ cfg["hero_image"] = f"{local_proxy}/c_images/hotel_view_images_hq/hotelview_defa
 cfg["avatar_imager"] = f"{local_proxy}/api/v1/habbo-imaging/avatarimage"
 cfg["frontend_dist"] = frontend_dist
 
+def to_local(url):
+    return url.replace("https://swf.habbo.rwx.ovh", local_proxy) if isinstance(url, str) else url
+
 for rel in cfg.get("flash_releases", []):
     if isinstance(rel, dict) and isinstance(rel.get("swf"), str):
-        rel["swf"] = rel["swf"].replace("https://swf.habbo.rwx.ovh", local_proxy)
+        rel["swf"] = to_local(rel["swf"])
+for rel in cfg.get("pixi_releases", []):
+    if isinstance(rel, dict) and isinstance(rel.get("dist"), str):
+        rel["dist"] = to_local(rel["dist"])
+if cfg.get("pixi_base"):
+    cfg["pixi_base"] = to_local(cfg["pixi_base"])
 
 with open(dst_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)

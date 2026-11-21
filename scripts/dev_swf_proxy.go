@@ -56,6 +56,11 @@ func main() {
 		if resp.Header.Get("Access-Control-Allow-Origin") == "" {
 			resp.Header.Set("Access-Control-Allow-Origin", "*")
 		}
+		// o CSP de prod só deixa a página ser embutida por https://habbo.rwx.ovh e só libera https:/wss:; em dev a CMS
+		// é http://127.0.0.1:<porta> e tudo passa por este proxy em http/ws, então o cliente PIXI nem abriria no iframe
+		resp.Header.Del("Content-Security-Policy")
+		resp.Header.Del("Content-Security-Policy-Report-Only")
+		resp.Header.Del("X-Frame-Options")
 		return nil
 	}
 
