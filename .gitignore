@@ -12,6 +12,8 @@ out/
 config.json
 config.yaml
 deploy/config.prod.yaml
+# MCP do projeto (debug_tools do emulador dev/prod): tem os tokens
+.mcp.json
 
 # MOTD
 motd/

@@ -100,6 +100,8 @@ data class HabboConfig(
     val metricsSampleIntervalMs: Long = 1000,
     @param:JsonProperty("dynamic_dns")
     val dynamicDnsConfig: DynamicDnsConfig? = null,
+    @param:JsonProperty("debug_tools")
+    val debugToolsConfig: DebugToolsConfig = DebugToolsConfig(),
 ) {
     val fastFoodWsPort: Int get() = fastFoodWsPortConfig ?: (wsPort + 10)
 

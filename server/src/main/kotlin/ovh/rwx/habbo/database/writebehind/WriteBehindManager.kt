@@ -58,9 +58,43 @@ object WriteBehindManager {
 
     // Deferred writes. Each declares the rows it touches (WriteKey): writes sharing a row keep their order,
     // writes on disjoint rows are persisted in parallel. See KeyedWriteScheduler.
-    private val writes = KeyedWriteScheduler(WRITE_PARALLELISM) { e ->
+    private val writes = KeyedWriteScheduler(WRITE_PARALLELISM, onFailure = ::recordFailure) { e ->
         log.error("Write-Behind error executing deferred write action", e)
     }
+
+    /** Falha de uma escrita adiada, guardada para o debug tool (`writebehind_status`). */
+    data class WriteFailure(val at: String, val keys: List<String>, val error: String)
+
+    private const val MAX_RECENT_FAILURES = 50
+    private val recentFailures = java.util.ArrayDeque<WriteFailure>()
+    private val totalFailures = java.util.concurrent.atomic.AtomicLong()
+
+    private fun recordFailure(keys: List<Any>, e: Throwable) {
+        totalFailures.incrementAndGet()
+        val cause = generateSequence(e) { it.cause }.last()
+        val failure = WriteFailure(
+            java.time.Instant.now().toString(), keys.map { it.toString() },
+            "${e.javaClass.simpleName}: ${e.message}" + if (cause !== e) " (causa: ${cause.javaClass.simpleName}: ${cause.message})" else ""
+        )
+        synchronized(recentFailures) {
+            recentFailures.addFirst(failure)
+            while (recentFailures.size > MAX_RECENT_FAILURES) recentFailures.removeLast()
+        }
+    }
+
+    /** Estado da fila para diagnóstico: escritas pendentes, entidades sujas e as últimas falhas (mais recente primeiro). */
+    data class Status(
+        val running: Boolean,
+        val dirtyEntities: Int,
+        val queue: KeyedWriteScheduler.Snapshot,
+        val totalFailures: Long,
+        val recentFailures: List<WriteFailure>,
+    )
+
+    fun status(): Status = Status(
+        running.get(), dirtyEntities.size, writes.snapshot(), totalFailures.get(),
+        synchronized(recentFailures) { recentFailures.toList() }
+    )
 
     // Coroutine worker state
     private var workerJob: Job? = null

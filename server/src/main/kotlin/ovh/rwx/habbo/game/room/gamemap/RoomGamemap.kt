@@ -202,4 +202,24 @@ class RoomGamemap(private val room: Room) {
     fun clearEntities() {
         roomEntityMap.clear()
     }
+
+    /** Cópia de quem ocupa cada tile (debug). */
+    fun entityTiles(): Map<Vector2, List<RoomEntity>> = roomEntityMap.mapValues { it.value.toList() }
+
+    /** Tira do mapa toda entidade fora de [alive] (sobras de uma remoção que falhou no meio); devolve o que saiu. */
+    fun purgeEntitiesNotIn(alive: Collection<RoomEntity>): List<Pair<Vector2, RoomEntity>> {
+        val keep = alive.toSet()
+        val removed = ArrayList<Pair<Vector2, RoomEntity>>()
+
+        for ((tile, set) in roomEntityMap.entries.toList()) {
+            for (entity in set.toList()) {
+                if (entity !in keep) {
+                    removeRoomEntity(entity, tile)
+                    removed += tile to entity
+                }
+            }
+        }
+
+        return removed
+    }
 }

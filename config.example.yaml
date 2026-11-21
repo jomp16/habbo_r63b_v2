@@ -147,3 +147,17 @@ webapp_admin_min_rank: 4
 metrics_sample_interval_ms: 1000
 # Rank mínimo para executar ações na API admin (recarregar catálogo, alerta ao hotel etc.); padrão 7
 webapp_admin_action_min_rank: 7
+# Ferramentas de debug remoto: endpoint MCP (/api/v1/debug/mcp), aba Debug da CMS (/api/v1/admin/debug) e
+# `debug <ferramenta>` no Server Console. Leitura pede read_min_rank; as que mudam estado, write_min_rank.
+debug_tools:
+  read_min_rank: 7
+  write_min_rank: 7
+  # eval de JavaScript com acesso total à JVM: só ligue durante uma sessão de debug (e reinicie depois)
+  eval_enabled: false
+  # Tokens do MCP (Claude Code etc.): guarde só o sha256. Gerar:
+  #   t="hdbg_$(openssl rand -hex 32)"; echo "$t"; printf %s "$t" | sha256sum
+  # tokens:
+  #   - name: claude
+  #     user_id: 1
+  #     sha256: "<hex do sha256sum>"
+  tokens: []

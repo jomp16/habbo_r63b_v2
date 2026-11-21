@@ -19,9 +19,12 @@
 
 package ovh.rwx.habbo.game.user.messenger
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.admin.debug.DebugConsole
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.database.user.UserInformationDao
 import ovh.rwx.habbo.game.user.HabboSession
@@ -102,6 +105,13 @@ object MessengerServerConsoleService {
             message == "reload_handlers" -> {
                 HabboServer.habboHandler.load()
                 HabboServer.serverScheduledExecutor.schedule({ sendResponse("Done!") }, 1, TimeUnit.SECONDS)
+            }
+
+            args[0] == "debug" -> {
+                // fora da thread do Netty: as ferramentas de sala esperam a thread da sala (até 3 s) e o db_query vai ao banco
+                HabboServer.applicationScope.launch(Dispatchers.IO) {
+                    DebugConsole.execute(habboSession, message.removePrefix("debug").trim()).forEach(sendResponse)
+                }
             }
 
             message == "habbo_version" -> {

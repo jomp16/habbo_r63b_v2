@@ -21,6 +21,8 @@ package ovh.rwx.habbo.console
 
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.admin.debug.DebugCaller
+import ovh.rwx.habbo.admin.debug.DebugConsole
 import ovh.rwx.habbo.game.gamedata.ExternalVariables
 import ovh.rwx.habbo.game.snowwar.SnowWarArenaMaps
 import ovh.rwx.habbo.game.snowwar.enums.SnowWarFieldType
@@ -101,11 +103,14 @@ class ServerConsole(private val server: HabboServer) {
                     else -> "Usage: reload <arenas|catalog|items|external_variables>"
                 }
             }
+            // stdin do processo = acesso local à máquina: rank máximo (o eval ainda depende do debug_tools.eval_enabled)
+            "debug" -> DebugConsole.execute(DebugCaller(0, "stdin", Int.MAX_VALUE, "stdin"), arg).joinToString("")
             "help", "?" -> {
                 """
                 === Console Commands ===
                 arena [id|name|random|reload] : View or force SnowWar arena
                 status                        : View server status
+                debug [tool param=value ...]  : Remote debug tools (list with 'debug')
                 reload <arenas|catalog|items|external_variables> : Reload server components
                 stop / exit                   : Gracefully stop the server
                 help                          : Show this help menu

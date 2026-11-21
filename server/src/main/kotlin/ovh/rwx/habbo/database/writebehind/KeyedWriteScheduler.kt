@@ -37,7 +37,12 @@ import kotlin.concurrent.withLock
  * only when it is the head of every one of its FIFOs. Because all FIFOs follow the same global submission order, the
  * oldest unfinished action is always runnable, so the scheduler can neither deadlock nor reorder a row.
  */
-class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Throwable) -> Unit) {
+class KeyedWriteScheduler(
+    private val parallelism: Int,
+    /** Called with the failed action's keys (diagnostics); [onError] still gets every failure. */
+    private val onFailure: (keys: List<Any>, error: Throwable) -> Unit = { _, _ -> },
+    private val onError: (Throwable) -> Unit,
+) {
     private class Task(val keys: List<Any>, val action: () -> Unit) {
         var started = false
         val submittedNanos = System.nanoTime()
@@ -69,6 +74,29 @@ class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Th
     /** Actions submitted and not finished yet (queued or running). */
     fun pendingCount(): Int = synchronized(lock) { pending }
 
+    /** Debug view of the queue: totals, the oldest pending action and the longest lanes. */
+    data class Snapshot(
+        val pending: Int,
+        val independent: Int,
+        val lanes: Int,
+        val oldestPendingMs: Long?,
+        val longestLanes: List<Pair<String, Int>>,
+    )
+
+    fun snapshot(topLanes: Int = 10): Snapshot = synchronized(lock) {
+        val now = System.nanoTime()
+        val oldest = (lanes.values.mapNotNull { it.firstOrNull() } + independent)
+            .minOfOrNull { it.submittedNanos }
+
+        Snapshot(
+            pending = pending,
+            independent = independent.size,
+            lanes = lanes.size,
+            oldestPendingMs = oldest?.let { (now - it) / 1_000_000 },
+            longestLanes = lanes.entries.sortedByDescending { it.value.size }.take(topLanes).map { it.key.toString() to it.value.size },
+        )
+    }
+
     fun isEmpty(): Boolean = pendingCount() == 0
 
     /** Runs everything submitted so far, and whatever is submitted while draining, then returns. */
@@ -92,6 +120,7 @@ class KeyedWriteScheduler(private val parallelism: Int, private val onError: (Th
                                 task.action()
                             } catch (e: Throwable) {
                                 failedAction = true
+                                onFailure(task.keys, e)
                                 onError(e)
                             } finally {
                                 WriteBehindStats.onFinish(System.nanoTime() - startNanos, failedAction)
