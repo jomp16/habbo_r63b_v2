@@ -26,6 +26,7 @@ import ovh.rwx.habbo.game.room.user.RoomBot
 import ovh.rwx.habbo.game.room.user.RoomEntity
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.room.user.RoomUser
+import ovh.rwx.habbo.util.Utils
 import ovh.rwx.habbo.util.Vector2
 
 /**
@@ -195,9 +196,9 @@ internal object DebugGamemap {
         "id" to i.id,
         "name" to i.furnishing.itemName,
         "origin" to "${i.position.x},${i.position.y}",
-        "z" to i.position.z,
-        "height" to i.height,
-        "total_height" to i.totalHeight,
+        "z" to Utils.round(i.position.z, 2),
+        "height" to Utils.round(i.height, 2),
+        "total_height" to Utils.round(i.totalHeight, 2), // z + altura em double dá 1.9500000000000002; só a exibição é arredondada
         "rotation" to i.rotation,
         "interaction" to i.furnishing.interactionType.name,
         "walkable" to i.furnishing.walkable,
@@ -217,7 +218,7 @@ internal object DebugGamemap {
             else -> null
         },
         "user_id" to (e as? RoomUser)?.habboSession?.userInformation?.id,
-        "z" to e.currentVector3.z,
+        "z" to Utils.round(e.currentVector3.z, 2),
     )
 
     /** Inconsistências de uma casa (o que o gamemap diz contra o que os itens e entidades dizem). */
