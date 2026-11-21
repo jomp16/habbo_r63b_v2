@@ -36,6 +36,7 @@ import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboResponse
 import ovh.rwx.habbo.communication.HabboVersion
 import ovh.rwx.habbo.communication.ProtocolEra
+import ovh.rwx.habbo.communication.RequestDedupe
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
@@ -69,7 +70,6 @@ import ovh.rwx.habbo.util.Utils
 import java.lang.Runnable
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -107,8 +107,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         internal set
     lateinit var userPreferences: UserPreferences
         internal set
-    /** Últimos pedidos de página do catálogo atendidos (chave -> nanoTime), para ignorar duplicatas em rajada do cliente. */
-    val recentCatalogPageRequests: MutableMap<String, Long> = ConcurrentHashMap()
+    /** Últimos pedidos atendidos dos handlers com `dedupeMs`, para descartar os repetidos em rajada pelo cliente. */
+    val requestDedupe = RequestDedupe()
     lateinit var habboSubscription: HabboSubscription
         internal set
     lateinit var habboBadge: HabboBadge
@@ -152,7 +152,6 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var uniqueID: String = ""
     var osInformation: String = ""
     var ping: Long = 0
-    val lastCatalogOfferRequest: MutableMap<Int, Long> = ConcurrentHashMap()
     var gameSSOToken: String = ""
     var fastFoodSession: FastFoodSession? = null
 

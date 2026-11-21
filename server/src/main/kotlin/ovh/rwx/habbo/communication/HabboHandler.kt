@@ -191,24 +191,24 @@ class HabboHandler {
 
         runBlocking {
             val jobHandlers = HabboServer.applicationScope.launch {
-                loadAnnotated(lookup, ClassIndex.Kind.HANDLER, instances, Handler::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                loadAnnotated(lookup, ClassIndex.Kind.HANDLER, instances, Handler::class.java, { it.headers }, { it.requiredAuth }, { it.dedupeMs }) { incoming, method, instance, handle, requiredAuth, dedupeNanos ->
                     messageHandlers.getOrPut(incoming) { mutableMapOf() }[method.name] =
-                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
+                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle, dedupeNanos)
                 }
-                loadAnnotated(lookup, ClassIndex.Kind.HANDLER_R63A, instances, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }) { incoming, method, instance, handle, requiredAuth ->
+                loadAnnotated(lookup, ClassIndex.Kind.HANDLER_R63A, instances, HandlerR63A::class.java, { it.headers }, { it.requiredAuth }, { it.dedupeMs }) { incoming, method, instance, handle, requiredAuth, dedupeNanos ->
                     messageHandlersR63A[incoming] =
-                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle)
+                        HabboMethodInfo(requiredAuth, HabboInvokers.buildRequestInvoker(lookup, instance, method, HabboSession::class.java), handle, dedupeNanos)
                 }
                 log.info("Loaded {} Habbo request handlers", messageHandlers.size)
                 log.info("Loaded {} Habbo R63A request handlers", messageHandlersR63A.size)
             }
 
             val jobResponses = HabboServer.applicationScope.launch {
-                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE, instances, Response::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE, instances, Response::class.java, { it.headers }, { false }, { 0 }) { outgoing, method, instance, handle, _, _ ->
                     messageResponses.getOrPut(outgoing) { mutableMapOf() }[method.name] =
                         RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
                 }
-                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE_R63A, instances, ResponseR63A::class.java, { it.headers }, { false }) { outgoing, method, instance, handle, _ ->
+                loadAnnotated(lookup, ClassIndex.Kind.RESPONSE_R63A, instances, ResponseR63A::class.java, { it.headers }, { false }, { 0 }) { outgoing, method, instance, handle, _, _ ->
                     messageResponsesR63A[outgoing] =
                         RegisteredResponse(HabboInvokers.buildResponseInvoker(instance, method), handle)
                 }
@@ -230,7 +230,8 @@ class HabboHandler {
         annotationClass: Class<A>,
         headersOf: (A) -> Array<out E>,
         requiredAuthOf: (A) -> Boolean,
-        register: (enumValue: E, method: Method, instance: Any, handle: MethodHandle, requiredAuth: Boolean) -> Unit
+        dedupeMsOf: (A) -> Int,
+        register: (enumValue: E, method: Method, instance: Any, handle: MethodHandle, requiredAuth: Boolean, dedupeNanos: Long) -> Unit
     ) {
         ClassIndex.classesOf(kind).forEach { clazz ->
             clazz.declaredMethods.filter { it.isAnnotationPresent(annotationClass) }.sortedBy { it.name }.forEach { method ->
@@ -238,8 +239,9 @@ class HabboHandler {
                 val instance = getInstance(instances, method.declaringClass)
                 val handle = lookup.unreflect(method)
                 val requiredAuth = requiredAuthOf(annotation)
+                val dedupeNanos = dedupeMsOf(annotation).coerceAtLeast(0) * 1_000_000L
 
-                headersOf(annotation).forEach { enumValue -> register(enumValue, method, instance, handle, requiredAuth) }
+                headersOf(annotation).forEach { enumValue -> register(enumValue, method, instance, handle, requiredAuth, dedupeNanos) }
             }
         }
     }
@@ -324,6 +326,11 @@ class HabboHandler {
     ) {
         if (methodInfo.requiredAuth && !habboSession.authenticated) {
             log.error("${habboRequest.headerId} - $logLabel - method requires authenticated user, but user wasn't authenticated!")
+            return
+        }
+
+        if (habboSession.requestDedupe.isDuplicate(habboRequest.headerId, habboRequest.byteBuf, methodInfo.dedupeNanos)) {
+            log.debug("{} (header {}) repetido em rajada: descartado", logLabel, habboRequest.headerId)
             return
         }
 

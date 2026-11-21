@@ -32,7 +32,9 @@ fun interface ResponseInvoker {
 data class HabboMethodInfo(
     val requiredAuth: Boolean,
     val invoker: RequestInvoker,
-    val handle: MethodHandle
+    val handle: MethodHandle,
+    /** Janela de descarte de pacotes idênticos repetidos ([Handler.dedupeMs]); 0 = nunca descarta. */
+    val dedupeNanos: Long = 0L
 )
 
 data class RegisteredResponse(

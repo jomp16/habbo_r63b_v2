@@ -21,6 +21,7 @@ package ovh.rwx.habbo.communication
 
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 
+/** [dedupeMs]: ver [Handler.dedupeMs]. */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-internal annotation class HandlerR63A(vararg val headers: IncomingR63A, val requiredAuth: Boolean = true)
+internal annotation class HandlerR63A(vararg val headers: IncomingR63A, val requiredAuth: Boolean = true, val dedupeMs: Int = 0)

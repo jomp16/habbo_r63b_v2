@@ -21,6 +21,11 @@ package ovh.rwx.habbo.communication
 
 import ovh.rwx.habbo.communication.incoming.Incoming
 
+/**
+ * [dedupeMs] > 0: um pacote IDÊNTICO (mesmo header e mesmo payload) que chega de novo na mesma sessão menos de
+ * [dedupeMs] depois do último atendido é descartado ([RequestDedupe]). Só para pedidos idempotentes
+ * que o cliente repete em rajada (ex.: o 2016 abre o quarto recém-criado 3x); nunca em ações (andar, chat, compra).
+ */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-internal annotation class Handler(vararg val headers: Incoming, val requiredAuth: Boolean = true)
+internal annotation class Handler(vararg val headers: Incoming, val requiredAuth: Boolean = true, val dedupeMs: Int = 0)

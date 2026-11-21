@@ -29,8 +29,10 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class RoomOpenFlatHandler {
-    @Handler(Incoming.ROOM_OPEN_FLAT)
-    @HandlerR63A(IncomingR63A.ROOM_OPEN_FLAT)
+    // O cliente PRODUCTION-2016 abre o quarto recém-criado 2-3x em ~10 ms (dois listeners chamam goToRoom): as
+    // repetidas idênticas são descartadas. Senha diferente (nova tentativa) é outro payload e passa.
+    @Handler(Incoming.ROOM_OPEN_FLAT, dedupeMs = 250)
+    @HandlerR63A(IncomingR63A.ROOM_OPEN_FLAT, dedupeMs = 250)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val roomId = habboRequest.readInt()
         val password = habboRequest.readUTF()

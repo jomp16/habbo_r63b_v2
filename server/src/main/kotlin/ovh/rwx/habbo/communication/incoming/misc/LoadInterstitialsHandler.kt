@@ -30,8 +30,9 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class LoadInterstitialsHandler {
-    @Handler(Incoming.LOAD_INTERSTITIALS)
-    @HandlerR63A(IncomingR63A.LOAD_INTERSTITIALS)
+    // vem junto de cada ROOM_OPEN_FLAT repetido do cliente 2016: uma resposta basta
+    @Handler(Incoming.LOAD_INTERSTITIALS, dedupeMs = 250)
+    @HandlerR63A(IncomingR63A.LOAD_INTERSTITIALS, dedupeMs = 250)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         habboSession.sendResponse(
             Outgoing.SHOW_INTERSTITIALS,

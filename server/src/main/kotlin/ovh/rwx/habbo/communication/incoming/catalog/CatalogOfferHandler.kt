@@ -28,18 +28,13 @@ import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
 class CatalogOfferHandler {
-    @Handler(Incoming.CATALOG_OFFER)
+    // Flood control: o mesmo item pedido de novo em menos de 500 ms é descartado (dedupeMs)
+    @Handler(Incoming.CATALOG_OFFER, dedupeMs = 500)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
         val catalogOfferId = habboRequest.readInt()
 
         if (catalogOfferId == -1) return
 
-        // Flood control: 500ms entre requests do mesmo item (por sessão)
-        val now = System.currentTimeMillis()
-        val lastTime = habboSession.lastCatalogOfferRequest[catalogOfferId] ?: 0
-        if (now - lastTime < 500) return
-        habboSession.lastCatalogOfferRequest[catalogOfferId] = now
-        
         val catalogItem = HabboServer.habboGame.catalogManager.catalogItems.find { it.id == catalogOfferId }
                 ?: return
         if (!catalogItem.isAvailableFor(habboSession.habboVersion)) return
