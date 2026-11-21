@@ -64,7 +64,7 @@ object UserPreferencesDao {
                     "hide_in_room" to userPreferences.hideInRoom,
                     "block_new_friends" to userPreferences.blockNewFriends,
                     "chat_color" to userPreferences.chatColor,
-                    "friend_bar_open" to userPreferences.friendBarOpen,
+                    "ui_flags" to userPreferences.uiFlags,
                     "friend_stream_enabled" to userPreferences.friendStreamEnabled,
                     "id" to userPreferences.id
                 )

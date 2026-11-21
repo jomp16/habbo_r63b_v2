@@ -30,7 +30,7 @@ data class UserSettingsData(
     val preferOldChat: Boolean = false,
     val ignoreRoomInvite: Boolean = false,
     val disableCameraFollow: Boolean = false,
-    val friendBarOpen: Boolean = false,
+    val uiFlags: Int = 0,
     val chatColor: Int = 0
 )
 
@@ -52,7 +52,7 @@ class SettingDataResponse {
             writeBoolean(data.preferOldChat)
             writeBoolean(data.ignoreRoomInvite)
             writeBoolean(data.disableCameraFollow)
-            writeInt(if (data.friendBarOpen) 1 else 0)
+            writeInt(data.uiFlags)
             writeInt(data.chatColor)
 
             if (isVersionAtLeast(2024, 5, 24)) {

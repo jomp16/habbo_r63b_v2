@@ -93,7 +93,7 @@ fun HabboSession.authenticateBot(ssoTicket: String): Boolean {
         hideInRoom = false,
         blockNewFriends = false,
         chatColor = 0,
-        friendBarOpen = false,
+        uiFlags = 0,
         friendStreamEnabled = false
     )
 

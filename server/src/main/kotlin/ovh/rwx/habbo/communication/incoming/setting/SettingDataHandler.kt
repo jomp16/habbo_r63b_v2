@@ -46,7 +46,7 @@ class SettingDataHandler {
                 preferOldChat = habboSession.userPreferences.preferOldChat,
                 ignoreRoomInvite = habboSession.userPreferences.ignoreRoomInvite,
                 disableCameraFollow = habboSession.userPreferences.disableCameraFollow,
-                friendBarOpen = habboSession.userPreferences.friendBarOpen,
+                uiFlags = habboSession.userPreferences.uiFlags,
                 chatColor = habboSession.userPreferences.chatColor
             )
         )

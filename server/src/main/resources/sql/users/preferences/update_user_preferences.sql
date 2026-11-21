@@ -30,6 +30,6 @@ SET `volume`                = :volume,
     `hide_in_room`          = :hide_in_room,
     `block_new_friends`     = :block_new_friends,
     `chat_color`            = :chat_color,
-    `friend_bar_open`       = :friend_bar_open,
+    `ui_flags`              = :ui_flags,
     `friend_stream_enabled` = :friend_stream_enabled
 WHERE `id` = :id

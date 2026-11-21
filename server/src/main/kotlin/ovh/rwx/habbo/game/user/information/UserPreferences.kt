@@ -35,7 +35,7 @@ class UserPreferences(
     hideInRoom: Boolean,
     blockNewFriends: Boolean,
     chatColor: Int,
-    friendBarOpen: Boolean,
+    uiFlags: Int,
     friendStreamEnabled: Boolean,
 ) : AbstractDirtyEntity() {
     var volume: String = volume; set(v) { if (field != v) { field = v; markDirty() } }
@@ -49,7 +49,14 @@ class UserPreferences(
     var hideInRoom: Boolean = hideInRoom; set(v) { if (field != v) { field = v; markDirty() } }
     var blockNewFriends: Boolean = blockNewFriends; set(v) { if (field != v) { field = v; markDirty() } }
     var chatColor: Int = chatColor; set(v) { if (field != v) { field = v; markDirty() } }
-    var friendBarOpen: Boolean = friendBarOpen; set(v) { if (field != v) { field = v; markDirty() } }
+    /** Bitmask de UI do cliente, guardado como veio (bits desconhecidos sobrevivem); use [UiFlag] para ler/gravar. */
+    var uiFlags: Int = uiFlags; set(v) { if (field != v) { field = v; markDirty() } }
+
+    fun isUiFlagSet(flag: UiFlag): Boolean = uiFlags and flag.bit != 0
+
+    fun setUiFlag(flag: UiFlag, enabled: Boolean) {
+        uiFlags = if (enabled) uiFlags or flag.bit else uiFlags and flag.bit.inv()
+    }
     var friendStreamEnabled: Boolean = friendStreamEnabled; set(v) { if (field != v) { field = v; markDirty() } }
 
     override fun flush() {
