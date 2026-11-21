@@ -76,7 +76,11 @@ data class AchievementUser(
 
         // Espelho do decremento do cliente: grupos de 1 nível, não conquistada, nome
         // com dígito no final → badgeId com dígito incrementado (cliente decrementa de volta).
+        // O decremento (ILocalizationManager.getPreviousLevelBadgeId / BadgeBaseAndLevel) só existe a partir de
+        // WIN63-202102181453 (2021-02-18, o primeiro build do dumps_repo que o tem; nenhum RELEASE*/PRODUCTION*
+        // o tem): antes disso o cliente pede o badgeId literal, e ACH_TradingPass8 dava 404.
         val badgeCode: String = if (
+            habboResponse.isVersionAtLeast(2021, 2, 18) &&
             totalLevels == 1 && level < 1 && group.name.isNotEmpty() && group.name.last().isDigit()
         ) {
             "${group.name.dropLast(1)}${group.name.last() - '0' + 1}"
