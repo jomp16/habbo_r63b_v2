@@ -43,7 +43,9 @@ class RoomInfoResponse {
 
                 serialize(data.room, true, data.isLoading)
 
-                if (isVersionAtLeast(2009, 8, 21)) {
+                // o parser do RELEASE35 (2009-06-30) já lê o booleano depois dos dados (o do RELEASE34 não): é ele que faz o
+                // client entrar no quarto (HabboNavigator "GO TO ROOM") ao receber a resposta de um forward.type/forward.id
+                if (isVersionAtLeast(2009, 6, 30)) {
                     writeBoolean(data.checkEntry)
                 }
 
