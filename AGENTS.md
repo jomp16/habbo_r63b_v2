@@ -66,6 +66,12 @@ The proxy also tunnels `/game` (WebSocket) to the emulator `ws_port`: the AIR cl
 (`habbo.rwx.ovh:443`) and only honours `?relay=ws://...`, which the CMS sends from `emulator.relay` in the generated
 local config. The AIR client's cross-origin fetches to `swf.habbo.rwx.ovh` rely on the edge nginx CORS allowlist
 (`nginx.local.rwx.ovh`, `location /`), which includes `http://127.0.0.1:<port>`.
+**The upstream is production: a dev run must never write to it.** Only GET/HEAD/OPTIONS reach it (a POST nobody routed
+gets 405). The clients' crash/error reports go to the LOCAL CMS: `/flash_client_error` and `/api/client/errors` are
+routed to `-cms` (default `http://127.0.0.1:8080`), and the proxy rewrites `client.fatal.error.url` in the
+`external_variables` it serves (the R63-era clients POST/navigate straight to that address, never through the proxy).
+A new client variable that points at a production endpoint the client WRITES to needs the same rewrite in
+`rewriteVariables`.
 
 ## Modules
 

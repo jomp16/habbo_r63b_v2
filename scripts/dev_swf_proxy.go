@@ -15,9 +15,23 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// fatalErrorURLLine is the external_variables line the R63-era clients send their crash report to
+// (HabboTracking: getKey("client.fatal.error.url")). Production's file has https://habbo.rwx.ovh/flash_client_error,
+// and the client POSTs or navigates straight there, never through this proxy.
+var fatalErrorURLLine = regexp.MustCompile(`(?m)^[ \t]*client\.fatal\.error\.url[ \t]*=[^\r\n]*`)
+
+// rewriteVariables points the upstream's external_variables back at this proxy: the upstream origin everywhere (banner,
+// api, assets) and the crash-report address, so a crash in a dev run lands in the LOCAL CMS (see -cms) and not in
+// production's.
+func rewriteVariables(body []byte, upstreamOrigin, localBase string) []byte {
+	body = bytes.ReplaceAll(body, []byte(upstreamOrigin), []byte(localBase))
+	return fatalErrorURLLine.ReplaceAll(body, []byte("client.fatal.error.url="+localBase+"/flash_client_error"))
+}
 
 func main() {
 	listenAddr := flag.String("listen", "127.0.0.1:8081", "address to listen on")
@@ -135,7 +149,7 @@ func main() {
 				return
 			}
 
-			body = bytes.ReplaceAll(body, []byte(upstreamOrigin), []byte(localBase))
+			body = rewriteVariables(body, upstreamOrigin, localBase)
 			if strings.HasPrefix(p, "/gamedata/override/external_override_variables") {
 				extra := "\nhotelview.banner.url=" + localBase + "/api/v1/banner\n"
 				body = append(body, []byte(extra)...)
