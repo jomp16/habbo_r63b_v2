@@ -39,7 +39,7 @@ internal object DebugGamemap {
     const val LEGEND = "layers: uma string por fileira (y), um caractere por coluna (x). " +
         "floor = altura do piso (0-9, a-z = 10-35; x = buraco/casa fechada). " +
         "height = altura absoluta com os itens (mesma escala, arredondada). " +
-        "state: # buraco/fechada, D porta, B bloqueada por item, E entidade, i item que não bloqueia, . livre, A anomalia (veja tiles)."
+        "state: # buraco/fechada, D porta, B bloqueada por item, U usuário, b bot, p pet, E outra entidade, i item que não bloqueia, . livre, A anomalia (veja tiles)."
 
     /** Altura → um caractere (0-9, a-z; arredonda; abaixo de zero '-', acima de 35 '+'). */
     fun levelChar(height: Double): Char {
@@ -51,13 +51,22 @@ internal object DebugGamemap {
         }
     }
 
-    /** Prioridade: anomalia, porta, buraco, bloqueada por item, entidade, item, livre. */
-    fun stateChar(closed: Boolean, door: Boolean, anomaly: Boolean, blockedByItem: Boolean, hasEntity: Boolean, hasItem: Boolean): Char = when {
+    /** Quem está na casa, para a camada de estado: usuário (U) antes de bot (b) antes de pet (p); outra coisa vira E; ninguém, null. */
+    fun entityChar(ents: Collection<RoomEntity>): Char? = when {
+        ents.isEmpty() -> null
+        ents.any { it is RoomUser } -> 'U'
+        ents.any { it is RoomBot } -> 'b'
+        ents.any { it is RoomPet } -> 'p'
+        else -> 'E'
+    }
+
+    /** Prioridade: anomalia, porta, buraco, bloqueada por item, entidade ([entityChar]), item, livre. */
+    fun stateChar(closed: Boolean, door: Boolean, anomaly: Boolean, blockedByItem: Boolean, entity: Char?, hasItem: Boolean): Char = when {
         anomaly -> 'A'
         door -> 'D'
         closed -> '#'
         blockedByItem -> 'B'
-        hasEntity -> 'E'
+        entity != null -> entity
         hasItem -> 'i'
         else -> '.'
     }
@@ -106,7 +115,7 @@ internal object DebugGamemap {
 
                 f.append(if (closed && !isDoor) 'x' else levelChar(model.floorHeight[xx][yy].toDouble()))
                 hh.append(if (closed && !isDoor) 'x' else levelChar(room.roomGamemap.getAbsoluteHeight(xx, yy)))
-                s.append(stateChar(closed, isDoor, anomalies.isNotEmpty(), blockedByItem, ents.isNotEmpty(), items.isNotEmpty()))
+                s.append(stateChar(closed, isDoor, anomalies.isNotEmpty(), blockedByItem, entityChar(ents), items.isNotEmpty()))
 
                 if (closed && !isDoor) holes++ else {
                     minFloor = minOf(minFloor, model.floorHeight[xx][yy].toInt())
@@ -142,6 +151,9 @@ internal object DebugGamemap {
                 "tiles_blocked_by_items" to blockedItems,
                 "tiles_cannot_stack" to cannotStack,
                 "entities" to entityTiles.values.sumOf { it.size },
+                "users" to entityTiles.values.sumOf { l -> l.count { it is RoomUser } },
+                "bots" to entityTiles.values.sumOf { l -> l.count { it is RoomBot } },
+                "pets" to entityTiles.values.sumOf { l -> l.count { it is RoomPet } },
                 "tiles_with_entities" to withEntities,
                 "tiles_with_anomalies" to anomalyTiles,
             ),
@@ -165,7 +177,7 @@ internal object DebugGamemap {
         return linkedMapOf(
             "x" to x,
             "y" to y,
-            "state" to stateChar(closed, isDoor, anomalies.isNotEmpty(), blockedByItem, ents.isNotEmpty(), items.isNotEmpty()).toString(),
+            "state" to stateChar(closed, isDoor, anomalies.isNotEmpty(), blockedByItem, entityChar(ents), items.isNotEmpty()).toString(),
             "floor_z" to model.floorHeight[x][y],
             "height" to gm.getAbsoluteHeight(x, y),
             "closed" to closed,

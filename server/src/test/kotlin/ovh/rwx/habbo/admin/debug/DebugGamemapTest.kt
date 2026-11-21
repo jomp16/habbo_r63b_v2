@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.admin.debug
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -38,13 +39,20 @@ class DebugGamemapTest {
 
     @Test
     fun estadoRespeitaAPrioridade() {
-        assertEquals('A', DebugGamemap.stateChar(true, true, true, true, true, true))
-        assertEquals('D', DebugGamemap.stateChar(false, true, false, true, true, true))
-        assertEquals('#', DebugGamemap.stateChar(true, false, false, true, true, true))
-        assertEquals('B', DebugGamemap.stateChar(false, false, false, true, true, true))
-        assertEquals('E', DebugGamemap.stateChar(false, false, false, false, true, true))
-        assertEquals('i', DebugGamemap.stateChar(false, false, false, false, false, true))
-        assertEquals('.', DebugGamemap.stateChar(false, false, false, false, false, false))
+        assertEquals('A', DebugGamemap.stateChar(true, true, true, true, 'U', true))
+        assertEquals('D', DebugGamemap.stateChar(false, true, false, true, 'U', true))
+        assertEquals('#', DebugGamemap.stateChar(true, false, false, true, 'U', true))
+        assertEquals('B', DebugGamemap.stateChar(false, false, false, true, 'U', true))
+        assertEquals('U', DebugGamemap.stateChar(false, false, false, false, 'U', true))
+        assertEquals('b', DebugGamemap.stateChar(false, false, false, false, 'b', true))
+        assertEquals('p', DebugGamemap.stateChar(false, false, false, false, 'p', false))
+        assertEquals('i', DebugGamemap.stateChar(false, false, false, false, null, true))
+        assertEquals('.', DebugGamemap.stateChar(false, false, false, false, null, false))
+    }
+
+    @Test
+    fun casaSemEntidadesNaoTemCaractere() {
+        assertNull(DebugGamemap.entityChar(emptyList()))
     }
 
     @Test
@@ -53,6 +61,6 @@ class DebugGamemapTest {
         assertEquals(DebugAccess.READ, t.access)
         assertEquals(listOf("room_id", "x", "y", "limit"), t.params.map { it.name })
         assertTrue(t.params.single { it.name == "room_id" }.required)
-        assertTrue(DebugGamemap.LEGEND.contains("state:"))
+        assertTrue(DebugGamemap.LEGEND.contains("U usuário, b bot, p pet"))
     }
 }
