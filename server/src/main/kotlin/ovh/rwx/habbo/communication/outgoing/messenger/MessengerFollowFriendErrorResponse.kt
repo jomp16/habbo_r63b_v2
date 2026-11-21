@@ -26,9 +26,9 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 @Suppress("unused", "UNUSED_PARAMETER")
 class MessengerFollowFriendErrorResponse {
     @Response(Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR)
-    fun response(habboResponse: HabboResponse, errorId: Int) {
+    fun response(habboResponse: HabboResponse, error: FollowFriendError) {
         habboResponse.apply {
-            writeInt(errorId)
+            writeInt(error.code)
         }
     }
 }

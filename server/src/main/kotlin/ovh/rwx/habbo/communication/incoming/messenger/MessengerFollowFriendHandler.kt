@@ -27,6 +27,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.communication.outgoing.messenger.FollowFriendError
 import ovh.rwx.habbo.game.user.HabboSession
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -38,24 +39,30 @@ class MessengerFollowFriendHandler {
         val friendId = habboRequest.readInt()
 
         if (friendId == 0 || friendId == habboSession.userInformation.id) return
+
+        if (!habboSession.habboMessenger.friends.containsKey(friendId) && !habboSession.hasPermission("acc_can_follow_anybody")) {
+            sendError(habboSession, FollowFriendError.NOT_FRIEND)
+            return
+        }
+
         val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(friendId)
 
-        friendHabboSession?.currentRoom.let { room ->
-            if (room == null) habboSession.sendResponse(
-                Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR,
-                OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR,
-                2
-            )
-
-            if (!habboSession.habboMessenger.friends.containsKey(friendId) && !habboSession.hasPermission("acc_can_follow_anybody")) {
-                habboSession.sendResponse(
-                    Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR,
-                    OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR,
-                    0
-                )
-            }
-
-            habboSession.sendResponse(Outgoing.ROOM_FORWARD, OutgoingR63A.ROOM_FORWARD, room)
+        if (friendHabboSession == null) {
+            sendError(habboSession, FollowFriendError.OFFLINE)
+            return
         }
+
+        val room = friendHabboSession.currentRoom
+
+        if (room == null) {
+            sendError(habboSession, FollowFriendError.HOTEL_VIEW)
+            return
+        }
+
+        habboSession.sendResponse(Outgoing.ROOM_FORWARD, OutgoingR63A.ROOM_FORWARD, room)
+    }
+
+    private fun sendError(habboSession: HabboSession, error: FollowFriendError) {
+        habboSession.sendResponse(Outgoing.MESSENGER_FOLLOW_FRIEND_ERROR, OutgoingR63A.MESSENGER_FOLLOW_FRIEND_ERROR, error)
     }
 }
