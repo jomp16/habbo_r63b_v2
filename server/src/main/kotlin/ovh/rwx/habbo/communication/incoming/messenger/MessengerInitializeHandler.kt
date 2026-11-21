@@ -41,14 +41,20 @@ class MessengerInitializeHandler {
     @Handler(Incoming.MESSENGER_INIT)
     @HandlerR63A(IncomingR63A.MESSENGER_INIT)
     fun handle(habboSession: HabboSession, habboRequest: HabboRequest) {
-        // o messenger carrega em paralelo ao login; poll curto (antes 500ms por tentativa somava até 500ms de ociosidade)
-        var attempts = 0
-        while (!habboSession.habboMessenger.initialized && attempts < 200) {
-            Thread.sleep(25)
-            attempts++
+        if (habboSession.habboMessenger.initialized) {
+            sendInit(habboSession)
+            return
         }
-        if (!habboSession.habboMessenger.initialized) return
 
+        // O messenger carrega em paralelo ao login (sessionScope). Esperar aqui prenderia a fila serial da sessão e
+        // os pacotes seguintes (navegador, sala, catálogo) ficariam atrás dele: a resposta é agendada na própria
+        // fila para quando o load terminar (o await suspende e libera a vez).
+        habboSession.sessionScope.launch(habboSession.packetDispatcher) {
+            if (habboSession.habboMessenger.awaitInitialized(INIT_TIMEOUT_MS)) sendInit(habboSession)
+        }
+    }
+
+    private fun sendInit(habboSession: HabboSession) {
         // R63A envia o init combinado (pré-shuffle o header estático 12 carrega limites + amigos + requests)
         habboSession.sendResponse(
             Outgoing.MESSENGER_INIT,
@@ -84,5 +90,9 @@ class MessengerInitializeHandler {
         }
 
         habboSession.habboMessenger.notifyFriends()
+    }
+
+    private companion object {
+        const val INIT_TIMEOUT_MS = 5_000L
     }
 }

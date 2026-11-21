@@ -19,9 +19,11 @@
 
 package ovh.rwx.habbo.game.user.messenger
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
@@ -34,9 +36,29 @@ import ovh.rwx.habbo.game.user.HabboSession
 class HabboMessenger(private val habboSession: HabboSession) {
     val friends: MutableMap<Int, MessengerFriend> = mutableMapOf()
     val requests: MutableMap<Int, MessengerRequest> = mutableMapOf()
+    @Volatile
     var initialized: Boolean = false
+        private set
+
+    /** Completa quando o [load] termina (com sucesso ou não): quem precisa da lista espera sem prender thread. */
+    private val loadFinished = CompletableDeferred<Unit>()
+
+    /** Espera o [load] por até [timeoutMs] e diz se o messenger ficou pronto. Bots nunca carregam: dá false no timeout. */
+    suspend fun awaitInitialized(timeoutMs: Long): Boolean {
+        if (initialized) return true
+        withTimeoutOrNull(timeoutMs) { loadFinished.await() }
+        return initialized
+    }
 
     internal fun load() {
+        try {
+            loadImpl()
+        } finally {
+            loadFinished.complete(Unit)
+        }
+    }
+
+    private fun loadImpl() {
         if (!initialized) {
             if (habboSession.hasPermission("acc_server_console")) {
                 // server console!

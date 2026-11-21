@@ -68,12 +68,16 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HabboRequest) ServerMetrics.recordPacketIn()
 
-        // Handshake RSA/DH (só CPU) vai para poucas threads dedicadas; o resto segue no pool cacheado
+        // Handshake RSA/DH (só CPU) vai para poucas threads dedicadas; o resto segue na fila serial da sessão
+        // (ordem de chegada garantida). O cliente espera a resposta do handshake antes do pacote seguinte, então
+        // sair da fila ali não reordena nada.
         val dispatcher: CoroutineContext = if (msg is HabboRequest) {
             val session = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
-            if (session != null && !session.authenticated && HabboServer.habboHandler.isHandshakeCrypto(session, msg.headerId)) {
-                HabboServer.handshakeDispatcher
-            } else EmptyCoroutineContext
+            when {
+                session == null -> EmptyCoroutineContext
+                !session.authenticated && HabboServer.habboHandler.isHandshakeCrypto(session, msg.headerId) -> HabboServer.handshakeDispatcher
+                else -> session.packetDispatcher
+            }
         } else EmptyCoroutineContext
 
         HabboServer.applicationScope.launch(dispatcher) {

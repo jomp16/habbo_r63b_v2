@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -82,6 +83,16 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val isWebSocket: Boolean get() = channel.pipeline().get(WebSocketServerProtocolHandler::class.java) != null
     val sessionJob = SupervisorJob()
     val sessionScope = CoroutineScope(Dispatchers.Default + sessionJob)
+
+    /**
+     * Fila serial dos pacotes desta sessão: os handlers rodam um de cada vez, na ordem de chegada (o cliente conta
+     * com isso; em paralelo, o `ROOM_OPEN_FLAT` repetido do cliente 2016 duplicava o avatar). Fatia de 1 thread do
+     * pool cacheado: uma rajada da sessão ocupa 1 thread, não N. Um handler que suspende libera a vez (os do jogo não
+     * suspendem; quem precisa esperar algo agenda a continuação aqui, ver `MessengerInitializeHandler`). Lazy: testes
+     * que criam sessões sem o [HabboServer] não tocam no pool. Chamadas de OUTRA sessão (campainha, direitos) não
+     * passam por esta fila: o estado compartilhado continua protegido por [roomEnterLock] e pelas tasks da sala.
+     */
+    val packetDispatcher: CoroutineDispatcher by lazy { HabboServer.cachedExecutorDispatcher.limitedParallelism(1) }
     lateinit var release: String
     val releaseInitialized get() = this::release.isInitialized
     var habboVersion: HabboVersion = HabboVersion(LocalDateTime.now(), 63)
