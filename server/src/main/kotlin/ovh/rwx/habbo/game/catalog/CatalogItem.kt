@@ -161,7 +161,10 @@ data class CatalogItem(
             writeInt(costCredits) // priceInCredits
             writeInt(pricePoints) // priceInActivityPoints
 
-            if (isVersionAtLeast(2010, 12, 3)) {
+            // nasceu entre RELEASE62-29767 (2010-11-12, lê 4 campos) e RELEASE63-29876 (2010-11-16, lê 5: o AS3 dela faz
+            // offerId, localizationId, credits, points, activityPointType e só então a contagem de produtos). Sem ele a 29876
+            // lê a contagem de um campo desalinhado e o laço de produtos roda para sempre (cenário catalog-page do driver).
+            if (isVersionAtLeast(2010, 11, 16)) {
                 writeInt(pointType) // activityPointType
             }
 
