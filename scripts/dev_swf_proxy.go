@@ -25,6 +25,7 @@ func main() {
 	upstreamRaw := flag.String("upstream", "https://swf.habbo.rwx.ovh", "upstream SWF/gamedata URL")
 	wsAddr := flag.String("ws", "127.0.0.1:35001", "local emulator ws_port host:port (target of /game)")
 	pixiDir := flag.String("pixi-dir", "", "local folder of built PIXI clients (the gordon/pixi tree): /gordon/pixi/* is served from it when the file exists, else from upstream")
+	cmsRaw := flag.String("cms", "http://127.0.0.1:8080", "local CMS URL: where the client's crash and error reports go (never upstream, which is production)")
 	flag.Parse()
 
 	emuURL, err := url.Parse(*emulatorRaw)
@@ -36,10 +37,16 @@ func main() {
 		log.Fatalf("invalid -upstream: %v", err)
 	}
 
+	cmsURL, err := url.Parse(*cmsRaw)
+	if err != nil {
+		log.Fatalf("invalid -cms: %v", err)
+	}
+
 	localBase := "http://" + *listenAddr
 	upstreamOrigin := upURL.Scheme + "://" + upURL.Host
 
 	emuProxy := httputil.NewSingleHostReverseProxy(emuURL)
+	cmsProxy := httputil.NewSingleHostReverseProxy(cmsURL)
 	upProxy := httputil.NewSingleHostReverseProxy(upURL)
 
 	// WebSocket do client AIR (?relay=ws://<este proxy>): /game?host=..&port=.. -> WS do emulador local em "/".
@@ -82,6 +89,13 @@ func main() {
 		// 1b. WebSocket relay for the AIR client
 		if p == "/game" {
 			wsProxy.ServeHTTP(w, r)
+			return
+		}
+
+		// 1c. The client's crash and error reports go to the LOCAL CMS. Without this they fell through to the upstream
+		// (step 4), and a dev run's crashes landed in production's CMS.
+		if p == "/flash_client_error" || p == "/api/client/errors" {
+			cmsProxy.ServeHTTP(w, r)
 			return
 		}
 
@@ -152,7 +166,13 @@ func main() {
 			}
 		}
 
-		// 4. Everything else -> upstream SWF/gamedata/c_images (read-only)
+		// 4. Everything else -> upstream SWF/gamedata/c_images. The upstream is production: only reads go there, so a
+		// POST nobody routed above (a report, a form) is refused here instead of reaching it.
+		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
+			log.Printf("refused %s %s: the upstream is read-only", r.Method, p)
+			http.Error(w, "dev_swf_proxy: the upstream is read-only", http.StatusMethodNotAllowed)
+			return
+		}
 		upProxy.ServeHTTP(w, r)
 	})
 
