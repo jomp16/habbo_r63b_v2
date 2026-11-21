@@ -70,6 +70,20 @@ internal object DebugToolset {
         ) { a -> roomInspect(room(a.requireInt("room_id"))) },
 
         DebugTool(
+            "room_gamemap",
+            "Gamemap de uma sala (só leitura, funciona com o loop parado): resumo (buracos, itens, bloqueios, entidades, alturas), três camadas em texto " +
+                "(piso, altura com itens e estado: uma string por fileira, um caractere por casa), as casas com itens/entidades/bloqueio/anomalias " +
+                "(altura Z, blocked, cannot_stack, itens empilhados) e inconsistências entre gamemap e itens. Com x e y devolve só o detalhe dessa casa.",
+            DebugAccess.READ,
+            listOf(
+                roomId,
+                DebugParam("x", DebugParamType.INT, "Coluna da casa (com y: detalhe de uma casa)"),
+                DebugParam("y", DebugParamType.INT, "Fileira da casa (com x: detalhe de uma casa)"),
+                DebugParam("limit", DebugParamType.INT, "Máximo de casas detalhadas (padrão 300, até 2000)"),
+            )
+        ) { a -> DebugGamemap.describe(room(a.requireInt("room_id")), a.int("x"), a.int("y"), (a.int("limit") ?: 300).coerceIn(1, 2000)) },
+
+        DebugTool(
             "user_inspect",
             "Sessões de um usuário (canal, release, sala atual, entidade) e todas as salas em memória onde há uma entidade dele (acha fantasmas). Informe user_id ou username.",
             DebugAccess.READ,
