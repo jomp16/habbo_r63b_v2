@@ -124,6 +124,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     var handshaking: Boolean = false
     var currentRoom: Room? = null
     var roomUser: RoomUser? = null
+    /** Serializa as entradas em sala desta sessão ([enterRoomImpl]). */
+    internal val roomEnterLock = Any()
     var targetTeleportId: Int = -1
     var teleportRoom: Room? = null
     val teleporting: Boolean

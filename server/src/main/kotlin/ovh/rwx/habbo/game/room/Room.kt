@@ -113,6 +113,18 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
     private val majorTickQueue = ConcurrentLinkedQueue<IRoomTask>()
 
     val running: Boolean get() = loopJob?.isActive == true
+
+    /** Debug: estado do job do loop (`none`, `active`, `cancelled`, `completed`). */
+    val loopState: String
+        get() = loopJob?.let { if (it.isActive) "active" else if (it.isCancelled) "cancelled" else "completed" } ?: "none"
+
+    /** Debug: quando e por que o último loop terminou (null se nunca terminou ou se parou pelo [stopLoop]). */
+    @Volatile
+    var loopEndedReason: String? = null
+        private set
+
+    /** Debug: tarefas na fila (alta frequência, tick maior). */
+    val pendingTaskCounts: Pair<Int, Int> get() = highFrequencyQueue.size to majorTickQueue.size
     // endregion
 
     // region Counters & State
@@ -260,10 +272,21 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                 tickMonitor.onSchedulingLag((System.nanoTime() - delayStartNano - delayMs * 1_000_000L).coerceAtLeast(0L))
             }
         }
+        loopEndedReason = null
+        val job = loopJob
+        // o loop só pega Exception: um Error (StackOverflowError, NoClassDefFoundError...) mata o job em silêncio e a
+        // sala fica "carregada" sem tick. Registra para o debug tool (room_inspect) e para o log.
+        job?.invokeOnCompletion { cause ->
+            if (cause != null && cause !is kotlinx.coroutines.CancellationException) {
+                loopEndedReason = "${java.time.Instant.now()} ${cause.javaClass.name}: ${cause.message}"
+                log.error("Loop of room n° {} died: {}", roomData.id, cause.toString(), cause)
+            }
+        }
     }
 
-    fun stopLoop() {
-        if (!running) return
+    /** Para o loop; [force] faz a limpeza mesmo com o loop já morto (debug: sala zumbi). */
+    fun stopLoop(force: Boolean = false) {
+        if (!running && !force) return
 
         log.info("Closing room n° {} - name {}", roomData.id, roomData.name)
 
@@ -441,6 +464,20 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
                     entity.habboSession.userInformation.username, entity.virtualID, roomData.id
                 )
                 userManager.removeEntity(entity, notifyClient = false, kickNotification = false)
+                continue
+            }
+
+            // Fantasma de sessão viva: o join já terminou mas a sessão aponta para OUTRA entidade (entrada duplicada).
+            // O UserJoinRoomTask marca session.roomUser antes de pendingJoin=false, então isto nunca pega um join em curso.
+            if (entity is RoomUser && !entity.pendingJoin && entity.habboSession.roomUser !== entity) {
+                log.warn(
+                    "Limpando entidade órfã {} (vid={}, sessão aponta para vid={}) da sala {}",
+                    entity.habboSession.userInformation.username, entity.virtualID,
+                    entity.habboSession.roomUser?.virtualID, roomData.id
+                )
+                userManager.removeEntity(entity, notifyClient = false, kickNotification = false)
+                // removeEntity enfileira o ROOM_USER_REMOVE; tira também qualquer sobra do gamemap
+                roomGamemap.removeRoomEntity(entity, entity.currentVector3.vector2)
                 continue
             }
 

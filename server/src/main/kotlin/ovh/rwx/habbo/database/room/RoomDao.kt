@@ -88,7 +88,9 @@ object RoomDao {
                         "model_name" to model,
                         "category" to category,
                         "users_max" to maxUsers,
-                        "trade_state" to tradeSettings
+                        // ENUM('0','1','2','3'): número em ENUM é o ÍNDICE (0 = '' → "Data truncated" e o quarto não era
+                        // gravado; 2 virava '1'). Tem que ir como texto, igual ao UPDATE do saveRoom.
+                        "trade_state" to tradeSettings.toString()
                     )
                 )
             }

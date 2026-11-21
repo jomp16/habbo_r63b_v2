@@ -42,4 +42,15 @@ class RoomTaskManager {
             room.stopLoop()
         }
     }
+
+    /**
+     * Debug: descarrega a sala mesmo se o loop já morreu (sala zumbi: segue em [rooms], então o [addRoom] da próxima
+     * entrada não reinicia nada e o `removeRoom` normal não limpa as entidades). A próxima entrada recarrega a sala.
+     */
+    fun forceRemoveRoom(room: Room) {
+        synchronized(room) {
+            rooms.remove(room)
+            room.stopLoop(force = true)
+        }
+    }
 }

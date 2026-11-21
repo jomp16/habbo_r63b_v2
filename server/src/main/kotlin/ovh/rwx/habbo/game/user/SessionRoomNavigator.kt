@@ -31,10 +31,26 @@ import ovh.rwx.habbo.game.room.RoomState
 import ovh.rwx.habbo.game.room.user.RoomUser
 import ovh.rwx.habbo.game.user.block.BlockPolicy
 
+/**
+ * Serializada por sessão: os pacotes de uma sessão rodam em paralelo (uma coroutine por pacote) e o cliente 2016
+ * manda `ROOM_OPEN_FLAT` 3 vezes em ~10 ms depois de criar um quarto. Sem o lock, as entradas passavam juntas pelo
+ * `room == currentRoom` (o currentRoom só é marcado depois de carregar a sala) e criavam duas entidades da mesma
+ * sessão: a que a sessão não aponta ficava para sempre na sala (avatar fantasma).
+ */
 fun HabboSession.enterRoomImpl(room: Room, password: String = "", bypassAuth: Boolean = false) {
+    synchronized(roomEnterLock) { enterRoomLocked(room, password, bypassAuth) }
+}
+
+private fun HabboSession.enterRoomLocked(room: Room, password: String, bypassAuth: Boolean) {
     if (!bypassAuth && room == currentRoom) return
 
-    currentRoom?.userManager?.removeEntity(roomUser, notifyClient = false, kickNotification = false)
+    // pela sessão e não pelo roomUser: com o join anterior ainda pendente o roomUser é null, e removeEntity(null) não
+    // fazia nada (a entidade ficava na sala antiga e o join dela ainda rodava depois)
+    currentRoom?.let { previous ->
+        previous.userManager.entities.values.filterIsInstance<RoomUser>()
+            .filter { it.habboSession === this }
+            .forEach { previous.userManager.removeEntity(it, notifyClient = false, kickNotification = false) }
+    }
 
     // Carrega a sala (itens, wired, bans, variáveis, pets) em paralelo ANTES dos checks abaixo: eles tocam
     // itens e bans, que antes eram buscados em série na thread do handler. initialize() é idempotente/sincronizado.

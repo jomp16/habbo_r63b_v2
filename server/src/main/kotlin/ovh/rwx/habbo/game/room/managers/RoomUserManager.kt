@@ -89,17 +89,18 @@ class RoomUserManager(private val room: Room) {
     }
 
     fun addUser(habboSession: HabboSession) {
-        if (!room.running || entities.values.filterIsInstance<RoomUser>()
-                .any { it.habboSession == habboSession }
-        ) return
+        // checar e inserir juntos: duas entradas simultâneas da mesma sessão criavam duas entidades
+        val newUser = synchronized(this) {
+            if (!room.running || entities.values.filterIsInstance<RoomUser>()
+                    .any { it.habboSession == habboSession }
+            ) return
 
-        var virtualId: Int
+            var virtualId: Int
 
-        do {
-            virtualId = (1..Int.MAX_VALUE).random()
-        } while (entities.containsKey(virtualId))
+            do {
+                virtualId = (1..Int.MAX_VALUE).random()
+            } while (entities.containsKey(virtualId))
 
-        val newUser =
             RoomUser(
                 habboSession,
                 room,
@@ -108,10 +109,10 @@ class RoomUserManager(private val room: Room) {
                 room.roomModel.doorDir,
                 room.roomModel.doorDir
             ).apply { roomOpened = false } // sem broadcasts até a carga inicial (UserJoinRoomTask)
-
-        // Adiciona o usuário imediatamente ao mapa para permitir remoção em caso de disconnect
-        // O estado pendingJoin=true indica que o join ainda não foi completado
-        entities[virtualId] = newUser
+                // Adiciona o usuário imediatamente ao mapa para permitir remoção em caso de disconnect
+                // O estado pendingJoin=true indica que o join ainda não foi completado
+                .also { entities[virtualId] = it }
+        }
 
         // Enfileira a tarefa de join que vai completar a inicialização e definir pendingJoin=false
         room.addTask(UserJoinRoomTask(newUser))
@@ -162,7 +163,9 @@ class RoomUserManager(private val room: Room) {
             HabboServer.habboGame.chestManager.onUserLeaveRoom(room, session)
             room.wiredVariableManager.onUserLeave(session.userInformation.id)
             handleUserDisconnectionMessages(session, notifyClient, kickNotification)
-            if (session.currentRoom == room) {
+            // só desvincula a sessão se esta é a entidade dela (ou o join ainda não a vinculou): remover uma duplicata
+            // órfã não pode tirar da sessão a entidade certa
+            if (session.currentRoom == room && (session.roomUser == null || session.roomUser === roomEntity)) {
                 session.roomUser = null
                 session.currentRoom = null
                 HabboServer.applicationScope.launch(kotlinx.coroutines.Dispatchers.IO) {
