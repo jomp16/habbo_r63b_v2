@@ -12,6 +12,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -21,6 +24,7 @@ func main() {
 	emulatorRaw := flag.String("emulator", "http://127.0.0.1:30003", "local emulator web_port URL")
 	upstreamRaw := flag.String("upstream", "https://swf.habbo.rwx.ovh", "upstream SWF/gamedata URL")
 	wsAddr := flag.String("ws", "127.0.0.1:35001", "local emulator ws_port host:port (target of /game)")
+	pixiDir := flag.String("pixi-dir", "", "local folder of built PIXI clients (the gordon/pixi tree): /gordon/pixi/* is served from it when the file exists, else from upstream")
 	flag.Parse()
 
 	emuURL, err := url.Parse(*emulatorRaw)
@@ -130,6 +134,24 @@ func main() {
 			return
 		}
 
+		// 3b. A client just rebuilt (add-release.sh writes to the local gordon/pixi tree): try it here before publishing it
+		if *pixiDir != "" && strings.HasPrefix(p, "/gordon/pixi/") {
+			full := filepath.Join(*pixiDir, filepath.FromSlash(path.Clean("/"+strings.TrimPrefix(p, "/gordon/pixi/"))))
+			if st, err := os.Stat(full); err == nil && (!st.IsDir() || fileExists(filepath.Join(full, "index.html"))) {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				// as production serves them: the files Vite names by content hash are immutable (and the runtime relies on
+				// that: it fetch()es the code chunk for progress and then import()s it "from cache"); anything else is
+				// re-read, so a rebuilt index.html is never stale
+				if strings.Contains(p, "/assets/") {
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				} else {
+					w.Header().Set("Cache-Control", "no-store")
+				}
+				http.ServeFile(w, r, full)
+				return
+			}
+		}
+
 		// 4. Everything else -> upstream SWF/gamedata/c_images (read-only)
 		upProxy.ServeHTTP(w, r)
 	})
@@ -138,4 +160,9 @@ func main() {
 	if err := http.ListenAndServe(*listenAddr, handler); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func fileExists(name string) bool {
+	st, err := os.Stat(name)
+	return err == nil && !st.IsDir()
 }

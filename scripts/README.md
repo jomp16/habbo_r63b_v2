@@ -29,7 +29,7 @@ O `dev_stack.sh` **aborta** se o `config.yaml` na raiz contiver `dynamic_dns`, e
 ./scripts/dev_stack.sh stop                  # Para proxy, emulador e CMS (mantém o MariaDB)
 ```
 
-Variáveis opcionais: `CMS_DIR`, `DEV_PROXY_ADDR` (padrão `127.0.0.1:8081`), `DEV_UPSTREAM_SWF` (padrão `https://swf.habbo.rwx.ovh`), `FORCE_BUILD=1`. Logs, PIDs e configs geradas ficam em `build/dev-stack/`.
+Variáveis opcionais: `CMS_DIR`, `DEV_PROXY_ADDR` (padrão `127.0.0.1:8081`), `DEV_UPSTREAM_SWF` (padrão `https://swf.habbo.rwx.ovh`), `DEV_PIXI_DIR` (pasta `gordon/pixi` local, ex.: `/home/jomp16/Downloads/Habbo/swf.habbo.rwx.ovh/gordon/pixi`: o proxy serve `/gordon/pixi/*` dela antes do upstream, para testar um cliente recém-compilado pelo `add-release.sh` antes de publicar), `FORCE_BUILD=1`. Logs, PIDs e configs geradas ficam em `build/dev-stack/`.
 
 ---
 

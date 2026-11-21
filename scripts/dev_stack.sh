@@ -186,7 +186,8 @@ do_start() {
   do_setup
 
   start_bg "dev_swf_proxy" "$STATE_DIR/proxy.pid" "$STATE_DIR/proxy.log" "$REPO_DIR" \
-    "$PROXY_BIN" -listen "$PROXY_ADDR" -emulator "http://127.0.0.1:${EMU_WEB_PORT}" -ws "127.0.0.1:${EMU_WS_PORT}" -upstream "$UPSTREAM_SWF"
+    "$PROXY_BIN" -listen "$PROXY_ADDR" -emulator "http://127.0.0.1:${EMU_WEB_PORT}" -ws "127.0.0.1:${EMU_WS_PORT}" -upstream "$UPSTREAM_SWF" \
+    ${DEV_PIXI_DIR:+-pixi-dir "$DEV_PIXI_DIR"}
 
   start_bg "habbo-cms" "$STATE_DIR/cms.pid" "$STATE_DIR/cms.log" "$CMS_DIR/backend" \
     "$CMS_BIN" -config "$CMS_CONFIG"
