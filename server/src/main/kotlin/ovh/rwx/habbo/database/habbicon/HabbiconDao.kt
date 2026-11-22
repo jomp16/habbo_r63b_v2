@@ -73,6 +73,22 @@ object HabbiconDao {
         }
     }
 
+    /**
+     * Ajusta o preço das coleções numa ÚNICA ida ao banco. Só mexe em coleção ainda com o preço padrão da importação
+     * (1 crédito, sem pontos): um preço definido à mão não é sobrescrito a cada boot.
+     */
+    fun setDefaultCollectionPrices(prices: Map<Int, Int>) {
+        if (prices.isEmpty()) return
+
+        db {
+            batchUpdate(
+                "UPDATE habbicon_collections SET price_credits = :price " +
+                    "WHERE id = :collection_id AND price_credits = 1 AND price_activity_points = 0 AND :price > 1",
+                prices.map { (collectionId, price) -> mapOf("collection_id" to collectionId, "price" to price) }
+            )
+        }
+    }
+
     fun setCollectionReward(collectionId: Int, habbiconId: Int) = WriteBehindManager.queue(WriteKey("habbicon-collection", collectionId.toLong())) {
         db {
             update(

@@ -99,6 +99,26 @@ class HabbiconManager {
         return true
     }
 
+    /**
+     * Preço da coleção para quem já tem parte dela: nunca mais que a soma dos itens que faltam, senão faltar 1 item
+     * custaria o preço cheio da coleção (mais que comprar o item). Os pontos só são comparados quando os itens usam a
+     * mesma moeda da coleção.
+     */
+    private fun collectionPrice(collection: HabbiconCollection, missing: List<Habbicon>): Price {
+        val sameCurrency = missing.all { it.activityPointType == collection.activityPointType }
+        val points = if (sameCurrency) {
+            minOf(collection.priceActivityPoints, missing.sumOf { it.priceActivityPoints })
+        } else {
+            collection.priceActivityPoints
+        }
+
+        return Price(
+            minOf(collection.priceCredits, missing.sumOf { it.priceCredits }),
+            collection.activityPointType,
+            points
+        )
+    }
+
     fun buyHabbiconCollection(habboSession: HabboSession, collectionId: Int): Boolean {
         val collection = collections[collectionId] ?: return false
         if (!collection.enabled) return false
@@ -109,7 +129,7 @@ class HabbiconManager {
 
         if (habbiconsToBuy.isEmpty()) return false
 
-        val price = Price(collection.priceCredits, collection.activityPointType, collection.priceActivityPoints)
+        val price = collectionPrice(collection, habbiconsToBuy)
         if (!CurrencyService.tryCharge(habboSession, price).ok) return false
 
         val newHabbiconIds = mutableListOf<Int>()
@@ -175,12 +195,7 @@ class HabbiconManager {
         )
         progressCollectedAchievement(habboSession)
 
-        HabboServer.habboGame.achievementManager.progress(
-            habboSession,
-            "ACH_HabbiconCollectionComp",
-            1,
-            accumulate = true
-        )
+        progressCollectionsCompletedAchievement(habboSession)
 
         return true
     }
@@ -280,6 +295,25 @@ class HabbiconManager {
 
         habboSession.habboHabbicon.recentHabbiconIds = recentIds
         HabbiconDao.updateUserHabbiconRecentIds(habboSession.userInformation.id, habbiconId, recentIds)
+    }
+
+    /**
+     * ACH_HabbiconCollectionComp: coleções cujo bônus o usuário resgatou. Valor absoluto (idempotente), não +1 por
+     * resgate: um resgate perdido (grupo ausente, outro caminho) se corrige sozinho, inclusive no backfill do login.
+     */
+    fun progressCollectionsCompletedAchievement(habboSession: HabboSession) {
+        val owned = habboSession.habboHabbicon.userHabbicons
+        val completed = collections.values.count { collection ->
+            collection.rewardHabbiconId?.let { owned.containsKey(it) } == true
+        }
+        if (completed == 0) return
+
+        HabboServer.habboGame.achievementManager.progress(
+            habboSession,
+            "ACH_HabbiconCollectionComp",
+            completed,
+            accumulate = false
+        )
     }
 
     private fun progressCollectedAchievement(habboSession: HabboSession) {

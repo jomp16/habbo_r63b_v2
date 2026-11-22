@@ -87,6 +87,7 @@ private fun HabboSession.backfillDerivedAchievements() {
     manager.progress(this, "ACH_TradingPass7", habboMessenger.friends.size, accumulate = false)
     manager.progress(this, "ACH_PetLover", PetDao.countPetsByUserId(userInformation.id), accumulate = false)
     manager.completeTutorialIfDone(this)
+    HabboServer.habboGame.habbiconManager.progressCollectionsCompletedAchievement(this)
 }
 
 fun HabboSession.processLoginAchievements() {

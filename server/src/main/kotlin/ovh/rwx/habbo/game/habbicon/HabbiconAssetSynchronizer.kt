@@ -38,6 +38,13 @@ object HabbiconAssetSynchronizer {
     private val log = LoggerFactory.getLogger(javaClass)
     private val jsonMapper = jacksonObjectMapper()
 
+    /** Cada habbicon comprável custa 1 crédito: a coleção inteira sai com [COLLECTION_DISCOUNT] de desconto. */
+    private const val COLLECTION_DISCOUNT = 0.2
+
+    /** Preço (créditos) de uma coleção com [purchasableCount] habbicons compráveis; nunca abaixo de 1. */
+    internal fun collectionPrice(purchasableCount: Int): Int =
+        Math.round(purchasableCount * (1 - COLLECTION_DISCOUNT)).toInt().coerceAtLeast(1)
+
     fun syncAssets() {
         runCatching {
             val hash = ExternalVariables.require(ExternalVariables.HABBICONS_HASH)
@@ -56,12 +63,15 @@ object HabbiconAssetSynchronizer {
             // com banco remoto, e isto roda a cada boot, dentro do carregamento do jogo (antes: ~60 idas em série)
             val knownCollections = HabbiconDao.getCollectionRefs().associateBy { it.name }
             val rows = ArrayList<HabbiconUpsertRow>()
+            val collectionPrices = HashMap<Int, Int>()
 
             grouped.forEach { (collectionName, entries) ->
                 val known = knownCollections[collectionName]
                 val collectionId = known?.id ?: HabbiconDao.getOrCreateCollection(collectionName)
                 val rewardId = known?.rewardHabbiconId
                     ?: entries.random().id.also { HabbiconDao.setCollectionReward(collectionId, it) }
+
+                collectionPrices[collectionId] = collectionPrice(entries.count { it.id != rewardId })
 
                 entries.mapTo(rows) { asset ->
                     HabbiconUpsertRow(
@@ -74,6 +84,7 @@ object HabbiconAssetSynchronizer {
             }
 
             HabbiconDao.upsertHabbicons(rows)
+            HabbiconDao.setDefaultCollectionPrices(collectionPrices)
 
             log.info("Synchronized {} Habbicons from {}", grouped.values.sumOf { it.size }, metadataUrl)
         }.onFailure { error ->
