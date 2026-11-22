@@ -37,5 +37,6 @@ class UserBadgePointsLimitsHandler {
         val groupedAchievements = HabboServer.habboGame.achievementManager.groupedAchievements
 
         habboSession.sendResponse(Outgoing.BADGE_POINTS_LIMIT, OutgoingR63A.BADGE_POINTS_LIMIT, groupedAchievements)
+        habboSession.badgePointLimitsRequested.complete(Unit)
     }
 }

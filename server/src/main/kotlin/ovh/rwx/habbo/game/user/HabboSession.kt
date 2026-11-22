@@ -21,6 +21,7 @@ package ovh.rwx.habbo.game.user
 
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +85,13 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     val isWebSocket: Boolean get() = channel.pipeline().get(WebSocketServerProtocolHandler::class.java) != null
     val sessionJob = SupervisorJob()
     val sessionScope = CoroutineScope(Dispatchers.Default + sessionJob)
+
+    /**
+     * Completa quando o cliente pede a tabela de limites das conquistas (BADGE_POINTS_LIMIT). O backfill do login só
+     * envia conquistas/emblemas depois disso: o cliente monta a descrição ("%limit%") com essa tabela, e o que chega
+     * antes dela aparece com 0 na aba de emblemas.
+     */
+    val badgePointLimitsRequested = CompletableDeferred<Unit>()
 
     /**
      * Fila serial dos pacotes desta sessão: os handlers rodam um de cada vez, na ordem de chegada (o cliente conta

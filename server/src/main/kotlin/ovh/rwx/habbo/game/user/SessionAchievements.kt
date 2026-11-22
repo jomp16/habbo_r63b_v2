@@ -20,6 +20,7 @@
 package ovh.rwx.habbo.game.user
 
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.item.ItemDao
@@ -90,8 +91,15 @@ private fun HabboSession.backfillDerivedAchievements() {
     HabboServer.habboGame.habbiconManager.backfillAchievements(this)
 }
 
+/** Teto da espera pelo pedido de limites: clientes que nunca o fazem só atrasam o backfill por este tempo. */
+private const val BADGE_LIMITS_WAIT_MS = 10_000L
+
 fun HabboSession.processLoginAchievements() {
     sessionScope.launch {
+        // Os pacotes de conquista/emblema do backfill só podem chegar depois da tabela de limites (ver
+        // badgePointLimitsRequested); sem isso o cliente mostra %limit% = 0 na aba de emblemas
+        if (!isBot) withTimeoutOrNull(BADGE_LIMITS_WAIT_MS) { badgePointLimitsRequested.await() }
+
         launch { backfillDerivedAchievements() }
 
         // LTD Purchaser & Early Bird & Credit Value & Photos
