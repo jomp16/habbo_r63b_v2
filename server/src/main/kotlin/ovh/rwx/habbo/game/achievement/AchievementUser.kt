@@ -76,11 +76,15 @@ data class AchievementUser(
 
         // Espelho do decremento do cliente: grupos de 1 nível, não conquistada, nome
         // com dígito no final → badgeId com dígito incrementado (cliente decrementa de volta).
-        // O decremento (ILocalizationManager.getPreviousLevelBadgeId / BadgeBaseAndLevel) só existe a partir de
-        // WIN63-202102181453 (2021-02-18, o primeiro build do dumps_repo que o tem; nenhum RELEASE*/PRODUCTION*
-        // o tem): antes disso o cliente pede o badgeId literal, e ACH_TradingPass8 dava 404.
+        // O decremento (localization.getPreviousLevelBadgeId: `BadgeBaseAndLevel.level--`, usado pelo card de detalhe
+        // e pelas miniaturas) existe desde RELEASE63-33647-33620-201105132315 (2011-05-13); o build anterior
+        // (RELEASE63-33578, 2011-05-12) pede o badgeId literal (ACH_TradingPass8 dava 404 lá). Varredura dos 1100+
+        // builds com código do dumps_repo (RELEASE34-63, PRODUCTION, WIN63): nenhum build posterior perde a função
+        // (os MAC63 só têm o HabboAir.swf, sem código). O getter do badgeId é ofuscado nos builds antigos
+        // (`_SafeStr_*` em vez de `badgeId`), então a busca não pode depender desse nome.
+        // Sem o incremento, o card da conquista N (não conquistada) mostrava o texto/emblema de N-1.
         val badgeCode: String = if (
-            habboResponse.isVersionAtLeast(2021, 2, 18) &&
+            habboResponse.isVersionAtLeast(2011, 5, 13) &&
             totalLevels == 1 && level < 1 && group.name.isNotEmpty() && group.name.last().isDigit()
         ) {
             "${group.name.dropLast(1)}${group.name.last() - '0' + 1}"
