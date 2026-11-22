@@ -464,6 +464,8 @@ class Trade(
                 session.habboInventory.removeItems(allUser2Items.map { it.id }, delete = false)
             }
 
+            TradeAchievements.onTradeCompleted(user1.habboSession, allUser1Items, user2.habboSession, allUser2Items)
+
             return TradeExecutionResult.Success
         } catch (e: Exception) {
             return TradeExecutionResult.DatabaseError

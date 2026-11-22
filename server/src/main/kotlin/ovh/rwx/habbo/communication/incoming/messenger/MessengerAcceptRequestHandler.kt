@@ -70,6 +70,12 @@ class MessengerAcceptRequestHandler {
             totalFriends,
             accumulate = false
         )
+        HabboServer.habboGame.achievementManager.progress(
+            habboSession,
+            "ACH_TradingPass7",
+            totalFriends,
+            accumulate = false
+        )
 
         friends.filterKeys { it != habboSession.userInformation.id }.forEach {
             val friendHabboSession = HabboServer.habboSessionManager.getHabboSessionById(it.value.userId)
@@ -79,6 +85,12 @@ class MessengerAcceptRequestHandler {
             val messengerFriend = it.value
 
             friendHabboSession.habboMessenger.friends[messengerFriend.userId] = messengerFriend
+            HabboServer.habboGame.achievementManager.progress(
+                friendHabboSession,
+                "ACH_TradingPass7",
+                friendHabboSession.habboMessenger.friends.size,
+                accumulate = false
+            )
 
             friendHabboSession.sendHabboResponse(
                 Outgoing.MESSENGER_FRIENDS_UPDATE,

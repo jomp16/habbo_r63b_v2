@@ -23,6 +23,8 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.database.item.ItemDao
+import ovh.rwx.habbo.database.pet.PetDao
+import ovh.rwx.habbo.game.achievement.CreditFurniValue
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -44,6 +46,7 @@ fun HabboSession.processPeriodicAchievementsImpl() {
         totalMinutes,
         accumulate = false
     )
+    HabboServer.habboGame.achievementManager.progress(this, "ACH_TradingPass2", totalMinutes, accumulate = false)
 
     if (habboSubscription.validUserSubscription) {
         val totalMonths = ChronoUnit.MONTHS.between(
@@ -68,8 +71,28 @@ fun HabboSession.processPeriodicAchievementsImpl() {
     }
 }
 
+/**
+ * Backfill: grupos derivados de estado já persistido (minutos online, idade da conta, amigos, salas visitadas).
+ * Roda a cada login com `accumulate = false` (idempotente), então contas antigas e eventos ocorridos com o gatilho
+ * ao vivo ainda inexistente são creditados retroativamente. `ACH_Name` vale quando `realname` está preenchido.
+ */
+private fun HabboSession.backfillDerivedAchievements() {
+    val manager = HabboServer.habboGame.achievementManager
+    val daysRegistered = ChronoUnit.DAYS.between(userInformation.accountCreated, LocalDateTime.now()).toInt()
+
+    if (userInformation.realname.isNotBlank()) manager.progress(this, "ACH_Name", 1, accumulate = false)
+    manager.progress(this, "ACH_TradingPass2", (userStats.totalOnlineSeconds / 60).toInt(), accumulate = false)
+    manager.progress(this, "ACH_TradingPass3", daysRegistered, accumulate = false)
+    manager.progress(this, "ACH_TradingPass5", manager.currentProgress(this, "ACH_RoomEntry"), accumulate = false)
+    manager.progress(this, "ACH_TradingPass7", habboMessenger.friends.size, accumulate = false)
+    manager.progress(this, "ACH_PetLover", PetDao.countPetsByUserId(userInformation.id), accumulate = false)
+    manager.completeTutorialIfDone(this)
+}
+
 fun HabboSession.processLoginAchievements() {
     sessionScope.launch {
+        launch { backfillDerivedAchievements() }
+
         // LTD Purchaser & Early Bird & Credit Value & Photos
         launch {
             val allUserItemsWithRoom = ItemDao.getAllUserItemsWithRoom(userInformation.id)
@@ -101,17 +124,7 @@ fun HabboSession.processLoginAchievements() {
 
             val totalCreditValue = allUserItemsWithRoom
                 .filter { it.roomId != null }
-                .filter { it.userItem.itemName.startsWith("CF_") || it.userItem.itemName.startsWith("CFC_") }
-                .sumOf { itemWithRoom ->
-                    val split = itemWithRoom.userItem.itemName.split('_')
-                    if (split.size > 2 && split[1] == "diamond") {
-                        split[2].toIntOrNull() ?: 0
-                    } else if (split.size > 1) {
-                        split[1].toIntOrNull() ?: 0
-                    } else {
-                        0
-                    }
-                }
+                .sumOf { CreditFurniValue.of(it.userItem.itemName) }
             if (totalCreditValue > 0) {
                 HabboServer.habboGame.achievementManager.progress(
                     this@processLoginAchievements,
@@ -197,7 +210,11 @@ fun HabboSession.processLoginAchievements() {
                 accumulate = false
             )
 
+            // Dias seguidos: perder um dia zera a sequência
             if (userStats.firstLoginOfDay) {
+                if (!userStats.loginStreakContinues) {
+                    HabboServer.habboGame.achievementManager.resetProgress(this@processLoginAchievements, "ACH_Login")
+                }
                 HabboServer.habboGame.achievementManager.progress(
                     this@processLoginAchievements,
                     "ACH_Login",

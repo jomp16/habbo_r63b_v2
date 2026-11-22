@@ -126,6 +126,7 @@ class UserJoinRoomTask(private val roomUser: RoomUser) : IRoomTask {
 
                 if (ownerId != userId) {
                     HabboServer.habboGame.achievementManager.progress(session, "ACH_RoomEntry", 1, accumulate = true)
+                    HabboServer.habboGame.achievementManager.progress(session, "ACH_TradingPass5", 1, accumulate = true)
                 }
             }
         }

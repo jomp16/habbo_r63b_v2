@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.communication.incoming.IncomingR63A
 import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
+import ovh.rwx.habbo.game.pet.PetAchievements
 import ovh.rwx.habbo.game.room.Room
 import ovh.rwx.habbo.game.room.user.RoomPet
 import ovh.rwx.habbo.game.user.HabboSession
@@ -50,6 +51,7 @@ class PetRespectHandler {
 
         // +10 XP per respect
         addExperience(roomPet, room, 10)
+        PetAchievements.onPetRespected(habboSession, roomPet.petData)
 
         room.sendHabboResponse(Outgoing.PET_RESPECT_NOTIFICATION, roomPet.petData)
         room.sendHabboResponse(OutgoingR63A.PET_RESPECT_NOTIFICATION, roomPet.petData)
@@ -61,6 +63,7 @@ class PetRespectHandler {
 
         if (roomPet.petData.level > oldLevel) {
             // todo: send level up notification
+            PetAchievements.onPetLevelUp(roomPet.petData, oldLevel)
         }
 
         room.sendHabboResponse(Outgoing.PET_EXPERIENCE, roomPet.petData.id, roomPet.virtualID, amount)

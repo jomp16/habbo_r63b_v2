@@ -25,6 +25,7 @@ import ovh.rwx.habbo.communication.outgoing.Outgoing
 import ovh.rwx.habbo.communication.outgoing.OutgoingR63A
 import ovh.rwx.habbo.communication.outgoing.room.RoomUserChatData
 import ovh.rwx.habbo.game.pet.PetAI
+import ovh.rwx.habbo.game.pet.PetAchievements
 import ovh.rwx.habbo.game.pet.PetAction
 import ovh.rwx.habbo.game.pet.PetData
 import ovh.rwx.habbo.game.room.Room
@@ -83,6 +84,7 @@ class RoomPet(
         room.sendHabboResponse(OutgoingR63A.PET_EXPERIENCE, petData.id, virtualID, amount)
 
         if (petData.level > oldLevel) {
+            PetAchievements.onPetLevelUp(petData, oldLevel)
             broadcastPetChat("*leveled up to level ${petData.level}!*")
         }
     }

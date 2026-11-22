@@ -43,6 +43,7 @@ import ovh.rwx.habbo.communication.outgoing.misc.MiscSuperNotificationResponse
 import ovh.rwx.habbo.database.badge.BadgeDao
 import ovh.rwx.habbo.database.room.RoomDao
 import ovh.rwx.habbo.database.user.UserInformationDao
+import ovh.rwx.habbo.database.user.UserLoginsDao
 import ovh.rwx.habbo.database.user.UserPreferencesDao
 import ovh.rwx.habbo.database.user.UserStatsDao
 import ovh.rwx.habbo.database.writebehind.WriteBehindManager
@@ -325,8 +326,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         val userId = userInformation1.id
         habboSubscription = HabboSubscription(this@HabboSession)
         habboHabbicon = HabboHabbicon(this@HabboSession)
+        var lastLoginFromTable: LocalDate? = null
         val (loadedStats, loadedPreferences, loadedFavorites) = runBlocking(Dispatchers.IO) {
             val stats = async { UserStatsDao.getUserStats(userId) }
+            val lastLogin = async { UserLoginsDao.lastLoginDate(userId) }
             val preferences = async { UserPreferencesDao.getUserPreferences(userId) }
             val favorites = async { RoomDao.getFavoritesRooms(userId).toMutableList() }
             val clothings = async { userInformation1.clothings }
@@ -346,13 +349,20 @@ class HabboSession(val channel: Channel) : AutoCloseable {
             ignores.await()
             blocks.await()
             subscription.await()
+            lastLoginFromTable = lastLogin.await()
             Triple(stats.await(), preferences.await(), favorites.await())
         }
         userStats = loadedStats
         userPreferences = loadedPreferences
         favoritesRooms = loadedFavorites
 
-        if (userStats.lastOnline.toLocalDate().isBefore(LocalDate.now())) userStats.firstLoginOfDay = true
+        // Login diário: conta entrar em cada dia (ver LoginStreak). Contas sem linha em users_logins (anteriores à
+        // tabela) usam o último acesso como semente, para não perder a sequência na transição.
+        val now = LocalDateTime.now()
+        val loginDay = LoginStreak.evaluate(lastLoginFromTable ?: userStats.lastOnline.toLocalDate(), now.toLocalDate())
+        userStats.firstLoginOfDay = loginDay.firstOfDay
+        userStats.loginStreakContinues = loginDay.streakContinues
+        UserLoginsDao.recordLogin(userId, now)
 
         userStats.lastOnline = LocalDateTime.now()
         userStats.lastOnlineDatabase = userStats.lastOnline

@@ -69,6 +69,9 @@ class UserStats(
         get() = if (favoriteGroupId == 0) null else HabboServer.habboGame.groupManager.groups[favoriteGroupId]
     var firstLoginOfDay: Boolean = false
 
+    /** O último login foi ontem (a sequência de dias seguidos continua); só vale com [firstLoginOfDay]. */
+    var loginStreakContinues: Boolean = false
+
     override fun flush() {
         UserStatsDao.saveStats(this)
         markClean()

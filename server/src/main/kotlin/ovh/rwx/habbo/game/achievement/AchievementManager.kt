@@ -112,6 +112,40 @@ class AchievementManager {
 
         // Adiciona na queue ao invés de salvar imediatamente
         saveQueue.add(userData)
+
+        if (habboSession != null && group.name in TUTORIAL_GROUPS) completeTutorialIfDone(habboSession)
+    }
+
+    /** Fecha o ciclo do tutorial: com os 5 grupos no nível máximo, concede ACH_TradingPass1. Idempotente (backfill). */
+    fun completeTutorialIfDone(habboSession: HabboSession) {
+        val users = habboSession.userInformation.achievementUsers
+        val done = TUTORIAL_GROUPS.all { name ->
+            val group = achievementGroups[name] ?: return
+            val totalLevels = achievementLevels[group.id]?.size ?: return
+            users.any { it.groupId == group.id && it.level >= totalLevels }
+        }
+        if (done) progress(habboSession, "ACH_TradingPass1", 1, accumulate = false)
+    }
+
+    private companion object {
+        val TUTORIAL_GROUPS = listOf(
+            "ACH_Tutorial1", "ACH_Tutorial2", "ACH_Tutorial3", "ACH_Tutorial4", "ACH_Tutorial5"
+        )
+    }
+
+    /** Zera o progresso do grupo (sequências quebradas); o nível já conquistado é mantido. */
+    fun resetProgress(habboSession: HabboSession, achievementName: String) {
+        val group = achievementGroups[achievementName] ?: return
+        val userData = habboSession.userInformation.achievementUsers.find { it.groupId == group.id } ?: return
+        if (userData.progress == 0) return
+        userData.progress = 0
+        saveQueue.add(userData)
+    }
+
+    /** Progresso atual do grupo para o usuário da sessão (0 se nunca progrediu). */
+    fun currentProgress(habboSession: HabboSession, achievementName: String): Int {
+        val group = achievementGroups[achievementName] ?: return 0
+        return habboSession.userInformation.achievementUsers.find { it.groupId == group.id }?.progress ?: 0
     }
 
     // Sobrecarga para manter compatibilidade

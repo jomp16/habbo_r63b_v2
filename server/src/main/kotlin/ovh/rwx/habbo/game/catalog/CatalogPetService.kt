@@ -26,6 +26,7 @@ import ovh.rwx.habbo.communication.outgoing.catalog.CatalogPurchaseOkData
 import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemCategory
 import ovh.rwx.habbo.communication.outgoing.inventory.UnseenItemsData
 import ovh.rwx.habbo.database.pet.PetDao
+import ovh.rwx.habbo.game.pet.PetAchievements
 import ovh.rwx.habbo.game.user.HabboSession
 import ovh.rwx.habbo.game.currency.CurrencyService
 
@@ -68,6 +69,7 @@ class CatalogPetService {
         }
 
         habboSession.habboInventory.addPet(petData, openInventory = true)
+        PetAchievements.onPetAcquired(habboSession.userInformation.id)
 
         // todo: give 1 free pet food
 

@@ -101,6 +101,20 @@ A new client variable that points at a production endpoint the client WRITES to 
 - Game state: `game/{room,item,user,achievement,camera,wired}/`. `IRoomTask`s run on the room scheduler pool
   (`room_task.threads`).
 
+## Achievements
+
+- Progresso via `achievementManager.progress(session, "ACH_X", n, accumulate)`: `accumulate = true` para contadores,
+  `false` para estados absolutos (só sobe). Grupo ausente no banco é ignorado em silêncio.
+- **Backfill no login**: `backfillDerivedAchievements()` (`game/user/SessionAchievements.kt`) recalcula, com
+  `accumulate = false`, tudo que deriva de estado persistido. Grupo novo com dado no banco = gatilho ao vivo + linha ali.
+- Dono offline (ex.: recados, mascotes): `progress(session?, userId, ...)` grava no banco, então chame fora das threads
+  de rede/sala (`applicationScope.launch(Dispatchers.IO)`, ver `game/pet/PetAchievements.kt`).
+- **Login diário (`ACH_Login`)**: conta ENTRAR em cada dia (ficar logado não farma). Regra pura em `LoginStreak`
+  (teste `LoginStreakTest`); `UserLoginsDao` grava no máximo 1 linha por usuário por dia em `users_logins` (write-behind,
+  cache em memória contra reentrada rápida; relogar toda hora em dev não cria linhas). Contas sem linha usam
+  `users_stats.last_online` como semente. Perder um dia zera o progresso do grupo, o nível fica.
+- Estado do Passe de Trocas e pendências: `docs/PLAN_TRADING_PASS_IMPLEMENTATION.md`.
+
 ## Wired
 
 - 19 triggers under `game/item/wire/trigger/triggers/`. A new trigger needs `WiredTriggerType`, the class, and any

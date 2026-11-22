@@ -19,10 +19,14 @@
 
 package ovh.rwx.habbo.communication.incoming.room
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import ovh.rwx.habbo.HabboServer
 import ovh.rwx.habbo.communication.HabboRequest
 import ovh.rwx.habbo.communication.Handler
 import ovh.rwx.habbo.communication.incoming.Incoming
 import ovh.rwx.habbo.game.item.InteractionType
+import ovh.rwx.habbo.game.item.stuff.PostItData
 import ovh.rwx.habbo.game.user.HabboSession
 import java.util.*
 
@@ -43,7 +47,27 @@ class RoomSavePostItHandler {
 
         if (roomItem.extraData == extraData) return
 
+        // Só o primeiro texto do recado conta (editar um recado já escrito não pontua)
+        val firstText = text.isNotEmpty() && PostItData.parse(roomItem.extraData).text.isBlank()
+
         roomItem.extraData = extraData
         roomItem.update(updateDb = true, updateClient = true)
+
+        val ownerId = habboSession.currentRoom!!.roomData.ownerId
+        if (firstText && ownerId != habboSession.userInformation.id) {
+            val writerId = habboSession.userInformation.id
+            // O dono pode estar offline: o progresso vai ao banco, fora da thread de rede
+            HabboServer.applicationScope.launch(Dispatchers.IO) {
+                val achievements = HabboServer.habboGame.achievementManager
+                achievements.progress(habboSession, "ACH_NotesLeft", 1, accumulate = true)
+                achievements.progress(
+                    HabboServer.habboSessionManager.getHabboSessionById(ownerId),
+                    ownerId,
+                    "ACH_NotesReceived",
+                    1,
+                    accumulate = true
+                )
+            }
+        }
     }
 }

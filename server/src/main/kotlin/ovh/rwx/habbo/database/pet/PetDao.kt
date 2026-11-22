@@ -71,6 +71,14 @@ object PetDao {
         ).map { it.toDomain() }
     }
 
+    /** Todos os mascotes do usuário, no inventário ou em salas (alimenta o backfill de ACH_PetLover). */
+    fun countPetsByUserId(userId: Int): Int = db {
+        queryOne<Int>(
+            "SELECT COUNT(*) FROM `users_pets` WHERE `user_id` = :user_id",
+            mapOf("user_id" to userId)
+        ) ?: 0
+    }
+
     fun savePet(pet: PetData) = WriteBehindManager.queue(WriteKey.pet(pet.id)) {
         db {
         update(
