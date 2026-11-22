@@ -301,6 +301,15 @@ class HabbiconManager {
      * ACH_HabbiconCollectionComp: coleções cujo bônus o usuário resgatou. Valor absoluto (idempotente), não +1 por
      * resgate: um resgate perdido (grupo ausente, outro caminho) se corrige sozinho, inclusive no backfill do login.
      */
+    /**
+     * Backfill do login: recalcula as conquistas derivadas do que o usuário possui (coletados e coleções completas).
+     * Reavalia também os níveis, então uma mudança nos limites do banco chega a quem já tinha o progresso.
+     */
+    fun backfillAchievements(habboSession: HabboSession) {
+        progressCollectedAchievement(habboSession)
+        progressCollectionsCompletedAchievement(habboSession)
+    }
+
     fun progressCollectionsCompletedAchievement(habboSession: HabboSession) {
         val owned = habboSession.habboHabbicon.userHabbicons
         val completed = collections.values.count { collection ->
