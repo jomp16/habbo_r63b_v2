@@ -126,6 +126,18 @@ object WriteBehindManager {
         }
     }
 
+    fun flushAllAndPause() {
+        log.info("Pausing Write-Behind persistence worker and flushing all pending writes...")
+        running.set(false)
+        runBlocking { workerJob?.cancelAndJoin() }
+        workerJob = null
+        flushAllSync()
+    }
+
+    fun resume(scope: CoroutineScope, flushIntervalMs: Long = 2000L) {
+        start(scope, flushIntervalMs)
+    }
+
     /** Fecha a janela de estatísticas do log de stress ([WriteBehindStressLog]). */
     fun drainStats(): WriteBehindStats.Window = WriteBehindStats.drain(writes.pendingCount())
 

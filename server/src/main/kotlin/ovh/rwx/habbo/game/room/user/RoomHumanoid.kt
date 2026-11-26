@@ -59,7 +59,7 @@ abstract class RoomHumanoid(
                 )
             } else 0
 
-            if (field != newValue) {
+            if (field != newValue && !suppressBroadcast) {
                 room.sendResponse(Outgoing.ROOM_USER_IDLE, OutgoingR63A.ROOM_USER_IDLE, virtualID, newValue)
             }
 
@@ -68,7 +68,7 @@ abstract class RoomHumanoid(
 
     var typing: Boolean = false
         set(newValue) {
-            if (field != newValue) {
+            if (field != newValue && !suppressBroadcast) {
                 val state = if (newValue) 1 else 0
                 room.sendResponse(Outgoing.ROOM_USER_TYPING, OutgoingR63A.ROOM_USER_TYPING, virtualID, state)
             }
@@ -78,7 +78,7 @@ abstract class RoomHumanoid(
 
     var danceId: Int = 0
         set(newValue) {
-            if (field != newValue) {
+            if (field != newValue && !suppressBroadcast) {
                 room.sendResponse(Outgoing.ROOM_USER_DANCE, OutgoingR63A.ROOM_USER_DANCE, virtualID, newValue)
             }
 
@@ -87,7 +87,7 @@ abstract class RoomHumanoid(
 
     var handItem: Int = 0
         set(newValue) {
-            if (field != newValue) {
+            if (field != newValue && !suppressBroadcast) {
                 room.sendResponse(Outgoing.ROOM_USER_HANDITEM, OutgoingR63A.ROOM_USER_HANDITEM, virtualID, newValue)
             }
 
@@ -95,7 +95,32 @@ abstract class RoomHumanoid(
         }
 
     override fun onEffectChanged(effectId: Int) {
-        room.sendResponse(Outgoing.ROOM_USER_EFFECT, OutgoingR63A.ROOM_USER_EFFECT, virtualID, effectId)
+        if (!suppressBroadcast) {
+            room.sendResponse(Outgoing.ROOM_USER_EFFECT, OutgoingR63A.ROOM_USER_EFFECT, virtualID, effectId)
+        }
+    }
+
+    internal fun restoreSilentState(
+        idle: Boolean,
+        danceId: Int,
+        handItem: Int,
+        effectId: Int,
+        statuses: Map<String, String>
+    ) {
+        suppressBroadcast = true
+        try {
+            this.idle = idle
+            this.danceId = danceId
+            this.handItem = handItem
+            this.effect = if (effectId > 0) RoomUserEffect(effectId, -1) else null
+            statusMap.clear()
+            val hadMove = statuses.containsKey("mv")
+            statuses.forEach { (k, v) -> if (k != "mv") statusMap[k] = Pair(null, v) }
+            if (hadMove) updateNeeded = true
+            this.pendingJoin = false
+        } finally {
+            suppressBroadcast = false
+        }
     }
 
     override fun onIdleExpired() {

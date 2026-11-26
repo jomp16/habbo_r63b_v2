@@ -19,12 +19,12 @@
 
 package ovh.rwx.habbo.encryption
 
-class WedgieRC4(key: ByteArray) : IHabboEncryption {
-    private val sBox = IntArray(256)
-    private var i = 0
-    private var j = 0
-
-    init {
+class WedgieRC4 private constructor(
+    private val sBox: IntArray,
+    private var i: Int,
+    private var j: Int
+) : IHabboEncryption {
+    constructor(key: ByteArray) : this(IntArray(256), 0, 0) {
         // 1. XOR Inicial (Idêntico ao AS3 init)
         val salt = "mWxFRJnGJ5T9Si0OMVvEBBm8laihXkN8GmH6fuv7ldZhLyGRRKCcGzziPYBaJom".toByteArray()
         val saltedKey = ByteArray(key.size) { k ->
@@ -44,6 +44,30 @@ class WedgieRC4(key: ByteArray) : IHabboEncryption {
             "NV6VVFPoC7FLDlzDUri3qcOAg9cRoFOmsYR9ffDGy5P8HfF6eekX40SFSVfJ1mDb3lcpYRqdg28sp61eHkPukKbqTu1JsVEKiRavi04YtSzUsLXaYSa5BEGwg5G2OF".toByteArray()
         repeat(52) {
             parse(premixString)
+        }
+    }
+
+    data class Snapshot(val sBox: IntArray, val i: Int, val j: Int) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Snapshot) return false
+            return i == other.i && j == other.j && sBox.contentEquals(other.sBox)
+        }
+
+        override fun hashCode(): Int {
+            var result = sBox.contentHashCode()
+            result = 31 * result + i
+            result = 31 * result + j
+            return result
+        }
+    }
+
+    fun snapshot(): Snapshot = Snapshot(sBox.copyOf(), i, j)
+
+    companion object {
+        fun fromSnapshot(s: Snapshot): WedgieRC4 {
+            require(s.sBox.size == 256) { "WedgieRC4 sBox must have 256 elements" }
+            return WedgieRC4(s.sBox.copyOf(), s.i, s.j)
         }
     }
 

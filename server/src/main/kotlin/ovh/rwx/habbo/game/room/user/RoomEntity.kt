@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class RoomEntity(
     val room: Room,
-    val virtualID: Int,
+    var virtualID: Int,
     var currentVector3: Vector3,
     var headRotation: Int,
     var bodyRotation: Int
@@ -50,6 +50,7 @@ abstract class RoomEntity(
     var updateNeeded: Boolean = false
     val statusMap: MutableMap<String, Pair<LocalDateTime?, String>> = ConcurrentHashMap()
     var pendingJoin: Boolean = true
+    var suppressBroadcast: Boolean = false
 
     var objectiveVector2: Vector2? = null
     var objectiveRotation: Int = 0

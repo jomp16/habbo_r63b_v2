@@ -45,6 +45,16 @@ import java.util.concurrent.ConcurrentHashMap
 class RoomUserManager(private val room: Room) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
+    data class PetRestoreInfo(
+        val petId: Int,
+        val virtualId: Int,
+        val x: Int,
+        val y: Int,
+        val z: Double,
+        val headRotation: Int,
+        val bodyRotation: Int
+    )
+
     val rights: MutableSet<RightData> by lazy {
         if (room.roomData.virtual) HashSet() else HashSet(RoomDao.getRights(room.roomData.id))
     }
@@ -146,6 +156,57 @@ class RoomUserManager(private val room: Room) {
         // Broadcast to all users
         room.sendResponse(Outgoing.ROOM_USERS, OutgoingR63A.ROOM_USERS, listOf(roomPet))
         room.sendResponse(Outgoing.ROOM_USERS_STATUSES, OutgoingR63A.ROOM_USERS_STATUSES, listOf(roomPet))
+    }
+
+    fun restoreUser(
+        session: HabboSession,
+        virtualId: Int,
+        pos: Vector3,
+        headRot: Int,
+        bodyRot: Int,
+        idle: Boolean,
+        danceId: Int,
+        handItem: Int,
+        effectId: Int,
+        statuses: Map<String, String>
+    ): RoomUser {
+        val user = RoomUser(session, room, virtualId, pos, headRot, bodyRot).apply {
+            roomOpened = true
+            pendingJoin = false
+        }
+        user.restoreSilentState(idle, danceId, handItem, effectId, statuses)
+        entities[virtualId] = user
+        room.roomGamemap.addRoomEntity(user, pos.vector2)
+        session.currentRoom = room
+        session.roomUser = user
+        return user
+    }
+
+    fun reconcilePetPositions(pets: List<PetRestoreInfo>) {
+        if (pets.isEmpty()) return
+
+        val petsById = entities.values.filterIsInstance<RoomPet>().associateBy { it.petData.id }
+        val virtualIdUpdates = mutableListOf<Pair<RoomPet, Int>>()
+
+        for (info in pets) {
+            val pet = petsById[info.petId] ?: continue
+            if (pet.virtualID != info.virtualId) {
+                entities.remove(pet.virtualID, pet)
+                virtualIdUpdates += pet to info.virtualId
+            }
+
+            val oldPos = pet.currentVector3.vector2
+            val newPos = Vector3(info.x, info.y, info.z)
+            pet.currentVector3 = newPos
+            pet.headRotation = info.headRotation
+            pet.bodyRotation = info.bodyRotation
+            room.roomGamemap.updateRoomEntityMovement(pet, oldPos, newPos.vector2)
+        }
+
+        for ((pet, newVirtualId) in virtualIdUpdates) {
+            pet.virtualID = newVirtualId
+            entities[newVirtualId] = pet
+        }
     }
 
     fun removeEntity(roomEntity: RoomEntity?, notifyClient: Boolean, kickNotification: Boolean) {

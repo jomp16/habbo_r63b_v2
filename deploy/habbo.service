@@ -4,12 +4,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-Type=simple
+Type=notify
+NotifyAccess=all
 User=habbo
 Group=habbo
-WorkingDirectory=/opt/habbo
+WorkingDirectory=/opt/habbo/current
 ExecStart=/usr/lib/jvm/java-25-openjdk/bin/java \
-    -Xms768m -Xmx1024m \
+    -Xms256m -Xmx768m \
     -XX:+UseG1GC \
     -XX:MaxGCPauseMillis=20 \
     -XX:G1ReservePercent=15 \
@@ -19,7 +20,9 @@ ExecStart=/usr/lib/jvm/java-25-openjdk/bin/java \
     -Dfile.encoding=UTF-8 \
     -Dkotlinx.coroutines.debug=off \
     -Dlog4j2.configurationFile=log4j2-prod.xml \
+    -Dhabbo.handoff.socket=/opt/habbo/shared/run/handoff.sock \
     -jar launcher-0.1.0-SNAPSHOT.jar
+ExecReload=/opt/habbo/shared/handoff-reload.sh
 
 Restart=on-failure
 RestartSec=5

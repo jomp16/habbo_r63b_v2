@@ -135,6 +135,9 @@ object HabboServer : AutoCloseable {
 
     /** Canais de escuta (TCP, WebSocket, FastFood TCP e WebSocket), fechados primeiro no [close] para parar de aceitar conexões. */
     private val serverChannels = CopyOnWriteArrayList<Channel>()
+    private var handoffServer: ovh.rwx.habbo.handoff.HandoffServer? = null
+    @Volatile
+    private var handoffSocketPath: String? = null
     val started: Boolean
         get() = isRunning && !workerGroup.isShuttingDown && !bossGroup.isShuttingDown
 
@@ -218,7 +221,6 @@ object HabboServer : AutoCloseable {
 
         log.info("Loading plugins...")
         pluginManager.loadPlugins(ClassIndex.classesOf(ClassIndex.Kind.PLUGIN_LISTENER).map { it.asSubclass(PluginListener::class.java) })
-        pluginManager.loadPluginsFromDir(File("plugins"))
         log.info("Done!")
 
         log.info("Adding shutdown hook...")
@@ -226,7 +228,13 @@ object HabboServer : AutoCloseable {
         log.info("Done!")
     }
 
-    fun start() {
+    @JvmOverloads
+    fun start(
+        handoffSocketPath: String? = null,
+        handoffMode: ovh.rwx.habbo.handoff.HandoffMode = ovh.rwx.habbo.handoff.HandoffMode.AUTO
+    ) {
+        val resolvedSocketPath = handoffSocketPath ?: System.getProperty("habbo.handoff.socket")
+        this.handoffSocketPath = resolvedSocketPath
         try {
             HabboResponse.debugEnabled = habboConfig.debug
             serverConsole.startConsoleReader()
@@ -236,85 +244,89 @@ object HabboServer : AutoCloseable {
             val habboNettyWebSocketHandler = HabboNettyWebSocketHandler()
             val fastFoodNettyEncoder = FastFoodNettyEncoder()
             val fastFoodNettyHandler = FastFoodNettyHandler()
+            val habboTcpInit = object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(socketChannel: SocketChannel) {
+                    socketChannel.pipeline().apply {
+                        addLast(IdleStateHandler(60, 0, 0))
+
+                        addLast(stringEncoder)
+                        addLast(habboNettyEncoder)
+
+                        if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
+
+                        addLast(HabboNettyDecoder())
+                        addLast(habboNettyHandler)
+                    }
+                }
+            }
+            val habboWsInit = object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(socketChannel: SocketChannel) {
+                    socketChannel.pipeline().apply {
+                        addLast(IdleStateHandler(60, 0, 0))
+                        addLast(HttpServerCodec())
+                        addLast(HttpObjectAggregator(65536))
+                        addLast(WebSocketServerProtocolHandler("/"))
+                        addLast(habboNettyWebSocketHandler)
+
+                        addLast(stringEncoder)
+                        addLast(habboNettyEncoder)
+
+                        if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
+
+                        addLast(HabboNettyDecoder())
+                        addLast(habboNettyHandler)
+                    }
+                }
+            }
+            val fastFoodTcpInit = object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(socketChannel: SocketChannel) {
+                    socketChannel.pipeline().apply {
+                        addLast(IdleStateHandler(60, 0, 0))
+
+                        addLast(stringEncoder)
+                        addLast(fastFoodNettyEncoder)
+                        addLast(FastFoodNettyDecoder())
+                        addLast(fastFoodNettyHandler)
+                    }
+                }
+            }
+            val fastFoodWsInit = object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(socketChannel: SocketChannel) {
+                    socketChannel.pipeline().apply {
+                        addLast(IdleStateHandler(60, 0, 0))
+                        addLast(HttpServerCodec())
+                        addLast(HttpObjectAggregator(65536))
+                        addLast(WebSocketServerProtocolHandler("/"))
+                        addLast(habboNettyWebSocketHandler)
+
+                        addLast(stringEncoder)
+                        addLast(fastFoodNettyEncoder)
+                        addLast(FastFoodNettyDecoder())
+                        addLast(fastFoodNettyHandler)
+                    }
+                }
+            }
             habboServerBootstrap.group(bossGroup, workerGroup)
                 .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                .childHandler(object : ChannelInitializer<SocketChannel>() {
-                    override fun initChannel(socketChannel: SocketChannel) {
-                        socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(60, 0, 0))
-
-                            addLast(stringEncoder)
-                            addLast(habboNettyEncoder)
-
-                            if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
-
-                            addLast(HabboNettyDecoder())
-                            addLast(habboNettyHandler)
-                        }
-                    }
-                })
+                .childHandler(habboTcpInit)
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
 
             habboWebSocketServerBootstrap.group(bossGroup, workerGroup)
                 .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                .childHandler(object : ChannelInitializer<SocketChannel>() {
-                    override fun initChannel(socketChannel: SocketChannel) {
-                        socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(60, 0, 0))
-                            addLast(HttpServerCodec())
-                            addLast(HttpObjectAggregator(65536))
-                            addLast(WebSocketServerProtocolHandler("/"))
-                            addLast(habboNettyWebSocketHandler)
-
-                            addLast(stringEncoder)
-                            addLast(habboNettyEncoder)
-
-                            if (habboConfig.encryptionConfig.rc4) addLast(HabboNettyRC4Decoder())
-
-                            addLast(HabboNettyDecoder())
-                            addLast(habboNettyHandler)
-                        }
-                    }
-                })
+                .childHandler(habboWsInit)
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
             fastFoodServerBootstrap.group(bossGroup, workerGroup)
                 .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                .childHandler(object : ChannelInitializer<SocketChannel>() {
-                    override fun initChannel(socketChannel: SocketChannel) {
-                        socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(60, 0, 0))
-
-                            addLast(stringEncoder)
-                            addLast(fastFoodNettyEncoder)
-                            addLast(FastFoodNettyDecoder())
-                            addLast(fastFoodNettyHandler)
-                        }
-                    }
-                })
+                .childHandler(fastFoodTcpInit)
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
             // Mesmo protocolo do TCP acima, em frames binários (clientes de navegador só abrem WebSocket); o
             // HabboNettyWebSocketHandler entrega o conteúdo dos frames como stream ao FastFoodNettyDecoder
             fastFoodWebSocketServerBootstrap.group(bossGroup, workerGroup)
                 .channel(if (Epoll.isAvailable()) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java)
-                .childHandler(object : ChannelInitializer<SocketChannel>() {
-                    override fun initChannel(socketChannel: SocketChannel) {
-                        socketChannel.pipeline().apply {
-                            addLast(IdleStateHandler(60, 0, 0))
-                            addLast(HttpServerCodec())
-                            addLast(HttpObjectAggregator(65536))
-                            addLast(WebSocketServerProtocolHandler("/"))
-                            addLast(habboNettyWebSocketHandler)
-
-                            addLast(stringEncoder)
-                            addLast(fastFoodNettyEncoder)
-                            addLast(FastFoodNettyDecoder())
-                            addLast(fastFoodNettyHandler)
-                        }
-                    }
-                })
+                .childHandler(fastFoodWsInit)
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
             log.info("Waiting for Habbo game to finish loading...")
@@ -325,6 +337,57 @@ object HabboServer : AutoCloseable {
             // Cada reserva é uma transação (~5 idas ao banco, ~600 ms com banco remoto): 11 em série seguravam o bind do
             // Netty por ~7 s. Rodam em segundo plano e em paralelo; se um usuário pedir um id antes, o próprio nextId()
             // reserva o bloco (o lock do HiLoSequence impede reservar duas vezes).
+            habboSessionManager.startHeartbeat(serverScheduledExecutor, habboConfig.heartbeatIntervalSeconds)
+            ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
+            if (habboConfig.stressTest) ovh.rwx.habbo.database.writebehind.WriteBehindStressLog.start()
+
+            habboConfig.dynamicDnsConfig?.let { ovh.rwx.habbo.net.DynamicDnsUpdater.start(it) }
+
+            val socketPath = this.handoffSocketPath
+            val canAdopt = Epoll.isAvailable() && socketPath != null &&
+                handoffMode != ovh.rwx.habbo.handoff.HandoffMode.FRESH &&
+                File(socketPath).exists()
+
+            if (canAdopt) {
+                adoptFromHandoff(
+                    socketPath,
+                    stringEncoder,
+                    habboNettyEncoder,
+                    habboNettyHandler,
+                    habboNettyWebSocketHandler,
+                    habboTcpInit,
+                    habboWsInit,
+                    fastFoodTcpInit,
+                    fastFoodWsInit
+                )
+            } else {
+                val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
+                val habboWebSocketChannelFuture = habboWebSocketServerBootstrap.bind(habboConfig.wsPort)
+                val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 10)
+                val fastFoodWebSocketChannelFuture = fastFoodWebSocketServerBootstrap.bind(habboConfig.fastFoodWsPort)
+                habboChannelFuture.sync()
+                habboWebSocketChannelFuture.sync()
+                fastFoodChannelFuture.sync()
+                fastFoodWebSocketChannelFuture.sync()
+                if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess && fastFoodWebSocketChannelFuture.isSuccess) {
+                    serverChannels += listOf(
+                        habboChannelFuture.channel(),
+                        habboWebSocketChannelFuture.channel(),
+                        fastFoodChannelFuture.channel(),
+                        fastFoodWebSocketChannelFuture.channel()
+                    )
+                } else {
+                    log.error(
+                        "Error starting ${BuildConfig.NAME} server!",
+                        habboChannelFuture.cause() ?: habboWebSocketChannelFuture.cause() ?: fastFoodChannelFuture.cause()
+                            ?: fastFoodWebSocketChannelFuture.cause()
+                    )
+                    exitProcess(1)
+                }
+            }
+
+            pluginManager.loadPluginsFromDir(File("plugins"))
+
             val hiLoSequences = listOf(
                 ovh.rwx.habbo.database.achievement.AchievementDao.achievementSequence,
                 ovh.rwx.habbo.database.badge.BadgeDao.badgeSequence,
@@ -344,52 +407,33 @@ object HabboServer : AutoCloseable {
                     try {
                         sequence.warmUp()
                     } catch (e: Exception) {
-                        // não é fatal: o primeiro nextId() desta sequência tenta a reserva de novo
                         log.warn("Falha ao pré-reservar o bloco Hi-Lo de '{}'", sequence.sequenceName, e)
                     }
                 }
             }
 
-            habboSessionManager.startHeartbeat(serverScheduledExecutor, habboConfig.heartbeatIntervalSeconds)
-            ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
-            if (habboConfig.stressTest) ovh.rwx.habbo.database.writebehind.WriteBehindStressLog.start()
-
-            habboConfig.dynamicDnsConfig?.let { ovh.rwx.habbo.net.DynamicDnsUpdater.start(it) }
-
-            val habboChannelFuture = habboServerBootstrap.bind(habboConfig.port)
-            val habboWebSocketChannelFuture = habboWebSocketServerBootstrap.bind(habboConfig.wsPort)
-            val fastFoodChannelFuture = fastFoodServerBootstrap.bind(habboConfig.port + 10)
-            val fastFoodWebSocketChannelFuture = fastFoodWebSocketServerBootstrap.bind(habboConfig.fastFoodWsPort)
-            habboChannelFuture.sync()
-            habboWebSocketChannelFuture.sync()
-            fastFoodChannelFuture.sync()
-            fastFoodWebSocketChannelFuture.sync()
-            if (habboChannelFuture.isSuccess && habboWebSocketChannelFuture.isSuccess && fastFoodChannelFuture.isSuccess && fastFoodWebSocketChannelFuture.isSuccess) {
-                serverChannels += listOf(
-                    habboChannelFuture.channel(),
-                    habboWebSocketChannelFuture.channel(),
-                    fastFoodChannelFuture.channel(),
-                    fastFoodWebSocketChannelFuture.channel()
-                )
-                isRunning = true
-                log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
-                log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
-                log.info("FastFood server started on port {}!", habboConfig.port + 10)
-                log.info("FastFood WebSocket server started on port {}!", habboConfig.fastFoodWsPort)
-                log.info("Cold start finished: JVM up for {}ms", java.lang.management.ManagementFactory.getRuntimeMXBean().uptime)
-                habboChannelFuture.channel().closeFuture().await()
-                habboWebSocketChannelFuture.channel().closeFuture().await()
-                fastFoodChannelFuture.channel().closeFuture().await()
-                fastFoodWebSocketChannelFuture.channel().closeFuture().sync()
-            } else {
-                log.error(
-                    "Error starting ${BuildConfig.NAME} server!",
-                    habboChannelFuture.cause() ?: habboWebSocketChannelFuture.cause() ?: fastFoodChannelFuture.cause()
-                        ?: fastFoodWebSocketChannelFuture.cause()
-                )
-
-                exitProcess(1)
+            log.info("Handoff config: epoll={}, socketPath={}, mode={}", Epoll.isAvailable(), this.handoffSocketPath, handoffMode)
+            if (Epoll.isAvailable() && this.handoffSocketPath != null) {
+                handoffServer = ovh.rwx.habbo.handoff.HandoffServer(
+                    socketPath = this.handoffSocketPath!!,
+                    onQuiesceAndSnapshot = { quiesceForHandoff() },
+                    onAck = { finalizeHandoffExit() },
+                    onRollback = { reason ->
+                        log.warn("Handoff rollback triggered: {}", reason)
+                        resumeFromFailedHandoff()
+                    }
+                ).also { it.start() }
             }
+
+            isRunning = true
+            if (!canAdopt) ovh.rwx.habbo.handoff.SystemdNotify.notifyReady()
+            log.info("${BuildConfig.NAME} server started on port {}!", habboConfig.port)
+            log.info("${BuildConfig.NAME} WebSocket server started on port {}!", habboConfig.wsPort)
+            log.info("FastFood server started on port {}!", habboConfig.port + 10)
+            log.info("FastFood WebSocket server started on port {}!", habboConfig.fastFoodWsPort)
+            log.info("Cold start finished: JVM up for {}ms", java.lang.management.ManagementFactory.getRuntimeMXBean().uptime)
+            serverChannels.forEach { it.closeFuture().await() }
+            serverChannels.lastOrNull()?.closeFuture()?.sync()
         } catch (e: Exception) {
             log.error("An exception happened!", e)
         } finally {
@@ -409,6 +453,8 @@ object HabboServer : AutoCloseable {
         if (started) {
             closing = true
             isRunning = false
+            handoffServer?.close()
+            handoffServer = null
             habboSessionManager.stopHeartbeat()
             ovh.rwx.habbo.metrics.ServerMetrics.stop()
             log.info("Shutting down ${BuildConfig.NAME} server...")
@@ -466,4 +512,358 @@ object HabboServer : AutoCloseable {
             log.info("Done!")
         }
     }
+
+    private fun adoptFromHandoff(
+        socketPath: String,
+        stringEncoder: StringEncoder,
+        habboNettyEncoder: HabboNettyEncoder,
+        habboNettyHandler: HabboNettyHandler,
+        habboNettyWebSocketHandler: HabboNettyWebSocketHandler,
+        habboTcpInit: ChannelInitializer<SocketChannel>,
+        habboWsInit: ChannelInitializer<SocketChannel>,
+        fastFoodTcpInit: ChannelInitializer<SocketChannel>,
+        fastFoodWsInit: ChannelInitializer<SocketChannel>
+    ) {
+        log.info("Adopting connections from previous instance via {}...", socketPath)
+        val received = ovh.rwx.habbo.handoff.HandoffClient.receive(socketPath)
+        try {
+            val payload = received.payload
+            val decoder = java.util.Base64.getDecoder()
+            val adoptedChannels = mutableListOf<Channel>()
+
+            received.listenerFds.forEachIndexed { idx, fd ->
+                val type = payload.listenerTypes.getOrNull(idx) ?: return@forEachIndexed
+                val init = when (type) {
+                    "habbo-tcp" -> habboTcpInit
+                    "habbo-ws" -> habboWsInit
+                    "fastfood-tcp" -> fastFoodTcpInit
+                    else -> fastFoodWsInit
+                }
+                val ch = EpollServerSocketChannel(fd.intValue())
+                ch.config().isAutoRead = true
+                ch.pipeline().addLast(object : io.netty.channel.ChannelInboundHandlerAdapter() {
+                    override fun channelRead(ctx: io.netty.channel.ChannelHandlerContext, msg: Any) {
+                        val child = msg as SocketChannel
+                        child.config().setOption(ChannelOption.SO_KEEPALIVE, true)
+                        child.pipeline().addLast(init)
+                        workerGroup.register(child)
+                    }
+                })
+                bossGroup.register(ch).syncUninterruptibly()
+                serverChannels += ch
+            }
+
+            // If any listener wasn't passed, bind fresh
+            if (serverChannels.isEmpty()) {
+                serverChannels += habboServerBootstrap.bind(habboConfig.port).sync().channel()
+                serverChannels += habboWebSocketServerBootstrap.bind(habboConfig.wsPort).sync().channel()
+                serverChannels += fastFoodServerBootstrap.bind(habboConfig.port + 10).sync().channel()
+                serverChannels += fastFoodWebSocketServerBootstrap.bind(habboConfig.fastFoodWsPort).sync().channel()
+            }
+
+            val restoredRooms = mutableMapOf<Int, ovh.rwx.habbo.game.room.Room>()
+            payload.rooms.forEach { roomSnap ->
+                val room = habboGame.roomManager.rooms[roomSnap.roomId] ?: return@forEach
+                habboGame.roomManager.roomTaskManager.registerRestoredRoom(
+                    room,
+                    roomSnap.tickCounter,
+                    roomSnap.rollerCounter,
+                    roomSnap.roomTimer
+                )
+                room.userManager.reconcilePetPositions(
+                    roomSnap.pets.map {
+                        ovh.rwx.habbo.game.room.managers.RoomUserManager.PetRestoreInfo(
+                            it.petId, it.virtualId, it.x, it.y, it.z, it.headRotation, it.bodyRotation
+                        )
+                    }
+                )
+                restoredRooms[roomSnap.roomId] = room
+            }
+
+            payload.sessions.forEach { snap ->
+                val fd = received.sessionFds[snap.fdIndex]
+                val ch = io.netty.channel.epoll.EpollSocketChannel(fd.intValue())
+                ch.config().isAutoRead = false
+                ch.config().setOption(ChannelOption.SO_KEEPALIVE, true)
+
+                val session = ovh.rwx.habbo.game.user.HabboSession(ch)
+                if (!session.restoreFromSnapshot(snap)) {
+                    log.warn("Failed to restore session for userId={}, closing adopted channel", snap.userId)
+                    ch.close()
+                    return@forEach
+                }
+
+                snap.cryptoIn?.let { session.rc4Encryption = restoreCrypto(it) }
+                snap.cryptoOut?.let { session.rc4EncryptionOut = restoreCrypto(it) }
+
+                val rc4Decoder = if (habboConfig.encryptionConfig.rc4) {
+                    HabboNettyRC4Decoder().apply { expectedBase64Length = snap.expectedBase64Length }
+                } else null
+                val habboDecoder = HabboNettyDecoder()
+
+                ch.pipeline().apply {
+                    addLast(IdleStateHandler(60, 0, 0))
+                    if (snap.isWebSocket) {
+                        addLast(io.netty.handler.codec.http.websocketx.WebSocket13FrameDecoder(true, false, 65536))
+                        addLast(io.netty.handler.codec.http.websocketx.WebSocket13FrameEncoder(false))
+                        addLast(habboNettyWebSocketHandler)
+                    }
+                    addLast(stringEncoder)
+                    addLast(habboNettyEncoder)
+                    if (rc4Decoder != null) addLast(rc4Decoder)
+                    addLast(habboDecoder)
+                    addLast(habboNettyHandler)
+                }
+
+                habboSessionManager.registerAdoptedSession(ch, session)
+                workerGroup.register(ch).syncUninterruptibly()
+
+                if (snap.currentRoomId != null && snap.roomUser != null) {
+                    val room = restoredRooms[snap.currentRoomId]
+                    val ru = snap.roomUser
+                    val restoredUser = room?.userManager?.restoreUser(
+                        session = session,
+                        virtualId = ru.virtualId,
+                        pos = ovh.rwx.habbo.util.Vector3(ru.x, ru.y, ru.z),
+                        headRot = ru.headRotation,
+                        bodyRot = ru.bodyRotation,
+                        idle = ru.idle,
+                        danceId = ru.danceId,
+                        handItem = ru.handItem,
+                        effectId = ru.effectId,
+                        statuses = ru.statuses
+                    )
+                    if (restoredUser != null && ru.objectiveX != null && ru.objectiveY != null) {
+                        restoredUser.moveTo(
+                            ovh.rwx.habbo.util.Vector2(ru.objectiveX, ru.objectiveY),
+                            ru.objectiveRotation
+                        )
+                    }
+                }
+
+                val pendingRc4 = if (snap.pendingRc4BytesB64.isNotEmpty()) decoder.decode(snap.pendingRc4BytesB64) else ByteArray(0)
+                val pendingDec = if (snap.pendingDecoderBytesB64.isNotEmpty()) decoder.decode(snap.pendingDecoderBytesB64) else ByteArray(0)
+                if (pendingRc4.isNotEmpty() || pendingDec.isNotEmpty()) {
+                    ch.eventLoop().execute {
+                        if (pendingRc4.isNotEmpty()) {
+                            ch.pipeline().fireChannelRead(io.netty.buffer.Unpooled.wrappedBuffer(pendingRc4))
+                        }
+                        if (pendingDec.isNotEmpty() && rc4Decoder != null) {
+                            ch.pipeline().context(rc4Decoder)?.fireChannelRead(io.netty.buffer.Unpooled.wrappedBuffer(pendingDec))
+                        } else if (pendingDec.isNotEmpty()) {
+                            ch.pipeline().fireChannelRead(io.netty.buffer.Unpooled.wrappedBuffer(pendingDec))
+                        }
+                    }
+                }
+
+                adoptedChannels += ch
+            }
+
+            adoptedChannels.forEach { it.config().isAutoRead = true }
+            ovh.rwx.habbo.handoff.SystemdNotify.notifyReady()
+            received.sendAck()
+            log.info("Adopted {} sessions and {} rooms via handoff!", adoptedChannels.size, restoredRooms.size)
+        } catch (t: Throwable) {
+            log.error("Handoff adoption failed, sending NACK", t)
+            runCatching { received.sendNack(t.message ?: t.javaClass.simpleName) }
+            throw t
+        } finally {
+            received.close()
+        }
+    }
+
+    private fun quiesceForHandoff(): Pair<ovh.rwx.habbo.handoff.HandoffPayload, List<Int>> {
+        log.info("Quiescing server for seamless handoff...")
+        habboGame.pausedForHandoff = true
+        habboSessionManager.stopHeartbeat()
+        ovh.rwx.habbo.metrics.ServerMetrics.stop()
+
+        // Close unauthenticated and FastFood sessions cleanly
+        habboSessionManager.habboSessions.values.toList().forEach { session ->
+            if (!session.authenticated) {
+                runCatching { session.channel.close().awaitUninterruptibly() }
+            } else {
+                session.channel.config().isAutoRead = false
+            }
+        }
+        habboSessionManager.fastFoodSessions.values.toList().forEach { session ->
+            runCatching {
+                habboSessionManager.removeFastFoodSession(session.channel)
+                session.channel.close().awaitUninterruptibly()
+            }
+        }
+
+        // Drain in-flight packet handlers before pausing rooms and flushing DB
+        habboSessionManager.habboSessions.values
+            .filter { it.authenticated && it.channel.isActive }
+            .forEach { it.drainPacketDispatcherBlocking() }
+
+        // Pause all active rooms without kicking entities
+        val activeRooms = habboGame.roomManager.roomTaskManager.rooms.toList()
+        activeRooms.forEach { it.pauseForHandoff() }
+
+        // Drain outboxes on event loops
+        val authSessions = habboSessionManager.habboSessions.values.filter { it.authenticated && it.channel.isActive }
+        authSessions.forEach { it.flushOutboxBlocking() }
+
+        // Flush achievements + write-behind + release unused Hi-Lo blocks before new JVM warms up
+        habboGame.achievementManager.saveQueuedAchievements()
+        WriteBehindManager.flushAllAndPause()
+        ovh.rwx.habbo.database.sequence.HiLoSequence.releaseAllUnusedBlocks()
+
+        // Stop external plugins (releases web_port)
+        pluginManager.close()
+
+        val encoder = java.util.Base64.getEncoder()
+        val fds = mutableListOf<Int>()
+        val listenerTypes = mutableListOf<String>()
+        serverChannels.forEachIndexed { idx, ch ->
+            if (ch is io.netty.channel.unix.UnixChannel) {
+                fds += ch.fd().intValue()
+                listenerTypes += when (idx) {
+                    0 -> "habbo-tcp"
+                    1 -> "habbo-ws"
+                    2 -> "fastfood-tcp"
+                    else -> "fastfood-ws"
+                }
+            }
+        }
+
+        val sessionSnapshots = authSessions.mapIndexed { idx, session ->
+            val ch = session.channel as io.netty.channel.unix.UnixChannel
+            fds += ch.fd().intValue()
+            val rc4Dec = session.channel.pipeline().get(HabboNettyRC4Decoder::class.java)
+            val habboDec = session.channel.pipeline().get(HabboNettyDecoder::class.java)
+            val pendingRc4 = rc4Dec?.drainPendingBytes() ?: ByteArray(0)
+            val pendingDec = habboDec?.drainPendingBytes() ?: ByteArray(0)
+
+            val ru = session.roomUser
+            val roomUserSnap = if (ru != null && session.currentRoom != null) {
+                ovh.rwx.habbo.handoff.RoomUserSnapshot(
+                    virtualId = ru.virtualID,
+                    x = ru.currentVector3.x,
+                    y = ru.currentVector3.y,
+                    z = ru.currentVector3.z,
+                    headRotation = ru.headRotation,
+                    bodyRotation = ru.bodyRotation,
+                    idle = ru.idle,
+                    danceId = ru.danceId,
+                    handItem = ru.handItem,
+                    effectId = ru.effect?.effectId ?: 0,
+                    statuses = ru.statusMap.mapValues { it.value.second },
+                    objectiveX = ru.objectiveVector2?.x,
+                    objectiveY = ru.objectiveVector2?.y,
+                    objectiveRotation = ru.objectiveRotation
+                )
+            } else null
+
+            ovh.rwx.habbo.handoff.SessionSnapshot(
+                fdIndex = idx,
+                isWebSocket = session.isWebSocket,
+                userId = session.userInformation.id,
+                release = session.releaseForHandoff(),
+                protocolEra = session.protocolEra.name,
+                habboVersionIso = session.habboVersion.buildDate.toString(),
+                habboVersionBuild = session.habboVersion.majorVersion,
+                habboVersionPlatform = session.habboVersion.platform.name,
+                habboVersionReleaseString = session.habboVersion.releaseString,
+                uniqueId = session.uniqueID,
+                osInformation = session.osInformation,
+                isBot = session.isBot,
+                cryptoIn = session.rc4Encryption?.let { snapshotCrypto(it) },
+                cryptoOut = session.rc4EncryptionOut?.let { snapshotCrypto(it) },
+                expectedBase64Length = rc4Dec?.expectedBase64Length ?: 0,
+                pendingRc4BytesB64 = encoder.encodeToString(pendingRc4),
+                pendingDecoderBytesB64 = encoder.encodeToString(pendingDec),
+                currentRoomId = session.currentRoom?.roomData?.id,
+                roomUser = roomUserSnap
+            )
+        }
+
+        val roomSnapshots = activeRooms.map { room ->
+            val pets = room.userManager.entities.values
+                .filterIsInstance<ovh.rwx.habbo.game.room.user.RoomPet>()
+                .map { pet ->
+                    ovh.rwx.habbo.handoff.PetSnapshot(
+                        petId = pet.petData.id,
+                        virtualId = pet.virtualID,
+                        x = pet.currentVector3.x,
+                        y = pet.currentVector3.y,
+                        z = pet.currentVector3.z,
+                        headRotation = pet.headRotation,
+                        bodyRotation = pet.bodyRotation
+                    )
+                }
+            ovh.rwx.habbo.handoff.RoomSnapshot(
+                roomId = room.roomData.id,
+                tickCounter = room.tickCounter,
+                rollerCounter = room.rollerCounter.get(),
+                roomTimer = room.roomTimer.get(),
+                pets = pets
+            )
+        }
+
+        return ovh.rwx.habbo.handoff.HandoffPayload(
+            schemaVersion = 1,
+            listenerTypes = listenerTypes,
+            sessions = sessionSnapshots,
+            rooms = roomSnapshots
+        ) to fds
+    }
+
+    private fun resumeFromFailedHandoff() {
+        log.warn("Resuming server after failed handoff...")
+        habboGame.pausedForHandoff = false
+        WriteBehindManager.resume(applicationScope)
+        habboGame.roomManager.roomTaskManager.rooms.forEach { it.resumeAfterFailedHandoff() }
+        pluginManager.loadPlugins(ClassIndex.classesOf(ClassIndex.Kind.PLUGIN_LISTENER).map { it.asSubclass(PluginListener::class.java) })
+        pluginManager.loadPluginsFromDir(File("plugins"))
+        habboSessionManager.habboSessions.values.forEach { it.channel.config().isAutoRead = true }
+        habboSessionManager.startHeartbeat(serverScheduledExecutor, habboConfig.heartbeatIntervalSeconds)
+        ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
+    }
+
+    private fun finalizeHandoffExit() {
+        log.info("Handoff ACK received! Exiting old instance cleanly without closing client sockets...")
+        closing = true
+        isRunning = false
+        habboSessionManager.habboSessions.values.forEach {
+            it.channel.attr(HabboSessionManager.handedOffAttributeKey).set(true)
+        }
+        hikariDataSource.close()
+        exitProcess(0)
+    }
+
+    private fun snapshotCrypto(crypto: ovh.rwx.habbo.encryption.IHabboEncryption): ovh.rwx.habbo.handoff.CryptoSnapshot? =
+        when (crypto) {
+            is ovh.rwx.habbo.encryption.RC4Encryption -> {
+                val s = crypto.snapshot()
+                ovh.rwx.habbo.handoff.CryptoSnapshot(type = "RC4", state = s.state, x = s.x, y = s.y)
+            }
+            is ovh.rwx.habbo.encryption.wedgie.WedgieWrapper -> {
+                val s = crypto.snapshot()
+                ovh.rwx.habbo.handoff.CryptoSnapshot(
+                    type = "WEDGIE",
+                    innerState = s.inner.sBox, innerI = s.inner.i, innerJ = s.inner.j,
+                    outerState = s.outer.sBox, outerI = s.outer.i, outerJ = s.outer.j,
+                    rngSeed = s.rng.seed, rngModulus = s.rng.modulus
+                )
+            }
+            else -> null
+        }
+
+    private fun restoreCrypto(snap: ovh.rwx.habbo.handoff.CryptoSnapshot): ovh.rwx.habbo.encryption.IHabboEncryption? =
+        when (snap.type) {
+            "RC4" -> ovh.rwx.habbo.encryption.RC4Encryption.fromSnapshot(
+                ovh.rwx.habbo.encryption.RC4Encryption.Snapshot(snap.state!!, snap.x, snap.y)
+            )
+            "WEDGIE" -> ovh.rwx.habbo.encryption.wedgie.WedgieWrapper.fromSnapshot(
+                ovh.rwx.habbo.encryption.wedgie.WedgieWrapper.Snapshot(
+                    ovh.rwx.habbo.encryption.WedgieRC4.Snapshot(snap.innerState!!, snap.innerI, snap.innerJ),
+                    ovh.rwx.habbo.encryption.WedgieRC4.Snapshot(snap.outerState!!, snap.outerI, snap.outerJ),
+                    ovh.rwx.habbo.encryption.wedgie.HabboRandom.Snapshot(snap.rngSeed, snap.rngModulus)
+                )
+            )
+            else -> null
+        }
 }
