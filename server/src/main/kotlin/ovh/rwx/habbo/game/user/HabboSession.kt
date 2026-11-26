@@ -225,11 +225,14 @@ class HabboSession(val channel: Channel) : AutoCloseable {
     private val outboxDrainScheduled = AtomicBoolean(false)
     private val outboxDrain = Runnable { drainOutbox() }
 
+    @Volatile
+    internal var handoffFrozen: Boolean = false
+
     fun sendHabboResponse(habboResponse: HabboResponse?) {
         habboResponse ?: return
 
-        if (!channel.isActive) {
-            // Channel already closed/disconnecting: release the pooled
+        if (handoffFrozen || !channel.isActive) {
+            // Channel already closed/disconnecting/frozen for handoff: release the pooled
             // ByteBuf ourselves, otherwise it leaks (the encoder never runs).
             habboResponse.close()
             return
@@ -270,6 +273,8 @@ class HabboSession(val channel: Channel) : AutoCloseable {
 
         if (wrote) channel.flush()
     }
+
+    internal fun drainOutboxOnEventLoop() = drainOutbox()
 
     internal fun releaseForHandoff(): String = if (releaseInitialized) release else ""
 

@@ -695,12 +695,12 @@ object HabboServer : AutoCloseable {
         habboSessionManager.stopHeartbeat()
         ovh.rwx.habbo.metrics.ServerMetrics.stop()
 
-        // Close unauthenticated and FastFood sessions cleanly
+        // Close unauthenticated and FastFood sessions cleanly; disable autoRead on each channel's eventLoop
         habboSessionManager.habboSessions.values.toList().forEach { session ->
             if (!session.authenticated) {
                 runCatching { session.channel.close().awaitUninterruptibly() }
             } else {
-                session.channel.config().isAutoRead = false
+                session.channel.eventLoop().submit { session.channel.config().isAutoRead = false }.syncUninterruptibly()
             }
         }
         habboSessionManager.fastFoodSessions.values.toList().forEach { session ->
@@ -719,9 +719,9 @@ object HabboServer : AutoCloseable {
         val activeRooms = habboGame.roomManager.roomTaskManager.rooms.toList()
         activeRooms.forEach { it.pauseForHandoff() }
 
-        // Drain outboxes on event loops
+        // Freeze outboxes so no late coroutine writes after RC4-out snapshot, then drain + snapshot on each channel's eventLoop
         val authSessions = habboSessionManager.habboSessions.values.filter { it.authenticated && it.channel.isActive }
-        authSessions.forEach { it.flushOutboxBlocking() }
+        authSessions.forEach { it.handoffFrozen = true }
 
         // Flush achievements + write-behind, then release unused Hi-Lo blocks in parallel with stopping external plugins
         habboGame.achievementManager.saveQueuedAchievements()
@@ -751,10 +751,27 @@ object HabboServer : AutoCloseable {
         val sessionSnapshots = authSessions.mapIndexed { idx, session ->
             val ch = session.channel as io.netty.channel.unix.UnixChannel
             fds += ch.fd().intValue()
-            val rc4Dec = session.channel.pipeline().get(HabboNettyRC4Decoder::class.java)
-            val habboDec = session.channel.pipeline().get(HabboNettyDecoder::class.java)
-            val pendingRc4 = rc4Dec?.drainPendingBytes() ?: ByteArray(0)
-            val pendingDec = habboDec?.drainPendingBytes() ?: ByteArray(0)
+
+            data class EventLoopCapture(
+                val cryptoIn: ovh.rwx.habbo.handoff.CryptoSnapshot?,
+                val cryptoOut: ovh.rwx.habbo.handoff.CryptoSnapshot?,
+                val expectedBase64Length: Int,
+                val pendingRc4: ByteArray,
+                val pendingDec: ByteArray,
+            )
+
+            val captured = session.channel.eventLoop().submit<EventLoopCapture> {
+                session.drainOutboxOnEventLoop()
+                val rc4Dec = session.channel.pipeline().get(HabboNettyRC4Decoder::class.java)
+                val habboDec = session.channel.pipeline().get(HabboNettyDecoder::class.java)
+                EventLoopCapture(
+                    cryptoIn = session.rc4Encryption?.let { snapshotCrypto(it) },
+                    cryptoOut = session.rc4EncryptionOut?.let { snapshotCrypto(it) },
+                    expectedBase64Length = rc4Dec?.expectedBase64Length ?: 0,
+                    pendingRc4 = rc4Dec?.drainPendingBytes() ?: ByteArray(0),
+                    pendingDec = habboDec?.drainPendingBytes() ?: ByteArray(0),
+                )
+            }.syncUninterruptibly().get()
 
             val ru = session.roomUser
             val roomUserSnap = if (ru != null && session.currentRoom != null) {
@@ -789,11 +806,11 @@ object HabboServer : AutoCloseable {
                 uniqueId = session.uniqueID,
                 osInformation = session.osInformation,
                 isBot = session.isBot,
-                cryptoIn = session.rc4Encryption?.let { snapshotCrypto(it) },
-                cryptoOut = session.rc4EncryptionOut?.let { snapshotCrypto(it) },
-                expectedBase64Length = rc4Dec?.expectedBase64Length ?: 0,
-                pendingRc4BytesB64 = encoder.encodeToString(pendingRc4),
-                pendingDecoderBytesB64 = encoder.encodeToString(pendingDec),
+                cryptoIn = captured.cryptoIn,
+                cryptoOut = captured.cryptoOut,
+                expectedBase64Length = captured.expectedBase64Length,
+                pendingRc4BytesB64 = encoder.encodeToString(captured.pendingRc4),
+                pendingDecoderBytesB64 = encoder.encodeToString(captured.pendingDec),
                 currentRoomId = session.currentRoom?.roomData?.id,
                 roomUser = roomUserSnap
             )
@@ -837,7 +854,10 @@ object HabboServer : AutoCloseable {
         habboGame.roomManager.roomTaskManager.rooms.forEach { it.resumeAfterFailedHandoff() }
         pluginManager.loadPlugins(ClassIndex.classesOf(ClassIndex.Kind.PLUGIN_LISTENER).map { it.asSubclass(PluginListener::class.java) })
         pluginManager.loadPluginsFromDir(File("plugins"))
-        habboSessionManager.habboSessions.values.forEach { it.channel.config().isAutoRead = true }
+        habboSessionManager.habboSessions.values.forEach {
+            it.handoffFrozen = false
+            it.channel.eventLoop().submit { it.channel.config().isAutoRead = true }
+        }
         habboSessionManager.startHeartbeat(serverScheduledExecutor, habboConfig.heartbeatIntervalSeconds)
         ovh.rwx.habbo.metrics.ServerMetrics.start(habboConfig.metricsSampleIntervalMs)
     }
