@@ -63,6 +63,11 @@ hot-load plugin system.
     `restoreFromSnapshot`/`restoreUser`; `"mv"` é removido na restauração com `updateNeeded = true` se estava andando.
   - **WebSocket adotado**: pula `HttpServerCodec`/`WebSocketServerProtocolHandler` (usa `WebSocket13FrameDecoder`/
     `Encoder` + `HabboNettyWebSocketHandler`); `HabboSession.isWebSocket` checa `HabboNettyWebSocketHandler`.
+  - **RC4 & `eventLoop` no quiesce**: `RC4Encryption` (`state`/`x`/`y`) não é thread-safe nem `volatile`. No
+    `quiesceForHandoff()`, `autoRead = false`, `handoffFrozen = true` (bloqueia escritas tardias no `outbox`),
+    `drainOutboxOnEventLoop()`, `snapshotCrypto` (IN e OUT) e `drainPendingBytes()` **devem** rodar sincronamente no
+    `channel.eventLoop()` — rodar fora do event loop dessincroniza o keystream RC4 (`Invalid delimiter` / `Invalid
+    message length`).
   - **Plugins & Rollback**: plugins externos (`plugin_webapp`) carregam em `start()` após o handoff para não colidir
     `web_port`; `resumeFromFailedHandoff()` recarrega built-ins (`ClassIndex`) e externos.
   - **Flyway**: migrations em deploy seamless devem ser expand-only (nunca `DROP`/`RENAME` no mesmo deploy).
