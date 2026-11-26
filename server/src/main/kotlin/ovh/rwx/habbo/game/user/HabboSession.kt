@@ -488,13 +488,10 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         habboBadge = HabboBadge(this@HabboSession)
         habboInventory = HabboInventory(this@HabboSession)
 
-        runBlocking(Dispatchers.IO) {
-            val badgeJob = async { habboBadge.load() }
-            val messengerJob = async { habboMessenger.load() }
-            val inventoryJob = async { habboInventory.load() }
-            badgeJob.await()
-            messengerJob.await()
-            inventoryJob.await()
+        sessionScope.launch(Dispatchers.IO) {
+            launch { habboBadge.load() }
+            launch { habboMessenger.load() }
+            launch { habboInventory.load() }
         }
 
         return true

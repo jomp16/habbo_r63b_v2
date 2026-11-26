@@ -19,6 +19,9 @@
 
 package ovh.rwx.habbo.database.sequence
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import ovh.rwx.habbo.database.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -145,14 +148,18 @@ open class HiLoSequence(
         private fun hiOf(s: Long): Int = (s ushr 32).toInt()
         private fun loOf(s: Long): Long = s and 0xFFFF_FFFFL
 
-        /** Shutdown: devolve os blocos não usados de todas as sequências (falha de uma não impede as outras). */
+        /** Shutdown: devolve os blocos não usados de todas as sequências em paralelo (falha de uma não impede as outras). */
         fun releaseAllUnusedBlocks() {
             val log = LoggerFactory.getLogger(HiLoSequence::class.java)
-            for (seq in all) {
-                try {
-                    seq.releaseUnusedBlock()
-                } catch (e: Exception) {
-                    log.warn("Failed to release Hi-Lo block of '{}'", seq.sequenceName, e)
+            runBlocking(Dispatchers.IO.limitedParallelism(8)) {
+                for (seq in all) {
+                    launch {
+                        try {
+                            seq.releaseUnusedBlock()
+                        } catch (e: Exception) {
+                            log.warn("Failed to release Hi-Lo block of '{}'", seq.sequenceName, e)
+                        }
+                    }
                 }
             }
         }

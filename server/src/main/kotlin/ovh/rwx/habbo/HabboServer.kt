@@ -561,33 +561,50 @@ object HabboServer : AutoCloseable {
                 serverChannels += fastFoodWebSocketServerBootstrap.bind(habboConfig.fastFoodWsPort).sync().channel()
             }
 
-            val restoredRooms = mutableMapOf<Int, ovh.rwx.habbo.game.room.Room>()
-            payload.rooms.forEach { roomSnap ->
-                val room = habboGame.roomManager.rooms[roomSnap.roomId] ?: return@forEach
-                habboGame.roomManager.roomTaskManager.registerRestoredRoom(
-                    room,
-                    roomSnap.tickCounter,
-                    roomSnap.rollerCounter,
-                    roomSnap.roomTimer
-                )
-                room.userManager.reconcilePetPositions(
-                    roomSnap.pets.map {
-                        ovh.rwx.habbo.game.room.managers.RoomUserManager.PetRestoreInfo(
-                            it.petId, it.virtualId, it.x, it.y, it.z, it.headRotation, it.bodyRotation
-                        )
-                    }
-                )
-                restoredRooms[roomSnap.roomId] = room
+            val restoredRooms = java.util.concurrent.ConcurrentHashMap<Int, ovh.rwx.habbo.game.room.Room>()
+            if (payload.rooms.isNotEmpty()) {
+                runBlocking(Dispatchers.IO.limitedParallelism(6)) {
+                    payload.rooms.map { roomSnap ->
+                        async {
+                            val room = habboGame.roomManager.rooms[roomSnap.roomId] ?: return@async
+                            habboGame.roomManager.roomTaskManager.registerRestoredRoom(
+                                room,
+                                roomSnap.tickCounter,
+                                roomSnap.rollerCounter,
+                                roomSnap.roomTimer
+                            )
+                            room.userManager.reconcilePetPositions(
+                                roomSnap.pets.map {
+                                    ovh.rwx.habbo.game.room.managers.RoomUserManager.PetRestoreInfo(
+                                        it.petId, it.virtualId, it.x, it.y, it.z, it.headRotation, it.bodyRotation
+                                    )
+                                }
+                            )
+                            restoredRooms[roomSnap.roomId] = room
+                        }
+                    }.awaitAll()
+                }
             }
 
-            payload.sessions.forEach { snap ->
-                val fd = received.sessionFds[snap.fdIndex]
-                val ch = io.netty.channel.epoll.EpollSocketChannel(fd.intValue())
-                ch.config().isAutoRead = false
-                ch.config().setOption(ChannelOption.SO_KEEPALIVE, true)
+            val preparedSessions = if (payload.sessions.isNotEmpty()) {
+                runBlocking(Dispatchers.IO.limitedParallelism(8)) {
+                    payload.sessions.map { snap ->
+                        async {
+                            val fd = received.sessionFds[snap.fdIndex]
+                            val ch = io.netty.channel.epoll.EpollSocketChannel(fd.intValue())
+                            ch.config().isAutoRead = false
+                            ch.config().setOption(ChannelOption.SO_KEEPALIVE, true)
 
-                val session = ovh.rwx.habbo.game.user.HabboSession(ch)
-                if (!session.restoreFromSnapshot(snap)) {
+                            val session = ovh.rwx.habbo.game.user.HabboSession(ch)
+                            val ok = session.restoreFromSnapshot(snap)
+                            Triple(snap, ch, if (ok) session else null)
+                        }
+                    }.awaitAll()
+                }
+            } else emptyList()
+
+            preparedSessions.forEach { (snap, ch, session) ->
+                if (session == null) {
                     log.warn("Failed to restore session for userId={}, closing adopted channel", snap.userId)
                     ch.close()
                     return@forEach
@@ -706,13 +723,15 @@ object HabboServer : AutoCloseable {
         val authSessions = habboSessionManager.habboSessions.values.filter { it.authenticated && it.channel.isActive }
         authSessions.forEach { it.flushOutboxBlocking() }
 
-        // Flush achievements + write-behind + release unused Hi-Lo blocks before new JVM warms up
+        // Flush achievements + write-behind, then release unused Hi-Lo blocks in parallel with stopping external plugins
         habboGame.achievementManager.saveQueuedAchievements()
         WriteBehindManager.flushAllAndPause()
-        ovh.rwx.habbo.database.sequence.HiLoSequence.releaseAllUnusedBlocks()
-
-        // Stop external plugins (releases web_port)
-        pluginManager.close()
+        runBlocking(Dispatchers.IO) {
+            val hiLoJob = async { ovh.rwx.habbo.database.sequence.HiLoSequence.releaseAllUnusedBlocks() }
+            val pluginsJob = async { pluginManager.close() }
+            hiLoJob.await()
+            pluginsJob.await()
+        }
 
         val encoder = java.util.Base64.getEncoder()
         val fds = mutableListOf<Int>()
