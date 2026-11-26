@@ -42,13 +42,32 @@ hot-load plugin system.
   (`camera_remote_skipped`) and the Kotlin one in `HabboCameraRenderer.externalImagesRejected`. Keep the rule identical
   in `HabboCameraRenderer.readPhoto` and `habbo-render`'s `Remote.read`.
 
-## Deploy (`scripts/deploy.sh`)
+## Deploy (`scripts/deploy.sh`, `deploy/habbo.service`, `deploy/handoff-reload.sh`)
 
-- systemd `habbo.service` as user `habbo:habbo`; app in `/opt/habbo/`; camera assets in
-  `/mnt/HDD_EXTERNO2/Habbo/camera_data` (symlinked to `/opt/habbo/camera_data`); MariaDB is external.
-- `./scripts/deploy.sh` builds locally, rsyncs jars/plugins, generates `deploy/config.prod.yaml` if missing
-  (`debug: false`), restarts the service. `DEPLOY_TARGET` overrides the target.
-- Flags: `--skip-build`, `--sync-camera` (camera_data changed), `--status` (+ `--tail [N]` to follow logs).
+- systemd `habbo.service` (`Type=notify`, `NotifyAccess=all`, user `habbo:habbo`, `-Xms256m -Xmx768m` — a VPS tem
+  1,5 GiB de RAM, `-Xms768m` arrisca OOM no overlap de 2 JVMs).
+- Layout versionado: `/opt/habbo/releases/<YYYYMMDD-HHMMSS>/` + symlink `/opt/habbo/current` (mantém últimas 3) +
+  `/opt/habbo/shared/` (`config.yaml`, `log4j2-prod.xml`, `cache/`, `logs/`, `motd/`, `run/`, `camera_data` symlink,
+  `handoff-reload.sh`).
+- **Seamless reload é o padrão**: `./scripts/deploy.sh` compila, sincroniza e roda `systemctl reload habbo.service`
+  (handoff de FDs via Netty Epoll `SCM_RIGHTS` em `/opt/habbo/shared/run/handoff.sock`), com fallback automático para
+  `restart`. `ExecReload` usa double-fork (`handoff-reload.sh`) para a nova JVM virar filha direta do PID 1 antes do
+  `sd_notify(MAINPID=)`.
+- Flags: `--skip-build`, `--no-seamless`/`--hard-restart`, `--sync-camera`, `--status`, `--tail [N]`. `DEPLOY_TARGET`
+  sobrescreve o alvo.
+- **Invariantes do handoff (`ovh.rwx.habbo.handoff`, `HabboServer.kt`)**:
+  - **Hi-Lo**: `HiLoSequence.releaseAllUnusedBlocks()` roda em `quiesceForHandoff()` e `warmUp()` roda *depois* de
+    `adoptFromHandoff()` (senão cada reload queima 1 bloco por sequência).
+  - **Sessão & `RoomUser`**: novos campos de protocolo (`HabboVersion.platform`/`releaseString`) ou estado visível do
+    avatar (`danceId`, `effect`, `handItem`, `statusMap`, `objectiveVector2`) entram em `HandoffSnapshot` +
+    `restoreFromSnapshot`/`restoreUser`; `"mv"` é removido na restauração com `updateNeeded = true` se estava andando.
+  - **WebSocket adotado**: pula `HttpServerCodec`/`WebSocketServerProtocolHandler` (usa `WebSocket13FrameDecoder`/
+    `Encoder` + `HabboNettyWebSocketHandler`); `HabboSession.isWebSocket` checa `HabboNettyWebSocketHandler`.
+  - **Plugins & Rollback**: plugins externos (`plugin_webapp`) carregam em `start()` após o handoff para não colidir
+    `web_port`; `resumeFromFailedHandoff()` recarrega built-ins (`ClassIndex`) e externos.
+  - **Flyway**: migrations em deploy seamless devem ser expand-only (nunca `DROP`/`RENAME` no mesmo deploy).
+- **Testes E2E locais (repos irmãos)**: `../habbo_client_driver` (`hcd`) testa clientes PIXI JS (WebSocket) contra
+  `dev_stack.sh`; `../habbo_client_sdk` (`./run.sh handoff`) testa bots TCP+RC4.
 
 ## Local dev DB (`scripts/dev_db.sh`)
 
