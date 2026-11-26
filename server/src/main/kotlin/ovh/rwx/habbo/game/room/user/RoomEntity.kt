@@ -168,7 +168,7 @@ abstract class RoomEntity(
         }
     }
 
-    private fun commitPendingMovementStep() {
+    internal fun commitPendingMovementStep() {
         if (!hasPendingStep) return
 
         val oldPos = currentVector3.copy()

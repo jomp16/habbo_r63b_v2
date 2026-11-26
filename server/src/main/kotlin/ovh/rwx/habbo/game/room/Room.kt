@@ -269,6 +269,15 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         runBlocking { job?.join() }
         loopJob = null
 
+        userManager.entities.values.forEach { entity ->
+            if (entity.nextStepVector != null) {
+                entity.commitPendingMovementStep()
+                if (entity.objectiveVector2 == entity.currentVector3.vector2) {
+                    entity.stopWalking()
+                }
+            }
+        }
+
         saveRoom()
     }
 
