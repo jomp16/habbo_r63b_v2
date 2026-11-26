@@ -82,7 +82,7 @@ import javax.script.ScriptEngineManager
 class HabboSession(val channel: Channel) : AutoCloseable {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     /** Conexão pelo listener WebSocket (cliente de navegador) em vez do TCP (Flash/AIR). */
-    val isWebSocket: Boolean get() = channel.pipeline().get(WebSocketServerProtocolHandler::class.java) != null
+    val isWebSocket: Boolean get() = channel.pipeline().get(ovh.rwx.habbo.netty.HabboNettyWebSocketHandler::class.java) != null
     val sessionJob = SupervisorJob()
     val sessionScope = CoroutineScope(Dispatchers.Default + sessionJob)
 
@@ -271,6 +271,37 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         if (wrote) channel.flush()
     }
 
+    internal fun releaseForHandoff(): String = if (releaseInitialized) release else ""
+
+    internal fun drainPacketDispatcherBlocking(timeoutMs: Long = 2000L) {
+        val latch = java.util.concurrent.CountDownLatch(1)
+        try {
+            HabboServer.applicationScope.launch(packetDispatcher) {
+                latch.countDown()
+            }
+            latch.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+        } catch (_: Exception) {
+            // dispatcher already shutting down
+        }
+    }
+
+    internal fun flushOutboxBlocking(timeoutMs: Long = 2000L) {
+        if (!channel.isActive) return
+        val latch = java.util.concurrent.CountDownLatch(1)
+        try {
+            channel.eventLoop().execute {
+                try {
+                    drainOutbox()
+                } finally {
+                    latch.countDown()
+                }
+            }
+            latch.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+        } catch (_: Exception) {
+            // event loop already shutting down or interrupted
+        }
+    }
+
     fun sendNotification(message: String) = sendNotification(NotificationType.BROADCAST_ALERT, message)
 
     fun sendNotification(notificationType: NotificationType, message: String) {
@@ -402,6 +433,69 @@ class HabboSession(val channel: Channel) : AutoCloseable {
         }
 
         HabboServer.pluginManager.executeEventAsync(UserLoginEvent(this))
+
+        return true
+    }
+
+    internal fun restoreFromSnapshot(snapshot: ovh.rwx.habbo.handoff.SessionSnapshot): Boolean {
+        release = snapshot.release
+        releaseCheckReceived = true
+        protocolEra = ProtocolEra.valueOf(snapshot.protocolEra)
+        habboVersion = HabboVersion(
+            LocalDateTime.parse(snapshot.habboVersionIso),
+            snapshot.habboVersionBuild,
+            ovh.rwx.habbo.communication.HabboPlatform.valueOf(snapshot.habboVersionPlatform),
+            snapshot.habboVersionReleaseString
+        )
+        uniqueID = snapshot.uniqueId
+        osInformation = snapshot.osInformation
+        badgePointLimitsRequested.complete(Unit)
+
+        if (snapshot.isBot) {
+            val suffix = snapshot.userId - 2_000_000_000
+            return authenticateBot("${HabboServer.habboConfig.botTicketPrefix}$suffix")
+        }
+
+        val userInformation1 = UserInformationDao.getUserInformationById(snapshot.userId) ?: return false
+        userInformation = userInformation1
+        isBot = snapshot.isBot
+
+        val userId = userInformation1.id
+        habboSubscription = HabboSubscription(this@HabboSession)
+        habboHabbicon = HabboHabbicon(this@HabboSession)
+        val (loadedStats, loadedPreferences, loadedFavorites) = runBlocking(Dispatchers.IO) {
+            val stats = async { UserStatsDao.getUserStats(userId) }
+            val preferences = async { UserPreferencesDao.getUserPreferences(userId) }
+            val favorites = async { RoomDao.getFavoritesRooms(userId).toMutableList() }
+            val clothings = async { userInformation1.clothings }
+            val subscription = async { habboSubscription.load() }
+            val ignores = async { habboIgnores.load() }
+            val blocks = async { habboBlocks.load() }
+            val habbicons = async { habboHabbicon.load() }
+            clothings.await()
+            habbicons.await()
+            ignores.await()
+            blocks.await()
+            subscription.await()
+            Triple(stats.await(), preferences.await(), favorites.await())
+        }
+        userStats = loadedStats
+        userPreferences = loadedPreferences
+        favoritesRooms = loadedFavorites
+        userStats.lastOnlineDatabase = userStats.lastOnline
+
+        habboMessenger = HabboMessenger(this@HabboSession)
+        habboBadge = HabboBadge(this@HabboSession)
+        habboInventory = HabboInventory(this@HabboSession)
+
+        runBlocking(Dispatchers.IO) {
+            val badgeJob = async { habboBadge.load() }
+            val messengerJob = async { habboMessenger.load() }
+            val inventoryJob = async { habboInventory.load() }
+            badgeJob.await()
+            messengerJob.await()
+            inventoryJob.await()
+        }
 
         return true
     }

@@ -28,7 +28,14 @@ import ovh.rwx.habbo.encryption.wedgie.WedgieWrapper
 import ovh.rwx.habbo.game.user.HabboSessionManager
 
 class HabboNettyRC4Decoder : ByteToMessageDecoder() {
-    private var expectedBase64Length = 0
+    internal var expectedBase64Length = 0
+
+    fun drainPendingBytes(): ByteArray {
+        val buf = internalBuffer()
+        val readable = buf.readableBytes()
+        if (readable <= 0) return ByteArray(0)
+        return ByteArray(readable).also { buf.readBytes(it) }
+    }
 
     override fun decode(ctx: ChannelHandlerContext, incomingByteBuf: ByteBuf, out: MutableList<Any>) {
         val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()

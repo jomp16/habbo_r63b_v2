@@ -20,12 +20,20 @@
 package ovh.rwx
 
 import ovh.rwx.habbo.HabboServer
+import ovh.rwx.habbo.handoff.HandoffMode
 
-fun main() {
-    // todo: LOAD FROM JAR!
-    // todo: add news
-    // todo: add update checking
-    // todo: ???
-    // todo: profit!
-    HabboServer.start()
+fun main(args: Array<String>) {
+    var handoffSocketPath: String? = null
+    var handoffMode = HandoffMode.AUTO
+
+    var i = 0
+    while (i < args.size) {
+        when (args[i]) {
+            "--handoff-socket" -> if (i + 1 < args.size) handoffSocketPath = args[++i]
+            "--handoff-mode" -> if (i + 1 < args.size) handoffMode = HandoffMode.valueOf(args[++i].uppercase())
+        }
+        i++
+    }
+
+    HabboServer.start(handoffSocketPath, handoffMode)
 }

@@ -27,12 +27,12 @@ package ovh.rwx.habbo.encryption
  *
  * Não é thread-safe: cada sessão usa a sua instância, sempre da mesma thread (o event loop do canal).
  */
-class RC4Encryption(key: ByteArray) : IHabboEncryption {
-    private val state = IntArray(256) { it }
-    private var x = 0
-    private var y = 0
-
-    init {
+class RC4Encryption private constructor(
+    private val state: IntArray,
+    private var x: Int,
+    private var y: Int
+) : IHabboEncryption {
+    constructor(key: ByteArray) : this(IntArray(256) { it }, 0, 0) {
         require(key.isNotEmpty()) { "chave RC4 vazia" }
 
         var j = 0
@@ -41,6 +41,30 @@ class RC4Encryption(key: ByteArray) : IHabboEncryption {
             val tmp = state[i]
             state[i] = state[j]
             state[j] = tmp
+        }
+    }
+
+    data class Snapshot(val state: IntArray, val x: Int, val y: Int) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Snapshot) return false
+            return x == other.x && y == other.y && state.contentEquals(other.state)
+        }
+
+        override fun hashCode(): Int {
+            var result = state.contentHashCode()
+            result = 31 * result + x
+            result = 31 * result + y
+            return result
+        }
+    }
+
+    fun snapshot(): Snapshot = Snapshot(state.copyOf(), x, y)
+
+    companion object {
+        fun fromSnapshot(s: Snapshot): RC4Encryption {
+            require(s.state.size == 256) { "RC4 state must have 256 elements" }
+            return RC4Encryption(s.state.copyOf(), s.x, s.y)
         }
     }
 

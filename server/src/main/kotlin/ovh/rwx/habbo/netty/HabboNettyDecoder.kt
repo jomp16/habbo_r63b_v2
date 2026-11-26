@@ -39,6 +39,13 @@ import ovh.rwx.habbo.kotlin.ip
 class HabboNettyDecoder : ByteToMessageDecoder() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
+    fun drainPendingBytes(): ByteArray {
+        val buf = internalBuffer()
+        val readable = buf.readableBytes()
+        if (readable <= 0) return ByteArray(0)
+        return ByteArray(readable).also { buf.readBytes(it) }
+    }
+
     companion object {
         // A detecção de era é empírica: o cliente pré-shuffle não reporta a versão na conexão
         // (só nas misc client variables, via flash.client.url), então a família é inferida pelo

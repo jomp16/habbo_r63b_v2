@@ -36,6 +36,13 @@ class RoomTaskManager {
         }
     }
 
+    fun registerRestoredRoom(room: Room, tickCounter: Int, rollerCounter: Int, roomTimer: Int) {
+        synchronized(room) {
+            if (!rooms.add(room)) return
+            room.startLoopForHandoff(tickCounter, rollerCounter, roomTimer)
+        }
+    }
+
     fun removeRoom(room: Room) {
         synchronized(room) {
             if (!rooms.remove(room)) return

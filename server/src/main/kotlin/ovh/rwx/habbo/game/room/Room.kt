@@ -244,6 +244,41 @@ class Room(val roomData: RoomData, var roomModel: RoomModel) : IHabboResponseSer
         initialize()
         roomGamemap.clearEntities()
 
+        launchLoopJob()
+    }
+
+    fun startLoopForHandoff(tickCounter: Int, rollerCounter: Int, roomTimer: Int) {
+        if (running) return
+
+        initialize()
+        this.tickCounter = tickCounter
+        this.rollerCounter.set(rollerCounter)
+        this.roomTimer.set(roomTimer)
+
+        launchLoopJob()
+    }
+
+    fun pauseForHandoff() {
+        if (!running) return
+
+        tradeManager.clearAllTrades()
+        HabboGame.instance?.chestManager?.onRoomUnload(this)
+
+        val job = loopJob
+        job?.cancel()
+        runBlocking { job?.join() }
+        loopJob = null
+
+        saveRoom()
+    }
+
+    fun resumeAfterFailedHandoff() {
+        if (running) return
+
+        launchLoopJob()
+    }
+
+    private fun launchLoopJob() {
         val tickMonitor = RoomTickMonitor(roomData.id, HabboServer.habboConfig.stressTest)
 
         loopJob = HabboServer.applicationScope.launch {

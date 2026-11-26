@@ -43,6 +43,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun channelRegistered(ctx: ChannelHandlerContext) {
+        if (ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get() != null) return
+
         val ip = ctx.channel().ip()
 
         log.info("New connection of {}!", ip)
@@ -55,6 +57,8 @@ class HabboNettyHandler : ChannelInboundHandlerAdapter() {
     }
 
     override fun channelUnregistered(ctx: ChannelHandlerContext) {
+        if (ctx.channel().attr(HabboSessionManager.handedOffAttributeKey).get() == true) return
+
         val habboSession = ctx.channel().attr(HabboSessionManager.habboSessionAttributeKey).get()
         val username = if (habboSession.authenticated) habboSession.userInformation.username else habboSession.channel.ip()
 

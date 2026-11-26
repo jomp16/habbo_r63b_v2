@@ -22,9 +22,10 @@
 # deploy.sh — Compila localmente e publica o Habbo Emulator no servidor de produção.
 #
 # Uso:
-#   ./scripts/deploy.sh                  # Compila, sincroniza binários/plugins/config e reinicia o serviço
+#   ./scripts/deploy.sh                  # Compila, sincroniza e faz reload seamless (fallback para restart)
 #   ./scripts/deploy.sh --skip-build     # Pula o build local e sincroniza o build existente
 #   ./scripts/deploy.sh --sync-camera    # Sincroniza também a pasta camera_data/ (1.5 GB)
+#   ./scripts/deploy.sh --no-seamless    # Força restart completo em vez de reload seamless
 #   ./scripts/deploy.sh --restart-only   # Apenas reinicia o serviço remoto
 #   ./scripts/deploy.sh --status         # Verifica o status e logs recentes do emulador remoto
 #   ./scripts/deploy.sh --tail [N]       # Acompanha logs do emulador em tempo real (ou --status --tail)
@@ -63,11 +64,16 @@ else
 fi
 
 REMOTE_APP_DIR="/opt/habbo"
+REMOTE_RELEASES_DIR="$REMOTE_APP_DIR/releases"
+REMOTE_SHARED_DIR="$REMOTE_APP_DIR/shared"
+REMOTE_CURRENT_LINK="$REMOTE_APP_DIR/current"
+REMOTE_HANDOFF_SOCK="$REMOTE_SHARED_DIR/run/handoff.sock"
 REMOTE_CAMERA_DIR="/mnt/HDD_EXTERNO2/Habbo/camera_data"
 SERVICE_NAME="habbo.service"
 
 SKIP_BUILD=0
 SYNC_CAMERA=0
+SEAMLESS=1
 RESTART_ONLY=0
 CHECK_STATUS=0
 TAIL_LOGS=0
@@ -77,6 +83,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build)   SKIP_BUILD=1; shift ;;
     --sync-camera)  SYNC_CAMERA=1; shift ;;
+    --seamless)     SEAMLESS=1; shift ;;
+    --no-seamless|--hard-restart) SEAMLESS=0; shift ;;
     --restart-only) RESTART_ONLY=1; shift ;;
     --status)       CHECK_STATUS=1; shift ;;
     --tail=*|--lines=*)
@@ -99,6 +107,8 @@ Uso: $0 [opções]
 Opções:
   --skip-build     Pula o gradle :launcher:installDist e envia o build atual
   --sync-camera    Sincroniza camera_data/ (assets do renderizador) para o HDD remoto
+  --seamless       (padrão) Usa reload via socket de handoff se o serviço estiver ativo
+  --no-seamless    Força restart completo em vez de reload seamless
   --restart-only   Apenas reinicia o serviço habbo remoto
   --status         Mostra status e logs recentes do emulador no servidor
   --tail [N]       Acompanha os logs em tempo real (journalctl -f, default: 50 linhas)
@@ -140,12 +150,32 @@ if [[ $TAIL_LOGS -eq 1 ]]; then
   exit 0
 fi
 
+reload_or_restart_remote() {
+  if [[ $SEAMLESS -eq 1 ]]; then
+    ssh "$SSH_TARGET" bash -s -- "$REMOTE_HANDOFF_SOCK" "$SERVICE_NAME" <<'EOF'
+set -euo pipefail
+handoff_sock="$1"
+service_name="$2"
+if [[ -S "$handoff_sock" ]] && systemctl is-active --quiet "$service_name"; then
+  echo "    • Socket de handoff ativo; executando systemctl reload $service_name..."
+  systemctl reload "$service_name"
+else
+  echo "    • Socket de handoff ausente ou serviço inativo; executando systemctl restart $service_name..."
+  systemctl restart "$service_name"
+fi
+EOF
+  else
+    ssh "$SSH_TARGET" "systemctl restart $SERVICE_NAME"
+  fi
+}
+
 # -------------------------------------------------------------
 # Restart only
 # -------------------------------------------------------------
 if [[ $RESTART_ONLY -eq 1 ]]; then
   echo "== Reiniciando $SERVICE_NAME em $SSH_TARGET =="
-  ssh "$SSH_TARGET" "systemctl restart $SERVICE_NAME && systemctl is-active $SERVICE_NAME"
+  reload_or_restart_remote
+  ssh "$SSH_TARGET" "systemctl is-active $SERVICE_NAME"
   echo "Pronto! Serviço reiniciado com sucesso."
   exit 0
 fi
@@ -205,41 +235,93 @@ fi
   exit 1
 }
 
+RELEASE_ID="$(date +%Y%m%d-%H%M%S)"
+REMOTE_RELEASE_DIR="$REMOTE_RELEASES_DIR/$RELEASE_ID"
+
 # -------------------------------------------------------------
 # 3. Setup de usuário e diretórios no servidor
 # -------------------------------------------------------------
 echo ""
-echo "--> 3. Verificando ambiente remoto (usuário 'habbo' e diretórios)..."
-ssh "$SSH_TARGET" bash -s <<EOF
+echo "--> 3. Verificando ambiente remoto (usuário 'habbo', releases e shared)..."
+ssh "$SSH_TARGET" bash -s -- "$REMOTE_APP_DIR" "$REMOTE_RELEASES_DIR" "$REMOTE_RELEASE_DIR" "$REMOTE_SHARED_DIR" "$REMOTE_CAMERA_DIR" <<'EOF'
 set -euo pipefail
-id -u habbo >/dev/null 2>&1 || useradd -r -s /usr/bin/nologin -U -d $REMOTE_APP_DIR habbo
-mkdir -p "$REMOTE_APP_DIR" "$REMOTE_CAMERA_DIR" "$REMOTE_APP_DIR/logs"
-ln -sfn "$REMOTE_CAMERA_DIR" "$REMOTE_APP_DIR/camera_data"
+app_dir="$1"
+releases_dir="$2"
+release_dir="$3"
+shared_dir="$4"
+camera_dir="$5"
+
+id -u habbo >/dev/null 2>&1 || useradd -r -s /usr/bin/nologin -U -d "$app_dir" habbo
+mkdir -p "$releases_dir" "$release_dir" "$shared_dir/logs" "$shared_dir/cache" "$shared_dir/motd" "$shared_dir/run" "$camera_dir"
+if [[ -d "$app_dir/cache" && ! -L "$app_dir/cache" ]]; then
+  cp -an "$app_dir/cache/." "$shared_dir/cache/" 2>/dev/null || true
+fi
+ln -sfn "$camera_dir" "$shared_dir/camera_data"
 EOF
 
 # -------------------------------------------------------------
-# 4. Sincronização de arquivos do emulador (rsync incremental)
+# 4. Sincronização de arquivos do emulador (release versionada + shared)
 # -------------------------------------------------------------
 echo ""
-echo "--> 4. Sincronizando binários e bibliotecas para $REMOTE_APP_DIR..."
-# Jars principais e dependências (com --delete no lib para expurgar versões antigas)
-rsync -avz --delete "$DIST_DIR/lib/" "$RSYNC_TARGET:$REMOTE_APP_DIR/lib/"
-rsync -avz "$DIST_DIR/launcher-0.1.0-SNAPSHOT.jar" "$RSYNC_TARGET:$REMOTE_APP_DIR/"
+echo "--> 4. Sincronizando release $RELEASE_ID para $REMOTE_RELEASE_DIR..."
+# Jars principais e dependências
+rsync -avz --delete "$DIST_DIR/lib/" "$RSYNC_TARGET:$REMOTE_RELEASE_DIR/lib/"
+rsync -avz "$DIST_DIR/launcher-0.1.0-SNAPSHOT.jar" "$RSYNC_TARGET:$REMOTE_RELEASE_DIR/"
 
 # Plugins
 echo "    • Sincronizando plugins..."
-rsync -avz --delete "$DIST_DIR/plugins/" "$RSYNC_TARGET:$REMOTE_APP_DIR/plugins/"
+rsync -avz --delete "$DIST_DIR/plugins/" "$RSYNC_TARGET:$REMOTE_RELEASE_DIR/plugins/"
 
-# Arquivos de suporte
-echo "    • Sincronizando arquivos de configuração e suporte..."
-rsync -avz "$DIST_DIR/fastfood_localization.json" "$RSYNC_TARGET:$REMOTE_APP_DIR/"
-rsync -avz "$REPO_DIR/deploy/config.prod.yaml" "$RSYNC_TARGET:$REMOTE_APP_DIR/config.yaml"
-rsync -avz "$REPO_DIR/deploy/log4j2-prod.xml" "$RSYNC_TARGET:$REMOTE_APP_DIR/log4j2-prod.xml"
+# Arquivos de suporte da release
+echo "    • Sincronizando arquivos de suporte da release..."
+rsync -avz "$DIST_DIR/fastfood_localization.json" "$RSYNC_TARGET:$REMOTE_RELEASE_DIR/"
+
+# Arquivos compartilhados
+echo "    • Sincronizando arquivos compartilhados em $REMOTE_SHARED_DIR..."
+rsync -avz "$REPO_DIR/deploy/config.prod.yaml" "$RSYNC_TARGET:$REMOTE_SHARED_DIR/config.yaml"
+rsync -avz "$REPO_DIR/deploy/log4j2-prod.xml" "$RSYNC_TARGET:$REMOTE_SHARED_DIR/log4j2-prod.xml"
+rsync -avz "$REPO_DIR/deploy/handoff-reload.sh" "$RSYNC_TARGET:$REMOTE_SHARED_DIR/handoff-reload.sh"
+ssh "$SSH_TARGET" "chmod +x '$REMOTE_SHARED_DIR/handoff-reload.sh'"
 
 # MOTD se existir
 if [[ -f "$REPO_DIR/motd/welcome.txt" ]]; then
-  rsync -avz "$REPO_DIR/motd/" "$RSYNC_TARGET:$REMOTE_APP_DIR/motd/"
+  rsync -avz "$REPO_DIR/motd/" "$RSYNC_TARGET:$REMOTE_SHARED_DIR/motd/"
 fi
+
+# Links simbólicos de shared -> release, ativação atômica de current e limpeza (mantém últimas 3)
+echo "    • Criando links simbólicos compartilhados, atualizando current e limpando releases antigas..."
+ssh "$SSH_TARGET" bash -s -- "$REMOTE_APP_DIR" "$REMOTE_RELEASES_DIR" "$REMOTE_RELEASE_DIR" "$REMOTE_SHARED_DIR" "$REMOTE_CURRENT_LINK" <<'EOF'
+set -euo pipefail
+app_dir="$1"
+releases_dir="$2"
+release_dir="$3"
+shared_dir="$4"
+current_link="$5"
+
+ln -sfn "$shared_dir/config.yaml" "$release_dir/config.yaml"
+ln -sfn "$shared_dir/log4j2-prod.xml" "$release_dir/log4j2-prod.xml"
+ln -sfn "$shared_dir/logs" "$release_dir/logs"
+ln -sfn "$shared_dir/cache" "$release_dir/cache"
+ln -sfn "$shared_dir/motd" "$release_dir/motd"
+ln -sfn "$shared_dir/camera_data" "$release_dir/camera_data"
+ln -sfn "$shared_dir/run" "$release_dir/run"
+
+chown -R habbo:habbo "$release_dir" "$shared_dir"
+chown habbo:habbo "$app_dir" "$releases_dir"
+
+ln -sfn "$release_dir" "$current_link"
+chown -h habbo:habbo "$current_link"
+
+current_target="$(readlink -f "$current_link" || true)"
+mapfile -t all_releases < <(find "$releases_dir" -mindepth 1 -maxdepth 1 -type d | sort -r)
+if (( ${#all_releases[@]} > 3 )); then
+  for old_release in "${all_releases[@]:3}"; do
+    if [[ "$old_release" != "$current_target" ]]; then
+      rm -rf "$old_release"
+    fi
+  done
+fi
+EOF
 
 # -------------------------------------------------------------
 # 5. Sincronização de camera_data (se requisitado ou ausente)
@@ -260,19 +342,22 @@ fi
 echo ""
 echo "--> 6. Atualizando systemd unit $SERVICE_NAME..."
 rsync -avz "$REPO_DIR/deploy/habbo.service" "$RSYNC_TARGET:/etc/systemd/system/$SERVICE_NAME"
-ssh "$SSH_TARGET" bash -s <<EOF
+ssh "$SSH_TARGET" bash -s -- "$SERVICE_NAME" <<'EOF'
 set -euo pipefail
-chown -R habbo:habbo "$REMOTE_APP_DIR"
 systemctl daemon-reload
-systemctl enable $SERVICE_NAME
+systemctl enable "$1"
 EOF
 
 # -------------------------------------------------------------
-# 7. Reinicia e valida o serviço
+# 7. Reinicia (ou recarrega em --seamless) e valida o serviço
 # -------------------------------------------------------------
 echo ""
-echo "--> 7. Reiniciando o emulador ($SERVICE_NAME)..."
-ssh "$SSH_TARGET" "systemctl restart $SERVICE_NAME"
+if [[ $SEAMLESS -eq 1 ]]; then
+  echo "--> 7. Recarregando/reiniciando o emulador em modo seamless ($SERVICE_NAME)..."
+else
+  echo "--> 7. Reiniciando o emulador ($SERVICE_NAME)..."
+fi
+reload_or_restart_remote
 
 echo "    Aguardando serviço iniciar..."
 sleep 3

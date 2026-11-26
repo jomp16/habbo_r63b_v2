@@ -22,6 +22,7 @@ package ovh.rwx.habbo.encryption
 import org.bouncycastle.crypto.engines.RC4Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.random.Random
 
@@ -99,5 +100,35 @@ class RC4EncryptionTest {
 
             assertArrayEquals(plain, buf)
         }
+    }
+
+    @Test
+    fun `snapshot e fromSnapshot mantem paridade byte a byte com instancia continua`() {
+        val random = Random(1337)
+        val key = random.nextBytes(32)
+        val continuous = RC4Encryption(key)
+        val original = RC4Encryption(key)
+
+        val prefix = random.nextBytes(513)
+        assertArrayEquals(continuous.parse(prefix), original.parse(prefix))
+
+        val snapshot = original.snapshot()
+        val restored = RC4Encryption.fromSnapshot(snapshot)
+
+        assertEquals(snapshot, restored.snapshot())
+
+        // Avanca original para garantir isolamento do snapshot
+        original.parse(random.nextBytes(100))
+        assertEquals(snapshot, restored.snapshot())
+
+        repeat(10) {
+            val chunk = random.nextBytes(random.nextInt(1, 512))
+            assertArrayEquals(continuous.parse(chunk), restored.parse(chunk))
+        }
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `fromSnapshot rejeita state com tamanho diferente de 256`() {
+        RC4Encryption.fromSnapshot(RC4Encryption.Snapshot(IntArray(64), 0, 0))
     }
 }

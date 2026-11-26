@@ -90,6 +90,11 @@ class HabboSessionManager {
         return habboSessions.putIfAbsent(channel.id(), habboSession) == null
     }
 
+    fun registerAdoptedSession(channel: Channel, session: HabboSession): Boolean {
+        channel.attr(habboSessionAttributeKey).set(session)
+        return habboSessions.putIfAbsent(channel.id(), session) == null
+    }
+
     fun makeFastFoodSession(channel: Channel): Boolean {
         val fastFoodSession = FastFoodSession(channel)
         channel.attr(fastFoodAttributeKey).set(fastFoodSession)
@@ -123,5 +128,6 @@ class HabboSessionManager {
     companion object {
         val habboSessionAttributeKey: AttributeKey<HabboSession> = AttributeKey.valueOf<HabboSession>("HABBO_SESSION")
         val fastFoodAttributeKey: AttributeKey<FastFoodSession> = AttributeKey.valueOf<FastFoodSession>("FAST_FOOD_SESSION")
+        val handedOffAttributeKey: AttributeKey<Boolean> = AttributeKey.valueOf<Boolean>("HABBO_HANDED_OFF")
     }
 }

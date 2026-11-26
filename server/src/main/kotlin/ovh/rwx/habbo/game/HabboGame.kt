@@ -81,6 +81,9 @@ class HabboGame : AutoCloseable {
 
     private val loadJobs = mutableListOf<Job>()
 
+    @Volatile
+    var pausedForHandoff: Boolean = false
+
     init {
         // o external_variables (furnidata, figuredata, Habbicons) já foi lido pelo HabboServer antes daqui
         loadJobs += gameScope.launch { landingManager.load() }
@@ -148,7 +151,7 @@ class HabboGame : AutoCloseable {
             if (initialDelayMs > 0L) delay(initialDelayMs.milliseconds)
             while (isActive) {
                 try {
-                    action()
+                    if (!pausedForHandoff) action()
                 } catch (e: CancellationException) {
                     break
                 } catch (e: Exception) {
